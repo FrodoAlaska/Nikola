@@ -1,6 +1,4 @@
 # URGENT TODO: 
-- Window 
-- Test window stuff 
 - Input 
 - Test input stuff 
 
