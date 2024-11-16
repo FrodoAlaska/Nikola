@@ -1296,10 +1296,10 @@ void String::copy(const char* str, const sizei str_len) {
   }
 
   // Make a new array
-  data = (char*)malloc(sizeof(char) * length);
+  data = (char*)malloc(length);
 
   // Copy the string over
-  memcpy(data, str, sizeof(char) * length);
+  memcpy(data, str, length + 1);
 }
 
 void String::copy(const String& str) {

@@ -2,9 +2,9 @@
 
 int main(int argc, char** argv) {
   // Initialze 
-  nikol::logger_init("logs/");
-  nikol::event_init();
-  nikol::input_init();
+  if(!nikol::init()) {
+    return -1;
+  }
 
   // Openinig the window
   nikol::i32 win_flags = nikol::WINDOW_FLAGS_FOCUS_ON_CREATE;
@@ -18,13 +18,12 @@ int main(int argc, char** argv) {
     if(nikol::input_key_pressed(nikol::KEY_F1)) {
       break;
     }
- 
+
     nikol::window_poll_events(window);
     nikol::window_swap_buffers(window);
   }
 
   // De-initialze
   nikol::window_close(window);
-  nikol::event_shutdown();
-  nikol::logger_shutdown();
+  nikol::shutdown();
 }

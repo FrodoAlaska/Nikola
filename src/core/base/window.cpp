@@ -227,11 +227,19 @@ static void set_window_hints(Window* window) {
   if((window->flags & WINDOW_FLAGS_GFX_D3D) == WINDOW_FLAGS_GFX_D3D) {
     // @TODO
   }
+  
+  if((window->flags & WINDOW_FLAGS_GFX_SOFTWARE) == WINDOW_FLAGS_GFX_SOFTWARE) {
+    // @TODO
+  }
+
+  if((window->flags & WINDOW_FLAGS_VSYNC_DISABLE) == WINDOW_FLAGS_VSYNC_DISABLE) {
+    window_set_vsync(window, false); 
+  }
 }
 
 static void create_glfw_handle(Window* window) {
   // Creating the window
-  window->handle = glfwCreateWindow(window->width, window->height, window->title.c_str(), nullptr, nullptr);
+  window->handle = glfwCreateWindow(window->width, window->height, window->title.data, nullptr, nullptr);
 
   // Setting the new refresh rate
   window->refresh_rate = glfwGetVideoMode(glfwGetPrimaryMonitor())->refreshRate;
@@ -333,6 +341,7 @@ void window_close(Window* window) {
 void window_poll_events(Window* window) {
   // TODO: Maybe take these system updates somewhere else? 
   input_update();
+  niclock_update();
 
   glfwPollEvents();
 }

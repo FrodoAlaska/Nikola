@@ -79,6 +79,18 @@ typedef ishtar::String String;
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// *** Library init ***
+
+/// Initialze various different subsystems of Nikol. 
+const bool init();
+
+/// Shutdown subsystems of the Nikol.
+void shutdown();
+
+/// *** Library init ***
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// *** Memory ***
 
 /// Memory functions 
@@ -153,12 +165,6 @@ enum LogLevel {
 /// Log level
 
 /// Logger functions
-
-/// Create a logger file to dump logging information to.
-bool logger_init(const String& path);
-
-/// Close the logger file and reclaim any memory.
-void logger_shutdown();
 
 /// Log an assertion with the given information.
 void logger_log_assert(const String& expr, const String& msg, const String& file, const u32 line_num);
@@ -279,13 +285,75 @@ typedef soc::Vector3 Vec3;
 typedef soc::Vector4 Vec4;
 /// Vec4 
 
-/// Mat3(3x3)
+/// Mat3 (3x3)
 typedef soc::Matrix3 Mat3;
-/// Mat3(3x3)
+/// Mat3 (3x3)
 
-/// Mat4(4x4)
+/// Mat4 (4x4)
 typedef soc::Matrix4 Mat4;
-/// Mat4(4x4)
+/// Mat4 (4x4)
+
+// Quat (Quaternion)
+typedef soc::Quaternion Quat;
+// Quat (Quaternion)
+
+/// Math functions 
+
+/// Return a random signed int. 
+const i32 random_i32();
+
+/// Return a random signed int between `min` and `max`. 
+const i32 random_i32(const i32 min, const i32 max);
+
+/// Return a random unsigned int. 
+const u32 random_u32();
+
+/// Return a random unsigned int between `min` and `max`. 
+const u32 random_u32(const u32 min, const u32 max);
+
+/// Return a random signed long. 
+const i64 random_i64();
+
+/// Return a random signed long between `min` and `max`. 
+const i64 random_i64(const i64 min, const i64 max);
+
+/// Return a random unsigned long. 
+const u64 random_u64();
+
+/// Return a random unsigned long between `min` and `max`. 
+const u64 random_u64(const u64 min, const u64 max);
+
+/// Return a random float.
+const f32 random_f32();
+
+/// Return a random float between `min` and `max`.
+const f32 random_f32(const f32 min, const f32 max);
+
+/// Return a random double.
+const f64 random_f64();
+
+/// Return a random double between `min` and `max`.
+const f64 random_f64(const f64 min, const f64 max);
+
+/// Return a random Vec2.
+const Vec2 random_vec2();
+
+/// Return a random Vec2 between `min` and `max`.
+const Vec2 random_vec2(const Vec2 min, const Vec2 max);
+
+/// Return a random Vec3.
+const Vec3 random_vec3();
+
+/// Return a random Vec3 between `min` and `max`.
+const Vec3 random_vec3(const Vec3 min, const Vec3 max);
+
+/// Return a random Vec4.
+const Vec4 random_vec4();
+
+/// Return a random Vec4 between `min` and `max`.
+const Vec4 random_vec4(const Vec4 min, const Vec4 max);
+
+/// Math functions 
 
 /// *** Math ***
 /// ---------------------------------------------------------------------
@@ -762,16 +830,39 @@ enum WindowFlags {
   
   /// Set the graphics context as `DirectX`
   WINDOW_FLAGS_GFX_D3D             = 1 << 11,
+  
+  /// Set the graphics context to be software rendered
+  WINDOW_FLAGS_GFX_SOFTWARE        = 1 << 12,
+
+  /// Disable VSYNC. By default it will be enabled. 
+  WINDOW_FLAGS_VSYNC_DISABLE       = 1 << 13,
 };
 /// WindowFlags
 
 /// Window functions
 
+/// 
 /// Creates a new window context and returns the result. 
 /// Returns a `nullptr` if the window was failed to be opened. 
 /// `title`: The title of the new window. 
 /// `width`: The width of the new window.
 /// `height`: The height of the new window.
+/// `flags`:
+///   - `WINDOW_FLAGS_NONE`                = No flags will be set when the window gets created.
+///   - `WINDOW_FLAGS_RESIZABLE`           = Set the window to be resizable.
+///   - `WINDOW_FLAGS_FOCUS_ON_CREATE`     = The window will gain focus on creation.  
+///   - `WINDOW_FLAGS_FOCUS_ON_SHOW`       = The window will always gain focus when shown. 
+///   - `WINDOW_FLAGS_MINIMIZE`            = Minimize the window on creation. 
+///   - `WINDOW_FLAGS_MAXMIZE`             = Maxmize the window on creation. 
+///   - `WINDOW_FLAGS_DISABLE_DECORATIONS` = Disable window decoration such as borders, widgets, etc. Decorations will be set to enabled by default.
+///   - `WINDOW_FLAGS_CENTER_MOUSE`        = Center the mouse position relative to the screen on startup.
+///   - `WINDOW_FLAGS_HIDE_CURSOR`         = Hide the cursor at creation. The cursos will be shown by default.
+///   - `WINDOW_FLAGS_FULLSCREEN`          = Set the window to be fullscreen on creation. 
+///   - `WINDOW_FLAGS_GFX_OPENGL`          = Set the graphics context as `OpenGL`.
+///   - `WINDOW_FLAGS_GFX_D3D`             = Set the graphics context as `DirectX`.
+///   - `WINDOW_FLAGS_GFX_SOFTWARE`        = Set the graphics context to be software rendered
+///   - `WINDOW_FLAGS_VSYNC_DISABLE`        = Disable VSYNC. By default it will be enabled.
+/// 
 Window* window_open(const i8* title, const i32 width, const i32 height, i32 flags);
 
 /// Closes the `window` context and clears up any memory.
@@ -841,6 +932,31 @@ void window_set_position(Window* window, const i32 x_pos, const i32 y_pos);
 /// Window functions
 
 /// *** Window ***
+/// ---------------------------------------------------------------------
+
+/// ---------------------------------------------------------------------
+/// *** Clock ***
+
+/// Clock functions
+
+/// NOTE: Every function has an "ni" prefix to avoid any confusion with the C clock library.
+
+/// Updates the values of the time, FPS (frames per second), and the delta time.
+/// NOTE: This must be called every frame.
+void niclock_update();
+
+/// Retrieve the time passed since the CPU was turned on.
+const f64 niclock_get_time(); 
+
+/// Retrieve the current FPS (frames per second) of the application
+const f64 niclock_get_fps();
+
+/// Retrieve the time passed between each frame. 
+const f64 niclock_get_delta_time();
+
+/// Clock functions
+
+/// *** Clock ***
 /// ---------------------------------------------------------------------
 
 } // End of nikol

@@ -27,11 +27,16 @@ set(NIKOL_SOURCES
   ${NIKOL_SRC_DIR}/main.cpp
   
   # Core/Base
+  ${NIKOL_SRC_DIR}/core/base/nikol.cpp
   ${NIKOL_SRC_DIR}/core/base/logger.cpp
   ${NIKOL_SRC_DIR}/core/base/event.cpp
   ${NIKOL_SRC_DIR}/core/base/window.cpp
   ${NIKOL_SRC_DIR}/core/base/memory.cpp
   ${NIKOL_SRC_DIR}/core/base/input.cpp
+  ${NIKOL_SRC_DIR}/core/base/nikol_clock.cpp
+  
+  # Core/Math
+  ${NIKOL_SRC_DIR}/core/math/nikol_random.cpp
 )
 ############################################################
 
