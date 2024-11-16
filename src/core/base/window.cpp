@@ -153,25 +153,18 @@ void joystick_callback(int jid, int event) {
   });
 }
 
-// static bool panda_mouse_move_callback(const Event& event) {
-//   if(event.type != EVENT_MOUSE_MOVED) {
-//     return false;
-//   }
-//
-//   glfwSetCursorPos(s_window.handle, event.mouse_pos.x, event.mouse_pos.y);
-//   return true;
-// }
-//
-// static bool panda_cursor_show_callback(const Event& event) {
-//   if(event.type != EVENT_MOUSE_CURSOR_SHOWN) {
-//     return false;
-//   }
-//
-//   i32 cursor_mode = event.cursor_shown ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED;
-//   glfwSetInputMode(s_window.handle, GLFW_CURSOR, cursor_mode);
-//
-//   return true;
-// }
+static bool nikol_cursor_show_callback(const Event& event, const void* dispatcher, const void* listener) {
+  if(event.type != EVENT_MOUSE_CURSOR_SHOWN) {
+    return false;
+  }
+
+  Window* window = (Window*)listener;
+
+  i32 cursor_mode = event.cursor_shown ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED;
+  glfwSetInputMode(window->handle, GLFW_CURSOR, cursor_mode);
+
+  return true;
+}
 /// Callbacks
 
 /// Private functions
@@ -264,6 +257,9 @@ static void set_window_callbacks(Window* window) {
 
   // Joystick callbacks 
   glfwSetJoystickCallback(joystick_callback); 
+
+  // Nikol cursor show callback
+  event_listen(EVENT_MOUSE_CURSOR_SHOWN, nikol_cursor_show_callback, window);
 }
 /// Private functions
 
@@ -271,7 +267,10 @@ static void set_window_callbacks(Window* window) {
 /// Window functions
 
 Window* window_open(const i8* title, const i32 width, const i32 height, i32 flags) {
-  Window* window = new Window{};
+  Window* window = (Window*)memory_allocate(sizeof(Window));
+
+  window->handle = nullptr;
+  window->cursor = nullptr;
 
   window->title  = title;
   window->width  = width; 
@@ -295,7 +294,7 @@ Window* window_open(const i8* title, const i32 width, const i32 height, i32 flag
   
   // Something wrong...
   if(!window->handle) {
-    delete window;
+    memory_free(window);
     return nullptr;
   }
 
@@ -312,6 +311,8 @@ Window* window_open(const i8* title, const i32 width, const i32 height, i32 flag
   if(!window->is_cursor_shown) {
     glfwSetInputMode(window->handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   }
+  
+  NIKOL_LOG_INFO("Window: {t = \"%s\", w = %i, h = %i} was successfully opened", title, width, height);
 
   return window;
 }
@@ -323,11 +324,16 @@ void window_close(Window* window) {
 
   glfwDestroyWindow(window->handle);
   glfwTerminate();
+  
+  memory_free(window);
 
-  delete window;
+  NIKOL_LOG_INFO("Window was successfully closed");
 }
 
 void window_poll_events(Window* window) {
+  // TODO: Maybe take these system updates somewhere else? 
+  input_update();
+
   glfwPollEvents();
 }
 

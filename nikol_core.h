@@ -79,6 +79,54 @@ typedef ishtar::String String;
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// *** Memory ***
+
+/// Memory functions 
+
+/// Allocate a memory block of size `size`.
+/// WARN: This function will assert if there's no suffient memory left.
+void* memory_allocate(const sizei size);
+
+/// Re-allocate a block of memory `ptr` with a new size of `new_size`.
+/// WARN: This function will assert if `ptr` is a `nullptr`.
+void* memory_reallocate(void* ptr, const sizei new_size);
+
+/// Set the value of the memory block `ptr` with a size of `ptr_size` to `value`.
+/// WARN: This function will assert if `ptr` is a `nullptr`.
+void* memory_set(void* ptr, const i32 value, const sizei ptr_size);
+
+/// Set the value of the memory block `ptr` of size `ptr_size` to 0.
+/// NOTE: This is equivalent to `memory_set(ptr, 0, ptr_size)`.
+/// WARN: This function will assert if `ptr` is a `nullptr`.
+void* memory_zero(void* ptr, const sizei ptr_size);
+
+/// Allocate `count` blocks of memory each with the size of `block_size`.
+/// NOTE: This is equivalent to `memory_allocate(block_size * count)`.
+void* memory_blocks_allocate(const sizei count, const sizei block_size);
+
+/// Copy `src_size` bytes of `src` to the memory block `dest`. 
+/// WARN: This function will assert if `dest` or `src` are a `nullptr`.
+void* memory_copy(void* dest, const void* src, const sizei src_size);
+
+/// Free/reclaim the memory of the given `ptr`.
+/// WARN: This function will assert if `ptr` is a `nullptr`.
+void memory_free(void* ptr);
+
+/// Retrieve the amount of allocations made so far.
+const sizei memory_get_allocations_count();
+
+/// Retrieve the amount of frees made so far. 
+const sizei memory_get_frees_count();
+
+/// Retrieve how many bytes have been allocated so far. 
+const sizei memory_get_allocation_bytes();
+
+/// Memory functions 
+
+/// *** Memory ***
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// *** Logger ***
 
 #define NIKOL_LOG_INFO_ACTIVE 1 
@@ -342,7 +390,7 @@ struct Event {
 /// Event
 
 /// Event callback
-using EventFireFn = bool(*)(const Event&);
+using EventFireFn = bool(*)(const Event&, const void* dispatcher, const void* listener);
 /// Event callback
 
 /// Event functions
@@ -353,12 +401,12 @@ void event_init();
 /// Shutdown the event system and reclaim some memory 
 void event_shutdown();
 
-/// Attach the given `func` callback to an event of type `type`.
-void event_listen(const EventType type, const EventFireFn& func);
+/// Attach the given `func` callback to an event of type `type`, passing in the `listener` as well.
+void event_listen(const EventType type, const EventFireFn& func, const void* listener = nullptr);
 
-/// Call all callbacks associated with `event.type` and pass in the given `event`. 
+/// Call all callbacks associated with `event.type` and pass in the given `event` and the `dispatcher`. 
 /// Returns `true` on success.
-const bool event_dispatch(const Event& event);
+const bool event_dispatch(const Event& event, const void* dispatcher = nullptr);
 
 /// Event functions
 
@@ -545,49 +593,50 @@ enum JoystickID {
 };
 /// JoystickID 
 
-/// JoystickAxis 
-enum JoystickAxis {
+/// GamepadAxis 
+enum GamepadAxis {
   // X and Y of the left axis
-  JOYSTICK_AXIS_LEFT    = 0, 
+  GAMEPAD_AXIS_LEFT    = 0, 
 
   // X and Y of the right axis
-  JOYSTICK_AXIS_RIGHT   = 2,
+  GAMEPAD_AXIS_RIGHT   = 2,
 
   // Left and Right trigger
-  JOYSTICK_AXIS_TRIGGER = 4, 
+  GAMEPAD_AXIS_TRIGGER = 4, 
 };
-/// JoystickAxis 
+/// GamepadAxis 
 
-/// JoystickButton 
-enum JoystickButton {
-  JOYSTICK_BUTTON_A = 0,
-  JOYSTICK_BUTTON_B,
-  JOYSTICK_BUTTON_X,
-  JOYSTICK_BUTTON_Y,
-
-  JOYSTICK_BUTTON_LEFT_BUMPER,
-  JOYSTICK_BUTTON_RIGHT_BUMPER,
-
-  JOYSTICK_BUTTON_BACK, 
-  JOYSTICK_BUTTON_START, 
-  JOYSTICK_BUTTON_GUIDE, 
+/// GamepadButton 
+enum GamepadButton {
+  GAMEPAD_BUTTON_A = 0,
+  GAMEPAD_BUTTON_B,
+  GAMEPAD_BUTTON_X,
+  GAMEPAD_BUTTON_Y,
   
-  JOYSTICK_BUTTON_LEFT_THUMB, 
-  JOYSTICK_BUTTON_RIGHT_THUMB, 
+  GAMEPAD_BUTTON_LEFT_BUMPER,
+  GAMEPAD_BUTTON_RIGHT_BUMPER,
   
-  JOYSTICK_BUTTON_DPAD_UP, 
-  JOYSTICK_BUTTON_DPAD_RIGHT, 
-  JOYSTICK_BUTTON_DPAD_DOWN, 
-  JOYSTICK_BUTTON_DPAD_LEFT, 
+  GAMEPAD_BUTTON_BACK, 
+  GAMEPAD_BUTTON_START, 
+  GAMEPAD_BUTTON_GUIDE, 
   
-  JOYSTICK_BUTTON_LAST = JOYSTICK_BUTTON_DPAD_LEFT,
+  GAMEPAD_BUTTON_LEFT_THUMB, 
+  GAMEPAD_BUTTON_RIGHT_THUMB, 
+  
+  GAMEPAD_BUTTON_DPAD_UP, 
+  GAMEPAD_BUTTON_DPAD_RIGHT, 
+  GAMEPAD_BUTTON_DPAD_DOWN, 
+  GAMEPAD_BUTTON_DPAD_LEFT, 
+  
+  GAMEPAD_BUTTON_LAST = GAMEPAD_BUTTON_DPAD_LEFT,
+  GAMEPAD_BUTTONS_MAX = GAMEPAD_BUTTON_LAST + 1,
 
-  JOYSTICK_BUTTON_CROSS    = JOYSTICK_BUTTON_A,
-  JOYSTICK_BUTTON_CIRCLE   = JOYSTICK_BUTTON_B,
-  JOYSTICK_BUTTON_SQUARE   = JOYSTICK_BUTTON_X,
-  JOYSTICK_BUTTON_TRIANGLE = JOYSTICK_BUTTON_Y,
+  GAMEPAD_BUTTON_CROSS    = GAMEPAD_BUTTON_A,
+  GAMEPAD_BUTTON_CIRCLE   = GAMEPAD_BUTTON_B,
+  GAMEPAD_BUTTON_SQUARE   = GAMEPAD_BUTTON_X,
+  GAMEPAD_BUTTON_TRIANGLE = GAMEPAD_BUTTON_Y,
 };
-/// JoystickButton 
+/// GamepadButton 
 
 /// Input functions 
 
@@ -624,9 +673,6 @@ const bool input_button_up(const MouseButton button);
 /// The current position of the mouse relative to the screen
 const Vec2 input_mouse_position();
 
-/// Set the position of the mouse 
-void input_mouse_set_position(const Vec2 position);
-
 /// The amount the mouse moved by since the last frame
 const Vec2 input_mouse_offset();
 
@@ -641,28 +687,28 @@ void input_cursor_show(const bool show);
 const bool input_cursor_on_screen();
 
 /// Returns the _current_ connection status of the given joystick `id`
-const bool input_joystick_connected(const JoystickID id);
+const bool input_gamepad_connected(const JoystickID id);
 
 /// Returns a number between -1.0f and 1.0f for the joystick's axes or bumbers.
 /// @NOTE: This functions returns a `nikol::Vec2`. The X and Y of the vector 
 /// corresponds with the axis's directions. However, for the triggers, the X and Y 
 /// components of the vector correspond to the left (X) and right (Y) triggers.
-const Vec2 input_joystick_axis_value(const JoystickID id, const JoystickAxis axis);
+const Vec2 input_gamepad_axis_value(const JoystickID id, const GamepadAxis axis);
 
-/// Returns `true` if `button` of the joystick `id` was pressed this frame  
-const bool input_joystick_button_pressed(const JoystickID id, const JoystickButton button);
+/// Returns `true` if `button` of the gamepad `id` was pressed this frame  
+const bool input_gamepad_button_pressed(const JoystickID id, const GamepadButton button);
 
-/// Returns `true` if `button` of the joystick `id` was released this frame  
-const bool input_joystick_button_released(const JoystickID id, const JoystickButton button);
+/// Returns `true` if `button` of the gamepad `id` was released this frame  
+const bool input_gamepad_button_released(const JoystickID id, const GamepadButton button);
 
-/// Returns `true` if `button` of the joystick `id` is being pressed
-const bool input_joystick_button_down(const JoystickID id, const JoystickButton button);
+/// Returns `true` if `button` of the gamepad `id` is being pressed
+const bool input_gamepad_button_down(const JoystickID id, const GamepadButton button);
 
-/// Returns `true` if `button` of the joystick `id` is not pressed currently
-const bool input_joystick_button_up(const JoystickID id, const JoystickButton button);
+/// Returns `true` if `button` of the jgamepad `id` is not pressed currently
+const bool input_gamepad_button_up(const JoystickID id, const GamepadButton button);
 
-/// Get the name of the given joystick `id` as a string if available
-const String input_joystick_get_name(const JoystickID id);
+/// Get the name of the given gamepad `id` as a string if available
+const String input_gamepad_get_name(const JoystickID id);
 
 /// Input functions 
 

@@ -30,6 +30,8 @@ set(NIKOL_SOURCES
   ${NIKOL_SRC_DIR}/core/base/logger.cpp
   ${NIKOL_SRC_DIR}/core/base/event.cpp
   ${NIKOL_SRC_DIR}/core/base/window.cpp
+  ${NIKOL_SRC_DIR}/core/base/memory.cpp
+  ${NIKOL_SRC_DIR}/core/base/input.cpp
 )
 ############################################################
 
