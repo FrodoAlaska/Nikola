@@ -16,7 +16,8 @@ struct InputState {
   bool current_mouse_state[MOUSE_BUTTONS_MAX];
   bool previous_mouse_state[MOUSE_BUTTONS_MAX];
 
-  Vec2 mouse_position, mouse_offset; 
+  f32 mouse_position_x, mouse_position_y;
+  f32 mouse_offset_x, mouse_offset_y; 
   f32 scroll_value;
 
   bool cursor_entered;
@@ -47,8 +48,11 @@ static bool key_callback(const Event& event, const void* dispatcher, const void*
 static bool mouse_callback(const Event& event, const void* dispatcher, const void* listener) {
   switch(event.type) {
     case EVENT_MOUSE_MOVED:
-      s_state.mouse_position = event.mouse_pos; 
-      s_state.mouse_offset = event.mouse_offset;
+      s_state.mouse_position_x = event.mouse_pos_x;
+      s_state.mouse_position_y = event.mouse_pos_y;
+
+      s_state.mouse_offset_x = event.mouse_offset_x;
+      s_state.mouse_offset_y = event.mouse_offset_y;
     return true;
     case EVENT_MOUSE_ENTER: 
       s_state.cursor_entered = true;
@@ -162,12 +166,14 @@ const bool input_button_up(const MouseButton button) {
   return !s_state.current_mouse_state[button];
 }
 
-const Vec2 input_mouse_position() {
-  return s_state.mouse_position;
+void input_mouse_position(f32* x, f32* y) {
+  *x = s_state.mouse_position_x;
+  *y = s_state.mouse_position_y;
 }
 
-const Vec2 input_mouse_offset() {
-  return s_state.mouse_offset;
+void input_mouse_offset(f32* x, f32* y) {
+  *x = s_state.mouse_offset_x;
+  *y = s_state.mouse_offset_y;
 }
 
 const f32 input_mouse_scroll_value() {
@@ -189,14 +195,12 @@ const bool input_gamepad_connected(const JoystickID id) {
   return s_state.connected_joysticks[id];
 }
 
-const Vec2 input_gamepad_axis_value(const JoystickID id, const GamepadAxis axis) {
+void input_gamepad_axis_value(const JoystickID id, const GamepadAxis axis, f32* x, f32* y) {
   GLFWgamepadstate gamepad_state; 
   glfwGetGamepadState(id, &gamepad_state);
   
-  f32 x = gamepad_state.axes[axis];
-  f32 y = gamepad_state.axes[axis + 1];
-
-  return Vec2(x, y);
+  *x = gamepad_state.axes[axis];
+  *y = gamepad_state.axes[axis + 1];
 }
 
 const bool input_gamepad_button_pressed(const JoystickID id, const GamepadButton button) {
@@ -215,7 +219,7 @@ const bool input_gamepad_button_up(const JoystickID id, const GamepadButton butt
   return !s_state.current_gamepad_state[id][button];
 }
 
-const String input_gamepad_get_name(const JoystickID id) {
+const i8* input_gamepad_get_name(const JoystickID id) {
   return glfwGetGamepadName(id);
 }
 

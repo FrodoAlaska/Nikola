@@ -1,7 +1,7 @@
 #include "nikol_core.h"
 
-#include <ishtar/ishtar.h>
 #include <GLFW/glfw3.h>
+#include <cstring>
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -13,15 +13,16 @@ struct Window {
   GLFWcursor* cursor = nullptr;
 
   i32 width, height; 
-  ishtar::String title;
   WindowFlags flags;
 
   f32 refresh_rate;
 
   bool is_fullscreen, is_focused, is_cursor_shown;
 
-  Vec2 position; 
-  Vec2 last_mouse_position, mouse_position, mouse_offset;
+  i32 position_x, position_y; 
+  f32 last_mouse_position_x, last_mouse_position_y;
+  f32 mouse_position_x, mouse_position_y; 
+  f32 mouse_offset_x, mouse_offset_y;
 };
 /// Window
 
@@ -33,11 +34,13 @@ static void error_callback(int err_code, const char* desc) {
 static void window_pos_callback(GLFWwindow* handle, int xpos, int ypos) {
   Window* window = (Window*)glfwGetWindowUserPointer(handle);
 
-  window->position = Vec2(xpos, ypos);
+  window->position_x = xpos;
+  window->position_y = ypos;
   
   event_dispatch(Event {
     .type = EVENT_WINDOW_MOVED, 
-    .window_new_pos = window->position,
+    .window_new_pos_x = window->position_x,
+    .window_new_pos_y = window->position_y,
   });
 }
 
@@ -67,14 +70,16 @@ static void window_focus_callback(GLFWwindow* handle, int focused) {
 static void window_framebuffer_resize_callback(GLFWwindow* window, int width, int height) {
   event_dispatch(Event {
     .type = EVENT_WINDOW_FRAMEBUFFER_RESIZED, 
-    .window_framebuffer_size = Vec2(width, height),
+    .window_framebuffer_width  = width,
+    .window_framebuffer_height = height,
   });
 }
 
 static void window_resize_callback(GLFWwindow* window, int width, int height) {
   event_dispatch(Event {
     .type = EVENT_WINDOW_RESIZED, 
-    .window_new_pos = Vec2(width, height),
+    .window_new_width  = width,
+    .window_new_height = height,
   });
 }
 
@@ -115,19 +120,29 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void cursor_pos_callback(GLFWwindow* handle, double xpos, double ypos) {
   Window* window = (Window*)glfwGetWindowUserPointer(handle);
 
-  window->mouse_position = Vec2(xpos, ypos);
+  window->mouse_position_x = xpos;
+  window->mouse_position_y = ypos;
+ 
+  f32 offset_x = xpos - window->last_mouse_position_x; 
+  f32 offset_y = window->last_mouse_position_y - ypos; 
   
-  Vec2 offset(xpos - window->last_mouse_position.x, ypos - window->last_mouse_position.y); 
-  window->last_mouse_position = Vec2(xpos, ypos); 
+  window->last_mouse_position_x = xpos; 
+  window->last_mouse_position_y = ypos; 
 
   // @TODO: Applying sensitivity. This must be configurable
-  offset *= 0.1f;
-  window->mouse_offset += offset;
+  offset_x *= 0.1f;
+  offset_y *= 0.1f;
+
+  window->mouse_offset_x += offset_x;
+  window->mouse_offset_y += offset_y;
 
   event_dispatch(Event {
     .type = EVENT_MOUSE_MOVED, 
-    .mouse_pos = window->mouse_position, 
-    .mouse_offset = window->mouse_offset,
+    .mouse_pos_x = window->mouse_position_x, 
+    .mouse_pos_y = window->mouse_position_y, 
+    
+    .mouse_offset_x = window->mouse_offset_x,
+    .mouse_offset_y = window->mouse_offset_y,
   });
 }
 
@@ -168,6 +183,16 @@ static bool nikol_cursor_show_callback(const Event& event, const void* dispatche
 /// Callbacks
 
 /// Private functions
+static void set_gtx_context(Window* window) {
+#if NIKOL_GTX_CONTEXT_OPENGL == 1 
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#elif NIKOL_GTX_CONTEXT_DX11 == 1 
+  // TODO
+#endif
+}
+
 static void set_window_hints(Window* window) {
   // Setting the this for the MSAA down the line
   // @TEMP: This should probably be configurable
@@ -218,14 +243,8 @@ static void set_window_hints(Window* window) {
     window->is_fullscreen = true; 
   }
   
-  if((window->flags & WINDOW_FLAGS_GFX_OPENGL) == WINDOW_FLAGS_GFX_OPENGL) {
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  }
-  
-  if((window->flags & WINDOW_FLAGS_GFX_D3D) == WINDOW_FLAGS_GFX_D3D) {
-    // @TODO
+  if((window->flags & WINDOW_FLAGS_GFX_HARDWARE) == WINDOW_FLAGS_GFX_HARDWARE) {
+    set_gtx_context(window);
   }
   
   if((window->flags & WINDOW_FLAGS_GFX_SOFTWARE) == WINDOW_FLAGS_GFX_SOFTWARE) {
@@ -237,9 +256,9 @@ static void set_window_hints(Window* window) {
   }
 }
 
-static void create_glfw_handle(Window* window) {
+static void create_glfw_handle(Window* window, const i8* title) {
   // Creating the window
-  window->handle = glfwCreateWindow(window->width, window->height, window->title.data, nullptr, nullptr);
+  window->handle = glfwCreateWindow(window->width, window->height, title, nullptr, nullptr);
 
   // Setting the new refresh rate
   window->refresh_rate = glfwGetVideoMode(glfwGetPrimaryMonitor())->refreshRate;
@@ -279,8 +298,7 @@ Window* window_open(const i8* title, const i32 width, const i32 height, i32 flag
 
   window->handle = nullptr;
   window->cursor = nullptr;
-
-  window->title  = title;
+  
   window->width  = width; 
   window->height = height; 
   window->flags  = (WindowFlags)flags;
@@ -289,15 +307,22 @@ Window* window_open(const i8* title, const i32 width, const i32 height, i32 flag
   window->is_fullscreen   = false;
   window->is_cursor_shown = true; 
 
-  window->position            = Vec2(0.0f);
-  window->last_mouse_position = Vec2(0.0f);
-  window->mouse_position      = window->last_mouse_position;
-  window->mouse_offset        = Vec2(0.0f);
+  window->position_x = 0.0f;
+  window->position_y = 0.0f;
+  
+  window->last_mouse_position_x = 0.0f;
+  window->last_mouse_position_y = 0.0f;
+  
+  window->mouse_position_x = window->last_mouse_position_x;
+  window->mouse_position_y = window->last_mouse_position_y;
+  
+  window->mouse_offset_x = 0.0f;
+  window->mouse_offset_y = 0.0f;
 
   // GLFW init and setup 
   glfwInit();
   set_window_hints(window);
-  create_glfw_handle(window);
+  create_glfw_handle(window, title);
   set_window_callbacks(window);
   
   // Something wrong...
@@ -366,17 +391,20 @@ const bool window_is_shown(Window* window) {
   return glfwGetWindowAttrib(window->handle, GLFW_VISIBLE);
 }
 
-const Vec2 window_get_size(Window* window) {
-  return Vec2(window->width, window->height);
+void window_get_size(Window* window, i32* width, i32* height) {
+  *width  = window->width;
+  *height = window->height;
 }
 
-const String window_get_title(Window* window) {
-  return window->title.c_str();
+const i8* window_get_title(Window* window) {
+  return glfwGetWindowTitle(window->handle);
 }
 
-const Vec2 window_get_monitor_size(Window* window) {
+void window_get_monitor_size(Window* window, i32* width, i32* height) {
   const GLFWvidmode* video_mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-  return Vec2(video_mode->width, video_mode->height);
+  
+  *width  = video_mode->width;
+  *height = video_mode->height;
 }
 
 const f32 window_get_aspect_ratio(Window* window) {
@@ -391,8 +419,9 @@ const WindowFlags window_get_flags(Window* window) {
   return window->flags;
 }
 
-const Vec2 window_get_position(Window* window) {
-  return window->position;
+void window_get_position(Window* window, i32* x, i32* y) {
+  *x = window->position_x;
+  *y = window->position_y;
 }
 
 void window_set_current_context(Window* window) {
@@ -417,7 +446,7 @@ void window_set_fullscreen(Window* window, const bool fullscreen) {
   else {
     glfwSetWindowMonitor(window->handle, 
                          nullptr, 
-                         window->position.x, window->position.y, 
+                         window->position_x, window->position_y, 
                          window->width, window->height, 
                          window->refresh_rate);
   }
@@ -439,14 +468,15 @@ void window_set_size(Window* window, const i32 width, const i32 height) {
   glfwSetWindowSize(window->handle, width, height);
 }
 
-void window_set_title(Window* window, const String& title) {
-  window->title = title; 
-  glfwSetWindowTitle(window->handle, window->title.c_str());
+void window_set_title(Window* window, const i8* title) {
+  glfwSetWindowTitle(window->handle, title);
 }
 
 void window_set_position(Window* window, const i32 x_pos, const i32 y_pos) {
-  window->position = Vec2(x_pos, y_pos); 
-  glfwSetWindowPos(window->handle, window->position.x, window->position.y);
+  window->position_x = x_pos; 
+  window->position_y = y_pos; 
+  
+  glfwSetWindowPos(window->handle, window->position_x, window->position_y);
 }
 
 /// Window functions

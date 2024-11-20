@@ -35,17 +35,15 @@ set(NIKOL_SOURCES
   ${NIKOL_SRC_DIR}/core/base/input.cpp
   ${NIKOL_SRC_DIR}/core/base/nikol_clock.cpp
   
-  # Core/Math
-  ${NIKOL_SRC_DIR}/core/math/nikol_random.cpp
+  # Core/Gfx
+  ${NIKOL_SRC_DIR}/core/gfx/gl_backend.cpp
 )
 ############################################################
 
 ### Library Sources ###
 ############################################################
 set(LIBS_SOURCES 
-  # ${NIKOL_LIBS_DIR}/sokol/sokol_gfx.cpp
-  ${NIKOL_LIBS_DIR}/ishtar/ishtar.cpp
-  ${NIKOL_LIBS_DIR}/stb/stb_image.cpp
+  ${NIKOL_LIBS_DIR}/glad/glad.c
 )
 ############################################################
 
@@ -62,7 +60,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${NIKOL_LIBRARIES})
 
 ### Compiling Options ###
 ############################################################
-target_compile_definitions(${PROJECT_NAME} PUBLIC ${NIKOL_BUILD_TYPE})
+target_compile_definitions(${PROJECT_NAME} PUBLIC ${NIKOL_BUILD_TYPE} GLFW_INCLUDE_NONE)
 target_compile_options(${PROJECT_NAME} PUBLIC -lm -Wall)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 ############################################################

@@ -1,8 +1,5 @@
 #pragma once
 
-#include <ishtar/ishtar.h>
-#include <socrates/socrates.h>
-
 #include <cstddef>
 
 //////////////////////////////////////////////////////////////////////////
@@ -45,9 +42,6 @@ typedef float  f32;
 /// double
 typedef double f64;   
 
-/// char*
-typedef ishtar::String String;
-
 /// *** Typedefs ***
 /// ----------------------------------------------------------------------
 
@@ -66,13 +60,15 @@ typedef ishtar::String String;
 /// Windows
 #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
 #define NIKOL_PLATFORM_WINDOWS 1
+#define NIKOL_GFX_CONTEXT_DX11 1
 #ifndef _WIN64 
 #error "[NIKOL-FATAL]: Only support 64-bit machines\n"
 #endif 
 
 /// Linux
 #elif defined(__linux__) || defined(__gnu_linux__)
-#define NIKOL_PLATFORM_LINUX 1 
+#define NIKOL_PLATFORM_LINUX     1 
+#define NIKOL_GFX_CONTEXT_OPENGL 1
 #endif
 
 /// *** Platform detection ***
@@ -81,11 +77,17 @@ typedef ishtar::String String;
 /// ----------------------------------------------------------------------
 /// *** Library init ***
 
+///---------------------------------------------------------------------------------------------------------------------
+/// Library functions
+
 /// Initialze various different subsystems of Nikol. 
 const bool init();
 
 /// Shutdown subsystems of the Nikol.
 void shutdown();
+
+/// Library functions
+///---------------------------------------------------------------------------------------------------------------------
 
 /// *** Library init ***
 /// ----------------------------------------------------------------------
@@ -93,6 +95,7 @@ void shutdown();
 /// ----------------------------------------------------------------------
 /// *** Memory ***
 
+///---------------------------------------------------------------------------------------------------------------------
 /// Memory functions 
 
 /// Allocate a memory block of size `size`.
@@ -134,6 +137,7 @@ const sizei memory_get_frees_count();
 const sizei memory_get_allocation_bytes();
 
 /// Memory functions 
+///---------------------------------------------------------------------------------------------------------------------
 
 /// *** Memory ***
 /// ----------------------------------------------------------------------
@@ -153,6 +157,7 @@ const sizei memory_get_allocation_bytes();
 #define NIKOL_LOG_DEBUG_ACTIVE 1
 #endif
 
+///---------------------------------------------------------------------------------------------------------------------
 /// Log level
 enum LogLevel {
   LOG_LEVEL_TRACE = 0,
@@ -163,16 +168,19 @@ enum LogLevel {
   LOG_LEVEL_FATAL,
 };
 /// Log level
+///---------------------------------------------------------------------------------------------------------------------
 
+///---------------------------------------------------------------------------------------------------------------------
 /// Logger functions
 
 /// Log an assertion with the given information.
-void logger_log_assert(const String& expr, const String& msg, const String& file, const u32 line_num);
+void logger_log_assert(const i8* expr, const i8* msg, const i8* file, const u32 line_num);
 
 /// Log a specific log level with the given `msg` and any other parametars.
 void logger_log(const LogLevel lvl, const i8* msg, ...);
 
 /// Logger functions
+///---------------------------------------------------------------------------------------------------------------------
 
 /// Trace log
 #if NIKOL_LOG_TRACE_ACTIVE == 1
@@ -239,6 +247,7 @@ void logger_log(const LogLevel lvl, const i8* msg, ...);
 
 #endif
 
+///---------------------------------------------------------------------------------------------------------------------
 /// Assert macro 
 #define NIKOL_ASSERT(expr, msg)                                         \
         {                                                               \
@@ -250,7 +259,9 @@ void logger_log(const LogLevel lvl, const i8* msg, ...);
           }                                                             \
         }
 /// Assert macro 
+///---------------------------------------------------------------------------------------------------------------------
 
+///---------------------------------------------------------------------------------------------------------------------
 /// Debug asserts
 #if NIKOL_DEBUG_BUILD == 1 
 #define NIKOL_ASSERT_DEBUG(expr, msg) {                               \
@@ -263,104 +274,17 @@ void logger_log(const LogLevel lvl, const i8* msg, ...);
 }                                                       
 #endif
 /// Debug asserts
+///---------------------------------------------------------------------------------------------------------------------
 
 #endif
 
 /// *** Asserts ***
 /// ---------------------------------------------------------------------
 
-
-/// ---------------------------------------------------------------------
-/// *** Math ***
-
-/// Vec2 
-typedef soc::Vector2 Vec2;
-/// Vec2 
-
-/// Vec3 
-typedef soc::Vector3 Vec3;
-/// Vec3 
-
-/// Vec4 
-typedef soc::Vector4 Vec4;
-/// Vec4 
-
-/// Mat3 (3x3)
-typedef soc::Matrix3 Mat3;
-/// Mat3 (3x3)
-
-/// Mat4 (4x4)
-typedef soc::Matrix4 Mat4;
-/// Mat4 (4x4)
-
-// Quat (Quaternion)
-typedef soc::Quaternion Quat;
-// Quat (Quaternion)
-
-/// Math functions 
-
-/// Return a random signed int. 
-const i32 random_i32();
-
-/// Return a random signed int between `min` and `max`. 
-const i32 random_i32(const i32 min, const i32 max);
-
-/// Return a random unsigned int. 
-const u32 random_u32();
-
-/// Return a random unsigned int between `min` and `max`. 
-const u32 random_u32(const u32 min, const u32 max);
-
-/// Return a random signed long. 
-const i64 random_i64();
-
-/// Return a random signed long between `min` and `max`. 
-const i64 random_i64(const i64 min, const i64 max);
-
-/// Return a random unsigned long. 
-const u64 random_u64();
-
-/// Return a random unsigned long between `min` and `max`. 
-const u64 random_u64(const u64 min, const u64 max);
-
-/// Return a random float.
-const f32 random_f32();
-
-/// Return a random float between `min` and `max`.
-const f32 random_f32(const f32 min, const f32 max);
-
-/// Return a random double.
-const f64 random_f64();
-
-/// Return a random double between `min` and `max`.
-const f64 random_f64(const f64 min, const f64 max);
-
-/// Return a random Vec2.
-const Vec2 random_vec2();
-
-/// Return a random Vec2 between `min` and `max`.
-const Vec2 random_vec2(const Vec2 min, const Vec2 max);
-
-/// Return a random Vec3.
-const Vec3 random_vec3();
-
-/// Return a random Vec3 between `min` and `max`.
-const Vec3 random_vec3(const Vec3 min, const Vec3 max);
-
-/// Return a random Vec4.
-const Vec4 random_vec4();
-
-/// Return a random Vec4 between `min` and `max`.
-const Vec4 random_vec4(const Vec4 min, const Vec4 max);
-
-/// Math functions 
-
-/// *** Math ***
-/// ---------------------------------------------------------------------
-
 /// ---------------------------------------------------------------------
 /// *** Event ***
 
+///---------------------------------------------------------------------------------------------------------------------
 /// EventType
 enum EventType {
   /// App events 
@@ -395,7 +319,9 @@ enum EventType {
   EVENTS_MAX = EVENT_JOYSTICK_DISCONNECTED + 1,
 };
 /// EventType
+///---------------------------------------------------------------------------------------------------------------------
 
+///---------------------------------------------------------------------------------------------------------------------
 /// Event
 struct Event {
   /// The event's type 
@@ -404,16 +330,16 @@ struct Event {
   /// Window events 
   
   /// New poisition of the window
-  Vec2 window_new_pos;
+  i32 window_new_pos_x, window_new_pos_y;
 
   /// The current focus state of the window
   bool window_has_focus;       
 
   /// The window's new size
-  Vec2 window_new_size;        
+  i32 window_new_width, window_new_height;        
 
   /// The window's new size of the framebuffer
-  Vec2 window_framebuffer_size; 
+  i32 window_framebuffer_width, window_framebuffer_height; 
   
   /// Window events 
   
@@ -430,10 +356,10 @@ struct Event {
   /// Mouse events
   
   /// The current mouse position (relative to the screen) 
-  Vec2 mouse_pos;    
+  f32 mouse_pos_x, mouse_pos_y;    
   
   /// By how much did the mouse move since the last frame? 
-  Vec2 mouse_offset; 
+  f32 mouse_offset_x, mouse_offset_y; 
    
   /// The mouse button that was just pressed
   i32 mouse_button_pressed; 
@@ -456,11 +382,17 @@ struct Event {
   /// Joystick events
 };
 /// Event
+///---------------------------------------------------------------------------------------------------------------------
 
+///---------------------------------------------------------------------------------------------------------------------
 /// Event callback
+
 using EventFireFn = bool(*)(const Event&, const void* dispatcher, const void* listener);
-/// Event callback
 
+/// Event callback
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// Event functions
 
 /// Initialze the event system 
@@ -477,6 +409,7 @@ void event_listen(const EventType type, const EventFireFn& func, const void* lis
 const bool event_dispatch(const Event& event, const void* dispatcher = nullptr);
 
 /// Event functions
+///---------------------------------------------------------------------------------------------------------------------
 
 /// *** Event ***
 /// ---------------------------------------------------------------------
@@ -484,6 +417,7 @@ const bool event_dispatch(const Event& event, const void* dispatcher = nullptr);
 /// ---------------------------------------------------------------------
 /// *** Input ***
 
+///---------------------------------------------------------------------------------------------------------------------
 /// Key 
 enum Key {
   UNKNOWN       = -1, 
@@ -616,7 +550,9 @@ enum Key {
   KEYS_MAX = 349
 };
 /// Key 
+///---------------------------------------------------------------------------------------------------------------------
 
+///---------------------------------------------------------------------------------------------------------------------
 /// MouseButton 
 enum MouseButton {
   MOUSE_BUTTON_1 = 0, 
@@ -636,7 +572,9 @@ enum MouseButton {
   MOUSE_BUTTONS_MAX = 8,
 };
 /// MouseButton 
+///---------------------------------------------------------------------------------------------------------------------
 
+///---------------------------------------------------------------------------------------------------------------------
 /// JoystickID 
 enum JoystickID {
   JOYSTICK_ID_0 = 0, 
@@ -660,7 +598,9 @@ enum JoystickID {
   JOYSTICK_ID_LAST = JOYSTICK_ID_16, 
 };
 /// JoystickID 
+///---------------------------------------------------------------------------------------------------------------------
 
+///---------------------------------------------------------------------------------------------------------------------
 /// GamepadAxis 
 enum GamepadAxis {
   // X and Y of the left axis
@@ -673,7 +613,9 @@ enum GamepadAxis {
   GAMEPAD_AXIS_TRIGGER = 4, 
 };
 /// GamepadAxis 
+///---------------------------------------------------------------------------------------------------------------------
 
+///---------------------------------------------------------------------------------------------------------------------
 /// GamepadButton 
 enum GamepadButton {
   GAMEPAD_BUTTON_A = 0,
@@ -705,7 +647,9 @@ enum GamepadButton {
   GAMEPAD_BUTTON_TRIANGLE = GAMEPAD_BUTTON_Y,
 };
 /// GamepadButton 
+///---------------------------------------------------------------------------------------------------------------------
 
+///---------------------------------------------------------------------------------------------------------------------
 /// Input functions 
 
 /// Initialze the input system 
@@ -739,10 +683,10 @@ const bool input_button_down(const MouseButton button);
 const bool input_button_up(const MouseButton button);
 
 /// The current position of the mouse relative to the screen
-const Vec2 input_mouse_position();
+void input_mouse_position(f32* x, f32* y);
 
 /// The amount the mouse moved by since the last frame
-const Vec2 input_mouse_offset();
+void input_mouse_offset(f32* x, f32* y);
 
 /// Get the mouse's scroll wheel value
 const f32 input_mouse_scroll_value();
@@ -758,10 +702,11 @@ const bool input_cursor_on_screen();
 const bool input_gamepad_connected(const JoystickID id);
 
 /// Returns a number between -1.0f and 1.0f for the joystick's axes or bumbers.
-/// @NOTE: This functions returns a `nikol::Vec2`. The X and Y of the vector 
+///
+/// NOTE: This functions returns will fill in the given `x` and `y` floats. The X and Y  
 /// corresponds with the axis's directions. However, for the triggers, the X and Y 
-/// components of the vector correspond to the left (X) and right (Y) triggers.
-const Vec2 input_gamepad_axis_value(const JoystickID id, const GamepadAxis axis);
+/// correspond to the left (X) and right (Y) triggers.
+void input_gamepad_axis_value(const JoystickID id, const GamepadAxis axis, f32* x, f32* y);
 
 /// Returns `true` if `button` of the gamepad `id` was pressed this frame  
 const bool input_gamepad_button_pressed(const JoystickID id, const GamepadButton button);
@@ -776,9 +721,10 @@ const bool input_gamepad_button_down(const JoystickID id, const GamepadButton bu
 const bool input_gamepad_button_up(const JoystickID id, const GamepadButton button);
 
 /// Get the name of the given gamepad `id` as a string if available
-const String input_gamepad_get_name(const JoystickID id);
+const i8* input_gamepad_get_name(const JoystickID id);
 
 /// Input functions 
+///---------------------------------------------------------------------------------------------------------------------
 
 /// *** Input ***
 /// ---------------------------------------------------------------------
@@ -786,11 +732,16 @@ const String input_gamepad_get_name(const JoystickID id);
 /// ---------------------------------------------------------------------
 /// *** Window ***
 
-/// Window
-/// An opaque `Window` struct
-struct Window;
+///---------------------------------------------------------------------------------------------------------------------
 /// Window
 
+/// An opaque `Window` struct
+struct Window;
+
+/// Window
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// WindowFlags
 enum WindowFlags {
   /// No flags will be set when the window gets created
@@ -825,20 +776,19 @@ enum WindowFlags {
   /// Set the window to be fullscreen on creation. 
   WINDOW_FLAGS_FULLSCREEN          = 1 << 9,
 
-  /// Set the graphics context as `OpenGL`
-  WINDOW_FLAGS_GFX_OPENGL          = 1 << 10,
-  
-  /// Set the graphics context as `DirectX`
-  WINDOW_FLAGS_GFX_D3D             = 1 << 11,
+  /// Set the graphics context to be hardware accelerated (i.e either using OpenGL or DirectX).
+  WINDOW_FLAGS_GFX_HARDWARE        = 1 << 10,
   
   /// Set the graphics context to be software rendered
-  WINDOW_FLAGS_GFX_SOFTWARE        = 1 << 12,
+  WINDOW_FLAGS_GFX_SOFTWARE        = 1 << 11,
 
   /// Disable VSYNC. By default it will be enabled. 
-  WINDOW_FLAGS_VSYNC_DISABLE       = 1 << 13,
+  WINDOW_FLAGS_VSYNC_DISABLE       = 1 << 12,
 };
 /// WindowFlags
+///---------------------------------------------------------------------------------------------------------------------
 
+///---------------------------------------------------------------------------------------------------------------------
 /// Window functions
 
 /// 
@@ -858,10 +808,9 @@ enum WindowFlags {
 ///   - `WINDOW_FLAGS_CENTER_MOUSE`        = Center the mouse position relative to the screen on startup.
 ///   - `WINDOW_FLAGS_HIDE_CURSOR`         = Hide the cursor at creation. The cursos will be shown by default.
 ///   - `WINDOW_FLAGS_FULLSCREEN`          = Set the window to be fullscreen on creation. 
-///   - `WINDOW_FLAGS_GFX_OPENGL`          = Set the graphics context as `OpenGL`.
-///   - `WINDOW_FLAGS_GFX_D3D`             = Set the graphics context as `DirectX`.
+///   - `WINDOW_FLAGS_GFX_HARDWARE`        = Set the graphics context to be hardware accelerated (i.e either using OpenGL or DirectX).
 ///   - `WINDOW_FLAGS_GFX_SOFTWARE`        = Set the graphics context to be software rendered
-///   - `WINDOW_FLAGS_VSYNC_DISABLE`        = Disable VSYNC. By default it will be enabled.
+///   - `WINDOW_FLAGS_VSYNC_DISABLE`       = Disable VSYNC. By default it will be enabled.
 /// 
 Window* window_open(const i8* title, const i32 width, const i32 height, i32 flags);
 
@@ -888,13 +837,13 @@ const bool window_is_focused(Window* window);
 const bool window_is_shown(Window* window);
 
 /// Retrieve the current size of the `window` context
-const Vec2 window_get_size(Window* window);
+void window_get_size(Window* window, i32* width, i32* height);
 
 /// Retrieve the current title of the `window` context
-const String window_get_title(Window* window);
+const i8* window_get_title(Window* window);
 
 /// Retrieve the current size of the monitor
-const Vec2 window_get_monitor_size(Window* window);
+void window_get_monitor_size(Window* window, i32* width, i32* height);
 
 /// Retrieve the aspect ratio of the `window` context
 const f32 window_get_aspect_ratio(Window* window);
@@ -906,7 +855,7 @@ const f32 window_get_refresh_rate(Window* window);
 const WindowFlags window_get_flags(Window* window);
 
 /// Retrieve the current position of the `window` context relative to the monitor
-const Vec2 window_get_position(Window* window);
+void window_get_position(Window* window, i32* x, i32* y);
 
 /// Set the given `window` as the current active context
 void window_set_current_context(Window* window);
@@ -924,12 +873,13 @@ void window_set_show(Window* window, const bool show);
 void window_set_size(Window* window, const i32 width, const i32 height);
 
 /// Set the title of the `window` to `title`.
-void window_set_title(Window* window, const String& title);
+void window_set_title(Window* window, const i8* title);
 
 /// Set the position of the `window` to `x_pos` and `y_pos`..
 void window_set_position(Window* window, const i32 x_pos, const i32 y_pos);
 
 /// Window functions
+///---------------------------------------------------------------------------------------------------------------------
 
 /// *** Window ***
 /// ---------------------------------------------------------------------
@@ -937,6 +887,7 @@ void window_set_position(Window* window, const i32 x_pos, const i32 y_pos);
 /// ---------------------------------------------------------------------
 /// *** Clock ***
 
+///---------------------------------------------------------------------------------------------------------------------
 /// Clock functions
 
 /// NOTE: Every function has an "ni" prefix to avoid any confusion with the C clock library.
@@ -955,8 +906,247 @@ const f64 niclock_get_fps();
 const f64 niclock_get_delta_time();
 
 /// Clock functions
+///---------------------------------------------------------------------------------------------------------------------
 
 /// *** Clock ***
+/// ---------------------------------------------------------------------
+
+/// ---------------------------------------------------------------------
+/// *** Graphics ***
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxContextFlags
+enum GfxContextFlags {
+  /// Enable the depth testing pass. This is enabled by default.
+  GFX_FLAGS_DEPTH   = 2 << 0, 
+  
+  /// Enable the stencil testing pass. This is enabled by default.
+  GFX_FLAGS_STENCIL = 2 << 1, 
+  
+  /// Enable blending. This is disabled by default.
+  GFX_FLAGS_BLEND   = 2 << 2, 
+};
+/// GfxContextFlags
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxBufferType
+enum GfxBufferType {
+  GFX_BUFFER_VERTEX = 3 << 0, 
+  GFX_BUFFER_INDEX  = 3 << 1, 
+  
+  // TODO: Add more
+};
+/// GfxBufferType
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxBufferMode
+enum GfxBufferMode {
+  GFX_BUFFER_MODE_DYNAMIC_COPY = 4 << 0,
+  GFX_BUFFER_MODE_DYNAMIC_DRAW = 4 << 1,
+  GFX_BUFFER_MODE_DYNAMIC_READ = 4 << 2,
+  
+  GFX_BUFFER_MODE_STATIC_COPY = 4 << 3,
+  GFX_BUFFER_MODE_STATIC_DRAW = 4 << 4,
+  GFX_BUFFER_MODE_STATIC_READ = 4 << 5,
+  
+  GFX_BUFFER_MODE_STREAM_COPY = 4 << 6,
+  GFX_BUFFER_MODE_STREAM_DRAW = 4 << 7,
+  GFX_BUFFER_MODE_STREAM_READ = 4 << 8,
+};
+/// GfxBufferMode
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxBufferLayout
+enum GfxBufferLayout {
+  GFX_LAYOUT_FLOAT1 = 5 << 0,
+  GFX_LAYOUT_FLOAT2 = 5 << 1,
+  GFX_LAYOUT_FLOAT3 = 5 << 2,
+  GFX_LAYOUT_FLOAT4 = 5 << 3,
+  
+  GFX_LAYOUT_INT1 = 5 << 4,
+  GFX_LAYOUT_INT2 = 5 << 5,
+  GFX_LAYOUT_INT3 = 5 << 6,
+  GFX_LAYOUT_INT4 = 5 << 7,
+  
+  GFX_LAYOUT_UINT1 = 5 << 8,
+  GFX_LAYOUT_UINT2 = 5 << 9,
+  GFX_LAYOUT_UINT3 = 5 << 10,
+  GFX_LAYOUT_UINT4 = 5 << 11,
+};
+/// GfxBufferLayout
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxContext
+struct GfxContext; 
+/// GfxContext
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxBuffer
+struct GfxBuffer;
+/// GfxBuffer
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxShader
+struct GfxShader;
+/// GfxShader
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxTextureFromat
+enum GfxTextureFromat {
+  GFX_TEXTURE_FORMAT_RED  = 6 << 0,
+  GFX_TEXTURE_FORMAT_RG   = 6 << 1,
+  GFX_TEXTURE_FORMAT_RGB  = 6 << 2,
+  GFX_TEXTURE_FORMAT_RGBA = 6 << 3,
+  
+  // TODO: Add more
+};
+/// GfxTextureFromat
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxTextureFilter
+enum GfxTextureFilter {
+  GFX_TEXTURE_FILTER_LINEAR    = 7 << 0,
+  GFX_TEXTURE_FILTER_NEAREST   = 7 << 1,
+
+  // TODO: Add more
+};
+/// GfxTextureFilter
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxTexture
+struct GfxTexture;
+/// GfxTexture
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxDrawCall
+struct GfxDrawCall {
+  GfxBuffer* vertex_buffer; 
+  GfxBuffer* index_buffer; 
+
+  GfxShader* shader; 
+
+  GfxTexture* textures; 
+  
+  // If you'd like only one texture, you can set this to 1 
+  // and it will have the same effect.
+  sizei texture_count;
+};
+/// GfxDrawCall
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Context functions 
+
+/// Create a `GfxContext` struct and return it. 
+/// This function will handle the initialization of the underlying graphics APIs.
+/// A refrence to the window will need to be passed to retrieve the size of the current 
+/// window, know which graphics API to use, and set the newly created context as the window 
+/// context for rendering.
+///
+/// `flags`:
+/// `GFX_FLAGS_DEPTH`   = Enable the depth testing pass. This is enabled by default.
+/// `GFX_FLAGS_STENCIL` = Enable the stencil testing pass. This is enabled by default.
+/// `GFX_FLAGS_BLEND`   = Enable blending. This is disabled by default.
+/// 
+/// NOTE: Later on, with any function, if an instance of `GfxContext` 
+/// is passed as a `nullptr`, the function will assert. 
+GfxContext* gfx_context_create(Window* window, const i32 flags);
+
+/// Free/reclaim any memory the graphics context has consumed. 
+/// This function will do any required de-initialization by the graphics API.
+void gfx_context_destroy(GfxContext* gfx);
+
+/// Clear the buffers and set the clear color as `{r, g, b, a}`.
+void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a);
+
+/// Set any `flag` of the context `gfx` to `value`. 
+void gfx_context_set_flag(GfxContext* gfx, const i32 flag, const bool value);
+
+/// Retrive the set flags of the `gfx` context.
+const GfxContextFlags gfx_context_get_flags(GfxContext* gfx);
+
+/// Use the information given by `call` to sumbit the vertex and index buffer, while 
+/// using the shader and the texture. 
+///
+/// NOTE: If any member of the given `call` is set as `nullptr`, it will be ignored.
+void gfx_context_draw(GfxContext* gfx, const GfxDrawCall& call); 
+
+/// Sumbit a `count` batch of `calls` to `gfx`. 
+///
+/// NOTE: This function will just call `gfx_context_draw` in a loop that iterates `count - 1` times.
+void gfx_context_draw_batch(GfxContext* gfx, GfxDrawCall* calls, const sizei count);
+
+/// Context functions 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Buffer functions 
+
+/// Create a `GfxBuffer` of type `type` with `data` of size `data_size` and the data will used as `mode`. 
+GfxBuffer* gfx_buffer_create(GfxContext* gfx, const GfxBufferType type, const GfxBufferMode mode, void* data, const sizei data_size);
+
+/// Set the layout of the given `buff` with a `layout` array of size `layout_count`. 
+void gfx_buffer_set_layout(GfxContext* gfx, GfxBuffer* buff, GfxBufferLayout* layout, const sizei layout_count);
+
+/// Free/reclaim any memory taken by `buff`.
+void gfx_buffer_destroy(GfxContext* gfx, GfxBuffer* buff);
+
+/// Buffer functions 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Shader functions 
+
+/// Create and return a `GfxShader`, passing the given `src`. 
+///
+/// NOTE: For glsl (OpenGL), both the vertex and the fragment shader should be combined into one. 
+/// In code, to seperate the two, you should add a `#type vertex` for a vertex shader and `#type fragment` 
+/// for a fragment shader. The function will seperate the shader into two and feed it into OpenGL.
+///
+/// Check the examples for more information.
+GfxShader* gfx_shader_create(const i8* src);
+
+/// Free/reclaim any memory taken by `shader`.
+void gfx_shader_destroy(GfxShader* shader);
+
+/// Shader functions 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Texture functions 
+
+/// Create and return a `GfxTexture`, passing the given parametars to the instance. 
+GfxTexture* gfx_texture_create(void* data, 
+                               const sizei channels_count, 
+                               const i32 width, 
+                               const i32 height,
+                               const GfxTextureFromat format = GFX_TEXTURE_FORMAT_RGBA, 
+                               const GfxTextureFilter filter = GFX_TEXTURE_FILTER_LINEAR);
+
+/// Free/reclaim any memory taken by `texture`.
+void gfx_texture_destroy(GfxTexture* texture);
+
+/// Retrieve the `width` and `height` of `texture`.
+void gfx_texture_get_size(GfxTexture* texture, i32* width, i32* height);
+
+/// Retrieve the `pixels` of `texture`.
+void gfx_texture_get_pixels(GfxTexture* texture, void* pixels);
+
+/// Texture functions 
+///---------------------------------------------------------------------------------------------------------------------
+
+
+/// *** Graphics ***
 /// ---------------------------------------------------------------------
 
 } // End of nikol
