@@ -1,11 +1,6 @@
 cmake_minimum_required(VERSION 3.27)
 project(NikolEngine)
 
-### CMake Variables ###
-############################################################
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-############################################################
-
 ### Project Variables ###
 ############################################################
 set(NIKOL_SRC_DIR src)
@@ -14,6 +9,12 @@ set(NIKOL_LIBRARIES glfw)
 
 set(NIKOL_BUILD_TYPE NIKOL_DEBUG)
 set(NIKOL_BUILD_OPTS "-lm -Wall")
+############################################################
+
+### CMake Variables ###
+############################################################
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_BUILD_TYPE DEBUG)
 ############################################################
 
 ### Libraries ###

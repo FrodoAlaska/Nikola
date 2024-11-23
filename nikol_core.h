@@ -68,7 +68,7 @@ typedef double f64;
 /// Linux
 #elif defined(__linux__) || defined(__gnu_linux__)
 #define NIKOL_PLATFORM_LINUX     1 
-#define NIKOL_GFX_CONTEXT_OPENGL 1
+#define NIKOL_GFX_CONTEXT_OPENGL
 #endif
 
 /// *** Platform detection ***
@@ -915,6 +915,12 @@ const f64 niclock_get_delta_time();
 /// *** Graphics ***
 
 ///---------------------------------------------------------------------------------------------------------------------
+// DEFS
+#define TEXTURES_MAX 32
+// DEFS
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// GfxContextFlags
 enum GfxContextFlags {
   /// Enable the depth testing pass. This is enabled by default.
@@ -925,6 +931,9 @@ enum GfxContextFlags {
   
   /// Enable blending. This is disabled by default.
   GFX_FLAGS_BLEND   = 2 << 2, 
+  
+  /// Enable multisampling. This is disabled by default.
+  GFX_FLAGS_MSAA    = 2 << 3, 
 };
 /// GfxContextFlags
 ///---------------------------------------------------------------------------------------------------------------------
@@ -986,9 +995,15 @@ struct GfxContext;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// GfxBuffer
-struct GfxBuffer;
-/// GfxBuffer
+/// GfxBufferDesc
+struct GfxBufferDesc {
+  void* data = nullptr; 
+  sizei size;
+  u32 elements_count;
+  GfxBufferType type;  
+  GfxBufferMode mode;
+};
+/// GfxBufferDesc
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1029,18 +1044,7 @@ struct GfxTexture;
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxDrawCall
-struct GfxDrawCall {
-  GfxBuffer* vertex_buffer; 
-  GfxBuffer* index_buffer; 
-
-  GfxShader* shader; 
-
-  GfxTexture* textures; 
-  
-  // If you'd like only one texture, you can set this to 1 
-  // and it will have the same effect.
-  sizei texture_count;
-};
+struct GfxDrawCall;
 /// GfxDrawCall
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -1057,6 +1061,7 @@ struct GfxDrawCall {
 /// `GFX_FLAGS_DEPTH`   = Enable the depth testing pass. This is enabled by default.
 /// `GFX_FLAGS_STENCIL` = Enable the stencil testing pass. This is enabled by default.
 /// `GFX_FLAGS_BLEND`   = Enable blending. This is disabled by default.
+/// `GFX_FLAGS_MSAA`    = Enable multisampling. This is disabled by default.
 /// 
 /// NOTE: Later on, with any function, if an instance of `GfxContext` 
 /// is passed as a `nullptr`, the function will assert. 
@@ -1079,29 +1084,20 @@ const GfxContextFlags gfx_context_get_flags(GfxContext* gfx);
 /// using the shader and the texture. 
 ///
 /// NOTE: If any member of the given `call` is set as `nullptr`, it will be ignored.
-void gfx_context_draw(GfxContext* gfx, const GfxDrawCall& call); 
+/// However, the only exception to this rule is the `vertex_buffer`. That must be a 
+/// valid pointer. 
+///
+/// NOTE: The function will prioritize the `index_buffer` over the `vertex_buffer` in 
+/// the `call` struct. Though, if the `index_buffer` is a `nullptr`, the `vertex_buffer` will 
+/// be used instead.
+void gfx_context_draw(GfxContext* gfx, const GfxDrawCall* call); 
 
 /// Sumbit a `count` batch of `calls` to `gfx`. 
 ///
 /// NOTE: This function will just call `gfx_context_draw` in a loop that iterates `count - 1` times.
-void gfx_context_draw_batch(GfxContext* gfx, GfxDrawCall* calls, const sizei count);
+void gfx_context_draw_batch(GfxContext* gfx, GfxDrawCall** calls, const sizei count);
 
 /// Context functions 
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// Buffer functions 
-
-/// Create a `GfxBuffer` of type `type` with `data` of size `data_size` and the data will used as `mode`. 
-GfxBuffer* gfx_buffer_create(GfxContext* gfx, const GfxBufferType type, const GfxBufferMode mode, void* data, const sizei data_size);
-
-/// Set the layout of the given `buff` with a `layout` array of size `layout_count`. 
-void gfx_buffer_set_layout(GfxContext* gfx, GfxBuffer* buff, GfxBufferLayout* layout, const sizei layout_count);
-
-/// Free/reclaim any memory taken by `buff`.
-void gfx_buffer_destroy(GfxContext* gfx, GfxBuffer* buff);
-
-/// Buffer functions 
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1110,7 +1106,7 @@ void gfx_buffer_destroy(GfxContext* gfx, GfxBuffer* buff);
 /// Create and return a `GfxShader`, passing the given `src`. 
 ///
 /// NOTE: For glsl (OpenGL), both the vertex and the fragment shader should be combined into one. 
-/// In code, to seperate the two, you should add a `#type vertex` for a vertex shader and `#type fragment` 
+/// In code, to seperate the two, you should add a `@type vertex` for a vertex shader and `@type fragment` 
 /// for a fragment shader. The function will seperate the shader into two and feed it into OpenGL.
 ///
 /// Check the examples for more information.
@@ -1145,6 +1141,33 @@ void gfx_texture_get_pixels(GfxTexture* texture, void* pixels);
 /// Texture functions 
 ///---------------------------------------------------------------------------------------------------------------------
 
+///---------------------------------------------------------------------------------------------------------------------
+/// DrawCall functions 
+
+/// Create and return a `GfxDrawCall` struct. 
+GfxDrawCall* gfx_draw_call_create(GfxContext* gfx);
+
+/// Add the `buff` buffer into the draw call to be used later with `gfx_context_draw`.
+void gfx_draw_call_push_buffer(GfxDrawCall* call, GfxContext* gfx, const GfxBufferDesc* buff);
+
+/// Set the `layout` of the data of `buff` in `call`. 
+void gfx_draw_call_set_layout(GfxDrawCall* call, GfxContext* gfx, const GfxBufferDesc* buff, GfxBufferLayout* layout, const sizei layout_count);
+
+/// Add the `shader` shader into the draw call to be used later with `gfx_context_draw`.
+void gfx_draw_call_push_shader(GfxDrawCall* call, GfxContext* gfx, const GfxShader* shader);
+
+/// Add the `texture` texture into the draw call to be used later with `gfx_context_draw`.
+void gfx_draw_call_push_texture(GfxDrawCall* call, GfxContext* gfx, const GfxTexture* texture);
+
+/// Add a `count` batch of the `texture` textures into the draw call to be used later with `gfx_context_draw`.
+/// NOTE: Cannot use more than `TEXTURES_MAX` at a time.
+void gfx_draw_call_push_texture_batch(GfxDrawCall* call, GfxContext* gfx, const GfxTexture** textures, const sizei count);
+
+/// Free/reclaim any memory taken by `call`.
+void gfx_draw_call_destroy(GfxDrawCall* call);
+
+/// DrawCall functions 
+///---------------------------------------------------------------------------------------------------------------------
 
 /// *** Graphics ***
 /// ---------------------------------------------------------------------

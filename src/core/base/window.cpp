@@ -1,7 +1,6 @@
 #include "nikol_core.h"
 
 #include <GLFW/glfw3.h>
-#include <cstring>
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -183,8 +182,8 @@ static bool nikol_cursor_show_callback(const Event& event, const void* dispatche
 /// Callbacks
 
 /// Private functions
-static void set_gtx_context(Window* window) {
-#if NIKOL_GTX_CONTEXT_OPENGL == 1 
+static void set_gfx_context(Window* window) {
+#ifdef NIKOL_GFX_CONTEXT_OPENGL 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -244,7 +243,7 @@ static void set_window_hints(Window* window) {
   }
   
   if((window->flags & WINDOW_FLAGS_GFX_HARDWARE) == WINDOW_FLAGS_GFX_HARDWARE) {
-    set_gtx_context(window);
+    set_gfx_context(window);
   }
   
   if((window->flags & WINDOW_FLAGS_GFX_SOFTWARE) == WINDOW_FLAGS_GFX_SOFTWARE) {
