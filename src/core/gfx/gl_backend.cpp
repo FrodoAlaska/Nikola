@@ -137,17 +137,6 @@ static void set_gfx_flags(GfxContext* gfx) {
   }
 }
 
-static GLenum get_buffer_type(const GfxBufferType type) {
-  switch(type) {
-    case GFX_BUFFER_INDEX:
-      return GL_ELEMENT_ARRAY_BUFFER;
-    case GFX_BUFFER_VERTEX:
-      return GL_ARRAY_BUFFER; 
-    default:
-      return 0;
-  }
-}
-
 static GLenum get_buffer_mode(const GfxBufferMode mode) {
   switch(mode) {
     case GFX_BUFFER_MODE_DYNAMIC_COPY:
@@ -403,7 +392,7 @@ const GfxContextFlags gfx_context_get_flags(GfxContext* gfx) {
   return gfx->flags;
 }
 
-void gfx_context_draw(GfxContext* gfx, const GfxDrawCall* call) {
+void gfx_context_sumbit_begin(GfxContext* gfx, const GfxDrawCall* call) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(call, "Invalid GfxDrawCall struct passed");
 
@@ -422,6 +411,12 @@ void gfx_context_draw(GfxContext* gfx, const GfxDrawCall* call) {
   // Bind the vertex array
   glBindVertexArray(call->vao);
 
+}
+
+void gfx_context_sumbit(GfxContext* gfx, const GfxDrawCall* call) {
+  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+  NIKOL_ASSERT(call, "Invalid GfxDrawCall struct passed");
+  
   // The vertex buffer MUST be valid
   NIKOL_ASSERT(call->vertex_buffer, "Cannot commit a draw call without a vertex buffer");
 
@@ -433,19 +428,14 @@ void gfx_context_draw(GfxContext* gfx, const GfxDrawCall* call) {
   else if(call->vertex_buffer) {
     glDrawArrays(GL_TRIANGLES, 0, call->vertex_buffer->elements_count);
   }
-
-  // Unbind the buffers 
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-  glBindVertexArray(0);
 }
 
-void gfx_context_draw_batch(GfxContext* gfx, GfxDrawCall** calls, const sizei count) {
+void gfx_context_sumbit_batch(GfxContext* gfx, GfxDrawCall** calls, const sizei count) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(calls, "Invalid calls array passed"); 
   
   for(sizei i = 0; i < count; i++) {
-    gfx_context_draw(gfx, calls[i]);
+    gfx_context_sumbit(gfx, calls[i]);
   }
 }
 
@@ -500,6 +490,57 @@ void gfx_shader_destroy(GfxShader* shader) {
 
   glDeleteProgram(shader->id);
   memory_free(shader);
+}
+
+const i32 gfx_shader_get_uniform_location(GfxShader* shader, const i8* uniform_name) {
+  i32 loc = 0; 
+
+  loc = glGetUniformLocation(shader->id, uniform_name);
+  if(loc == UNIFORM_INVALID) {
+    NIKOL_LOG_WARN("Could not find uniform \'%s\' in shader", uniform_name);
+  }
+
+  return loc;
+}
+
+void gfx_shader_set_uniform_data(GfxShader* shader, const i32 location, const GfxUniformType type, const void* data) {
+  NIKOL_ASSERT(shader, "Invalid GfxShader struct passed"); 
+  NIKOL_ASSERT((location != UNIFORM_INVALID), "Cannot set a non-location uniform in shader"); 
+
+  switch(type) {
+    case GFX_UNIFORM_TYPE_FLOAT: 
+      glUniform1fv(location, 1, (f32*)data);
+    break;  
+    case GFX_UNIFORM_TYPE_DOUBLE: 
+      glUniform1dv(location, 1, (f64*)data);
+    break;
+    case GFX_UNIFORM_TYPE_INT: 
+      glUniform1iv(location, 1, (i32*)data);
+    break;
+    case GFX_UNIFORM_TYPE_UINT: 
+      glUniform1uiv(location, 1, (u32*)data);
+    break;
+    case GFX_UNIFORM_TYPE_VEC2: 
+      glUniform2fv(location, 1, (f32*)data);
+    break;
+    case GFX_UNIFORM_TYPE_VEC3: 
+      glUniform3fv(location, 1, (f32*)data);
+    break;
+    case GFX_UNIFORM_TYPE_VEC4: 
+      glUniform4fv(location, 1, (f32*)data);
+    break;
+    case GFX_UNIFORM_TYPE_MAT2: 
+      glUniformMatrix2fv(location, 1, false, (f32*)data);
+    break;
+    case GFX_UNIFORM_TYPE_MAT3: 
+      glUniformMatrix3fv(location, 1, false, (f32*)data);
+    break;
+    case GFX_UNIFORM_TYPE_MAT4: 
+      glUniformMatrix4fv(location, 1, false, (f32*)data);
+    break;
+  }
+
+  gl_check_error("glUniform");
 }
 
 /// Shader functions 

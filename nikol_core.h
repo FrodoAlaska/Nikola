@@ -916,7 +916,14 @@ const f64 niclock_get_delta_time();
 
 ///---------------------------------------------------------------------------------------------------------------------
 // DEFS
+
+/// The max amount of textures the GPU supports at a time. 
 #define TEXTURES_MAX 32
+
+/// Will be returned from the function `gfx_shader_get_uniform_location` if a uniform 
+/// was not found. 
+#define UNIFORM_INVALID -1
+
 // DEFS
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -1007,6 +1014,25 @@ struct GfxBufferDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// GfxUniformType
+enum GfxUniformType {
+  GFX_UNIFORM_TYPE_FLOAT  = 6 << 0, 
+  GFX_UNIFORM_TYPE_DOUBLE = 6 << 1, 
+  
+  GFX_UNIFORM_TYPE_INT  = 6 << 2, 
+  GFX_UNIFORM_TYPE_UINT = 6 << 3, 
+  
+  GFX_UNIFORM_TYPE_VEC2 = 6 << 4, 
+  GFX_UNIFORM_TYPE_VEC3 = 6 << 5, 
+  GFX_UNIFORM_TYPE_VEC4 = 6 << 6, 
+  
+  GFX_UNIFORM_TYPE_MAT2 = 6 << 7, 
+  GFX_UNIFORM_TYPE_MAT3 = 6 << 8, 
+  GFX_UNIFORM_TYPE_MAT4 = 6 << 9, 
+};
+/// GfxUniformType
+
+///---------------------------------------------------------------------------------------------------------------------
 /// GfxShader
 struct GfxShader;
 /// GfxShader
@@ -1015,10 +1041,10 @@ struct GfxShader;
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxTextureFromat
 enum GfxTextureFromat {
-  GFX_TEXTURE_FORMAT_RED  = 6 << 0,
-  GFX_TEXTURE_FORMAT_RG   = 6 << 1,
-  GFX_TEXTURE_FORMAT_RGB  = 6 << 2,
-  GFX_TEXTURE_FORMAT_RGBA = 6 << 3,
+  GFX_TEXTURE_FORMAT_RED  = 7 << 0,
+  GFX_TEXTURE_FORMAT_RG   = 7 << 1,
+  GFX_TEXTURE_FORMAT_RGB  = 7 << 2,
+  GFX_TEXTURE_FORMAT_RGBA = 7 << 3,
   
   // TODO: Add more
 };
@@ -1028,8 +1054,8 @@ enum GfxTextureFromat {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxTextureFilter
 enum GfxTextureFilter {
-  GFX_TEXTURE_FILTER_LINEAR    = 7 << 0,
-  GFX_TEXTURE_FILTER_NEAREST   = 7 << 1,
+  GFX_TEXTURE_FILTER_LINEAR    = 8 << 0,
+  GFX_TEXTURE_FILTER_NEAREST   = 8 << 1,
 
   // TODO: Add more
 };
@@ -1080,6 +1106,10 @@ void gfx_context_set_flag(GfxContext* gfx, const i32 flag, const bool value);
 /// Retrive the set flags of the `gfx` context.
 const GfxContextFlags gfx_context_get_flags(GfxContext* gfx);
 
+/// Begin the sumbit stage of the context. Bind the shaders and buffers to get them 
+/// ready to be drawn later using `gfx_context_sumbit`. 
+void gfx_context_sumbit_begin(GfxContext* gfx, const GfxDrawCall* call);
+
 /// Use the information given by `call` to sumbit the vertex and index buffer, while 
 /// using the shader and the texture. 
 ///
@@ -1090,12 +1120,12 @@ const GfxContextFlags gfx_context_get_flags(GfxContext* gfx);
 /// NOTE: The function will prioritize the `index_buffer` over the `vertex_buffer` in 
 /// the `call` struct. Though, if the `index_buffer` is a `nullptr`, the `vertex_buffer` will 
 /// be used instead.
-void gfx_context_draw(GfxContext* gfx, const GfxDrawCall* call); 
+void gfx_context_sumbit(GfxContext* gfx, const GfxDrawCall* call); 
 
 /// Sumbit a `count` batch of `calls` to `gfx`. 
 ///
-/// NOTE: This function will just call `gfx_context_draw` in a loop that iterates `count - 1` times.
-void gfx_context_draw_batch(GfxContext* gfx, GfxDrawCall** calls, const sizei count);
+/// NOTE: This function will just call `gfx_context_sumbit` in a loop that iterates `count - 1` times.
+void gfx_context_sumbit_batch(GfxContext* gfx, GfxDrawCall** calls, const sizei count);
 
 /// Context functions 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1106,14 +1136,23 @@ void gfx_context_draw_batch(GfxContext* gfx, GfxDrawCall** calls, const sizei co
 /// Create and return a `GfxShader`, passing the given `src`. 
 ///
 /// NOTE: For glsl (OpenGL), both the vertex and the fragment shader should be combined into one. 
-/// In code, to seperate the two, you should add a `@type vertex` for a vertex shader and `@type fragment` 
-/// for a fragment shader. The function will seperate the shader into two and feed it into OpenGL.
+/// The function will look for the `#version` declarative in order to seperate the two or more shaders. The first 
+/// one will be the vertex shader, the second will be the geometry shader, and the third will be 
+/// the fragment shader. 
 ///
 /// Check the examples for more information.
 GfxShader* gfx_shader_create(const i8* src);
 
 /// Free/reclaim any memory taken by `shader`.
 void gfx_shader_destroy(GfxShader* shader);
+
+/// Get the location index of `uniform_name` within `shader`.
+const i32 gfx_shader_get_uniform_location(GfxShader* shader, const i8* uniform_name);
+
+/// Send `data` of `type` at `location` to the `shader`.
+///
+/// NOTE: The given `shader` needs to be binded. You will need to use `gfx_context_sumbit_begin` prior to this function.
+void gfx_shader_set_uniform_data(GfxShader* shader, const i32 location, const GfxUniformType type, const void* data);
 
 /// Shader functions 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1147,19 +1186,19 @@ void gfx_texture_get_pixels(GfxTexture* texture, void* pixels);
 /// Create and return a `GfxDrawCall` struct. 
 GfxDrawCall* gfx_draw_call_create(GfxContext* gfx);
 
-/// Add the `buff` buffer into the draw call to be used later with `gfx_context_draw`.
+/// Add the `buff` buffer into the draw call to be used later with `gfx_context_sumbit`.
 void gfx_draw_call_push_buffer(GfxDrawCall* call, GfxContext* gfx, const GfxBufferDesc* buff);
 
 /// Set the `layout` of the data of `buff` in `call`. 
 void gfx_draw_call_set_layout(GfxDrawCall* call, GfxContext* gfx, const GfxBufferDesc* buff, GfxBufferLayout* layout, const sizei layout_count);
 
-/// Add the `shader` shader into the draw call to be used later with `gfx_context_draw`.
+/// Add the `shader` shader into the draw call to be used later with `gfx_context_sumbit`.
 void gfx_draw_call_push_shader(GfxDrawCall* call, GfxContext* gfx, const GfxShader* shader);
 
-/// Add the `texture` texture into the draw call to be used later with `gfx_context_draw`.
+/// Add the `texture` texture into the draw call to be used later with `gfx_context_sumbit`.
 void gfx_draw_call_push_texture(GfxDrawCall* call, GfxContext* gfx, const GfxTexture* texture);
 
-/// Add a `count` batch of the `texture` textures into the draw call to be used later with `gfx_context_draw`.
+/// Add a `count` batch of the `texture` textures into the draw call to be used later with `gfx_context_sumbit`.
 /// NOTE: Cannot use more than `TEXTURES_MAX` at a time.
 void gfx_draw_call_push_texture_batch(GfxDrawCall* call, GfxContext* gfx, const GfxTexture** textures, const sizei count);
 
