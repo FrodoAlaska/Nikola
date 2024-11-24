@@ -1,0 +1,1 @@
+/usr/bin/c++ -g CMakeFiles/NikolExamples.dir/src/main.cpp.o -o NikolExamples  -Wl,-rpath,/home/mohamed/Dev/C++/NikolEngine/build /home/mohamed/Dev/C++/NikolEngine/build/libNikolCore.so

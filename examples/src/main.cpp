@@ -14,13 +14,15 @@ NIKOL_MAIN() {
   }
 
   // Creating a graphics context
-  nikol::GfxContext* gfx = gfx_context_create(window, nikol::GFX_FLAGS_BLEND | nikol::GFX_FLAGS_DEPTH | nikol::GFX_FLAGS_STENCIL);
+  nikol::GfxContext* gfx = gfx_context_init(window, nikol::GFX_FLAGS_BLEND | nikol::GFX_FLAGS_DEPTH | nikol::GFX_FLAGS_STENCIL);
   if(!gfx) {
     return -1;
   }
 
+  // Must create the draw call before adding anything to it
   nikol::GfxDrawCall* call = nikol::gfx_draw_call_create(gfx);
-  
+ 
+  // Creating a shader and adding it to the draw call
   const char* src =
   "#version 460 core\n"
   "\n"
@@ -48,6 +50,7 @@ NIKOL_MAIN() {
   nikol::GfxShader* shader = nikol::gfx_shader_create(src);
   nikol::gfx_draw_call_push_shader(call, gfx, shader);
 
+  // Creating a vertex buffer and adding it to the draw call
   nikol::f32 vertices[] = {
     -0.5f,  0.5f, 0.0f, 0.0f, 1.0f,
      0.5f,  0.5f, 0.0f, 1.0f, 1.0f,
@@ -63,12 +66,14 @@ NIKOL_MAIN() {
   };
   nikol::gfx_draw_call_push_buffer(call, gfx, &vert_buff);
 
+  // Setting the layout of the vertex buffer
   nikol::GfxBufferLayout layout[] = {
     nikol::GFX_LAYOUT_FLOAT3,
     nikol::GFX_LAYOUT_FLOAT2,
   };
   nikol::gfx_draw_call_set_layout(call, gfx, &vert_buff, layout, 2);
 
+  // Creating an index buffer and adding it to the draw call
   nikol::u32 indices[] = {
     0, 1, 2, 
     2, 3, 0,
@@ -82,6 +87,7 @@ NIKOL_MAIN() {
   };
   nikol::gfx_draw_call_push_buffer(call, gfx, &index_buff);
 
+  // Creating a texture and adding it to the draw call
   nikol::u32 pixels = 0xffffffff;
   nikol::GfxTextureDesc texture = {
     .width    = 1, 
@@ -94,30 +100,33 @@ NIKOL_MAIN() {
   };
   nikol::gfx_draw_call_push_texture(call, gfx, &texture);
 
-  // nikol::u32 color_loc = nikol::gfx_shader_get_uniform_location(shader, "u_color");
-  // float color[] = {1.0f, 0.0f, 0.0f, 1.0f};
-
   // Main loop
   while(nikol::window_is_open(window)) {
+    // Will stop the application when F1 is pressed
     if(nikol::input_key_pressed(nikol::KEY_F1)) {
       break;
     }
-
-    nikol::gfx_context_clear(gfx, 0.1f, 0.1f, 0.1f, 1.0f);
+    
+    // Clear the screen to black
+    nikol::gfx_context_clear(gfx, 0.0f, 0.0f, 0.0f, 1.0f);
+    
+    // Begin the drawing pass
     nikol::gfx_context_sumbit_begin(gfx, call);
 
-    // nikol::gfx_shader_set_uniform_data(shader, color_loc, nikol::GFX_UNIFORM_TYPE_VEC4, color);
-    
+    // Sumbit the draw call and render it to the screen
     nikol::gfx_context_sumbit(gfx, call);
 
+    // Poll the window events
     nikol::window_poll_events(window);
+    
+    // Swap the internal window buffer
     nikol::window_swap_buffers(window);
   }
 
   // De-initialze
   nikol::gfx_shader_destroy(shader);
   nikol::gfx_draw_call_destroy(call); 
-  nikol::gfx_context_destroy(gfx);
+  nikol::gfx_context_shutdown(gfx);
   nikol::window_close(window);
   nikol::shutdown();
 

@@ -342,7 +342,7 @@ static GLenum get_texture_filter(const GfxTextureFilter filter) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Context functions 
 
-GfxContext* gfx_context_create(Window* window, const i32 flags) {
+GfxContext* gfx_context_init(Window* window, const i32 flags) {
   GfxContext* gfx = (GfxContext*)memory_allocate(sizeof(GfxContext));
   
   gfx->buffer_bits = GL_COLOR_BUFFER_BIT;
@@ -383,7 +383,7 @@ GfxContext* gfx_context_create(Window* window, const i32 flags) {
   return gfx;
 }
 
-void gfx_context_destroy(GfxContext* gfx) {
+void gfx_context_shutdown(GfxContext* gfx) {
   if(!gfx) {
     return;
   }

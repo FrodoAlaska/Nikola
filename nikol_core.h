@@ -1094,7 +1094,7 @@ struct GfxDrawCall;
 ///---------------------------------------------------------------------------------------------------------------------
 /// Context functions 
 
-/// Create a `GfxContext` struct and return it. 
+/// initialize the `GfxContext` struct and return it. 
 /// This function will handle the initialization of the underlying graphics APIs.
 /// A refrence to the window will need to be passed to retrieve the size of the current 
 /// window, know which graphics API to use, and set the newly created context as the window 
@@ -1108,11 +1108,11 @@ struct GfxDrawCall;
 /// 
 /// NOTE: Later on, with any function, if an instance of `GfxContext` 
 /// is passed as a `nullptr`, the function will assert. 
-GfxContext* gfx_context_create(Window* window, const i32 flags);
+GfxContext* gfx_context_init(Window* window, const i32 flags);
 
 /// Free/reclaim any memory the graphics context has consumed. 
 /// This function will do any required de-initialization by the graphics API.
-void gfx_context_destroy(GfxContext* gfx);
+void gfx_context_shutdown(GfxContext* gfx);
 
 /// Clear the buffers and set the clear color as `{r, g, b, a}`.
 void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a);

@@ -1,0 +1,8 @@
+[
+{
+  "directory": "/home/mohamed/Dev/C++/NikolEngine/examples/build",
+  "command": "/usr/bin/c++  -I/home/mohamed/Dev/C++/NikolEngine/examples/BEFORE -I/home/mohamed/Dev/C++/NikolEngine/examples/.. -g -std=gnu++20 -lm -Wall -o CMakeFiles/NikolExamples.dir/src/main.cpp.o -c /home/mohamed/Dev/C++/NikolEngine/examples/src/main.cpp",
+  "file": "/home/mohamed/Dev/C++/NikolEngine/examples/src/main.cpp",
+  "output": "CMakeFiles/NikolExamples.dir/src/main.cpp.o"
+}
+]
