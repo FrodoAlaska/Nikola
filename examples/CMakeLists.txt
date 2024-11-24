@@ -3,7 +3,6 @@ project(NikolExamples)
 
 ### CMake Variables ###
 ############################################################
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_BUILD_TYPE DEBUG)
 set(CMAKE_PREFIX_PATH ../build/)
 ############################################################
@@ -16,7 +15,7 @@ find_library(NikolCore NikolCore)
 ### Project Sources ###
 ############################################################
 set(SOURCES 
-  src/main.cpp
+  src/gl_example.cpp
 )
 ############################################################
 
