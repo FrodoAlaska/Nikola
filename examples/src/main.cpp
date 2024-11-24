@@ -1,7 +1,7 @@
 #include <nikol_core.h>
 
 NIKOL_MAIN() {
-  // Initialze 
+  // Initialze the library
   if(!nikol::init()) {
     return -1;
   }
@@ -129,5 +129,4 @@ NIKOL_MAIN() {
   nikol::gfx_context_shutdown(gfx);
   nikol::window_close(window);
   nikol::shutdown();
-
 }
