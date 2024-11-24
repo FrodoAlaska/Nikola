@@ -128,10 +128,6 @@ void cursor_pos_callback(GLFWwindow* handle, double xpos, double ypos) {
   window->last_mouse_position_x = xpos; 
   window->last_mouse_position_y = ypos; 
 
-  // @TODO: Applying sensitivity. This must be configurable
-  offset_x *= 0.1f;
-  offset_y *= 0.1f;
-
   window->mouse_offset_x += offset_x;
   window->mouse_offset_y += offset_y;
 

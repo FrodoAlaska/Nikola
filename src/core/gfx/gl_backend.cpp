@@ -31,20 +31,10 @@ struct GfxShader {
 
   i8* vert_src; 
   i8* frag_src;
+  
+  i32 vert_src_len, frag_src_len;
 };
 /// GfxShader
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// GfxTexture
-struct GfxTexture {
-  u32 id;
-
-  i32 width, height;
-  i32 channels;
-  void* pixels; 
-};
-/// GfxTexture
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -55,7 +45,7 @@ struct GfxDrawCall {
   GfxBufferDesc* vertex_buffer       = nullptr; 
   GfxBufferDesc* index_buffer        = nullptr; 
   GfxShader* shader                  = nullptr; 
-  GfxTexture* textures[TEXTURES_MAX] = {nullptr};
+  u32 textures[TEXTURES_MAX]         = {};
 
   sizei texture_count = 0;
 };
@@ -279,21 +269,21 @@ static void seperate_shader_src(const i8* src, GfxShader* shader) {
   }
 
   // Calculate where each shader ends
-  sizei vert_end = frag_start - 1; 
   sizei frag_end = src_len;
 
-  sizei frag_src_len = frag_end - frag_start;
+  shader->frag_src_len = frag_end - frag_start;
+  shader->vert_src_len = frag_start - 1;
 
   // // Allocate new strings
-  shader->vert_src = (i8*)memory_allocate(vert_end);
-  memory_zero(shader->vert_src, vert_end);
+  shader->vert_src = (i8*)memory_allocate(shader->vert_src_len);
+  memory_zero(shader->vert_src, shader->vert_src_len);
 
-  shader->frag_src = (i8*)memory_allocate(frag_src_len);
-  memory_zero(shader->frag_src, frag_src_len);
+  shader->frag_src = (i8*)memory_allocate(shader->frag_src_len);
+  memory_zero(shader->frag_src, shader->frag_src_len);
 
   // Copying the correct strings over 
-  memory_copy(shader->vert_src, src, vert_end);
-  memory_copy(shader->frag_src, &src[frag_start], frag_src_len);
+  memory_copy(shader->vert_src, src, shader->vert_src_len);
+  memory_copy(shader->frag_src, &src[frag_start], shader->frag_src_len);
 }
 
 static void check_shader_compile_error(const sizei shader) {
@@ -317,6 +307,32 @@ static void check_shader_linker_error(const GfxShader* shader) {
   if(!success) {
     glGetProgramInfoLog(shader->id, 512, nullptr, log_info);
     NIKOL_LOG_WARN("SHADER-ERROR: %s", log_info);
+  }
+}
+
+static GLenum get_texture_format(const GfxTextureFormat format) {
+  switch(format) {
+    case GFX_TEXTURE_FORMAT_RED:
+      return GL_RED;
+    case GFX_TEXTURE_FORMAT_RG:
+      return GL_RG;
+    case GFX_TEXTURE_FORMAT_RGB:
+      return GL_RGB;
+    case GFX_TEXTURE_FORMAT_RGBA:
+      return GL_RGBA;
+    default:
+      return 0;
+  }
+}
+
+static GLenum get_texture_filter(const GfxTextureFilter filter) {
+  switch(filter) {
+    case GFX_TEXTURE_FILTER_LINEAR:
+      return GL_LINEAR;
+    case GFX_TEXTURE_FILTER_NEAREST:
+      return GL_NEAREST;
+    default:
+      return 0;
   }
 }
 
@@ -404,7 +420,8 @@ void gfx_context_sumbit_begin(GfxContext* gfx, const GfxDrawCall* call) {
   if(call->texture_count > 0) {
     for(sizei i = 0; i < call->texture_count; i++) {
       glActiveTexture(GL_TEXTURE0 + i);
-      glBindTexture(GL_TEXTURE_2D, call->textures[i]->id);
+      glBindTexture(GL_TEXTURE_2D, call->textures[i]);
+      NIKOL_LOG_TRACE("%i", call->textures[i]);
     }
   }
 
@@ -453,13 +470,13 @@ GfxShader* gfx_shader_create(const i8* src) {
 
   // Vertex shader
   shader->vert_id = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(shader->vert_id, 1, &shader->vert_src, 0); 
+  glShaderSource(shader->vert_id, 1, &shader->vert_src, &shader->vert_src_len); 
   glCompileShader(shader->vert_id);
   check_shader_compile_error(shader->vert_id);
     
   // Fragment shader
   shader->frag_id = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(shader->frag_id, 1, &shader->frag_src, 0); 
+  glShaderSource(shader->frag_id, 1, &shader->frag_src, &shader->frag_src_len); 
   glCompileShader(shader->frag_id);
   check_shader_compile_error(shader->frag_id);
 
@@ -543,44 +560,47 @@ void gfx_shader_set_uniform_data(GfxShader* shader, const i32 location, const Gf
   gl_check_error("glUniform");
 }
 
-/// Shader functions 
-///---------------------------------------------------------------------------------------------------------------------
+void gfx_shader_set_uniform_data_array(GfxShader* shader, const i32 location, const GfxUniformType type, const void* array, const sizei count) {
+  NIKOL_ASSERT(shader, "Invalid GfxShader struct passed"); 
+  NIKOL_ASSERT((location != UNIFORM_INVALID), "Cannot set a non-location uniform in shader"); 
 
-///---------------------------------------------------------------------------------------------------------------------
-/// Texture functions 
-
-GfxTexture* gfx_texture_create(void* data, 
-                               const sizei channels_count, 
-                               const i32 width, 
-                               const i32 height,
-                               const GfxTextureFromat format, 
-                               const GfxTextureFilter filter) {
-  GfxTexture* texture = (GfxTexture*)memory_allocate(sizeof(GfxTexture)); 
-
-  return texture;
-}
-
-void gfx_texture_destroy(GfxTexture* texture) {
-  if(!texture) {
-    return;
+  switch(type) {
+    case GFX_UNIFORM_TYPE_FLOAT: 
+      glUniform1fv(location, count, (f32*)array);
+    break;  
+    case GFX_UNIFORM_TYPE_DOUBLE: 
+      glUniform1dv(location, count, (f64*)array);
+    break;
+    case GFX_UNIFORM_TYPE_INT: 
+      glUniform1iv(location, count, (i32*)array);
+    break;
+    case GFX_UNIFORM_TYPE_UINT: 
+      glUniform1uiv(location, count, (u32*)array);
+    break;
+    case GFX_UNIFORM_TYPE_VEC2: 
+      glUniform2fv(location, count, (f32*)array);
+    break;
+    case GFX_UNIFORM_TYPE_VEC3: 
+      glUniform3fv(location, count, (f32*)array);
+    break;
+    case GFX_UNIFORM_TYPE_VEC4: 
+      glUniform4fv(location, count, (f32*)array);
+    break;
+    case GFX_UNIFORM_TYPE_MAT2: 
+      glUniformMatrix2fv(location, count, false, (f32*)array);
+    break;
+    case GFX_UNIFORM_TYPE_MAT3: 
+      glUniformMatrix3fv(location, count, false, (f32*)array);
+    break;
+    case GFX_UNIFORM_TYPE_MAT4: 
+      glUniformMatrix4fv(location, count, false, (f32*)array);
+    break;
   }
-    
-  memory_free(texture);
+
+  gl_check_error("glUniform");
 }
 
-void gfx_texture_get_size(GfxTexture* texture, i32* width, i32* height) {
-  NIKOL_ASSERT(texture, "Could not retrieve the size of an invalid texture");
-  
-  *width  = texture->width;
-  *height = texture->height; 
-}
-
-void gfx_texture_get_pixels(GfxTexture* texture, void* pixels) {
-  NIKOL_ASSERT(texture, "Could not retrieve the size of an invalid texture");
-  pixels = texture->pixels;
-}
-
-/// Texture functions 
+/// Shader functions 
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -659,18 +679,41 @@ void gfx_draw_call_push_shader(GfxDrawCall* call, GfxContext* gfx, const GfxShad
   call->shader = (GfxShader*)shader;
 }
 
-void gfx_draw_call_push_texture(GfxDrawCall* call, GfxContext* gfx, const GfxTexture* texture) {
+void gfx_draw_call_push_texture(GfxDrawCall* call, GfxContext* gfx, const GfxTextureDesc* texture) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(call, "Invalid GfxDrawCall struct passed");
   NIKOL_ASSERT(texture, "Invalid GfxTexture struct passed");
+
+  GLenum gl_tex_format    = get_texture_format(texture->format);
+  GLenum gl_filter_format = get_texture_filter(texture->filter);
+
+  glGenTextures(1, &call->textures[call->texture_count]);
+  glBindTexture(GL_TEXTURE_2D, call->textures[call->texture_count]);
   
-  call->textures[call->texture_count] = (GfxTexture*)texture;
   call->texture_count++;
+
+  glTexImage2D(GL_TEXTURE_2D, 
+               0, 
+               texture->channels, 
+               texture->width, 
+               texture->height, 
+               texture->depth, 
+               gl_tex_format, 
+               GL_UNSIGNED_INT, 
+               texture->data);
+  glGenerateMipmap(GL_TEXTURE_2D);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_format);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_format);
+
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void gfx_draw_call_push_texture_batch(GfxDrawCall* call, GfxContext* gfx, const GfxTexture** textures, const sizei count) {
+void gfx_draw_call_push_texture_batch(GfxDrawCall* call, GfxContext* gfx, const GfxTextureDesc* textures, const sizei count) {
   for(sizei i = 0; i < count; i++) {
-    gfx_draw_call_push_texture(call, gfx, textures[i]);
+    gfx_draw_call_push_texture(call, gfx, &textures[i]);
   }
 }
 

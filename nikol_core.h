@@ -1039,8 +1039,8 @@ struct GfxShader;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// GfxTextureFromat
-enum GfxTextureFromat {
+/// GfxTextureFormat
+enum GfxTextureFormat {
   GFX_TEXTURE_FORMAT_RED  = 7 << 0,
   GFX_TEXTURE_FORMAT_RG   = 7 << 1,
   GFX_TEXTURE_FORMAT_RGB  = 7 << 2,
@@ -1063,9 +1063,17 @@ enum GfxTextureFilter {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// GfxTexture
-struct GfxTexture;
-/// GfxTexture
+/// GfxTextureDesc
+struct GfxTextureDesc {
+  i32 width, height; 
+  u32 channels, depth; 
+
+  GfxTextureFormat format;
+  GfxTextureFilter filter;
+  
+  void* data;
+};
+/// GfxTextureDesc
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1154,30 +1162,10 @@ const i32 gfx_shader_get_uniform_location(GfxShader* shader, const i8* uniform_n
 /// NOTE: The given `shader` needs to be binded. You will need to use `gfx_context_sumbit_begin` prior to this function.
 void gfx_shader_set_uniform_data(GfxShader* shader, const i32 location, const GfxUniformType type, const void* data);
 
+/// Send an `array` of `type` with `count` elements in bulk at `location` to the `shader`.
+void gfx_shader_set_uniform_data_array(GfxShader* shader, const i32 location, const GfxUniformType type, const void* array, const sizei count);
+
 /// Shader functions 
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// Texture functions 
-
-/// Create and return a `GfxTexture`, passing the given parametars to the instance. 
-GfxTexture* gfx_texture_create(void* data, 
-                               const sizei channels_count, 
-                               const i32 width, 
-                               const i32 height,
-                               const GfxTextureFromat format = GFX_TEXTURE_FORMAT_RGBA, 
-                               const GfxTextureFilter filter = GFX_TEXTURE_FILTER_LINEAR);
-
-/// Free/reclaim any memory taken by `texture`.
-void gfx_texture_destroy(GfxTexture* texture);
-
-/// Retrieve the `width` and `height` of `texture`.
-void gfx_texture_get_size(GfxTexture* texture, i32* width, i32* height);
-
-/// Retrieve the `pixels` of `texture`.
-void gfx_texture_get_pixels(GfxTexture* texture, void* pixels);
-
-/// Texture functions 
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1196,11 +1184,11 @@ void gfx_draw_call_set_layout(GfxDrawCall* call, GfxContext* gfx, const GfxBuffe
 void gfx_draw_call_push_shader(GfxDrawCall* call, GfxContext* gfx, const GfxShader* shader);
 
 /// Add the `texture` texture into the draw call to be used later with `gfx_context_sumbit`.
-void gfx_draw_call_push_texture(GfxDrawCall* call, GfxContext* gfx, const GfxTexture* texture);
+void gfx_draw_call_push_texture(GfxDrawCall* call, GfxContext* gfx, const GfxTextureDesc* texture);
 
 /// Add a `count` batch of the `texture` textures into the draw call to be used later with `gfx_context_sumbit`.
 /// NOTE: Cannot use more than `TEXTURES_MAX` at a time.
-void gfx_draw_call_push_texture_batch(GfxDrawCall* call, GfxContext* gfx, const GfxTexture** textures, const sizei count);
+void gfx_draw_call_push_texture_batch(GfxDrawCall* call, GfxContext* gfx, const GfxTextureDesc* textures, const sizei count);
 
 /// Free/reclaim any memory taken by `call`.
 void gfx_draw_call_destroy(GfxDrawCall* call);
