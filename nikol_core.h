@@ -71,6 +71,15 @@ typedef double f64;
 #define NIKOL_GFX_CONTEXT_OPENGL
 #endif
 
+/// Win32 main entry
+#if NIKOL_PLATFORM_WINDOWS == 1 
+#define NIKOL_MAIN() int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdShow)
+
+/// Linux main entry
+#elif NIKOL_PLATFORM_LINUX == 1 
+#define NIKOL_MAIN() int main(int argc, char** argv)
+#endif
+
 /// *** Platform detection ***
 /// ----------------------------------------------------------------------
 

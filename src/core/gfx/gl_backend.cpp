@@ -421,7 +421,6 @@ void gfx_context_sumbit_begin(GfxContext* gfx, const GfxDrawCall* call) {
     for(sizei i = 0; i < call->texture_count; i++) {
       glActiveTexture(GL_TEXTURE0 + i);
       glBindTexture(GL_TEXTURE_2D, call->textures[i]);
-      NIKOL_LOG_TRACE("%i", call->textures[i]);
     }
   }
 
@@ -692,14 +691,14 @@ void gfx_draw_call_push_texture(GfxDrawCall* call, GfxContext* gfx, const GfxTex
   
   call->texture_count++;
 
-  glTexImage2D(GL_TEXTURE_2D, 
-               0, 
-               texture->channels, 
+  glTexImage2D(GL_TEXTURE_2D,
+               texture->depth, 
+               gl_tex_format,
                texture->width, 
                texture->height, 
-               texture->depth, 
+               0, 
                gl_tex_format, 
-               GL_UNSIGNED_INT, 
+               GL_UNSIGNED_BYTE, 
                texture->data);
   glGenerateMipmap(GL_TEXTURE_2D);
 

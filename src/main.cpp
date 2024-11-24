@@ -1,6 +1,6 @@
 #include <nikol_core.h>
 
-int main(int argc, char** argv) {
+NIKOL_MAIN() {
   // Initialze 
   if(!nikol::init()) {
     return -1;
@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
   };
   nikol::gfx_draw_call_push_buffer(call, gfx, &index_buff);
 
-  nikol::u32 pixels = 0xff00ffff;
+  nikol::u32 pixels = 0xffffffff;
   nikol::GfxTextureDesc texture = {
     .width    = 1, 
     .height   = 1, 
