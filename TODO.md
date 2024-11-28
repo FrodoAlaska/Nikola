@@ -1,5 +1,5 @@
 # URGENT TODO: 
-- Make some examples 
+- Need to fix up and design the draw call/pipeline arch
 - Set up a DirectX backend
 
 # FUTURE TODO: 

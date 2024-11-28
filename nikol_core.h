@@ -924,14 +924,17 @@ const f64 niclock_get_delta_time();
 /// *** Graphics ***
 
 ///---------------------------------------------------------------------------------------------------------------------
-// DEFS
+// Consts
 
 /// The max amount of textures the GPU supports at a time. 
-#define TEXTURES_MAX 32
+const sizei TEXTURES_MAX = 32;
 
 /// Will be returned from the function `gfx_shader_get_uniform_location` if a uniform 
 /// was not found. 
-#define UNIFORM_INVALID -1
+const i32 UNIFORM_INVALID = -1;
+
+/// The max number of elments a buffer's layout can have.
+const sizei LAYOUT_ELEMENTS_MAX = 32;
 
 // DEFS
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1075,7 +1078,7 @@ enum GfxTextureFilter {
 /// GfxTextureDesc
 struct GfxTextureDesc {
   i32 width, height; 
-  u32 channels, depth; 
+  i32 channels, depth; 
 
   GfxTextureFormat format;
   GfxTextureFilter filter;
@@ -1086,9 +1089,26 @@ struct GfxTextureDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// GfxDrawCall
-struct GfxDrawCall;
-/// GfxDrawCall
+/// GfxPipelineDesc
+struct GfxPipelineDesc {
+  GfxBufferDesc* vertex_buffer = nullptr; 
+  GfxBufferDesc* index_buffer  = nullptr;
+
+  GfxBufferLayout layout[LAYOUT_ELEMENTS_MAX];
+  sizei layout_count = 0; 
+
+  GfxShader* shader = nullptr;
+
+  GfxTextureDesc* textures[TEXTURES_MAX];
+  sizei texture_count = 0;
+};
+/// GfxPipelineDesc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxPipeline
+struct GfxPipeline;
+/// GfxPipeline
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1123,27 +1143,6 @@ void gfx_context_set_flag(GfxContext* gfx, const i32 flag, const bool value);
 /// Retrive the set flags of the `gfx` context.
 const GfxContextFlags gfx_context_get_flags(GfxContext* gfx);
 
-/// Begin the sumbit stage of the context. Bind the shaders and buffers to get them 
-/// ready to be drawn later using `gfx_context_sumbit`. 
-void gfx_context_sumbit_begin(GfxContext* gfx, const GfxDrawCall* call);
-
-/// Use the information given by `call` to sumbit the vertex and index buffer, while 
-/// using the shader and the texture. 
-///
-/// NOTE: If any member of the given `call` is set as `nullptr`, it will be ignored.
-/// However, the only exception to this rule is the `vertex_buffer`. That must be a 
-/// valid pointer. 
-///
-/// NOTE: The function will prioritize the `index_buffer` over the `vertex_buffer` in 
-/// the `call` struct. Though, if the `index_buffer` is a `nullptr`, the `vertex_buffer` will 
-/// be used instead.
-void gfx_context_sumbit(GfxContext* gfx, const GfxDrawCall* call); 
-
-/// Sumbit a `count` batch of `calls` to `gfx`. 
-///
-/// NOTE: This function will just call `gfx_context_sumbit` in a loop that iterates `count - 1` times.
-void gfx_context_sumbit_batch(GfxContext* gfx, GfxDrawCall** calls, const sizei count);
-
 /// Context functions 
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -1160,15 +1159,10 @@ void gfx_context_sumbit_batch(GfxContext* gfx, GfxDrawCall** calls, const sizei 
 /// Check the examples for more information.
 GfxShader* gfx_shader_create(const i8* src);
 
-/// Free/reclaim any memory taken by `shader`.
-void gfx_shader_destroy(GfxShader* shader);
-
 /// Get the location index of `uniform_name` within `shader`.
 const i32 gfx_shader_get_uniform_location(GfxShader* shader, const i8* uniform_name);
 
 /// Send `data` of `type` at `location` to the `shader`.
-///
-/// NOTE: The given `shader` needs to be binded. You will need to use `gfx_context_sumbit_begin` prior to this function.
 void gfx_shader_set_uniform_data(GfxShader* shader, const i32 location, const GfxUniformType type, const void* data);
 
 /// Send an `array` of `type` with `count` elements in bulk at `location` to the `shader`.
@@ -1178,31 +1172,16 @@ void gfx_shader_set_uniform_data_array(GfxShader* shader, const i32 location, co
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// DrawCall functions 
+/// Pipeline functions 
 
-/// Create and return a `GfxDrawCall` struct. 
-GfxDrawCall* gfx_draw_call_create(GfxContext* gfx);
+GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc* desc);
+void gfx_pipeline_destroy(GfxPipeline* pipeline);
 
-/// Add the `buff` buffer into the draw call to be used later with `gfx_context_sumbit`.
-void gfx_draw_call_push_buffer(GfxDrawCall* call, GfxContext* gfx, const GfxBufferDesc* buff);
+void gfx_piepline_begin(GfxContext* gfx, GfxPipeline* pipeline);
+void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc* desc);
+void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc* desc);
 
-/// Set the `layout` of the data of `buff` in `call`. 
-void gfx_draw_call_set_layout(GfxDrawCall* call, GfxContext* gfx, const GfxBufferDesc* buff, GfxBufferLayout* layout, const sizei layout_count);
-
-/// Add the `shader` shader into the draw call to be used later with `gfx_context_sumbit`.
-void gfx_draw_call_push_shader(GfxDrawCall* call, GfxContext* gfx, const GfxShader* shader);
-
-/// Add the `texture` texture into the draw call to be used later with `gfx_context_sumbit`.
-void gfx_draw_call_push_texture(GfxDrawCall* call, GfxContext* gfx, const GfxTextureDesc* texture);
-
-/// Add a `count` batch of the `texture` textures into the draw call to be used later with `gfx_context_sumbit`.
-/// NOTE: Cannot use more than `TEXTURES_MAX` at a time.
-void gfx_draw_call_push_texture_batch(GfxDrawCall* call, GfxContext* gfx, const GfxTextureDesc* textures, const sizei count);
-
-/// Free/reclaim any memory taken by `call`.
-void gfx_draw_call_destroy(GfxDrawCall* call);
-
-/// DrawCall functions 
+/// Pipeline functions 
 ///---------------------------------------------------------------------------------------------------------------------
 
 /// *** Graphics ***

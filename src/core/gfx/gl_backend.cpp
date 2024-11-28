@@ -38,18 +38,15 @@ struct GfxShader {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// GfxDrawCall
-struct GfxDrawCall {
-  u32 vao, vbo, ebo; 
+/// GfxPipeline
+struct GfxPipeline {
+  u32 vertex_array, vertex_buffer, index_buffer; 
 
-  GfxBufferDesc* vertex_buffer       = nullptr; 
-  GfxBufferDesc* index_buffer        = nullptr; 
-  GfxShader* shader                  = nullptr; 
-  u32 textures[TEXTURES_MAX]         = {};
-
-  sizei texture_count = 0;
+  GfxShader* shader = nullptr; 
+  
+  u32 textures[TEXTURES_MAX] = {};
 };
-/// GfxDrawCall
+/// GfxPipeline
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -336,6 +333,50 @@ static GLenum get_texture_filter(const GfxTextureFilter filter) {
   }
 }
 
+static void set_buffer_layout(const GfxBufferDesc* buff, const GfxBufferLayout* layout, const sizei layout_count) {
+  sizei stride = calc_stride(layout, layout_count);
+  sizei size   = get_layout_size(layout[0]);
+  
+  for(sizei i = 0; i < layout_count; i++) {
+    glEnableVertexAttribArray(i);
+
+    sizei offset        = i * size; 
+    GLenum gl_comp_type = get_layout_type(layout[i]);
+    sizei comp_count    = get_layout_count(layout[i]);
+    
+    size = get_layout_size(layout[i]);
+
+    glVertexAttribPointer(i, comp_count, gl_comp_type, false, stride, (void*)offset);
+  }
+}
+
+static u32 create_texture(const GfxTextureDesc* texture) {
+  GLenum gl_tex_format    = get_texture_format(texture->format);
+  GLenum gl_filter_format = get_texture_filter(texture->filter);
+  u32 id = 0;
+
+  glGenTextures(1, &id);
+  glBindTexture(GL_TEXTURE_2D, id);
+  
+  glTexImage2D(GL_TEXTURE_2D,
+               texture->depth, 
+               gl_tex_format,
+               texture->width, 
+               texture->height, 
+               0, 
+               gl_tex_format, 
+               GL_UNSIGNED_BYTE, 
+               texture->data);
+  glGenerateMipmap(GL_TEXTURE_2D);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_format);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_format);
+
+  return id;
+}
+
 /// Private functions 
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -408,53 +449,6 @@ const GfxContextFlags gfx_context_get_flags(GfxContext* gfx) {
   return gfx->flags;
 }
 
-void gfx_context_sumbit_begin(GfxContext* gfx, const GfxDrawCall* call) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
-  NIKOL_ASSERT(call, "Invalid GfxDrawCall struct passed");
-
-  // Bind the shader 
-  NIKOL_ASSERT(call->shader, "Must provide a shader for a draw call"); 
-  glUseProgram(call->shader->id);
-
-  // Bind/draw all of the textures if it is valid
-  if(call->texture_count > 0) {
-    for(sizei i = 0; i < call->texture_count; i++) {
-      glActiveTexture(GL_TEXTURE0 + i);
-      glBindTexture(GL_TEXTURE_2D, call->textures[i]);
-    }
-  }
-
-  // Bind the vertex array
-  glBindVertexArray(call->vao);
-
-}
-
-void gfx_context_sumbit(GfxContext* gfx, const GfxDrawCall* call) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
-  NIKOL_ASSERT(call, "Invalid GfxDrawCall struct passed");
-  
-  // The vertex buffer MUST be valid
-  NIKOL_ASSERT(call->vertex_buffer, "Cannot commit a draw call without a vertex buffer");
-
-  // Always prioritize the index buffer 
-  if(call->index_buffer) {
-    glDrawElements(GL_TRIANGLES, call->index_buffer->elements_count, GL_UNSIGNED_INT, 0);
-  }
-  // Draw the vertex buffer instead if the index buffer is invalid 
-  else if(call->vertex_buffer) {
-    glDrawArrays(GL_TRIANGLES, 0, call->vertex_buffer->elements_count);
-  }
-}
-
-void gfx_context_sumbit_batch(GfxContext* gfx, GfxDrawCall** calls, const sizei count) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
-  NIKOL_ASSERT(calls, "Invalid calls array passed"); 
-  
-  for(sizei i = 0; i < count; i++) {
-    gfx_context_sumbit(gfx, calls[i]);
-  }
-}
-
 /// Context functions 
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -501,11 +495,6 @@ void gfx_shader_destroy(GfxShader* shader) {
     return;
   }
   
-  memory_free(shader->vert_src);
-  memory_free(shader->frag_src);
-
-  glDeleteProgram(shader->id);
-  memory_free(shader);
 }
 
 const i32 gfx_shader_get_uniform_location(GfxShader* shader, const i8* uniform_name) {
@@ -521,7 +510,11 @@ const i32 gfx_shader_get_uniform_location(GfxShader* shader, const i8* uniform_n
 
 void gfx_shader_set_uniform_data(GfxShader* shader, const i32 location, const GfxUniformType type, const void* data) {
   NIKOL_ASSERT(shader, "Invalid GfxShader struct passed"); 
-  NIKOL_ASSERT((location != UNIFORM_INVALID), "Cannot set a non-location uniform in shader"); 
+
+  // Will not waste time on an invalid uniform location 
+  if(location == UNIFORM_INVALID) {
+    return;
+  }
 
   switch(type) {
     case GFX_UNIFORM_TYPE_FLOAT: 
@@ -603,132 +596,142 @@ void gfx_shader_set_uniform_data_array(GfxShader* shader, const i32 location, co
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// DrawCall functions 
+/// Pipeline functions 
 
-/// Create and return a `GfxDrawCall` struct. 
-GfxDrawCall* gfx_draw_call_create(GfxContext* gfx) {
+GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc* desc) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
-  
-  GfxDrawCall* call = (GfxDrawCall*)memory_allocate(sizeof(GfxDrawCall));
-  memory_zero(call, sizeof(GfxDrawCall));
+  NIKOL_ASSERT(desc, "Invalid GfxPipelineDesc struct passed"); 
 
-  glGenVertexArrays(1, &call->vao);
+  GfxPipeline* pipe = (GfxPipeline*)memory_allocate(sizeof(GfxPipeline));
+  memory_zero(pipe, sizeof(GfxPipeline));
 
-  return call;
-}
+  // VAO init
+  glGenVertexArrays(1, &pipe->vertex_array);
+  glBindVertexArray(pipe->vertex_array);
 
-void gfx_draw_call_push_buffer(GfxDrawCall* call, GfxContext* gfx, const GfxBufferDesc* buff) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
-  NIKOL_ASSERT(call, "Invalid GfxDrawCall struct passed");
+  // VBO init
+  if(desc->vertex_buffer) {
+    GLenum gl_buffer_mode = get_buffer_mode(desc->vertex_buffer->mode);
 
-  glBindVertexArray(call->vao);
-
-  GLenum gl_data_mode = get_buffer_mode(buff->mode);
-
-  switch(buff->type) {
-    case GFX_BUFFER_VERTEX:
-      glGenBuffers(1, &call->vbo);
-      glBindBuffer(GL_ARRAY_BUFFER, call->vbo);
-      glBufferData(GL_ARRAY_BUFFER, buff->size, buff->data, gl_data_mode);
-      call->vertex_buffer = (GfxBufferDesc*)buff;
-      break;
-    case GFX_BUFFER_INDEX:
-      glGenBuffers(1, &call->ebo);
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, call->ebo);
-      glBufferData(GL_ELEMENT_ARRAY_BUFFER, buff->size, buff->data, gl_data_mode);
-      call->index_buffer = (GfxBufferDesc*)buff;
-      break;
+    glGenBuffers(1, &pipe->vertex_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, pipe->vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, desc->vertex_buffer->size, desc->vertex_buffer->data, gl_buffer_mode);
   }
-  
-  glBindVertexArray(0);
-}
 
-void gfx_draw_call_set_layout(GfxDrawCall* call, GfxContext* gfx, const GfxBufferDesc* buff, GfxBufferLayout* layout, const sizei layout_count) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
-  NIKOL_ASSERT(call, "Invalid GfxDrawCall struct passed");
-  NIKOL_ASSERT(layout, "Empty layout array passed into buffer");
+  // Layout init 
+  set_buffer_layout(desc->vertex_buffer, desc->layout, desc->layout_count); 
 
-  glBindVertexArray(call->vao);
-  glBindBuffer(GL_ARRAY_BUFFER, call->vbo);
-
-  sizei stride = calc_stride(layout, layout_count);
-  sizei size   = get_layout_size(layout[0]);
-  
-  for(sizei i = 0; i < layout_count; i++) {
-    glEnableVertexAttribArray(i);
-
-    sizei offset        = i * size; 
-    GLenum gl_comp_type = get_layout_type(layout[i]);
-    sizei comp_count    = get_layout_count(layout[i]);
+  // EBO init
+  if(desc->index_buffer) {
+    GLenum gl_buffer_mode = get_buffer_mode(desc->index_buffer->mode);
     
-    size = get_layout_size(layout[i]);
-
-    glVertexAttribPointer(i, comp_count, gl_comp_type, false, stride, (void*)offset);
+    glGenBuffers(1, &pipe->index_buffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pipe->index_buffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, desc->index_buffer->size, desc->index_buffer->data, gl_buffer_mode);
   }
+
+  // Textures init
+  if(desc->texture_count > 0) {
+    for(sizei i = 0; i < desc->texture_count; i++) {
+      pipe->textures[i] = create_texture(desc->textures[i]);
+    }
+  }
+
+  return pipe;
+}
+
+void gfx_pipeline_destroy(GfxPipeline* pipeline) {
+  NIKOL_ASSERT(pipeline, "Attempting to free an invalid GfxPipeline");
+
+  // Deleting the buffers
+  glDeleteBuffers(1, &pipeline->vertex_buffer);
+  glDeleteBuffers(1, &pipeline->index_buffer);
+  glDeleteVertexArrays(1, &pipeline->vertex_array);
+
+  // Deleting the shader
+  memory_free(pipeline->shader->vert_src);
+  memory_free(pipeline->shader->frag_src);
+  glDeleteProgram(pipeline->shader->id);
+  memory_free(pipeline->shader);
   
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindVertexArray(0);
+  memory_free(pipeline);
 }
 
-void gfx_draw_call_push_shader(GfxDrawCall* call, GfxContext* gfx, const GfxShader* shader) {
+void gfx_piepline_begin(GfxContext* gfx, GfxPipeline* pipeline) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
-  NIKOL_ASSERT(call, "Invalid GfxDrawCall struct passed");
-  NIKOL_ASSERT(shader, "Invalid GfxShader struct passed");
+  NIKOL_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
 
-  call->shader = (GfxShader*)shader;
+  // Bind the shader
+  glUseProgram(pipeline->shader->id);
+
+  // Bind the vertex array
+  glBindVertexArray(pipeline->vertex_array);
 }
 
-void gfx_draw_call_push_texture(GfxDrawCall* call, GfxContext* gfx, const GfxTextureDesc* texture) {
+void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc* desc) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
-  NIKOL_ASSERT(call, "Invalid GfxDrawCall struct passed");
-  NIKOL_ASSERT(texture, "Invalid GfxTexture struct passed");
+  NIKOL_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
+  NIKOL_ASSERT(desc, "Invalid GfxPipelineDesc struct passed");
+  NIKOL_ASSERT(desc->vertex_buffer, "Must have a valid vertex buffer to draw");
 
-  GLenum gl_tex_format    = get_texture_format(texture->format);
-  GLenum gl_filter_format = get_texture_filter(texture->filter);
-
-  glGenTextures(1, &call->textures[call->texture_count]);
-  glBindTexture(GL_TEXTURE_2D, call->textures[call->texture_count]);
-  
-  call->texture_count++;
-
-  glTexImage2D(GL_TEXTURE_2D,
-               texture->depth, 
-               gl_tex_format,
-               texture->width, 
-               texture->height, 
-               0, 
-               gl_tex_format, 
-               GL_UNSIGNED_BYTE, 
-               texture->data);
-  glGenerateMipmap(GL_TEXTURE_2D);
-
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_format);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_format);
-
-  glBindTexture(GL_TEXTURE_2D, 0);
-}
-
-void gfx_draw_call_push_texture_batch(GfxDrawCall* call, GfxContext* gfx, const GfxTextureDesc* textures, const sizei count) {
-  for(sizei i = 0; i < count; i++) {
-    gfx_draw_call_push_texture(call, gfx, &textures[i]);
-  }
-}
-
-void gfx_draw_call_destroy(GfxDrawCall* call) {
-  if(!call) {
-    return;
+  // Draw the textures 
+  if(desc->texture_count > 0) {
+    for(sizei i = 0; i < desc->texture_count; i++) {
+      glActiveTexture(GL_TEXTURE0 + i);
+      glBindTexture(GL_TEXTURE_2D, pipeline->textures[i]);
+    }
   }
 
-  glDeleteBuffers(1, &call->vbo);
-  glDeleteBuffers(1, &call->ebo);
-  glDeleteVertexArrays(1, &call->vao);
+  // Draw the vertex buffer 
+  glBindBuffer(GL_ARRAY_BUFFER, pipeline->vertex_buffer);
 
-  memory_free(call);
+  GfxBufferMode mode = desc->vertex_buffer->mode;
+  bool is_dynamic = mode == GFX_BUFFER_MODE_DYNAMIC_COPY || 
+                    mode == GFX_BUFFER_MODE_DYNAMIC_DRAW ||  
+                    mode == GFX_BUFFER_MODE_DYNAMIC_READ;
+
+  // The buffer data will be re-sumbitted if the buffer is dynamic 
+  if(is_dynamic) {
+    GLenum gl_buffer_mode = get_buffer_mode(mode);
+    glBufferData(GL_ARRAY_BUFFER, desc->vertex_buffer->size, desc->vertex_buffer->data, gl_buffer_mode);
+  }
+
+  glDrawArrays(GL_TRIANGLES, 0, desc->vertex_buffer->elements_count);
 }
 
-/// DrawCall functions 
+void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc* desc) {
+  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+  NIKOL_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
+  NIKOL_ASSERT(desc, "Invalid GfxPipelineDesc struct passed");
+  NIKOL_ASSERT(desc->vertex_buffer, "Must have a valid vertex buffer to draw");
+  NIKOL_ASSERT(desc->index_buffer, "Must have a valid index buffer to draw");
+
+  // Draw the textures 
+  if(desc->texture_count > 0) {
+    for(sizei i = 0; i < desc->texture_count; i++) {
+      glActiveTexture(GL_TEXTURE0 + i);
+      glBindTexture(GL_TEXTURE_2D, pipeline->textures[i]);
+    }
+  }
+
+  // Draw the vertex buffer 
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pipeline->index_buffer);
+
+  GfxBufferMode mode = desc->index_buffer->mode;
+  bool is_dynamic = mode == GFX_BUFFER_MODE_DYNAMIC_COPY || 
+                    mode == GFX_BUFFER_MODE_DYNAMIC_DRAW ||  
+                    mode == GFX_BUFFER_MODE_DYNAMIC_READ;
+
+  // The buffer data will be re-sumbitted if the buffer is dynamic 
+  if(is_dynamic) {
+    GLenum gl_buffer_mode = get_buffer_mode(mode);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, desc->index_buffer->size, desc->index_buffer->data, gl_buffer_mode);
+  }
+
+  glDrawElements(GL_TRIANGLES, desc->index_buffer->elements_count, GL_UNSIGNED_INT, 0);
+}
+
+/// Pipeline functions 
 ///---------------------------------------------------------------------------------------------------------------------
 
 /// *** Graphics ***
