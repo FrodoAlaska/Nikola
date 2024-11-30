@@ -343,18 +343,25 @@ static GLenum get_texture_filter(const GfxTextureFilter filter) {
 static void set_buffer_layout(const GfxBufferDesc* buff, const GfxBufferLayout* layout, const sizei layout_count) {
   sizei stride = calc_stride(layout, layout_count);
   sizei size   = get_layout_size(layout[0]);
-  
+  sizei offset = 0;
+
   for(sizei i = 0; i < layout_count; i++) {
     glEnableVertexAttribArray(i);
 
-    sizei offset        = i * size; 
     GLenum gl_comp_type = get_layout_type(layout[i]);
     sizei comp_count    = get_layout_count(layout[i]);
-    
-    size = get_layout_size(layout[i]);
 
     glVertexAttribPointer(i, comp_count, gl_comp_type, false, stride, (void*)offset);
+    
+    size    = get_layout_size(layout[i]);
+    offset += size; 
   }
+}
+
+static bool is_buffer_dynamic(const GfxBufferMode& mode) {
+  return mode == GFX_BUFFER_MODE_DYNAMIC_DRAW || 
+         mode == GFX_BUFFER_MODE_DYNAMIC_COPY || 
+         mode == GFX_BUFFER_MODE_DYNAMIC_READ;
 }
 
 /// Private functions 
@@ -724,6 +731,7 @@ void gfx_pipeline_begin(GfxContext* gfx, GfxPipeline* pipeline) {
 }
 
 void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc* desc) {
+
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
   NIKOL_ASSERT(desc, "Invalid GfxPipelineDesc struct passed");
@@ -733,24 +741,19 @@ void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline, const GfxP
   if(desc->texture_count > 0) {
     for(sizei i = 0; i < desc->texture_count; i++) {
       glActiveTexture(GL_TEXTURE0 + i);
-      glBindTexture(GL_TEXTURE_2D, pipeline->textures[i]);
+      glBindTexture(GL_TEXTURE_2D, desc->textures[i]->id);
     }
   }
 
-  // Draw the vertex buffer 
-  glBindBuffer(GL_ARRAY_BUFFER, pipeline->vertex_buffer);
-
-  GfxBufferMode mode = desc->vertex_buffer->mode;
-  bool is_dynamic = mode == GFX_BUFFER_MODE_DYNAMIC_COPY || 
-                    mode == GFX_BUFFER_MODE_DYNAMIC_DRAW ||  
-                    mode == GFX_BUFFER_MODE_DYNAMIC_READ;
-
   // The buffer data will be re-sumbitted if the buffer is dynamic 
-  if(is_dynamic) {
-    GLenum gl_buffer_mode = get_buffer_mode(mode);
+  if(is_buffer_dynamic(desc->vertex_buffer->mode)) {
+    GLenum gl_buffer_mode = get_buffer_mode(desc->vertex_buffer->mode);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, pipeline->vertex_buffer);
     glBufferData(GL_ARRAY_BUFFER, desc->vertex_buffer->size, desc->vertex_buffer->data, gl_buffer_mode);
   }
 
+  // Draw the vertices
   glDrawArrays(GL_TRIANGLES, 0, desc->vertex_buffer->elements_count);
 }
 
@@ -765,24 +768,27 @@ void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline, const GfxPi
   if(desc->texture_count > 0) {
     for(sizei i = 0; i < desc->texture_count; i++) {
       glActiveTexture(GL_TEXTURE0 + i);
-      glBindTexture(GL_TEXTURE_2D, pipeline->textures[i]);
+      glBindTexture(GL_TEXTURE_2D, desc->textures[i]->id);
     }
   }
-
-  // Draw the vertex buffer 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pipeline->index_buffer);
-
-  GfxBufferMode mode = desc->index_buffer->mode;
-  bool is_dynamic = mode == GFX_BUFFER_MODE_DYNAMIC_COPY || 
-                    mode == GFX_BUFFER_MODE_DYNAMIC_DRAW ||  
-                    mode == GFX_BUFFER_MODE_DYNAMIC_READ;
-
+  
   // The buffer data will be re-sumbitted if the buffer is dynamic 
-  if(is_dynamic) {
-    GLenum gl_buffer_mode = get_buffer_mode(mode);
+  if(is_buffer_dynamic(desc->index_buffer->mode)) {
+    GLenum gl_buffer_mode = get_buffer_mode(desc->index_buffer->mode);
+    
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pipeline->index_buffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, desc->index_buffer->size, desc->index_buffer->data, gl_buffer_mode);
   }
 
+  // Do the same thing with the vertex buffer 
+  if(is_buffer_dynamic(desc->vertex_buffer->mode)) {
+    GLenum gl_buffer_mode = get_buffer_mode(desc->vertex_buffer->mode);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, pipeline->vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, desc->vertex_buffer->size, desc->vertex_buffer->data, gl_buffer_mode);
+  }
+
+  // Draw with the indices
   glDrawElements(GL_TRIANGLES, desc->index_buffer->elements_count, GL_UNSIGNED_INT, 0);
 }
 

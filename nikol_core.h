@@ -1193,7 +1193,7 @@ void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc);
 GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc* desc);
 void gfx_pipeline_destroy(GfxPipeline* pipeline);
 
-void gfx_piepline_begin(GfxContext* gfx, GfxPipeline* pipeline);
+void gfx_pipeline_begin(GfxContext* gfx, GfxPipeline* pipeline);
 void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc* desc);
 void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc* desc);
 
