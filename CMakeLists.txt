@@ -62,8 +62,8 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${NIKOL_LIBRARIES})
 
 ### Compiling Options ###
 ############################################################
-target_compile_definitions(${PROJECT_NAME} PUBLIC ${NIKOL_BUILD_TYPE} GLFW_INCLUDE_NONE)
-target_compile_options(${PROJECT_NAME} PUBLIC -lm -Wall)
+target_compile_definitions(${PROJECT_NAME} PUBLIC GLFW_INCLUDE_NONE)
+target_compile_options(${PROJECT_NAME} PUBLIC -lm -w -Wall)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 ############################################################
 

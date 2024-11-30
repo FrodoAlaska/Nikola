@@ -1,6 +1,5 @@
 #include "nikol_core.h"
 
-
 //////////////////////////////////////////////////////////////////////////
 
 #ifdef NIKOL_GFX_CONTEXT_OPENGL  // OpenGL check
@@ -35,6 +34,14 @@ struct GfxShader {
   i32 vert_src_len, frag_src_len;
 };
 /// GfxShader
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxTexture
+struct GfxTexture {
+  u32 id;
+};
+/// GfxTexture
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -350,33 +357,6 @@ static void set_buffer_layout(const GfxBufferDesc* buff, const GfxBufferLayout* 
   }
 }
 
-static u32 create_texture(const GfxTextureDesc* texture) {
-  GLenum gl_tex_format    = get_texture_format(texture->format);
-  GLenum gl_filter_format = get_texture_filter(texture->filter);
-  u32 id = 0;
-
-  glGenTextures(1, &id);
-  glBindTexture(GL_TEXTURE_2D, id);
-  
-  glTexImage2D(GL_TEXTURE_2D,
-               texture->depth, 
-               gl_tex_format,
-               texture->width, 
-               texture->height, 
-               0, 
-               gl_tex_format, 
-               GL_UNSIGNED_BYTE, 
-               texture->data);
-  glGenerateMipmap(GL_TEXTURE_2D);
-
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_format);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_format);
-
-  return id;
-}
-
 /// Private functions 
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -494,7 +474,70 @@ void gfx_shader_destroy(GfxShader* shader) {
   if(!shader) {
     return;
   }
+ 
+  memory_free(shader->vert_src);
+  memory_free(shader->frag_src);
+  memory_free(shader);
+}
+
+GfxTexture* gfx_texture_create(const GfxTextureDesc& desc) {
+  GfxTexture* texture = (GfxTexture*)memory_allocate(sizeof(GfxTexture));
+  memory_zero(texture, sizeof(GfxTexture));
   
+  GLenum gl_tex_format    = get_texture_format(desc.format);
+  GLenum gl_filter_format = get_texture_filter(desc.filter);
+
+  glGenTextures(1, &texture->id);
+  glBindTexture(GL_TEXTURE_2D, texture->id);
+  
+  glTexImage2D(GL_TEXTURE_2D,
+               desc.depth, 
+               gl_tex_format,
+               desc.width, 
+               desc.height, 
+               0, 
+               gl_tex_format, 
+               GL_UNSIGNED_BYTE, 
+               desc.data);
+  glGenerateMipmap(GL_TEXTURE_2D);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_format);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_format);
+
+  return texture;
+}
+
+void gfx_texture_destroy(GfxTexture* texture) {
+  if(!texture) {
+    return;
+  }
+
+  memory_free(texture);
+}
+
+void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc) {
+  glBindTexture(GL_TEXTURE_2D, texture->id);
+  
+  GLenum gl_tex_format    = get_texture_format(desc.format);
+  GLenum gl_filter_format = get_texture_filter(desc.filter);
+  
+  glTexImage2D(GL_TEXTURE_2D,
+               desc.depth, 
+               gl_tex_format,
+               desc.width, 
+               desc.height, 
+               0, 
+               gl_tex_format, 
+               GL_UNSIGNED_BYTE, 
+               desc.data);
+  glGenerateMipmap(GL_TEXTURE_2D);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_format);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_format);
 }
 
 const i32 gfx_shader_get_uniform_location(GfxShader* shader, const i8* uniform_name) {
@@ -515,6 +558,8 @@ void gfx_shader_set_uniform_data(GfxShader* shader, const i32 location, const Gf
   if(location == UNIFORM_INVALID) {
     return;
   }
+
+  glUseProgram(shader->id);
 
   switch(type) {
     case GFX_UNIFORM_TYPE_FLOAT: 
@@ -554,7 +599,13 @@ void gfx_shader_set_uniform_data(GfxShader* shader, const i32 location, const Gf
 
 void gfx_shader_set_uniform_data_array(GfxShader* shader, const i32 location, const GfxUniformType type, const void* array, const sizei count) {
   NIKOL_ASSERT(shader, "Invalid GfxShader struct passed"); 
-  NIKOL_ASSERT((location != UNIFORM_INVALID), "Cannot set a non-location uniform in shader"); 
+  
+  // Don't be bothered with invalid uniform locations
+  if(location == UNIFORM_INVALID) {
+    return;
+  }
+  
+  glUseProgram(shader->id);
 
   switch(type) {
     case GFX_UNIFORM_TYPE_FLOAT: 
@@ -629,11 +680,14 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc* desc) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pipe->index_buffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, desc->index_buffer->size, desc->index_buffer->data, gl_buffer_mode);
   }
+  
+  // Shader init 
+  pipe->shader = desc->shader; 
 
   // Textures init
   if(desc->texture_count > 0) {
     for(sizei i = 0; i < desc->texture_count; i++) {
-      pipe->textures[i] = create_texture(desc->textures[i]);
+      pipe->textures[i] = desc->textures[i]->id;
     }
   }
 
@@ -657,9 +711,10 @@ void gfx_pipeline_destroy(GfxPipeline* pipeline) {
   memory_free(pipeline);
 }
 
-void gfx_piepline_begin(GfxContext* gfx, GfxPipeline* pipeline) {
+void gfx_pipeline_begin(GfxContext* gfx, GfxPipeline* pipeline) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
+  NIKOL_ASSERT(pipeline->shader, "Must pass a shader to the pipeline");
 
   // Bind the shader
   glUseProgram(pipeline->shader->id);

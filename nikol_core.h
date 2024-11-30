@@ -1089,6 +1089,12 @@ struct GfxTextureDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// GfxTexture
+struct GfxTexture;
+/// GfxTexture
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// GfxPipelineDesc
 struct GfxPipelineDesc {
   GfxBufferDesc* vertex_buffer = nullptr; 
@@ -1099,7 +1105,7 @@ struct GfxPipelineDesc {
 
   GfxShader* shader = nullptr;
 
-  GfxTextureDesc* textures[TEXTURES_MAX];
+  GfxTexture* textures[TEXTURES_MAX];
   sizei texture_count = 0;
 };
 /// GfxPipelineDesc
@@ -1169,6 +1175,16 @@ void gfx_shader_set_uniform_data(GfxShader* shader, const i32 location, const Gf
 void gfx_shader_set_uniform_data_array(GfxShader* shader, const i32 location, const GfxUniformType type, const void* array, const sizei count);
 
 /// Shader functions 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Texture functions 
+
+GfxTexture* gfx_texture_create(const GfxTextureDesc& desc);
+void gfx_texture_destroy(GfxTexture* texture);
+void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc);
+
+/// Texture functions 
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
