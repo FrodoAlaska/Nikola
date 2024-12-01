@@ -50,8 +50,7 @@ struct GfxPipeline {
   u32 vertex_array, vertex_buffer, index_buffer; 
 
   GfxShader* shader = nullptr; 
-  
-  u32 textures[TEXTURES_MAX] = {};
+  GfxTexture* textures[TEXTURES_MAX] = {};
 };
 /// GfxPipeline
 ///---------------------------------------------------------------------------------------------------------------------
@@ -656,9 +655,8 @@ void gfx_shader_set_uniform_data_array(GfxShader* shader, const i32 location, co
 ///---------------------------------------------------------------------------------------------------------------------
 /// Pipeline functions 
 
-GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc* desc) {
+GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
-  NIKOL_ASSERT(desc, "Invalid GfxPipelineDesc struct passed"); 
 
   GfxPipeline* pipe = (GfxPipeline*)memory_allocate(sizeof(GfxPipeline));
   memory_zero(pipe, sizeof(GfxPipeline));
@@ -668,33 +666,33 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc* desc) {
   glBindVertexArray(pipe->vertex_array);
 
   // VBO init
-  if(desc->vertex_buffer) {
-    GLenum gl_buffer_mode = get_buffer_mode(desc->vertex_buffer->mode);
+  if(desc.vertex_buffer) {
+    GLenum gl_buffer_mode = get_buffer_mode(desc.vertex_buffer->mode);
 
     glGenBuffers(1, &pipe->vertex_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, pipe->vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, desc->vertex_buffer->size, desc->vertex_buffer->data, gl_buffer_mode);
+    glBufferData(GL_ARRAY_BUFFER, desc.vertex_buffer->size, desc.vertex_buffer->data, gl_buffer_mode);
   }
 
   // Layout init 
-  set_buffer_layout(desc->vertex_buffer, desc->layout, desc->layout_count); 
+  set_buffer_layout(desc.vertex_buffer, desc.layout, desc.layout_count); 
 
   // EBO init
-  if(desc->index_buffer) {
-    GLenum gl_buffer_mode = get_buffer_mode(desc->index_buffer->mode);
+  if(desc.index_buffer) {
+    GLenum gl_buffer_mode = get_buffer_mode(desc.index_buffer->mode);
     
     glGenBuffers(1, &pipe->index_buffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pipe->index_buffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, desc->index_buffer->size, desc->index_buffer->data, gl_buffer_mode);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, desc.index_buffer->size, desc.index_buffer->data, gl_buffer_mode);
   }
   
   // Shader init 
-  pipe->shader = desc->shader; 
+  pipe->shader = desc.shader; 
 
   // Textures init
-  if(desc->texture_count > 0) {
-    for(sizei i = 0; i < desc->texture_count; i++) {
-      pipe->textures[i] = desc->textures[i]->id;
+  if(desc.texture_count > 0) {
+    for(sizei i = 0; i < desc.texture_count; i++) {
+      pipe->textures[i] = desc.textures[i];
     }
   }
 

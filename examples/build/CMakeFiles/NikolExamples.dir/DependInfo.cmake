@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/mohamed/Dev/C++/NikolEngine/examples/src/main.cpp" "CMakeFiles/NikolExamples.dir/src/main.cpp.o" "gcc" "CMakeFiles/NikolExamples.dir/src/main.cpp.o.d"
+  "/home/mohamed/Dev/C++/NikolEngine/examples/src/gl_example.cpp" "CMakeFiles/NikolExamples.dir/src/gl_example.cpp.o" "gcc" "CMakeFiles/NikolExamples.dir/src/gl_example.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

@@ -1,6 +1,6 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/NikolExamples.dir/src/main.cpp.o"
-  "CMakeFiles/NikolExamples.dir/src/main.cpp.o.d"
+  "CMakeFiles/NikolExamples.dir/src/gl_example.cpp.o"
+  "CMakeFiles/NikolExamples.dir/src/gl_example.cpp.o.d"
   "NikolExamples"
   "NikolExamples.pdb"
 )

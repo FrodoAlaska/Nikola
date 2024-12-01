@@ -73,11 +73,11 @@ typedef double f64;
 
 /// Win32 main entry
 #if NIKOL_PLATFORM_WINDOWS == 1 
-#define NIKOL_MAIN() int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdShow)
+#define NIKOL_MAIN() WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdShow)
 
 /// Linux main entry
 #elif NIKOL_PLATFORM_LINUX == 1 
-#define NIKOL_MAIN() int main(int argc, char** argv)
+#define NIKOL_MAIN() main(int argc, char** argv)
 #endif
 
 /// *** Platform detection ***
@@ -1190,7 +1190,7 @@ void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Pipeline functions 
 
-GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc* desc);
+GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc);
 void gfx_pipeline_destroy(GfxPipeline* pipeline);
 
 void gfx_pipeline_begin(GfxContext* gfx, GfxPipeline* pipeline);

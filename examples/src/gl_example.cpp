@@ -1,6 +1,6 @@
 #include <nikol_core.h>
 
-NIKOL_MAIN() {
+int NIKOL_MAIN() {
   // Initialze the library
   if(!nikol::init()) {
     return -1;
@@ -19,12 +19,13 @@ NIKOL_MAIN() {
     return -1;
   }
 
-  // Must create the draw call before adding anything to it
-  nikol::GfxDrawCall* call = nikol::gfx_draw_call_create(gfx);
- 
+  nikol::GfxPipelineDesc desc = {
+
+  };
+
   // Creating a shader and adding it to the draw call
   const char* src =
-  "#version 460 core\n"
+  "#version 450 core\n"
   "\n"
   "layout (location = 0) in vec3 a_pos;\n"
   "layout (location = 1) in vec2 a_texture_coords;\n"
@@ -36,7 +37,7 @@ NIKOL_MAIN() {
   " texture_coords = a_texture_coords;\n"
   "}\n"
   "\n"
-  "#version 460 core\n"
+  "#version 450 core\n"
   "\n" 
   "layout (location = 0) out vec4 out_color;\n"
   "\n" 
@@ -47,8 +48,7 @@ NIKOL_MAIN() {
   "void main() {\n"
   " out_color = texture(u_texture, texture_coords);\n"
   "}\n";
-  nikol::GfxShader* shader = nikol::gfx_shader_create(src);
-  nikol::gfx_draw_call_push_shader(call, gfx, shader);
+  desc.shader = nikol::gfx_shader_create(src);
 
   // Creating a vertex buffer and adding it to the draw call
   nikol::f32 vertices[] = {
@@ -64,14 +64,12 @@ NIKOL_MAIN() {
     .type = nikol::GFX_BUFFER_VERTEX, 
     .mode = nikol::GFX_BUFFER_MODE_STATIC_DRAW,
   };
-  nikol::gfx_draw_call_push_buffer(call, gfx, &vert_buff);
+  desc.vertex_buffer = &vert_buff;
 
   // Setting the layout of the vertex buffer
-  nikol::GfxBufferLayout layout[] = {
-    nikol::GFX_LAYOUT_FLOAT3,
-    nikol::GFX_LAYOUT_FLOAT2,
-  };
-  nikol::gfx_draw_call_set_layout(call, gfx, &vert_buff, layout, 2);
+  desc.layout[0] = nikol::GFX_LAYOUT_FLOAT3;
+  desc.layout[1] = nikol::GFX_LAYOUT_FLOAT2;
+  desc.layout_count = 2;
 
   // Creating an index buffer and adding it to the draw call
   nikol::u32 indices[] = {
@@ -85,10 +83,10 @@ NIKOL_MAIN() {
     .type             = nikol::GFX_BUFFER_INDEX, 
     .mode             = nikol::GFX_BUFFER_MODE_STATIC_DRAW,
   };
-  nikol::gfx_draw_call_push_buffer(call, gfx, &index_buff);
+  desc.index_buffer = &index_buff;
 
   // Creating a texture and adding it to the draw call
-  nikol::u32 pixels = 0xffffffff;
+  nikol::u32 pixels = 0xaaffaaff;
   nikol::GfxTextureDesc texture = {
     .width    = 1, 
     .height   = 1, 
@@ -98,7 +96,10 @@ NIKOL_MAIN() {
     .filter   = nikol::GFX_TEXTURE_FILTER_LINEAR, 
     .data     = &pixels,
   };
-  nikol::gfx_draw_call_push_texture(call, gfx, &texture);
+  desc.textures[0] = &texture;
+  desc.texture_count++;
+  
+  nikol::GfxPipeline* pipeline = nikol::gfx_pipeline_create(gfx, desc);
 
   // Main loop
   while(nikol::window_is_open(window)) {
@@ -108,13 +109,13 @@ NIKOL_MAIN() {
     }
     
     // Clear the screen to black
-    nikol::gfx_context_clear(gfx, 0.0f, 0.0f, 0.0f, 1.0f);
+    nikol::gfx_context_clear(gfx, 0.3f, 0.3f, 0.3f, 1.0f);
     
     // Begin the drawing pass
-    nikol::gfx_context_sumbit_begin(gfx, call);
+    nikol::gfx_pipeline_begin(gfx, pipeline);
 
     // Sumbit the draw call and render it to the screen
-    nikol::gfx_context_sumbit(gfx, call);
+    nikol::gfx_pipeline_draw_index(gfx, pipeline, &desc);
 
     // Poll the window events
     nikol::window_poll_events(window);
@@ -124,8 +125,7 @@ NIKOL_MAIN() {
   }
 
   // De-initialze
-  nikol::gfx_shader_destroy(shader);
-  nikol::gfx_draw_call_destroy(call); 
+  nikol::gfx_pipeline_destroy(pipeline);
   nikol::gfx_context_shutdown(gfx);
   nikol::window_close(window);
   nikol::shutdown();
