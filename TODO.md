@@ -1,5 +1,6 @@
 # URGENT TODO: 
-- Random and math functions 
+- Meshes
+- Make a 3D example
 - Set up a DirectX backend
 
 # FUTURE TODO: 

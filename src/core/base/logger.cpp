@@ -1,4 +1,4 @@
-#include "nikol_core.h"
+#include "../nikol_core.h"
 
 #include <cstdio>
 #include <cstdarg>
