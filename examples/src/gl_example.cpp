@@ -19,13 +19,11 @@ int NIKOL_MAIN() {
     return -1;
   }
 
-  nikol::GfxPipelineDesc desc = {
-
-  };
+  nikol::GfxPipelineDesc desc;
 
   // Creating a shader and adding it to the draw call
   const char* src =
-  "#version 450 core\n"
+  "#version 460 core\n"
   "\n"
   "layout (location = 0) in vec3 a_pos;\n"
   "layout (location = 1) in vec2 a_texture_coords;\n"
@@ -37,17 +35,18 @@ int NIKOL_MAIN() {
   " texture_coords = a_texture_coords;\n"
   "}\n"
   "\n"
-  "#version 450 core\n"
+  "#version 460 core\n"
   "\n" 
   "layout (location = 0) out vec4 out_color;\n"
   "\n" 
   "in vec2 texture_coords;\n"
   "\n" 
   "uniform sampler2D u_texture;\n"
+  "uniform vec4 u_color;\n"
   "\n" 
   "void main() {\n"
-  " out_color = texture(u_texture, texture_coords);\n"
-  "}\n";
+  " out_color = u_color;//texture(u_texture, texture_coords);"
+  "\n}\n";
   desc.shader = nikol::gfx_shader_create(src);
 
   // Creating a vertex buffer and adding it to the draw call
@@ -87,7 +86,7 @@ int NIKOL_MAIN() {
 
   // Creating a texture and adding it to the draw call
   nikol::u32 pixels = 0xaaffaaff;
-  nikol::GfxTextureDesc texture = {
+  const nikol::GfxTextureDesc texture = {
     .width    = 1, 
     .height   = 1, 
     .channels = 4, 
@@ -96,15 +95,19 @@ int NIKOL_MAIN() {
     .filter   = nikol::GFX_TEXTURE_FILTER_LINEAR, 
     .data     = &pixels,
   };
-  desc.textures[0] = &texture;
+  nikol::GfxTexture* white_texture = nikol::gfx_texture_create(texture);
+  desc.textures[0] = white_texture;
   desc.texture_count++;
   
   nikol::GfxPipeline* pipeline = nikol::gfx_pipeline_create(gfx, desc);
 
+  nikol::i32 color_loc = nikol::gfx_shader_get_uniform_location(desc.shader, "u_color");
+  nikol::f32 color[4] = {1.0f, 0.0f, 0.0f, 1.0f}; 
+
   // Main loop
   while(nikol::window_is_open(window)) {
-    // Will stop the application when F1 is pressed
-    if(nikol::input_key_pressed(nikol::KEY_F1)) {
+    // Will stop the application when ESCAPE is pressed
+    if(nikol::input_key_pressed(nikol::KEY_ESCAPE)) {
       break;
     }
     
@@ -113,6 +116,15 @@ int NIKOL_MAIN() {
     
     // Begin the drawing pass
     nikol::gfx_pipeline_begin(gfx, pipeline);
+   
+    // Uploading uniform data to the shader
+    const nikol::GfxUniformDesc uni_desc = {
+      .type = nikol::GFX_UNIFORM_TYPE_VEC4, 
+      .location = color_loc,
+      .data = &color,
+      .count = 1,
+    };
+    nikol::gfx_shader_upload_uniform(desc.shader,  uni_desc);
 
     // Sumbit the draw call and render it to the screen
     nikol::gfx_pipeline_draw_index(gfx, pipeline, &desc);

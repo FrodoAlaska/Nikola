@@ -557,96 +557,56 @@ const i32 gfx_shader_get_uniform_location(GfxShader* shader, const i8* uniform_n
   return loc;
 }
 
-void gfx_shader_set_uniform_data(GfxShader* shader, const i32 location, const GfxUniformType type, const void* data) {
+void gfx_shader_upload_uniform(GfxShader* shader, const GfxUniformDesc& desc) {
   NIKOL_ASSERT(shader, "Invalid GfxShader struct passed"); 
 
   // Will not waste time on an invalid uniform location 
-  if(location == UNIFORM_INVALID) {
+  if(desc.location == UNIFORM_INVALID) {
     return;
   }
 
   glUseProgram(shader->id);
 
-  switch(type) {
+  switch(desc.type) {
     case GFX_UNIFORM_TYPE_FLOAT: 
-      glUniform1fv(location, 1, (f32*)data);
+      glUniform1fv(desc.location, desc.count, (f32*)desc.data);
     break;  
     case GFX_UNIFORM_TYPE_DOUBLE: 
-      glUniform1dv(location, 1, (f64*)data);
+      glUniform1dv(desc.location, desc.count, (f64*)desc.data);
     break;
     case GFX_UNIFORM_TYPE_INT: 
-      glUniform1iv(location, 1, (i32*)data);
+      glUniform1iv(desc.location, desc.count, (i32*)desc.data);
     break;
     case GFX_UNIFORM_TYPE_UINT: 
-      glUniform1uiv(location, 1, (u32*)data);
+      glUniform1uiv(desc.location, desc.count, (u32*)desc.data);
     break;
     case GFX_UNIFORM_TYPE_VEC2: 
-      glUniform2fv(location, 1, (f32*)data);
+      glUniform2fv(desc.location, desc.count, (f32*)desc.data);
     break;
     case GFX_UNIFORM_TYPE_VEC3: 
-      glUniform3fv(location, 1, (f32*)data);
+      glUniform3fv(desc.location, desc.count, (f32*)desc.data);
     break;
     case GFX_UNIFORM_TYPE_VEC4: 
-      glUniform4fv(location, 1, (f32*)data);
+      glUniform4fv(desc.location, desc.count, (f32*)desc.data);
     break;
     case GFX_UNIFORM_TYPE_MAT2: 
-      glUniformMatrix2fv(location, 1, false, (f32*)data);
+      glUniformMatrix2fv(desc.location, desc.count, false, (f32*)desc.data);
     break;
     case GFX_UNIFORM_TYPE_MAT3: 
-      glUniformMatrix3fv(location, 1, false, (f32*)data);
+      glUniformMatrix3fv(desc.location, desc.count, false, (f32*)desc.data);
     break;
     case GFX_UNIFORM_TYPE_MAT4: 
-      glUniformMatrix4fv(location, 1, false, (f32*)data);
+      glUniformMatrix4fv(desc.location, desc.count, false, (f32*)desc.data);
     break;
   }
 
   gl_check_error("glUniform");
 }
 
-void gfx_shader_set_uniform_data_array(GfxShader* shader, const i32 location, const GfxUniformType type, const void* array, const sizei count) {
-  NIKOL_ASSERT(shader, "Invalid GfxShader struct passed"); 
-  
-  // Don't be bothered with invalid uniform locations
-  if(location == UNIFORM_INVALID) {
-    return;
+void gfx_shader_upload_uniform_batch(GfxShader* shader, const GfxUniformDesc* descs, const sizei count) {
+  for(sizei i = 0; i < count; i++) {
+    gfx_shader_upload_uniform(shader, descs[i]);
   }
-  
-  glUseProgram(shader->id);
-
-  switch(type) {
-    case GFX_UNIFORM_TYPE_FLOAT: 
-      glUniform1fv(location, count, (f32*)array);
-    break;  
-    case GFX_UNIFORM_TYPE_DOUBLE: 
-      glUniform1dv(location, count, (f64*)array);
-    break;
-    case GFX_UNIFORM_TYPE_INT: 
-      glUniform1iv(location, count, (i32*)array);
-    break;
-    case GFX_UNIFORM_TYPE_UINT: 
-      glUniform1uiv(location, count, (u32*)array);
-    break;
-    case GFX_UNIFORM_TYPE_VEC2: 
-      glUniform2fv(location, count, (f32*)array);
-    break;
-    case GFX_UNIFORM_TYPE_VEC3: 
-      glUniform3fv(location, count, (f32*)array);
-    break;
-    case GFX_UNIFORM_TYPE_VEC4: 
-      glUniform4fv(location, count, (f32*)array);
-    break;
-    case GFX_UNIFORM_TYPE_MAT2: 
-      glUniformMatrix2fv(location, count, false, (f32*)array);
-    break;
-    case GFX_UNIFORM_TYPE_MAT3: 
-      glUniformMatrix3fv(location, count, false, (f32*)array);
-    break;
-    case GFX_UNIFORM_TYPE_MAT4: 
-      glUniformMatrix4fv(location, count, false, (f32*)array);
-    break;
-  }
-
-  gl_check_error("glUniform");
 }
 
 /// Shader functions 

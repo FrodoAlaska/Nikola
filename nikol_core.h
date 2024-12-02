@@ -1043,6 +1043,18 @@ enum GfxUniformType {
   GFX_UNIFORM_TYPE_MAT4 = 6 << 9, 
 };
 /// GfxUniformType
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxUniformDesc
+struct GfxUniformDesc {
+  GfxUniformType type;
+  i32 location; 
+  void* data;
+  sizei count;
+};
+/// GfxUniformDesc
+///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxShader
@@ -1168,11 +1180,11 @@ GfxShader* gfx_shader_create(const i8* src);
 /// Get the location index of `uniform_name` within `shader`.
 const i32 gfx_shader_get_uniform_location(GfxShader* shader, const i8* uniform_name);
 
-/// Send `data` of `type` at `location` to the `shader`.
-void gfx_shader_set_uniform_data(GfxShader* shader, const i32 location, const GfxUniformType type, const void* data);
+/// Send `data` of `desc.type` at `desc.location` to the `shader`.
+void gfx_shader_upload_uniform(GfxShader* shader, const GfxUniformDesc& desc);
 
-/// Send an `array` of `type` with `count` elements in bulk at `location` to the `shader`.
-void gfx_shader_set_uniform_data_array(GfxShader* shader, const i32 location, const GfxUniformType type, const void* array, const sizei count);
+/// Send an `array` of `GfxUniformDesc` in batch at to the `shader`.
+void gfx_shader_upload_uniform_batch(GfxShader* shader, const GfxUniformDesc* descs, const sizei count);
 
 /// Shader functions 
 ///---------------------------------------------------------------------------------------------------------------------
