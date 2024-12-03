@@ -1,4 +1,4 @@
-#include <nikol_core.h>
+#include <nikol_core.hpp>
 
 int NIKOL_MAIN() {
   // Initialze the library
@@ -61,7 +61,8 @@ int NIKOL_MAIN() {
     .size           = sizeof(vertices), 
     .elements_count = 20, 
     .type = nikol::GFX_BUFFER_VERTEX, 
-    .mode = nikol::GFX_BUFFER_MODE_STATIC_DRAW,
+    .usage = nikol::GFX_BUFFER_USAGE_STATIC_DRAW,
+    .draw_mode = nikol::GFX_BUFFER_MODE_TRIANGLE,
   };
   desc.vertex_buffer = &vert_buff;
 
@@ -80,7 +81,8 @@ int NIKOL_MAIN() {
     .size             = sizeof(indices), 
     .elements_count   = 6, 
     .type             = nikol::GFX_BUFFER_INDEX, 
-    .mode             = nikol::GFX_BUFFER_MODE_STATIC_DRAW,
+    .usage            = nikol::GFX_BUFFER_USAGE_STATIC_DRAW,
+    .draw_mode        = nikol::GFX_BUFFER_MODE_TRIANGLE,
   };
   desc.index_buffer = &index_buff;
 
@@ -91,8 +93,10 @@ int NIKOL_MAIN() {
     .height   = 1, 
     .channels = 4, 
     .depth    = 0, 
-    .format   = nikol::GFX_TEXTURE_FORMAT_RGBA, 
-    .filter   = nikol::GFX_TEXTURE_FILTER_LINEAR, 
+    .format   = nikol::GFX_TEXTURE_FORMAT_RGBA8, 
+    .min_filter   = nikol::GFX_TEXTURE_FILTER_TRILINEAR,
+    .mag_filter   = nikol::GFX_TEXTURE_FILTER_LINEAR,
+    .wrap_mode    = nikol::GFX_TEXTURE_WRAP_REPEAT,
     .data     = &pixels,
   };
   nikol::GfxTexture* white_texture = nikol::gfx_texture_create(texture);

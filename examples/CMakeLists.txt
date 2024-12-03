@@ -5,6 +5,7 @@ project(NikolExamples)
 ############################################################
 set(CMAKE_BUILD_TYPE DEBUG)
 set(CMAKE_PREFIX_PATH ../build/)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 ############################################################
 
 ### Libraries ###
@@ -26,7 +27,7 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 
 ### Linking ###
 ############################################################
-target_include_directories(${PROJECT_NAME} PUBLIC BEFORE ../)
+target_include_directories(${PROJECT_NAME} PUBLIC BEFORE ../ ../libs/glm/)
 target_link_libraries(${PROJECT_NAME} PUBLIC ${NikolCore})
 ############################################################
 

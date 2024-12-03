@@ -1041,16 +1041,24 @@ const sizei LAYOUT_ELEMENTS_MAX = 32;
 /// GfxContextFlags
 enum GfxContextFlags {
   /// Enable the depth testing pass. This is enabled by default.
-  GFX_FLAGS_DEPTH   = 2 << 0, 
+  GFX_FLAGS_DEPTH    = 2 << 0, 
   
   /// Enable the stencil testing pass. This is enabled by default.
-  GFX_FLAGS_STENCIL = 2 << 1, 
+  GFX_FLAGS_STENCIL  = 2 << 1, 
   
   /// Enable blending. This is disabled by default.
-  GFX_FLAGS_BLEND   = 2 << 2, 
+  GFX_FLAGS_BLEND    = 2 << 2, 
   
   /// Enable multisampling. This is disabled by default.
-  GFX_FLAGS_MSAA    = 2 << 3, 
+  GFX_FLAGS_MSAA     = 2 << 3, 
+  
+  /// Clockwise culling order. 
+  /// NOTE: Culling is disabled by default.
+  GFX_FLAGS_CULL_CW  = 2 << 4,
+
+  /// Counter-Clockwise culling order. 
+  /// NOTE: Culling is disabled by default.
+  GFX_FLAGS_CULL_CCW = 2 << 5, 
 };
 /// GfxContextFlags
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1060,26 +1068,39 @@ enum GfxContextFlags {
 enum GfxBufferType {
   GFX_BUFFER_VERTEX = 3 << 0, 
   GFX_BUFFER_INDEX  = 3 << 1, 
-  
-  // TODO: Add more
 };
 /// GfxBufferType
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// GfxBufferUsage
+enum GfxBufferUsage {
+  GFX_BUFFER_USAGE_DYNAMIC_COPY = 4 << 0,
+  GFX_BUFFER_USAGE_DYNAMIC_DRAW = 4 << 1,
+  GFX_BUFFER_USAGE_DYNAMIC_READ = 4 << 2,
+  
+  GFX_BUFFER_USAGE_STATIC_COPY = 4 << 3,
+  GFX_BUFFER_USAGE_STATIC_DRAW = 4 << 4,
+  GFX_BUFFER_USAGE_STATIC_READ = 4 << 5,
+  
+  GFX_BUFFER_USAGE_STREAM_COPY = 4 << 6,
+  GFX_BUFFER_USAGE_STREAM_DRAW = 4 << 7,
+  GFX_BUFFER_USAGE_STREAM_READ = 4 << 8,
+};
+/// GfxBufferUsage
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// GfxBufferMode
 enum GfxBufferMode {
-  GFX_BUFFER_MODE_DYNAMIC_COPY = 4 << 0,
-  GFX_BUFFER_MODE_DYNAMIC_DRAW = 4 << 1,
-  GFX_BUFFER_MODE_DYNAMIC_READ = 4 << 2,
+  GFX_BUFFER_MODE_POINT          = 5 << 0,
   
-  GFX_BUFFER_MODE_STATIC_COPY = 4 << 3,
-  GFX_BUFFER_MODE_STATIC_DRAW = 4 << 4,
-  GFX_BUFFER_MODE_STATIC_READ = 4 << 5,
+  GFX_BUFFER_MODE_TRIANGLE       = 5 << 1,
+  GFX_BUFFER_MODE_TRIANGLE_STRIP = 5 << 2,
+  GFX_BUFFER_MODE_TRIANGLE_FAN   = 5 << 3,
   
-  GFX_BUFFER_MODE_STREAM_COPY = 4 << 6,
-  GFX_BUFFER_MODE_STREAM_DRAW = 4 << 7,
-  GFX_BUFFER_MODE_STREAM_READ = 4 << 8,
+  GFX_BUFFER_MODE_LINE           = 5 << 4,
+  GFX_BUFFER_MODE_LINE_STRIP     = 5 << 5,
 };
 /// GfxBufferMode
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1087,22 +1108,84 @@ enum GfxBufferMode {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxBufferLayout
 enum GfxBufferLayout {
-  GFX_LAYOUT_FLOAT1 = 5 << 0,
-  GFX_LAYOUT_FLOAT2 = 5 << 1,
-  GFX_LAYOUT_FLOAT3 = 5 << 2,
-  GFX_LAYOUT_FLOAT4 = 5 << 3,
+  GFX_LAYOUT_FLOAT1 = 6 << 0,
+  GFX_LAYOUT_FLOAT2 = 6 << 1,
+  GFX_LAYOUT_FLOAT3 = 6 << 2,
+  GFX_LAYOUT_FLOAT4 = 6 << 3,
   
-  GFX_LAYOUT_INT1 = 5 << 4,
-  GFX_LAYOUT_INT2 = 5 << 5,
-  GFX_LAYOUT_INT3 = 5 << 6,
-  GFX_LAYOUT_INT4 = 5 << 7,
+  GFX_LAYOUT_INT1 = 6 << 4,
+  GFX_LAYOUT_INT2 = 6 << 5,
+  GFX_LAYOUT_INT3 = 6 << 6,
+  GFX_LAYOUT_INT4 = 6 << 7,
   
-  GFX_LAYOUT_UINT1 = 5 << 8,
-  GFX_LAYOUT_UINT2 = 5 << 9,
-  GFX_LAYOUT_UINT3 = 5 << 10,
-  GFX_LAYOUT_UINT4 = 5 << 11,
+  GFX_LAYOUT_UINT1 = 6 << 8,
+  GFX_LAYOUT_UINT2 = 6 << 9,
+  GFX_LAYOUT_UINT3 = 6 << 10,
+  GFX_LAYOUT_UINT4 = 6 << 11,
 };
 /// GfxBufferLayout
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxUniformType
+enum GfxUniformType {
+  GFX_UNIFORM_TYPE_FLOAT  = 7 << 0, 
+  GFX_UNIFORM_TYPE_DOUBLE = 7 << 1, 
+  
+  GFX_UNIFORM_TYPE_INT  = 7 << 2, 
+  GFX_UNIFORM_TYPE_UINT = 7 << 3, 
+  
+  GFX_UNIFORM_TYPE_VEC2 = 7 << 4, 
+  GFX_UNIFORM_TYPE_VEC3 = 7 << 5, 
+  GFX_UNIFORM_TYPE_VEC4 = 7 << 6, 
+  
+  GFX_UNIFORM_TYPE_MAT2 = 7 << 7, 
+  GFX_UNIFORM_TYPE_MAT3 = 7 << 8, 
+  GFX_UNIFORM_TYPE_MAT4 = 7 << 9, 
+};
+/// GfxUniformType
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxTextureFormat
+enum GfxTextureFormat {
+  GFX_TEXTURE_FORMAT_R8     = 8 << 0,
+  GFX_TEXTURE_FORMAT_R16    = 8 << 1,
+
+  GFX_TEXTURE_FORMAT_RG8     = 8 << 2,
+  GFX_TEXTURE_FORMAT_RG16    = 8 << 3,
+  
+  GFX_TEXTURE_FORMAT_RGB8    = 8 << 4,
+  GFX_TEXTURE_FORMAT_RGB16   = 8 << 5,
+  
+  GFX_TEXTURE_FORMAT_RGBA8   = 8 << 6,
+  GFX_TEXTURE_FORMAT_RGBA16  = 8 << 7,
+};
+/// GfxTextureFromat
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxTextureFilter
+enum GfxTextureFilter {
+  GFX_TEXTURE_FILTER_NEAREST   = 9 << 0,
+  GFX_TEXTURE_FILTER_LINEAR    = 9 << 1,
+
+  /// Uses the two closest mipmaps and gets the weighted average of 
+  /// the sampled texels as the result.
+  GFX_TEXTURE_FILTER_TRILINEAR = 9 << 2,
+};
+/// GfxTextureFilter
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxTextureWrap
+enum GfxTextureWrap {
+  GFX_TEXTURE_WRAP_REPEAT       = 10 << 0, 
+  GFX_TEXTURE_WRAP_MIRROR       = 10 << 1, 
+  GFX_TEXTURE_WRAP_CLAMP        = 10 << 2, 
+  GFX_TEXTURE_WRAP_BORDER_COLOR = 10 << 3,
+};
+/// GfxTextureWrap
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1112,35 +1195,35 @@ struct GfxContext;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// GfxShader
+struct GfxShader;
+/// GfxShader
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxTexture
+struct GfxTexture;
+/// GfxTexture
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxPipeline
+struct GfxPipeline;
+/// GfxPipeline
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// GfxBufferDesc
 struct GfxBufferDesc {
   void* data = nullptr; 
   sizei size;
   u32 elements_count;
+
   GfxBufferType type;  
-  GfxBufferMode mode;
+  GfxBufferUsage usage;
+  GfxBufferMode draw_mode;
 };
 /// GfxBufferDesc
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// GfxUniformType
-enum GfxUniformType {
-  GFX_UNIFORM_TYPE_FLOAT  = 6 << 0, 
-  GFX_UNIFORM_TYPE_DOUBLE = 6 << 1, 
-  
-  GFX_UNIFORM_TYPE_INT  = 6 << 2, 
-  GFX_UNIFORM_TYPE_UINT = 6 << 3, 
-  
-  GFX_UNIFORM_TYPE_VEC2 = 6 << 4, 
-  GFX_UNIFORM_TYPE_VEC3 = 6 << 5, 
-  GFX_UNIFORM_TYPE_VEC4 = 6 << 6, 
-  
-  GFX_UNIFORM_TYPE_MAT2 = 6 << 7, 
-  GFX_UNIFORM_TYPE_MAT3 = 6 << 8, 
-  GFX_UNIFORM_TYPE_MAT4 = 6 << 9, 
-};
-/// GfxUniformType
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1155,53 +1238,18 @@ struct GfxUniformDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// GfxShader
-struct GfxShader;
-/// GfxShader
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// GfxTextureFormat
-enum GfxTextureFormat {
-  GFX_TEXTURE_FORMAT_RED  = 7 << 0,
-  GFX_TEXTURE_FORMAT_RG   = 7 << 1,
-  GFX_TEXTURE_FORMAT_RGB  = 7 << 2,
-  GFX_TEXTURE_FORMAT_RGBA = 7 << 3,
-  
-  // TODO: Add more
-};
-/// GfxTextureFromat
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// GfxTextureFilter
-enum GfxTextureFilter {
-  GFX_TEXTURE_FILTER_LINEAR    = 8 << 0,
-  GFX_TEXTURE_FILTER_NEAREST   = 8 << 1,
-
-  // TODO: Add more
-};
-/// GfxTextureFilter
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
 /// GfxTextureDesc
 struct GfxTextureDesc {
   i32 width, height; 
   i32 channels, depth; 
 
   GfxTextureFormat format;
-  GfxTextureFilter filter;
-  
+  GfxTextureFilter min_filter, mag_filter;
+  GfxTextureWrap wrap_mode;
+
   void* data;
 };
 /// GfxTextureDesc
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// GfxTexture
-struct GfxTexture;
-/// GfxTexture
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1222,12 +1270,6 @@ struct GfxPipelineDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// GfxPipeline
-struct GfxPipeline;
-/// GfxPipeline
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
 /// Context functions 
 
 /// initialize the `GfxContext` struct and return it. 
@@ -1237,10 +1279,12 @@ struct GfxPipeline;
 /// context for rendering.
 ///
 /// `flags`:
-/// `GFX_FLAGS_DEPTH`   = Enable the depth testing pass. This is enabled by default.
-/// `GFX_FLAGS_STENCIL` = Enable the stencil testing pass. This is enabled by default.
-/// `GFX_FLAGS_BLEND`   = Enable blending. This is disabled by default.
-/// `GFX_FLAGS_MSAA`    = Enable multisampling. This is disabled by default.
+/// `GFX_FLAGS_DEPTH`    = Enable the depth testing pass. This is enabled by default.
+/// `GFX_FLAGS_STENCIL`  = Enable the stencil testing pass. This is enabled by default.
+/// `GFX_FLAGS_BLEND`    = Enable blending. This is disabled by default.
+/// `GFX_FLAGS_MSAA`     = Enable multisampling. This is disabled by default.
+/// `GFX_FLAGS_CULL_CW`  = Clockwise culling order. This is selected by default. 
+/// `GFX_FLAGS_CULL_CCW` = Counter-Clockwise culling order. 
 /// 
 /// NOTE: Later on, with any function, if an instance of `GfxContext` 
 /// is passed as a `nullptr`, the function will assert. 

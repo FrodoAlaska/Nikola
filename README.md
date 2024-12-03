@@ -4,7 +4,7 @@ A cross-platform framework for window creation, input handling, and rendering us
 # Features 
 - Cross-platform window creation. 
 - Gamepad, keyboard, and mouse input support.
-- Cross-platform rendering API using OpenGL (Linux) and DirectX11 (Windows).
+- Fully-configurable cross-platform rendering API using OpenGL (Linux) and DirectX11 (Windows).
 - Fully-integrated math library using GLM.
 
 # Dependencies

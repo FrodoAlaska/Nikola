@@ -1,4 +1,4 @@
-#include "../nikol_core.h"
+#include "../nikol_core.hpp"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -128,28 +128,57 @@ static void set_gfx_flags(GfxContext* gfx) {
   if((gfx->flags & GFX_FLAGS_MSAA) == GFX_FLAGS_MSAA) {
     glEnable(GL_MULTISAMPLE);
   }
+
+  if((gfx->flags & GFX_FLAGS_CULL_CW) == GFX_FLAGS_CULL_CW) {
+    glEnable(GL_CULL_FACE);
+    glFrontFace(GL_CW);
+  }
+  
+  if((gfx->flags & GFX_FLAGS_CULL_CCW) == GFX_FLAGS_CULL_CCW) {
+    glEnable(GL_CULL_FACE);
+    glFrontFace(GL_CCW);
+  }
+}
+
+static GLenum get_buffer_usage(const GfxBufferUsage usage) {
+  switch(usage) {
+    case GFX_BUFFER_USAGE_DYNAMIC_COPY:
+      return GL_DYNAMIC_COPY;
+    case GFX_BUFFER_USAGE_DYNAMIC_DRAW:
+      return GL_DYNAMIC_DRAW;
+    case GFX_BUFFER_USAGE_DYNAMIC_READ:
+      return GL_DYNAMIC_READ;
+    case GFX_BUFFER_USAGE_STATIC_COPY:
+      return GL_STATIC_COPY;
+    case GFX_BUFFER_USAGE_STATIC_DRAW:
+      return GL_STATIC_DRAW;
+    case GFX_BUFFER_USAGE_STATIC_READ:
+      return GL_STATIC_READ;
+    case GFX_BUFFER_USAGE_STREAM_COPY:
+      return GL_STREAM_COPY;
+    case GFX_BUFFER_USAGE_STREAM_DRAW:
+      return GL_STREAM_DRAW;
+    case GFX_BUFFER_USAGE_STREAM_READ:
+      return GL_STREAM_READ;
+    default:
+      return 0;
+  }
 }
 
 static GLenum get_buffer_mode(const GfxBufferMode mode) {
   switch(mode) {
-    case GFX_BUFFER_MODE_DYNAMIC_COPY:
-      return GL_DYNAMIC_COPY;
-    case GFX_BUFFER_MODE_DYNAMIC_DRAW:
-      return GL_DYNAMIC_DRAW;
-    case GFX_BUFFER_MODE_DYNAMIC_READ:
-      return GL_DYNAMIC_READ;
-    case GFX_BUFFER_MODE_STATIC_COPY:
-      return GL_STATIC_COPY;
-    case GFX_BUFFER_MODE_STATIC_DRAW:
-      return GL_STATIC_DRAW;
-    case GFX_BUFFER_MODE_STATIC_READ:
-      return GL_STATIC_READ;
-    case GFX_BUFFER_MODE_STREAM_COPY:
-      return GL_STREAM_COPY;
-    case GFX_BUFFER_MODE_STREAM_DRAW:
-      return GL_STREAM_DRAW;
-    case GFX_BUFFER_MODE_STREAM_READ:
-      return GL_STREAM_READ;
+    case GFX_BUFFER_MODE_POINT:
+      return GL_POINTS;
+    case GFX_BUFFER_MODE_TRIANGLE:
+      return GL_TRIANGLES;
+    case GFX_BUFFER_MODE_TRIANGLE_STRIP:
+      return GL_TRIANGLE_STRIP;
+    case GFX_BUFFER_MODE_TRIANGLE_FAN:
+      return GL_TRIANGLE_FAN;
+    case GFX_BUFFER_MODE_LINE:
+      return GL_LINES;
+    case GFX_BUFFER_MODE_LINE_STRIP:
+      return GL_LINE_STRIP;
     default:
       return 0;
   }
@@ -315,14 +344,22 @@ static void check_shader_linker_error(const GfxShader* shader) {
 
 static GLenum get_texture_format(const GfxTextureFormat format) {
   switch(format) {
-    case GFX_TEXTURE_FORMAT_RED:
-      return GL_RED;
-    case GFX_TEXTURE_FORMAT_RG:
-      return GL_RG;
-    case GFX_TEXTURE_FORMAT_RGB:
-      return GL_RGB;
-    case GFX_TEXTURE_FORMAT_RGBA:
-      return GL_RGBA;
+    case GFX_TEXTURE_FORMAT_R8:
+      return GL_R8;
+    case GFX_TEXTURE_FORMAT_R16:
+      return GL_R16;
+    case GFX_TEXTURE_FORMAT_RG8:
+      return GL_RG8;
+    case GFX_TEXTURE_FORMAT_RG16:
+      return GL_RG16;
+    case GFX_TEXTURE_FORMAT_RGB8:
+      return GL_RGB8;
+    case GFX_TEXTURE_FORMAT_RGB16:
+      return GL_RGB16;
+    case GFX_TEXTURE_FORMAT_RGBA8:
+      return GL_RGBA8;
+    case GFX_TEXTURE_FORMAT_RGBA16:
+      return GL_RGBA16;
     default:
       return 0;
   }
@@ -334,6 +371,23 @@ static GLenum get_texture_filter(const GfxTextureFilter filter) {
       return GL_LINEAR;
     case GFX_TEXTURE_FILTER_NEAREST:
       return GL_NEAREST;
+    case GFX_TEXTURE_FILTER_TRILINEAR:
+      return GL_LINEAR_MIPMAP_LINEAR;
+    default:
+      return 0;
+  }
+}
+
+static GLenum get_texture_wrap(const GfxTextureWrap wrap) {
+  switch(wrap) {
+    case GFX_TEXTURE_WRAP_REPEAT: 
+      return GL_REPEAT;
+    case GFX_TEXTURE_WRAP_MIRROR: 
+      return GL_MIRRORED_REPEAT;
+    case GFX_TEXTURE_WRAP_CLAMP: 
+      return GL_CLAMP_TO_EDGE;
+    case GFX_TEXTURE_WRAP_BORDER_COLOR:
+      return GL_CLAMP_TO_BORDER;
     default:
       return 0;
   }
@@ -357,10 +411,10 @@ static void set_buffer_layout(const GfxBufferDesc* buff, const GfxBufferLayout* 
   }
 }
 
-static bool is_buffer_dynamic(const GfxBufferMode& mode) {
-  return mode == GFX_BUFFER_MODE_DYNAMIC_DRAW || 
-         mode == GFX_BUFFER_MODE_DYNAMIC_COPY || 
-         mode == GFX_BUFFER_MODE_DYNAMIC_READ;
+static bool is_buffer_dynamic(const GfxBufferUsage& usage) {
+  return usage == GFX_BUFFER_USAGE_DYNAMIC_DRAW || 
+         usage == GFX_BUFFER_USAGE_DYNAMIC_COPY || 
+         usage == GFX_BUFFER_USAGE_DYNAMIC_READ;
 }
 
 /// Private functions 
@@ -472,7 +526,6 @@ GfxShader* gfx_shader_create(const i8* src) {
   glDeleteShader(shader->vert_id);
   glDeleteShader(shader->frag_id);
 
-  // // We don't need the strings anymore
   return shader;
 }
 
@@ -490,8 +543,10 @@ GfxTexture* gfx_texture_create(const GfxTextureDesc& desc) {
   GfxTexture* texture = (GfxTexture*)memory_allocate(sizeof(GfxTexture));
   memory_zero(texture, sizeof(GfxTexture));
   
-  GLenum gl_tex_format    = get_texture_format(desc.format);
-  GLenum gl_filter_format = get_texture_filter(desc.filter);
+  GLenum gl_tex_format        = get_texture_format(desc.format);
+  GLenum gl_min_filter_format = get_texture_filter(desc.min_filter);
+  GLenum gl_mag_filter_format = get_texture_filter(desc.mag_filter);
+  GLenum gl_wrap_format       = get_texture_wrap(desc.wrap_mode);
 
   glGenTextures(1, &texture->id);
   glBindTexture(GL_TEXTURE_2D, texture->id);
@@ -507,10 +562,10 @@ GfxTexture* gfx_texture_create(const GfxTextureDesc& desc) {
                desc.data);
   glGenerateMipmap(GL_TEXTURE_2D);
 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_format);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_format);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, gl_wrap_format);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, gl_wrap_format);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_min_filter_format);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_mag_filter_format);
 
   return texture;
 }
@@ -526,9 +581,11 @@ void gfx_texture_destroy(GfxTexture* texture) {
 void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc) {
   glBindTexture(GL_TEXTURE_2D, texture->id);
   
-  GLenum gl_tex_format    = get_texture_format(desc.format);
-  GLenum gl_filter_format = get_texture_filter(desc.filter);
-  
+  GLenum gl_tex_format        = get_texture_format(desc.format);
+  GLenum gl_min_filter_format = get_texture_filter(desc.min_filter);
+  GLenum gl_mag_filter_format = get_texture_filter(desc.mag_filter);
+  GLenum gl_wrap_format       = get_texture_wrap(desc.wrap_mode);
+
   glTexImage2D(GL_TEXTURE_2D,
                desc.depth, 
                gl_tex_format,
@@ -540,10 +597,10 @@ void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc) {
                desc.data);
   glGenerateMipmap(GL_TEXTURE_2D);
 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_format);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_format);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, gl_wrap_format);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, gl_wrap_format);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_min_filter_format);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_mag_filter_format);
 }
 
 const i32 gfx_shader_get_uniform_location(GfxShader* shader, const i8* uniform_name) {
@@ -627,7 +684,7 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc) {
 
   // VBO init
   if(desc.vertex_buffer) {
-    GLenum gl_buffer_mode = get_buffer_mode(desc.vertex_buffer->mode);
+    GLenum gl_buffer_mode = get_buffer_usage(desc.vertex_buffer->usage);
 
     glGenBuffers(1, &pipe->vertex_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, pipe->vertex_buffer);
@@ -639,7 +696,7 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc) {
 
   // EBO init
   if(desc.index_buffer) {
-    GLenum gl_buffer_mode = get_buffer_mode(desc.index_buffer->mode);
+    GLenum gl_buffer_mode = get_buffer_usage(desc.index_buffer->usage);
     
     glGenBuffers(1, &pipe->index_buffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pipe->index_buffer);
@@ -704,15 +761,16 @@ void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline, const GfxP
   }
 
   // The buffer data will be re-sumbitted if the buffer is dynamic 
-  if(is_buffer_dynamic(desc->vertex_buffer->mode)) {
-    GLenum gl_buffer_mode = get_buffer_mode(desc->vertex_buffer->mode);
+  if(is_buffer_dynamic(desc->vertex_buffer->usage)) {
+    GLenum gl_buffer_mode = get_buffer_usage(desc->vertex_buffer->usage);
     
     glBindBuffer(GL_ARRAY_BUFFER, pipeline->vertex_buffer);
     glBufferData(GL_ARRAY_BUFFER, desc->vertex_buffer->size, desc->vertex_buffer->data, gl_buffer_mode);
   }
 
   // Draw the vertices
-  glDrawArrays(GL_TRIANGLES, 0, desc->vertex_buffer->elements_count);
+  GLenum draw_mode = get_buffer_mode(desc->vertex_buffer->draw_mode); 
+  glDrawArrays(draw_mode, 0, desc->vertex_buffer->elements_count);
 }
 
 void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc* desc) {
@@ -731,23 +789,24 @@ void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline, const GfxPi
   }
   
   // The buffer data will be re-sumbitted if the buffer is dynamic 
-  if(is_buffer_dynamic(desc->index_buffer->mode)) {
-    GLenum gl_buffer_mode = get_buffer_mode(desc->index_buffer->mode);
+  if(is_buffer_dynamic(desc->index_buffer->usage)) {
+    GLenum gl_buffer_mode = get_buffer_usage(desc->index_buffer->usage);
     
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pipeline->index_buffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, desc->index_buffer->size, desc->index_buffer->data, gl_buffer_mode);
   }
 
   // Do the same thing with the vertex buffer 
-  if(is_buffer_dynamic(desc->vertex_buffer->mode)) {
-    GLenum gl_buffer_mode = get_buffer_mode(desc->vertex_buffer->mode);
+  if(is_buffer_dynamic(desc->vertex_buffer->usage)) {
+    GLenum gl_buffer_mode = get_buffer_usage(desc->vertex_buffer->usage);
     
     glBindBuffer(GL_ARRAY_BUFFER, pipeline->vertex_buffer);
     glBufferData(GL_ARRAY_BUFFER, desc->vertex_buffer->size, desc->vertex_buffer->data, gl_buffer_mode);
   }
 
   // Draw with the indices
-  glDrawElements(GL_TRIANGLES, desc->index_buffer->elements_count, GL_UNSIGNED_INT, 0);
+  GLenum draw_mode = get_buffer_mode(desc->index_buffer->draw_mode); 
+  glDrawElements(draw_mode, desc->index_buffer->elements_count, GL_UNSIGNED_INT, 0);
 }
 
 /// Pipeline functions 

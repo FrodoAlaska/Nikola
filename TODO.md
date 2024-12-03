@@ -1,7 +1,7 @@
 # URGENT TODO: 
+- Set up a DirectX backend
 - Meshes
 - Make a 3D example
-- Set up a DirectX backend
 
 # FUTURE TODO: 
 - Turn it into more of a library/engine
