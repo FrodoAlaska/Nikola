@@ -2,10 +2,15 @@
 A cross-platform framework for window creation, input handling, and rendering using OpenGL or DirectX11. 
 
 # Features 
+- Cross-platform window creation. 
+- Gamepad, keyboard, and mouse input support.
+- Cross-platform rendering API using OpenGL (Linux) and DirectX11 (Windows).
+- Fully-integrated math library using GLM.
 
 # Dependencies
 - GLFW3 
-- GLAD 
+- GLAD
+- GLM
 - D3D11
 
 # Build Instructions

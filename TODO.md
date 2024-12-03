@@ -7,9 +7,10 @@
 - Turn it into more of a library/engine
 - Include stb and such
 - Fonts 
+- Audio context and audio buffers
+- Get rid of GLFW and do it the old-fashioned way. Misery.
 - Resource manager and loaders for each resources
 - Scene manager
-- Audio context and audio buffers
 
 # EXAMPLES: 
 - A simple and small drawing app
