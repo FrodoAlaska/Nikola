@@ -1,3 +1,0 @@
-/home/mohamed/Dev/C++/NikolEngine/examples/build/CMakeFiles/NikolExamples.dir
-/home/mohamed/Dev/C++/NikolEngine/examples/build/CMakeFiles/edit_cache.dir
-/home/mohamed/Dev/C++/NikolEngine/examples/build/CMakeFiles/rebuild_cache.dir
