@@ -7,10 +7,26 @@ set(NIKOL_SRC_DIR src)
 set(NIKOL_LIBS_DIR libs)
 set(NIKOL_LIBRARIES glfw)
 
-set(NIKOL_BUILD_TYPE SHARED)
-set(NIKOL_BUILD_OPTS -lm -w -Wall)
+set(NIKOL_BUILD_TYPE STATIC)
+set(NIKOL_BUILD_OPTS -w -Wall)
 set(NIKOL_BUILD_DEFS GLFW_INCLUDE_NONE)
 set(NIKOL_BUILD_LIBS_DIR ${NIKOL_LIBS_DIR} ${NIKOL_LIBS_DIR}/GLFW/include ${NIKOL_SRC_DIR} ${NIKOL_LIBS_DIR}/glm/)
+############################################################
+
+### Project Options ###
+############################################################
+option(NIKOL_BUILD_SHARED "Build Nikol as a shared library" ON)
+option(NIKOL_BUILD_EXAMPLES "Build the examples with the library" ON)
+
+# Build the examples
+if(NIKOL_BUILD_EXAMPLES)
+  add_subdirectory(examples)
+endif()
+
+# Set it to shared
+if(NIKOL_BUILD_SHARED)
+  set(NIKOL_BUILD_TYPE SHARED)
+endif()
 ############################################################
 
 ### CMake Variables ###
@@ -40,10 +56,11 @@ set(NIKOL_SOURCES
   
   # Core/Gfx
   ${NIKOL_SRC_DIR}/core/gfx/gl_backend.cpp
+  ${NIKOL_SRC_DIR}/core/gfx/dx11_backend.cpp
 )
 
 set(NIKOL_HEADERS
-  ${CMAKE_SOURCE_DIR}/nikol_core.h
+  ${CMAKE_SOURCE_DIR}/nikol_core.hpp
 )
 ############################################################
 

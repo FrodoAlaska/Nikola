@@ -63,6 +63,7 @@ typedef double f64;
 #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
 #define NIKOL_PLATFORM_WINDOWS 1
 #define NIKOL_GFX_CONTEXT_DX11 1
+#define WIN32_LEAN_AND_MEAN
 #ifndef _WIN64 
 #error "[NIKOL-FATAL]: Only support 64-bit machines\n"
 #endif 
@@ -74,7 +75,7 @@ typedef double f64;
 #endif
 
 /// Win32 main entry
-#if NIKOL_PLATFORM_WINDOWS == 1 
+#if NIKOL_PLATFORM_WINDOWS == 1
 #define NIKOL_MAIN() WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdShow)
 
 /// Linux main entry
@@ -244,15 +245,15 @@ void logger_log(const LogLevel lvl, const i8* msg, ...);
 #ifdef NIKOL_ASSERTS_ENABLED
 
 // Debug break 
-#if _MSC_VERT
+#if NIKOL_PLATFORM_WINDOWS == 1
 
-/// Windows debug breal
+/// Windows debug break
 #include <intrin.h>
 #define DEBUG_BREAK() __debugbreak()
-/// Windows debug breal
+/// Windows debug break
 
 /// Linux debug break
-#else
+#elif NIKOL_PLATFORM_LINUX == 1
 #define DEBUG_BREAK() __builtin_trap()
 /// Linux debug break
 

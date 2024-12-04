@@ -4,13 +4,10 @@ project(NikolExamples)
 ### CMake Variables ###
 ############################################################
 set(CMAKE_BUILD_TYPE DEBUG)
-set(CMAKE_PREFIX_PATH ../build/)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 ############################################################
 
 ### Libraries ###
 ############################################################
-find_library(NikolCore NikolCore)
 ############################################################
 
 ### Project Sources ###
@@ -28,11 +25,13 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 ### Linking ###
 ############################################################
 target_include_directories(${PROJECT_NAME} PUBLIC BEFORE ../ ../libs/glm/)
-target_link_libraries(${PROJECT_NAME} PUBLIC ${NikolCore})
+
+## TODO: Need to fix. What the fuck?!!!
+target_link_libraries(${PROJECT_NAME} PUBLIC C:/Dev/C++/NikolCore/build/Debug/NikolCore.lib C:/Dev/C++/NikolCore/build/libs/glfw/src/Debug/glfw3.lib)
 ############################################################
 
 ### Compiling Options ###
 ############################################################
-target_compile_options(${PROJECT_NAME} PUBLIC -lm -Wall)
+target_compile_options(${PROJECT_NAME} PUBLIC -w -Wall)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 ############################################################
