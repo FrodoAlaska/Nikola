@@ -7,6 +7,7 @@
 - Make MSAA configurable
 
 # URGENT TODO: 
+<<<<<<< HEAD
 - Better vsync set up
 - Better buffer swap setup
 - Meshes

@@ -1,0 +1,8 @@
+[
+{
+  "directory": "/home/mohamed/Dev/C++/NikolEngine/examples/build",
+  "command": "/usr/bin/c++  -I/home/mohamed/Dev/C++/NikolEngine/examples/BEFORE -I/home/mohamed/Dev/C++/NikolEngine/examples/.. -I/home/mohamed/Dev/C++/NikolEngine/examples/../libs/glm -g -std=gnu++20 -lm -Wall -o CMakeFiles/NikolExamples.dir/src/gl_example.cpp.o -c /home/mohamed/Dev/C++/NikolEngine/examples/src/gl_example.cpp",
+  "file": "/home/mohamed/Dev/C++/NikolEngine/examples/src/gl_example.cpp",
+  "output": "CMakeFiles/NikolExamples.dir/src/gl_example.cpp.o"
+}
+]
