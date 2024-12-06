@@ -27,7 +27,7 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PUBLIC BEFORE ../ ../libs/glm/)
 
 ## TODO: Need to fix. What the fuck?!!!
-target_link_libraries(${PROJECT_NAME} PUBLIC C:/Dev/C++/NikolCore/build/Debug/NikolCore.lib C:/Dev/C++/NikolCore/build/libs/glfw/src/Debug/glfw3.lib)
+target_link_libraries(${PROJECT_NAME} PUBLIC /home/mohamed/Dev/C++/NikolCore/build/libNikolCore.so /home/mohamed/Dev/C++/NikolCore/build/libs/glfw/src/libglfw3.a)
 ############################################################
 
 ### Compiling Options ###

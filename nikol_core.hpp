@@ -944,6 +944,13 @@ const bool window_is_focused(Window* window);
 /// Returns `true` if the `window` context is currently shown
 const bool window_is_shown(Window* window);
 
+/// Return the platform-specific window handle.
+/// For example, this function will return `HWND` in a Windows enviornment.
+///
+/// NOTE: This function will return the native window handle as a pointer. 
+/// Defrefrence the returned pointer if it is to be used.
+void* window_get_native_handle(Window* window);
+
 /// Retrieve the current size of the `window` context
 void window_get_size(Window* window, i32* width, i32* height);
 
