@@ -455,7 +455,7 @@ GfxContext* gfx_context_init(Window* window, const i32 flags) {
   const u8* gl_version = glGetString(GL_VERSION);
   const u8* glsl_version = glGetString(GL_SHADING_LANGUAGE_VERSION);
 
-  NIKOL_LOG_INFO("A graphics context was successfully created:\n" 
+  NIKOL_LOG_INFO("An OpenGL graphics context was successfully created:\n" 
                  "              VENDOR: %s\n" 
                  "              RENDERER: %s\n" 
                  "              GL VERSION: %s\n" 
@@ -478,6 +478,10 @@ void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, c
 
   glClear(gfx->buffer_bits);
   glClearColor(r, g, b, a);
+}
+
+void gfx_context_present(GfxContext* gfx) {
+  // TODO:
 }
 
 void gfx_context_set_flag(GfxContext* gfx, const i32 flag, const bool value) {

@@ -1,5 +1,14 @@
+# DX11 TODO: 
+- Get the native window handle 
+- Test
+- Buffers and shaders 
+- Textures 
+- Enable Blending 
+- Make MSAA configurable
+
 # URGENT TODO: 
-- Set up a DirectX backend
+- Better vsync set up
+- Better buffer swap setup
 - Meshes
 - Make a 3D example
 

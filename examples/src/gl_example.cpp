@@ -2,7 +2,7 @@
 
 #include <windows.h>
 
-int NIKOL_MAIN() {
+int main() {
   // Initialze the library
   if(!nikol::init()) {
     return -1;

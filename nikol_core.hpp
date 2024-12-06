@@ -62,8 +62,8 @@ typedef double f64;
 /// Windows
 #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
 #define NIKOL_PLATFORM_WINDOWS 1
-#define NIKOL_GFX_CONTEXT_DX11 1
-#define WIN32_LEAN_AND_MEAN
+#define NIKOL_GFX_CONTEXT_DX11
+// #define WIN32_LEAN_AND_MEAN
 #ifndef _WIN64 
 #error "[NIKOL-FATAL]: Only support 64-bit machines\n"
 #endif 
@@ -1297,6 +1297,11 @@ void gfx_context_shutdown(GfxContext* gfx);
 
 /// Clear the buffers and set the clear color as `{r, g, b, a}`.
 void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a);
+
+/// Switch to the back buffer or, rather, present the back buffer. 
+/// 
+/// NOTE: This function will be effected by vsync. 
+void gfx_context_present(GfxContext* gfx);
 
 /// Set any `flag` of the context `gfx` to `value`. 
 void gfx_context_set_flag(GfxContext* gfx, const i32 flag, const bool value);
