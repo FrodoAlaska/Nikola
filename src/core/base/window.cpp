@@ -2,14 +2,23 @@
 
 #include <GLFW/glfw3.h>
 
+#if NIKOL_PLATFORM_WINDOWS == 1
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
+#elif NIKOL_PLATFORM_LINUX == 1
+#define GLFW_EXPOSE_NATIVE_X11
+#include <GLFW/glfw3native.h>
+#endif
+
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikol { // Start of nikol
 
 /// Window
 struct Window {
-  GLFWwindow* handle = nullptr;
-  GLFWcursor* cursor = nullptr;
+  GLFWwindow* handle  = nullptr;
+  GLFWcursor* cursor  = nullptr;
+  void* native_handle = nullptr;
 
   i32 width, height; 
   WindowFlags flags;
@@ -283,6 +292,14 @@ static void set_window_callbacks(Window* window) {
   // Nikol cursor show callback
   event_listen(EVENT_MOUSE_CURSOR_SHOWN, nikol_cursor_show_callback, window);
 }
+
+static void set_native_window_handle(Window* window) {
+#if NIKOL_PLATFORM_WINDOWS == 1
+  window->native_handle = (HWND*)glfwGetWin32Window(window->handle);
+#elif NIKOL_PLATFORM_LINUX == 1
+  window->native_handle = (Window*)glfwGetX11Window(window->handle);
+#endif
+}
 /// Private functions
 
 /// ---------------------------------------------------------------------
@@ -384,6 +401,10 @@ const bool window_is_focused(Window* window) {
 
 const bool window_is_shown(Window* window) {
   return glfwGetWindowAttrib(window->handle, GLFW_VISIBLE);
+}
+
+void* window_get_native_handle(Window* window) {
+  return window->native_handle;
 }
 
 void window_get_size(Window* window, i32* width, i32* height) {

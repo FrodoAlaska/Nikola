@@ -1,7 +1,5 @@
 #include <nikol_core.hpp>
 
-#include <windows.h>
-
 int main() {
   // Initialze the library
   if(!nikol::init()) {
