@@ -1,24 +1,18 @@
 # DX11 TODO: 
-- Get the native window handle 
-- Test
-- Get driver information
-- Buffers and shaders 
+- Uniform/constant buffers.
 - Textures 
 - Enable Blending 
-- Make MSAA configurable
 
 # URGENT TODO: 
+- Remove `NIKOL_MAIN`. That is more of an engine thing.
+- Put the "nikol_core.h" file in the "src" directory
 - A better and more configurable graphpics context -> better vsync set up, better buffer swap setup, etc.
-- Meshes
-- Make a 3D example
-- Fonts 
+- Better testing env
+- Audio context and audio buffers
 
 # FUTURE TODO: 
-- Include stb and such
-- Audio context and audio buffers
-- Get rid of GLFW and do it the old-fashioned way. Misery.
-- Resource manager and loaders for each resources
-- Scene manager
+- Get rid of GLFW and do it the old-fashioned way? Misery.
+- Rename the whole repo to "Nikol" or "NikolLib" or "NikolEngine" instead of just "NikolCore".
 
 # EXAMPLES: 
 - A simple and small drawing app
@@ -28,4 +22,11 @@
 - Enabling the depth and stencil tests and configuring their functions 
 - Enabling blending and configuring its function 
 - Enabling culling and configuring its function and if it should cull from the back or front face 
-- Enabling VSYNC from the context instead of the window
+
+# Engine TODO:
+- Meshes
+- Make a 3D example
+- Fonts 
+- NUSL -> Nikol Uniform Shading Language
+- Resource manager and loaders for each resources
+- Scene manager

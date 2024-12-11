@@ -142,24 +142,14 @@ static void set_gfx_flags(GfxContext* gfx) {
 
 static GLenum get_buffer_usage(const GfxBufferUsage usage) {
   switch(usage) {
-    case GFX_BUFFER_USAGE_DYNAMIC_COPY:
-      return GL_DYNAMIC_COPY;
     case GFX_BUFFER_USAGE_DYNAMIC_DRAW:
       return GL_DYNAMIC_DRAW;
     case GFX_BUFFER_USAGE_DYNAMIC_READ:
       return GL_DYNAMIC_READ;
-    case GFX_BUFFER_USAGE_STATIC_COPY:
-      return GL_STATIC_COPY;
     case GFX_BUFFER_USAGE_STATIC_DRAW:
       return GL_STATIC_DRAW;
     case GFX_BUFFER_USAGE_STATIC_READ:
       return GL_STATIC_READ;
-    case GFX_BUFFER_USAGE_STREAM_COPY:
-      return GL_STREAM_COPY;
-    case GFX_BUFFER_USAGE_STREAM_DRAW:
-      return GL_STREAM_DRAW;
-    case GFX_BUFFER_USAGE_STREAM_READ:
-      return GL_STREAM_READ;
     default:
       return 0;
   }
@@ -538,12 +528,14 @@ void gfx_shader_destroy(GfxShader* shader) {
     return;
   }
  
-  memory_free(shader->vert_src);
-  memory_free(shader->frag_src);
-  memory_free(shader);
+  memory_free(pipeline->shader->vert_src);
+  memory_free(pipeline->shader->frag_src);
+  glDeleteProgram(pipeline->shader->id);
+
+  memeory_free(shader);
 }
 
-GfxTexture* gfx_texture_create(const GfxTextureDesc& desc) {
+GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   GfxTexture* texture = (GfxTexture*)memory_allocate(sizeof(GfxTexture));
   memory_zero(texture, sizeof(GfxTexture));
   
@@ -582,7 +574,7 @@ void gfx_texture_destroy(GfxTexture* texture) {
   memory_free(texture);
 }
 
-void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc) {
+void gfx_texture_update(GfxContext* gfx, GfxTexture* texture, const GfxTextureDesc& desc) {
   glBindTexture(GL_TEXTURE_2D, texture->id);
   
   GLenum gl_tex_format        = get_texture_format(desc.format);
@@ -607,7 +599,7 @@ void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_mag_filter_format);
 }
 
-const i32 gfx_shader_get_uniform_location(GfxShader* shader, const i8* uniform_name) {
+const i32 gfx_shader_get_uniform_location(GfxContext* gfx, GfxShader* shader, const i8* uniform_name) {
   i32 loc = 0; 
 
   loc = glGetUniformLocation(shader->id, uniform_name);
@@ -618,7 +610,11 @@ const i32 gfx_shader_get_uniform_location(GfxShader* shader, const i8* uniform_n
   return loc;
 }
 
-void gfx_shader_upload_uniform(GfxShader* shader, const GfxUniformDesc& desc) {
+void gfx_shader_destroy(GfxShader* shader) {
+  // @TODO:
+}
+
+void gfx_shader_upload_uniform_batch(GfxContext* gfx, GfxShader* shader, const GfxUniformDesc& desc, const sizei count) {
   NIKOL_ASSERT(shader, "Invalid GfxShader struct passed"); 
 
   // Will not waste time on an invalid uniform location 
@@ -630,44 +626,42 @@ void gfx_shader_upload_uniform(GfxShader* shader, const GfxUniformDesc& desc) {
 
   switch(desc.type) {
     case GFX_UNIFORM_TYPE_FLOAT: 
-      glUniform1fv(desc.location, desc.count, (f32*)desc.data);
+      glUniform1fv(desc.location, count, (f32*)desc.data);
     break;  
     case GFX_UNIFORM_TYPE_DOUBLE: 
-      glUniform1dv(desc.location, desc.count, (f64*)desc.data);
+      glUniform1dv(desc.location, count, (f64*)desc.data);
     break;
     case GFX_UNIFORM_TYPE_INT: 
-      glUniform1iv(desc.location, desc.count, (i32*)desc.data);
+      glUniform1iv(desc.location, count, (i32*)desc.data);
     break;
     case GFX_UNIFORM_TYPE_UINT: 
-      glUniform1uiv(desc.location, desc.count, (u32*)desc.data);
+      glUniform1uiv(desc.location, count, (u32*)desc.data);
     break;
     case GFX_UNIFORM_TYPE_VEC2: 
-      glUniform2fv(desc.location, desc.count, (f32*)desc.data);
+      glUniform2fv(desc.location, count, (f32*)desc.data);
     break;
     case GFX_UNIFORM_TYPE_VEC3: 
-      glUniform3fv(desc.location, desc.count, (f32*)desc.data);
+      glUniform3fv(desc.location, count, (f32*)desc.data);
     break;
     case GFX_UNIFORM_TYPE_VEC4: 
-      glUniform4fv(desc.location, desc.count, (f32*)desc.data);
+      glUniform4fv(desc.location, count, (f32*)desc.data);
     break;
     case GFX_UNIFORM_TYPE_MAT2: 
-      glUniformMatrix2fv(desc.location, desc.count, false, (f32*)desc.data);
+      glUniformMatrix2fv(desc.location, count, false, (f32*)desc.data);
     break;
     case GFX_UNIFORM_TYPE_MAT3: 
-      glUniformMatrix3fv(desc.location, desc.count, false, (f32*)desc.data);
+      glUniformMatrix3fv(desc.location, count, false, (f32*)desc.data);
     break;
     case GFX_UNIFORM_TYPE_MAT4: 
-      glUniformMatrix4fv(desc.location, desc.count, false, (f32*)desc.data);
+      glUniformMatrix4fv(desc.location, count, false, (f32*)desc.data);
     break;
   }
 
   gl_check_error("glUniform");
 }
 
-void gfx_shader_upload_uniform_batch(GfxShader* shader, const GfxUniformDesc* descs, const sizei count) {
-  for(sizei i = 0; i < count; i++) {
-    gfx_shader_upload_uniform(shader, descs[i]);
-  }
+void gfx_shader_upload_uniform(GfxContext* gfx, GfxShader* shader, const GfxUniformDesc& desc) {
+  gfx_shader_upload_uniform_batch(gfx, shader, desc, 1);
 }
 
 /// Shader functions 
@@ -728,12 +722,9 @@ void gfx_pipeline_destroy(GfxPipeline* pipeline) {
   glDeleteBuffers(1, &pipeline->index_buffer);
   glDeleteVertexArrays(1, &pipeline->vertex_array);
 
-  // Deleting the shader
-  memory_free(pipeline->shader->vert_src);
-  memory_free(pipeline->shader->frag_src);
-  glDeleteProgram(pipeline->shader->id);
-  memory_free(pipeline->shader);
-  
+  // Destroying the shader
+  gfx_shader_destroy(pipeline->shader);
+
   memory_free(pipeline);
 }
 

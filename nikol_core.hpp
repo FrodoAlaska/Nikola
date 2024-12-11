@@ -63,7 +63,7 @@ typedef double f64;
 #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
 #define NIKOL_PLATFORM_WINDOWS 1
 #define NIKOL_GFX_CONTEXT_DX11
-// #define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 #ifndef _WIN64 
 #error "[NIKOL-FATAL]: Only support 64-bit machines\n"
 #endif 
@@ -76,7 +76,7 @@ typedef double f64;
 
 /// Win32 main entry
 #if NIKOL_PLATFORM_WINDOWS == 1
-#define NIKOL_MAIN() WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdShow)
+#define NIKOL_MAIN() WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 
 /// Linux main entry
 #elif NIKOL_PLATFORM_LINUX == 1 
@@ -889,9 +889,6 @@ enum WindowFlags {
   
   /// Set the graphics context to be software rendered
   WINDOW_FLAGS_GFX_SOFTWARE        = 1 << 11,
-
-  /// Disable VSYNC. By default it will be enabled. 
-  WINDOW_FLAGS_VSYNC_DISABLE       = 1 << 12,
 };
 /// WindowFlags
 ///---------------------------------------------------------------------------------------------------------------------
@@ -918,7 +915,6 @@ enum WindowFlags {
 ///   - `WINDOW_FLAGS_FULLSCREEN`          = Set the window to be fullscreen on creation. 
 ///   - `WINDOW_FLAGS_GFX_HARDWARE`        = Set the graphics context to be hardware accelerated (i.e either using OpenGL or DirectX).
 ///   - `WINDOW_FLAGS_GFX_SOFTWARE`        = Set the graphics context to be software rendered
-///   - `WINDOW_FLAGS_VSYNC_DISABLE`       = Disable VSYNC. By default it will be enabled.
 /// 
 Window* window_open(const i8* title, const i32 width, const i32 height, i32 flags);
 
@@ -974,9 +970,6 @@ void window_get_position(Window* window, i32* x, i32* y);
 
 /// Set the given `window` as the current active context
 void window_set_current_context(Window* window);
-
-/// Either disable or enable vsync (vertical synchronization) on the `window` context.
-void window_set_vsync(Window* window, const bool vsync);
 
 /// Either disable or enable fullscreen mode on the `window` context.
 void window_set_fullscreen(Window* window, const bool fullscreen);
@@ -1048,25 +1041,26 @@ const sizei LAYOUT_ELEMENTS_MAX = 32;
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxContextFlags
 enum GfxContextFlags {
-  /// Enable the depth testing pass. This is enabled by default.
-  GFX_FLAGS_DEPTH    = 2 << 0, 
+  /// Enable the depth testing pass.
+  GFX_FLAGS_DEPTH        = 2 << 0, 
   
-  /// Enable the stencil testing pass. This is enabled by default.
-  GFX_FLAGS_STENCIL  = 2 << 1, 
+  /// Enable the stencil testing pass. 
+  GFX_FLAGS_STENCIL      = 2 << 1, 
   
-  /// Enable blending. This is disabled by default.
-  GFX_FLAGS_BLEND    = 2 << 2, 
+  /// Enable blending.
+  GFX_FLAGS_BLEND        = 2 << 2, 
   
-  /// Enable multisampling. This is disabled by default.
-  GFX_FLAGS_MSAA     = 2 << 3, 
+  /// Enable multisampling. 
+  GFX_FLAGS_MSAA         = 2 << 3, 
   
   /// Clockwise culling order. 
-  /// NOTE: Culling is disabled by default.
-  GFX_FLAGS_CULL_CW  = 2 << 4,
+  GFX_FLAGS_CULL_CW      = 2 << 4,
 
   /// Counter-Clockwise culling order. 
-  /// NOTE: Culling is disabled by default.
-  GFX_FLAGS_CULL_CCW = 2 << 5, 
+  GFX_FLAGS_CULL_CCW     = 2 << 5, 
+
+  /// Enable vertical synchronization (VSYNC).
+  GFX_FLAGS_ENABLE_VSYNC = 2 << 6, 
 };
 /// GfxContextFlags
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1083,39 +1077,31 @@ enum GfxBufferType {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxBufferUsage
 enum GfxBufferUsage {
-  GFX_BUFFER_USAGE_DYNAMIC_COPY = 4 << 0,
-  GFX_BUFFER_USAGE_DYNAMIC_DRAW = 4 << 1,
-  GFX_BUFFER_USAGE_DYNAMIC_READ = 4 << 2,
+  GFX_BUFFER_USAGE_DYNAMIC_DRAW = 4 << 0,
+  GFX_BUFFER_USAGE_DYNAMIC_READ = 4 << 1,
   
-  GFX_BUFFER_USAGE_STATIC_COPY = 4 << 3,
-  GFX_BUFFER_USAGE_STATIC_DRAW = 4 << 4,
-  GFX_BUFFER_USAGE_STATIC_READ = 4 << 5,
-  
-  GFX_BUFFER_USAGE_STREAM_COPY = 4 << 6,
-  GFX_BUFFER_USAGE_STREAM_DRAW = 4 << 7,
-  GFX_BUFFER_USAGE_STREAM_READ = 4 << 8,
+  GFX_BUFFER_USAGE_STATIC_DRAW  = 4 << 2,
+  GFX_BUFFER_USAGE_STATIC_READ  = 4 << 3,
 };
 /// GfxBufferUsage
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// GfxBufferMode
-enum GfxBufferMode {
-  GFX_BUFFER_MODE_POINT          = 5 << 0,
-  
-  GFX_BUFFER_MODE_TRIANGLE       = 5 << 1,
-  GFX_BUFFER_MODE_TRIANGLE_STRIP = 5 << 2,
-  GFX_BUFFER_MODE_TRIANGLE_FAN   = 5 << 3,
-  
-  GFX_BUFFER_MODE_LINE           = 5 << 4,
-  GFX_BUFFER_MODE_LINE_STRIP     = 5 << 5,
+/// GfxDrawMode
+enum GfxDrawMode {
+  GFX_DRAW_MODE_POINT          = 5 << 0,
+  GFX_DRAW_MODE_TRIANGLE       = 5 << 1,
+  GFX_DRAW_MODE_TRIANGLE_STRIP = 5 << 2,
+  GFX_DRAW_MODE_TRIANGLE_FAN   = 5 << 3,
+  GFX_DRAW_MODE_LINE           = 5 << 4,
+  GFX_DRAW_MODE_LINE_STRIP     = 5 << 5,
 };
-/// GfxBufferMode
+/// GfxDrawMode
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// GfxBufferLayout
-enum GfxBufferLayout {
+/// GfxLayoutType
+enum GfxLayoutType {
   GFX_LAYOUT_FLOAT1 = 6 << 0,
   GFX_LAYOUT_FLOAT2 = 6 << 1,
   GFX_LAYOUT_FLOAT3 = 6 << 2,
@@ -1130,8 +1116,12 @@ enum GfxBufferLayout {
   GFX_LAYOUT_UINT2 = 6 << 9,
   GFX_LAYOUT_UINT3 = 6 << 10,
   GFX_LAYOUT_UINT4 = 6 << 11,
+
+  GFX_LAYOUT_MAT2  = 6 << 12,
+  GFX_LAYOUT_MAT3  = 6 << 13,
+  GFX_LAYOUT_MAT4  = 6 << 14,
 };
-/// GfxBufferLayout
+/// GfxLayoutType
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1229,9 +1219,23 @@ struct GfxBufferDesc {
 
   GfxBufferType type;  
   GfxBufferUsage usage;
-  GfxBufferMode draw_mode;
 };
 /// GfxBufferDesc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxLayoutDesc
+struct GfxLayoutDesc {
+  const i8* name; 
+  GfxLayoutType type; 
+
+  /// If this value is set to `0`, the layout will 
+  /// be sent immediately to the shader. However, 
+  /// if it is set to a value >= `1`, the layout 
+  /// will be sent after the nth instance. 
+  u32 instance_rate = 0;
+};
+/// GfxLayoutDesc
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1240,7 +1244,6 @@ struct GfxUniformDesc {
   GfxUniformType type;
   i32 location; 
   void* data;
-  sizei count;
 };
 /// GfxUniformDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1266,10 +1269,12 @@ struct GfxPipelineDesc {
   GfxBufferDesc* vertex_buffer = nullptr; 
   GfxBufferDesc* index_buffer  = nullptr;
 
-  GfxBufferLayout layout[LAYOUT_ELEMENTS_MAX];
+  GfxShader* shader = nullptr;
+
+  GfxLayoutDesc layout[LAYOUT_ELEMENTS_MAX];
   sizei layout_count = 0; 
 
-  GfxShader* shader = nullptr;
+  GfxDrawMode draw_mode;
 
   GfxTexture* textures[TEXTURES_MAX];
   sizei texture_count = 0;
@@ -1287,12 +1292,15 @@ struct GfxPipelineDesc {
 /// context for rendering.
 ///
 /// `flags`:
-/// `GFX_FLAGS_DEPTH`    = Enable the depth testing pass. This is enabled by default.
-/// `GFX_FLAGS_STENCIL`  = Enable the stencil testing pass. This is enabled by default.
-/// `GFX_FLAGS_BLEND`    = Enable blending. This is disabled by default.
-/// `GFX_FLAGS_MSAA`     = Enable multisampling. This is disabled by default.
-/// `GFX_FLAGS_CULL_CW`  = Clockwise culling order. This is selected by default. 
-/// `GFX_FLAGS_CULL_CCW` = Counter-Clockwise culling order. 
+/// `GFX_FLAGS_DEPTH`        = Enable the depth testing pass. This is enabled by default.
+/// `GFX_FLAGS_STENCIL`      = Enable the stencil testing pass. This is enabled by default.
+/// `GFX_FLAGS_BLEND`        = Enable blending. This is disabled by default.
+/// `GFX_FLAGS_MSAA`         = Enable multisampling. This is disabled by default.
+/// `GFX_FLAGS_CULL_CW`      = Clockwise culling order. This is selected by default. 
+/// `GFX_FLAGS_CULL_CCW`     = Counter-Clockwise culling order. 
+/// `GFX_FLAGS_ENABLE_VSYNC` = Enable vertical synchronization (VSYNC).
+/// 
+/// NOTE: All flags by default are turned off. None are enabled initially. 
 /// 
 /// NOTE: Later on, with any function, if an instance of `GfxContext` 
 /// is passed as a `nullptr`, the function will assert. 
@@ -1330,16 +1338,19 @@ const GfxContextFlags gfx_context_get_flags(GfxContext* gfx);
 /// the fragment shader. 
 ///
 /// Check the examples for more information.
-GfxShader* gfx_shader_create(const i8* src);
+GfxShader* gfx_shader_create(GfxContext* gfx, const i8* src);
+
+/// Free/reclaim any memory the graphics context has consumed. 
+void gfx_shader_destroy(GfxShader* shader);
 
 /// Get the location index of `uniform_name` within `shader`.
-const i32 gfx_shader_get_uniform_location(GfxShader* shader, const i8* uniform_name);
+const i32 gfx_shader_get_uniform_location(GfxContext* gfx, GfxShader* shader, const i8* uniform_name);
+
+/// Send the `desc.data` in a batch of `count` to the `shader`.
+void gfx_shader_upload_uniform_batch(GfxContext* gfx, GfxShader* shader, const GfxUniformDesc& desc, const sizei count);
 
 /// Send `data` of `desc.type` at `desc.location` to the `shader`.
-void gfx_shader_upload_uniform(GfxShader* shader, const GfxUniformDesc& desc);
-
-/// Send an `array` of `GfxUniformDesc` in batch at to the `shader`.
-void gfx_shader_upload_uniform_batch(GfxShader* shader, const GfxUniformDesc* descs, const sizei count);
+void gfx_shader_upload_uniform(GfxContext* gfx, GfxShader* shader, const GfxUniformDesc& desc);
 
 /// Shader functions 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1347,9 +1358,14 @@ void gfx_shader_upload_uniform_batch(GfxShader* shader, const GfxUniformDesc* de
 ///---------------------------------------------------------------------------------------------------------------------
 /// Texture functions 
 
-GfxTexture* gfx_texture_create(const GfxTextureDesc& desc);
+/// Create and return a `GfxTexture` from the information provided by `desc`. 
+GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc);
+
+/// Reclaim/free any memory allocated by `texture`.
 void gfx_texture_destroy(GfxTexture* texture);
-void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc);
+
+/// Update the `texture`'s information from the given `desc`.
+void gfx_texture_update(GfxContext* gfx, GfxTexture* texture, const GfxTextureDesc& desc);
 
 /// Texture functions 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1357,12 +1373,19 @@ void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Pipeline functions 
 
+/// Create and return a `GfxPipeline` from the information provided by `desc`.
 GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc);
+
+/// Reclaim/free any memory allocated by `pipeline`, including the shaders 
+/// and textures that were added into the `pipeline`.
 void gfx_pipeline_destroy(GfxPipeline* pipeline);
 
-void gfx_pipeline_begin(GfxContext* gfx, GfxPipeline* pipeline);
-void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc* desc);
-void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc* desc);
+/// Draw the contents of the `vertex_buffer` in `pipeline`, using the information provided by `desc`.
+void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc& desc);
+
+/// Draw the contents of the `vertex_buffer` using the `index_buffer` 
+/// in `pipeline`, using the information provided by `desc`.
+void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc& desc);
 
 /// Pipeline functions 
 ///---------------------------------------------------------------------------------------------------------------------

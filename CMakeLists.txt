@@ -21,6 +21,7 @@ option(NIKOL_BUILD_EXAMPLES "Build the examples with the library" ON)
 # Build the examples
 if(NIKOL_BUILD_EXAMPLES)
   add_subdirectory(examples)
+  message("Building examples...")
 endif()
 
 # Set it to shared

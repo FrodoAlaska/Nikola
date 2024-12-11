@@ -254,10 +254,6 @@ static void set_window_hints(Window* window) {
   if((window->flags & WINDOW_FLAGS_GFX_SOFTWARE) == WINDOW_FLAGS_GFX_SOFTWARE) {
     // @TODO
   }
-
-  if((window->flags & WINDOW_FLAGS_VSYNC_DISABLE) == WINDOW_FLAGS_VSYNC_DISABLE) {
-    window_set_vsync(window, false); 
-  }
 }
 
 static void create_glfw_handle(Window* window, const i8* title) {
@@ -349,6 +345,9 @@ Window* window_open(const i8* title, const i32 width, const i32 height, i32 flag
   // Set the current context 
   glfwMakeContextCurrent(window->handle);
 
+  // Set the native window handle to retrieve it later 
+  set_native_window_handle(window);
+
   if(window->is_fullscreen) {
     window_set_fullscreen(window, true);
   }
@@ -404,7 +403,7 @@ const bool window_is_shown(Window* window) {
 }
 
 void* window_get_native_handle(Window* window) {
-  return window->native_handle;
+  return window->handle;
 }
 
 void window_get_size(Window* window, i32* width, i32* height) {
@@ -442,10 +441,6 @@ void window_get_position(Window* window, i32* x, i32* y) {
 
 void window_set_current_context(Window* window) {
   glfwMakeContextCurrent(window->handle);
-}
-
-void window_set_vsync(Window* window, const bool vsync) {
-  glfwSwapInterval(vsync);
 }
 
 void window_set_fullscreen(Window* window, const bool fullscreen) {

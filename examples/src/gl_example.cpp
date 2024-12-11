@@ -1,6 +1,6 @@
 #include <nikol_core.hpp>
 
-int main() {
+int NIKOL_MAIN() {
   // Initialze the library
   if(!nikol::init()) {
     return -1;
@@ -14,7 +14,7 @@ int main() {
   }
 
   // Creating a graphics context
-  nikol::GfxContext* gfx = gfx_context_init(window, nikol::GFX_FLAGS_BLEND | nikol::GFX_FLAGS_DEPTH | nikol::GFX_FLAGS_STENCIL);
+  nikol::GfxContext* gfx = gfx_context_init(window, nikol::GFX_FLAGS_BLEND | nikol::GFX_FLAGS_DEPTH | nikol::GFX_FLAGS_STENCIL | nikol::GFX_FLAGS_ENABLE_VSYNC);
   if(!gfx) {
     return -1;
   }
