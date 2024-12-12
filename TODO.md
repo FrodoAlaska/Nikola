@@ -1,12 +1,10 @@
 # DX11 TODO: 
-- Uniform/constant buffers.
 - Textures 
 - Enable Blending 
 
 # URGENT TODO: 
 - Remove `NIKOL_MAIN`. That is more of an engine thing.
 - Put the "nikol_core.h" file in the "src" directory
-- A better and more configurable graphpics context -> better vsync set up, better buffer swap setup, etc.
 - Better testing env
 - Audio context and audio buffers
 
@@ -28,5 +26,18 @@
 - Make a 3D example
 - Fonts 
 - NUSL -> Nikol Uniform Shading Language
-- Resource manager and loaders for each resources
+- Resource manager and loaders for each resource
 - Scene manager
+
+sizei uniform_index = gfx_shader_create_uniform_buffer(gfx, shader, sizeof(1024));
+
+GfxUniformDesc uni_desc = {
+    .index = uniform_index, 
+    .type  = GFX_LAYOUT_MAT4,
+    .data  = &view_projection, 
+    .size  = sizeof(Mat4),
+};
+gfx_shader_upload_uniform(gfx, shader, uni_desc); <- Will only _update_ the constant/uniform buffer. But it will _not_ upload it to the shader.
+
+// This will _actually_ upload the uniform buffer to the shader 
+

@@ -26,8 +26,6 @@ int main() {
     return -1;
   }
 
-  nikol::GfxPipelineDesc desc;
-
   // Creating a shader and adding it to the draw call
   const char* src =
   "struct vs_in {\n"
@@ -49,10 +47,15 @@ int main() {
   "   return output;\n"
   "}\n"
   "\n"
+  "cbuffer OutColor {\n"
+  "   float4 color;\n"
+  "};\n"
+  "\n"
   "float4 ps_main(vs_out input) : SV_TARGET {\n"
-  "   return float4(input.color.xyz, 1.0);\n"
+  "   return color;\n"
   "}\n";
-  desc.shader = nikol::gfx_shader_create(gfx, src);
+  nikol::GfxShader* shader = nikol::gfx_shader_create(gfx, src);
+  nikol::sizei uniform_index = nikol::gfx_shader_create_uniform(gfx, shader, nikol::GFX_SHADER_PIXEL, sizeof(float) * 4);
 
   // Creating a vertex buffer and adding it to the draw call
   nikol::f32 vertices[] = {
@@ -62,18 +65,11 @@ int main() {
     -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
   };
   nikol::GfxBufferDesc vert_buff = {
-    .data           = vertices, 
-    .size           = sizeof(vertices), 
-    .elements_count = 4, 
-    .type           = nikol::GFX_BUFFER_VERTEX, 
-    .usage          = nikol::GFX_BUFFER_USAGE_STATIC_DRAW,
+    .data  = vertices, 
+    .size  = sizeof(vertices), 
+    .type  = nikol::GFX_BUFFER_VERTEX, 
+    .usage = nikol::GFX_BUFFER_USAGE_STATIC_DRAW,
   };
-  desc.vertex_buffer = &vert_buff;
-
-  // Setting the layout of the vertex buffer
-  desc.layout[0]    = {"POSITION", nikol::GFX_LAYOUT_FLOAT3, 0};
-  desc.layout[1]    = {"COLOR", nikol::GFX_LAYOUT_FLOAT4, 0};
-  desc.layout_count = 2;
 
   // Creating an index buffer and adding it to the draw call
   nikol::u32 indices[] = {
@@ -81,18 +77,38 @@ int main() {
     2, 3, 0,
   };
   nikol::GfxBufferDesc index_buff = {
-    .data             = indices, 
-    .size             = sizeof(indices), 
-    .elements_count   = 6, 
-    .type             = nikol::GFX_BUFFER_INDEX, 
-    .usage            = nikol::GFX_BUFFER_USAGE_STATIC_DRAW,
+    .data  = indices, 
+    .size  = sizeof(indices), 
+    .type  = nikol::GFX_BUFFER_INDEX, 
+    .usage = nikol::GFX_BUFFER_USAGE_STATIC_DRAW,
   };
-  desc.index_buffer = &index_buff;
 
-  desc.draw_mode = nikol::GFX_DRAW_MODE_TRIANGLE;
+  // Finally creating the pipeline from the desc
+  nikol::GfxPipelineDesc pipe_desc = {
+    .vertex_buffer  = &vert_buff, 
+    .vertices_count = 4, 
 
-  // Finally creating the pipeline
-  nikol::GfxPipeline* pipeline = nikol::gfx_pipeline_create(gfx, desc);
+    .index_buffer  = &index_buff, 
+    .indices_count = 6,
+
+    .shader = shader, 
+
+    .layout       = {{"POSITION", nikol::GFX_LAYOUT_FLOAT3, 0}, {"COLOR", nikol::GFX_LAYOUT_FLOAT4, 0}},
+    .layout_count = 2,
+
+    .draw_mode = nikol::GFX_DRAW_MODE_TRIANGLE, 
+  };
+  nikol::GfxPipeline* pipeline = nikol::gfx_pipeline_create(gfx, pipe_desc);
+
+  // Setting up the constant buffer to be uploaded to the shader later
+  float color[4] = {1.0f, 0.2f, 0.4f, 1.0f};
+  nikol::GfxUniformDesc uniform_desc = {
+    .shader_type = nikol::GFX_SHADER_PIXEL, 
+    .index       = uniform_index, 
+    .data        = color, 
+    .size        = sizeof(color),
+  };
+  nikol::gfx_shader_queue_uniform(gfx, shader, uniform_desc);
 
   // Main loop
   while(nikol::window_is_open(window)) {
@@ -105,7 +121,7 @@ int main() {
     nikol::gfx_context_clear(gfx, 0.3f, 0.3f, 0.3f, 1.0f);
     
     // Sumbit the draw call and render it to the screen
-    nikol::gfx_pipeline_draw_index(gfx, pipeline, desc);
+    nikol::gfx_pipeline_draw_index(gfx, pipeline, pipe_desc);
 
     // Swap the internal window buffer
     nikol::gfx_context_present(gfx); 

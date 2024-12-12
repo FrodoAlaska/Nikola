@@ -1028,9 +1028,8 @@ const f64 niclock_get_delta_time();
 /// The max amount of textures the GPU supports at a time. 
 const sizei TEXTURES_MAX = 32;
 
-/// Will be returned from the function `gfx_shader_get_uniform_location` if a uniform 
-/// was not found. 
-const i32 UNIFORM_INVALID = -1;
+/// The max amount of uniform buffers to be created in a shader type.
+const sizei UNIFORM_BUFFERS_MAX = 16;
 
 /// The max number of elments a buffer's layout can have.
 const sizei LAYOUT_ELEMENTS_MAX = 32;
@@ -1068,8 +1067,9 @@ enum GfxContextFlags {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxBufferType
 enum GfxBufferType {
-  GFX_BUFFER_VERTEX = 3 << 0, 
-  GFX_BUFFER_INDEX  = 3 << 1, 
+  GFX_BUFFER_VERTEX  = 3 << 0, 
+  GFX_BUFFER_INDEX   = 3 << 1, 
+  GFX_BUFFER_UNIFORM = 3 << 2,
 };
 /// GfxBufferType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1125,26 +1125,6 @@ enum GfxLayoutType {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// GfxUniformType
-enum GfxUniformType {
-  GFX_UNIFORM_TYPE_FLOAT  = 7 << 0, 
-  GFX_UNIFORM_TYPE_DOUBLE = 7 << 1, 
-  
-  GFX_UNIFORM_TYPE_INT  = 7 << 2, 
-  GFX_UNIFORM_TYPE_UINT = 7 << 3, 
-  
-  GFX_UNIFORM_TYPE_VEC2 = 7 << 4, 
-  GFX_UNIFORM_TYPE_VEC3 = 7 << 5, 
-  GFX_UNIFORM_TYPE_VEC4 = 7 << 6, 
-  
-  GFX_UNIFORM_TYPE_MAT2 = 7 << 7, 
-  GFX_UNIFORM_TYPE_MAT3 = 7 << 8, 
-  GFX_UNIFORM_TYPE_MAT4 = 7 << 9, 
-};
-/// GfxUniformType
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
 /// GfxTextureFormat
 enum GfxTextureFormat {
   GFX_TEXTURE_FORMAT_R8     = 8 << 0,
@@ -1187,6 +1167,16 @@ enum GfxTextureWrap {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// GfxShaderType
+enum GfxShaderType {
+  GFX_SHADER_VERTEX   = 11 << 0, 
+  GFX_SHADER_PIXEL    = 11 << 1, 
+  GFX_SHADER_GEOMETRY = 11 << 2,
+};
+/// GfxShaderType
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// GfxContext
 struct GfxContext; 
 /// GfxContext
@@ -1215,7 +1205,6 @@ struct GfxPipeline;
 struct GfxBufferDesc {
   void* data = nullptr; 
   sizei size;
-  u32 elements_count;
 
   GfxBufferType type;  
   GfxBufferUsage usage;
@@ -1241,9 +1230,18 @@ struct GfxLayoutDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxUniformDesc
 struct GfxUniformDesc {
-  GfxUniformType type;
-  i32 location; 
+  /// The type of the shader the uniform will be 
+  /// uploaded to. 
+  GfxShaderType shader_type;
+
+  /// The index of the uniform buffer. 
+  sizei index; 
+
+  /// The data that will be sent to the shader.
   void* data;
+
+  /// The size of `data`.
+  sizei size;
 };
 /// GfxUniformDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1267,7 +1265,10 @@ struct GfxTextureDesc {
 /// GfxPipelineDesc
 struct GfxPipelineDesc {
   GfxBufferDesc* vertex_buffer = nullptr; 
+  sizei vertices_count;
+
   GfxBufferDesc* index_buffer  = nullptr;
+  sizei indices_count;
 
   GfxShader* shader = nullptr;
 
@@ -1343,14 +1344,14 @@ GfxShader* gfx_shader_create(GfxContext* gfx, const i8* src);
 /// Free/reclaim any memory the graphics context has consumed. 
 void gfx_shader_destroy(GfxShader* shader);
 
-/// Get the location index of `uniform_name` within `shader`.
-const i32 gfx_shader_get_uniform_location(GfxContext* gfx, GfxShader* shader, const i8* uniform_name);
+/// Create a uniform buffer of size `uniform_buff_size` in `shader` of type `type` and return the index to be used later.
+const sizei gfx_shader_create_uniform(GfxContext* gfx, GfxShader* shader, const GfxShaderType type, const sizei uniform_buff_size);
 
-/// Send the `desc.data` in a batch of `count` to the `shader`.
-void gfx_shader_upload_uniform_batch(GfxContext* gfx, GfxShader* shader, const GfxUniformDesc& desc, const sizei count);
-
-/// Send `data` of `desc.type` at `desc.location` to the `shader`.
-void gfx_shader_upload_uniform(GfxContext* gfx, GfxShader* shader, const GfxUniformDesc& desc);
+/// Queue the uniform buffer at `desc.index` with `desc.data` of size `desc.size` in 
+/// the `shader` of type `desc.shader_type` to be uploaded later with `gfx_pipeline_draw_*`.
+void gfx_shader_queue_uniform(GfxContext* gfx, 
+                              GfxShader* shader, 
+                              const GfxUniformDesc& desc);
 
 /// Shader functions 
 ///---------------------------------------------------------------------------------------------------------------------

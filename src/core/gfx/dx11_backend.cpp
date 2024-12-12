@@ -60,9 +60,14 @@ struct GfxShader {
   ID3DBlob* vertex_blob = nullptr;
   ID3DBlob* pixel_blob  = nullptr;
 
-  ID3D11Buffer* constant_buffer     = nullptr;
   ID3D11VertexShader* vertex_shader = nullptr;
   ID3D11PixelShader* pixel_shader   = nullptr;
+  
+  ID3D11Buffer* vertex_uniform_buffers[UNIFORM_BUFFERS_MAX];
+  ID3D11Buffer* pixel_uniform_buffers[UNIFORM_BUFFERS_MAX];
+
+  sizei vertex_uniforms_count;
+  sizei pixel_uniforms_count;
 };
 /// GfxShader
 ///---------------------------------------------------------------------------------------------------------------------
@@ -506,33 +511,6 @@ static void compile_shader_blob(const i8* src, const i8* entry_point, const i8* 
   }
 }
 
-static sizei get_uniform_size(const GfxUniformType type) {
-  switch(type) {
-    case GFX_UNIFORM_TYPE_FLOAT:
-      return sizeof(f32);
-    case GFX_UNIFORM_TYPE_DOUBLE:
-      return sizeof(f64);
-    case GFX_UNIFORM_TYPE_INT:
-      return sizeof(i32);
-    case GFX_UNIFORM_TYPE_UINT:
-      return sizeof(u32);
-    case GFX_UNIFORM_TYPE_VEC2:
-      return sizeof(f32) * 2;
-    case GFX_UNIFORM_TYPE_VEC3:
-      return sizeof(f32) * 3;
-    case GFX_UNIFORM_TYPE_VEC4:
-      return sizeof(f32) * 4;
-    case GFX_UNIFORM_TYPE_MAT2:
-      return sizeof(f32) * 4;
-    case GFX_UNIFORM_TYPE_MAT3:
-      return sizeof(f32) * 9;
-    case GFX_UNIFORM_TYPE_MAT4:
-      return sizeof(f32) * 16;
-    default:
-      return 0;
-  }
-}
-
 static sizei get_layout_size(const GfxLayoutType layout) {
   switch(layout) {
     case GFX_LAYOUT_FLOAT1:
@@ -625,6 +603,8 @@ static u32 get_buffer_type(const GfxBufferType type) {
       return D3D11_BIND_VERTEX_BUFFER;
     case GFX_BUFFER_INDEX:
       return D3D11_BIND_INDEX_BUFFER;
+    case GFX_BUFFER_UNIFORM:
+      return D3D11_BIND_CONSTANT_BUFFER;
     default:
       return 0;
   }
@@ -648,9 +628,7 @@ static ID3D11Buffer* create_buffer(GfxContext* gfx, const GfxBufferDesc* desc) {
   D3D11_BUFFER_DESC buff_desc = {};
   ID3D11Buffer* buff          = nullptr;
   
-  data.pSysMem          = desc->data;
-  // data.SysMemPitch      = 0;
-  // data.SysMemSlicePitch = 0;
+  data.pSysMem = desc->data;
 
   get_buffer_usage(desc->usage, &buff_desc.Usage, &buff_desc.CPUAccessFlags);
   buff_desc.ByteWidth           = desc->size;
@@ -658,7 +636,15 @@ static ID3D11Buffer* create_buffer(GfxContext* gfx, const GfxBufferDesc* desc) {
   buff_desc.MiscFlags           = 0; 
   buff_desc.StructureByteStride = 0;
 
-  HRESULT res = gfx->device->CreateBuffer(&buff_desc, &data, &buff);
+  HRESULT res;
+  
+  if(desc->data) {
+    res = gfx->device->CreateBuffer(&buff_desc, &data, &buff);
+  }
+  else {
+    res = gfx->device->CreateBuffer(&buff_desc, NULL, &buff);
+  }
+
   check_error(res, "CreateBuffer"); 
 
   return buff;
@@ -730,6 +716,59 @@ static D3D11_PRIMITIVE_TOPOLOGY get_draw_mode(const GfxDrawMode mode) {
 static bool is_buffer_dynamic(const GfxBufferUsage& usage) {
   return usage == GFX_BUFFER_USAGE_DYNAMIC_DRAW || 
          usage == GFX_BUFFER_USAGE_DYNAMIC_READ;
+}
+
+static void create_uniform_buffer_by_type(GfxContext* gfx, GfxShader* shader, const GfxShaderType& type, const sizei buff_size, sizei* index) {
+  GfxBufferDesc buff_desc = {
+    .data  = nullptr, 
+    .size  = buff_size, 
+    .type  = GFX_BUFFER_UNIFORM, 
+    .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
+  };
+
+  switch(type) {
+    case GFX_SHADER_VERTEX:
+      shader->vertex_uniforms_count++;
+      NIKOL_ASSERT((shader->vertex_uniforms_count < UNIFORM_BUFFERS_MAX), "Cannot create more than UNIFORM_BUFFERS_MAX");
+
+      *index                                 = shader->vertex_uniforms_count - 1;
+      shader->vertex_uniform_buffers[*index] = create_buffer(gfx, &buff_desc);
+      break;
+    case GFX_SHADER_PIXEL:
+      shader->pixel_uniforms_count++;
+      NIKOL_ASSERT((shader->pixel_uniforms_count < UNIFORM_BUFFERS_MAX), "Cannot create more than UNIFORM_BUFFERS_MAX");
+      
+      *index                                = shader->pixel_uniforms_count - 1;
+      shader->pixel_uniform_buffers[*index] = create_buffer(gfx, &buff_desc);
+      break;
+    case GFX_SHADER_GEOMETRY:
+      break;
+    default:
+      break;
+  }
+}
+
+static ID3D11Buffer* get_uniform_buffer_by_type(GfxShader* shader, const GfxShaderType& type, const sizei index) {
+  switch(type) {
+    case GFX_SHADER_VERTEX:
+      return shader->vertex_uniform_buffers[index];
+    case GFX_SHADER_PIXEL:
+      return shader->pixel_uniform_buffers[index];
+    case GFX_SHADER_GEOMETRY:
+      return nullptr;
+    default:
+      return nullptr;
+  }
+}
+
+static void set_uniform_buffers(GfxContext* gfx, GfxShader* shader) {
+  if(shader->vertex_uniforms_count > 0) {
+    gfx->device_ctx->VSSetConstantBuffers(0, shader->vertex_uniforms_count, shader->vertex_uniform_buffers);
+  }
+  
+  if(shader->pixel_uniforms_count > 0) {
+    gfx->device_ctx->PSSetConstantBuffers(0, shader->pixel_uniforms_count, shader->pixel_uniform_buffers);
+  }
 }
 
 /// Private functions
@@ -876,17 +915,8 @@ GfxShader* gfx_shader_create(GfxContext* gfx, const i8* src) {
                                        &shader->pixel_shader);
   check_error(res, "CreatePixelShader");
 
-  // Create the constant buffer to be used later 
-  D3D11_BUFFER_DESC cbuff_desc   = {}; 
-  cbuff_desc.ByteWidth           = 1024; 
-  cbuff_desc.Usage               = D3D11_USAGE_DYNAMIC;
-  cbuff_desc.BindFlags           = D3D11_BIND_CONSTANT_BUFFER;
-  cbuff_desc.CPUAccessFlags      = D3D11_CPU_ACCESS_WRITE;
-  cbuff_desc.MiscFlags           = 0;
-  cbuff_desc.StructureByteStride = 0;
-
-  res = gfx->device->CreateBuffer(&cbuff_desc, NULL, &shader->constant_buffer);
-  check_error(res, "CreateBuffer shader");
+  shader->vertex_uniforms_count = 0;
+  shader->pixel_uniforms_count  = 0;
 
   return shader;
 }
@@ -896,7 +926,14 @@ void gfx_shader_destroy(GfxShader* shader) {
     return;
   }
 
-  shader->constant_buffer->Release();
+  for(sizei i = 0; i < shader->vertex_uniforms_count; i++) {
+    shader->vertex_uniform_buffers[i]->Release();
+  }
+  
+  for(sizei i = 0; i < shader->pixel_uniforms_count; i++) {
+    shader->pixel_uniform_buffers[i]->Release();
+  }
+
   shader->vertex_shader->Release();
   shader->vertex_blob->Release();
   shader->pixel_shader->Release();
@@ -905,36 +942,28 @@ void gfx_shader_destroy(GfxShader* shader) {
   memory_free(shader);
 }
 
-const i32 gfx_shader_get_uniform_location(GfxContext* gfx, GfxShader* shader, const i8* uniform_name) {
+const sizei gfx_shader_create_uniform(GfxContext* gfx, GfxShader* shader, const GfxShaderType type, const sizei uniform_buff_size) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(shader, "Invalid GfxShader struct passed");
   
-  return 0;
+  sizei index = 0;
+  create_uniform_buffer_by_type(gfx, shader, type, uniform_buff_size, &index);
+
+  return index;
 }
 
-void gfx_shader_upload_uniform(GfxContext* gfx, GfxShader* shader, const GfxUniformDesc& desc) {
+void gfx_shader_queue_uniform(GfxContext* gfx, GfxShader* shader, const GfxUniformDesc& desc) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(shader, "Invalid GfxShader struct passed");
+  NIKOL_ASSERT((desc.index >= 0 && desc.index < UNIFORM_BUFFERS_MAX), "Invalid index passed to \'gfx_shader_query_uniform\'");
 
-  D3D11_MAPPED_SUBRESOURCE map_res = {};
-  
-  // Begin the writing operation to the constant buffer
-  HRESULT res = gfx->device_ctx->Map(shader->constant_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map_res);
-  check_error(res, "Map");
+  ID3D11Buffer* cbuff = get_uniform_buffer_by_type(shader, desc.shader_type, desc.index); 
 
-  // Writing the uniform data to the constant buffer
-  memory_copy(map_res.pData, desc.data, get_uniform_size(desc.type));
-
-  gfx->device_ctx->Unmap(shader->constant_buffer, 0);
-
-  // @TODO:
-}
-
-void gfx_shader_upload_uniform_batch(GfxContext* gfx, GfxShader* shader, const GfxUniformDesc& desc, const sizei count) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
-  NIKOL_ASSERT(shader, "Invalid GfxShader struct passed");
-
-  // @TODO:
+  GfxBufferDesc buff_desc = {
+    .data = desc.data, 
+    .size = desc.size, 
+  };
+  update_buffer(gfx, cbuff, &buff_desc);
 }
 
 /// Shader functions 
@@ -1050,6 +1079,9 @@ void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline, const GfxP
   
   // Shaders
   //
+  // Set the constant buffers in the shader
+  set_uniform_buffers(gfx, desc.shader); 
+  
   // Set the shaders
   gfx->device_ctx->VSSetShader(desc.shader->vertex_shader, NULL, 0);
   gfx->device_ctx->PSSetShader(desc.shader->pixel_shader, NULL, 0);
@@ -1059,7 +1091,7 @@ void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline, const GfxP
   // Drawing
   //
   // Draw the vertex buffer
-  gfx->device_ctx->Draw(desc.vertex_buffer->elements_count, 0);
+  gfx->device_ctx->Draw(desc.vertices_count, 0);
   //
   // Drawing
 }
@@ -1095,6 +1127,9 @@ void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline, const GfxPi
   
   // Shaders
   //
+  // Set the constant buffers in the shader
+  set_uniform_buffers(gfx, desc.shader); 
+  
   // Set the shaders
   gfx->device_ctx->VSSetShader(desc.shader->vertex_shader, NULL, 0);
   gfx->device_ctx->PSSetShader(desc.shader->pixel_shader, NULL, 0);
@@ -1104,7 +1139,7 @@ void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline, const GfxPi
   // Drawing
   //
   // Draw the index buffer
-  gfx->device_ctx->DrawIndexed(desc.index_buffer->elements_count, 0, 0);
+  gfx->device_ctx->DrawIndexed(desc.indices_count, 0, 0);
   //
   // Drawing
 }
