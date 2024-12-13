@@ -69,6 +69,8 @@ set(NIKOL_HEADERS
 ############################################################
 set(LIBS_SOURCES 
   ${NIKOL_LIBS_DIR}/glad/glad.c
+
+  ${NIKOL_LIBS_DIR}/stb/stb_image.cpp
 )
 ############################################################
 

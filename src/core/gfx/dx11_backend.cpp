@@ -75,7 +75,9 @@ struct GfxShader {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxTexture
 struct GfxTexture {
-  ID3D11Texture2D* handle = nullptr;
+  ID3D11Texture2D* handle            = nullptr;
+  ID3D11SamplerState* sampler        = nullptr;
+  ID3D11ShaderResourceView* resource = nullptr;
 };
 /// GfxTexture
 ///---------------------------------------------------------------------------------------------------------------------
@@ -90,8 +92,9 @@ struct GfxPipeline {
   GfxDrawMode draw_mode;
 
   GfxShader* shader                  = nullptr;
-  GfxTexture* textures[TEXTURES_MAX] = {};
-  sizei texture_count                = 0;
+
+  ID3D11ShaderResourceView* texture_views[TEXTURES_MAX] = {};
+  ID3D11SamplerState* texture_samplers[TEXTURES_MAX]    = {};
 
   u32 stride = 0;
   u32 offset = 0;
@@ -710,6 +713,8 @@ static D3D11_PRIMITIVE_TOPOLOGY get_draw_mode(const GfxDrawMode mode) {
       return D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
     case GFX_DRAW_MODE_LINE_STRIP:
       return D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP;
+    default:
+      return (D3D11_PRIMITIVE_TOPOLOGY)0;
   }
 }
 
@@ -768,6 +773,59 @@ static void set_uniform_buffers(GfxContext* gfx, GfxShader* shader) {
   
   if(shader->pixel_uniforms_count > 0) {
     gfx->device_ctx->PSSetConstantBuffers(0, shader->pixel_uniforms_count, shader->pixel_uniform_buffers);
+  }
+}
+
+static D3D11_FILTER get_texture_filter(GfxTextureFilter filter) {
+  switch(filter) {
+    case GFX_TEXTURE_FILTER_MIN_MAG_LINEAR:
+      return D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+    case GFX_TEXTURE_FILTER_MIN_MAG_NEAREST:
+      return D3D11_FILTER_MIN_MAG_MIP_POINT;
+    case GFX_TEXTURE_FILTER_MIN_LINEAR_MAG_NEAREST:
+      return D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT;
+    case GFX_TEXTURE_FILTER_MIN_NEAREST_MAG_LINEAR:
+      return D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+    case GFX_TEXTURE_FILTER_MIN_TRILINEAR_MAG_LINEAR:
+      return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    case GFX_TEXTURE_FILTER_MIN_TRILINEAR_MAG_NEAREST:
+      return D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+    default:
+      return (D3D11_FILTER)0;
+  }
+}
+
+static D3D11_TEXTURE_ADDRESS_MODE get_texture_wrap(GfxTextureWrap wrap) {
+  switch(wrap) {
+    case GFX_TEXTURE_WRAP_REPEAT:
+      return D3D11_TEXTURE_ADDRESS_WRAP;
+    case GFX_TEXTURE_WRAP_MIRROR:
+      return D3D11_TEXTURE_ADDRESS_MIRROR;
+    case GFX_TEXTURE_WRAP_CLAMP:
+      return D3D11_TEXTURE_ADDRESS_CLAMP;
+    case GFX_TEXTURE_WRAP_BORDER_COLOR:
+      return D3D11_TEXTURE_ADDRESS_BORDER;
+    default:
+      return (D3D11_TEXTURE_ADDRESS_MODE)0;
+  }
+}
+
+static DXGI_FORMAT get_texture_format(const GfxTextureFormat format) {
+  switch(format) {
+    case GFX_TEXTURE_FORMAT_R8:
+      return DXGI_FORMAT_R8_UNORM;
+    case GFX_TEXTURE_FORMAT_R16:
+      return DXGI_FORMAT_R16_UNORM;
+    case GFX_TEXTURE_FORMAT_RG8:
+      return DXGI_FORMAT_R8G8_UNORM;
+    case GFX_TEXTURE_FORMAT_RG16:
+      return DXGI_FORMAT_R16G16_UNORM;
+    case GFX_TEXTURE_FORMAT_RGBA8:
+      return DXGI_FORMAT_R8G8B8A8_UNORM;
+    case GFX_TEXTURE_FORMAT_RGBA16:
+      return DXGI_FORMAT_R16G16B16A16_UNORM;
+    default:
+      return DXGI_FORMAT_UNKNOWN;
   }
 }
 
@@ -978,6 +1036,67 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   GfxTexture* texture = (GfxTexture*)memory_allocate(sizeof(GfxTexture));
   memory_zero(texture, sizeof(GfxTexture));
 
+  // Creating the sampler 
+  D3D11_SAMPLER_DESC sampler_desc = {
+    .Filter         = get_texture_filter(desc.filter),
+    .AddressU       = get_texture_wrap(desc.wrap_mode), 
+    .AddressV       = get_texture_wrap(desc.wrap_mode), 
+    .AddressW       = get_texture_wrap(desc.wrap_mode), 
+    .MipLODBias     = 1.0f, 
+    .MaxAnisotropy  = 1, 
+    .ComparisonFunc = D3D11_COMPARISON_ALWAYS, 
+    .BorderColor    = {0.0f, 0.0f, 0.0f, 0.0f},
+    .MinLOD         = 0.0f, 
+    .MaxLOD         = D3D11_FLOAT32_MAX,
+  };
+  HRESULT res = gfx->device->CreateSamplerState(&sampler_desc, &texture->sampler);
+  check_error(res, "CreateSamplerState");
+
+  // D3D11 Texture desc
+  D3D11_TEXTURE2D_DESC texture_desc = {
+    .Width          = desc.width, 
+    .Height         = desc.height, 
+    .MipLevels      = desc.depth, 
+    .ArraySize      = desc.depth <= 0 ? 1 : desc.depth, // If this is left to 0, it will seg fault... for some reason.
+    .Format         = get_texture_format(desc.format),
+    .SampleDesc     = {1, 0}, 
+    .Usage          = D3D11_USAGE_DEFAULT, 
+    .BindFlags      = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
+    .CPUAccessFlags = 0, 
+    .MiscFlags      = D3D11_RESOURCE_MISC_GENERATE_MIPS,
+  }; 
+
+  // No data set in the texture.
+  // NOTE: We'll get an error if we don't do this.
+  if(!desc.data) {
+    res = gfx->device->CreateTexture2D(&texture_desc, NULL, &texture->handle);
+    check_error(res, "CreateTexture2D");
+
+    return texture;
+  }
+  
+  // Setting the data
+  D3D11_SUBRESOURCE_DATA data = {
+    .pSysMem     = desc.data,
+    .SysMemPitch = desc.width * desc.channels,
+  };
+
+  // Creating the texture
+  res = gfx->device->CreateTexture2D(&texture_desc, &data, &texture->handle);
+  check_error(res, "CreateTexture2D");
+
+  // Setting the shader resource view 
+  D3D11_SHADER_RESOURCE_VIEW_DESC view_desc = {};
+  view_desc.Format                    = texture_desc.Format; 
+  view_desc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2D;
+  view_desc.Texture2D.MostDetailedMip = 0; 
+  view_desc.Texture2D.MipLevels       = -1; 
+
+  // Creating the shader resource to be used later to actually 
+  // render the texture 
+  res = gfx->device->CreateShaderResourceView(texture->handle, &view_desc, &texture->resource);
+  check_error(res, "CreateShaderResourceView");
+
   return texture;
 }
 
@@ -985,6 +1104,10 @@ void gfx_texture_destroy(GfxTexture* texture) {
   if(!texture) {
     return;
   }
+
+  texture->resource->Release();
+  texture->handle->Release();
+  texture->sampler->Release();
 
   memory_free(texture);
 }
@@ -1022,9 +1145,9 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc) {
   pipeline->draw_mode = desc.draw_mode;
 
   // Setting the textures 
-  pipeline->texture_count = desc.texture_count;
-  for(sizei i = 0; i < pipeline->texture_count; i++) {
-    pipeline->textures[i] = desc.textures[i];
+  for(sizei i = 0; i < desc.texture_count; i++) {
+    pipeline->texture_views[i]    = desc.textures[i]->resource;
+    pipeline->texture_samplers[i] = desc.textures[i]->sampler;
   }
 
   return pipeline;
@@ -1035,16 +1158,8 @@ void gfx_pipeline_destroy(GfxPipeline* pipeline) {
       return;
   }
 
-  // Free the textures
-  for(sizei i = 0; i < pipeline->texture_count; i++) {
-    gfx_texture_destroy(pipeline->textures[i]);
-  }
-
   // Free layout 
   pipeline->layout->Release();
-
-  // Free the shader
-  gfx_shader_destroy(pipeline->shader);
 
   // Free the buffers
   pipeline->vertex_buffer->Release();
@@ -1059,8 +1174,6 @@ void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline, const GfxP
   NIKOL_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
   NIKOL_ASSERT(desc.vertex_buffer, "Must have a valid vertex buffer to draw");
   
-  // Input Assembly
-  //
   // Set the topology
   gfx->device_ctx->IASetPrimitiveTopology(get_draw_mode(desc.draw_mode));
   
@@ -1074,26 +1187,22 @@ void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline, const GfxP
   
   // Set the buffer
   gfx->device_ctx->IASetVertexBuffers(0, 1, &pipeline->vertex_buffer, &pipeline->stride, &pipeline->offset);
-  //
-  // Input Assembly
   
-  // Shaders
-  //
   // Set the constant buffers in the shader
   set_uniform_buffers(gfx, desc.shader); 
   
   // Set the shaders
   gfx->device_ctx->VSSetShader(desc.shader->vertex_shader, NULL, 0);
   gfx->device_ctx->PSSetShader(desc.shader->pixel_shader, NULL, 0);
-  //
-  // Shaders
 
-  // Drawing
-  //
+  // Setting the textures (if there are any)
+  if(desc.texture_count > 0) {
+    gfx->device_ctx->PSSetShaderResources(0, desc.texture_count, pipeline->texture_views);
+    gfx->device_ctx->PSSetSamplers(0, desc.texture_count, pipeline->texture_samplers);
+  }
+
   // Draw the vertex buffer
   gfx->device_ctx->Draw(desc.vertices_count, 0);
-  //
-  // Drawing
 }
 
 void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc& desc) {
@@ -1102,8 +1211,6 @@ void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline, const GfxPi
   NIKOL_ASSERT(desc.vertex_buffer, "Must have a valid vertex buffer to draw");
   NIKOL_ASSERT(desc.index_buffer, "Must have a valid index buffer to draw");
   
-  // Input Assembly
-  //
   // Set the topology
   gfx->device_ctx->IASetPrimitiveTopology(get_draw_mode(desc.draw_mode));
   
@@ -1122,26 +1229,22 @@ void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline, const GfxPi
   // Set the buffers
   gfx->device_ctx->IASetIndexBuffer(pipeline->index_buffer, DXGI_FORMAT_R32_UINT, 0); 
   gfx->device_ctx->IASetVertexBuffers(0, 1, &pipeline->vertex_buffer, &pipeline->stride, &pipeline->offset);
-  //
-  // Input Assembly
   
-  // Shaders
-  //
   // Set the constant buffers in the shader
   set_uniform_buffers(gfx, desc.shader); 
   
   // Set the shaders
   gfx->device_ctx->VSSetShader(desc.shader->vertex_shader, NULL, 0);
   gfx->device_ctx->PSSetShader(desc.shader->pixel_shader, NULL, 0);
-  //
-  // Shaders
+  
+  // Setting the textures (if there are any)
+  if(desc.texture_count > 0) {
+    gfx->device_ctx->PSSetShaderResources(0, desc.texture_count, pipeline->texture_views);
+    gfx->device_ctx->PSSetSamplers(0, desc.texture_count, pipeline->texture_samplers);
+  }
 
-  // Drawing
-  //
   // Draw the index buffer
   gfx->device_ctx->DrawIndexed(desc.indices_count, 0, 0);
-  //
-  // Drawing
 }
 
 /// Pipeline functions 

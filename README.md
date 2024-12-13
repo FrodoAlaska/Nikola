@@ -8,10 +8,12 @@ A cross-platform framework for window creation, input handling, and rendering us
 - Fully-integrated math library using GLM.
 
 # Dependencies
-- GLFW3 
-- GLAD
-- GLM
-- D3D11
+- glfw3 
+- glm
+- stb_image
+- glad
+- glm
+- d3d11
 
 # Build Instructions
 
@@ -19,10 +21,10 @@ A cross-platform framework for window creation, input handling, and rendering us
 Here's a simple example of the library. The example below will open a basic window and initialze a graphics context.
 
 ```c++
-#include <nikol_core.h>
+#include <nikol_core.hpp>
 
 // Will choose the appropriate main entry based on the platform
-NIKOL_MAIN() {
+int main() {
   // Initialze the library
   if(!nikol::init()) {
     return -1;
@@ -55,7 +57,7 @@ NIKOL_MAIN() {
     nikol::window_poll_events(window);
     
     // Swap the internal window buffer
-    nikol::window_swap_buffers(window);
+    nikol::gfx_context_present(gfx);
   }
 
   // De-initialze
@@ -65,5 +67,3 @@ NIKOL_MAIN() {
 }
 
 ```
-
-# Other Examples 

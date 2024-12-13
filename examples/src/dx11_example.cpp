@@ -1,6 +1,25 @@
 #include <nikol_core.hpp>
+#include <stb/stb_image.h>
 
-#include <windows.h>
+static nikol::GfxTextureDesc load_texture_from_file(const char* path) {
+  nikol::GfxTextureDesc desc; 
+
+  int width, height, channels;
+
+  stbi_set_flip_vertically_on_load(true);
+  nikol::u8* pixels = stbi_load(path, &width, &height, &channels, 0);
+
+  desc.width     = width; 
+  desc.height    = height;
+  desc.channels  = channels;
+  desc.depth     = 1; 
+  desc.format    = nikol::GFX_TEXTURE_FORMAT_RGBA8; 
+  desc.filter    = nikol::GFX_TEXTURE_FILTER_MIN_MAG_LINEAR;
+  desc.wrap_mode = nikol::GFX_TEXTURE_WRAP_MIRROR;
+  desc.data      = pixels;
+
+  return desc;
+}
 
 int main() {
   // Initialze the library
@@ -29,40 +48,49 @@ int main() {
   // Creating a shader and adding it to the draw call
   const char* src =
   "struct vs_in {\n"
-  "   float3 vertex_position : POSITION;\n"
-  "   float4 color : COLOR;\n"
+  "   float3 vertex_position : POS;\n"
+  "   float2 tex_coords : TEX;\n"
   "};\n"
   "\n"
   "struct vs_out {\n"
   "   float4 position : SV_POSITION;\n"
-  "   float4 color : COLOR;\n"
+  "   float2 tex_coords : TEXCOORD0;\n"
   "};\n"
   "\n"
-  "vs_out vs_main(vs_in input) {\n"
-  "   vs_out output = (vs_out)0;\n"
+  "Texture2D text : register(t0);\n"
+  "SamplerState samp : register(s0);\n"
   "\n"
-  "   output.position = float4(input.vertex_position, 1.0);\n"
-  "   output.color    = input.color;\n"
+  "vs_out vs_main(vs_in input) {\n"
+  "   vs_out output;\n"
+  "\n"
+  "   output.position   = float4(input.vertex_position, 1.0);\n"
+  "   output.tex_coords = input.tex_coords;\n"
   "\n"
   "   return output;\n"
   "}\n"
   "\n"
-  "cbuffer OutColor {\n"
-  "   float4 color;\n"
-  "};\n"
-  "\n"
   "float4 ps_main(vs_out input) : SV_TARGET {\n"
+  "   float4 color;\n"
+  "   color = text.Sample(samp, input.tex_coords);\n"
   "   return color;\n"
   "}\n";
   nikol::GfxShader* shader = nikol::gfx_shader_create(gfx, src);
-  nikol::sizei uniform_index = nikol::gfx_shader_create_uniform(gfx, shader, nikol::GFX_SHADER_PIXEL, sizeof(float) * 4);
+  // // Setting up the constant buffer to be uploaded to the shader later
+  // float color[4] = {1.0f, 0.2f, 0.4f, 1.0f};
+  // nikol::GfxUniformDesc uniform_desc = {
+  //   .shader_type = nikol::GFX_SHADER_PIXEL, 
+  //   .index       = nikol::gfx_shader_create_uniform(gfx, shader, nikol::GFX_SHADER_PIXEL, sizeof(color)), 
+  //   .data        = color, 
+  //   .size        = sizeof(color),
+  // };
+  // nikol::gfx_shader_queue_uniform(gfx, shader, uniform_desc);
 
   // Creating a vertex buffer and adding it to the draw call
   nikol::f32 vertices[] = {
-    -0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-     0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-     0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-    -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+    -0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
+     0.5f,  0.5f, 0.0f, 1.0f, 0.0f,
+     0.5f, -0.5f, 0.0f, 1.0f, 1.0f,
+    -0.5f, -0.5f, 0.0f, 0.0f, 1.0f,
   };
   nikol::GfxBufferDesc vert_buff = {
     .data  = vertices, 
@@ -83,6 +111,10 @@ int main() {
     .usage = nikol::GFX_BUFFER_USAGE_STATIC_DRAW,
   };
 
+  // Creating a texture 
+  nikol::GfxTextureDesc texture_desc = load_texture_from_file("container.png");
+  nikol::GfxTexture* texture = nikol::gfx_texture_create(gfx, texture_desc);
+
   // Finally creating the pipeline from the desc
   nikol::GfxPipelineDesc pipe_desc = {
     .vertex_buffer  = &vert_buff, 
@@ -93,22 +125,15 @@ int main() {
 
     .shader = shader, 
 
-    .layout       = {{"POSITION", nikol::GFX_LAYOUT_FLOAT3, 0}, {"COLOR", nikol::GFX_LAYOUT_FLOAT4, 0}},
+    .layout       = {{"POS", nikol::GFX_LAYOUT_FLOAT3, 0}, {"TEX", nikol::GFX_LAYOUT_FLOAT2, 0}},
     .layout_count = 2,
 
     .draw_mode = nikol::GFX_DRAW_MODE_TRIANGLE, 
+
+    .textures = {texture}, 
+    .texture_count = 1,
   };
   nikol::GfxPipeline* pipeline = nikol::gfx_pipeline_create(gfx, pipe_desc);
-
-  // Setting up the constant buffer to be uploaded to the shader later
-  float color[4] = {1.0f, 0.2f, 0.4f, 1.0f};
-  nikol::GfxUniformDesc uniform_desc = {
-    .shader_type = nikol::GFX_SHADER_PIXEL, 
-    .index       = uniform_index, 
-    .data        = color, 
-    .size        = sizeof(color),
-  };
-  nikol::gfx_shader_queue_uniform(gfx, shader, uniform_desc);
 
   // Main loop
   while(nikol::window_is_open(window)) {

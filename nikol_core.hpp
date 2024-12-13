@@ -1127,17 +1127,14 @@ enum GfxLayoutType {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxTextureFormat
 enum GfxTextureFormat {
-  GFX_TEXTURE_FORMAT_R8     = 8 << 0,
-  GFX_TEXTURE_FORMAT_R16    = 8 << 1,
+  GFX_TEXTURE_FORMAT_R8      = 8 << 0,
+  GFX_TEXTURE_FORMAT_R16     = 8 << 1,
 
   GFX_TEXTURE_FORMAT_RG8     = 8 << 2,
   GFX_TEXTURE_FORMAT_RG16    = 8 << 3,
   
-  GFX_TEXTURE_FORMAT_RGB8    = 8 << 4,
-  GFX_TEXTURE_FORMAT_RGB16   = 8 << 5,
-  
-  GFX_TEXTURE_FORMAT_RGBA8   = 8 << 6,
-  GFX_TEXTURE_FORMAT_RGBA16  = 8 << 7,
+  GFX_TEXTURE_FORMAT_RGBA8   = 8 << 4,
+  GFX_TEXTURE_FORMAT_RGBA16  = 8 << 5,
 };
 /// GfxTextureFromat
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1145,12 +1142,25 @@ enum GfxTextureFormat {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxTextureFilter
 enum GfxTextureFilter {
-  GFX_TEXTURE_FILTER_NEAREST   = 9 << 0,
-  GFX_TEXTURE_FILTER_LINEAR    = 9 << 1,
+  /// Uses linear filtering on both modes.
+  GFX_TEXTURE_FILTER_MIN_MAG_LINEAR            = 9 << 0,
 
-  /// Uses the two closest mipmaps and gets the weighted average of 
-  /// the sampled texels as the result.
-  GFX_TEXTURE_FILTER_TRILINEAR = 9 << 2,
+  /// Uses nearest filtering on both modes.
+  GFX_TEXTURE_FILTER_MIN_MAG_NEAREST           = 9 << 1,
+ 
+  /// Uses linear filtering on minification and nearest filtering magnification. 
+  GFX_TEXTURE_FILTER_MIN_LINEAR_MAG_NEAREST    = 9 << 2,
+  
+  /// Uses nearest filtering on minification and linear filtering magnification. 
+  GFX_TEXTURE_FILTER_MIN_NEAREST_MAG_LINEAR    = 9 << 3,
+
+  /// Uses trilinear filtering (the weighted average of the two closes mipmaps)
+  /// on minification and linear filtering on magnification.
+  GFX_TEXTURE_FILTER_MIN_TRILINEAR_MAG_LINEAR  = 9 << 4,
+  
+  /// Uses trilinear filtering (the weighted average of the two closes mipmaps)
+  /// on minification and nearest filtering on magnification.
+  GFX_TEXTURE_FILTER_MIN_TRILINEAR_MAG_NEAREST = 9 << 5,
 };
 /// GfxTextureFilter
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1249,11 +1259,11 @@ struct GfxUniformDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxTextureDesc
 struct GfxTextureDesc {
-  i32 width, height; 
-  i32 channels, depth; 
+  u32 width, height; 
+  u32 channels, depth; 
 
   GfxTextureFormat format;
-  GfxTextureFilter min_filter, mag_filter;
+  GfxTextureFilter filter;
   GfxTextureWrap wrap_mode;
 
   void* data;
@@ -1377,8 +1387,7 @@ void gfx_texture_update(GfxContext* gfx, GfxTexture* texture, const GfxTextureDe
 /// Create and return a `GfxPipeline` from the information provided by `desc`.
 GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc);
 
-/// Reclaim/free any memory allocated by `pipeline`, including the shaders 
-/// and textures that were added into the `pipeline`.
+/// Reclaim/free any memory allocated by `pipeline`.
 void gfx_pipeline_destroy(GfxPipeline* pipeline);
 
 /// Draw the contents of the `vertex_buffer` in `pipeline`, using the information provided by `desc`.

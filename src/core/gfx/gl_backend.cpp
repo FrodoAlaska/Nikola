@@ -342,10 +342,6 @@ static GLenum get_texture_format(const GfxTextureFormat format) {
       return GL_RG8;
     case GFX_TEXTURE_FORMAT_RG16:
       return GL_RG16;
-    case GFX_TEXTURE_FORMAT_RGB8:
-      return GL_RGB8;
-    case GFX_TEXTURE_FORMAT_RGB16:
-      return GL_RGB16;
     case GFX_TEXTURE_FORMAT_RGBA8:
       return GL_RGBA8;
     case GFX_TEXTURE_FORMAT_RGBA16:
