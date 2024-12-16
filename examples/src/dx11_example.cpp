@@ -7,15 +7,14 @@ static nikol::GfxTextureDesc load_texture_from_file(const char* path) {
   int width, height, channels;
 
   stbi_set_flip_vertically_on_load(true);
-  nikol::u8* pixels = stbi_load(path, &width, &height, &channels, 0);
+  nikol::u8* pixels = stbi_load(path, &width, &height, &channels, 4);
 
   desc.width     = width; 
   desc.height    = height;
-  desc.channels  = channels;
   desc.depth     = 1; 
   desc.format    = nikol::GFX_TEXTURE_FORMAT_RGBA8; 
   desc.filter    = nikol::GFX_TEXTURE_FILTER_MIN_MAG_LINEAR;
-  desc.wrap_mode = nikol::GFX_TEXTURE_WRAP_MIRROR;
+  desc.wrap_mode = nikol::GFX_TEXTURE_WRAP_REPEAT;
   desc.data      = pixels;
 
   return desc;

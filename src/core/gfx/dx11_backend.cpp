@@ -78,6 +78,8 @@ struct GfxTexture {
   ID3D11Texture2D* handle            = nullptr;
   ID3D11SamplerState* sampler        = nullptr;
   ID3D11ShaderResourceView* resource = nullptr;
+
+  GfxTextureDesc desc;
 };
 /// GfxTexture
 ///---------------------------------------------------------------------------------------------------------------------
@@ -91,7 +93,7 @@ struct GfxPipeline {
 
   GfxDrawMode draw_mode;
 
-  GfxShader* shader                  = nullptr;
+  GfxShader* shader = nullptr;
 
   ID3D11ShaderResourceView* texture_views[TEXTURES_MAX] = {};
   ID3D11SamplerState* texture_samplers[TEXTURES_MAX]    = {};
@@ -810,19 +812,25 @@ static D3D11_TEXTURE_ADDRESS_MODE get_texture_wrap(GfxTextureWrap wrap) {
   }
 }
 
-static DXGI_FORMAT get_texture_format(const GfxTextureFormat format) {
+static DXGI_FORMAT get_texture_format(u32* channels, const GfxTextureFormat format) {
   switch(format) {
     case GFX_TEXTURE_FORMAT_R8:
+      *channels = 1;
       return DXGI_FORMAT_R8_UNORM;
     case GFX_TEXTURE_FORMAT_R16:
+      *channels = 1;
       return DXGI_FORMAT_R16_UNORM;
     case GFX_TEXTURE_FORMAT_RG8:
+      *channels = 2;
       return DXGI_FORMAT_R8G8_UNORM;
     case GFX_TEXTURE_FORMAT_RG16:
+      *channels = 2;
       return DXGI_FORMAT_R16G16_UNORM;
     case GFX_TEXTURE_FORMAT_RGBA8:
+      *channels = 4;
       return DXGI_FORMAT_R8G8B8A8_UNORM;
     case GFX_TEXTURE_FORMAT_RGBA16:
+      *channels = 4;
       return DXGI_FORMAT_R16G16B16A16_UNORM;
     default:
       return DXGI_FORMAT_UNKNOWN;
@@ -914,7 +922,7 @@ void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, c
 
   gfx->device_ctx->ClearRenderTargetView(gfx->render_target, color);
   gfx->device_ctx->ClearDepthStencilView(gfx->stencil_view, gfx->clear_flags, 1.0f, 0);
-
+  
   gfx->device_ctx->RSSetViewports(1, &gfx->viewport);
   gfx->device_ctx->OMSetRenderTargets(1, &gfx->render_target, gfx->stencil_view);
 }
@@ -1042,7 +1050,7 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
     .AddressU       = get_texture_wrap(desc.wrap_mode), 
     .AddressV       = get_texture_wrap(desc.wrap_mode), 
     .AddressW       = get_texture_wrap(desc.wrap_mode), 
-    .MipLODBias     = 1.0f, 
+    .MipLODBias     = 0.0f, 
     .MaxAnisotropy  = 1, 
     .ComparisonFunc = D3D11_COMPARISON_ALWAYS, 
     .BorderColor    = {0.0f, 0.0f, 0.0f, 0.0f},
@@ -1052,13 +1060,15 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   HRESULT res = gfx->device->CreateSamplerState(&sampler_desc, &texture->sampler);
   check_error(res, "CreateSamplerState");
 
+  u32 channels = 0;
+
   // D3D11 Texture desc
   D3D11_TEXTURE2D_DESC texture_desc = {
     .Width          = desc.width, 
     .Height         = desc.height, 
     .MipLevels      = desc.depth, 
     .ArraySize      = desc.depth <= 0 ? 1 : desc.depth, // If this is left to 0, it will seg fault... for some reason.
-    .Format         = get_texture_format(desc.format),
+    .Format         = get_texture_format(&channels, desc.format),
     .SampleDesc     = {1, 0}, 
     .Usage          = D3D11_USAGE_DEFAULT, 
     .BindFlags      = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
@@ -1078,7 +1088,7 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   // Setting the data
   D3D11_SUBRESOURCE_DATA data = {
     .pSysMem     = desc.data,
-    .SysMemPitch = desc.width * desc.channels,
+    .SysMemPitch = desc.width * channels,
   };
 
   // Creating the texture
@@ -1097,6 +1107,10 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   res = gfx->device->CreateShaderResourceView(texture->handle, &view_desc, &texture->resource);
   check_error(res, "CreateShaderResourceView");
 
+  // Generate the mipmap levels of the texture 
+  gfx->device_ctx->GenerateMips(texture->resource);
+
+  texture->desc = desc;
   return texture;
 }
 
@@ -1105,6 +1119,7 @@ void gfx_texture_destroy(GfxTexture* texture) {
     return;
   }
 
+  memory_free(texture->desc.data);
   texture->resource->Release();
   texture->handle->Release();
   texture->sampler->Release();

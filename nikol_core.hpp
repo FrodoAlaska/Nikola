@@ -1260,7 +1260,7 @@ struct GfxUniformDesc {
 /// GfxTextureDesc
 struct GfxTextureDesc {
   u32 width, height; 
-  u32 channels, depth; 
+  u32 depth; 
 
   GfxTextureFormat format;
   GfxTextureFilter filter;

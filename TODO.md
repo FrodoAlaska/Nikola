@@ -1,5 +1,4 @@
 # DX11 TODO: 
-- Fix the textures 
 - Enable Blending 
 
 # URGENT TODO: 
@@ -9,17 +8,21 @@
 - Audio context and audio buffers
 
 # FUTURE TODO: 
-- Get rid of GLFW and do it the old-fashioned way? Misery.
 - Rename the whole repo to "Nikol" or "NikolLib" or "NikolEngine" instead of just "NikolCore".
+- Get rid of GLFW and do it the old-fashioned way? Misery.
 
-# EXAMPLES: 
-- A simple and small drawing app
+# BUGS: 
+- Weird stretched textures in D3D11
 
 # GFX Flags: 
 - Enabling MSAA and configuring the amount of subsamples 
 - Enabling the depth and stencil tests and configuring their functions 
 - Enabling blending and configuring its function 
 - Enabling culling and configuring its function and if it should cull from the back or front face 
+
+# EXAMPLES: 
+- A simple and small drawing app
+- A simple image manipulation app
 
 # Engine TODO:
 - Meshes
