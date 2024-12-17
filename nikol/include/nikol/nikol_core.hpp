@@ -74,15 +74,6 @@ typedef double f64;
 #define NIKOL_GFX_CONTEXT_OPENGL
 #endif
 
-/// Win32 main entry
-#if NIKOL_PLATFORM_WINDOWS == 1
-#define NIKOL_MAIN() WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
-
-/// Linux main entry
-#elif NIKOL_PLATFORM_LINUX == 1 
-#define NIKOL_MAIN() main(int argc, char** argv)
-#endif
-
 /// *** Platform detection ***
 /// ----------------------------------------------------------------------
 
@@ -1034,7 +1025,7 @@ const sizei UNIFORM_BUFFERS_MAX = 16;
 /// The max number of elments a buffer's layout can have.
 const sizei LAYOUT_ELEMENTS_MAX = 32;
 
-// DEFS
+// Consts
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------

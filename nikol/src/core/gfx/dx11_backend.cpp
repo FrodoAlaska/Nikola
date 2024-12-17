@@ -1,4 +1,4 @@
-#include "../nikol_core.hpp"
+#include "nikol/nikol_core.hpp"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -45,7 +45,8 @@ struct GfxContext {
   ID3D11DepthStencilState* stencil_state = nullptr;
   ID3D11DepthStencilView* stencil_view   = nullptr;
   ID3D11RasterizerState* raster_state    = nullptr;
-  
+  ID3D11BlendState* blend_state          = nullptr;
+
   // Other
   u32 msaa_samples = 0;
   D3D11_VIEWPORT viewport;
@@ -273,6 +274,30 @@ static DXGI_SAMPLE_DESC init_msaa(GfxContext* gfx) {
   return sample_desc;
 }
 
+static void init_blend_state(GfxContext* gfx) {
+  if(!gfx->has_blend) {
+    return;
+  }
+
+  D3D11_RENDER_TARGET_BLEND_DESC render_target = {};
+  render_target.BlendEnable           = true;
+  render_target.SrcBlend              = D3D11_BLEND_SRC_COLOR;
+  render_target.DestBlend             = D3D11_BLEND_DEST_COLOR;
+  render_target.BlendOp               = D3D11_BLEND_OP_ADD;
+  render_target.SrcBlendAlpha         = D3D11_BLEND_ONE;
+  render_target.DestBlendAlpha        = D3D11_BLEND_SRC_ALPHA;
+  render_target.BlendOpAlpha          = D3D11_BLEND_OP_SUBTRACT;
+  render_target.RenderTargetWriteMask = D3D10_COLOR_WRITE_ENABLE_ALL;
+
+  D3D11_BLEND_DESC blend_desc = {};
+  blend_desc.AlphaToCoverageEnable  = true;
+  blend_desc.IndependentBlendEnable = false;
+  blend_desc.RenderTarget[0]        = render_target;
+
+  HRESULT res = gfx->device->CreateBlendState(&blend_desc, &gfx->blend_state);
+  check_error(res, "CreateBlendState");
+}
+
 static void init_depth_buffer(GfxContext* gfx, int width, int height) {
   D3D11_TEXTURE2D_DESC stencil_buff_desc = {};
   stencil_buff_desc.Width     = width; 
@@ -458,6 +483,9 @@ static void init_d3d11(GfxContext* gfx, Window* window) {
   check_error(res, "CreateRenderTargetView");  
 
   framebuffer->Release();
+
+  // Blend state init 
+  init_blend_state(gfx);
 
   // Depth state init 
   init_depth_buffer(gfx, width, height);
@@ -922,7 +950,11 @@ void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, c
 
   gfx->device_ctx->ClearRenderTargetView(gfx->render_target, color);
   gfx->device_ctx->ClearDepthStencilView(gfx->stencil_view, gfx->clear_flags, 1.0f, 0);
-  
+
+  // @TODO: Fix
+  f32 blend_factor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+  gfx->device_ctx->OMSetBlendState(gfx->blend_state, blend_factor, 0xffffffff);
+
   gfx->device_ctx->RSSetViewports(1, &gfx->viewport);
   gfx->device_ctx->OMSetRenderTargets(1, &gfx->render_target, gfx->stencil_view);
 }

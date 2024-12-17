@@ -1,4 +1,4 @@
-#include "../nikol_core.hpp"
+#include "nikol/nikol_core.hpp"
 
 #include <GLFW/glfw3.h>
 

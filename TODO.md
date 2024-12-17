@@ -1,18 +1,14 @@
-# DX11 TODO: 
-- Enable Blending 
-
 # URGENT TODO: 
-- Remove `NIKOL_MAIN`. That is more of an engine thing.
-- Put the "nikol_core.h" file in the "src" directory
-- Better testing env
+- Rename the whole repo to "Nikol" or "NikolLib" or "NikolEngine" instead of just "NikolCore".
+- Fix the GL backend
 - Audio context and audio buffers
 
 # FUTURE TODO: 
-- Rename the whole repo to "Nikol" or "NikolLib" or "NikolEngine" instead of just "NikolCore".
 - Get rid of GLFW and do it the old-fashioned way? Misery.
 
 # BUGS: 
 - Weird stretched textures in D3D11
+- Blending is not completely correct in D3D11
 
 # GFX Flags: 
 - Enabling MSAA and configuring the amount of subsamples 

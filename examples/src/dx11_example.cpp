@@ -1,4 +1,4 @@
-#include <nikol_core.hpp>
+#include <nikol/nikol_core.hpp>
 #include <stb/stb_image.h>
 
 static nikol::GfxTextureDesc load_texture_from_file(const char* path) {
@@ -34,8 +34,7 @@ int main() {
   }
 
   // Creating a graphics context
-  nikol::i32 flags = nikol::GFX_FLAGS_BLEND | 
-                     nikol::GFX_FLAGS_DEPTH | 
+  nikol::i32 flags = nikol::GFX_FLAGS_DEPTH | 
                      nikol::GFX_FLAGS_STENCIL | 
                      nikol::GFX_FLAGS_ENABLE_VSYNC | 
                      nikol::GFX_FLAGS_CULL_CCW;

@@ -3,14 +3,16 @@ project(NikolCore)
 
 ### Project Variables ###
 ############################################################
-set(NIKOL_SRC_DIR src)
-set(NIKOL_LIBS_DIR libs)
+set(NIKOL_SRC_DIR ${CMAKE_SOURCE_DIR}/nikol/src)
+set(NIKOL_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/nikol/include)
+set(NIKOL_LIBS_DIR ${CMAKE_SOURCE_DIR}/libs)
 set(NIKOL_LIBRARIES glfw)
 
-set(NIKOL_BUILD_TYPE STATIC)
 set(NIKOL_BUILD_OPTS -w -Wall)
 set(NIKOL_BUILD_DEFS GLFW_INCLUDE_NONE)
-set(NIKOL_BUILD_LIBS_DIR ${NIKOL_LIBS_DIR} ${NIKOL_LIBS_DIR}/GLFW/include ${NIKOL_SRC_DIR} ${NIKOL_LIBS_DIR}/glm/)
+set(NIKOL_BUILD_LIBS_DIR ${NIKOL_INCLUDE_DIR} ${NIKOL_LIBS_DIR} ${NIKOL_LIBS_DIR}/GLFW/include ${NIKOL_SRC_DIR} ${NIKOL_LIBS_DIR}/glm/)
+
+set(NIKOL_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
 ############################################################
 
 ### Project Options ###
@@ -27,6 +29,10 @@ endif()
 # Set it to shared
 if(NIKOL_BUILD_SHARED)
   set(NIKOL_BUILD_TYPE SHARED)
+  set(BUILD_SHARED_LIBS ON)
+else()
+  set(NIKOL_BUILD_TYPE STATIC)
+  set(BUILD_SHARED_LIBS OFF)
 endif()
 ############################################################
 
@@ -61,7 +67,7 @@ set(NIKOL_SOURCES
 )
 
 set(NIKOL_HEADERS
-  ${CMAKE_SOURCE_DIR}/nikol_core.hpp
+  ${NIKOL_INCLUDE_DIR}/nikol_core.hpp
 )
 ############################################################
 
