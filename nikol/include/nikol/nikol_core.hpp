@@ -48,6 +48,20 @@ typedef double f64;
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// DEFS
+
+/// Nikol only supports OpenGL versions greater than these.
+#define NIKOL_GL_MINIMUM_MAJOR_VERSION 4
+#define NIKOL_GL_MINIMUM_MINOR_VERSION 2
+
+/// Nikol only supports Direct3D11 versions greater than these.
+#define NIKOL_D3D11_MINIMUM_MAJOR_VERSION 11 
+#define NIKOL_D3D11_MINIMUM_MINOR_VERSION 0 
+
+/// DEFS
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// *** Build Types ***
 
 #define NIKOL_BUILD_DEBUG   1 
@@ -1184,6 +1198,12 @@ struct GfxContext;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// GfxBuffer
+struct GfxBuffer;
+/// GfxBuffer
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// GfxShader
 struct GfxShader;
 /// GfxShader
@@ -1265,21 +1285,21 @@ struct GfxTextureDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxPipelineDesc
 struct GfxPipelineDesc {
-  GfxBufferDesc* vertex_buffer = nullptr; 
-  sizei vertices_count;
+  GfxBuffer* vertex_buffer = nullptr; 
+  sizei vertices_count     = 0;
 
-  GfxBufferDesc* index_buffer  = nullptr;
-  sizei indices_count;
+  GfxBuffer* index_buffer  = nullptr;
+  sizei indices_count      = 0;
 
-  GfxShader* shader = nullptr;
+  GfxShader* shader        = nullptr;
 
   GfxLayoutDesc layout[LAYOUT_ELEMENTS_MAX];
-  sizei layout_count = 0; 
+  sizei layout_count       = 0; 
 
   GfxDrawMode draw_mode;
 
   GfxTexture* textures[TEXTURES_MAX];
-  sizei texture_count = 0;
+  sizei texture_count      = 0;
 };
 /// GfxPipelineDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1287,10 +1307,10 @@ struct GfxPipelineDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Context functions 
 
-/// initialize the `GfxContext` struct and return it. 
+/// Initialize the `GfxContext` struct and return it. 
 /// This function will handle the initialization of the underlying graphics APIs.
 /// A refrence to the window will need to be passed to retrieve the size of the current 
-/// window, know which graphics API to use, and set the newly created context as the window 
+/// window, to know which graphics API to use, and set the newly created context as the window 
 /// context for rendering.
 ///
 /// `flags`:
@@ -1302,9 +1322,9 @@ struct GfxPipelineDesc {
 /// `GFX_FLAGS_CULL_CCW`     = Counter-Clockwise culling order. 
 /// `GFX_FLAGS_ENABLE_VSYNC` = Enable vertical synchronization (VSYNC).
 /// 
-/// NOTE: All flags by default are turned off. None are enabled initially. 
+/// @NOTE: All flags by default are turned off. None are enabled initially. 
 /// 
-/// NOTE: Later on, with any function, if an instance of `GfxContext` 
+/// @NOTE: Later on, with any function, if an instance of `GfxContext` 
 /// is passed as a `nullptr`, the function will assert. 
 GfxContext* gfx_context_init(Window* window, const i32 flags);
 
@@ -1317,7 +1337,7 @@ void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, c
 
 /// Switch to the back buffer or, rather, present the back buffer. 
 /// 
-/// NOTE: This function will be effected by vsync. 
+/// @NOTE: This function will be effected by vsync. 
 void gfx_context_present(GfxContext* gfx);
 
 /// Set any `flag` of the context `gfx` to `value`. 
@@ -1330,11 +1350,26 @@ const GfxContextFlags gfx_context_get_flags(GfxContext* gfx);
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// Buffer functions 
+
+/// Allocate and return a `GfxBuffer` object, using the information in `desc`.
+GfxBuffer* gfx_buffer_create(GfxContext* gfx, const GfxBufferDesc& desc);
+
+/// Free/reclaim any memory taken by `buff`.
+void gfx_buffer_destroy(GfxBuffer* buff);
+
+/// Update the contents of `buff` starting at `offset` with `data` of size `size`.
+void gfx_buffer_update(GfxContext* gfx, GfxBuffer* buff, const sizei offset, const sizei size, const void* data);
+
+/// Buffer functions 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// Shader functions 
 
-/// Create and return a `GfxShader`, passing the given `src`. 
+/// Allocate and return a `GfxShader`, passing the given `src`. 
 ///
-/// NOTE: For glsl (OpenGL), both the vertex and the fragment shader should be combined into one. 
+/// @NOTE: For glsl (OpenGL), both the vertex and the fragment shader should be combined into one. 
 /// The function will look for the `#version` declarative in order to seperate the two or more shaders. The first 
 /// one will be the vertex shader, the second will be the geometry shader, and the third will be 
 /// the fragment shader. 
@@ -1345,14 +1380,15 @@ GfxShader* gfx_shader_create(GfxContext* gfx, const i8* src);
 /// Free/reclaim any memory the graphics context has consumed. 
 void gfx_shader_destroy(GfxShader* shader);
 
-/// Create a uniform buffer of size `uniform_buff_size` in `shader` of type `type` and return the index to be used later.
-const sizei gfx_shader_create_uniform(GfxContext* gfx, GfxShader* shader, const GfxShaderType type, const sizei uniform_buff_size);
-
-/// Queue the uniform buffer at `desc.index` with `desc.data` of size `desc.size` in 
-/// the `shader` of type `desc.shader_type` to be uploaded later with `gfx_pipeline_draw_*`.
-void gfx_shader_queue_uniform(GfxContext* gfx, 
-                              GfxShader* shader, 
-                              const GfxUniformDesc& desc);
+/// Attaches the uniform `buffer` to the `shader` of type `type`. 
+/// Later, when the pipeline initiates the draw phase, the contents of `buffer` will be updated and sent to the shader.
+/// This function only queues the uniform buffer.
+///
+/// @NOTE: For GLSL (OpenGL), you _need_ to specify the binding point of the uniform buffer in the shader itself. For example, 
+/// do something like, `layout (std140, binding = 0)`. Now that uniform buffer will be bound to the point `0` and the shader 
+/// can easily find it. Also, make sure to have the binding points increase like an index, since that's how this function 
+/// will look for them. 
+void gfx_shader_attach_uniform(GfxContext* gfx, GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer);
 
 /// Shader functions 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1360,7 +1396,7 @@ void gfx_shader_queue_uniform(GfxContext* gfx,
 ///---------------------------------------------------------------------------------------------------------------------
 /// Texture functions 
 
-/// Create and return a `GfxTexture` from the information provided by `desc`. 
+/// Allocate and return a `GfxTexture` from the information provided by `desc`. 
 GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc);
 
 /// Reclaim/free any memory allocated by `texture`.
@@ -1375,7 +1411,7 @@ void gfx_texture_update(GfxContext* gfx, GfxTexture* texture, const GfxTextureDe
 ///---------------------------------------------------------------------------------------------------------------------
 /// Pipeline functions 
 
-/// Create and return a `GfxPipeline` from the information provided by `desc`.
+/// Allocate and return a `GfxPipeline` from the information provided by `desc`.
 GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc);
 
 /// Reclaim/free any memory allocated by `pipeline`.

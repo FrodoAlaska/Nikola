@@ -73,15 +73,6 @@ int main() {
   "   return color;\n"
   "}\n";
   nikol::GfxShader* shader = nikol::gfx_shader_create(gfx, src);
-  // // Setting up the constant buffer to be uploaded to the shader later
-  // float color[4] = {1.0f, 0.2f, 0.4f, 1.0f};
-  // nikol::GfxUniformDesc uniform_desc = {
-  //   .shader_type = nikol::GFX_SHADER_PIXEL, 
-  //   .index       = nikol::gfx_shader_create_uniform(gfx, shader, nikol::GFX_SHADER_PIXEL, sizeof(color)), 
-  //   .data        = color, 
-  //   .size        = sizeof(color),
-  // };
-  // nikol::gfx_shader_queue_uniform(gfx, shader, uniform_desc);
 
   // Creating a vertex buffer and adding it to the draw call
   nikol::f32 vertices[] = {
@@ -90,24 +81,26 @@ int main() {
      0.5f, -0.5f, 0.0f, 1.0f, 1.0f,
     -0.5f, -0.5f, 0.0f, 0.0f, 1.0f,
   };
-  nikol::GfxBufferDesc vert_buff = {
+  nikol::GfxBufferDesc vert_desc = {
     .data  = vertices, 
     .size  = sizeof(vertices), 
     .type  = nikol::GFX_BUFFER_VERTEX, 
     .usage = nikol::GFX_BUFFER_USAGE_STATIC_DRAW,
   };
+  nikol::GfxBuffer* vert_buff = nikol::gfx_buffer_create(gfx, vert_desc);
 
   // Creating an index buffer and adding it to the draw call
   nikol::u32 indices[] = {
     0, 1, 2, 
     2, 3, 0,
   };
-  nikol::GfxBufferDesc index_buff = {
+  nikol::GfxBufferDesc index_desc = {
     .data  = indices, 
     .size  = sizeof(indices), 
     .type  = nikol::GFX_BUFFER_INDEX, 
     .usage = nikol::GFX_BUFFER_USAGE_STATIC_DRAW,
   };
+  nikol::GfxBuffer* index_buff = nikol::gfx_buffer_create(gfx, index_desc);
 
   // Creating a texture 
   nikol::GfxTextureDesc texture_desc = load_texture_from_file("container.png");
@@ -115,10 +108,10 @@ int main() {
 
   // Finally creating the pipeline from the desc
   nikol::GfxPipelineDesc pipe_desc = {
-    .vertex_buffer  = &vert_buff, 
+    .vertex_buffer  = vert_buff, 
     .vertices_count = 4, 
 
-    .index_buffer  = &index_buff, 
+    .index_buffer  = index_buff, 
     .indices_count = 6,
 
     .shader = shader, 

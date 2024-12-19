@@ -13,8 +13,8 @@ set(CMAKE_BUILD_TYPE DEBUG)
 ### Project Sources ###
 ############################################################
 set(SOURCES 
-  # src/gl_example.cpp
-  src/dx11_example.cpp
+  src/gl_example.cpp
+  # src/dx11_example.cpp
 )
 ############################################################
 
@@ -26,7 +26,7 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 ### Linking ###
 ############################################################
 target_include_directories(${PROJECT_NAME} PUBLIC BEFORE ${NIKOL_BUILD_LIBS_DIR})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${NIKOL_OUTPUT_DIR}/Debug/NikolCore.lib ${NIKOL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${NIKOL_OUTPUT_DIR}/libnikol.so ${NIKOL_LIBRARIES})
 ############################################################
 
 ### Compiling Options ###

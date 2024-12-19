@@ -1,6 +1,26 @@
-#include <nikol_core.hpp>
+#include <nikol/nikol_core.hpp>
+#include <stb/stb_image.h>
 
-int NIKOL_MAIN() {
+static nikol::GfxTextureDesc load_texture_from_file(const char* path) {
+  nikol::GfxTextureDesc desc; 
+
+  int width, height, channels;
+
+  stbi_set_flip_vertically_on_load(true);
+  nikol::u8* pixels = stbi_load(path, &width, &height, &channels, 4);
+
+  desc.width     = width; 
+  desc.height    = height;
+  desc.depth     = 0; 
+  desc.format    = nikol::GFX_TEXTURE_FORMAT_RGBA8; 
+  desc.filter    = nikol::GFX_TEXTURE_FILTER_MIN_TRILINEAR_MAG_LINEAR;
+  desc.wrap_mode = nikol::GFX_TEXTURE_WRAP_REPEAT;
+  desc.data      = pixels;
+
+  return desc;
+}
+
+int main() {
   // Initialze the library
   if(!nikol::init()) {
     return -1;
@@ -14,12 +34,14 @@ int NIKOL_MAIN() {
   }
 
   // Creating a graphics context
-  nikol::GfxContext* gfx = gfx_context_init(window, nikol::GFX_FLAGS_BLEND | nikol::GFX_FLAGS_DEPTH | nikol::GFX_FLAGS_STENCIL | nikol::GFX_FLAGS_ENABLE_VSYNC);
+  nikol::u32 gfx_flags =  nikol::GFX_FLAGS_BLEND | 
+                          nikol::GFX_FLAGS_DEPTH | 
+                          nikol::GFX_FLAGS_STENCIL | 
+                          nikol::GFX_FLAGS_ENABLE_VSYNC;
+  nikol::GfxContext* gfx = gfx_context_init(window, gfx_flags);
   if(!gfx) {
     return -1;
   }
-
-  nikol::GfxPipelineDesc desc;
 
   // Creating a shader and adding it to the draw call
   const char* src =
@@ -27,86 +49,88 @@ int NIKOL_MAIN() {
   "\n"
   "layout (location = 0) in vec3 a_pos;\n"
   "layout (location = 1) in vec2 a_texture_coords;\n"
+  "layout (location = 2) in vec4 a_color;\n"
   "\n" 
-  "out vec2 texture_coords;\n"
+  "out VS_OUT {\n"
+  "   vec2 texture_coords;\n"
+  "   vec4 vertex_color;\n"
+  "} vs_out;\n"
   "\n" 
   "void main() {\n"
-  " gl_Position    = vec4(a_pos, 1.0);\n"
-  " texture_coords = a_texture_coords;\n"
+  "   gl_Position           = vec4(a_pos, 1.0);\n"
+  "   vs_out.texture_coords = a_texture_coords;\n"
+  "   vs_out.vertex_color   = a_color;\n"
   "}\n"
   "\n"
   "#version 460 core\n"
   "\n" 
   "layout (location = 0) out vec4 out_color;\n"
+  "\n"
+  "in VS_OUT {\n"
+  "   vec2 texture_coords;\n"
+  "   vec4 vertex_color;\n"
+  "} fs_in;\n"
   "\n" 
-  "in vec2 texture_coords;\n"
-  "\n" 
-  "uniform sampler2D u_texture;\n"
-  "uniform vec4 u_color;\n"
+  "uniform sampler2D container_texture;\n" 
   "\n" 
   "void main() {\n"
-  " out_color = u_color;//texture(u_texture, texture_coords);"
-  "\n}\n";
-  desc.shader = nikol::gfx_shader_create(src);
+  "   out_color = texture(container_texture, fs_in.texture_coords);\n"
+  "}\n";
+  nikol::GfxShader* shader = nikol::gfx_shader_create(gfx, src);
 
   // Creating a vertex buffer and adding it to the draw call
   nikol::f32 vertices[] = {
-    -0.5f,  0.5f, 0.0f, 0.0f, 1.0f,
-     0.5f,  0.5f, 0.0f, 1.0f, 1.0f,
-     0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-    -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+    // Vertices         // Coords   // Color  
+    -0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+     0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+     0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+    -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
   };
-  nikol::GfxBufferDesc vert_buff = {
-    .data           = vertices, 
-    .size           = sizeof(vertices), 
-    .elements_count = 20, 
-    .type = nikol::GFX_BUFFER_VERTEX, 
+  nikol::GfxBufferDesc vert_desc = {
+    .data  = vertices, 
+    .size  = sizeof(vertices), 
+    .type  = nikol::GFX_BUFFER_VERTEX, 
     .usage = nikol::GFX_BUFFER_USAGE_STATIC_DRAW,
-    .draw_mode = nikol::GFX_BUFFER_MODE_TRIANGLE,
   };
-  desc.vertex_buffer = &vert_buff;
-
-  // Setting the layout of the vertex buffer
-  desc.layout[0] = nikol::GFX_LAYOUT_FLOAT3;
-  desc.layout[1] = nikol::GFX_LAYOUT_FLOAT2;
-  desc.layout_count = 2;
+  nikol::GfxBuffer* vert_buff = nikol::gfx_buffer_create(gfx, vert_desc);
 
   // Creating an index buffer and adding it to the draw call
   nikol::u32 indices[] = {
     0, 1, 2, 
     2, 3, 0,
   };
-  nikol::GfxBufferDesc index_buff = {
+  nikol::GfxBufferDesc index_desc = {
     .data             = indices, 
     .size             = sizeof(indices), 
-    .elements_count   = 6, 
     .type             = nikol::GFX_BUFFER_INDEX, 
     .usage            = nikol::GFX_BUFFER_USAGE_STATIC_DRAW,
-    .draw_mode        = nikol::GFX_BUFFER_MODE_TRIANGLE,
   };
-  desc.index_buffer = &index_buff;
+  nikol::GfxBuffer* index_buff = nikol::gfx_buffer_create(gfx, index_desc);
 
   // Creating a texture and adding it to the draw call
-  nikol::u32 pixels = 0xaaffaaff;
-  const nikol::GfxTextureDesc texture = {
-    .width    = 1, 
-    .height   = 1, 
-    .channels = 4, 
-    .depth    = 0, 
-    .format   = nikol::GFX_TEXTURE_FORMAT_RGBA8, 
-    .min_filter   = nikol::GFX_TEXTURE_FILTER_TRILINEAR,
-    .mag_filter   = nikol::GFX_TEXTURE_FILTER_LINEAR,
-    .wrap_mode    = nikol::GFX_TEXTURE_WRAP_REPEAT,
-    .data     = &pixels,
-  };
-  nikol::GfxTexture* white_texture = nikol::gfx_texture_create(texture);
-  desc.textures[0] = white_texture;
-  desc.texture_count++;
-  
-  nikol::GfxPipeline* pipeline = nikol::gfx_pipeline_create(gfx, desc);
+  nikol::GfxTextureDesc texture_desc = load_texture_from_file("container.png");
+  nikol::GfxTexture* container_texture = nikol::gfx_texture_create(gfx, texture_desc);
+ 
+  nikol::GfxPipelineDesc desc = {};
+  desc.vertex_buffer = vert_buff; 
+  desc.vertices_count = 4;
 
-  nikol::i32 color_loc = nikol::gfx_shader_get_uniform_location(desc.shader, "u_color");
-  nikol::f32 color[4] = {1.0f, 0.0f, 0.0f, 1.0f}; 
+  desc.index_buffer = index_buff; 
+  desc.indices_count = 6; 
+
+  desc.shader = shader; 
+
+  desc.layout[0] = {"POS", nikol::GFX_LAYOUT_FLOAT3, 0};
+  desc.layout[1] = {"TEX", nikol::GFX_LAYOUT_FLOAT2, 0};
+  desc.layout[2] = {"COLOR", nikol::GFX_LAYOUT_FLOAT4, 0};
+  desc.layout_count = 3;
+
+  desc.draw_mode = nikol::GFX_DRAW_MODE_TRIANGLE, 
+
+  desc.textures[0]   = container_texture;
+  desc.texture_count = 1;
+
+  nikol::GfxPipeline* pipeline = nikol::gfx_pipeline_create(gfx, desc);
 
   // Main loop
   while(nikol::window_is_open(window)) {
@@ -115,29 +139,17 @@ int NIKOL_MAIN() {
       break;
     }
     
-    // Clear the screen to black
+    // Clear the screen to a specified color
     nikol::gfx_context_clear(gfx, 0.3f, 0.3f, 0.3f, 1.0f);
     
-    // Begin the drawing pass
-    nikol::gfx_pipeline_begin(gfx, pipeline);
-   
-    // Uploading uniform data to the shader
-    const nikol::GfxUniformDesc uni_desc = {
-      .type = nikol::GFX_UNIFORM_TYPE_VEC4, 
-      .location = color_loc,
-      .data = &color,
-      .count = 1,
-    };
-    nikol::gfx_shader_upload_uniform(desc.shader,  uni_desc);
-
     // Sumbit the draw call and render it to the screen
-    nikol::gfx_pipeline_draw_index(gfx, pipeline, &desc);
+    nikol::gfx_pipeline_draw_index(gfx, pipeline, desc);
+
+    // Swap the internal window buffer
+    nikol::gfx_context_present(gfx); 
 
     // Poll the window events
     nikol::window_poll_events(window);
-    
-    // Swap the internal window buffer
-    nikol::window_swap_buffers(window);
   }
 
   // De-initialze

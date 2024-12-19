@@ -267,7 +267,7 @@ static DXGI_SAMPLE_DESC init_msaa(GfxContext* gfx) {
 
   // Enabling Anti-aliasing 
   if(gfx->has_msaa) {
-    sample_desc.Count   = gfx->msaa_samples; // TODO: Make this configurable
+    sample_desc.Count   = gfx->msaa_samples;
     sample_desc.Quality = 1;
   }
 
