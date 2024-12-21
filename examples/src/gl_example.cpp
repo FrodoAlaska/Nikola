@@ -34,11 +34,11 @@ int main() {
   }
 
   // Creating a graphics context
-  nikol::u32 gfx_flags =  nikol::GFX_FLAGS_BLEND | 
-                          nikol::GFX_FLAGS_DEPTH | 
-                          nikol::GFX_FLAGS_STENCIL | 
-                          nikol::GFX_FLAGS_ENABLE_VSYNC;
-  nikol::GfxContext* gfx = gfx_context_init(window, gfx_flags);
+  nikol::GfxContextDesc gfx_desc = {
+    .window = window,
+    .states = nikol::GFX_STATE_DEPTH | nikol::GFX_STATE_STENCIL | nikol::GFX_STATE_VSYNC,
+  };
+  nikol::GfxContext* gfx = gfx_context_init(gfx_desc);
   if(!gfx) {
     return -1;
   }
@@ -128,7 +128,7 @@ int main() {
   desc.draw_mode = nikol::GFX_DRAW_MODE_TRIANGLE, 
 
   desc.textures[0]   = container_texture;
-  desc.texture_count = 1;
+  desc.textures_count = 1;
 
   nikol::GfxPipeline* pipeline = nikol::gfx_pipeline_create(gfx, desc);
 
@@ -141,9 +141,12 @@ int main() {
     
     // Clear the screen to a specified color
     nikol::gfx_context_clear(gfx, 0.3f, 0.3f, 0.3f, 1.0f);
-    
+   
+    // Apply the pipeline state to the current context to be drawn
+    nikol::gfx_context_apply_pipeline(gfx, pipeline, desc);
+
     // Sumbit the draw call and render it to the screen
-    nikol::gfx_pipeline_draw_index(gfx, pipeline, desc);
+    nikol::gfx_pipeline_draw_index(gfx, pipeline);
 
     // Swap the internal window buffer
     nikol::gfx_context_present(gfx); 

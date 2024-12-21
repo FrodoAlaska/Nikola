@@ -1,18 +1,14 @@
 # URGENT TODO: 
-- Context flags and states
-- D3D11 backend: buffers, shader uniforms, and assert on wrong D3D11 versions
+- D3D11 backend: buffers, shader uniforms, context flags and states, and assert on wrong D3D11 versions
+- Redocument the graphics context section
 - Audio context and audio buffers
 
 # FUTURE TODO: 
-- Enabling MSAA and configuring the amount of subsamples 
-- Enabling the depth and stencil tests and configuring their functions 
-- Enabling blending and configuring its function 
-- Enabling culling and configuring its function and if it should cull from the back or front face 
+- Context and window dissociation
 - Get rid of GLFW and do it the old-fashioned way? Misery.
 
 # BUGS: 
-- Zoomed textures in GL
-- Weird stretched textures in D3D11
+- MSAA still does not work well in OpenGL
 - Blending is not completely correct in D3D11
 
 # TEST: 

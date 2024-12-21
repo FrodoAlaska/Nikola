@@ -93,8 +93,6 @@ struct GfxTexture {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxPipeline
 struct GfxPipeline {
-  GfxPipelineDesc desc;
-
   u32 vertex_array;
 
   GfxBuffer* vertex_buffer = nullptr;
@@ -862,12 +860,6 @@ void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const Gf
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
 
-  // Updating the pipeline 
-  pipeline->desc = pipe_desc;
-
-  // Setting the stencil mask of the pipeline state
-  glStencilMask(pipe_desc.stencil_ref);
-
   // Setting the blend color of the pipeline state
   const f32* blend_color = pipe_desc.blend_factor;
   glBlendColor(blend_color[0], blend_color[1], blend_color[2], blend_color[3]);
@@ -1088,8 +1080,6 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc) {
   GfxPipeline* pipe = (GfxPipeline*)memory_allocate(sizeof(GfxPipeline));
   memory_zero(pipe, sizeof(GfxPipeline));
 
-  pipe->desc = desc;
-
   // VAO init
   glCreateVertexArrays(1, &pipe->vertex_array);
 
@@ -1119,10 +1109,10 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc) {
   pipe->draw_mode = desc.draw_mode;
 
   // Textures init
-  pipe->textures_count = desc.textures_count; 
+  pipe->textures_count = desc.texture_count; 
 
-  if(desc.textures_count > 0) {
-    for(sizei i = 0; i < desc.textures_count; i++) {
+  if(desc.texture_count > 0) {
+    for(sizei i = 0; i < desc.texture_count; i++) {
       pipe->textures[i] = desc.textures[i]->id;
     }
   }
@@ -1145,24 +1135,21 @@ void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline) {
   NIKOL_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
   NIKOL_ASSERT(pipeline->vertex_buffer, "Must have a valid vertex buffer to draw");
 
-  // Bind the shader
-  glUseProgram(pipeline->desc.shader->id);
-
   // Setting the uniform buffers
-  send_vertex_uniform_buffers(pipeline->desc.shader); 
-  send_fragment_uniform_buffers(pipeline->desc.shader); 
+  send_vertex_uniform_buffers(pipeline->shader); 
+  send_fragment_uniform_buffers(pipeline->shader); 
+
+  // Bind the shader
+  glUseProgram(pipeline->shader->id);
 
   // Draw the textures
-  if(pipeline->desc.textures_count > 0) {
-    for(sizei i = 0; i < pipeline->desc.textures_count; i++) {
-      glActiveTexture(GL_TEXTURE0 + i);
-      glBindTexture(GL_TEXTURE_2D, pipeline->desc.textures[i]->id);
-    }
+  if(pipeline->textures_count > 0) {
+    glBindTextures(0, pipeline->textures_count, pipeline->textures);
   }
 
   // Draw the vertices
-  GLenum draw_mode = get_draw_mode(pipeline->desc.draw_mode); 
-  glDrawArrays(draw_mode, 0, pipeline->desc.vertices_count);
+  GLenum draw_mode = get_draw_mode(pipeline->draw_mode); 
+  glDrawArrays(draw_mode, 0, pipeline->vertex_count);
 
   // Unbind the vertex array for debugging purposes
   glBindVertexArray(0);
@@ -1175,23 +1162,20 @@ void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline) {
   NIKOL_ASSERT(pipeline->index_buffer, "Must have a valid index buffer to draw");
 
   // Bind the shader
-  glUseProgram(pipeline->desc.shader->id);
+  glUseProgram(pipeline->shader->id);
 
   // Setting the uniform buffers
-  send_vertex_uniform_buffers(pipeline->desc.shader); 
-  send_fragment_uniform_buffers(pipeline->desc.shader); 
+  send_vertex_uniform_buffers(pipeline->shader); 
+  send_fragment_uniform_buffers(pipeline->shader); 
 
   // Draw the textures
-  if(pipeline->desc.textures_count > 0) {
-    for(sizei i = 0; i < pipeline->desc.textures_count; i++) {
-      glActiveTexture(GL_TEXTURE0 + i);
-      glBindTexture(GL_TEXTURE_2D, pipeline->desc.textures[i]->id);
-    }
+  if(pipeline->textures_count > 0) {
+    glBindTextures(0, pipeline->textures_count, pipeline->textures);
   }
 
   // Draw the indices
-  GLenum draw_mode = get_draw_mode(pipeline->desc.draw_mode); 
-  glDrawElements(draw_mode, pipeline->desc.indices_count, GL_UNSIGNED_INT, 0);
+  GLenum draw_mode = get_draw_mode(pipeline->draw_mode); 
+  glDrawElements(draw_mode, pipeline->index_count, GL_UNSIGNED_INT, 0);
   
   // Unbind the vertex array for debugging purposes
   glBindVertexArray(0);

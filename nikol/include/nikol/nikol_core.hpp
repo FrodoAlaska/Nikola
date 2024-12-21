@@ -62,6 +62,21 @@ typedef double f64;
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// Macros 
+
+/// Returns `true` if `other` is set in `bit`
+#define IS_BIT_SET(bit, other) ((bit & other) == other)
+
+/// Sets/adds `other` into `bit`
+#define SET_BIT(bit, other)    (bit |= other)
+
+/// Unsets/removes `other` from `bit`
+#define UNSET_BIT(bit, other)  (bit &= ~(other))
+
+/// Macros 
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// *** Build Types ***
 
 #define NIKOL_BUILD_DEBUG   1 
@@ -1043,30 +1058,103 @@ const sizei LAYOUT_ELEMENTS_MAX = 32;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// GfxContextFlags
-enum GfxContextFlags {
+/// GfxStates
+enum GfxStates {
   /// Enable the depth testing pass.
-  GFX_FLAGS_DEPTH        = 2 << 0, 
+  GFX_STATE_DEPTH   = 2 << 0, 
   
   /// Enable the stencil testing pass. 
-  GFX_FLAGS_STENCIL      = 2 << 1, 
+  GFX_STATE_STENCIL = 2 << 1, 
   
   /// Enable blending.
-  GFX_FLAGS_BLEND        = 2 << 2, 
+  GFX_STATE_BLEND   = 2 << 2, 
   
   /// Enable multisampling. 
-  GFX_FLAGS_MSAA         = 2 << 3, 
+  GFX_STATE_MSAA    = 2 << 3, 
   
-  /// Clockwise culling order. 
-  GFX_FLAGS_CULL_CW      = 2 << 4,
-
-  /// Counter-Clockwise culling order. 
-  GFX_FLAGS_CULL_CCW     = 2 << 5, 
+  /// Enable face culling. 
+  GFX_STATE_CULL    = 2 << 4,
 
   /// Enable vertical synchronization (VSYNC).
-  GFX_FLAGS_ENABLE_VSYNC = 2 << 6, 
+  GFX_STATE_VSYNC   = 2 << 5, 
 };
-/// GfxContextFlags
+/// GfxStates
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxCompareFunc
+enum GfxCompareFunc {
+  GFX_COMPARE_ALWAYS        = 3 << 0,
+  GFX_COMPARE_NEVER         = 3 << 1,
+
+  GFX_COMPARE_LESS          = 3 << 2, 
+  GFX_COMPARE_LESS_EQUAL    = 3 << 3, 
+  
+  GFX_COMPARE_GREATER       = 3 << 4, 
+  GFX_COMPARE_GREATER_EQUAL = 3 << 5, 
+  
+  GFX_COMPARE_NOT_EQUAL     = 3 << 6,
+};
+/// GfxCompareFunc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxOperation 
+enum GfxOperation {
+  GFX_OP_KEEP      = 4 << 0, 
+  GFX_OP_ZERO      = 4 << 1, 
+  GFX_OP_INVERT    = 4 << 2, 
+  GFX_OP_REPLACE   = 4 << 3, 
+
+  GFX_OP_INCR      = 4 << 4, 
+  GFX_OP_DECR      = 4 << 5, 
+  
+  GFX_OP_INCR_WRAP = 4 << 6, 
+  GFX_OP_DECR_WRAP = 4 << 7, 
+};
+/// GfxOperation 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxBlendMode 
+enum GfxBlendMode {
+  GFX_BLEND_ZERO               = 5 << 0,
+  GFX_BLEND_ONE                = 5 << 1, 
+
+  GFX_BLEND_SRC_COLOR          = 5 << 2,
+  GFX_BLEND_DEST_COLOR         = 5 << 3, 
+
+  GFX_BLEND_SRC_ALPHA          = 5 << 4, 
+  GFX_BLEND_DEST_ALPHA         = 5 << 5, 
+
+  GFX_BLEND_INV_SRC_COLOR      = 5 << 6, 
+  GFX_BLEND_INV_DEST_COLOR     = 5 << 7, 
+  
+  GFX_BLEND_INV_SRC_ALPHA      = 5 << 8, 
+  GFX_BLEND_INV_DEST_ALPHA     = 5 << 9,
+
+  GFX_BLEND_SRC_ALPHA_SATURATE = 5 << 10,
+};
+/// GfxBlendMode 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxCullMode
+enum GfxCullMode {
+  GFX_CULL_FRONT          = 6 << 0,
+  GFX_CULL_BACK           = 6 << 1,
+  GFX_CULL_FRONT_AND_BACK = 6 << 2,
+};
+/// GfxCullMode
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxCullOrder
+enum GfxCullOrder {
+  GFX_ORDER_CLOCKWISE         = 7 << 0, 
+  GFX_ORDER_COUNTER_CLOCKWISE = 7 << 1,
+};
+/// GfxCullOrder
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1222,6 +1310,157 @@ struct GfxPipeline;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// GfxDepthDesc
+struct GfxDepthDesc {
+  /// The comparison funcion of the depth buffer.
+  /// The default value is `GFX_COMPARE_LESS`.
+  GfxCompareFunc compare_func = GFX_COMPARE_LESS;
+
+  /// Enables/disables writing to the depth buffer.
+  /// The default value is `true`.
+  bool depth_write_enabled    = true;
+};
+/// GfxDepthDesc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxStencilDesc
+struct GfxStencilDesc {
+  /// Which of the polygon faces will the below operations
+  /// have affect on. 
+  /// The default value is "GFX_FACE_FRONT_AND_BACK".
+  GfxCullMode polygon_face     = GFX_CULL_FRONT_AND_BACK; 
+
+  /// The comparison function of the stencil buffer.
+  /// The default value is `GFX_COMPARE_ALWAYS`.
+  GfxCompareFunc compare_func  = GFX_COMPARE_ALWAYS;
+
+  /// The operation to carry when the stencil test fails. 
+  /// The default value is `GFX_OP_KEEP`.
+  GfxOperation stencil_fail_op = GFX_OP_KEEP;
+  
+  /// The operation to carry when the depth test succeeds. 
+  /// The default value is `GFX_OP_KEEP`.
+  GfxOperation depth_pass_op   = GFX_OP_KEEP;
+  
+  /// The operation to carry when the depth test fails. 
+  /// The default value is `GFX_OP_KEEP`.
+  GfxOperation depth_fail_op   = GFX_OP_KEEP;
+
+  /// The refrence value of the stencil test. 
+  /// The default value is `1`.
+  i32 ref                      = 1;
+
+  /// The mask that will be bitwise ANDed with the `ref` and the stencil value 
+  /// currently in the buffer. The two resulting ANDded values will then be compared 
+  /// to determine the outcome of that pixel.
+  ///
+  /// The default value is `0xff`.
+  u32 mask                     = 0xff;
+};
+/// GfxStencilDesc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxBlendDesc
+struct GfxBlendDesc {
+  /// The blend mode of the RGB of the source's color. 
+  /// The default value is `GFX_BLEND_ONE`.
+  GfxBlendMode src_color_blend  = GFX_BLEND_ONE; 
+  
+  /// The blend mode of the RGB of the destination's color. 
+  /// The default value is `GFX_BLEND_ZERO`.
+  GfxBlendMode dest_color_blend = GFX_BLEND_ZERO; 
+
+  /// The blend mode of the Alpha value of the source's color. 
+  /// The default value is `GFX_BLEND_SRC_ALPHA`.
+  GfxBlendMode src_alpha_blend  = GFX_BLEND_SRC_ALPHA; 
+  
+  /// The blend mode of the Alpha value of the destination's color. 
+  /// The default value is `GFX_BLEND_INV_SRC_ALPHA`.
+  GfxBlendMode dest_alpha_blend = GFX_BLEND_INV_SRC_ALPHA; 
+
+  /// The default blend factor. 
+  /// The default values are `R = 0, G = 0, B = 0, A = 0`.
+  f32 blend_factor[4]           = {0, 0, 0, 0};
+};
+/// GfxBlendDesc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxCullDesc 
+struct GfxCullDesc {
+  /// The face to cull. 
+  /// If this value is set to `GFX_FACE_FRONT_AND_BACK`, then 
+  /// all the polygons will be culled. 
+  /// 
+  /// @NOTE: By default, this value is set to `GFX_FACE_FRONT`.
+  GfxCullMode cull_mode;
+
+  /// Determines the front-facing triangle. 
+  /// If this value is set to `GFX_CULL_CLOCKWISE`, then
+  /// the triangles with clockwise-ordering vertices are considered 
+  /// front-facing and back-facing otherwise. The opposite is true 
+  /// with `GFX_CULL_COUNTER_CLOCKWISE`.
+  ///
+  /// @NOTE: The default value is `GFX_CULL_CLOCKWISE`.
+  GfxCullOrder front_face = GFX_ORDER_CLOCKWISE; 
+};
+/// GfxCullDesc 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxContextDesc 
+struct GfxContextDesc {
+  /// A refrence to the window.
+  ///
+  /// @NOTE: This _must_ be set to a valid value.
+  Window* window                = nullptr;
+
+  /// A bitwise ORed values from `GfxStates` determining the 
+  /// states to create/enable.
+  ///
+  /// @NOTE: By default, no states are set. 
+  u32 states                    = 0;
+
+  /// The pixel format of the swapchain image. 
+  ///
+  /// @NOTE: By default, the value is `GFX_TEXTURE_FORMAT_RGBA8`.
+  GfxTextureFormat pixel_format = GFX_TEXTURE_FORMAT_RGBA8;
+
+  /// The subsamples of the MSAA buffer. 
+  ///
+  /// @NOTE: By default, this is set to `1`.
+  u32 msaa_samples              = 1;
+
+  /// The description of the depth state. 
+  ///
+  /// @NOTE: Check `GfxDepthDesc` to know the default values
+  /// of each memeber.
+  GfxDepthDesc depth_desc       = {}; 
+  
+  /// The description of the stencil state. 
+  ///
+  /// @NOTE: Check `GfxStencilDesc` to know the default values
+  /// of each memeber.
+  GfxStencilDesc stencil_desc   = {};
+  
+  /// The description of the blend state. 
+  ///
+  /// @NOTE: Check `GfxBlendDesc` to know the default values
+  /// of each memeber.
+  GfxBlendDesc blend_desc       = {};
+  
+  /// The description of the cull state. 
+  ///
+  /// @NOTE: Check `GfxCullDesc` to know the default values
+  /// of each memeber.
+  GfxCullDesc cull_desc         = {};
+};
+/// GfxContextDesc 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// GfxBufferDesc
 struct GfxBufferDesc {
   void* data = nullptr; 
@@ -1299,7 +1538,10 @@ struct GfxPipelineDesc {
   GfxDrawMode draw_mode;
 
   GfxTexture* textures[TEXTURES_MAX];
-  sizei texture_count      = 0;
+  sizei textures_count     = 0;
+
+  u32 stencil_ref          = 1;
+  f32 blend_factor[4]      = {0, 0, 0, 0};
 };
 /// GfxPipelineDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1326,7 +1568,7 @@ struct GfxPipelineDesc {
 /// 
 /// @NOTE: Later on, with any function, if an instance of `GfxContext` 
 /// is passed as a `nullptr`, the function will assert. 
-GfxContext* gfx_context_init(Window* window, const i32 flags);
+GfxContext* gfx_context_init(const GfxContextDesc& desc);
 
 /// Free/reclaim any memory the graphics context has consumed. 
 /// This function will do any required de-initialization by the graphics API.
@@ -1340,11 +1582,12 @@ void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, c
 /// @NOTE: This function will be effected by vsync. 
 void gfx_context_present(GfxContext* gfx);
 
-/// Set any `flag` of the context `gfx` to `value`. 
-void gfx_context_set_flag(GfxContext* gfx, const i32 flag, const bool value);
+/// Set any `state` of the context `gfx` to `value`. 
+/// 
+/// @NOTE: This can turn on or off the `state` in the given `gfx` context.
+void gfx_context_set_state(GfxContext* gfx, const GfxStates state, const bool value);
 
-/// Retrive the set flags of the `gfx` context.
-const GfxContextFlags gfx_context_get_flags(GfxContext* gfx);
+void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc& pipe_desc);
 
 /// Context functions 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1417,12 +1660,11 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc);
 /// Reclaim/free any memory allocated by `pipeline`.
 void gfx_pipeline_destroy(GfxPipeline* pipeline);
 
-/// Draw the contents of the `vertex_buffer` in `pipeline`, using the information provided by `desc`.
-void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc& desc);
+/// Draw the contents of the `vertex_buffer` in `pipeline`.
+void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline);
 
-/// Draw the contents of the `vertex_buffer` using the `index_buffer` 
-/// in `pipeline`, using the information provided by `desc`.
-void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc& desc);
+/// Draw the contents of the `vertex_buffer` using the `index_buffer` in `pipeline`.
+void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline);
 
 /// Pipeline functions 
 ///---------------------------------------------------------------------------------------------------------------------
