@@ -32,9 +32,10 @@ struct GfxContext {
   GfxContextDesc desc;
 
   // Flags
-  GfxStates states;
   u32 clear_flags = 0;
-  bool has_msaa, has_vsync;
+  bool has_msaa   = false;
+  bool has_vsync  = false;
+  f32 depth_mask  = 1.0f;
 
   // Devices
   ID3D11Device* device                  = nullptr; 
@@ -42,10 +43,17 @@ struct GfxContext {
   IDXGISwapChain* swapchain             = nullptr; 
   ID3D11RenderTargetView* render_target = nullptr;
 
-  // Active states
-  ID3D11Texture2D* stencil_buffer        = nullptr; 
-  ID3D11DepthStencilState* stencil_state = nullptr;
+  // State-related variables
   ID3D11DepthStencilView* stencil_view   = nullptr;
+  ID3D11Texture2D* stencil_buffer        = nullptr; 
+
+  // Valid states
+  ID3D11DepthStencilState* valid_stencil_state = nullptr;
+  ID3D11RasterizerState* valid_raster_state    = nullptr;
+  ID3D11BlendState* valid_blend_state          = nullptr;
+
+  // Current active states
+  ID3D11DepthStencilState* stencil_state = nullptr;
   ID3D11RasterizerState* raster_state    = nullptr;
   ID3D11BlendState* blend_state          = nullptr;
 
@@ -367,11 +375,11 @@ static void init_depth_buffer(GfxContext* gfx, int width, int height) {
   check_error(res, "CreateTexture2D");
 }
 
-static void set_stencil_state(GfxContext* gfx) {
+static void init_stencil_state(GfxContext* gfx) {
   D3D11_DEPTH_STENCIL_DESC stencil_desc = {};
 
   // Setting the depth state if it is set
-  if(IS_BIT_SET(gfx->states, GFX_STATE_DEPTH)) {
+  if(IS_BIT_SET(gfx->desc.states, GFX_STATE_DEPTH)) {
     stencil_desc.DepthEnable    = gfx->desc.depth_desc.depth_write_enabled;
     stencil_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
     stencil_desc.DepthFunc      = get_d3d11_compare(gfx->desc.depth_desc.compare_func);
@@ -382,7 +390,7 @@ static void set_stencil_state(GfxContext* gfx) {
   }
   
   // Setting the stencil state if it is set
-  if(IS_BIT_SET(gfx->states, GFX_STATE_STENCIL)) {
+  if(IS_BIT_SET(gfx->desc.states, GFX_STATE_STENCIL)) {
     stencil_desc.StencilEnable    = true;    
     stencil_desc.StencilReadMask  = gfx->desc.stencil_desc.mask;    
     stencil_desc.StencilWriteMask = gfx->desc.stencil_desc.mask;    
@@ -431,11 +439,8 @@ static void set_stencil_state(GfxContext* gfx) {
   }
 
   // Create the depth stencil state 
-  HRESULT res = gfx->device->CreateDepthStencilState(&stencil_desc, &gfx->stencil_state);
+  HRESULT res = gfx->device->CreateDepthStencilState(&stencil_desc, &gfx->valid_stencil_state);
   check_error(res, "CreateDepthStencilState");
-
-  // Set the depth stencil state 
-  gfx->device_ctx->OMSetDepthStencilState(gfx->stencil_state, 1);
 
   D3D11_DEPTH_STENCIL_VIEW_DESC stencil_view_desc = {};
   stencil_view_desc.Format             = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -450,7 +455,7 @@ static void set_stencil_state(GfxContext* gfx) {
   gfx->device_ctx->OMSetRenderTargets(1, &gfx->render_target, gfx->stencil_view);
 }
 
-static void set_blend_state(GfxContext* gfx) {
+static void init_blend_state(GfxContext* gfx) {
   D3D11_BLEND src_color  = get_d3d11_blend(gfx->desc.blend_desc.src_color_blend);
   D3D11_BLEND dest_color = get_d3d11_blend(gfx->desc.blend_desc.dest_color_blend);
   D3D11_BLEND src_alpha  = get_d3d11_blend(gfx->desc.blend_desc.src_alpha_blend);
@@ -472,14 +477,11 @@ static void set_blend_state(GfxContext* gfx) {
   blend_desc.RenderTarget[0]        = render_target;
   
   // Creating the blend state
-  HRESULT res = gfx->device->CreateBlendState(&blend_desc, &gfx->blend_state);
+  HRESULT res = gfx->device->CreateBlendState(&blend_desc, &gfx->valid_blend_state);
   check_error(res, "CreateBlendState");
-  
-  // Setting the blend state
-  gfx->device_ctx->OMSetBlendState(gfx->blend_state, gfx->desc.blend_desc.blend_factor, 0xffffffff);
 }
 
-static void set_cull_state(GfxContext* gfx) {
+static void init_cull_state(GfxContext* gfx) {
   D3D11_RASTERIZER_DESC raster_desc = {};
   raster_desc.FillMode = D3D11_FILL_SOLID; 
   raster_desc.CullMode = get_d3d11_cull(gfx->desc.cull_desc.cull_mode); 
@@ -498,11 +500,85 @@ static void set_cull_state(GfxContext* gfx) {
   raster_desc.MultisampleEnable     = gfx->has_msaa;
 
   // Create the rasterizer state
-  HRESULT res = gfx->device->CreateRasterizerState(&raster_desc, &gfx->raster_state);
+  HRESULT res = gfx->device->CreateRasterizerState(&raster_desc, &gfx->valid_raster_state);
   check_error(res, "CreateRasterizerState");
+}
 
-  // Set the rasterizer state
-  gfx->device_ctx->RSSetState(gfx->raster_state);
+static void set_gfx_state(GfxContext* gfx, const GfxStates state, const bool value) {
+  switch(state) {
+    // Depth state
+    case GFX_STATE_DEPTH: {
+      if(value) {
+        UNSET_BIT(gfx->clear_flags, D3D11_CLEAR_DEPTH);
+        UNSET_BIT(gfx->desc.states, (u32)state);
+        gfx->depth_mask = 0.0f;
+      } 
+      else {
+        SET_BIT(gfx->clear_flags, D3D11_CLEAR_DEPTH);
+        SET_BIT(gfx->desc.states, (u32)state);
+        gfx->depth_mask = 1.0f;
+      }
+    } break;
+    
+    // Stencil state
+    case GFX_STATE_STENCIL: {
+      if(value) {
+        UNSET_BIT(gfx->clear_flags, D3D11_CLEAR_STENCIL);
+        UNSET_BIT(gfx->desc.states, (u32)state);
+        gfx->desc.stencil_desc.ref = 0;
+        gfx->stencil_state         = nullptr;
+      } 
+      else {
+        SET_BIT(gfx->clear_flags, D3D11_CLEAR_STENCIL);
+        SET_BIT(gfx->desc.states, (u32)state);
+        gfx->desc.stencil_desc.ref = 1;
+        gfx->stencil_state         = gfx->valid_stencil_state;
+      }
+
+      gfx->device_ctx->OMSetDepthStencilState(gfx->stencil_state, gfx->desc.stencil_desc.ref);
+    } break;
+
+    // Blend state
+    case GFX_STATE_BLEND: {
+      f32* blend_factor = nullptr;
+
+      if(value) {
+        UNSET_BIT(gfx->desc.states, (u32)state);
+        blend_factor     = gfx->desc.blend_desc.blend_factor;
+        gfx->blend_state = nullptr;
+      } 
+      else {
+        SET_BIT(gfx->desc.states, (u32)state);
+        gfx->blend_state = gfx->valid_blend_state;
+      }
+
+      gfx->device_ctx->OMSetBlendState(gfx->blend_state, blend_factor, 0xffffffff);
+    } break;
+    
+    // Cull/rasterizer state
+    case GFX_STATE_CULL: {
+      if(value) {
+        UNSET_BIT(gfx->desc.states, (u32)state);
+        gfx->raster_state = nullptr;
+      } 
+      else {
+        SET_BIT(gfx->desc.states, (u32)state);
+        gfx->raster_state = gfx->valid_raster_state;
+      }
+
+      gfx->device_ctx->RSSetState(gfx->raster_state);
+    } break;
+    
+    // MSAA state
+    case GFX_STATE_MSAA:
+      gfx->has_msaa = value;
+      break;
+    
+    // VSYNC
+    case GFX_STATE_VSYNC:
+      gfx->has_vsync = value;
+      break;
+  }
 }
 
 static void set_d3d11_states(GfxContext* gfx) {
@@ -510,21 +586,30 @@ static void set_d3d11_states(GfxContext* gfx) {
   window_get_size(gfx->desc.window, &width, &height);
 
   init_depth_buffer(gfx, width, height);
-  set_stencil_state(gfx);
+  init_stencil_state(gfx);
+  init_blend_state(gfx);
+  init_cull_state(gfx);
+  
+  if(IS_BIT_SET(gfx->desc.states, (GFX_STATE_DEPTH | GFX_STATE_STENCIL))) {
+    gfx->stencil_state = gfx->valid_stencil_state;
+    gfx->device_ctx->OMSetDepthStencilState(gfx->stencil_state, gfx->desc.stencil_desc.ref);
+  }
 
-  if(IS_BIT_SET(gfx->states, GFX_STATE_BLEND)) {
-    set_blend_state(gfx);
+  if(IS_BIT_SET(gfx->desc.states, GFX_STATE_CULL)) {
+    gfx->raster_state = gfx->valid_raster_state;
+    gfx->device_ctx->RSSetState(gfx->raster_state);
+  }
+
+  if(IS_BIT_SET(gfx->desc.states, GFX_STATE_BLEND)) {
+    gfx->blend_state = gfx->valid_blend_state;
+    gfx->device_ctx->OMSetBlendState(gfx->blend_state, gfx->desc.blend_desc.blend_factor, 0xffffffff);
   }
   
-  if(IS_BIT_SET(gfx->states, GFX_STATE_MSAA)) {
+  if(IS_BIT_SET(gfx->desc.states, GFX_STATE_MSAA)) {
     gfx->has_msaa = true;
   }
 
-  if(IS_BIT_SET(gfx->states, GFX_STATE_CULL)) {
-    set_cull_state(gfx);
-  }
-
-  if(IS_BIT_SET(gfx->states, GFX_STATE_VSYNC)) {
+  if(IS_BIT_SET(gfx->desc.states, GFX_STATE_VSYNC)) {
     gfx->has_vsync = true;
   }
 }
@@ -919,9 +1004,6 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
  
   gfx->desc = desc;
 
-  // Setting the flags
-  gfx->states = (GfxStates)desc.states;
-
   // D3D11 init
   init_d3d11(gfx, desc.window);
 
@@ -942,44 +1024,26 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
 
 void gfx_context_shutdown(GfxContext* gfx) {
   if(!gfx) {
-      return;
+    return;
   }
-
+  
+  // Direct3D11 will seg fault if this is not done
   if(gfx->swapchain) {
     gfx->swapchain->SetFullscreenState(false, NULL);
   }
+  
+  // Releasing all the states
+  gfx->valid_blend_state->Release();
+  gfx->valid_raster_state->Release();
+  gfx->stencil_view->Release();
+  gfx->valid_stencil_state->Release();
+  gfx->stencil_buffer->Release();
+  gfx->render_target->Release();
 
-  if(gfx->raster_state) {
-    gfx->raster_state->Release();
-  }
-  
-  if(gfx->stencil_view) {
-    gfx->stencil_view->Release();
-  }
-  
-  if(gfx->stencil_state) {
-    gfx->stencil_state->Release();
-  }
-  
-  if(gfx->stencil_buffer) {
-    gfx->stencil_buffer->Release();
-  }
-  
-  if(gfx->render_target) {
-    gfx->render_target->Release();
-  }
-  
-  if(gfx->device_ctx) {
-    gfx->device_ctx->Release();
-  }
-
-  if(gfx->device) {
-    gfx->device->Release();
-  }
-  
-  if(gfx->swapchain) {
-    gfx->swapchain->Release();
-  }
+  // Releasing the devices and the swapchain
+  gfx->device_ctx->Release();
+  gfx->device->Release();
+  gfx->swapchain->Release();
 
   NIKOL_LOG_INFO("The graphics context was successfully destroyed");
   memory_free(gfx);
@@ -991,7 +1055,7 @@ void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, c
   f32 color[4] = {r, g, b, a};
 
   gfx->device_ctx->ClearRenderTargetView(gfx->render_target, color);
-  gfx->device_ctx->ClearDepthStencilView(gfx->stencil_view, gfx->clear_flags, 1.0f, gfx->desc.stencil_desc.ref);
+  gfx->device_ctx->ClearDepthStencilView(gfx->stencil_view, gfx->clear_flags, gfx->depth_mask, gfx->desc.stencil_desc.ref);
 }
 
 void gfx_context_present(GfxContext* gfx) {
@@ -1003,21 +1067,7 @@ void gfx_context_present(GfxContext* gfx) {
 void gfx_context_set_state(GfxContext* gfx, const GfxStates state, const bool value) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
 
-  switch(state) {
-    case GFX_STATE_DEPTH:
-      break;
-    case GFX_STATE_STENCIL:
-      break;
-    case GFX_STATE_BLEND:
-      break;
-    case GFX_STATE_MSAA:
-      break;
-    case GFX_STATE_CULL:
-      break;
-    case GFX_STATE_VSYNC:
-      gfx->has_vsync = value;
-      break;
-  }
+  set_gfx_state(gfx, state, value);
 }
 
 void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc& pipe_desc) {

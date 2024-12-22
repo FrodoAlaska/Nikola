@@ -110,7 +110,7 @@ int main() {
   // Creating a graphics context
   nikol::GfxContextDesc gfx_desc = {
     .window = window,
-    .states = nikol::GFX_STATE_DEPTH | nikol::GFX_STATE_STENCIL | nikol::GFX_STATE_VSYNC,
+    .states = nikol::GFX_STATE_DEPTH | nikol::GFX_STATE_STENCIL | nikol::GFX_STATE_VSYNC | nikol::GFX_STATE_BLEND,
   };
   nikol::GfxContext* gfx = gfx_context_init(gfx_desc);
   if(!gfx) {
@@ -121,7 +121,7 @@ int main() {
   nikol::GfxShader* shader = nikol::gfx_shader_create(gfx, get_shader_basic());
   
   // Sending a uniform to the shader
-  float color[4] = {1.0f, 0.0f, 0.0f, 1.0f}; 
+  float color[4] = {0.0f, 0.0f, 1.0f, 1.0f}; 
   nikol::GfxBufferDesc uniform_desc = {
     .data  = color, 
     .size  = sizeof(color), 
@@ -180,17 +180,39 @@ int main() {
 
   desc.draw_mode = nikol::GFX_DRAW_MODE_TRIANGLE;
 
-  desc.textures[0]   = container_texture;
+  desc.textures[0]    = container_texture;
   desc.textures_count = 1;
 
   nikol::GfxPipeline* pipeline = nikol::gfx_pipeline_create(gfx, desc);
 
+  float col_incr = 0.0f;
+  
   // Main loop
   while(nikol::window_is_open(window)) {
     // Will stop the application when ESCAPE is pressed
     if(nikol::input_key_pressed(nikol::KEY_ESCAPE)) {
       break;
     }
+
+    if(nikol::input_key_pressed(nikol::KEY_RIGHT)) {
+      col_incr += 0.1f;
+    }
+    else if(nikol::input_key_pressed(nikol::KEY_LEFT)) {
+      col_incr -= 0.1f;
+    }
+
+    if(nikol::input_key_down(nikol::KEY_R)) {
+      color[0] = col_incr;
+    }
+    else if(nikol::input_key_down(nikol::KEY_G)) {
+      color[1] = col_incr;
+    }
+    else if(nikol::input_key_down(nikol::KEY_B)) {
+      color[2] = col_incr;
+    }
+    
+    // Updating the uniform buffer
+    nikol::gfx_buffer_update(gfx, uniform_buffer, 0, sizeof(color), color);
     
     // Clear the screen to a specified color
     nikol::gfx_context_clear(gfx, 0.3f, 0.3f, 0.3f, 1.0f);

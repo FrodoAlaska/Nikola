@@ -1390,11 +1390,11 @@ struct GfxBlendDesc {
 /// GfxCullDesc 
 struct GfxCullDesc {
   /// The face to cull. 
-  /// If this value is set to `GFX_FACE_FRONT_AND_BACK`, then 
+  /// If this value is set to `GFX_CULL_FRONT_AND_BACK`, then 
   /// all the polygons will be culled. 
   /// 
-  /// @NOTE: By default, this value is set to `GFX_FACE_FRONT`.
-  GfxCullMode cull_mode;
+  /// @NOTE: By default, this value is set to `GFX_CULL_FRONT`.
+  GfxCullMode cull_mode  = GFX_CULL_FRONT;
 
   /// Determines the front-facing triangle. 
   /// If this value is set to `GFX_CULL_CLOCKWISE`, then

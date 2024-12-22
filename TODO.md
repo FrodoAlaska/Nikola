@@ -1,5 +1,4 @@
 # URGENT TODO: 
-- D3D11 backend: shader uniforms, context flags, and states
 - Redocument the graphics context section
 - Audio context and audio buffers
 
@@ -9,6 +8,7 @@
 
 # BUGS: 
 - MSAA still does not work well in OpenGL
+- MSAA in D3D11 needs to be configured some more
 - Blending is not completely correct in D3D11
 
 # TEST: 
