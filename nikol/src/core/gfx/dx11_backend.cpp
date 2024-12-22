@@ -7,6 +7,7 @@
 /// @TEMP:
 #include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
+#define WIN32_LEAN_AND_MEAN
 #include <GLFW/glfw3native.h>
 /// @TEMP:
 
@@ -28,11 +29,12 @@ namespace nikol { // Start of nikol
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxContext
 struct GfxContext {
+  GfxContextDesc desc;
+
   // Flags
-  GfxContextFlags flags;
+  GfxStates states;
   u32 clear_flags = 0;
-  bool has_msaa, has_stencil, has_depth;
-  bool has_blend, has_cull_ccw, has_cull_cw, has_vsync;
+  bool has_msaa, has_vsync;
 
   // Devices
   ID3D11Device* device                  = nullptr; 
@@ -40,7 +42,7 @@ struct GfxContext {
   IDXGISwapChain* swapchain             = nullptr; 
   ID3D11RenderTargetView* render_target = nullptr;
 
-  // States
+  // Active states
   ID3D11Texture2D* stencil_buffer        = nullptr; 
   ID3D11DepthStencilState* stencil_state = nullptr;
   ID3D11DepthStencilView* stencil_view   = nullptr;
@@ -48,11 +50,21 @@ struct GfxContext {
   ID3D11BlendState* blend_state          = nullptr;
 
   // Other
-  u32 msaa_samples = 0;
   D3D11_VIEWPORT viewport;
   D3D_FEATURE_LEVEL dx_version;
 };
 /// GfxContext
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxBuffer
+struct GfxBuffer {
+  GfxBufferDesc desc;
+
+  ID3D11Buffer* buffer         = nullptr;
+  D3D11_BUFFER_DESC d3d11_desc = {};
+};
+/// GfxBuffer
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -64,11 +76,11 @@ struct GfxShader {
   ID3D11VertexShader* vertex_shader = nullptr;
   ID3D11PixelShader* pixel_shader   = nullptr;
   
-  ID3D11Buffer* vertex_uniform_buffers[UNIFORM_BUFFERS_MAX];
-  ID3D11Buffer* pixel_uniform_buffers[UNIFORM_BUFFERS_MAX];
+  ID3D11Buffer* vertex_uniforms[UNIFORM_BUFFERS_MAX];
+  ID3D11Buffer* pixel_uniforms[UNIFORM_BUFFERS_MAX];
 
-  sizei vertex_uniforms_count;
-  sizei pixel_uniforms_count;
+  sizei vertex_uniforms_count = 0;
+  sizei pixel_uniforms_count  = 0;
 };
 /// GfxShader
 ///---------------------------------------------------------------------------------------------------------------------
@@ -76,11 +88,11 @@ struct GfxShader {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxTexture
 struct GfxTexture {
+  GfxTextureDesc desc;
+  
   ID3D11Texture2D* handle            = nullptr;
   ID3D11SamplerState* sampler        = nullptr;
   ID3D11ShaderResourceView* resource = nullptr;
-
-  GfxTextureDesc desc;
 };
 /// GfxTexture
 ///---------------------------------------------------------------------------------------------------------------------
@@ -88,6 +100,8 @@ struct GfxTexture {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxPipeline
 struct GfxPipeline {
+  GfxPipelineDesc desc;
+
   ID3D11Buffer* vertex_buffer = nullptr;
   ID3D11Buffer* index_buffer  = nullptr;
   ID3D11InputLayout* layout   = nullptr;
@@ -98,6 +112,7 @@ struct GfxPipeline {
 
   ID3D11ShaderResourceView* texture_views[TEXTURES_MAX] = {};
   ID3D11SamplerState* texture_samplers[TEXTURES_MAX]    = {};
+  u32 textures_count = 0;
 
   u32 stride = 0;
   u32 offset = 0;
@@ -169,39 +184,6 @@ static void check_error(HRESULT res, const i8* func) {
   }
 }
 
-static void set_gfx_flags(GfxContext* gfx) {
-  if((gfx->flags & GFX_FLAGS_DEPTH) == GFX_FLAGS_DEPTH) {
-    gfx->has_depth = true;
-    gfx->clear_flags |= D3D11_CLEAR_DEPTH;
-  }
-  
-  if((gfx->flags & GFX_FLAGS_STENCIL) == GFX_FLAGS_STENCIL) {
-    gfx->has_stencil = true;
-    gfx->clear_flags |= D3D11_CLEAR_STENCIL;
-  }
-  
-  if((gfx->flags & GFX_FLAGS_BLEND) == GFX_FLAGS_BLEND) {
-    gfx->has_blend = true;
-  }
-  
-  if((gfx->flags & GFX_FLAGS_MSAA) == GFX_FLAGS_MSAA) {
-    gfx->has_msaa     = true;
-    gfx->msaa_samples = 4;
-  }
-
-  if((gfx->flags & GFX_FLAGS_CULL_CW) == GFX_FLAGS_CULL_CW) {
-    gfx->has_cull_cw = true;
-  }
-  
-  if((gfx->flags & GFX_FLAGS_CULL_CCW) == GFX_FLAGS_CULL_CCW) {
-    gfx->has_cull_ccw = true;
-  }
-  
-  if((gfx->flags & GFX_FLAGS_ENABLE_VSYNC) == GFX_FLAGS_ENABLE_VSYNC) {
-    gfx->has_vsync = true;
-  }
-}
-
 static DXGI_RATIONAL get_refresh_rate(GfxContext* gfx, int width, int height) {
   // No need to go through everything below since VSYNC is off
   if(!gfx->has_vsync) {
@@ -260,42 +242,109 @@ static DXGI_RATIONAL get_refresh_rate(GfxContext* gfx, int width, int height) {
   return refresh_rate;
 }
 
-static DXGI_SAMPLE_DESC init_msaa(GfxContext* gfx) {
-  DXGI_SAMPLE_DESC sample_desc = {};
-  sample_desc.Count   = 1; 
-  sample_desc.Quality = 0;
-
-  // Enabling Anti-aliasing 
-  if(gfx->has_msaa) {
-    sample_desc.Count   = gfx->msaa_samples;
-    sample_desc.Quality = 1;
+static D3D11_COMPARISON_FUNC get_d3d11_compare(const GfxCompareFunc func) {
+  switch(func) {
+    case GFX_COMPARE_ALWAYS:
+      return D3D11_COMPARISON_ALWAYS;
+    case GFX_COMPARE_NEVER:
+      return D3D11_COMPARISON_NEVER;
+    case GFX_COMPARE_LESS:
+      return D3D11_COMPARISON_LESS;
+    case GFX_COMPARE_LESS_EQUAL:
+      return D3D11_COMPARISON_LESS_EQUAL;
+    case GFX_COMPARE_GREATER:
+      return D3D11_COMPARISON_GREATER;
+    case GFX_COMPARE_GREATER_EQUAL:
+      return D3D11_COMPARISON_GREATER_EQUAL;
+    case GFX_COMPARE_NOT_EQUAL:
+      return D3D11_COMPARISON_NOT_EQUAL;
+    default: 
+      return (D3D11_COMPARISON_FUNC)0;
   }
-
-  return sample_desc;
 }
 
-static void init_blend_state(GfxContext* gfx) {
-  if(!gfx->has_blend) {
-    return;
+static D3D11_STENCIL_OP get_d3d11_operation(const GfxOperation op) {
+  switch(op) {
+    case GFX_OP_KEEP:
+      return D3D11_STENCIL_OP_KEEP;
+    case GFX_OP_ZERO:
+      return D3D11_STENCIL_OP_ZERO;
+    case GFX_OP_INVERT:
+      return D3D11_STENCIL_OP_INVERT;
+    case GFX_OP_REPLACE:
+      return D3D11_STENCIL_OP_REPLACE;
+    case GFX_OP_INCR:
+      return D3D11_STENCIL_OP_INCR;
+    case GFX_OP_DECR:
+      return D3D11_STENCIL_OP_DECR;
+    case GFX_OP_INCR_WRAP:
+      return D3D11_STENCIL_OP_INCR_SAT;
+    case GFX_OP_DECR_WRAP:
+      return D3D11_STENCIL_OP_DECR_SAT;
+    default: 
+      return (D3D11_STENCIL_OP)0;
   }
+}
 
-  D3D11_RENDER_TARGET_BLEND_DESC render_target = {};
-  render_target.BlendEnable           = true;
-  render_target.SrcBlend              = D3D11_BLEND_SRC_COLOR;
-  render_target.DestBlend             = D3D11_BLEND_DEST_COLOR;
-  render_target.BlendOp               = D3D11_BLEND_OP_ADD;
-  render_target.SrcBlendAlpha         = D3D11_BLEND_ONE;
-  render_target.DestBlendAlpha        = D3D11_BLEND_SRC_ALPHA;
-  render_target.BlendOpAlpha          = D3D11_BLEND_OP_SUBTRACT;
-  render_target.RenderTargetWriteMask = D3D10_COLOR_WRITE_ENABLE_ALL;
+static D3D11_BLEND get_d3d11_blend(const GfxBlendMode mode) {
+  switch(mode) {
+    case GFX_BLEND_ZERO:
+      return D3D11_BLEND_ZERO;
+    case GFX_BLEND_ONE:
+      return D3D11_BLEND_ONE;
+    case GFX_BLEND_SRC_COLOR:
+      return D3D11_BLEND_SRC_COLOR;
+    case GFX_BLEND_DEST_COLOR:
+      return D3D11_BLEND_DEST_COLOR;
+    case GFX_BLEND_SRC_ALPHA:
+      return D3D11_BLEND_SRC_ALPHA;
+    case GFX_BLEND_DEST_ALPHA:
+      return D3D11_BLEND_DEST_ALPHA;
+    case GFX_BLEND_INV_SRC_COLOR:
+      return D3D11_BLEND_INV_SRC_COLOR;
+    case GFX_BLEND_INV_DEST_COLOR:
+      return D3D11_BLEND_INV_DEST_COLOR;
+    case GFX_BLEND_INV_SRC_ALPHA:
+      return D3D11_BLEND_INV_SRC_ALPHA;
+    case GFX_BLEND_INV_DEST_ALPHA:
+      return D3D11_BLEND_INV_DEST_ALPHA;
+    case GFX_BLEND_SRC_ALPHA_SATURATE:
+      return D3D11_BLEND_SRC_ALPHA_SAT;
+    default: 
+      return (D3D11_BLEND)0;
+  }
+}
 
-  D3D11_BLEND_DESC blend_desc = {};
-  blend_desc.AlphaToCoverageEnable  = true;
-  blend_desc.IndependentBlendEnable = false;
-  blend_desc.RenderTarget[0]        = render_target;
+static D3D11_CULL_MODE get_d3d11_cull(const GfxCullMode mode) {
+  switch(mode) {
+    case GFX_CULL_FRONT:
+      return D3D11_CULL_FRONT;
+    case GFX_CULL_BACK:
+      return D3D11_CULL_BACK;
+    case GFX_CULL_FRONT_AND_BACK:
+      return D3D11_CULL_NONE;
+    default: 
+      return (D3D11_CULL_MODE)0;
+  }
+}
 
-  HRESULT res = gfx->device->CreateBlendState(&blend_desc, &gfx->blend_state);
-  check_error(res, "CreateBlendState");
+static DXGI_FORMAT get_pixel_format(const GfxTextureFormat format) {
+  switch(format) {
+    case GFX_TEXTURE_FORMAT_R8:
+      return DXGI_FORMAT_R8_UNORM;
+    case GFX_TEXTURE_FORMAT_R16:
+      return DXGI_FORMAT_R16_UNORM;
+    case GFX_TEXTURE_FORMAT_RG8:
+      return DXGI_FORMAT_R8G8_UNORM;
+    case GFX_TEXTURE_FORMAT_RG16:
+      return DXGI_FORMAT_R16G16_UNORM;
+    case GFX_TEXTURE_FORMAT_RGBA8:
+      return DXGI_FORMAT_R8G8B8A8_UNORM;
+    case GFX_TEXTURE_FORMAT_RGBA16:
+      return DXGI_FORMAT_R16G16B16A16_UNORM;
+    default:
+      return DXGI_FORMAT_UNKNOWN;
+  }
 }
 
 static void init_depth_buffer(GfxContext* gfx, int width, int height) {
@@ -306,8 +355,8 @@ static void init_depth_buffer(GfxContext* gfx, int width, int height) {
   stencil_buff_desc.ArraySize = 1; 
   stencil_buff_desc.Format    = DXGI_FORMAT_D24_UNORM_S8_UINT; 
 
-  stencil_buff_desc.SampleDesc.Count   = 1; 
-  stencil_buff_desc.SampleDesc.Quality = 0; 
+  stencil_buff_desc.SampleDesc.Count   = gfx->desc.msaa_samples; 
+  stencil_buff_desc.SampleDesc.Quality = gfx->desc.msaa_samples - 1; 
   
   stencil_buff_desc.Usage          = D3D11_USAGE_DEFAULT; 
   stencil_buff_desc.BindFlags      = D3D11_BIND_DEPTH_STENCIL; 
@@ -318,38 +367,68 @@ static void init_depth_buffer(GfxContext* gfx, int width, int height) {
   check_error(res, "CreateTexture2D");
 }
 
-static void init_stencil_buffer(GfxContext* gfx) {
+static void set_stencil_state(GfxContext* gfx) {
   D3D11_DEPTH_STENCIL_DESC stencil_desc = {};
 
-  if(gfx->has_depth) {
-    stencil_desc.DepthEnable    = true;
+  // Setting the depth state if it is set
+  if(IS_BIT_SET(gfx->states, GFX_STATE_DEPTH)) {
+    stencil_desc.DepthEnable    = gfx->desc.depth_desc.depth_write_enabled;
     stencil_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-    stencil_desc.DepthFunc      = D3D11_COMPARISON_LESS_EQUAL;
+    stencil_desc.DepthFunc      = get_d3d11_compare(gfx->desc.depth_desc.compare_func);
+    gfx->clear_flags |= D3D11_CLEAR_DEPTH;
   }
   else {
     stencil_desc.DepthEnable = false;
   }
-
-  if(gfx->has_stencil) {
+  
+  // Setting the stencil state if it is set
+  if(IS_BIT_SET(gfx->states, GFX_STATE_STENCIL)) {
     stencil_desc.StencilEnable    = true;    
-    stencil_desc.StencilReadMask  = 0xff;    
-    stencil_desc.StencilWriteMask = 0xff;    
+    stencil_desc.StencilReadMask  = gfx->desc.stencil_desc.mask;    
+    stencil_desc.StencilWriteMask = gfx->desc.stencil_desc.mask;    
+    
+    gfx->clear_flags |= D3D11_CLEAR_STENCIL;
   }
   else {
     stencil_desc.StencilEnable = false;    
   }
+ 
+  D3D11_STENCIL_OP depth_pass   = get_d3d11_operation(gfx->desc.stencil_desc.depth_pass_op);
+  D3D11_STENCIL_OP depth_fail   = get_d3d11_operation(gfx->desc.stencil_desc.depth_fail_op);
+  D3D11_STENCIL_OP stencil_fail = get_d3d11_operation(gfx->desc.stencil_desc.stencil_fail_op);
 
-  // Front-facing pixel stencil test 
-  stencil_desc.FrontFace.StencilFailOp      = D3D11_STENCIL_OP_KEEP;
-  stencil_desc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
-  stencil_desc.FrontFace.StencilPassOp      = D3D11_STENCIL_OP_KEEP;
-  stencil_desc.FrontFace.StencilFunc        = D3D11_COMPARISON_ALWAYS;
-  
-  // Back-facing pixel stencil test 
-  stencil_desc.BackFace.StencilFailOp      = D3D11_STENCIL_OP_KEEP;
-  stencil_desc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
-  stencil_desc.BackFace.StencilPassOp      = D3D11_STENCIL_OP_KEEP;
-  stencil_desc.BackFace.StencilFunc        = D3D11_COMPARISON_ALWAYS;
+  D3D11_COMPARISON_FUNC compare_func = get_d3d11_compare(gfx->desc.stencil_desc.compare_func);
+
+  // Determining which face to cull
+  switch(gfx->desc.stencil_desc.polygon_face) {
+    case GFX_CULL_FRONT: 
+      // Front-facing pixel stencil test 
+      stencil_desc.FrontFace.StencilFailOp      = stencil_fail;
+      stencil_desc.FrontFace.StencilDepthFailOp = depth_fail;
+      stencil_desc.FrontFace.StencilPassOp      = depth_pass;
+      stencil_desc.FrontFace.StencilFunc        = compare_func;
+      break;
+    case GFX_CULL_BACK:
+      // Back-facing pixel stencil test 
+      stencil_desc.BackFace.StencilFailOp      = stencil_fail;
+      stencil_desc.BackFace.StencilDepthFailOp = depth_fail;
+      stencil_desc.BackFace.StencilPassOp      = depth_pass;
+      stencil_desc.BackFace.StencilFunc        = compare_func;
+      break;
+    case GFX_CULL_FRONT_AND_BACK:
+      // Front-facing pixel stencil test 
+      stencil_desc.FrontFace.StencilFailOp      = stencil_fail;
+      stencil_desc.FrontFace.StencilDepthFailOp = depth_fail;
+      stencil_desc.FrontFace.StencilPassOp      = depth_pass;
+      stencil_desc.FrontFace.StencilFunc        = compare_func;
+      
+      // Back-facing pixel stencil test 
+      stencil_desc.BackFace.StencilFailOp      = stencil_fail;
+      stencil_desc.BackFace.StencilDepthFailOp = depth_fail;
+      stencil_desc.BackFace.StencilPassOp      = depth_pass;
+      stencil_desc.BackFace.StencilFunc        = compare_func;
+      break;
+  }
 
   // Create the depth stencil state 
   HRESULT res = gfx->device->CreateDepthStencilState(&stencil_desc, &gfx->stencil_state);
@@ -371,17 +450,48 @@ static void init_stencil_buffer(GfxContext* gfx) {
   gfx->device_ctx->OMSetRenderTargets(1, &gfx->render_target, gfx->stencil_view);
 }
 
-static void init_rasterizer_state(GfxContext* gfx) {
+static void set_blend_state(GfxContext* gfx) {
+  D3D11_BLEND src_color  = get_d3d11_blend(gfx->desc.blend_desc.src_color_blend);
+  D3D11_BLEND dest_color = get_d3d11_blend(gfx->desc.blend_desc.dest_color_blend);
+  D3D11_BLEND src_alpha  = get_d3d11_blend(gfx->desc.blend_desc.src_alpha_blend);
+  D3D11_BLEND dest_alpha = get_d3d11_blend(gfx->desc.blend_desc.dest_alpha_blend);
+
+  D3D11_RENDER_TARGET_BLEND_DESC render_target = {};
+  render_target.BlendEnable           = true;
+  render_target.SrcBlend              = src_color;
+  render_target.DestBlend             = dest_color;
+  render_target.BlendOp               = D3D11_BLEND_OP_ADD;
+  render_target.SrcBlendAlpha         = src_alpha;
+  render_target.DestBlendAlpha        = dest_alpha;
+  render_target.BlendOpAlpha          = D3D11_BLEND_OP_ADD;
+  render_target.RenderTargetWriteMask = D3D10_COLOR_WRITE_ENABLE_ALL;
+
+  D3D11_BLEND_DESC blend_desc = {};
+  blend_desc.AlphaToCoverageEnable  = true;
+  blend_desc.IndependentBlendEnable = false;
+  blend_desc.RenderTarget[0]        = render_target;
+  
+  // Creating the blend state
+  HRESULT res = gfx->device->CreateBlendState(&blend_desc, &gfx->blend_state);
+  check_error(res, "CreateBlendState");
+  
+  // Setting the blend state
+  gfx->device_ctx->OMSetBlendState(gfx->blend_state, gfx->desc.blend_desc.blend_factor, 0xffffffff);
+}
+
+static void set_cull_state(GfxContext* gfx) {
   D3D11_RASTERIZER_DESC raster_desc = {};
   raster_desc.FillMode = D3D11_FILL_SOLID; 
-  raster_desc.CullMode = D3D11_CULL_FRONT; 
+  raster_desc.CullMode = get_d3d11_cull(gfx->desc.cull_desc.cull_mode); 
 
-  raster_desc.FrontCounterClockwise = gfx->has_cull_ccw;
+  bool is_ccw = gfx->desc.cull_desc.front_face == GFX_ORDER_COUNTER_CLOCKWISE;
+
+  raster_desc.FrontCounterClockwise = is_ccw;
 
   raster_desc.DepthBias            = 0; 
   raster_desc.DepthBiasClamp       = 0.0f;
   raster_desc.SlopeScaledDepthBias = 0.0f;
-  raster_desc.DepthClipEnable      = (gfx->has_cull_ccw || gfx->has_cull_cw);
+  raster_desc.DepthClipEnable      = true;
   raster_desc.ScissorEnable        = false;
 
   raster_desc.AntialiasedLineEnable = gfx->has_msaa;
@@ -393,6 +503,30 @@ static void init_rasterizer_state(GfxContext* gfx) {
 
   // Set the rasterizer state
   gfx->device_ctx->RSSetState(gfx->raster_state);
+}
+
+static void set_d3d11_states(GfxContext* gfx) {
+  i32 width, height; 
+  window_get_size(gfx->desc.window, &width, &height);
+
+  init_depth_buffer(gfx, width, height);
+  set_stencil_state(gfx);
+
+  if(IS_BIT_SET(gfx->states, GFX_STATE_BLEND)) {
+    set_blend_state(gfx);
+  }
+  
+  if(IS_BIT_SET(gfx->states, GFX_STATE_MSAA)) {
+    gfx->has_msaa = true;
+  }
+
+  if(IS_BIT_SET(gfx->states, GFX_STATE_CULL)) {
+    set_cull_state(gfx);
+  }
+
+  if(IS_BIT_SET(gfx->states, GFX_STATE_VSYNC)) {
+    gfx->has_vsync = true;
+  }
 }
 
 static void init_viewport(GfxContext* gfx, int width, int height) {
@@ -427,12 +561,14 @@ static void init_d3d11(GfxContext* gfx, Window* window) {
   buffer_desc.Width                   = width;
   buffer_desc.Height                  = height; 
   buffer_desc.RefreshRate             = get_refresh_rate(gfx, width, height),
-  buffer_desc.Format                  = DXGI_FORMAT_R8G8B8A8_UNORM;
+  buffer_desc.Format                  = get_pixel_format(gfx->desc.pixel_format);
   buffer_desc.ScanlineOrdering        = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
   buffer_desc.Scaling                 = DXGI_MODE_SCALING_UNSPECIFIED;
 
   // Sample desc
-  DXGI_SAMPLE_DESC sample_desc = init_msaa(gfx);
+  DXGI_SAMPLE_DESC sample_desc = {};
+  sample_desc.Count   = gfx->desc.msaa_samples; 
+  sample_desc.Quality = gfx->desc.msaa_samples - 1;
 
   // @TODO: No. Absolutely not.
   GLFWwindow* wnd = (GLFWwindow*)window_get_native_handle(window);
@@ -484,17 +620,9 @@ static void init_d3d11(GfxContext* gfx, Window* window) {
 
   framebuffer->Release();
 
-  // Blend state init 
-  init_blend_state(gfx);
-
-  // Depth state init 
-  init_depth_buffer(gfx, width, height);
-
-  // Stenctil state init
-  init_stencil_buffer(gfx);
-
-  // Rasterizer state init 
-  init_rasterizer_state(gfx);
+  // Set each state of the D3D11 pipeline based on 
+  // the currently active state flags.
+  set_d3d11_states(gfx);
 
   // Viewport init 
   init_viewport(gfx, width, height);
@@ -656,47 +784,6 @@ static u32 get_semantic_index(const GfxLayoutType type) {
   } 
 }
 
-static ID3D11Buffer* create_buffer(GfxContext* gfx, const GfxBufferDesc* desc) {
-  D3D11_SUBRESOURCE_DATA data = {};
-  D3D11_BUFFER_DESC buff_desc = {};
-  ID3D11Buffer* buff          = nullptr;
-  
-  data.pSysMem = desc->data;
-
-  get_buffer_usage(desc->usage, &buff_desc.Usage, &buff_desc.CPUAccessFlags);
-  buff_desc.ByteWidth           = desc->size;
-  buff_desc.BindFlags           = get_buffer_type(desc->type);
-  buff_desc.MiscFlags           = 0; 
-  buff_desc.StructureByteStride = 0;
-
-  HRESULT res;
-  
-  if(desc->data) {
-    res = gfx->device->CreateBuffer(&buff_desc, &data, &buff);
-  }
-  else {
-    res = gfx->device->CreateBuffer(&buff_desc, NULL, &buff);
-  }
-
-  check_error(res, "CreateBuffer"); 
-
-  return buff;
-}
-
-static void update_buffer(GfxContext* gfx, ID3D11Buffer* buffer, const GfxBufferDesc* new_buff) {
-  D3D11_MAPPED_SUBRESOURCE map_res = {};
- 
-  // Begin the operation to map the new data into the buffer
-  HRESULT res = gfx->device_ctx->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map_res);
-  check_error(res, "Map");
-
-  // Copy the memory to the buffer
-  memory_copy(map_res.pData, new_buff->data, new_buff->size);
-
-  // We're done here
-  gfx->device_ctx->Unmap(buffer, 0);
-}
-
 static ID3D11InputLayout* set_layout(GfxContext* gfx, GfxShader* shader, const GfxLayoutDesc* layout, const sizei count, u32* stride) {
   ID3D11InputLayout* dx_layout = nullptr; 
   D3D11_INPUT_ELEMENT_DESC* descs = (D3D11_INPUT_ELEMENT_DESC*)memory_allocate(sizeof(D3D11_INPUT_ELEMENT_DESC) * count); 
@@ -748,61 +835,13 @@ static D3D11_PRIMITIVE_TOPOLOGY get_draw_mode(const GfxDrawMode mode) {
   }
 }
 
-static bool is_buffer_dynamic(const GfxBufferUsage& usage) {
-  return usage == GFX_BUFFER_USAGE_DYNAMIC_DRAW || 
-         usage == GFX_BUFFER_USAGE_DYNAMIC_READ;
-}
-
-static void create_uniform_buffer_by_type(GfxContext* gfx, GfxShader* shader, const GfxShaderType& type, const sizei buff_size, sizei* index) {
-  GfxBufferDesc buff_desc = {
-    .data  = nullptr, 
-    .size  = buff_size, 
-    .type  = GFX_BUFFER_UNIFORM, 
-    .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
-  };
-
-  switch(type) {
-    case GFX_SHADER_VERTEX:
-      shader->vertex_uniforms_count++;
-      NIKOL_ASSERT((shader->vertex_uniforms_count < UNIFORM_BUFFERS_MAX), "Cannot create more than UNIFORM_BUFFERS_MAX");
-
-      *index                                 = shader->vertex_uniforms_count - 1;
-      shader->vertex_uniform_buffers[*index] = create_buffer(gfx, &buff_desc);
-      break;
-    case GFX_SHADER_PIXEL:
-      shader->pixel_uniforms_count++;
-      NIKOL_ASSERT((shader->pixel_uniforms_count < UNIFORM_BUFFERS_MAX), "Cannot create more than UNIFORM_BUFFERS_MAX");
-      
-      *index                                = shader->pixel_uniforms_count - 1;
-      shader->pixel_uniform_buffers[*index] = create_buffer(gfx, &buff_desc);
-      break;
-    case GFX_SHADER_GEOMETRY:
-      break;
-    default:
-      break;
-  }
-}
-
-static ID3D11Buffer* get_uniform_buffer_by_type(GfxShader* shader, const GfxShaderType& type, const sizei index) {
-  switch(type) {
-    case GFX_SHADER_VERTEX:
-      return shader->vertex_uniform_buffers[index];
-    case GFX_SHADER_PIXEL:
-      return shader->pixel_uniform_buffers[index];
-    case GFX_SHADER_GEOMETRY:
-      return nullptr;
-    default:
-      return nullptr;
-  }
-}
-
 static void set_uniform_buffers(GfxContext* gfx, GfxShader* shader) {
   if(shader->vertex_uniforms_count > 0) {
-    gfx->device_ctx->VSSetConstantBuffers(0, shader->vertex_uniforms_count, shader->vertex_uniform_buffers);
+    gfx->device_ctx->VSSetConstantBuffers(0, shader->vertex_uniforms_count, shader->vertex_uniforms);
   }
   
   if(shader->pixel_uniforms_count > 0) {
-    gfx->device_ctx->PSSetConstantBuffers(0, shader->pixel_uniforms_count, shader->pixel_uniform_buffers);
+    gfx->device_ctx->PSSetConstantBuffers(0, shader->pixel_uniforms_count, shader->pixel_uniforms);
   }
 }
 
@@ -840,28 +879,29 @@ static D3D11_TEXTURE_ADDRESS_MODE get_texture_wrap(GfxTextureWrap wrap) {
   }
 }
 
-static DXGI_FORMAT get_texture_format(u32* channels, const GfxTextureFormat format) {
+static u32 get_texture_channels(const GfxTextureFormat format) {
   switch(format) {
     case GFX_TEXTURE_FORMAT_R8:
-      *channels = 1;
-      return DXGI_FORMAT_R8_UNORM;
     case GFX_TEXTURE_FORMAT_R16:
-      *channels = 1;
-      return DXGI_FORMAT_R16_UNORM;
+      return 1;
     case GFX_TEXTURE_FORMAT_RG8:
-      *channels = 2;
-      return DXGI_FORMAT_R8G8_UNORM;
     case GFX_TEXTURE_FORMAT_RG16:
-      *channels = 2;
-      return DXGI_FORMAT_R16G16_UNORM;
+      return 2;
     case GFX_TEXTURE_FORMAT_RGBA8:
-      *channels = 4;
-      return DXGI_FORMAT_R8G8B8A8_UNORM;
     case GFX_TEXTURE_FORMAT_RGBA16:
-      *channels = 4;
-      return DXGI_FORMAT_R16G16B16A16_UNORM;
+      return 4;
     default:
-      return DXGI_FORMAT_UNKNOWN;
+      return 0;
+  }
+}
+
+static void send_shader_uniforms(GfxContext* gfx, GfxShader* shader) {
+  if(shader->vertex_uniforms_count > 0) {
+    gfx->device_ctx->VSSetConstantBuffers(0, shader->vertex_uniforms_count, shader->vertex_uniforms); 
+  }
+  
+  if(shader->pixel_uniforms_count > 0) {
+    gfx->device_ctx->PSSetConstantBuffers(0, shader->pixel_uniforms_count, shader->pixel_uniforms); 
   }
 }
 
@@ -871,24 +911,26 @@ static DXGI_FORMAT get_texture_format(u32* channels, const GfxTextureFormat form
 ///---------------------------------------------------------------------------------------------------------------------
 /// Context functions 
 
-GfxContext* gfx_context_init(Window* window, const i32 flags) {
-  NIKOL_ASSERT(window, "Invalid window passed to context");
+GfxContext* gfx_context_init(const GfxContextDesc& desc) {
+  NIKOL_ASSERT(desc.window, "Invalid window passed to context");
 
   GfxContext* gfx = (GfxContext*)memory_allocate(sizeof(GfxContext));
   memory_zero(gfx, sizeof(GfxContext));
-  
+ 
+  gfx->desc = desc;
+
   // Setting the flags
-  gfx->flags = (GfxContextFlags)flags;
-  set_gfx_flags(gfx);
+  gfx->states = (GfxStates)desc.states;
 
   // D3D11 init
-  init_d3d11(gfx, window);
+  init_d3d11(gfx, desc.window);
 
   // Listening to events
   event_listen(EVENT_WINDOW_FRAMEBUFFER_RESIZED, framebuffer_resize, gfx);
 
   i32 dx_version     = get_dx_version_num(gfx->dx_version);
   i32 shader_version = 11;
+  NIKOL_ASSERT(dx_version >= NIKOL_D3D11_MINIMUM_MAJOR_VERSION, "Cannot support Direct3D versions less than 11");
 
   NIKOL_LOG_INFO("A Direct3D11 graphics context was successfully created:\n" 
                  "              DIRECT3D VERSION: %i\n" 
@@ -949,14 +991,7 @@ void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, c
   f32 color[4] = {r, g, b, a};
 
   gfx->device_ctx->ClearRenderTargetView(gfx->render_target, color);
-  gfx->device_ctx->ClearDepthStencilView(gfx->stencil_view, gfx->clear_flags, 1.0f, 0);
-
-  // @TODO: Fix
-  f32 blend_factor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-  gfx->device_ctx->OMSetBlendState(gfx->blend_state, blend_factor, 0xffffffff);
-
-  gfx->device_ctx->RSSetViewports(1, &gfx->viewport);
-  gfx->device_ctx->OMSetRenderTargets(1, &gfx->render_target, gfx->stencil_view);
+  gfx->device_ctx->ClearDepthStencilView(gfx->stencil_view, gfx->clear_flags, 1.0f, gfx->desc.stencil_desc.ref);
 }
 
 void gfx_context_present(GfxContext* gfx) {
@@ -965,19 +1000,127 @@ void gfx_context_present(GfxContext* gfx) {
   gfx->swapchain->Present(gfx->has_vsync, 0);
 }
 
-void gfx_context_set_flag(GfxContext* gfx, const i32 flag, const bool value) {
+void gfx_context_set_state(GfxContext* gfx, const GfxStates state, const bool value) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
-  
-  // TODO:
+
+  switch(state) {
+    case GFX_STATE_DEPTH:
+      break;
+    case GFX_STATE_STENCIL:
+      break;
+    case GFX_STATE_BLEND:
+      break;
+    case GFX_STATE_MSAA:
+      break;
+    case GFX_STATE_CULL:
+      break;
+    case GFX_STATE_VSYNC:
+      gfx->has_vsync = value;
+      break;
+  }
 }
 
-const GfxContextFlags gfx_context_get_flags(GfxContext* gfx) {
+void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc& pipe_desc) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+  NIKOL_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
   
-  return gfx->flags;
+  // Updating the desc
+  pipeline->desc = pipe_desc; 
+
+  // Updating the shader
+  pipeline->shader = pipe_desc.shader;
+
+  // Updating the buffers
+  pipeline->vertex_buffer = pipe_desc.vertex_buffer->buffer;
+  pipeline->index_buffer = pipe_desc.index_buffer->buffer;
+
+  // Updating the textures
+  pipeline->textures_count = pipe_desc.textures_count; 
+  for(sizei i = 0; i < pipe_desc.textures_count; i++) {
+    pipeline->texture_views[i]    = pipe_desc.textures[i]->resource;
+    pipeline->texture_samplers[i] = pipe_desc.textures[i]->sampler;
+  }
+
+  // Set the rasterizer state
+  gfx->device_ctx->RSSetState(gfx->raster_state); 
+  gfx->device_ctx->RSSetViewports(1, &gfx->viewport);
+  
+  // Set the output merger state
+  gfx->device_ctx->OMSetRenderTargets(1, &gfx->render_target, gfx->stencil_view);
+  gfx->device_ctx->OMSetDepthStencilState(gfx->stencil_state, gfx->desc.stencil_desc.ref);
+  gfx->device_ctx->OMSetBlendState(gfx->blend_state, gfx->desc.blend_desc.blend_factor, 0xffffffff);
+
+  // Set the input assembly state
+  gfx->device_ctx->IASetPrimitiveTopology(get_draw_mode(pipeline->draw_mode));
+  gfx->device_ctx->IASetInputLayout(pipeline->layout);
 }
 
 /// Context functions 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Buffer functions 
+
+GfxBuffer* gfx_buffer_create(GfxContext* gfx, const GfxBufferDesc& desc) {
+  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+ 
+  GfxBuffer* buffer = (GfxBuffer*)memory_allocate(sizeof(GfxBuffer));
+  memory_zero(buffer, sizeof(GfxBuffer));
+
+  buffer->desc = desc;
+
+  D3D11_SUBRESOURCE_DATA data = {};
+  data.pSysMem = desc.data;
+  
+  get_buffer_usage(desc.usage, &buffer->d3d11_desc.Usage, &buffer->d3d11_desc.CPUAccessFlags);
+  buffer->d3d11_desc.ByteWidth           = desc.size;
+  buffer->d3d11_desc.BindFlags           = get_buffer_type(desc.type);
+  buffer->d3d11_desc.MiscFlags           = 0; 
+  buffer->d3d11_desc.StructureByteStride = 0;
+  
+  HRESULT res;
+  if(desc.data) {
+    res = gfx->device->CreateBuffer(&buffer->d3d11_desc, &data, &buffer->buffer);
+  }
+  else {
+    res = gfx->device->CreateBuffer(&buffer->d3d11_desc, NULL, &buffer->buffer);
+  }
+  check_error(res, "CreateBuffer"); 
+
+  return buffer;
+}
+
+void gfx_buffer_destroy(GfxBuffer* buff) {
+  if(!buff) {
+    return;
+  }
+  
+  buff->buffer->Release();
+
+  memory_free(buff);
+}
+
+void gfx_buffer_update(GfxContext* gfx, GfxBuffer* buff, const sizei offset, const sizei size, const void* data) {
+  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+  NIKOL_ASSERT(buff, "Invalid GfxBuffer struct passed");
+ 
+  buff->desc.size = size; 
+  buff->desc.data = (void*)data;
+
+  D3D11_MAPPED_SUBRESOURCE map_res = {};
+ 
+  // Begin the operation to map the new data into the buffer
+  HRESULT res = gfx->device_ctx->Map(buff->buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map_res);
+  check_error(res, "Map");
+
+  // Copy the memory to the buffer
+  memory_copy(map_res.pData, data, size);
+
+  // We're done here
+  gfx->device_ctx->Unmap(buff->buffer, 0);
+}
+
+/// Buffer functions 
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1025,11 +1168,11 @@ void gfx_shader_destroy(GfxShader* shader) {
   }
 
   for(sizei i = 0; i < shader->vertex_uniforms_count; i++) {
-    shader->vertex_uniform_buffers[i]->Release();
+    shader->vertex_uniforms[i]->Release();
   }
   
   for(sizei i = 0; i < shader->pixel_uniforms_count; i++) {
-    shader->pixel_uniform_buffers[i]->Release();
+    shader->pixel_uniforms[i]->Release();
   }
 
   shader->vertex_shader->Release();
@@ -1040,28 +1183,23 @@ void gfx_shader_destroy(GfxShader* shader) {
   memory_free(shader);
 }
 
-const sizei gfx_shader_create_uniform(GfxContext* gfx, GfxShader* shader, const GfxShaderType type, const sizei uniform_buff_size) {
+void gfx_shader_attach_uniform(GfxContext* gfx, GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(shader, "Invalid GfxShader struct passed");
-  
-  sizei index = 0;
-  create_uniform_buffer_by_type(gfx, shader, type, uniform_buff_size, &index);
+  NIKOL_ASSERT(buffer, "Invalid GfxBuffer struct passed");
 
-  return index;
-}
-
-void gfx_shader_queue_uniform(GfxContext* gfx, GfxShader* shader, const GfxUniformDesc& desc) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
-  NIKOL_ASSERT(shader, "Invalid GfxShader struct passed");
-  NIKOL_ASSERT((desc.index >= 0 && desc.index < UNIFORM_BUFFERS_MAX), "Invalid index passed to \'gfx_shader_query_uniform\'");
-
-  ID3D11Buffer* cbuff = get_uniform_buffer_by_type(shader, desc.shader_type, desc.index); 
-
-  GfxBufferDesc buff_desc = {
-    .data = desc.data, 
-    .size = desc.size, 
-  };
-  update_buffer(gfx, cbuff, &buff_desc);
+  switch(type) {
+    case GFX_SHADER_VERTEX:
+      shader->vertex_uniforms[shader->vertex_uniforms_count] = buffer->buffer;
+      shader->vertex_uniforms_count++;
+      break;
+    case GFX_SHADER_PIXEL:
+      shader->pixel_uniforms[shader->pixel_uniforms_count] = buffer->buffer;
+      shader->pixel_uniforms_count++;
+      break;
+    case GFX_SHADER_GEOMETRY:
+      break;
+  }
 }
 
 /// Shader functions 
@@ -1092,7 +1230,7 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   HRESULT res = gfx->device->CreateSamplerState(&sampler_desc, &texture->sampler);
   check_error(res, "CreateSamplerState");
 
-  u32 channels = 0;
+  u32 channels = get_texture_channels(desc.format);
 
   // D3D11 Texture desc
   D3D11_TEXTURE2D_DESC texture_desc = {
@@ -1100,8 +1238,8 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
     .Height         = desc.height, 
     .MipLevels      = desc.depth, 
     .ArraySize      = desc.depth <= 0 ? 1 : desc.depth, // If this is left to 0, it will seg fault... for some reason.
-    .Format         = get_texture_format(&channels, desc.format),
-    .SampleDesc     = {1, 0}, 
+    .Format         = get_pixel_format(desc.format),
+    .SampleDesc     = {gfx->desc.msaa_samples, gfx->desc.msaa_samples - 1}, 
     .Usage          = D3D11_USAGE_DEFAULT, 
     .BindFlags      = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
     .CPUAccessFlags = 0, 
@@ -1162,6 +1300,8 @@ void gfx_texture_destroy(GfxTexture* texture) {
 void gfx_texture_update(GfxContext* gfx, GfxTexture* texture, const GfxTextureDesc& desc) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(texture, "Invalid GfxTexture struct passed");
+
+  // @TODO:
 }
 
 /// Texture functions 
@@ -1176,11 +1316,13 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc) {
   GfxPipeline* pipeline = (GfxPipeline*)memory_allocate(sizeof(GfxPipeline));
   memory_zero(pipeline, sizeof(GfxPipeline));
 
+  pipeline->desc = desc;
+
   // Create the vertex buffer 
-  pipeline->vertex_buffer = create_buffer(gfx, desc.vertex_buffer); 
+  pipeline->vertex_buffer = desc.vertex_buffer->buffer; 
 
   // Create the index buffer
-  pipeline->index_buffer = create_buffer(gfx, desc.index_buffer); 
+  pipeline->index_buffer = desc.index_buffer->buffer; 
 
   // Setting the shader 
   pipeline->shader = desc.shader;
@@ -1192,7 +1334,8 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc) {
   pipeline->draw_mode = desc.draw_mode;
 
   // Setting the textures 
-  for(sizei i = 0; i < desc.texture_count; i++) {
+  pipeline->textures_count = desc.textures_count; 
+  for(sizei i = 0; i < desc.textures_count; i++) {
     pipeline->texture_views[i]    = desc.textures[i]->resource;
     pipeline->texture_samplers[i] = desc.textures[i]->sampler;
   }
@@ -1216,82 +1359,56 @@ void gfx_pipeline_destroy(GfxPipeline* pipeline) {
   memory_free(pipeline);
 }
 
-void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc& desc) {
+void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
-  NIKOL_ASSERT(desc.vertex_buffer, "Must have a valid vertex buffer to draw");
-  
-  // Set the topology
-  gfx->device_ctx->IASetPrimitiveTopology(get_draw_mode(desc.draw_mode));
-  
-  // Set the layout  
-  gfx->device_ctx->IASetInputLayout(pipeline->layout);
-  
-  // Update the buffer if it is dynamic
-  if(is_buffer_dynamic(desc.vertex_buffer->usage)) {
-    update_buffer(gfx, pipeline->vertex_buffer, desc.vertex_buffer);
-  }
+  NIKOL_ASSERT(pipeline->desc.vertex_buffer, "Must have a valid vertex buffer to draw");
   
   // Set the buffer
   gfx->device_ctx->IASetVertexBuffers(0, 1, &pipeline->vertex_buffer, &pipeline->stride, &pipeline->offset);
   
   // Set the constant buffers in the shader
-  set_uniform_buffers(gfx, desc.shader); 
+  send_shader_uniforms(gfx, pipeline->shader); 
   
   // Set the shaders
-  gfx->device_ctx->VSSetShader(desc.shader->vertex_shader, NULL, 0);
-  gfx->device_ctx->PSSetShader(desc.shader->pixel_shader, NULL, 0);
+  gfx->device_ctx->VSSetShader(pipeline->shader->vertex_shader, NULL, 0);
+  gfx->device_ctx->PSSetShader(pipeline->shader->pixel_shader, NULL, 0);
 
   // Setting the textures (if there are any)
-  if(desc.texture_count > 0) {
-    gfx->device_ctx->PSSetShaderResources(0, desc.texture_count, pipeline->texture_views);
-    gfx->device_ctx->PSSetSamplers(0, desc.texture_count, pipeline->texture_samplers);
+  if(pipeline->textures_count > 0) {
+    gfx->device_ctx->PSSetShaderResources(0, pipeline->textures_count, pipeline->texture_views);
+    gfx->device_ctx->PSSetSamplers(0, pipeline->textures_count, pipeline->texture_samplers);
   }
 
   // Draw the vertex buffer
-  gfx->device_ctx->Draw(desc.vertices_count, 0);
+  gfx->device_ctx->Draw(pipeline->desc.vertices_count, 0);
 }
 
-void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc& desc) {
+void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
-  NIKOL_ASSERT(desc.vertex_buffer, "Must have a valid vertex buffer to draw");
-  NIKOL_ASSERT(desc.index_buffer, "Must have a valid index buffer to draw");
+  NIKOL_ASSERT(pipeline->desc.vertex_buffer, "Must have a valid vertex buffer to draw");
+  NIKOL_ASSERT(pipeline->desc.index_buffer, "Must have a valid index buffer to draw");
   
-  // Set the topology
-  gfx->device_ctx->IASetPrimitiveTopology(get_draw_mode(desc.draw_mode));
-  
-  // Set the layout  
-  gfx->device_ctx->IASetInputLayout(pipeline->layout);
- 
-  // Update the buffers if they are dynamic
-  if(is_buffer_dynamic(desc.vertex_buffer->usage)) {
-    update_buffer(gfx, pipeline->vertex_buffer, desc.vertex_buffer);
-  }
-  
-  if(is_buffer_dynamic(desc.index_buffer->usage)) {
-    update_buffer(gfx, pipeline->index_buffer, desc.index_buffer);
-  }
-
   // Set the buffers
   gfx->device_ctx->IASetIndexBuffer(pipeline->index_buffer, DXGI_FORMAT_R32_UINT, 0); 
   gfx->device_ctx->IASetVertexBuffers(0, 1, &pipeline->vertex_buffer, &pipeline->stride, &pipeline->offset);
   
   // Set the constant buffers in the shader
-  set_uniform_buffers(gfx, desc.shader); 
-  
+  send_shader_uniforms(gfx, pipeline->shader); 
+
   // Set the shaders
-  gfx->device_ctx->VSSetShader(desc.shader->vertex_shader, NULL, 0);
-  gfx->device_ctx->PSSetShader(desc.shader->pixel_shader, NULL, 0);
+  gfx->device_ctx->VSSetShader(pipeline->shader->vertex_shader, NULL, 0);
+  gfx->device_ctx->PSSetShader(pipeline->shader->pixel_shader, NULL, 0);
   
   // Setting the textures (if there are any)
-  if(desc.texture_count > 0) {
-    gfx->device_ctx->PSSetShaderResources(0, desc.texture_count, pipeline->texture_views);
-    gfx->device_ctx->PSSetSamplers(0, desc.texture_count, pipeline->texture_samplers);
+  if(pipeline->textures_count > 0) {
+    gfx->device_ctx->PSSetShaderResources(0, pipeline->textures_count, pipeline->texture_views);
+    gfx->device_ctx->PSSetSamplers(0, pipeline->textures_count, pipeline->texture_samplers);
   }
 
   // Draw the index buffer
-  gfx->device_ctx->DrawIndexed(desc.indices_count, 0, 0);
+  gfx->device_ctx->DrawIndexed(pipeline->desc.indices_count, 0, 0);
 }
 
 /// Pipeline functions 

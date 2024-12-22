@@ -1,5 +1,5 @@
 # URGENT TODO: 
-- D3D11 backend: buffers, shader uniforms, context flags and states, and assert on wrong D3D11 versions
+- D3D11 backend: shader uniforms, context flags, and states
 - Redocument the graphics context section
 - Audio context and audio buffers
 

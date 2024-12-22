@@ -17,7 +17,7 @@ set(NIKOL_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 ### Project Options ###
 ############################################################
-option(NIKOL_BUILD_SHARED "Build Nikol as a shared library" ON)
+option(NIKOL_BUILD_SHARED "Build Nikol as a shared library" OFF)
 option(NIKOL_BUILD_EXAMPLES "Build the examples with the library" ON)
 
 # Build the examples

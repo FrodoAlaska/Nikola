@@ -92,7 +92,6 @@ typedef double f64;
 #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
 #define NIKOL_PLATFORM_WINDOWS 1
 #define NIKOL_GFX_CONTEXT_DX11
-#define WIN32_LEAN_AND_MEAN
 #ifndef _WIN64 
 #error "[NIKOL-FATAL]: Only support 64-bit machines\n"
 #endif 
@@ -1313,8 +1312,8 @@ struct GfxPipeline;
 /// GfxDepthDesc
 struct GfxDepthDesc {
   /// The comparison funcion of the depth buffer.
-  /// The default value is `GFX_COMPARE_LESS`.
-  GfxCompareFunc compare_func = GFX_COMPARE_LESS;
+  /// The default value is `GFX_COMPARE_LESS_EQUAL`.
+  GfxCompareFunc compare_func = GFX_COMPARE_LESS_EQUAL;
 
   /// Enables/disables writing to the depth buffer.
   /// The default value is `true`.

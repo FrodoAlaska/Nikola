@@ -358,7 +358,7 @@ static void set_gfx_states(GfxContext* gfx) {
   }
 
   if(IS_BIT_SET(gfx->states, GFX_STATE_CULL)) {
-    set_blend_state(gfx);
+    set_cull_state(gfx);
   }
 
   if(IS_BIT_SET(gfx->states, GFX_STATE_VSYNC)) {
@@ -864,6 +864,17 @@ void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const Gf
 
   // Updating the pipeline 
   pipeline->desc = pipe_desc;
+ 
+  // Updating the shader
+  pipeline->shader = pipe_desc.shader;
+
+  // Updating the textures
+  pipeline->textures_count = pipe_desc.textures_count; 
+  if(pipeline->textures_count > 0) {
+    for(sizei i = 0; i < pipeline->textures_count; i++) {
+      pipeline->textures[i] = pipe_desc.textures[i]->id;
+    }
+  }
 
   // Setting the stencil mask of the pipeline state
   glStencilMask(pipe_desc.stencil_ref);
@@ -1120,7 +1131,6 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc) {
 
   // Textures init
   pipe->textures_count = desc.textures_count; 
-
   if(desc.textures_count > 0) {
     for(sizei i = 0; i < desc.textures_count; i++) {
       pipe->textures[i] = desc.textures[i]->id;
@@ -1153,11 +1163,8 @@ void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline) {
   send_fragment_uniform_buffers(pipeline->desc.shader); 
 
   // Draw the textures
-  if(pipeline->desc.textures_count > 0) {
-    for(sizei i = 0; i < pipeline->desc.textures_count; i++) {
-      glActiveTexture(GL_TEXTURE0 + i);
-      glBindTexture(GL_TEXTURE_2D, pipeline->desc.textures[i]->id);
-    }
+  if(pipeline->textures_count > 0) {
+    glBindTextures(0, pipeline->textures_count, pipeline->textures[i]);
   }
 
   // Draw the vertices
@@ -1182,11 +1189,8 @@ void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline) {
   send_fragment_uniform_buffers(pipeline->desc.shader); 
 
   // Draw the textures
-  if(pipeline->desc.textures_count > 0) {
-    for(sizei i = 0; i < pipeline->desc.textures_count; i++) {
-      glActiveTexture(GL_TEXTURE0 + i);
-      glBindTexture(GL_TEXTURE_2D, pipeline->desc.textures[i]->id);
-    }
+  if(pipeline->textures_count > 0) {
+    glBindTextures(0, pipeline->textures_count, pipeline->textures[i]);
   }
 
   // Draw the indices

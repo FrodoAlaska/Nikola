@@ -4,6 +4,7 @@
 
 #if NIKOL_PLATFORM_WINDOWS == 1
 #define GLFW_EXPOSE_NATIVE_WIN32
+#define WIN32_LEAN_AND_MEAN
 #include <GLFW/glfw3native.h>
 #elif NIKOL_PLATFORM_LINUX == 1
 #define GLFW_EXPOSE_NATIVE_X11
