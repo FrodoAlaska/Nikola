@@ -1164,7 +1164,7 @@ void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline) {
 
   // Draw the textures
   if(pipeline->textures_count > 0) {
-    glBindTextures(0, pipeline->textures_count, pipeline->textures[i]);
+    glBindTextures(0, pipeline->textures_count, pipeline->textures);
   }
 
   // Draw the vertices
@@ -1190,7 +1190,7 @@ void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline) {
 
   // Draw the textures
   if(pipeline->textures_count > 0) {
-    glBindTextures(0, pipeline->textures_count, pipeline->textures[i]);
+    glBindTextures(0, pipeline->textures_count, pipeline->textures);
   }
 
   // Draw the indices
