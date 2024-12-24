@@ -8,14 +8,12 @@ A cross-platform framework for window creation, input handling, and rendering us
 - Fully-integrated math library using GLM.
 
 # Dependencies
-- glfw3 
-- glm
-- stb_image
-- glad
-- glm
-- d3d11
+- GLFW3 
+- GLAD
+- D3D11
 
 # Build Instructions
+// @TODO
 
 # Hello, Nikol
 Here's a simple example of the library. The example below will open a basic window and initialze a graphics context.
