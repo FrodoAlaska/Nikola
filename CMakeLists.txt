@@ -18,13 +18,6 @@ set(NIKOL_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
 ### Project Options ###
 ############################################################
 option(NIKOL_BUILD_SHARED "Build Nikol as a shared library" OFF)
-option(NIKOL_BUILD_EXAMPLES "Build the examples with the library" ON)
-
-# Build the examples
-if(NIKOL_BUILD_EXAMPLES)
-  add_subdirectory(examples)
-  message("Building examples...")
-endif()
 
 # Set it to shared
 if(NIKOL_BUILD_SHARED)
@@ -75,8 +68,6 @@ set(NIKOL_HEADERS
 ############################################################
 set(LIBS_SOURCES 
   ${NIKOL_LIBS_DIR}/glad/glad.c
-
-  ${NIKOL_LIBS_DIR}/stb/stb_image.cpp
 )
 ############################################################
 
