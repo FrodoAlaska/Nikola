@@ -65,3 +65,6 @@ int main() {
 }
 
 ```
+
+# More Examples 
+For more practical examples using the _Nikol_ engine, go to [NikolExamples]("https://github.com/FrodoAlaska/NikolExamples.git").

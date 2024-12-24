@@ -3,9 +3,9 @@ project(nikol)
 
 ### Project Variables ###
 ############################################################
-set(NIKOL_SRC_DIR ${CMAKE_SOURCE_DIR}/nikol/src)
-set(NIKOL_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/nikol/include)
-set(NIKOL_LIBS_DIR ${CMAKE_SOURCE_DIR}/libs)
+set(NIKOL_SRC_DIR nikol/src)
+set(NIKOL_INCLUDE_DIR nikol/include)
+set(NIKOL_LIBS_DIR libs)
 set(NIKOL_LIBRARIES glfw)
 
 set(NIKOL_BUILD_OPTS -w -Wall)
