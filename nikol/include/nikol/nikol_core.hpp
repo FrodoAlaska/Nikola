@@ -1586,6 +1586,8 @@ void gfx_context_present(GfxContext* gfx);
 /// @NOTE: This can turn on or off the `state` in the given `gfx` context.
 void gfx_context_set_state(GfxContext* gfx, const GfxStates state, const bool value);
 
+/// Apply the `pipeline` using the updated `pipe_desc` in the current `gfx`. 
+/// This will bind any active states and set up the buffers for rendering.
 void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc& pipe_desc);
 
 /// Context functions 

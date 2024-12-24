@@ -1,8 +1,9 @@
 # URGENT TODO: 
+- Extract the examples out of the repo and into another seperate repo
 - Redocument the graphics context section
-- Audio context and audio buffers
 
 # FUTURE TODO: 
+- Audio context and audio buffers
 - Context and window dissociation
 - Get rid of GLFW and do it the old-fashioned way? Misery.
 
@@ -15,6 +16,8 @@
 - (OpenGL) Shader attribute semantics
 
 # EXAMPLES: 
+- A 2D batch renderer 
+- A simple contrived 3D example with rotating cubes. Yes, cube(_S_). Plural.
 - A simple and small drawing app
 - A simple image manipulation app
 
