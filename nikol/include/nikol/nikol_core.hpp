@@ -2,8 +2,6 @@
 
 #include <cstddef>
 
-#include <glm/glm.hpp>
-
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikol { // Start of nikol
@@ -316,37 +314,7 @@ void logger_log(const LogLevel lvl, const i8* msg, ...);
 /// *** Math ***
 
 /// ---------------------------------------------------------------------
-/// Vec2
-typedef glm::vec2 Vec2;
-/// Vec2
-/// ---------------------------------------------------------------------
-
-/// ---------------------------------------------------------------------
-/// Vec3
-typedef glm::vec3 Vec3;
-/// Vec3
-/// ---------------------------------------------------------------------
-
-/// ---------------------------------------------------------------------
-/// Vec4
-typedef glm::vec4 Vec4;
-/// Vec4
-/// ---------------------------------------------------------------------
-
-/// ---------------------------------------------------------------------
-/// Mat3(3x3)
-typedef glm::mat3 Mat3;
-/// Mat3(3x3)
-/// ---------------------------------------------------------------------
-
-/// ---------------------------------------------------------------------
-/// Mat4(4x4)
-typedef glm::mat4 Mat4;
-/// Mat4(4x4)
-/// ---------------------------------------------------------------------
-
-/// ---------------------------------------------------------------------
-/// Math functions 
+/// Math random functions 
 
 /// Return a random signed int.
 const i32 random_i32();
@@ -384,25 +352,7 @@ const f64 random_f64();
 /// Return a random double between `min` and `max`.
 const f64 random_f64(const f64 min, const f64 max);
 
-/// Return a random Vec2.
-const Vec2 random_vec2();
-
-/// Return a random Vec2 between `min` and `max`.
-const Vec2 random_vec2(const Vec2 min, const Vec2 max);
-
-/// Return a random Vec3.
-const Vec3 random_vec3();
-
-/// Return a random Vec3 between `min` and `max`.
-const Vec3 random_vec3(const Vec3 min, const Vec3 max);
-
-/// Return a random Vec4.
-const Vec4 random_vec4();
-
-/// Return a random Vec4 between `min` and `max`.
-const Vec4 random_vec4(const Vec4 min, const Vec4 max);
-
-/// Math functions 
+/// Math random functions 
 /// ---------------------------------------------------------------------
 
 /// *** Math ***
