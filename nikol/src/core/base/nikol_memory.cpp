@@ -1,7 +1,7 @@
 #include "nikol/nikol_core.hpp"
 
-#include <cstdlib>
-#include <cstring>
+#include <stdlib.h>
+#include <string.h>
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -32,8 +32,10 @@ void* memory_allocate(const sizei size) {
 }
 
 void* memory_reallocate(void* ptr, const sizei new_size) {
-  ptr = realloc(ptr, new_size);
+  void* temp_ptr = realloc(ptr, new_size);
+
   NIKOL_ASSERT(ptr, "Could not allocate any more memory!");
+  ptr = temp_ptr;
   
   s_state.alloc_count++;
   s_state.alloc_total_bytes += new_size;

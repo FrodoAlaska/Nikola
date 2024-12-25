@@ -10,14 +10,14 @@ set(NIKOL_LIBRARIES glfw)
 
 set(NIKOL_BUILD_OPTS -w -W0)
 set(NIKOL_BUILD_DEFS GLFW_INCLUDE_NONE)
-set(NIKOL_BUILD_LIBS_DIR ${NIKOL_INCLUDE_DIR} ${NIKOL_LIBS_DIR} ${NIKOL_LIBS_DIR}/GLFW/include ${NIKOL_SRC_DIR} ${NIKOL_LIBS_DIR}/glm/)
+set(NIKOL_BUILD_LIBS_DIR ${NIKOL_INCLUDE_DIR} ${NIKOL_LIBS_DIR} ${NIKOL_LIBS_DIR}/GLFW/include)
 
 set(NIKOL_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
 ############################################################
 
 ### Project Options ###
 ############################################################
-option(NIKOL_BUILD_SHARED "Build Nikol as a shared library" OFF)
+option(NIKOL_BUILD_SHARED "Build Nikol as a shared library" ON)
 
 # Set it to shared
 if(NIKOL_BUILD_SHARED)
@@ -47,7 +47,7 @@ set(NIKOL_SOURCES
   ${NIKOL_SRC_DIR}/core/base/logger.cpp
   ${NIKOL_SRC_DIR}/core/base/event.cpp
   ${NIKOL_SRC_DIR}/core/base/window.cpp
-  ${NIKOL_SRC_DIR}/core/base/memory.cpp
+  ${NIKOL_SRC_DIR}/core/base/nikol_memory.cpp
   ${NIKOL_SRC_DIR}/core/base/input.cpp
   ${NIKOL_SRC_DIR}/core/base/nikol_clock.cpp
   
