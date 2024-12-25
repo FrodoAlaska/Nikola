@@ -1086,9 +1086,8 @@ enum GfxDrawMode {
   GFX_DRAW_MODE_POINT          = 5 << 0,
   GFX_DRAW_MODE_TRIANGLE       = 5 << 1,
   GFX_DRAW_MODE_TRIANGLE_STRIP = 5 << 2,
-  GFX_DRAW_MODE_TRIANGLE_FAN   = 5 << 3,
-  GFX_DRAW_MODE_LINE           = 5 << 4,
-  GFX_DRAW_MODE_LINE_STRIP     = 5 << 5,
+  GFX_DRAW_MODE_LINE           = 5 << 3,
+  GFX_DRAW_MODE_LINE_STRIP     = 5 << 4,
 };
 /// GfxDrawMode
 ///---------------------------------------------------------------------------------------------------------------------

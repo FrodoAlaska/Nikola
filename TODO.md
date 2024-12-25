@@ -1,5 +1,5 @@
 # URGENT TODO: 
-- Extract the examples out of the repo and into another seperate repo
+- Get and set descriptions of Gfx types.
 - Redocument the graphics context section
 
 # FUTURE TODO: 

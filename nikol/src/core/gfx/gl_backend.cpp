@@ -400,8 +400,6 @@ static GLenum get_draw_mode(const GfxDrawMode mode) {
       return GL_TRIANGLES;
     case GFX_DRAW_MODE_TRIANGLE_STRIP:
       return GL_TRIANGLE_STRIP;
-    case GFX_DRAW_MODE_TRIANGLE_FAN:
-      return GL_TRIANGLE_FAN;
     case GFX_DRAW_MODE_LINE:
       return GL_LINES;
     case GFX_DRAW_MODE_LINE_STRIP:
