@@ -2,15 +2,6 @@
 
 #include <GLFW/glfw3.h>
 
-#if NIKOL_PLATFORM_WINDOWS == 1
-#define GLFW_EXPOSE_NATIVE_WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <GLFW/glfw3native.h>
-#elif NIKOL_PLATFORM_LINUX == 1
-#define GLFW_EXPOSE_NATIVE_X11
-#include <GLFW/glfw3native.h>
-#endif
-
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikol { // Start of nikol
@@ -19,7 +10,6 @@ namespace nikol { // Start of nikol
 struct Window {
   GLFWwindow* handle  = nullptr;
   GLFWcursor* cursor  = nullptr;
-  void* native_handle = nullptr;
 
   i32 width, height; 
   WindowFlags flags;
@@ -289,14 +279,6 @@ static void set_window_callbacks(Window* window) {
   // Nikol cursor show callback
   event_listen(EVENT_MOUSE_CURSOR_SHOWN, nikol_cursor_show_callback, window);
 }
-
-static void set_native_window_handle(Window* window) {
-#if NIKOL_PLATFORM_WINDOWS == 1
-  window->native_handle = (HWND*)glfwGetWin32Window(window->handle);
-#elif NIKOL_PLATFORM_LINUX == 1
-  window->native_handle = (Window*)glfwGetX11Window(window->handle);
-#endif
-}
 /// Private functions
 
 /// ---------------------------------------------------------------------
@@ -345,9 +327,6 @@ Window* window_open(const i8* title, const i32 width, const i32 height, i32 flag
 
   // Set the current context 
   glfwMakeContextCurrent(window->handle);
-
-  // Set the native window handle to retrieve it later 
-  set_native_window_handle(window);
 
   if(window->is_fullscreen) {
     window_set_fullscreen(window, true);

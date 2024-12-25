@@ -53,12 +53,12 @@ struct GfxContext {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxBuffer  
 struct GfxBuffer {
+  GfxBufferDesc desc;
+
   u32 id;
 
   GLenum gl_buff_type; 
   GLenum gl_buff_usage;
-
-  GfxBufferDesc desc;
 };
 /// GfxBuffer  
 ///---------------------------------------------------------------------------------------------------------------------
@@ -85,6 +85,8 @@ struct GfxShader {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxTexture
 struct GfxTexture {
+  GfxTextureDesc desc;
+
   u32 id;
 };
 /// GfxTexture
@@ -1014,7 +1016,9 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   
   GfxTexture* texture = (GfxTexture*)memory_allocate(sizeof(GfxTexture));
   memory_zero(texture, sizeof(GfxTexture));
-  
+ 
+  texture->desc = desc;
+
   GLenum gl_wrap_format = get_texture_wrap(desc.wrap_mode);
  
   GLenum in_format, base_format;
