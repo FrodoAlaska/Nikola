@@ -1289,8 +1289,8 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   D3D11_TEXTURE2D_DESC texture_desc = {
     .Width          = desc.width, 
     .Height         = desc.height, 
-    .MipLevels      = desc.depth <= 0 ? 1 : desc.depth, // If this is left to 0, it will seg fault... for some reason.
-    .ArraySize      = desc.depth <= 0 ? 1 : desc.depth, // Same case...
+    .MipLevels      = 1, // @TODO: Need to apply depth somehow
+    .ArraySize      = 1, // There's only one texture in a 2D texure
     .Format         = get_pixel_format(desc.format),
     .SampleDesc     = {gfx->desc.msaa_samples, gfx->desc.msaa_samples - 1}, 
     .Usage          = D3D11_USAGE_DEFAULT, 
