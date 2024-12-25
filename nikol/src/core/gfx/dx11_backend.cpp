@@ -1281,19 +1281,22 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   check_error(res, "CreateSamplerState");
 
   u32 channels = get_texture_channels(desc.format);
+  
+  // Generate a mipmap if the texture has depth
+  UINT tex_flags = desc.depth <= 0 ? 0 : D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
   // D3D11 Texture desc
   D3D11_TEXTURE2D_DESC texture_desc = {
     .Width          = desc.width, 
     .Height         = desc.height, 
-    .MipLevels      = desc.depth, 
-    .ArraySize      = desc.depth <= 0 ? 1 : desc.depth, // If this is left to 0, it will seg fault... for some reason.
+    .MipLevels      = desc.depth <= 0 ? 1 : desc.depth, // If this is left to 0, it will seg fault... for some reason.
+    .ArraySize      = desc.depth <= 0 ? 1 : desc.depth, // Same case...
     .Format         = get_pixel_format(desc.format),
     .SampleDesc     = {gfx->desc.msaa_samples, gfx->desc.msaa_samples - 1}, 
     .Usage          = D3D11_USAGE_DEFAULT, 
     .BindFlags      = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
     .CPUAccessFlags = 0, 
-    .MiscFlags      = D3D11_RESOURCE_MISC_GENERATE_MIPS,
+    .MiscFlags      = tex_flags,
   }; 
 
   // No data set in the texture.
@@ -1327,8 +1330,10 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   res = gfx->device->CreateShaderResourceView(texture->handle, &view_desc, &texture->resource);
   check_error(res, "CreateShaderResourceView");
 
-  // Generate the mipmap levels of the texture 
-  gfx->device_ctx->GenerateMips(texture->resource);
+  // Generate the mipmap levels of the texture (if requested)
+  if(desc.depth > 0) {
+    gfx->device_ctx->GenerateMips(texture->resource);
+  }
 
   texture->desc = desc;
   return texture;
