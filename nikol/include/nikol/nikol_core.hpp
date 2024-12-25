@@ -311,54 +311,6 @@ void logger_log(const LogLevel lvl, const i8* msg, ...);
 /// ---------------------------------------------------------------------
 
 /// ---------------------------------------------------------------------
-/// *** Math ***
-
-/// ---------------------------------------------------------------------
-/// Math random functions 
-
-/// Return a random signed int.
-const i32 random_i32();
-
-/// Return a random signed int between `min` and `max`.
-const i32 random_i32(const i32 min, const i32 max);
-
-/// Return a random unsigned int.
-const u32 random_u32();
-
-/// Return a random unsigned int between `min` and `max`.
-const u32 random_u32(const u32 min, const u32 max);
-
-/// Return a random signed long.
-const i64 random_i64();
-
-/// Return a random signed long between `min` and `max`.
-const i64 random_i64(const i64 min, const i64 max);
-
-/// Return a random unsigned long.
-const u64 random_u64();
-
-/// Return a random unsigned long between `min` and `max`.
-const u64 random_u64(const u64 min, const u64 max);
-
-/// Return a random float.
-const f32 random_f32();
-
-/// Return a random float between `min` and `max`.
-const f32 random_f32(const f32 min, const f32 max);
-
-/// Return a random double.
-const f64 random_f64();
-
-/// Return a random double between `min` and `max`.
-const f64 random_f64(const f64 min, const f64 max);
-
-/// Math random functions 
-/// ---------------------------------------------------------------------
-
-/// *** Math ***
-/// ---------------------------------------------------------------------
-
-/// ---------------------------------------------------------------------
 /// *** Event ***
 
 ///---------------------------------------------------------------------------------------------------------------------

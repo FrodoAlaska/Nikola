@@ -8,7 +8,7 @@ set(NIKOL_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/nikol/include)
 set(NIKOL_LIBS_DIR ${CMAKE_SOURCE_DIR}/libs)
 set(NIKOL_LIBRARIES glfw)
 
-set(NIKOL_BUILD_OPTS -w -Wall)
+set(NIKOL_BUILD_OPTS -w -W0)
 set(NIKOL_BUILD_DEFS GLFW_INCLUDE_NONE)
 set(NIKOL_BUILD_LIBS_DIR ${NIKOL_INCLUDE_DIR} ${NIKOL_LIBS_DIR} ${NIKOL_LIBS_DIR}/GLFW/include ${NIKOL_SRC_DIR} ${NIKOL_LIBS_DIR}/glm/)
 
@@ -50,9 +50,6 @@ set(NIKOL_SOURCES
   ${NIKOL_SRC_DIR}/core/base/memory.cpp
   ${NIKOL_SRC_DIR}/core/base/input.cpp
   ${NIKOL_SRC_DIR}/core/base/nikol_clock.cpp
-  
-  # Core/Math
-  ${NIKOL_SRC_DIR}/core/math/nikol_random.cpp
   
   # Core/Gfx
   ${NIKOL_SRC_DIR}/core/gfx/gl_backend.cpp
