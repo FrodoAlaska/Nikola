@@ -36,7 +36,11 @@ int main() {
   }
 
   // Creating a graphics context
-  nikol::GfxContext* gfx = gfx_context_init(window, nikol::GFX_FLAGS_BLEND | nikol::GFX_FLAGS_DEPTH | nikol::GFX_FLAGS_STENCIL);
+  nikol::GfxContextDesc gfx_desc = {
+    .window = window,
+    .states = nikol::GFX_STATE_DEPTH | nikol::GFX_STATE_STENCIL,
+  };
+  nikol::GfxContext* gfx = nikol::gfx_context_init(gfx_desc);
   if(!gfx) {
     return -1;
   }
@@ -51,11 +55,11 @@ int main() {
     // Clear the screen to black
     nikol::gfx_context_clear(gfx, 0.0f, 0.0f, 0.0f, 1.0f);
     
-    // Poll the window events
-    nikol::window_poll_events(window);
-    
     // Swap the internal window buffer
     nikol::gfx_context_present(gfx);
+    
+    // Poll the window events
+    nikol::window_poll_events(window);
   }
 
   // De-initialze

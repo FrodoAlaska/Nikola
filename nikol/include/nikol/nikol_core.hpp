@@ -265,7 +265,6 @@ void logger_log(const LogLevel lvl, const i8* msg, ...);
 #if NIKOL_PLATFORM_WINDOWS == 1
 
 /// Windows debug break
-#include <intrin.h>
 #define DEBUG_BREAK() __debugbreak()
 /// Windows debug break
 

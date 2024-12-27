@@ -1,5 +1,6 @@
 # URGENT TODO: 
-- Get and set descriptions of Gfx types.
+- Save a reference to the GfxContext in the resources for ease of use
+- Get and set descriptions of Gfx types
 - Redocument the graphics context section
 
 # FUTURE TODO: 
