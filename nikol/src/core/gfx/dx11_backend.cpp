@@ -1251,6 +1251,7 @@ void gfx_shader_attach_uniform(GfxContext* gfx, GfxShader* shader, const GfxShad
 
 i32 gfx_glsl_get_uniform_location(GfxShader* shader, const i8* uniform_name) {
   /// No implementation for Direct3D11...
+  return 0;
 }
 
 void gfx_glsl_upload_uniform_array(GfxShader* shader, const i32 location, const sizei count, const GfxLayoutType type, const void* data) {
