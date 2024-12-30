@@ -5,7 +5,6 @@ A cross-platform framework for window creation, input handling, and rendering us
 - Cross-platform window creation. 
 - Gamepad, keyboard, and mouse input support.
 - Fully-configurable cross-platform rendering API using OpenGL (Linux) and DirectX11 (Windows).
-- Fully-integrated math library using GLM.
 
 # Dependencies
 - GLFW3 
@@ -71,4 +70,4 @@ int main() {
 ```
 
 # More Examples 
-For more practical examples using the _Nikol_ engine, go to [NikolExamples]("https://github.com/FrodoAlaska/NikolExamples.git").
+For more practical examples using the _Nikol_ engine, go to [NikolExamples]("https://github.com/FrodoAlaska/NikolExamples")

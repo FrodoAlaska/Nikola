@@ -1470,6 +1470,9 @@ void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline) {
   if(pipeline->textures_count > 0) {
     gfx->device_ctx->PSSetShaderResources(0, pipeline->textures_count, pipeline->texture_views);
     gfx->device_ctx->PSSetSamplers(0, pipeline->textures_count, pipeline->texture_samplers);
+    
+    gfx->device_ctx->VSSetShaderResources(0, pipeline->textures_count, pipeline->texture_views);
+    gfx->device_ctx->VSSetSamplers(0, pipeline->textures_count, pipeline->texture_samplers);
   }
 
   // Draw the index buffer

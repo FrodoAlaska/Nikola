@@ -1,7 +1,11 @@
 # URGENT TODO: 
+- Redocument the graphics context section
+
+# FIXES
 - Save a reference to the GfxContext in the resources for ease of use
 - Get and set descriptions of Gfx types
-- Redocument the graphics context section
+- (D3D11) Make sure that fullscreen mode is taken into account in the graphics backends
+- (OpenGL) Have the textures binded to a specific sampler unit?
 
 # FUTURE TODO: 
 - Audio context and audio buffers
@@ -14,17 +18,15 @@
 - Blending is not completely correct in D3D11
 
 # TEST: 
-- (OpenGL) Shader attribute semantics
+- (OpenGL) Shader attribute semantics (e.g, does Mat4 work there)
 
 # EXAMPLES: 
-- A 2D batch renderer 
 - A simple contrived 3D example with rotating cubes. Yes, cube(_S_). Plural.
 - A simple and small drawing app
 - A simple image manipulation app
 
 # Engine TODO:
 - Meshes
-- Make a 3D example
 - Fonts 
 - NUSL -> Nikol Uniform Shading Language
 - Resource manager and loaders for each resource

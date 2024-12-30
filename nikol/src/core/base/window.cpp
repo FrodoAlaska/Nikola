@@ -66,7 +66,11 @@ static void window_focus_callback(GLFWwindow* handle, int focused) {
   });
 }
 
-static void window_framebuffer_resize_callback(GLFWwindow* window, int width, int height) {
+static void window_framebuffer_resize_callback(GLFWwindow* handle, int width, int height) {
+  Window* window = (Window*)glfwGetWindowUserPointer(handle);
+  window->width  = width;
+  window->height = height;
+  
   event_dispatch(Event {
     .type = EVENT_WINDOW_FRAMEBUFFER_RESIZED, 
     .window_framebuffer_width  = width,
@@ -74,7 +78,11 @@ static void window_framebuffer_resize_callback(GLFWwindow* window, int width, in
   });
 }
 
-static void window_resize_callback(GLFWwindow* window, int width, int height) {
+static void window_resize_callback(GLFWwindow* handle, int width, int height) {
+  Window* window = (Window*)glfwGetWindowUserPointer(handle);
+  window->width  = width;
+  window->height = height;
+  
   event_dispatch(Event {
     .type = EVENT_WINDOW_RESIZED, 
     .window_new_width  = width,
