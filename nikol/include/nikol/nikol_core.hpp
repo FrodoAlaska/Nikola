@@ -849,44 +849,37 @@ void window_poll_events(Window* window);
 void window_swap_buffers(Window* window);
 
 /// Returns `true` if the `window` context is still actively open. 
-const bool window_is_open(Window* window);
+const bool window_is_open(const Window* window);
 
 /// Returns `true` if the `window` context is currently in fullscreen mode
-const bool window_is_fullscreen(Window* window);
+const bool window_is_fullscreen(const Window* window);
 
 /// Returns `true` if the `window` context is currently focused
-const bool window_is_focused(Window* window);
+const bool window_is_focused(const Window* window);
 
 /// Returns `true` if the `window` context is currently shown
-const bool window_is_shown(Window* window);
-
-/// Return the platform-specific window handle.
-/// For example, this function will return `HWND` in a Windows enviornment.
-///
-/// NOTE: This function will return the native window handle as a pointer. 
-/// Defrefrence the returned pointer if it is to be used.
-void* window_get_native_handle(Window* window);
+const bool window_is_shown(const Window* window);
 
 /// Retrieve the current size of the `window` context
-void window_get_size(Window* window, i32* width, i32* height);
+void window_get_size(const Window* window, i32* width, i32* height);
 
 /// Retrieve the current title of the `window` context
-const i8* window_get_title(Window* window);
+const i8* window_get_title(const Window* window);
 
 /// Retrieve the current size of the monitor
-void window_get_monitor_size(Window* window, i32* width, i32* height);
+void window_get_monitor_size(const Window* window, i32* width, i32* height);
 
 /// Retrieve the aspect ratio of the `window` context
-const f32 window_get_aspect_ratio(Window* window);
+const f32 window_get_aspect_ratio(const Window* window);
 
 /// Retrieve the refresh rate of the monitor 
-const f32 window_get_refresh_rate(Window* window);
+const f32 window_get_refresh_rate(const Window* window);
 
 /// Retrieve the set window flags of `window`
-const WindowFlags window_get_flags(Window* window);
+const WindowFlags window_get_flags(const Window* window);
 
 /// Retrieve the current position of the `window` context relative to the monitor
-void window_get_position(Window* window, i32* x, i32* y);
+void window_get_position(const Window* window, i32* x, i32* y);
 
 /// Set the given `window` as the current active context
 void window_set_current_context(Window* window);

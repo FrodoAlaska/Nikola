@@ -12,16 +12,26 @@ struct Window {
   GLFWcursor* cursor  = nullptr;
 
   i32 width, height; 
+  
   WindowFlags flags;
 
-  f32 refresh_rate;
+  f32 refresh_rate = 0.0f;
 
-  bool is_fullscreen, is_focused, is_cursor_shown;
+  bool is_fullscreen   = false;
+  bool is_focused      = false;
+  bool is_cursor_shown = true;
 
-  i32 position_x, position_y; 
-  f32 last_mouse_position_x, last_mouse_position_y;
-  f32 mouse_position_x, mouse_position_y; 
-  f32 mouse_offset_x, mouse_offset_y;
+  i32 position_x = 0; 
+  i32 position_y = 0;
+
+  f64 mouse_position_x = 0.0f; 
+  f64 mouse_position_y = 0.0f; 
+
+  f32 last_mouse_position_x = 0.0f;
+  f32 last_mouse_position_y = 0.0f;
+  
+  f32 mouse_offset_x = 0.0f; 
+  f32 mouse_offset_y = 0.0f;
 };
 /// Window
 
@@ -141,8 +151,8 @@ void cursor_pos_callback(GLFWwindow* handle, double xpos, double ypos) {
 
   event_dispatch(Event {
     .type = EVENT_MOUSE_MOVED, 
-    .mouse_pos_x = window->mouse_position_x, 
-    .mouse_pos_y = window->mouse_position_y, 
+    .mouse_pos_x = (f32)window->mouse_position_x, 
+    .mouse_pos_y = (f32)window->mouse_position_y, 
     
     .mouse_offset_x = window->mouse_offset_x,
     .mouse_offset_y = window->mouse_offset_y,
@@ -210,47 +220,49 @@ static void set_window_hints(Window* window) {
   /// @TODO: There must be a better way than this shit
   /// Seriously, what the fuck???
 
-  if((window->flags & WINDOW_FLAGS_RESIZABLE) == WINDOW_FLAGS_RESIZABLE) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_RESIZABLE))
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
   }
   
-  if((window->flags & WINDOW_FLAGS_FOCUS_ON_CREATE) == WINDOW_FLAGS_FOCUS_ON_CREATE) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_FOCUS_ON_CREATE) {
     glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
+    window->is_focused = true;
   }
   
-  if((window->flags & WINDOW_FLAGS_FOCUS_ON_SHOW) == WINDOW_FLAGS_FOCUS_ON_SHOW) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_FOCUS_ON_SHOW) {
     glfwWindowHint(GLFW_FOCUS_ON_SHOW, GLFW_TRUE);
+    window->is_focused = true;
   }
   
-  if((window->flags & WINDOW_FLAGS_MINIMIZE) == WINDOW_FLAGS_MINIMIZE) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_MINIMIZE) {
     glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
   }
   
-  if((window->flags & WINDOW_FLAGS_MAXMIZE) == WINDOW_FLAGS_MAXMIZE) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_MAXMIZE) {
     glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
   }
   
-  if((window->flags & WINDOW_FLAGS_DISABLE_DECORATIONS) == WINDOW_FLAGS_DISABLE_DECORATIONS) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_DISABLE_DECORATIONS) {
     glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
   }
   
-  if((window->flags & WINDOW_FLAGS_CENTER_MOUSE) == WINDOW_FLAGS_CENTER_MOUSE) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_CENTER_MOUSE) {
     glfwWindowHint(GLFW_CENTER_CURSOR, GLFW_TRUE);
   }
   
-  if((window->flags & WINDOW_FLAGS_HIDE_CURSOR) == WINDOW_FLAGS_HIDE_CURSOR) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_HIDE_CURSOR) {
     window->is_cursor_shown = false;
   }
   
-  if((window->flags & WINDOW_FLAGS_FULLSCREEN) == WINDOW_FLAGS_FULLSCREEN) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_FULLSCREEN) {
     window->is_fullscreen = true; 
   }
   
-  if((window->flags & WINDOW_FLAGS_GFX_HARDWARE) == WINDOW_FLAGS_GFX_HARDWARE) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_GFX_HARDWARE) {
     set_gfx_context(window);
   }
   
-  if((window->flags & WINDOW_FLAGS_GFX_SOFTWARE) == WINDOW_FLAGS_GFX_SOFTWARE) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_GFX_SOFTWARE) {
     // @TODO
   }
 }
@@ -294,29 +306,10 @@ static void set_window_callbacks(Window* window) {
 
 Window* window_open(const i8* title, const i32 width, const i32 height, i32 flags) {
   Window* window = (Window*)memory_allocate(sizeof(Window));
-
-  window->handle = nullptr;
-  window->cursor = nullptr;
   
   window->width  = width; 
   window->height = height; 
   window->flags  = (WindowFlags)flags;
-
-  window->is_focused      = true;
-  window->is_fullscreen   = false;
-  window->is_cursor_shown = true; 
-
-  window->position_x = 0.0f;
-  window->position_y = 0.0f;
-  
-  window->last_mouse_position_x = 0.0f;
-  window->last_mouse_position_y = 0.0f;
-  
-  window->mouse_position_x = window->last_mouse_position_x;
-  window->mouse_position_y = window->last_mouse_position_y;
-  
-  window->mouse_offset_x = 0.0f;
-  window->mouse_offset_y = 0.0f;
 
   // GLFW init and setup 
   glfwInit();
@@ -332,6 +325,17 @@ Window* window_open(const i8* title, const i32 width, const i32 height, i32 flag
 
   // Setting our `window` as user data in the glfw window
   glfwSetWindowUserPointer(window->handle, window);
+  
+  // Querying data from the GLFW window
+  glfwGetWindowPos(window->handle, &window->position_x, &window->position_y); 
+  glfwGetCursorPos(window->handle, &window->mouse_position_x, &window->mouse_position_y);
+
+  window->last_mouse_position_x = window->mouse_position_x;
+  window->last_mouse_position_y = window->mouse_position_y;
+  
+  // Setting the correct initial mouse offset
+  window->mouse_offset_x = window->last_mouse_position_x - window->mouse_position_x;
+  window->mouse_offset_y = window->last_mouse_position_y - window->mouse_position_y;
 
   // Set the current context 
   glfwMakeContextCurrent(window->handle);
@@ -374,55 +378,51 @@ void window_swap_buffers(Window* window) {
   glfwSwapBuffers(window->handle);
 }
 
-const bool window_is_open(Window* window) {
+const bool window_is_open(const Window* window) {
   return !glfwWindowShouldClose(window->handle);
 }
 
-const bool window_is_fullscreen(Window* window) {
+const bool window_is_fullscreen(const Window* window) {
   return window->is_fullscreen;
 }
 
-const bool window_is_focused(Window* window) {
+const bool window_is_focused(const Window* window) {
   return window->is_focused;
 }
 
-const bool window_is_shown(Window* window) {
+const bool window_is_shown(const Window* window) {
   return glfwGetWindowAttrib(window->handle, GLFW_VISIBLE);
 }
 
-void* window_get_native_handle(Window* window) {
-  return window->handle;
-}
-
-void window_get_size(Window* window, i32* width, i32* height) {
+void window_get_size(const Window* window, i32* width, i32* height) {
   *width  = window->width;
   *height = window->height;
 }
 
-const i8* window_get_title(Window* window) {
+const i8* window_get_title(const Window* window) {
   return glfwGetWindowTitle(window->handle);
 }
 
-void window_get_monitor_size(Window* window, i32* width, i32* height) {
+void window_get_monitor_size(const Window* window, i32* width, i32* height) {
   const GLFWvidmode* video_mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
   
   *width  = video_mode->width;
   *height = video_mode->height;
 }
 
-const f32 window_get_aspect_ratio(Window* window) {
+const f32 window_get_aspect_ratio(const Window* window) {
   return ((f32)window->width / (f32)window->height);
 }
 
-const f32 window_get_refresh_rate(Window* window) {
+const f32 window_get_refresh_rate(const Window* window) {
   return window->refresh_rate;
 }
 
-const WindowFlags window_get_flags(Window* window) {
+const WindowFlags window_get_flags(const Window* window) {
   return window->flags;
 }
 
-void window_get_position(Window* window, i32* x, i32* y) {
+void window_get_position(const Window* window, i32* x, i32* y) {
   *x = window->position_x;
   *y = window->position_y;
 }

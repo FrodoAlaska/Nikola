@@ -20,7 +20,6 @@ Here's a simple example of the library. The example below will open a basic wind
 ```c++
 #include <nikol_core.hpp>
 
-// Will choose the appropriate main entry based on the platform
 int main() {
   // Initialze the library
   if(!nikol::init()) {
@@ -70,4 +69,4 @@ int main() {
 ```
 
 # More Examples 
-For more practical examples using the _Nikol_ engine, go to [NikolExamples]("https://github.com/FrodoAlaska/NikolExamples")
+For more practical examples using the _Nikol_ engine, go to [Nikol Examples]("https://github.com/FrodoAlaska/NikolExamples")

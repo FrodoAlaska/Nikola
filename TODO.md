@@ -1,10 +1,16 @@
 # URGENT TODO: 
+- "Forcing OpenGL" option
+- A function to update the texture's data and overall desc
+- A function to sub image or slice a texture 
+- Get and set descriptions of Gfx types
+- Put some thought into instancing
 - Redocument the graphics context section
 
 # FIXES
 - Save a reference to the GfxContext in the resources for ease of use
-- Get and set descriptions of Gfx types
 - (D3D11) Make sure that fullscreen mode is taken into account in the graphics backends
+- (D3D11) The whole layout thing
+- (D3D11) Textures shouldn't destroy the data
 - (OpenGL) Have the textures binded to a specific sampler unit?
 
 # FUTURE TODO: 
@@ -22,6 +28,7 @@
 
 # EXAMPLES: 
 - A simple contrived 3D example with rotating cubes. Yes, cube(_S_). Plural.
+- An obj loader
 - A simple and small drawing app
 - A simple image manipulation app
 
