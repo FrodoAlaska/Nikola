@@ -53,7 +53,8 @@ struct GfxContext {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxBuffer  
 struct GfxBuffer {
-  GfxBufferDesc desc;
+  GfxBufferDesc desc = {};
+  GfxContext* gfx    = nullptr;
 
   u32 id;
 
@@ -66,6 +67,8 @@ struct GfxBuffer {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxShader
 struct GfxShader {
+  GfxContext* gfx = nullptr;
+
   u32 id, vert_id, frag_id;
 
   i8* vert_src; 
@@ -85,7 +88,8 @@ struct GfxShader {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxTexture
 struct GfxTexture {
-  GfxTextureDesc desc;
+  GfxTextureDesc desc = {};
+  GfxContext* gfx     = nullptr;
 
   u32 id;
 };
@@ -95,7 +99,8 @@ struct GfxTexture {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxPipeline
 struct GfxPipeline {
-  GfxPipelineDesc desc;
+  GfxPipelineDesc desc = {};
+  GfxContext* gfx      = nullptr;
 
   u32 vertex_array;
 
@@ -841,6 +846,12 @@ void gfx_context_shutdown(GfxContext* gfx) {
   memory_free(gfx);
 }
 
+GfxContextDesc& gfx_context_get_desc(GfxContext* gfx) {
+  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+  
+  return gfx->desc;
+}
+
 void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
 
@@ -899,9 +910,10 @@ GfxBuffer* gfx_buffer_create(GfxContext* gfx, const GfxBufferDesc& desc) {
   GfxBuffer* buff = (GfxBuffer*)memory_allocate(sizeof(GfxBuffer));
   memory_zero(buff, sizeof(GfxBuffer));
   
-  buff->desc            = desc;
-  buff->gl_buff_type    = get_buffer_type(desc.type);
-  buff->gl_buff_usage   = get_buffer_usage(desc.usage);
+  buff->desc          = desc;
+  buff->gfx           = gfx; 
+  buff->gl_buff_type  = get_buffer_type(desc.type);
+  buff->gl_buff_usage = get_buffer_usage(desc.usage);
 
   glCreateBuffers(1, &buff->id);
   glNamedBufferData(buff->id, desc.size, desc.data, buff->gl_buff_usage);
@@ -919,8 +931,14 @@ void gfx_buffer_destroy(GfxBuffer* buff) {
   memory_free(buff);
 }
 
-void gfx_buffer_update(GfxContext* gfx, GfxBuffer* buff, const sizei offset, const sizei size, const void* data) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+GfxBufferDesc& gfx_buffer_get_desc(GfxBuffer* buffer) {
+  NIKOL_ASSERT(buffer, "Invalid GfxBuffer struct passed");
+
+  return buffer->desc;
+}
+
+void gfx_buffer_update(GfxBuffer* buff, const sizei offset, const sizei size, const void* data) {
+  NIKOL_ASSERT(buff->gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(buff, "Invalid GfxBuffer struct passed");
 
   buff->desc.size = size;
@@ -940,6 +958,8 @@ GfxShader* gfx_shader_create(GfxContext* gfx, const i8* src) {
   
   GfxShader* shader = (GfxShader*)memory_allocate(sizeof(GfxShader));
   memory_zero(shader, sizeof(GfxShader));
+
+  shader->gfx = gfx;
 
   seperate_shader_src(src, shader);
 
@@ -983,8 +1003,8 @@ void gfx_shader_destroy(GfxShader* shader) {
   memory_free(shader);
 }
 
-void gfx_shader_attach_uniform(GfxContext* gfx, GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer) {
+  NIKOL_ASSERT(shader->gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(shader, "Invalid GfxShader struct passed");
 
   switch (type) {
@@ -1094,6 +1114,7 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   memory_zero(texture, sizeof(GfxTexture));
  
   texture->desc = desc;
+  texture->gfx  = gfx;
 
   GLenum gl_wrap_format = get_texture_wrap(desc.wrap_mode);
  
@@ -1139,7 +1160,16 @@ void gfx_texture_destroy(GfxTexture* texture) {
   memory_free(texture);
 }
 
-void gfx_texture_update(GfxContext* gfx, GfxTexture* texture, const GfxTextureDesc& desc) {
+GfxTextureDesc& gfx_texture_get_desc(GfxTexture* texture) {
+  NIKOL_ASSERT(texture, "Invalid GfxTexture struct passed");
+
+  return texture->desc;
+}
+
+void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc) {
+  NIKOL_ASSERT(texture->gfx, "Invalid GfxContext struct passed");
+  NIKOL_ASSERT(texture, "Invalid GfxTexture struct passed");
+  
   GLenum gl_wrap_format = get_texture_wrap(desc.wrap_mode);
   
   GLenum in_format, base_format;
@@ -1147,7 +1177,8 @@ void gfx_texture_update(GfxContext* gfx, GfxTexture* texture, const GfxTextureDe
 
   GLenum min_filter, mag_filter;
   get_texture_filter(desc.filter, &min_filter, &mag_filter);
-
+  
+  // Re-updating the whole texture
   glTextureSubImage2D(texture->id, 
                       desc.depth,
                       0, 
@@ -1157,8 +1188,11 @@ void gfx_texture_update(GfxContext* gfx, GfxTexture* texture, const GfxTextureDe
                       in_format,
                       GL_UNSIGNED_BYTE, 
                       desc.data);
+  
+  // Re-generate the mipmap 
   glGenerateTextureMipmap(texture->id);
 
+  // Set texture parameters again
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
   glTextureParameteri(texture->id, GL_TEXTURE_MIN_FILTER, min_filter);
@@ -1178,13 +1212,13 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc) {
   memory_zero(pipe, sizeof(GfxPipeline));
 
   pipe->desc = desc;
+  pipe->gfx  = gfx;
 
   // VAO init
   glCreateVertexArrays(1, &pipe->vertex_array);
 
   // Layout init 
   sizei stride = set_buffer_layout(pipe->vertex_array, desc.layout, desc.layout_count); 
-
   NIKOL_ASSERT(desc.vertex_buffer, "Must have a vertex buffer to create a GfxPipeline struct");
 
   // VBO init
@@ -1228,8 +1262,14 @@ void gfx_pipeline_destroy(GfxPipeline* pipeline) {
   memory_free(pipeline);
 }
 
-void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+GfxPipelineDesc& gfx_pipeline_get_desc(GfxPipeline* pipeline) {
+  NIKOL_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
+
+  return pipeline->desc;
+}
+
+void gfx_pipeline_draw_vertex(GfxPipeline* pipeline) {
+  NIKOL_ASSERT(pipeline->gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
   NIKOL_ASSERT(pipeline->vertex_buffer, "Must have a valid vertex buffer to draw");
 
@@ -1253,8 +1293,8 @@ void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline) {
   glBindVertexArray(0);
 }
 
-void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+void gfx_pipeline_draw_index(GfxPipeline* pipeline) {
+  NIKOL_ASSERT(pipeline->gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
   NIKOL_ASSERT(pipeline->vertex_buffer, "Must have a valid vertex buffer to draw");
   NIKOL_ASSERT(pipeline->index_buffer, "Must have a valid index buffer to draw");

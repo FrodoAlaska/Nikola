@@ -66,7 +66,8 @@ struct GfxContext {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxBuffer
 struct GfxBuffer {
-  GfxBufferDesc desc;
+  GfxBufferDesc desc = {};
+  GfxContext* gfx    = nullptr
 
   ID3D11Buffer* buffer         = nullptr;
   D3D11_BUFFER_DESC d3d11_desc = {};
@@ -77,6 +78,8 @@ struct GfxBuffer {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxShader
 struct GfxShader {
+  GfxContext* gfx = nullptr;
+
   ID3DBlob* vertex_blob = nullptr;
   ID3DBlob* pixel_blob  = nullptr;
 
@@ -95,7 +98,8 @@ struct GfxShader {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxTexture
 struct GfxTexture {
-  GfxTextureDesc desc;
+  GfxTextureDesc desc = {};
+  GfxContext* gfx     = nullptr;
   
   ID3D11Texture2D* handle            = nullptr;
   ID3D11SamplerState* sampler        = nullptr;
@@ -107,7 +111,8 @@ struct GfxTexture {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxPipeline
 struct GfxPipeline {
-  GfxPipelineDesc desc;
+  GfxPipelineDesc desc = {};
+  GfxContext* gfx      = nullptr;
 
   ID3D11Buffer* vertex_buffer = nullptr;
   ID3D11Buffer* index_buffer  = nullptr;
@@ -140,6 +145,18 @@ static bool framebuffer_resize(const Event& event, const void* dispatcher, const
   gfx->viewport.Height = event.window_framebuffer_height;
 
   gfx->device_ctx->RSSetViewports(1, &gfx->viewport);
+
+  return true;
+}
+
+static bool fullscreen_callback(const Event& event, const void* dispatcher, const void* listener) {
+  if(event.type != EVENT_WINDOW_FULLSCREEN) {
+    return false;
+  }
+
+  GfxContext* gfx = (GfxContext*)listener;
+  HRESULT res = gfx->swapchain->SetFullscreenState(false, NULL);
+  check_error(res, "SetFullscreenState");
 
   return true;
 }
@@ -1006,6 +1023,7 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
 
   // Listening to events
   event_listen(EVENT_WINDOW_FRAMEBUFFER_RESIZED, framebuffer_resize, gfx);
+  event_listen(EVENT_WINDOW_FULLSCREEN, fullscreen_callback, gfx)
 
   i32 dx_version     = get_dx_version_num(gfx->dx_version);
   i32 shader_version = 11;
@@ -1076,6 +1094,11 @@ void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const Gf
 
   // Updating the shader
   pipeline->shader = pipe_desc.shader;
+  
+  // Create a layout if there isn't one...
+  if(!pipeline->layout) {
+    pipeline->layout = set_layout(gfx, pipeline->shader, pipe_desc.layout, pipe_desc.layout_count, &pipeline->stride);
+  }
 
   // Updating the buffers
   pipeline->vertex_buffer = pipe_desc.vertex_buffer->buffer;
@@ -1115,6 +1138,7 @@ GfxBuffer* gfx_buffer_create(GfxContext* gfx, const GfxBufferDesc& desc) {
   memory_zero(buffer, sizeof(GfxBuffer));
 
   buffer->desc = desc;
+  buffer->gfx  = gfx;
 
   D3D11_SUBRESOURCE_DATA data = {};
   data.pSysMem = desc.data;
@@ -1143,12 +1167,11 @@ void gfx_buffer_destroy(GfxBuffer* buff) {
   }
   
   buff->buffer->Release();
-
   memory_free(buff);
 }
 
-void gfx_buffer_update(GfxContext* gfx, GfxBuffer* buff, const sizei offset, const sizei size, const void* data) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+void gfx_buffer_update(GfxBuffer* buff, const sizei offset, const sizei size, const void* data) {
+  NIKOL_ASSERT(buff->gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(buff, "Invalid GfxBuffer struct passed");
  
   buff->desc.size = size; 
@@ -1157,14 +1180,14 @@ void gfx_buffer_update(GfxContext* gfx, GfxBuffer* buff, const sizei offset, con
   D3D11_MAPPED_SUBRESOURCE map_res = {};
  
   // Begin the operation to map the new data into the buffer
-  HRESULT res = gfx->device_ctx->Map(buff->buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map_res);
+  HRESULT res = buff->gfx->device_ctx->Map(buff->buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map_res);
   check_error(res, "Map");
 
   // Copy the memory to the buffer
   memory_copy(map_res.pData, data, size);
 
   // We're done here
-  gfx->device_ctx->Unmap(buff->buffer, 0);
+  buff->gfx->device_ctx->Unmap(buff->buffer, 0);
 }
 
 /// Buffer functions 
@@ -1178,6 +1201,8 @@ GfxShader* gfx_shader_create(GfxContext* gfx, const i8* src) {
   
   GfxShader* shader = (GfxShader*)memory_allocate(sizeof(GfxShader));
   memory_zero(shader, sizeof(GfxShader));
+
+  shader->gfx = gfx;
 
   u32 flags = D3DCOMPILE_ENABLE_STRICTNESS;
 
@@ -1230,8 +1255,8 @@ void gfx_shader_destroy(GfxShader* shader) {
   memory_free(shader);
 }
 
-void gfx_shader_attach_uniform(GfxContext* gfx, GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer) {
+  NIKOL_ASSERT(shader->gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(shader, "Invalid GfxShader struct passed");
   NIKOL_ASSERT(buffer, "Invalid GfxBuffer struct passed");
 
@@ -1273,6 +1298,8 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   
   GfxTexture* texture = (GfxTexture*)memory_allocate(sizeof(GfxTexture));
   memory_zero(texture, sizeof(GfxTexture));
+
+  texture->gfx = gfx;
 
   // Creating the sampler 
   D3D11_SAMPLER_DESC sampler_desc = {
@@ -1354,7 +1381,6 @@ void gfx_texture_destroy(GfxTexture* texture) {
     return;
   }
 
-  memory_free(texture->desc.data);
   texture->resource->Release();
   texture->handle->Release();
   texture->sampler->Release();
@@ -1362,8 +1388,8 @@ void gfx_texture_destroy(GfxTexture* texture) {
   memory_free(texture);
 }
 
-void gfx_texture_update(GfxContext* gfx, GfxTexture* texture, const GfxTextureDesc& desc) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc) {
+  NIKOL_ASSERT(texture->gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(texture, "Invalid GfxTexture struct passed");
 
   // @TODO:
@@ -1382,6 +1408,7 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc) {
   memory_zero(pipeline, sizeof(GfxPipeline));
 
   pipeline->desc = desc;
+  pipeline->gfx  = gfx;
 
   // Create the vertex buffer 
   pipeline->vertex_buffer = desc.vertex_buffer->buffer; 
@@ -1392,8 +1419,10 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc) {
   // Setting the shader 
   pipeline->shader = desc.shader;
 
-  // Setting the layout 
-  pipeline->layout = set_layout(gfx, pipeline->shader, desc.layout, desc.layout_count, &pipeline->stride);
+  // Only create the layout if there's a shader
+  if(pipeline->shader) {
+    pipeline->layout = set_layout(gfx, pipeline->shader, desc.layout, desc.layout_count, &pipeline->stride);
+  }
 
   // Set the draw mode for the pipeline 
   pipeline->draw_mode = desc.draw_mode;
@@ -1416,67 +1445,63 @@ void gfx_pipeline_destroy(GfxPipeline* pipeline) {
   // Free layout 
   pipeline->layout->Release();
 
-  // Free the buffers
-  pipeline->vertex_buffer->Release();
-  pipeline->index_buffer->Release();
-
   // Free the pipeline
   memory_free(pipeline);
 }
 
-void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+void gfx_pipeline_draw_vertex(GfxPipeline* pipeline) {
+  NIKOL_ASSERT(pipeline->gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
   NIKOL_ASSERT(pipeline->desc.vertex_buffer, "Must have a valid vertex buffer to draw");
   
   // Set the buffer
-  gfx->device_ctx->IASetVertexBuffers(0, 1, &pipeline->vertex_buffer, &pipeline->stride, &pipeline->offset);
+  pipeline->gfx->device_ctx->IASetVertexBuffers(0, 1, &pipeline->vertex_buffer, &pipeline->stride, &pipeline->offset);
   
   // Set the constant buffers in the shader
-  send_shader_uniforms(gfx, pipeline->shader); 
+  send_shader_uniforms(pipeline->gfx, pipeline->shader); 
   
   // Set the shaders
-  gfx->device_ctx->VSSetShader(pipeline->shader->vertex_shader, NULL, 0);
-  gfx->device_ctx->PSSetShader(pipeline->shader->pixel_shader, NULL, 0);
+  pipeline->gfx->device_ctx->VSSetShader(pipeline->shader->vertex_shader, NULL, 0);
+  pipeline->gfx->device_ctx->PSSetShader(pipeline->shader->pixel_shader, NULL, 0);
 
   // Setting the textures (if there are any)
   if(pipeline->textures_count > 0) {
-    gfx->device_ctx->PSSetShaderResources(0, pipeline->textures_count, pipeline->texture_views);
-    gfx->device_ctx->PSSetSamplers(0, pipeline->textures_count, pipeline->texture_samplers);
+    pipeline->gfx->device_ctx->PSSetShaderResources(0, pipeline->textures_count, pipeline->texture_views);
+    pipeline->gfx->device_ctx->PSSetSamplers(0, pipeline->textures_count, pipeline->texture_samplers);
   }
 
   // Draw the vertex buffer
-  gfx->device_ctx->Draw(pipeline->desc.vertices_count, 0);
+  pipeline->gfx->device_ctx->Draw(pipeline->desc.vertices_count, 0);
 }
 
-void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+void gfx_pipeline_draw_index(GfxPipeline* pipeline) {
+  NIKOL_ASSERT(pipeline->gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
   NIKOL_ASSERT(pipeline->desc.vertex_buffer, "Must have a valid vertex buffer to draw");
   NIKOL_ASSERT(pipeline->desc.index_buffer, "Must have a valid index buffer to draw");
   
   // Set the buffers
-  gfx->device_ctx->IASetIndexBuffer(pipeline->index_buffer, DXGI_FORMAT_R32_UINT, 0); 
-  gfx->device_ctx->IASetVertexBuffers(0, 1, &pipeline->vertex_buffer, &pipeline->stride, &pipeline->offset);
+  pipeline->gfx->device_ctx->IASetIndexBuffer(pipeline->index_buffer, DXGI_FORMAT_R32_UINT, 0); 
+  pipeline->gfx->device_ctx->IASetVertexBuffers(0, 1, &pipeline->vertex_buffer, &pipeline->stride, &pipeline->offset);
   
   // Set the constant buffers in the shader
-  send_shader_uniforms(gfx, pipeline->shader); 
+  send_shader_uniforms(pipeline->gfx, pipeline->shader); 
 
   // Set the shaders
-  gfx->device_ctx->VSSetShader(pipeline->shader->vertex_shader, NULL, 0);
-  gfx->device_ctx->PSSetShader(pipeline->shader->pixel_shader, NULL, 0);
+  pipeline->gfx->device_ctx->VSSetShader(pipeline->shader->vertex_shader, NULL, 0);
+  pipeline->gfx->device_ctx->PSSetShader(pipeline->shader->pixel_shader, NULL, 0);
   
   // Setting the textures (if there are any)
   if(pipeline->textures_count > 0) {
-    gfx->device_ctx->PSSetShaderResources(0, pipeline->textures_count, pipeline->texture_views);
-    gfx->device_ctx->PSSetSamplers(0, pipeline->textures_count, pipeline->texture_samplers);
+    pipeline->gfx->device_ctx->PSSetShaderResources(0, pipeline->textures_count, pipeline->texture_views);
+    pipeline->gfx->device_ctx->PSSetSamplers(0, pipeline->textures_count, pipeline->texture_samplers);
     
-    gfx->device_ctx->VSSetShaderResources(0, pipeline->textures_count, pipeline->texture_views);
-    gfx->device_ctx->VSSetSamplers(0, pipeline->textures_count, pipeline->texture_samplers);
+    pipeline->gfx->device_ctx->VSSetShaderResources(0, pipeline->textures_count, pipeline->texture_views);
+    pipeline->gfx->device_ctx->VSSetSamplers(0, pipeline->textures_count, pipeline->texture_samplers);
   }
 
   // Draw the index buffer
-  gfx->device_ctx->DrawIndexed(pipeline->desc.indices_count, 0, 0);
+  pipeline->gfx->device_ctx->DrawIndexed(pipeline->desc.indices_count, 0, 0);
 }
 
 /// Pipeline functions 

@@ -6,6 +6,7 @@
 
 namespace nikol { // Start of nikol
 
+///---------------------------------------------------------------------------------------------------------------------
 /// Window
 struct Window {
   GLFWwindow* handle  = nullptr;
@@ -34,7 +35,9 @@ struct Window {
   f32 mouse_offset_y = 0.0f;
 };
 /// Window
+///---------------------------------------------------------------------------------------------------------------------
 
+///---------------------------------------------------------------------------------------------------------------------
 /// Callbacks
 static void error_callback(int err_code, const char* desc) {
   NIKOL_LOG_FATAL("%s", desc);
@@ -194,7 +197,9 @@ static bool nikol_cursor_show_callback(const Event& event, const void* dispatche
   return true;
 }
 /// Callbacks
+///---------------------------------------------------------------------------------------------------------------------
 
+///---------------------------------------------------------------------------------------------------------------------
 /// Private functions
 static void set_gfx_context(Window* window) {
 #ifdef NIKOL_GFX_CONTEXT_OPENGL 
@@ -216,53 +221,52 @@ static void set_window_hints(Window* window) {
 
   // Not resizable by default
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-  
-  /// @TODO: There must be a better way than this shit
-  /// Seriously, what the fuck???
 
-  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_RESIZABLE))
+  // Setting the flags...
+
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_RESIZABLE)) {
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
   }
   
-  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_FOCUS_ON_CREATE) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_FOCUS_ON_CREATE)) {
     glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
     window->is_focused = true;
   }
   
-  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_FOCUS_ON_SHOW) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_FOCUS_ON_SHOW)) {
     glfwWindowHint(GLFW_FOCUS_ON_SHOW, GLFW_TRUE);
     window->is_focused = true;
   }
   
-  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_MINIMIZE) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_MINIMIZE)) {
     glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
   }
   
-  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_MAXMIZE) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_MAXMIZE)) {
     glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
   }
   
-  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_DISABLE_DECORATIONS) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_DISABLE_DECORATIONS)) {
     glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
   }
   
-  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_CENTER_MOUSE) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_CENTER_MOUSE)) {
     glfwWindowHint(GLFW_CENTER_CURSOR, GLFW_TRUE);
   }
   
-  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_HIDE_CURSOR) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_HIDE_CURSOR)) {
     window->is_cursor_shown = false;
   }
   
-  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_FULLSCREEN) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_FULLSCREEN)) {
     window->is_fullscreen = true; 
   }
   
-  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_GFX_HARDWARE) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_GFX_HARDWARE)) {
     set_gfx_context(window);
   }
   
-  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_GFX_SOFTWARE) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_GFX_SOFTWARE)) {
     // @TODO
   }
 }
@@ -300,8 +304,9 @@ static void set_window_callbacks(Window* window) {
   event_listen(EVENT_MOUSE_CURSOR_SHOWN, nikol_cursor_show_callback, window);
 }
 /// Private functions
+///---------------------------------------------------------------------------------------------------------------------
 
-/// ---------------------------------------------------------------------
+///---------------------------------------------------------------------------------------------------------------------
 /// Window functions
 
 Window* window_open(const i8* title, const i32 width, const i32 height, i32 flags) {
@@ -449,6 +454,12 @@ void window_set_fullscreen(Window* window, const bool fullscreen) {
                          window->width, window->height, 
                          window->refresh_rate);
   }
+  
+  // Firing an event for the internal systems
+  event_dispatch(Event {
+    .type                 = EVENT_WINDOW_FULLSCREEN, 
+    .window_is_fullscreen = fullscreen,
+  }, window);
 }
 
 void window_set_show(Window* window, const bool show) {
@@ -479,7 +490,7 @@ void window_set_position(Window* window, const i32 x_pos, const i32 y_pos) {
 }
 
 /// Window functions
-/// ---------------------------------------------------------------------
+///---------------------------------------------------------------------------------------------------------------------
 
 } // End of nikol
 

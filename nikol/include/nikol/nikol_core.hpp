@@ -326,6 +326,7 @@ enum EventType {
   EVENT_WINDOW_RESIZED, 
   EVENT_WINDOW_FRAMEBUFFER_RESIZED, 
   EVENT_WINDOW_CLOSED, 
+  EVENT_WINDOW_FULLSCREEN,
 
   /// Mouse events 
   EVENT_MOUSE_MOVED, 
@@ -368,7 +369,10 @@ struct Event {
 
   /// The window's new size of the framebuffer
   i32 window_framebuffer_width, window_framebuffer_height; 
-  
+ 
+  /// The window's new fullscreen state
+  bool window_is_fullscreen;
+
   /// Window events 
   
   /// Key events
@@ -1466,6 +1470,9 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc);
 /// This function will do any required de-initialization by the graphics API.
 void gfx_context_shutdown(GfxContext* gfx);
 
+/// Retrieve the internal `GfxContextDesc` of `gfx`
+GfxContextDesc& gfx_context_get_desc(GfxContext* gfx);
+
 /// Clear the buffers and set the clear color as `{r, g, b, a}`.
 void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a);
 
@@ -1495,8 +1502,11 @@ GfxBuffer* gfx_buffer_create(GfxContext* gfx, const GfxBufferDesc& desc);
 /// Free/reclaim any memory taken by `buff`.
 void gfx_buffer_destroy(GfxBuffer* buff);
 
+/// Retrieve the internal `GfxBufferDesc` of `buffer`
+GfxBufferDesc& gfx_buffer_get_desc(GfxBuffer* buffer);
+
 /// Update the contents of `buff` starting at `offset` with `data` of size `size`.
-void gfx_buffer_update(GfxContext* gfx, GfxBuffer* buff, const sizei offset, const sizei size, const void* data);
+void gfx_buffer_update(GfxBuffer* buff, const sizei offset, const sizei size, const void* data);
 
 /// Buffer functions 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1525,7 +1535,7 @@ void gfx_shader_destroy(GfxShader* shader);
 /// do something like, `layout (std140, binding = 0)`. Now that uniform buffer will be bound to the point `0` and the shader 
 /// can easily find it. Also, make sure to have the binding points increase like an index, since that's how this function 
 /// will look for them. 
-void gfx_shader_attach_uniform(GfxContext* gfx, GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer);
+void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer);
 
 /// Only for GLSL (OpenGL), retrieve the location of the `uniform_name` in the `shader`.
 i32 gfx_glsl_get_uniform_location(GfxShader* shader, const i8* uniform_name);
@@ -1548,8 +1558,11 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc);
 /// Reclaim/free any memory allocated by `texture`.
 void gfx_texture_destroy(GfxTexture* texture);
 
+/// Retrieve the internal `GfxTextureDesc` of `texture`
+GfxTextureDesc& gfx_texture_get_desc(GfxTexture* texture);
+
 /// Update the `texture`'s information from the given `desc`.
-void gfx_texture_update(GfxContext* gfx, GfxTexture* texture, const GfxTextureDesc& desc);
+void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc);
 
 /// Texture functions 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1563,11 +1576,14 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc);
 /// Reclaim/free any memory allocated by `pipeline`.
 void gfx_pipeline_destroy(GfxPipeline* pipeline);
 
+/// Retrieve the internal `GfxPipelineDesc` of `pipeline`
+GfxPipelineDesc& gfx_pipeline_get_desc(GfxPipeline* pipeline);
+
 /// Draw the contents of the `vertex_buffer` in `pipeline`.
-void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline);
+void gfx_pipeline_draw_vertex(GfxPipeline* pipeline);
 
 /// Draw the contents of the `vertex_buffer` using the `index_buffer` in `pipeline`.
-void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline);
+void gfx_pipeline_draw_index(GfxPipeline* pipeline);
 
 /// Pipeline functions 
 ///---------------------------------------------------------------------------------------------------------------------
