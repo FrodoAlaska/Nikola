@@ -89,7 +89,8 @@ typedef double f64;
 /// Windows
 #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
 #define NIKOL_PLATFORM_WINDOWS 1
-#define NIKOL_GFX_CONTEXT_DX11
+// @TODO: #define NIKOL_GFX_CONTEXT_DX11
+#define NIKOL_GFX_CONTEXT_OPENGL
 #ifndef _WIN64 
 #error "[NIKOL-FATAL]: Only support 64-bit machines\n"
 #endif 

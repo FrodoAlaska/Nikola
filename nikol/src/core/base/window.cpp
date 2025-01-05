@@ -311,7 +311,8 @@ static void set_window_callbacks(Window* window) {
 
 Window* window_open(const i8* title, const i32 width, const i32 height, i32 flags) {
   Window* window = (Window*)memory_allocate(sizeof(Window));
-  
+  nikol::memory_zero(window, sizeof(Window)); 
+
   window->width  = width; 
   window->height = height; 
   window->flags  = (WindowFlags)flags;
