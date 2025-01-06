@@ -1262,9 +1262,6 @@ GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc& desc) {
     gl_check_error("glTexImage2D");
   }
   
-  glGenerateTextureMipmap(cubemap->id);
-  gl_check_error("glGenerateTextureMipmap");
-
   glTextureParameteri(cubemap->id, GL_TEXTURE_MIN_FILTER, min_filter);
   glTextureParameteri(cubemap->id, GL_TEXTURE_MAG_FILTER, mag_filter);
   glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
