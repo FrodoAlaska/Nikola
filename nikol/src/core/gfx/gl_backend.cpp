@@ -97,6 +97,17 @@ struct GfxTexture {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// GfxCubemap
+struct GfxCubemap {
+  GfxCubemapDesc desc = {};
+  GfxContext* gfx     = nullptr;
+  
+  u32 id;
+};
+/// GfxCubemap
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// GfxPipeline
 struct GfxPipeline {
   GfxPipelineDesc desc = {};
@@ -113,6 +124,9 @@ struct GfxPipeline {
   GfxDrawMode draw_mode;
 
   GfxShader* shader;
+
+  u32 cubemaps[CUBEMAPS_MAX] = {};
+  sizei cubemaps_count       = 0;
 
   u32 textures[TEXTURES_MAX] = {};
   sizei textures_count       = 0;
@@ -881,11 +895,15 @@ void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const Gf
 
   // Updating the textures
   pipeline->textures_count = pipe_desc.textures_count; 
-  if(pipeline->textures_count > 0) {
-    for(sizei i = 0; i < pipeline->textures_count; i++) {
-      pipeline->textures[i] = pipe_desc.textures[i]->id;
-    }
+  for(sizei i = 0; i < pipeline->textures_count; i++) {
+    pipeline->textures[i] = pipe_desc.textures[i]->id;
   }
+
+  // Updating the cubemaps 
+  pipeline->cubemaps_count = pipe_desc.cubemaps_count; 
+  for(sizei i = 0; i < pipeline->cubemaps_count; i++) {
+    pipeline->cubemaps[i] = pipe_desc.cubemaps[i]->id;
+  }  
 
   // Setting the stencil mask of the pipeline state
   glStencilMask(pipe_desc.stencil_ref);
@@ -1169,7 +1187,9 @@ GfxTextureDesc& gfx_texture_get_desc(GfxTexture* texture) {
 void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc) {
   NIKOL_ASSERT(texture->gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(texture, "Invalid GfxTexture struct passed");
-  
+ 
+  texture->desc = desc;
+
   GLenum gl_wrap_format = get_texture_wrap(desc.wrap_mode);
   
   GLenum in_format, base_format;
@@ -1200,6 +1220,120 @@ void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc) {
 }
 
 /// Texture functions 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Cubemap functions 
+
+GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc& desc) {
+  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+
+  GfxCubemap* cubemap = (GfxCubemap*)memory_allocate(sizeof(GfxCubemap));
+  memory_zero(cubemap, sizeof(GfxCubemap));
+
+  cubemap->gfx  = gfx;
+  cubemap->desc = desc;
+  
+  GLenum gl_wrap_format = get_texture_wrap(desc.wrap_mode);
+ 
+  GLenum in_format, base_format;
+  get_texture_format(desc.format, &in_format, &base_format);
+
+  GLenum min_filter, mag_filter;
+  get_texture_filter(desc.filter, &min_filter, &mag_filter); 
+
+  glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &cubemap->id);
+  gl_check_error("glCreateTextures");
+  
+  glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap->id);
+  gl_check_error("glBindTexture");
+
+  // Set the texture for each face in the cubemap
+  for(sizei i = 0; i < desc.faces_count; i++) {
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
+                 desc.depth, 
+                 in_format, 
+                 desc.width, 
+                 desc.height, 
+                 0, 
+                 base_format, 
+                 GL_UNSIGNED_BYTE, 
+                 desc.data[i]);
+    gl_check_error("glTexImage2D");
+  }
+  
+  glGenerateTextureMipmap(cubemap->id);
+  gl_check_error("glGenerateTextureMipmap");
+
+  glTextureParameteri(cubemap->id, GL_TEXTURE_MIN_FILTER, min_filter);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_MAG_FILTER, mag_filter);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_R, gl_wrap_format);
+  gl_check_error("glTextureParameteri");
+
+  return cubemap;
+}
+
+void gfx_cubemap_destroy(GfxCubemap* cubemap) {
+  if(!cubemap) {
+    return;
+  }
+  
+  glDeleteTextures(1, &cubemap->id);
+  memory_free(cubemap);
+}
+
+GfxCubemapDesc& gfx_cubemap_get_desc(GfxCubemap* cubemap) {
+  NIKOL_ASSERT(cubemap, "Invalid GfxCubemap struct passed");
+
+  return cubemap->desc;
+}
+
+void gfx_cubemap_update(GfxCubemap* cubemap, const GfxCubemapDesc& desc) {
+  NIKOL_ASSERT(cubemap->gfx, "Invalid GfxContext struct passed");
+  NIKOL_ASSERT(cubemap, "Invalid GfxCubemap struct passed");
+  
+  cubemap->desc = desc;
+  
+  GLenum gl_wrap_format = get_texture_wrap(desc.wrap_mode);
+ 
+  GLenum in_format, base_format;
+  get_texture_format(desc.format, &in_format, &base_format);
+
+  GLenum min_filter, mag_filter;
+  get_texture_filter(desc.filter, &min_filter, &mag_filter); 
+
+  glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &cubemap->id);
+  gl_check_error("glCreateTextures");
+  
+  glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap->id);
+  gl_check_error("glBindTexture");
+
+  // Set the texture for each face in the cubemap
+  for(sizei i = 0; i < desc.faces_count; i++) {
+    glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
+                    desc.depth,
+                    0, 0, 
+                    desc.width, desc.height, 
+                    in_format, 
+                    GL_UNSIGNED_INT, 
+                    desc.data[i]);
+    gl_check_error("glTexImage2D");
+  }
+  
+  glGenerateTextureMipmap(cubemap->id);
+  gl_check_error("glGenerateTextureMipmap");
+
+  glTextureParameteri(cubemap->id, GL_TEXTURE_MIN_FILTER, min_filter);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_MAG_FILTER, mag_filter);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_R, gl_wrap_format);
+  gl_check_error("glTextureParameteri");
+}
+
+/// Cubemap functions 
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1243,11 +1377,15 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc) {
 
   // Textures init
   pipe->textures_count = desc.textures_count; 
-  if(desc.textures_count > 0) {
-    for(sizei i = 0; i < desc.textures_count; i++) {
-      pipe->textures[i] = desc.textures[i]->id;
-    }
+  for(sizei i = 0; i < desc.textures_count; i++) {
+    pipe->textures[i] = desc.textures[i]->id;
   }
+
+  // Cubemaps init 
+  pipe->cubemaps_count = desc.cubemaps_count; 
+  for(sizei i = 0; i < desc.cubemaps_count; i++) {
+    pipe->cubemaps[i] = desc.cubemaps[i]->id;
+  }  
 
   return pipe;
 }
@@ -1279,6 +1417,11 @@ void gfx_pipeline_draw_vertex(GfxPipeline* pipeline) {
   // Setting the uniform buffers
   send_vertex_uniform_buffers(pipeline->desc.shader); 
   send_fragment_uniform_buffers(pipeline->desc.shader); 
+  
+  // Draw the cubemaps
+  if(pipeline->cubemaps_count > 0) {
+    glBindTextures(0, pipeline->cubemaps_count, pipeline->cubemaps);
+  } 
 
   // Draw the textures
   if(pipeline->textures_count > 0) {
@@ -1305,6 +1448,11 @@ void gfx_pipeline_draw_index(GfxPipeline* pipeline) {
   // Setting the uniform buffers
   send_vertex_uniform_buffers(pipeline->desc.shader); 
   send_fragment_uniform_buffers(pipeline->desc.shader); 
+
+  // Draw the cubemaps
+  if(pipeline->cubemaps_count > 0) {
+    glBindTextures(0, pipeline->cubemaps_count, pipeline->cubemaps);
+  } 
 
   // Draw the textures
   if(pipeline->textures_count > 0) {

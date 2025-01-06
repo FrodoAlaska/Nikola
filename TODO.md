@@ -1,5 +1,4 @@
 # URGENT TODO: 
-- Redocument the graphics context section
 - A function to sub image or slice a texture 
 - Put some thought into instancing
 

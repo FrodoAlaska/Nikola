@@ -944,7 +944,13 @@ const f64 niclock_get_delta_time();
 // Consts
 
 /// The maximum amount of textures the GPU supports at a time. 
-const sizei TEXTURES_MAX = 32;
+const sizei TEXTURES_MAX        = 32;
+
+/// The maximum amount of textures the GPU supports at a time. 
+const sizei CUBEMAPS_MAX        = 5;
+
+/// The maximum amount of faces in a cubemap
+const sizei CUBEMAP_FACES_MAX   = 6;
 
 /// The maximum amount of uniform buffers to be created in a shader type.
 const sizei UNIFORM_BUFFERS_MAX = 16;
@@ -1319,6 +1325,12 @@ struct GfxTexture;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// GfxCubemap
+struct GfxCubemap;
+/// GfxCubemap
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// GfxPipeline
 struct GfxPipeline;
 /// GfxPipeline
@@ -1559,55 +1571,90 @@ struct GfxTextureDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// GfxCubemapDesc
+struct GfxCubemapDesc {
+  /// The overall size of the cubemap.
+  u32 width, height; 
+
+  /// The mipmap level of the cubemap. 
+  ///
+  /// @NOTE: Leave this as `0` if the depth is not important.
+  u32 depth; 
+
+  /// The pixel format of the cubemap.
+  GfxTextureFormat format;
+
+  /// The filter to be used on the cubemap when magnified or minified.
+  GfxTextureFilter filter;
+
+  /// The addressing mode of the cubemap.
+  GfxTextureWrap wrap_mode;
+  
+  /// An array of pixels (up to `CUBEMAP_FACES_MAX`) of each face of the cubemap.
+  void* data[CUBEMAP_FACES_MAX]; 
+
+  /// The amount of faces of the cubemap to use in `data`.
+  sizei faces_count = 0;
+};
+/// GfxCubemapDesc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// GfxPipelineDesc
 struct GfxPipelineDesc {
   /// The vertex buffer to be used in a `draw_vertex` command.
   ///
   /// @NOTE: This buffer _must_ be set. It cannot be left a `nullptr`.
   /// Even if `draw_index` is being used.
-  GfxBuffer* vertex_buffer = nullptr; 
+  GfxBuffer* vertex_buffer           = nullptr; 
 
   /// The amount of vertices in the `vertex_buffer` to be drawn. 
-  sizei vertices_count     = 0;
+  sizei vertices_count               = 0;
   
   /// The index buffer to be used in a `draw_index` command.
   ///
   /// @NOTE: This buffer _must_ be set if a `draw_index` command is used.
   /// Otherwise, it can be left as `nullptr`.
-  GfxBuffer* index_buffer  = nullptr;
+  GfxBuffer* index_buffer            = nullptr;
 
   /// The amount of indices in the `index_buffer` to be drawn.
-  sizei indices_count      = 0;
+  sizei indices_count                = 0;
 
   /// The shader to be used in the draw command.
-  GfxShader* shader        = nullptr;
+  GfxShader* shader                  = nullptr;
   
   /// Layout array up to `LAYOUT_ELEMENTS_MAX` describing each layout attribute.
   GfxLayoutDesc layout[LAYOUT_ELEMENTS_MAX];
 
   /// The amount of layouts to be set in `layout`.
-  sizei layout_count       = 0; 
+  sizei layout_count                 = 0; 
 
   /// The draw mode of the entire pipeline.
   ///
   /// @NOTE: This can be changed at anytime before the draw command.
   GfxDrawMode draw_mode;
-  
+ 
+  /// Array of cubmaps up to `CUBEMAPS_MAX` to be used in a draw command.
+  GfxCubemap* cubemaps[CUBEMAPS_MAX] = {nullptr};
+
+  /// The amout of cubemaps to be used in `cubemaps`.
+  sizei cubemaps_count               = 0;
+
   /// Array of textures up to `TEXTURES_MAX` to be used in a draw command. 
-  GfxTexture* textures[TEXTURES_MAX];
+  GfxTexture* textures[TEXTURES_MAX] = {nullptr};
 
   /// The amount of textures to be used in `textures`.
-  sizei textures_count     = 0;
+  sizei textures_count               = 0;
   
   /// The stencil reference value of the pipeline. 
   ///
   /// @NOTE: This is `1` by default.
-  u32 stencil_ref          = 1;
+  u32 stencil_ref                    = 1;
   
   /// The blend factor to be used in the pipeline. 
   ///
   /// @NOTE: This is `{0, 0, 0, 0}` by default.
-  f32 blend_factor[4]      = {0, 0, 0, 0};
+  f32 blend_factor[4]                = {0, 0, 0, 0};
 };
 /// GfxPipelineDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1737,6 +1784,26 @@ GfxTextureDesc& gfx_texture_get_desc(GfxTexture* texture);
 void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc);
 
 /// Texture functions 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Cubemap functions 
+
+/// Allocate and return a `GfxCubemap` from the information provided by `desc`. 
+GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc& desc);
+
+/// Reclaim/free any memory allocated by `texture`.
+void gfx_cubemap_destroy(GfxCubemap* cubemap);
+
+/// Retrieve the internal `GfxCubemapDesc` of `cubemap`
+GfxCubemapDesc& gfx_cubemap_get_desc(GfxCubemap* cubemap);
+
+/// Update the `cubemap`'s information from the given `desc`.
+///
+/// @NOTE: This will resend the pixels of `cubemap` to the GPU with the new information provided by `desc`.
+void gfx_cubemap_update(GfxCubemap* cubemap, const GfxCubemapDesc& desc);
+
+/// Cubemap functions 
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
