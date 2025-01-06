@@ -943,13 +943,13 @@ const f64 niclock_get_delta_time();
 ///---------------------------------------------------------------------------------------------------------------------
 // Consts
 
-/// The max amount of textures the GPU supports at a time. 
+/// The maximum amount of textures the GPU supports at a time. 
 const sizei TEXTURES_MAX = 32;
 
-/// The max amount of uniform buffers to be created in a shader type.
+/// The maximum amount of uniform buffers to be created in a shader type.
 const sizei UNIFORM_BUFFERS_MAX = 16;
 
-/// The max number of elments a buffer's layout can have.
+/// The maximum number of elements a buffer's layout can have.
 const sizei LAYOUT_ELEMENTS_MAX = 32;
 
 // Consts
@@ -963,13 +963,13 @@ enum GfxStates {
   
   /// Enable the stencil testing pass. 
   GFX_STATE_STENCIL = 2 << 1, 
-  
+
   /// Enable blending.
   GFX_STATE_BLEND   = 2 << 2, 
-  
+
   /// Enable multisampling. 
   GFX_STATE_MSAA    = 2 << 3, 
-  
+
   /// Enable face culling. 
   GFX_STATE_CULL    = 2 << 4,
 
@@ -982,15 +982,25 @@ enum GfxStates {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxCompareFunc
 enum GfxCompareFunc {
+  /// Always passes the comparison.
   GFX_COMPARE_ALWAYS        = 3 << 0,
+
+  /// Never passes the comparison.
   GFX_COMPARE_NEVER         = 3 << 1,
 
+  /// Passes the comparison when the `a < b`.
   GFX_COMPARE_LESS          = 3 << 2, 
+
+  /// Passes the comparison when the `a <= b`.
   GFX_COMPARE_LESS_EQUAL    = 3 << 3, 
-  
+
+  /// Passes the comparison when the `a > b`.
   GFX_COMPARE_GREATER       = 3 << 4, 
+
+  /// Passes the comparison when the `a >= b`.
   GFX_COMPARE_GREATER_EQUAL = 3 << 5, 
-  
+
+  /// Passes the comparison when the `a != b`.
   GFX_COMPARE_NOT_EQUAL     = 3 << 6,
 };
 /// GfxCompareFunc
@@ -999,15 +1009,28 @@ enum GfxCompareFunc {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxOperation 
 enum GfxOperation {
+  /// Always keep the value.
   GFX_OP_KEEP      = 4 << 0, 
+  
+  /// Always set the value to `0`.
   GFX_OP_ZERO      = 4 << 1, 
+
+  /// Invert the value.
   GFX_OP_INVERT    = 4 << 2, 
+
+  /// Replace the value `a` with the other value `b`.
   GFX_OP_REPLACE   = 4 << 3, 
 
+  /// Increase the value by `1`.
   GFX_OP_INCR      = 4 << 4, 
+
+  /// Decrease the value by `1`.
   GFX_OP_DECR      = 4 << 5, 
-  
+
+  /// Increase the value by `1` and wrap to the beginning when it reaches the maximum.
   GFX_OP_INCR_WRAP = 4 << 6, 
+
+  /// Decrease the value by `1` and wrap to the end when it reaches the minimum.
   GFX_OP_DECR_WRAP = 4 << 7, 
 };
 /// GfxOperation 
@@ -1016,21 +1039,37 @@ enum GfxOperation {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxBlendMode 
 enum GfxBlendMode {
+  /// Always keep the blended value at `0`.
   GFX_BLEND_ZERO               = 5 << 0,
+  
+  /// Always keep the blended value at `1`.
   GFX_BLEND_ONE                = 5 << 1, 
-
+  
+  /// Take the source's color as the blended value.
   GFX_BLEND_SRC_COLOR          = 5 << 2,
+  
+  /// Take the destination's color as the blended value.
   GFX_BLEND_DEST_COLOR         = 5 << 3, 
-
+  
+  /// Take the source's alpha value as the blended value.
   GFX_BLEND_SRC_ALPHA          = 5 << 4, 
+  
+  /// Take the destination's alpha value as the blended value.
   GFX_BLEND_DEST_ALPHA         = 5 << 5, 
-
+  
+  /// Take the inverse of the source's color as the blended value.
   GFX_BLEND_INV_SRC_COLOR      = 5 << 6, 
+  
+  /// Take the inverse of the destination's color as the blended value.
   GFX_BLEND_INV_DEST_COLOR     = 5 << 7, 
   
+  /// Take the inverse of the source's alpha value as the blended value.
   GFX_BLEND_INV_SRC_ALPHA      = 5 << 8, 
+  
+  /// Take the inverse of the destination's alpha value as the blended value.
   GFX_BLEND_INV_DEST_ALPHA     = 5 << 9,
-
+  
+  /// Take the saturated alpha value of the source's color as the blended value.
   GFX_BLEND_SRC_ALPHA_SATURATE = 5 << 10,
 };
 /// GfxBlendMode 
@@ -1039,8 +1078,13 @@ enum GfxBlendMode {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxCullMode
 enum GfxCullMode {
+  /// Only cull the front faces.
   GFX_CULL_FRONT          = 6 << 0,
+  
+  /// Only cull the back faces.
   GFX_CULL_BACK           = 6 << 1,
+  
+  /// Cull both the front and back faces.
   GFX_CULL_FRONT_AND_BACK = 6 << 2,
 };
 /// GfxCullMode
@@ -1049,7 +1093,10 @@ enum GfxCullMode {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxCullOrder
 enum GfxCullOrder {
+  /// Clockwise vertices are the front faces.
   GFX_ORDER_CLOCKWISE         = 7 << 0, 
+  
+  /// Counter-clockwise vertices are the front faces.
   GFX_ORDER_COUNTER_CLOCKWISE = 7 << 1,
 };
 /// GfxCullOrder
@@ -1058,8 +1105,13 @@ enum GfxCullOrder {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxBufferType
 enum GfxBufferType {
+  /// A vertex buffer.
   GFX_BUFFER_VERTEX  = 3 << 0, 
+
+  /// An index buffer.
   GFX_BUFFER_INDEX   = 3 << 1, 
+
+  /// A uniform buffer.
   GFX_BUFFER_UNIFORM = 3 << 2,
 };
 /// GfxBufferType
@@ -1068,10 +1120,20 @@ enum GfxBufferType {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxBufferUsage
 enum GfxBufferUsage {
+  /// Set the buffer to be dynamically written to.
+  /// This will be used for frequently writing to the buffer.
   GFX_BUFFER_USAGE_DYNAMIC_DRAW = 4 << 0,
-  GFX_BUFFER_USAGE_DYNAMIC_READ = 4 << 1,
   
+  /// Set the buffer to be dynamically read from.
+  /// This will be used for frequent reading from the buffer.
+  GFX_BUFFER_USAGE_DYNAMIC_READ = 4 << 1,
+
+  /// Set the buffer to be statically written to.
+  /// This will be used for writing to the buffer once or rarely.
   GFX_BUFFER_USAGE_STATIC_DRAW  = 4 << 2,
+
+  /// Set the buffer to be statically read from.
+  /// This will be used for reading from the buffer once or rarely.
   GFX_BUFFER_USAGE_STATIC_READ  = 4 << 3,
 };
 /// GfxBufferUsage
@@ -1080,10 +1142,19 @@ enum GfxBufferUsage {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxDrawMode
 enum GfxDrawMode {
+  /// Will set up the pipeline to draw points.
   GFX_DRAW_MODE_POINT          = 5 << 0,
+
+  /// Will set up the pipeline to draw triangles.
   GFX_DRAW_MODE_TRIANGLE       = 5 << 1,
+  
+  /// Will set up the pipeline to draw triangle strips.
   GFX_DRAW_MODE_TRIANGLE_STRIP = 5 << 2,
+  
+  /// Will set up the pipeline to draw lines.
   GFX_DRAW_MODE_LINE           = 5 << 3,
+  
+  /// Will set up the pipeline to draw line strips.
   GFX_DRAW_MODE_LINE_STRIP     = 5 << 4,
 };
 /// GfxDrawMode
@@ -1092,23 +1163,49 @@ enum GfxDrawMode {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxLayoutType
 enum GfxLayoutType {
+  /// Equivalent to `float`.
   GFX_LAYOUT_FLOAT1 = 6 << 0,
+  
+  /// Equivalent to `fVector2`.
   GFX_LAYOUT_FLOAT2 = 6 << 1,
+  
+  /// Equivalent to `fVector3`.
   GFX_LAYOUT_FLOAT3 = 6 << 2,
+  
+  /// Equivalent to `fVector4`.
   GFX_LAYOUT_FLOAT4 = 6 << 3,
   
+  /// Equivalent to `int`.
   GFX_LAYOUT_INT1 = 6 << 4,
+  
+  /// Equivalent to `iVector2`.
   GFX_LAYOUT_INT2 = 6 << 5,
+  
+  /// Equivalent to `iVector3`.
   GFX_LAYOUT_INT3 = 6 << 6,
+  
+  /// Equivalent to `iVector4`.
   GFX_LAYOUT_INT4 = 6 << 7,
   
+  /// Equivalent to `unsigned int`.
   GFX_LAYOUT_UINT1 = 6 << 8,
+  
+  /// Equivalent to `uVector2`.
   GFX_LAYOUT_UINT2 = 6 << 9,
+  
+  /// Equivalent to `uVector3`.
   GFX_LAYOUT_UINT3 = 6 << 10,
+  
+  /// Equivalent to `uVector4`.
   GFX_LAYOUT_UINT4 = 6 << 11,
 
+  /// A 2x2 matrix (or 4 `float`s).
   GFX_LAYOUT_MAT2  = 6 << 12,
+  
+  /// A 3x3 matrix (or 9 `float`s).
   GFX_LAYOUT_MAT3  = 6 << 13,
+  
+  /// A 4x4 matrix (or 16 `float`s).
   GFX_LAYOUT_MAT4  = 6 << 14,
 };
 /// GfxLayoutType
@@ -1117,13 +1214,22 @@ enum GfxLayoutType {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxTextureFormat
 enum GfxTextureFormat {
+  /// An 8 bits per pixel red channel texture format.
   GFX_TEXTURE_FORMAT_R8      = 8 << 0,
+  
+  /// A 16 bits per pixel red channel texture format.
   GFX_TEXTURE_FORMAT_R16     = 8 << 1,
 
+  /// An 8 bits per pixel red and green channel texture format.
   GFX_TEXTURE_FORMAT_RG8     = 8 << 2,
+  
+  /// A 16 bits per pixel red and green channel texture format.
   GFX_TEXTURE_FORMAT_RG16    = 8 << 3,
   
+  /// An 8 bytes per pixel red, green, blue, and alpha channel texture format.
   GFX_TEXTURE_FORMAT_RGBA8   = 8 << 4,
+  
+  /// A 16 bytes per pixel red, green, blue, and alpha channel texture format.
   GFX_TEXTURE_FORMAT_RGBA16  = 8 << 5,
 };
 /// GfxTextureFromat
@@ -1132,23 +1238,23 @@ enum GfxTextureFormat {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxTextureFilter
 enum GfxTextureFilter {
-  /// Uses linear filtering on both modes.
+  /// Uses linear filtering in both modes.
   GFX_TEXTURE_FILTER_MIN_MAG_LINEAR            = 9 << 0,
-
+  
   /// Uses nearest filtering on both modes.
   GFX_TEXTURE_FILTER_MIN_MAG_NEAREST           = 9 << 1,
- 
+  
   /// Uses linear filtering on minification and nearest filtering magnification. 
   GFX_TEXTURE_FILTER_MIN_LINEAR_MAG_NEAREST    = 9 << 2,
   
   /// Uses nearest filtering on minification and linear filtering magnification. 
   GFX_TEXTURE_FILTER_MIN_NEAREST_MAG_LINEAR    = 9 << 3,
-
-  /// Uses trilinear filtering (the weighted average of the two closes mipmaps)
+  
+  /// Uses trilinear filtering (the weighted average of the two closest mipmaps)
   /// on minification and linear filtering on magnification.
   GFX_TEXTURE_FILTER_MIN_TRILINEAR_MAG_LINEAR  = 9 << 4,
   
-  /// Uses trilinear filtering (the weighted average of the two closes mipmaps)
+  /// Uses trilinear filtering (the weighted average of the two closest mipmaps)
   /// on minification and nearest filtering on magnification.
   GFX_TEXTURE_FILTER_MIN_TRILINEAR_MAG_NEAREST = 9 << 5,
 };
@@ -1158,9 +1264,16 @@ enum GfxTextureFilter {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxTextureWrap
 enum GfxTextureWrap {
+  /// Repeat the pixel when wrapped.
   GFX_TEXTURE_WRAP_REPEAT       = 10 << 0, 
+  
+  /// Mirror the pixel when wrapped.
   GFX_TEXTURE_WRAP_MIRROR       = 10 << 1, 
+  
+  /// Clamp the pixel when wrapped.
   GFX_TEXTURE_WRAP_CLAMP        = 10 << 2, 
+  
+  /// Use the border color when wrapped.
   GFX_TEXTURE_WRAP_BORDER_COLOR = 10 << 3,
 };
 /// GfxTextureWrap
@@ -1169,8 +1282,13 @@ enum GfxTextureWrap {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxShaderType
 enum GfxShaderType {
+  /// A vertex shader.
   GFX_SHADER_VERTEX   = 11 << 0, 
+
+  /// A pixel/fragment shader.
   GFX_SHADER_PIXEL    = 11 << 1, 
+
+  /// A geometry shader.
   GFX_SHADER_GEOMETRY = 11 << 2,
 };
 /// GfxShaderType
@@ -1224,7 +1342,7 @@ struct GfxDepthDesc {
 /// GfxStencilDesc
 struct GfxStencilDesc {
   /// Which of the polygon faces will the below operations
-  /// have affect on. 
+  /// affect on. 
   /// The default value is "GFX_FACE_FRONT_AND_BACK".
   GfxCullMode polygon_face     = GFX_CULL_FRONT_AND_BACK; 
 
@@ -1235,21 +1353,21 @@ struct GfxStencilDesc {
   /// The operation to carry when the stencil test fails. 
   /// The default value is `GFX_OP_KEEP`.
   GfxOperation stencil_fail_op = GFX_OP_KEEP;
-  
-  /// The operation to carry when the depth test succeeds. 
+
+  /// The operation to be carried out when the depth test succeeds. 
   /// The default value is `GFX_OP_KEEP`.
   GfxOperation depth_pass_op   = GFX_OP_KEEP;
-  
-  /// The operation to carry when the depth test fails. 
+
+  /// The operation to be carried out when the depth test fails. 
   /// The default value is `GFX_OP_KEEP`.
   GfxOperation depth_fail_op   = GFX_OP_KEEP;
 
-  /// The refrence value of the stencil test. 
+  /// The reference value of the stencil test. 
   /// The default value is `1`.
   i32 ref                      = 1;
 
-  /// The mask that will be bitwise ANDed with the `ref` and the stencil value 
-  /// currently in the buffer. The two resulting ANDded values will then be compared 
+  /// The mask that will be bitwise `AND`ed with the `ref` and the stencil value 
+  /// currently in the buffer. The two resulting `AND`ded values will then be compared 
   /// to determine the outcome of that pixel.
   ///
   /// The default value is `0xff`.
@@ -1264,7 +1382,7 @@ struct GfxBlendDesc {
   /// The blend mode of the RGB of the source's color. 
   /// The default value is `GFX_BLEND_ONE`.
   GfxBlendMode src_color_blend  = GFX_BLEND_ONE; 
-  
+
   /// The blend mode of the RGB of the destination's color. 
   /// The default value is `GFX_BLEND_ZERO`.
   GfxBlendMode dest_color_blend = GFX_BLEND_ZERO; 
@@ -1272,7 +1390,7 @@ struct GfxBlendDesc {
   /// The blend mode of the Alpha value of the source's color. 
   /// The default value is `GFX_BLEND_SRC_ALPHA`.
   GfxBlendMode src_alpha_blend  = GFX_BLEND_SRC_ALPHA; 
-  
+
   /// The blend mode of the Alpha value of the destination's color. 
   /// The default value is `GFX_BLEND_INV_SRC_ALPHA`.
   GfxBlendMode dest_alpha_blend = GFX_BLEND_INV_SRC_ALPHA; 
@@ -1299,7 +1417,7 @@ struct GfxCullDesc {
   /// the triangles with clockwise-ordering vertices are considered 
   /// front-facing and back-facing otherwise. The opposite is true 
   /// with `GFX_CULL_COUNTER_CLOCKWISE`.
-  ///
+  /// 
   /// @NOTE: The default value is `GFX_CULL_CLOCKWISE`.
   GfxCullOrder front_face = GFX_ORDER_CLOCKWISE; 
 };
@@ -1309,49 +1427,49 @@ struct GfxCullDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxContextDesc 
 struct GfxContextDesc {
-  /// A refrence to the window.
-  ///
+  /// A reference to the window.
+  /// 
   /// @NOTE: This _must_ be set to a valid value.
   Window* window                = nullptr;
 
-  /// A bitwise ORed values from `GfxStates` determining the 
+  /// A bitwise ORed value from `GfxStates` determining the 
   /// states to create/enable.
-  ///
+  /// 
   /// @NOTE: By default, no states are set. 
   u32 states                    = 0;
 
   /// The pixel format of the swapchain image. 
-  ///
+  /// 
   /// @NOTE: By default, the value is `GFX_TEXTURE_FORMAT_RGBA8`.
   GfxTextureFormat pixel_format = GFX_TEXTURE_FORMAT_RGBA8;
 
   /// The subsamples of the MSAA buffer. 
-  ///
+  /// 
   /// @NOTE: By default, this is set to `1`.
   u32 msaa_samples              = 1;
 
   /// The description of the depth state. 
-  ///
+  /// 
   /// @NOTE: Check `GfxDepthDesc` to know the default values
-  /// of each memeber.
+  /// of each member.
   GfxDepthDesc depth_desc       = {}; 
-  
+
   /// The description of the stencil state. 
-  ///
+  /// 
   /// @NOTE: Check `GfxStencilDesc` to know the default values
-  /// of each memeber.
+  /// of each member.
   GfxStencilDesc stencil_desc   = {};
-  
+
   /// The description of the blend state. 
-  ///
+  /// 
   /// @NOTE: Check `GfxBlendDesc` to know the default values
-  /// of each memeber.
+  /// of each member.
   GfxBlendDesc blend_desc       = {};
-  
+
   /// The description of the cull state. 
-  ///
+  /// 
   /// @NOTE: Check `GfxCullDesc` to know the default values
-  /// of each memeber.
+  /// of each member.
   GfxCullDesc cull_desc         = {};
 };
 /// GfxContextDesc 
@@ -1360,10 +1478,16 @@ struct GfxContextDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxBufferDesc
 struct GfxBufferDesc {
+  /// The data that will be sent to the GPU.
   void* data = nullptr; 
-  sizei size;
 
+  /// The size of `data` in bytes.
+  sizei size;
+  
+  /// Notify the type of the buffer to the GPU.
   GfxBufferType type;  
+
+  /// Set up how the buffer will be used depending on the usage. 
   GfxBufferUsage usage;
 };
 /// GfxBufferDesc
@@ -1372,7 +1496,12 @@ struct GfxBufferDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxLayoutDesc
 struct GfxLayoutDesc {
+  /// The name of the layout attribute. 
+  ///
+  /// @NOTE: This can be left blank for OpenGL.
   const i8* name; 
+
+  /// The type of the layout.
   GfxLayoutType type; 
 
   /// If this value is set to `0`, the layout will 
@@ -1406,14 +1535,25 @@ struct GfxUniformDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxTextureDesc
 struct GfxTextureDesc {
+  /// The overall size of the texture.
   u32 width, height; 
+
+  /// The mipmap level of the texture. 
+  ///
+  /// @NOTE: Leave this as `0` if the depth is not important.
   u32 depth; 
 
+  /// The pixel format of the texture.
   GfxTextureFormat format;
-  GfxTextureFilter filter;
-  GfxTextureWrap wrap_mode;
 
-  void* data;
+  /// The filter to be used on the texture when magnified or minified.
+  GfxTextureFilter filter;
+
+  /// The addressing mode of the texture.
+  GfxTextureWrap wrap_mode;
+  
+  /// The pixels that will be sent to the GPU.
+  void* data = nullptr;
 };
 /// GfxTextureDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1421,23 +1561,52 @@ struct GfxTextureDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxPipelineDesc
 struct GfxPipelineDesc {
+  /// The vertex buffer to be used in a `draw_vertex` command.
+  ///
+  /// @NOTE: This buffer _must_ be set. It cannot be left a `nullptr`.
+  /// Even if `draw_index` is being used.
   GfxBuffer* vertex_buffer = nullptr; 
-  sizei vertices_count     = 0;
 
+  /// The amount of vertices in the `vertex_buffer` to be drawn. 
+  sizei vertices_count     = 0;
+  
+  /// The index buffer to be used in a `draw_index` command.
+  ///
+  /// @NOTE: This buffer _must_ be set if a `draw_index` command is used.
+  /// Otherwise, it can be left as `nullptr`.
   GfxBuffer* index_buffer  = nullptr;
+
+  /// The amount of indices in the `index_buffer` to be drawn.
   sizei indices_count      = 0;
 
+  /// The shader to be used in the draw command.
   GfxShader* shader        = nullptr;
-
+  
+  /// Layout array up to `LAYOUT_ELEMENTS_MAX` describing each layout attribute.
   GfxLayoutDesc layout[LAYOUT_ELEMENTS_MAX];
+
+  /// The amount of layouts to be set in `layout`.
   sizei layout_count       = 0; 
 
+  /// The draw mode of the entire pipeline.
+  ///
+  /// @NOTE: This can be changed at anytime before the draw command.
   GfxDrawMode draw_mode;
-
+  
+  /// Array of textures up to `TEXTURES_MAX` to be used in a draw command. 
   GfxTexture* textures[TEXTURES_MAX];
-  sizei textures_count     = 0;
 
+  /// The amount of textures to be used in `textures`.
+  sizei textures_count     = 0;
+  
+  /// The stencil reference value of the pipeline. 
+  ///
+  /// @NOTE: This is `1` by default.
   u32 stencil_ref          = 1;
+  
+  /// The blend factor to be used in the pipeline. 
+  ///
+  /// @NOTE: This is `{0, 0, 0, 0}` by default.
   f32 blend_factor[4]      = {0, 0, 0, 0};
 };
 /// GfxPipelineDesc
@@ -1447,28 +1616,29 @@ struct GfxPipelineDesc {
 /// Context functions 
 
 /// Initialize the `GfxContext` struct and return it. 
-/// This function will handle the initialization of the underlying graphics APIs.
-/// A refrence to the window will need to be passed to retrieve the size of the current 
-/// window, to know which graphics API to use, and set the newly created context as the window 
-/// context for rendering.
-///
-/// `flags`:
-/// `GFX_FLAGS_DEPTH`        = Enable the depth testing pass. This is enabled by default.
-/// `GFX_FLAGS_STENCIL`      = Enable the stencil testing pass. This is enabled by default.
-/// `GFX_FLAGS_BLEND`        = Enable blending. This is disabled by default.
-/// `GFX_FLAGS_MSAA`         = Enable multisampling. This is disabled by default.
-/// `GFX_FLAGS_CULL_CW`      = Clockwise culling order. This is selected by default. 
-/// `GFX_FLAGS_CULL_CCW`     = Counter-Clockwise culling order. 
-/// `GFX_FLAGS_ENABLE_VSYNC` = Enable vertical synchronization (VSYNC).
+/// This function will handle the initialization of the underlying graphics API.
+/// Setting up any states, creating the graphics devices, setting the pixel format of the swapchain, and so on.
+///  
+/// Any information describing the many states will be taken from `desc`.
 /// 
-/// @NOTE: All flags by default are turned off. None are enabled initially. 
+/// If any errors occur during initialization, this function will return a `nullptr`.
+/// 
+/// Check out the `GfxContextDesc` struct for more details on its members 
+/// that will be passed into this function. All of the members have default values. 
+/// However, two members _have_ to be set. Mainly, `window` and `states`.
+/// 
+/// The `window` is a pointer to the previously created `Window` struct.
+/// The `states` flags of type `GfxStates` can be `OR`ed together which will 
+/// indicate the initial active states of the context.
+/// 
+/// This function will also save a reference internally to `desc`.
 /// 
 /// @NOTE: Later on, with any function, if an instance of `GfxContext` 
 /// is passed as a `nullptr`, the function will assert. 
 GfxContext* gfx_context_init(const GfxContextDesc& desc);
 
-/// Free/reclaim any memory the graphics context has consumed. 
-/// This function will do any required de-initialization by the graphics API.
+/// Free/reclaim any memory `gfx` has consumed. 
+/// This function will do any required de-initialization of the graphics API.
 void gfx_context_shutdown(GfxContext* gfx);
 
 /// Retrieve the internal `GfxContextDesc` of `gfx`
@@ -1477,18 +1647,18 @@ GfxContextDesc& gfx_context_get_desc(GfxContext* gfx);
 /// Clear the buffers and set the clear color as `{r, g, b, a}`.
 void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a);
 
-/// Switch to the back buffer or, rather, present the back buffer. 
+/// Switch to the back buffer or, rather, present the back buffer to the screen. 
 /// 
-/// @NOTE: This function will be effected by vsync. 
+/// @NOTE: This function will be affected by vsync. 
 void gfx_context_present(GfxContext* gfx);
 
 /// Set any `state` of the context `gfx` to `value`. 
-/// 
-/// @NOTE: This can turn on or off the `state` in the given `gfx` context.
+/// i.e, this function can turn on or off the `state` in the given `gfx` context.
 void gfx_context_set_state(GfxContext* gfx, const GfxStates state, const bool value);
 
 /// Apply the `pipeline` using the updated `pipe_desc` in the current `gfx`. 
-/// This will bind any active states and set up the buffers for rendering.
+/// This function will update the references of the shader, buffers, and textures in `pipeline` using `pipe_desc` 
+/// as well as set up all the currently active states.
 void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc& pipe_desc);
 
 /// Context functions 
@@ -1516,25 +1686,24 @@ void gfx_buffer_update(GfxBuffer* buff, const sizei offset, const sizei size, co
 /// Shader functions 
 
 /// Allocate and return a `GfxShader`, passing the given `src`. 
-///
+/// 
 /// @NOTE: For glsl (OpenGL), both the vertex and the fragment shader should be combined into one. 
-/// The function will look for the `#version` declarative in order to seperate the two or more shaders. The first 
-/// one will be the vertex shader, the second will be the geometry shader, and the third will be 
-/// the fragment shader. 
-///
-/// Check the examples for more information.
+/// The function will look for the `#version` declarative to separate the two or more shaders. The first 
+/// one will be the vertex shader and the second will be the pixel/fragment shader. 
+/// 
+/// @NOTE: Unfortunately, geometry shaders are not currently supported.
 GfxShader* gfx_shader_create(GfxContext* gfx, const i8* src);
 
-/// Free/reclaim any memory the graphics context has consumed. 
+/// Free/reclaim any memory consumed by `shader`.
 void gfx_shader_destroy(GfxShader* shader);
 
 /// Attaches the uniform `buffer` to the `shader` of type `type`. 
 /// Later, when the pipeline initiates the draw phase, the contents of `buffer` will be updated and sent to the shader.
 /// This function only queues the uniform buffer.
-///
+/// 
 /// @NOTE: For GLSL (OpenGL), you _need_ to specify the binding point of the uniform buffer in the shader itself. For example, 
-/// do something like, `layout (std140, binding = 0)`. Now that uniform buffer will be bound to the point `0` and the shader 
-/// can easily find it. Also, make sure to have the binding points increase like an index, since that's how this function 
+/// do something like, `layout (std140, binding = 0)`. Now the uniform buffer will be bound to the point `0` and the shader 
+/// can easily find it. Also, make sure to have the binding points increase like an index since that's how this function 
 /// will look for them. 
 void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer);
 
@@ -1563,6 +1732,8 @@ void gfx_texture_destroy(GfxTexture* texture);
 GfxTextureDesc& gfx_texture_get_desc(GfxTexture* texture);
 
 /// Update the `texture`'s information from the given `desc`.
+///
+/// @NOTE: This will resend the pixels of `texture` to the GPU with the new information provided by `desc`.
 void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc);
 
 /// Texture functions 

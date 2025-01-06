@@ -1,10 +1,12 @@
-# Nikol
-A cross-platform framework for window creation, input handling, and rendering using OpenGL or DirectX11. 
+# *Nikol*
+A cross-platform framework for window creation, input handling, audio playback, and rendering using OpenGL 4.5 or Direct3D11.
 
 # Features 
+- A fully documented single header file for every functionality in the library.
 - Cross-platform window creation. 
 - Gamepad, keyboard, and mouse input support.
 - Fully-configurable cross-platform rendering API using OpenGL (Linux) and DirectX11 (Windows).
+- A cross-platform audio abstraction layer.
 
 # Dependencies
 - GLFW3 
@@ -12,9 +14,16 @@ A cross-platform framework for window creation, input handling, and rendering us
 - D3D11
 
 # Build Instructions
-// @TODO
+Run the following commands to build *Nikol* using _CMake_
 
-# Hello, Nikol
+```bash
+mkdir build 
+cd build 
+cmake .. 
+make (or use cmake --build . for Windows)
+```
+
+# Hello, *Nikol*
 Here's a simple example of the library. The example below will open a basic window and initialze a graphics context.
 
 ```c++
@@ -69,4 +78,4 @@ int main() {
 ```
 
 # More Examples 
-For more practical examples using the _Nikol_ engine, go to [Nikol Examples]("https://github.com/FrodoAlaska/NikolExamples")
+For more practical examples using the *Nikol* engine, go to <a href="https://github.com/FrodoAlaska/NikolExamples">NikolExamples</a>
