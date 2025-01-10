@@ -699,28 +699,28 @@ static void check_shader_linker_error(const GfxShader* shader) {
   }
 }
 
-static GLenum get_texture_format(const GfxTextureFormat format) {
+static void get_texture_gl_format(const GfxTextureFormat format, GLenum* in_format, GLenum* gl_format, GLenum* type) {
   switch(format) {
     case GFX_TEXTURE_FORMAT_R8:
-      return GL_R8;
+      break;
     case GFX_TEXTURE_FORMAT_R16:
-      return GL_R16;
+      break;
     case GFX_TEXTURE_FORMAT_RG8:
-      return GL_RG8;
+      break;
     case GFX_TEXTURE_FORMAT_RG16:
-      return GL_RG16;
+      break;
     case GFX_TEXTURE_FORMAT_RGBA8:
-      return GL_RGBA8;
+      break;
     case GFX_TEXTURE_FORMAT_RGBA16:
-      return GL_RGBA16;
+      break;
     case GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8:
-      return GL_DEPTH24_STENCIL8;
+      break;
     default:
-      return 0;
+      break;
   }
 }
 
-static void get_texture_filter(const GfxTextureFilter filter, GLenum* min, GLenum* mag) {
+static void get_texture_gl_filter(const GfxTextureFilter filter, GLenum* min, GLenum* mag) {
   switch(filter) {
     case GFX_TEXTURE_FILTER_MIN_MAG_LINEAR:
       *min = GL_LINEAR; 
@@ -751,7 +751,7 @@ static void get_texture_filter(const GfxTextureFilter filter, GLenum* min, GLenu
   }
 }
 
-static GLenum get_texture_wrap(const GfxTextureWrap wrap) {
+static GLenum get_texture_gl_wrap(const GfxTextureWrap wrap) {
   switch(wrap) {
     case GFX_TEXTURE_WRAP_REPEAT: 
       return GL_REPEAT;
@@ -766,114 +766,118 @@ static GLenum get_texture_wrap(const GfxTextureWrap wrap) {
   }
 }
 
-static GLenum get_texture_type(const GfxTextureType& type) {
+static GLenum create_gl_texture(const GfxTextureType type) {
+  u32 id = 0;
+
   switch(type) {
     case GFX_TEXTURE_1D:
-      return GL_TEXTURE_1D;
+      glCreateTextures(GL_TEXTURE_1D, 1, &id);
+      gl_check_error("glCreateTextures 1D");
+      break;
     case GFX_TEXTURE_2D:
-      return GL_TEXTURE_2D;
-    case GFX_TEXTURE_3D:
-      return GL_TEXTURE_3D;
-    
     case GFX_TEXTURE_RENDER_TARGET:
-    case GFX_TEXTURE_DEPTH_TARGET:
+      glCreateTextures(GL_TEXTURE_2D, 1, &id);
+      gl_check_error("glCreateTextures 2D");
+      break;
+    case GFX_TEXTURE_3D:
+      glCreateTextures(GL_TEXTURE_3D, 1, &id);
+      gl_check_error("glCreateTextures 3D");
+      break;
     case GFX_TEXTURE_STENCIL_TARGET:
+    case GFX_TEXTURE_DEPTH_TARGET:
     case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
-      return GL_TEXTURE_2D;
-    
+      glCreateRenderbuffers(1, &id);
+      gl_check_error("glCreateRenderbuffers");
+      break;
     default:
-      return 0;
-  } 
-}
-
-static u32 create_gl_texture(GfxContext* gfx, const GfxTextureDesc& desc, GLenum format) {
-  u32 id; 
-  
-  // Getting the appropriate GL type
-  GLenum type = get_texture_type(desc.type);
-  
-  // Creating the texture
-  glCreateTextures(type, 1, &id);
-  gl_check_error("glCreateTextures");
-  
-  // Filling the texture with the data based on its type
-  switch(desc.type) {
-    case GFX_TEXTURE_1D: 
-      glTextureStorage1D(id, desc.mips, format, desc.width);
-      gl_check_error("glTextureStorage2D");
-      break;
-    case GFX_TEXTURE_2D:
-      glTextureStorage2D(id, desc.mips, format, desc.width, desc.height);
-      gl_check_error("glTextureStorage2D");
-      break;
-    case GFX_TEXTURE_3D:
-      glTextureStorage3D(id, desc.mips, format, desc.width, desc.height, desc.depth);
-      gl_check_error("glTextureStorage2D");
-      break;
-    case GFX_TEXTURE_RENDER_TARGET:
-      glNamedFramebufferTexture(gfx->framebuffer_id, GL_COLOR_ATTACHMENT0, id, desc.mips);
-      gl_check_error("glNamedFramebufferTexture");
-      break;
-    case GFX_TEXTURE_DEPTH_TARGET:
-      glNamedFramebufferTexture(gfx->framebuffer_id, GL_DEPTH_ATTACHMENT, id, desc.mips);
-      gl_check_error("glNamedFramebufferTexture");
-      break;
-    case GFX_TEXTURE_STENCIL_TARGET:
-      glNamedFramebufferTexture(gfx->framebuffer_id, GL_STENCIL_ATTACHMENT, id, desc.mips);
-      gl_check_error("glNamedFramebufferTexture");
-      break;
-    case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
-      glNamedFramebufferTexture(gfx->framebuffer_id, GL_DEPTH_STENCIL_ATTACHMENT, id, desc.mips);
-      gl_check_error("glNamedFramebufferTexture");
       break;
   } 
-
-  // Generting some mipmaps
-  glGenerateTextureMipmap(id);
-  gl_check_error("glGenerateTextureMipmap");
 
   return id;
 }
 
-static void update_gl_texture(GfxTexture* texture, const GLenum format) {
-  const GfxTextureDesc desc = texture->desc;
-
+static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format, GLenum gl_format, GLenum gl_pixel_type) {
   switch(texture->desc.type) {
     case GFX_TEXTURE_1D: 
+      glTextureStorage1D(texture->id, texture->desc.mips, in_format, texture->desc.width);
+      gl_check_error("glTextureStorage2D");
+      
       glTextureSubImage1D(texture->id, 
-                          desc.mips, 
+                          texture->desc.mips, 
                           0, 
-                          desc.width, 
-                          format, 
-                          GL_UNSIGNED_BYTE, 
-                          desc.data);
+                          texture->desc.width, 
+                          gl_format, 
+                          gl_pixel_type, 
+                          texture->desc.data);
       gl_check_error("glTextureSubImage1D");
       break;
     case GFX_TEXTURE_2D:
-    case GFX_TEXTURE_RENDER_TARGET:
-    case GFX_TEXTURE_DEPTH_TARGET:
-    case GFX_TEXTURE_STENCIL_TARGET:
-    case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
+      glTextureStorage2D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height);
+      gl_check_error("glTextureStorage2D");
+      
       glTextureSubImage2D(texture->id, 
-                          desc.mips, 
+                          texture->desc.mips, 
                           0, 0,
-                          desc.width, desc.height,
-                          format, 
-                          GL_UNSIGNED_BYTE, 
-                          desc.data);
+                          texture->desc.width, texture->desc.height,
+                          gl_format, 
+                          gl_pixel_type, 
+                          texture->desc.data);
       gl_check_error("glTextureSubImage2D");
       break;
     case GFX_TEXTURE_3D:
+      glTextureStorage3D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height, texture->desc.height);
+      gl_check_error("glTextureStorage3D");
+
       glTextureSubImage3D(texture->id, 
-                          desc.mips, 
+                          texture->desc.mips, 
                           0, 0, 0,
-                          desc.width, desc.height, desc.depth,
-                          format, 
-                          GL_UNSIGNED_BYTE, 
-                          desc.data);
+                          texture->desc.width, texture->desc.height, texture->desc.depth,
+                          gl_format, 
+                          gl_pixel_type, 
+                          texture->desc.data);
       gl_check_error("glTextureSubImage3D");
       break;
-  } 
+    case GFX_TEXTURE_RENDER_TARGET:
+      glTextureStorage2D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height);
+      gl_check_error("glTextureStorage2D");
+
+      glTextureSubImage2D(texture->id, 
+                          texture->desc.mips, 
+                          0, 0,
+                          texture->desc.width, texture->desc.height,
+                          gl_format, 
+                          gl_pixel_type, 
+                          NULL);
+      gl_check_error("glTextureSubImage2D");
+      break;
+    case GFX_TEXTURE_DEPTH_TARGET:
+    case GFX_TEXTURE_STENCIL_TARGET:
+    case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
+      glNamedRenderbufferStorage(texture->id, in_format, texture->desc.width, texture->desc.height);
+      gl_check_error("glNamedRenderbufferStorage");
+      break;
+    default:
+      break;
+  }
+}
+
+static void apply_gl_render_target(u32 fbo, GfxTexture* texture) {
+  switch(texture->desc.type) {
+    case GFX_TEXTURE_RENDER_TARGET:
+      glNamedFramebufferTexture(fbo, GL_COLOR_ATTACHMENT0, texture->id, texture->desc.mips);
+      break;
+    case GFX_TEXTURE_DEPTH_TARGET:
+      glNamedFramebufferTexture(fbo, GL_DEPTH_ATTACHMENT, texture->id, texture->desc.mips);
+      break;
+    case GFX_TEXTURE_STENCIL_TARGET:
+      glNamedFramebufferTexture(fbo, GL_STENCIL_ATTACHMENT, texture->id, texture->desc.mips);
+      break;
+    case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
+      glNamedFramebufferTexture(fbo, GL_DEPTH_STENCIL_ATTACHMENT, texture->id, texture->desc.mips);
+      break;
+    default:
+      break;
+  }
 }
 
 /// Private functions 
@@ -984,6 +988,8 @@ void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const Gf
     // Binding to a framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, pipeline->framebuffer_id);
     gl_check_error("glBindFramebuffer");
+
+    apply_gl_render_target(pipeline->framebuffer_id, pipe_desc.render_target);
   }
   // There are no render targets so just render to the  
   // default framebuffer.
@@ -1222,17 +1228,27 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   texture->gfx  = gfx;
   
   // Getting the appropriate GL pixel format
-  GLenum format = get_texture_format(desc.format);
+  GLenum in_format, gl_format, gl_pixel_type;
+  get_texture_gl_format(desc.format, &in_format, &gl_format, &gl_pixel_type);
 
   // Getting the appropriate GL addressing modes
-  GLenum gl_wrap_format = get_texture_wrap(desc.wrap_mode);
+  GLenum gl_wrap_format = get_texture_gl_wrap(desc.wrap_mode);
   
   // Getting the appropriate GL filters
   GLenum min_filter, mag_filter;
-  get_texture_filter(desc.filter, &min_filter, &mag_filter); 
+  get_texture_gl_filter(desc.filter, &min_filter, &mag_filter); 
   
   // Creating the texutre based on its type
-  texture->id = create_gl_texture(gfx, desc, format);
+  texture->id = create_gl_texture(desc.type);
+  
+  // Filling the texture with the data based on its type
+  update_gl_texture_storage(texture, in_format, gl_format, gl_pixel_type);
+
+  // Generating some mipmaps (if we want them)
+  if(desc.mips > 0) {
+    glGenerateTextureMipmap(texture->id);
+    gl_check_error("glGenerateTextureMipmap");
+  }
 
   // Setting texture parameters
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
@@ -1265,17 +1281,25 @@ void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc) {
  
   texture->desc = desc;
 
-  GLenum gl_wrap_format = get_texture_wrap(desc.wrap_mode);
-  GLenum format         = get_texture_format(desc.format);
+  // Updating the formats
+  GLenum in_format, gl_format, gl_pixel_type;
+  get_texture_gl_format(desc.format, &in_format, &gl_format, &gl_pixel_type);
 
-  GLenum min_filter, mag_filter;
-  get_texture_filter(desc.filter, &min_filter, &mag_filter);
+  // Updating the addressing mode
+  GLenum gl_wrap_format = get_texture_gl_wrap(desc.wrap_mode);
   
-  // Re-updating the whole texture
-  update_gl_texture(texture, format);
+  // Updating the filters
+  GLenum min_filter, mag_filter;
+  get_texture_gl_filter(desc.filter, &min_filter, &mag_filter); 
+  
+  // updating the whole texture
+  update_gl_texture_storage(texture, in_format, gl_format, gl_pixel_type);
 
-  // Re-generate the mipmap 
-  glGenerateTextureMipmap(texture->id);
+  // Re-generate some mipmaps (if we want them)
+  if(desc.mips > 0) {
+    glGenerateTextureMipmap(texture->id);
+    gl_check_error("glGenerateTextureMipmap");
+  }
 
   // Set texture parameters again
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
@@ -1299,16 +1323,21 @@ GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc& desc) {
   cubemap->gfx  = gfx;
   cubemap->desc = desc;
   
-  GLenum gl_wrap_format = get_texture_wrap(desc.wrap_mode);
-  GLenum format         = get_texture_format(desc.format);
+  // Getting the appropriate GL pixel format
+  GLenum in_format, gl_format, gl_pixel_type;
+  get_texture_gl_format(desc.format, &in_format, &gl_format, &gl_pixel_type);
 
+  // Getting the appropriate GL addressing modes
+  GLenum gl_wrap_format = get_texture_gl_wrap(desc.wrap_mode);
+  
+  // Getting the appropriate GL filters
   GLenum min_filter, mag_filter;
-  get_texture_filter(desc.filter, &min_filter, &mag_filter); 
+  get_texture_gl_filter(desc.filter, &min_filter, &mag_filter); 
 
   glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &cubemap->id);
   gl_check_error("glCreateTextures");
     
-  glTextureStorage2D(cubemap->id, desc.mips, format, desc.width, desc.height);
+  glTextureStorage2D(cubemap->id, desc.mips, in_format, desc.width, desc.height);
   gl_check_error("glTextureStorage2D");
 
   // Set the texture for each face in the cubemap
@@ -1317,8 +1346,8 @@ GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc& desc) {
                         desc.mips,                   // Mipmaps 
                         0, 0, i,                     // Offset (x, y, z)
                         desc.width, desc.height, 1,  // Size (width, height, depth)
-                        format,                      // Format
-                        GL_UNSIGNED_BYTE,            // Type
+                        gl_format,                   // Format
+                        gl_pixel_type,               // Type
                         desc.data[i]);               // Pixels
     gl_check_error("glTextureStorage3D");
   }
@@ -1354,27 +1383,34 @@ void gfx_cubemap_update(GfxCubemap* cubemap, const GfxCubemapDesc& desc) {
   
   cubemap->desc = desc;
   
-  GLenum gl_wrap_format = get_texture_wrap(desc.wrap_mode);
-  GLenum format         = get_texture_format(desc.format);
+  // Updating the format
+  GLenum in_format, gl_format, gl_pixel_type;
+  get_texture_gl_format(desc.format, &in_format, &gl_format, &gl_pixel_type);
 
+  // Updating the addressing mode
+  GLenum gl_wrap_format = get_texture_gl_wrap(desc.wrap_mode);
+  
+  // Updating the filters
   GLenum min_filter, mag_filter;
-  get_texture_filter(desc.filter, &min_filter, &mag_filter); 
+  get_texture_gl_filter(desc.filter, &min_filter, &mag_filter); 
 
-  glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &cubemap->id);
-  gl_check_error("glCreateTextures");
-    
-  // Set the texture for each face in the cubemap
+  // Updating the storage
+  glTextureStorage2D(cubemap->id, desc.mips, in_format, desc.width, desc.height);
+  gl_check_error("glTextureStorage2D");
+
+  // Updating the texture image
   for(sizei i = 0; i < desc.faces_count; i++) {
     glTextureSubImage3D(cubemap->id,                 // Texture
                         desc.mips,                   // Mipmaps 
                         0, 0, i,                     // Offset (x, y, z)
                         desc.width, desc.height, 1,  // Size (width, height, depth)
-                        format,                      // Format
-                        GL_UNSIGNED_BYTE,            // Type
+                        gl_format,                   // Format
+                        gl_pixel_type,               // Type
                         desc.data[i]);               // Pixels
     gl_check_error("glTextureStorage3D");
   }
   
+  // Re-setting the parameters
   glTextureParameteri(cubemap->id, GL_TEXTURE_MIN_FILTER, min_filter);
   glTextureParameteri(cubemap->id, GL_TEXTURE_MAG_FILTER, mag_filter);
   glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
