@@ -1218,25 +1218,56 @@ enum GfxLayoutType {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// GfxTextureType
+enum GfxTextureType {
+  /// Creates a 1D texture.
+  GFX_TEXTURE_1D                   = 7 << 0,
+  
+  /// Creates a 2D texture.
+  GFX_TEXTURE_2D                   = 7 << 1,
+  
+  /// Creates a 3D texture.
+  GFX_TEXTURE_3D                   = 7 << 2,
+  
+  /// Creates a texture to be used as a render target.
+  GFX_TEXTURE_RENDER_TARGET        = 7 << 3,
+  
+  /// Creates a texture to be used as the depth buffer.
+  GFX_TEXTURE_DEPTH_TARGET         = 7 << 4,
+  
+  /// Creates a texture to be used as the stencil buffer.
+  GFX_TEXTURE_STENCIL_TARGET       = 7 << 5,
+
+  /// Creates a texture to be used as both the depth and stencil buffers.
+  GFX_TEXTURE_DEPTH_STENCIL_TARGET = GFX_TEXTURE_DEPTH_TARGET | GFX_TEXTURE_STENCIL_TARGET,
+};
+/// GfxTextureType
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// GfxTextureFormat
 enum GfxTextureFormat {
   /// An 8 bits per pixel red channel texture format.
-  GFX_TEXTURE_FORMAT_R8      = 8 << 0,
+  GFX_TEXTURE_FORMAT_R8          = 8 << 0,
   
   /// A 16 bits per pixel red channel texture format.
-  GFX_TEXTURE_FORMAT_R16     = 8 << 1,
+  GFX_TEXTURE_FORMAT_R16         = 8 << 1,
 
   /// An 8 bits per pixel red and green channel texture format.
-  GFX_TEXTURE_FORMAT_RG8     = 8 << 2,
+  GFX_TEXTURE_FORMAT_RG8         = 8 << 2,
   
   /// A 16 bits per pixel red and green channel texture format.
-  GFX_TEXTURE_FORMAT_RG16    = 8 << 3,
+  GFX_TEXTURE_FORMAT_RG16        = 8 << 3,
   
-  /// An 8 bytes per pixel red, green, blue, and alpha channel texture format.
-  GFX_TEXTURE_FORMAT_RGBA8   = 8 << 4,
+  /// An 8 bits per pixel red, green, blue, and alpha channel texture format.
+  GFX_TEXTURE_FORMAT_RGBA8       = 8 << 4,
   
-  /// A 16 bytes per pixel red, green, blue, and alpha channel texture format.
-  GFX_TEXTURE_FORMAT_RGBA16  = 8 << 5,
+  /// A 16 bits per pixel red, green, blue, and alpha channel texture format.
+  GFX_TEXTURE_FORMAT_RGBA16      = 8 << 5,
+
+  /// A format to be used with the depth and stencil buffers where 
+  /// the depth buffer gets 24 bits and the stencil buffer gets 8 bits.
+  GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8 = 8 << 6,
 };
 /// GfxTextureFromat
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1549,11 +1580,22 @@ struct GfxUniformDesc {
 struct GfxTextureDesc {
   /// The overall size of the texture.
   u32 width, height; 
+  
+  /// The depth on the Z-axis of the texture. 
+  ///
+  /// @NOTE: If the texture `type` is any variation of `GFX_TEXTURE_*_ARRAY`, 
+  /// the `depth` will be used to determine the size of the array. 
+  /// Otherwise, if the texture `type` is `GFX_TEXTURE_3D`, the `depth` will 
+  /// act as the intended name.
+  u32 depth;
 
   /// The mipmap level of the texture. 
   ///
-  /// @NOTE: Leave this as `0` if the depth is not important.
-  u32 depth; 
+  /// @NOTE: Leave this as `0` if the mipmap levels are not important.
+  u32 mips; 
+
+  /// The type of the texture to be used.
+  GfxTextureType type;
 
   /// The pixel format of the texture.
   GfxTextureFormat format;
@@ -1579,7 +1621,7 @@ struct GfxCubemapDesc {
   /// The mipmap level of the cubemap. 
   ///
   /// @NOTE: Leave this as `0` if the depth is not important.
-  u32 depth; 
+  u32 mips; 
 
   /// The pixel format of the cubemap.
   GfxTextureFormat format;
@@ -1645,7 +1687,13 @@ struct GfxPipelineDesc {
 
   /// The amount of textures to be used in `textures`.
   sizei textures_count               = 0;
-  
+ 
+  /// A flag to indicate if the pipeline can 
+  /// or cannot write to the depth buffer. 
+  ///
+  /// @NOTE: By default, this value is `true`.
+  bool depth_mask                    = true;
+
   /// The stencil reference value of the pipeline. 
   ///
   /// @NOTE: This is `1` by default.
@@ -1655,6 +1703,8 @@ struct GfxPipelineDesc {
   ///
   /// @NOTE: This is `{0, 0, 0, 0}` by default.
   f32 blend_factor[4]                = {0, 0, 0, 0};
+
+  GfxTexture* render_target          = nullptr;
 };
 /// GfxPipelineDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1744,15 +1794,13 @@ GfxShader* gfx_shader_create(GfxContext* gfx, const i8* src);
 /// Free/reclaim any memory consumed by `shader`.
 void gfx_shader_destroy(GfxShader* shader);
 
-/// Attaches the uniform `buffer` to the `shader` of type `type`. 
-/// Later, when the pipeline initiates the draw phase, the contents of `buffer` will be updated and sent to the shader.
-/// This function only queues the uniform buffer.
+/// Attaches the uniform `buffer` to the `shader` of type `type` to point `bind_point`. 
+/// Any updates to `buffer` will have an effect on the `shader`.
 /// 
 /// @NOTE: For GLSL (OpenGL), you _need_ to specify the binding point of the uniform buffer in the shader itself. For example, 
 /// do something like, `layout (std140, binding = 0)`. Now the uniform buffer will be bound to the point `0` and the shader 
-/// can easily find it. Also, make sure to have the binding points increase like an index since that's how this function 
-/// will look for them. 
-void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer);
+/// can easily find it. 
+void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer, const u32 bind_point);
 
 /// Only for GLSL (OpenGL), retrieve the location of the `uniform_name` in the `shader`.
 i32 gfx_glsl_get_uniform_location(GfxShader* shader, const i8* uniform_name);

@@ -202,11 +202,11 @@ static bool nikol_cursor_show_callback(const Event& event, const void* dispatche
 ///---------------------------------------------------------------------------------------------------------------------
 /// Private functions
 static void set_gfx_context(Window* window) {
-#ifdef NIKOL_GFX_CONTEXT_OPENGL 
+#if defined(NIKOL_GFX_CONTEXT_OPENGL)
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#elif NIKOL_GTX_CONTEXT_DX11 
+#elif defined(NIKOL_GTX_CONTEXT_DX11) 
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 #endif
 }

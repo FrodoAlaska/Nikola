@@ -1,9 +1,11 @@
 # URGENT TODO: 
+- Add framebuffers and custom render targets
+- Better debuging output using DSA
 - A function to sub image or slice a texture 
 - Put some thought into instancing
 
 # FIXES
-- (OpenGL) Have the textures binded to a specific sampler unit?
+- (OpenGL) Generating mipmaps for cubemaps is apparently "cube incomplete"
 
 # FUTURE TODO: 
 - Audio context and audio buffers
@@ -11,7 +13,7 @@
 - Get rid of GLFW and do it the old-fashioned way? Misery.
 
 # BUGS: 
-- MSAA still does not work well in OpenGL
+- MSAA still does not work well in OpenGL (configure the samples in the context not in the window... somehow)
 - MSAA in D3D11 needs to be configured some more
 - Blending is not completely correct in D3D11
 
@@ -19,7 +21,7 @@
 - (OpenGL) Shader attribute semantics (e.g, does Mat4 work there)
 
 # EXAMPLES: 
-- A simple contrived 3D example with rotating cubes. Yes, cube(_S_). Plural.
+- Post-processing example
 - An obj loader
 - A simple and small drawing app
 - A simple image manipulation app
