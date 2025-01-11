@@ -5,7 +5,7 @@
 - Put some thought into instancing
 
 # FIXES
-- (OpenGL) Generating mipmaps for cubemaps is apparently "cube incomplete"
+- EMPTY FOR NOW
 
 # FUTURE TODO: 
 - Audio context and audio buffers

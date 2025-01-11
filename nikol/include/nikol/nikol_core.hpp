@@ -958,6 +958,9 @@ const sizei UNIFORM_BUFFERS_MAX = 16;
 /// The maximum number of elements a buffer's layout can have.
 const sizei LAYOUT_ELEMENTS_MAX = 32;
 
+/// The maximum number of render targets to be bound at once.
+const sizei RENDER_TARGETS_MAX  = 8;
+
 // Consts
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -978,9 +981,6 @@ enum GfxStates {
 
   /// Enable face culling. 
   GFX_STATE_CULL    = 2 << 4,
-
-  /// Enable vertical synchronization (VSYNC).
-  GFX_STATE_VSYNC   = 2 << 5, 
 };
 /// GfxStates
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1109,16 +1109,33 @@ enum GfxCullOrder {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// GfxContextFlags 
+enum GfxContextFlags {
+  /// Enable VSYNC in the graphics context
+  ///
+  /// @NOTE: VSYNC is disabled by default.
+  GFX_CONTEXT_ENABLE_VSYNC       = 3 << 0, 
+
+  /// Render to a custom framebuffer
+  ///
+  /// @NOTE: This should be set if the `render_targets` of `GfxPipeline` 
+  /// is to be used. Initially, the graphics context will render to the default framebuffer.
+  GFX_CONTEXT_CUSTOM_FRAMEBUFFER = 3 << 1, 
+};
+/// GfxContextFlags 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// GfxBufferType
 enum GfxBufferType {
   /// A vertex buffer.
-  GFX_BUFFER_VERTEX  = 3 << 0, 
+  GFX_BUFFER_VERTEX  = 4 << 0, 
 
   /// An index buffer.
-  GFX_BUFFER_INDEX   = 3 << 1, 
+  GFX_BUFFER_INDEX   = 4 << 1, 
 
   /// A uniform buffer.
-  GFX_BUFFER_UNIFORM = 3 << 2,
+  GFX_BUFFER_UNIFORM = 4 << 2,
 };
 /// GfxBufferType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1128,19 +1145,19 @@ enum GfxBufferType {
 enum GfxBufferUsage {
   /// Set the buffer to be dynamically written to.
   /// This will be used for frequently writing to the buffer.
-  GFX_BUFFER_USAGE_DYNAMIC_DRAW = 4 << 0,
+  GFX_BUFFER_USAGE_DYNAMIC_DRAW = 5 << 0,
   
   /// Set the buffer to be dynamically read from.
   /// This will be used for frequent reading from the buffer.
-  GFX_BUFFER_USAGE_DYNAMIC_READ = 4 << 1,
+  GFX_BUFFER_USAGE_DYNAMIC_READ = 5 << 1,
 
   /// Set the buffer to be statically written to.
   /// This will be used for writing to the buffer once or rarely.
-  GFX_BUFFER_USAGE_STATIC_DRAW  = 4 << 2,
+  GFX_BUFFER_USAGE_STATIC_DRAW  = 5 << 2,
 
   /// Set the buffer to be statically read from.
   /// This will be used for reading from the buffer once or rarely.
-  GFX_BUFFER_USAGE_STATIC_READ  = 4 << 3,
+  GFX_BUFFER_USAGE_STATIC_READ  = 5 << 3,
 };
 /// GfxBufferUsage
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1149,19 +1166,19 @@ enum GfxBufferUsage {
 /// GfxDrawMode
 enum GfxDrawMode {
   /// Will set up the pipeline to draw points.
-  GFX_DRAW_MODE_POINT          = 5 << 0,
+  GFX_DRAW_MODE_POINT          = 6 << 0,
 
   /// Will set up the pipeline to draw triangles.
-  GFX_DRAW_MODE_TRIANGLE       = 5 << 1,
+  GFX_DRAW_MODE_TRIANGLE       = 6 << 1,
   
   /// Will set up the pipeline to draw triangle strips.
-  GFX_DRAW_MODE_TRIANGLE_STRIP = 5 << 2,
+  GFX_DRAW_MODE_TRIANGLE_STRIP = 6 << 2,
   
   /// Will set up the pipeline to draw lines.
-  GFX_DRAW_MODE_LINE           = 5 << 3,
+  GFX_DRAW_MODE_LINE           = 6 << 3,
   
   /// Will set up the pipeline to draw line strips.
-  GFX_DRAW_MODE_LINE_STRIP     = 5 << 4,
+  GFX_DRAW_MODE_LINE_STRIP     = 6 << 4,
 };
 /// GfxDrawMode
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1170,49 +1187,49 @@ enum GfxDrawMode {
 /// GfxLayoutType
 enum GfxLayoutType {
   /// Equivalent to `float`.
-  GFX_LAYOUT_FLOAT1 = 6 << 0,
+  GFX_LAYOUT_FLOAT1 = 7 << 0,
   
   /// Equivalent to `fVector2`.
-  GFX_LAYOUT_FLOAT2 = 6 << 1,
+  GFX_LAYOUT_FLOAT2 = 7 << 1,
   
   /// Equivalent to `fVector3`.
-  GFX_LAYOUT_FLOAT3 = 6 << 2,
+  GFX_LAYOUT_FLOAT3 = 7 << 2,
   
   /// Equivalent to `fVector4`.
-  GFX_LAYOUT_FLOAT4 = 6 << 3,
+  GFX_LAYOUT_FLOAT4 = 7 << 3,
   
   /// Equivalent to `int`.
-  GFX_LAYOUT_INT1 = 6 << 4,
+  GFX_LAYOUT_INT1   = 7 << 4,
   
   /// Equivalent to `iVector2`.
-  GFX_LAYOUT_INT2 = 6 << 5,
+  GFX_LAYOUT_INT2   = 7 << 5,
   
   /// Equivalent to `iVector3`.
-  GFX_LAYOUT_INT3 = 6 << 6,
+  GFX_LAYOUT_INT3   = 7 << 6,
   
   /// Equivalent to `iVector4`.
-  GFX_LAYOUT_INT4 = 6 << 7,
+  GFX_LAYOUT_INT4   = 7 << 7,
   
   /// Equivalent to `unsigned int`.
-  GFX_LAYOUT_UINT1 = 6 << 8,
+  GFX_LAYOUT_UINT1  = 7 << 8,
   
   /// Equivalent to `uVector2`.
-  GFX_LAYOUT_UINT2 = 6 << 9,
+  GFX_LAYOUT_UINT2  = 7 << 9,
   
   /// Equivalent to `uVector3`.
-  GFX_LAYOUT_UINT3 = 6 << 10,
+  GFX_LAYOUT_UINT3  = 7 << 10,
   
   /// Equivalent to `uVector4`.
-  GFX_LAYOUT_UINT4 = 6 << 11,
+  GFX_LAYOUT_UINT4  = 7 << 11,
 
   /// A 2x2 matrix (or 4 `float`s).
-  GFX_LAYOUT_MAT2  = 6 << 12,
+  GFX_LAYOUT_MAT2   = 7 << 12,
   
   /// A 3x3 matrix (or 9 `float`s).
-  GFX_LAYOUT_MAT3  = 6 << 13,
+  GFX_LAYOUT_MAT3   = 7 << 13,
   
   /// A 4x4 matrix (or 16 `float`s).
-  GFX_LAYOUT_MAT4  = 6 << 14,
+  GFX_LAYOUT_MAT4   = 7 << 14,
 };
 /// GfxLayoutType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1221,22 +1238,22 @@ enum GfxLayoutType {
 /// GfxTextureType
 enum GfxTextureType {
   /// Creates a 1D texture.
-  GFX_TEXTURE_1D                   = 7 << 0,
+  GFX_TEXTURE_1D                   = 8 << 0,
   
   /// Creates a 2D texture.
-  GFX_TEXTURE_2D                   = 7 << 1,
+  GFX_TEXTURE_2D                   = 8 << 1,
   
   /// Creates a 3D texture.
-  GFX_TEXTURE_3D                   = 7 << 2,
+  GFX_TEXTURE_3D                   = 8 << 2,
   
   /// Creates a texture to be used as a render target.
-  GFX_TEXTURE_RENDER_TARGET        = 7 << 3,
+  GFX_TEXTURE_RENDER_TARGET        = 8 << 3,
   
   /// Creates a texture to be used as the depth buffer.
-  GFX_TEXTURE_DEPTH_TARGET         = 7 << 4,
+  GFX_TEXTURE_DEPTH_TARGET         = 8 << 4,
   
   /// Creates a texture to be used as the stencil buffer.
-  GFX_TEXTURE_STENCIL_TARGET       = 7 << 5,
+  GFX_TEXTURE_STENCIL_TARGET       = 8 << 5,
 
   /// Creates a texture to be used as both the depth and stencil buffers.
   GFX_TEXTURE_DEPTH_STENCIL_TARGET = GFX_TEXTURE_DEPTH_TARGET | GFX_TEXTURE_STENCIL_TARGET,
@@ -1248,26 +1265,26 @@ enum GfxTextureType {
 /// GfxTextureFormat
 enum GfxTextureFormat {
   /// An 8 bits per pixel red channel texture format.
-  GFX_TEXTURE_FORMAT_R8          = 8 << 0,
+  GFX_TEXTURE_FORMAT_R8                 = 9 << 0,
   
   /// A 16 bits per pixel red channel texture format.
-  GFX_TEXTURE_FORMAT_R16         = 8 << 1,
+  GFX_TEXTURE_FORMAT_R16                = 9 << 1,
 
   /// An 8 bits per pixel red and green channel texture format.
-  GFX_TEXTURE_FORMAT_RG8         = 8 << 2,
+  GFX_TEXTURE_FORMAT_RG8                = 9 << 2,
   
   /// A 16 bits per pixel red and green channel texture format.
-  GFX_TEXTURE_FORMAT_RG16        = 8 << 3,
+  GFX_TEXTURE_FORMAT_RG16               = 9 << 3,
   
   /// An 8 bits per pixel red, green, blue, and alpha channel texture format.
-  GFX_TEXTURE_FORMAT_RGBA8       = 8 << 4,
+  GFX_TEXTURE_FORMAT_RGBA8              = 9 << 4,
   
   /// A 16 bits per pixel red, green, blue, and alpha channel texture format.
-  GFX_TEXTURE_FORMAT_RGBA16      = 8 << 5,
+  GFX_TEXTURE_FORMAT_RGBA16             = 9 << 5,
 
   /// A format to be used with the depth and stencil buffers where 
   /// the depth buffer gets 24 bits and the stencil buffer gets 8 bits.
-  GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8 = 8 << 6,
+  GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8 = 9 << 6,
 };
 /// GfxTextureFromat
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1276,24 +1293,24 @@ enum GfxTextureFormat {
 /// GfxTextureFilter
 enum GfxTextureFilter {
   /// Uses linear filtering in both modes.
-  GFX_TEXTURE_FILTER_MIN_MAG_LINEAR            = 9 << 0,
+  GFX_TEXTURE_FILTER_MIN_MAG_LINEAR            = 10 << 0,
   
   /// Uses nearest filtering on both modes.
-  GFX_TEXTURE_FILTER_MIN_MAG_NEAREST           = 9 << 1,
+  GFX_TEXTURE_FILTER_MIN_MAG_NEAREST           = 10 << 1,
   
   /// Uses linear filtering on minification and nearest filtering magnification. 
-  GFX_TEXTURE_FILTER_MIN_LINEAR_MAG_NEAREST    = 9 << 2,
+  GFX_TEXTURE_FILTER_MIN_LINEAR_MAG_NEAREST    = 10 << 2,
   
   /// Uses nearest filtering on minification and linear filtering magnification. 
-  GFX_TEXTURE_FILTER_MIN_NEAREST_MAG_LINEAR    = 9 << 3,
+  GFX_TEXTURE_FILTER_MIN_NEAREST_MAG_LINEAR    = 10 << 3,
   
   /// Uses trilinear filtering (the weighted average of the two closest mipmaps)
   /// on minification and linear filtering on magnification.
-  GFX_TEXTURE_FILTER_MIN_TRILINEAR_MAG_LINEAR  = 9 << 4,
+  GFX_TEXTURE_FILTER_MIN_TRILINEAR_MAG_LINEAR  = 10 << 4,
   
   /// Uses trilinear filtering (the weighted average of the two closest mipmaps)
   /// on minification and nearest filtering on magnification.
-  GFX_TEXTURE_FILTER_MIN_TRILINEAR_MAG_NEAREST = 9 << 5,
+  GFX_TEXTURE_FILTER_MIN_TRILINEAR_MAG_NEAREST = 10 << 5,
 };
 /// GfxTextureFilter
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1302,16 +1319,16 @@ enum GfxTextureFilter {
 /// GfxTextureWrap
 enum GfxTextureWrap {
   /// Repeat the pixel when wrapped.
-  GFX_TEXTURE_WRAP_REPEAT       = 10 << 0, 
+  GFX_TEXTURE_WRAP_REPEAT       = 11 << 0, 
   
   /// Mirror the pixel when wrapped.
-  GFX_TEXTURE_WRAP_MIRROR       = 10 << 1, 
+  GFX_TEXTURE_WRAP_MIRROR       = 11 << 1, 
   
   /// Clamp the pixel when wrapped.
-  GFX_TEXTURE_WRAP_CLAMP        = 10 << 2, 
+  GFX_TEXTURE_WRAP_CLAMP        = 11 << 2, 
   
   /// Use the border color when wrapped.
-  GFX_TEXTURE_WRAP_BORDER_COLOR = 10 << 3,
+  GFX_TEXTURE_WRAP_BORDER_COLOR = 11 << 3,
 };
 /// GfxTextureWrap
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1320,13 +1337,13 @@ enum GfxTextureWrap {
 /// GfxShaderType
 enum GfxShaderType {
   /// A vertex shader.
-  GFX_SHADER_VERTEX   = 11 << 0, 
+  GFX_SHADER_VERTEX   = 12 << 0, 
 
   /// A pixel/fragment shader.
-  GFX_SHADER_PIXEL    = 11 << 1, 
+  GFX_SHADER_PIXEL    = 12 << 1, 
 
   /// A geometry shader.
-  GFX_SHADER_GEOMETRY = 11 << 2,
+  GFX_SHADER_GEOMETRY = 12 << 2,
 };
 /// GfxShaderType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1702,12 +1719,14 @@ struct GfxPipelineDesc {
   /// @NOTE: This is `{0, 0, 0, 0}` by default.
   f32 blend_factor[4]                = {0, 0, 0, 0};
 
-  /// The current render target of the pipeline. 
+  /// The current render targets (up to RENDER_TARGETS_MAX) of the pipeline. 
+  GfxTexture* render_targets[RENDER_TARGETS_MAX];
+
+  /// The amount of render targets to use in `render_targets`.
   ///
-  /// @NOTE: This is `nullptr` by default and should be 
-  /// left as so if you wish to render to the default 
-  /// render target.
-  GfxTexture* render_target          = nullptr;
+  /// @NOTE: This is `0` by default and should be left as such 
+  /// if you wish to render to the default render target.
+  sizei render_targets_count         = 0;
 };
 /// GfxPipelineDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1744,22 +1763,27 @@ void gfx_context_shutdown(GfxContext* gfx);
 /// Retrieve the internal `GfxContextDesc` of `gfx`
 GfxContextDesc& gfx_context_get_desc(GfxContext* gfx);
 
-/// Clear the buffers and set the clear color as `{r, g, b, a}`.
-void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a);
-
-/// Switch to the back buffer or, rather, present the back buffer to the screen. 
-/// 
-/// @NOTE: This function will be affected by vsync. 
-void gfx_context_present(GfxContext* gfx);
-
 /// Set any `state` of the context `gfx` to `value`. 
 /// i.e, this function can turn on or off the `state` in the given `gfx` context.
 void gfx_context_set_state(GfxContext* gfx, const GfxStates state, const bool value);
+
+/// Clear the buffers of the currently active states, sets the clear color as `{r, g, b, a}`, 
+/// and sets any required actions of `flags` (which can be `OR`ed together).
+///
+/// `flags`:
+///   - `GFX_CONTEXT_ENABLE_VSYNC`       = Enable VSYNC in the graphics context. 
+///   - `GFX_CONTEXT_CUSTOM_FRAMEBUFFER` = Render to a custom framebuffer.
+void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a, const u32 flags);
 
 /// Apply the `pipeline` using the updated `pipe_desc` in the current `gfx`. 
 /// This function will update the references of the shader, buffers, and textures in `pipeline` using `pipe_desc` 
 /// as well as set up all the currently active states.
 void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc& pipe_desc);
+
+/// Switch to the back buffer or, rather, present the back buffer to the screen. 
+/// 
+/// @NOTE: This function will be affected by vsync. 
+void gfx_context_present(GfxContext* gfx);
 
 /// Context functions 
 ///---------------------------------------------------------------------------------------------------------------------

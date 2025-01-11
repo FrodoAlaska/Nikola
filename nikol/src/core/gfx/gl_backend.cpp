@@ -47,7 +47,8 @@ struct GfxContext {
 
   bool has_vsync = false;
 
-  u32 framebuffer_id = 0;
+  u32 framebuffer_id      = 0;
+  u32 current_framebuffer = 0;
 };
 /// GfxContext
 ///---------------------------------------------------------------------------------------------------------------------
@@ -126,9 +127,6 @@ struct GfxPipeline {
 
   u32 textures[TEXTURES_MAX] = {};
   sizei textures_count       = 0;
-
-  u32 render_target_id       = 0;
-  u32 framebuffer_id         = 0;
 };
 /// GfxPipeline
 ///---------------------------------------------------------------------------------------------------------------------
@@ -306,9 +304,6 @@ static void set_state(GfxContext* gfx, const GfxStates state, const bool value) 
     case GFX_STATE_CULL:
       SET_GFX_STATE(value, GL_CULL_FACE);
       break;
-    case GFX_STATE_VSYNC:
-      gfx->has_vsync = value; 
-      break;
   }
 }
 
@@ -380,9 +375,18 @@ static void set_gfx_states(GfxContext* gfx) {
   if(IS_BIT_SET(gfx->states, GFX_STATE_CULL)) {
     set_cull_state(gfx);
   }
+}
 
-  if(IS_BIT_SET(gfx->states, GFX_STATE_VSYNC)) {
-    set_state(gfx, GFX_STATE_VSYNC, true);
+static void set_context_flags(GfxContext* gfx, const u32 flags) {
+  gfx->has_vsync           = false;
+  gfx->current_framebuffer = 0;
+
+  if(IS_BIT_SET(flags, GFX_CONTEXT_ENABLE_VSYNC)) {
+    gfx->has_vsync = true;
+  }
+
+  if(IS_BIT_SET(flags, GFX_CONTEXT_CUSTOM_FRAMEBUFFER)) {
+    gfx->current_framebuffer = gfx->framebuffer_id;
   }
 }
 
@@ -863,7 +867,7 @@ static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format, GLe
       gl_check_error("glTextureStorage2D");
 
       glTextureSubImage2D(texture->id, 
-                          texture->desc.mips, 
+                          0, 
                           0, 0,
                           texture->desc.width, texture->desc.height,
                           gl_format, 
@@ -885,19 +889,27 @@ static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format, GLe
 static void apply_gl_render_target(u32 fbo, GfxTexture* texture) {
   switch(texture->desc.type) {
     case GFX_TEXTURE_RENDER_TARGET:
-      glNamedFramebufferTexture(fbo, GL_COLOR_ATTACHMENT0, texture->id, texture->desc.mips);
+      glNamedFramebufferTexture(fbo, GL_COLOR_ATTACHMENT0, texture->id, 0);
+      gl_check_error("glNamedFramebufferTexture");
       break;
     case GFX_TEXTURE_DEPTH_TARGET:
-      glNamedFramebufferTexture(fbo, GL_DEPTH_ATTACHMENT, texture->id, texture->desc.mips);
+      glNamedFramebufferRenderbuffer(fbo, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, texture->id);
+      gl_check_error("glNamedFramebufferRenderbuffer");
       break;
     case GFX_TEXTURE_STENCIL_TARGET:
-      glNamedFramebufferTexture(fbo, GL_STENCIL_ATTACHMENT, texture->id, texture->desc.mips);
+      glNamedFramebufferRenderbuffer(fbo, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, texture->id);
+      gl_check_error("glNamedFramebufferRenderbuffer");
       break;
     case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
-      glNamedFramebufferTexture(fbo, GL_DEPTH_STENCIL_ATTACHMENT, texture->id, texture->desc.mips);
+      glNamedFramebufferRenderbuffer(fbo, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, texture->id);
+      gl_check_error("glNamedFramebufferRenderbuffer");
       break;
     default:
       break;
+  }
+
+  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    NIKOL_LOG_WARN("GL-ERROR: Framebuffer %i is incomplete", fbo);
   }
 }
 
@@ -977,21 +989,19 @@ GfxContextDesc& gfx_context_get_desc(GfxContext* gfx) {
   return gfx->desc;
 }
 
-void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
-
-  glClear(gfx->buffer_bits);
-  glClearColor(r, g, b, a);
-}
-
-void gfx_context_present(GfxContext* gfx) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
-  window_swap_buffers(gfx->desc.window);
-}
-
 void gfx_context_set_state(GfxContext* gfx, const GfxStates state, const bool value) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
   set_state(gfx, state, value);
+}
+
+void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a, const u32 flags) {
+  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+ 
+  set_context_flags(gfx, flags);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, gfx->current_framebuffer);
+  glClear(gfx->buffer_bits);
+  glClearColor(r, g, b, a);
 }
 
 void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc& pipe_desc) {
@@ -1001,23 +1011,10 @@ void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const Gf
   // Updating the pipeline 
   pipeline->desc = pipe_desc;
   
-  // Render to the pipeline's render target if it exists
-  pipeline->render_target_id = 0;
-  if(pipe_desc.render_target) {
-    pipeline->render_target_id = pipe_desc.render_target->id;    
-  
-    // Binding to a framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, pipeline->framebuffer_id);
-    gl_check_error("glBindFramebuffer");
-
-    apply_gl_render_target(pipeline->framebuffer_id, pipe_desc.render_target);
-  }
-  // There are no render targets so just render to the  
-  // default framebuffer.
-  else {
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    gl_check_error("glBindFramebuffer");
-  }
+  // Render to the pipeline's render targets if they exists
+  for(sizei i = 0; i < pipe_desc.render_targets_count; i++) {
+    apply_gl_render_target(gfx->framebuffer_id, pipe_desc.render_targets[i]);
+  } 
  
   // Updating the shader
   pipeline->shader = pipe_desc.shader;
@@ -1043,6 +1040,11 @@ void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const Gf
   // Setting the blend color of the pipeline state
   const f32* blend_color = pipe_desc.blend_factor;
   glBlendColor(blend_color[0], blend_color[1], blend_color[2], blend_color[3]);
+}
+
+void gfx_context_present(GfxContext* gfx) {
+  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+  window_swap_buffers(gfx->desc.window);
 }
 
 /// Context functions 
@@ -1490,15 +1492,6 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc) {
     pipe->cubemaps[i] = desc.cubemaps[i]->id;
   }  
     
-  // Framebuffer init
-  glCreateFramebuffers(1, &pipe->framebuffer_id);
-  gl_check_error("glCreateFramebuffers");
-
-  // Render target init
-  if(desc.render_target) {
-    pipe->render_target_id = desc.render_target->id;
-  }
-
   return pipe;
 }
 
