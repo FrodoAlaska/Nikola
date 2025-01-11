@@ -699,21 +699,42 @@ static void check_shader_linker_error(const GfxShader* shader) {
   }
 }
 
-static void get_texture_gl_format(const GfxTextureFormat format, GLenum* in_format, GLenum* gl_format, GLenum* type) {
+static void get_texture_gl_format(const GfxTextureFormat format, GLenum* in_format, GLenum* gl_format, GLenum* gl_type) {
   switch(format) {
     case GFX_TEXTURE_FORMAT_R8:
+      *in_format = GL_R8;
+      *gl_format = GL_RED;
+      *gl_type   = GL_UNSIGNED_BYTE;
       break;
     case GFX_TEXTURE_FORMAT_R16:
+      *in_format = GL_R16;
+      *gl_format = GL_RED;
+      *gl_type   = GL_UNSIGNED_SHORT;
       break;
     case GFX_TEXTURE_FORMAT_RG8:
+      *in_format = GL_RG8;
+      *gl_format = GL_RG;
+      *gl_type   = GL_UNSIGNED_BYTE;
       break;
     case GFX_TEXTURE_FORMAT_RG16:
+      *in_format = GL_RG16;
+      *gl_format = GL_RG;
+      *gl_type   = GL_UNSIGNED_SHORT;
       break;
     case GFX_TEXTURE_FORMAT_RGBA8:
+      *in_format = GL_RGBA8;
+      *gl_format = GL_RGBA;
+      *gl_type   = GL_UNSIGNED_BYTE;
       break;
     case GFX_TEXTURE_FORMAT_RGBA16:
+      *in_format = GL_RGBA16;
+      *gl_format = GL_RGBA;
+      *gl_type   = GL_UNSIGNED_SHORT;
       break;
     case GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8:
+      *in_format = GL_DEPTH24_STENCIL8;
+      *gl_format = GL_DEPTH_STENCIL;
+      *gl_type   = GL_UNSIGNED_INT_24_8;
       break;
     default:
       break;
