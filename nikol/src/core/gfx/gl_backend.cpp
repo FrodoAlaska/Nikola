@@ -837,7 +837,7 @@ static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format, GLe
       gl_check_error("glTextureStorage2D");
       
       glTextureSubImage2D(texture->id, 
-                          texture->desc.mips, 
+                          0, 
                           0, 0,
                           texture->desc.width, texture->desc.height,
                           gl_format, 
@@ -1265,11 +1265,9 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   // Filling the texture with the data based on its type
   update_gl_texture_storage(texture, in_format, gl_format, gl_pixel_type);
 
-  // Generating some mipmaps (if we want them)
-  if(desc.mips > 0) {
-    glGenerateTextureMipmap(texture->id);
-    gl_check_error("glGenerateTextureMipmap");
-  }
+  // Generating some mipmaps
+  glGenerateTextureMipmap(texture->id);
+  gl_check_error("glGenerateTextureMipmap");
 
   // Setting texture parameters
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
@@ -1316,11 +1314,9 @@ void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc) {
   // updating the whole texture
   update_gl_texture_storage(texture, in_format, gl_format, gl_pixel_type);
 
-  // Re-generate some mipmaps (if we want them)
-  if(desc.mips > 0) {
-    glGenerateTextureMipmap(texture->id);
-    gl_check_error("glGenerateTextureMipmap");
-  }
+  // Re-generate some mipmaps
+  glGenerateTextureMipmap(texture->id);
+  gl_check_error("glGenerateTextureMipmap");
 
   // Set texture parameters again
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
@@ -1364,7 +1360,7 @@ GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc& desc) {
   // Set the texture for each face in the cubemap
   for(sizei i = 0; i < desc.faces_count; i++) {
     glTextureSubImage3D(cubemap->id,                 // Texture
-                        desc.mips,                   // Mipmaps 
+                        0,                           // Levels
                         0, 0, i,                     // Offset (x, y, z)
                         desc.width, desc.height, 1,  // Size (width, height, depth)
                         gl_format,                   // Format

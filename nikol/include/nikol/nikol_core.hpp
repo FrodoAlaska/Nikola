@@ -1583,15 +1583,13 @@ struct GfxTextureDesc {
   
   /// The depth on the Z-axis of the texture. 
   ///
-  /// @NOTE: If the texture `type` is any variation of `GFX_TEXTURE_*_ARRAY`, 
-  /// the `depth` will be used to determine the size of the array. 
-  /// Otherwise, if the texture `type` is `GFX_TEXTURE_3D`, the `depth` will 
-  /// act as the intended name.
+  /// If the texture `type` is anything other than `GFX_TEXTURE_3D`, 
+  /// the `depth` member will be ignored.
   u32 depth;
 
   /// The mipmap level of the texture. 
   ///
-  /// @NOTE: Leave this as `0` if the mipmap levels are not important.
+  /// @NOTE: Leave this as `1` if the mipmap levels are not important.
   u32 mips; 
 
   /// The type of the texture to be used.
@@ -1704,6 +1702,11 @@ struct GfxPipelineDesc {
   /// @NOTE: This is `{0, 0, 0, 0}` by default.
   f32 blend_factor[4]                = {0, 0, 0, 0};
 
+  /// The current render target of the pipeline. 
+  ///
+  /// @NOTE: This is `nullptr` by default and should be 
+  /// left as so if you wish to render to the default 
+  /// render target.
   GfxTexture* render_target          = nullptr;
 };
 /// GfxPipelineDesc
