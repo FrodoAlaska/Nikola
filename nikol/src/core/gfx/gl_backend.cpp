@@ -40,14 +40,16 @@ namespace nikol { // Start of nikol
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxContext
 struct GfxContext {
-  GfxContextDesc desc;
-
+  GfxContextDesc desc = {};
   GfxStates states;
-  sizei buffer_bits = 0;
 
-  bool has_vsync = false;
+  bool has_vsync         = false;
+  u32 default_clear_bits = 0;
 
-  u32 framebuffer_id      = 0;
+  u32 framebuffer_id         = 0;
+  u32 framebuffer_clear_bits = 0;
+
+  u32 current_clear_bits  = 0;
   u32 current_framebuffer = 0;
 };
 /// GfxContext
@@ -313,11 +315,11 @@ static void set_state(GfxContext* gfx, const GfxStates state, const bool value) 
   switch(state) {
     case GFX_STATE_DEPTH:
       SET_GFX_STATE(value, GL_DEPTH_TEST);
-      SET_BUFFER_BIT(value, gfx->buffer_bits, GL_DEPTH_BUFFER_BIT);
+      SET_BUFFER_BIT(value, gfx->default_clear_bits, GL_DEPTH_BUFFER_BIT);
       break;
     case GFX_STATE_STENCIL:
       SET_GFX_STATE(value, GL_STENCIL_TEST);
-      SET_BUFFER_BIT(value, gfx->buffer_bits, GL_STENCIL_BUFFER_BIT);
+      SET_BUFFER_BIT(value, gfx->default_clear_bits, GL_STENCIL_BUFFER_BIT);
       break;
     case GFX_STATE_BLEND:
       SET_GFX_STATE(value, GL_BLEND);
@@ -404,6 +406,7 @@ static void set_gfx_states(GfxContext* gfx) {
 static void set_context_flags(GfxContext* gfx, const u32 flags) {
   gfx->has_vsync           = false;
   gfx->current_framebuffer = 0;
+  gfx->current_clear_bits  = gfx->default_clear_bits;
 
   if(IS_BIT_SET(flags, GFX_CONTEXT_ENABLE_VSYNC)) {
     gfx->has_vsync = true;
@@ -411,6 +414,7 @@ static void set_context_flags(GfxContext* gfx, const u32 flags) {
 
   if(IS_BIT_SET(flags, GFX_CONTEXT_CUSTOM_FRAMEBUFFER)) {
     gfx->current_framebuffer = gfx->framebuffer_id;
+    gfx->current_clear_bits  = gfx->framebuffer_clear_bits;
   }
 }
 
@@ -887,26 +891,29 @@ static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format, GLe
   }
 }
 
-static void apply_gl_render_target(u32 fbo, GfxTexture* texture) {
+static void apply_gl_render_target(GfxContext* gfx, GfxTexture* texture) {
   switch(texture->desc.type) {
     case GFX_TEXTURE_RENDER_TARGET:
-      glNamedFramebufferTexture(fbo, GL_COLOR_ATTACHMENT0, texture->id, 0);
+      glNamedFramebufferTexture(gfx->framebuffer_id, GL_COLOR_ATTACHMENT0, texture->id, 0);
       break;
     case GFX_TEXTURE_DEPTH_TARGET:
-      glNamedFramebufferRenderbuffer(fbo, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, texture->id);
+      glNamedFramebufferRenderbuffer(gfx->framebuffer_id, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, texture->id);
+      gfx->framebuffer_clear_bits |= GL_DEPTH_BUFFER_BIT;
       break;
     case GFX_TEXTURE_STENCIL_TARGET:
-      glNamedFramebufferRenderbuffer(fbo, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, texture->id);
+      glNamedFramebufferRenderbuffer(gfx->framebuffer_id, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, texture->id);
+      gfx->framebuffer_clear_bits |= GL_STENCIL_BUFFER_BIT;
       break;
     case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
-      glNamedFramebufferRenderbuffer(fbo, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, texture->id);
+      glNamedFramebufferRenderbuffer(gfx->framebuffer_id, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, texture->id);
+      gfx->framebuffer_clear_bits |= GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
       break;
     default:
       break;
   }
 
-  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-    NIKOL_LOG_WARN("GL-ERROR: Framebuffer %i is incomplete", fbo);
+  if(glCheckNamedFramebufferStatus(gfx->framebuffer_id, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    NIKOL_LOG_WARN("GL-ERROR: Framebuffer %i is incomplete", gfx->framebuffer_id);
   }
 }
 
@@ -920,8 +927,8 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
   GfxContext* gfx = (GfxContext*)memory_allocate(sizeof(GfxContext));
   memory_zero(gfx, sizeof(GfxContext)); 
   
-  gfx->desc        = desc;
-  gfx->buffer_bits = GL_COLOR_BUFFER_BIT;
+  gfx->desc               = desc;
+  gfx->default_clear_bits = GL_COLOR_BUFFER_BIT;
 
   // Glad init
   if(!gladLoadGL()) {
@@ -929,6 +936,7 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
     return nullptr;
   }
 
+  // Enabling debug output on debug builds only
 #if NIKOL_BUILD_DEBUG == 1 
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(gl_error_callback, nullptr);
@@ -936,6 +944,7 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
 
   // Framebuffer init
   glCreateFramebuffers(1, &gfx->framebuffer_id); 
+  gfx->framebuffer_clear_bits = GL_COLOR_BUFFER_BIT;
 
   // Setting the window context to this OpenGL context 
   window_set_current_context(desc.window);
@@ -1001,7 +1010,7 @@ void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, c
   set_context_flags(gfx, flags);
 
   glBindFramebuffer(GL_FRAMEBUFFER, gfx->current_framebuffer);
-  glClear(gfx->buffer_bits);
+  glClear(gfx->current_clear_bits);
   glClearColor(r, g, b, a);
 }
 
@@ -1012,11 +1021,6 @@ void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const Gf
   // Updating the pipeline 
   pipeline->desc = pipe_desc;
   
-  // Render to the pipeline's render targets if they exists
-  for(sizei i = 0; i < pipe_desc.render_targets_count; i++) {
-    apply_gl_render_target(gfx->framebuffer_id, pipe_desc.render_targets[i]);
-  } 
- 
   // Updating the shader
   pipeline->shader = pipe_desc.shader;
 
@@ -1276,6 +1280,9 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
   glTextureParameteri(texture->id, GL_TEXTURE_MIN_FILTER, min_filter);
   glTextureParameteri(texture->id, GL_TEXTURE_MAG_FILTER, mag_filter);
+
+  // @TEMP 
+  apply_gl_render_target(gfx, texture);
 
   return texture;
 }
