@@ -1111,16 +1111,32 @@ enum GfxCullOrder {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxContextFlags 
 enum GfxContextFlags {
+  /// No flags will be used.
+  GFX_CONTEXT_FLAGS_NONE                   = 3 << 0,
+
   /// Enable VSYNC in the graphics context
   ///
   /// @NOTE: VSYNC is disabled by default.
-  GFX_CONTEXT_ENABLE_VSYNC       = 3 << 0, 
+  GFX_CONTEXT_FLAGS_ENABLE_VSYNC           = 3 << 1, 
 
-  /// Render to a custom framebuffer
+  /// Render to a custom render target.
   ///
   /// @NOTE: This should be set if the `render_targets` of `GfxPipeline` 
-  /// is to be used. Initially, the graphics context will render to the default framebuffer.
-  GFX_CONTEXT_CUSTOM_FRAMEBUFFER = 3 << 1, 
+  /// is to be used. Initially, the graphics context will render to the default render target.
+  GFX_CONTEXT_FLAGS_CUSTOM_RENDER_TARGET   = 3 << 2, 
+  
+  /// Clear the color buffer of the current context. 
+  GFX_CONTEXT_FLAGS_CLEAR_COLOR_BUFFER     = 3 << 3,
+
+  /// Clear the depth buffer of the current context. 
+  ///
+  /// @NOTE: This flag will be ignored if the depth state is disabled.
+  GFX_CONTEXT_FLAGS_CLEAR_DEPTH_BUFFER     = 3 << 4,
+  
+  /// Clear the stencil buffer of the current context. 
+  ///
+  /// @NOTE: This flag will be ignored if the stencil state is disabled.
+  GFX_CONTEXT_FLAGS_CLEAR_STENCIL_BUFFER   = 3 << 5,
 };
 /// GfxContextFlags 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1249,14 +1265,8 @@ enum GfxTextureType {
   /// Creates a texture to be used as a render target.
   GFX_TEXTURE_RENDER_TARGET        = 8 << 3,
   
-  /// Creates a texture to be used as the depth buffer.
-  GFX_TEXTURE_DEPTH_TARGET         = 8 << 4,
-  
-  /// Creates a texture to be used as the stencil buffer.
-  GFX_TEXTURE_STENCIL_TARGET       = 8 << 5,
-
   /// Creates a texture to be used as both the depth and stencil buffers.
-  GFX_TEXTURE_DEPTH_STENCIL_TARGET = GFX_TEXTURE_DEPTH_TARGET | GFX_TEXTURE_STENCIL_TARGET,
+  GFX_TEXTURE_DEPTH_STENCIL_TARGET = 8 << 4,
 };
 /// GfxTextureType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1771,8 +1781,12 @@ void gfx_context_set_state(GfxContext* gfx, const GfxStates state, const bool va
 /// and sets any required actions of `flags` (which can be `OR`ed together).
 ///
 /// `flags`:
-///   - `GFX_CONTEXT_ENABLE_VSYNC`       = Enable VSYNC in the graphics context. 
-///   - `GFX_CONTEXT_CUSTOM_FRAMEBUFFER` = Render to a custom framebuffer.
+///   - `GFX_CONTEXT_FLAGS_NONE`                   = No flags will be used.
+///   - `GFX_CONTEXT_FLAGS_ENABLE_VSYNC`           = Enable VSYNC in the graphics context 
+///   - `GFX_CONTEXT_FLAGS_CUSTOM_RENDER_TARGET`   = Render to a custom render target. 
+///   - `GFX_CONTEXT_FLAGS_CLEAR_COLOR_BUFFER`     = Clear the color buffer of the current context. 
+///   - `GFX_CONTEXT_FLAGS_CLEAR_DEPTH_BUFFER`     = Clear the depth buffer of the current context.
+///   - `GFX_CONTEXT_FLAGS_CLEAR_STENCIL_BUFFER`   = Clear the stencil buffer of the current context.
 void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a, const u32 flags);
 
 /// Apply the `pipeline` using the updated `pipe_desc` in the current `gfx`. 

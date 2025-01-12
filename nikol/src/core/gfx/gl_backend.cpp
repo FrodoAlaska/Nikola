@@ -315,11 +315,9 @@ static void set_state(GfxContext* gfx, const GfxStates state, const bool value) 
   switch(state) {
     case GFX_STATE_DEPTH:
       SET_GFX_STATE(value, GL_DEPTH_TEST);
-      SET_BUFFER_BIT(value, gfx->default_clear_bits, GL_DEPTH_BUFFER_BIT);
       break;
     case GFX_STATE_STENCIL:
       SET_GFX_STATE(value, GL_STENCIL_TEST);
-      SET_BUFFER_BIT(value, gfx->default_clear_bits, GL_STENCIL_BUFFER_BIT);
       break;
     case GFX_STATE_BLEND:
       SET_GFX_STATE(value, GL_BLEND);
@@ -334,8 +332,6 @@ static void set_state(GfxContext* gfx, const GfxStates state, const bool value) 
 }
 
 static void set_depth_state(GfxContext* gfx) {
-  set_state(gfx, GFX_STATE_DEPTH, true);   
-
   GLenum func = get_gl_compare_func(gfx->desc.depth_desc.compare_func);
 
   glDepthFunc(func);
@@ -343,8 +339,6 @@ static void set_depth_state(GfxContext* gfx) {
 }
 
 static void set_stencil_state(GfxContext* gfx) {
-  set_state(gfx, GFX_STATE_STENCIL, true);   
-
   GLenum func  = get_gl_compare_func(gfx->desc.stencil_desc.compare_func);
   GLenum face  = get_gl_cull_mode(gfx->desc.stencil_desc.polygon_face); 
   GLenum sfail = get_gl_operation(gfx->desc.stencil_desc.stencil_fail_op); 
@@ -357,8 +351,6 @@ static void set_stencil_state(GfxContext* gfx) {
 }
 
 static void set_blend_state(GfxContext* gfx) {
-  set_state(gfx, GFX_STATE_BLEND, true);   
-
   GLenum src_color = get_gl_blend_mode(gfx->desc.blend_desc.src_color_blend);
   GLenum dst_color = get_gl_blend_mode(gfx->desc.blend_desc.dest_color_blend);
 
@@ -372,8 +364,6 @@ static void set_blend_state(GfxContext* gfx) {
 }
 
 static void set_cull_state(GfxContext* gfx) {
-  set_state(gfx, GFX_STATE_CULL, true);   
-
   GLenum front_face = get_gl_cull_order(gfx->desc.cull_desc.front_face);
   GLenum face       = get_gl_cull_mode(gfx->desc.cull_desc.cull_mode);
   
@@ -382,16 +372,21 @@ static void set_cull_state(GfxContext* gfx) {
 }
 
 static void set_gfx_states(GfxContext* gfx) {
+  set_depth_state(gfx);
+  set_stencil_state(gfx);
+  set_blend_state(gfx);
+  set_cull_state(gfx);
+
   if(IS_BIT_SET(gfx->states, GFX_STATE_DEPTH)) {
-    set_depth_state(gfx);
+    set_state(gfx, GFX_STATE_DEPTH, true);   
   }
   
   if(IS_BIT_SET(gfx->states, GFX_STATE_STENCIL)) {
-    set_stencil_state(gfx);
+    set_state(gfx, GFX_STATE_STENCIL, true);   
   }
   
   if(IS_BIT_SET(gfx->states, GFX_STATE_BLEND)) {
-    set_blend_state(gfx);
+    set_state(gfx, GFX_STATE_BLEND, true);   
   }
   
   if(IS_BIT_SET(gfx->states, GFX_STATE_MSAA)) {
@@ -399,22 +394,38 @@ static void set_gfx_states(GfxContext* gfx) {
   }
 
   if(IS_BIT_SET(gfx->states, GFX_STATE_CULL)) {
-    set_cull_state(gfx);
+    set_state(gfx, GFX_STATE_CULL, true);   
   }
 }
 
 static void set_context_flags(GfxContext* gfx, const u32 flags) {
   gfx->has_vsync           = false;
   gfx->current_framebuffer = 0;
-  gfx->current_clear_bits  = gfx->default_clear_bits;
+  gfx->current_clear_bits  = 0;
 
-  if(IS_BIT_SET(flags, GFX_CONTEXT_ENABLE_VSYNC)) {
+  if(IS_BIT_SET(flags, GFX_CONTEXT_FLAGS_NONE)) {
+    return;
+  }
+
+  if(IS_BIT_SET(flags, GFX_CONTEXT_FLAGS_ENABLE_VSYNC)) {
     gfx->has_vsync = true;
   }
 
-  if(IS_BIT_SET(flags, GFX_CONTEXT_CUSTOM_FRAMEBUFFER)) {
+  if(IS_BIT_SET(flags, GFX_CONTEXT_FLAGS_CUSTOM_RENDER_TARGET)) {
     gfx->current_framebuffer = gfx->framebuffer_id;
     gfx->current_clear_bits  = gfx->framebuffer_clear_bits;
+  }
+  
+  if(IS_BIT_SET(flags, GFX_CONTEXT_FLAGS_CLEAR_COLOR_BUFFER)) {
+    gfx->current_clear_bits |= GL_COLOR_BUFFER_BIT;
+  }
+  
+  if(IS_BIT_SET(flags, GFX_CONTEXT_FLAGS_CLEAR_DEPTH_BUFFER)) {
+    gfx->current_clear_bits |= GL_DEPTH_BUFFER_BIT;
+  }
+  
+  if(IS_BIT_SET(flags, GFX_CONTEXT_FLAGS_CLEAR_STENCIL_BUFFER)) {
+    gfx->current_clear_bits |= GL_STENCIL_BUFFER_BIT;
   }
 }
 
@@ -827,8 +838,6 @@ static GLenum create_gl_texture(const GfxTextureType type) {
     case GFX_TEXTURE_3D:
       glCreateTextures(GL_TEXTURE_3D, 1, &id);
       break;
-    case GFX_TEXTURE_STENCIL_TARGET:
-    case GFX_TEXTURE_DEPTH_TARGET:
     case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
       glCreateRenderbuffers(1, &id);
       break;
@@ -881,8 +890,6 @@ static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format, GLe
                           gl_pixel_type, 
                           NULL);
       break;
-    case GFX_TEXTURE_DEPTH_TARGET:
-    case GFX_TEXTURE_STENCIL_TARGET:
     case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
       glNamedRenderbufferStorage(texture->id, in_format, texture->desc.width, texture->desc.height);
       break;
@@ -895,14 +902,6 @@ static void apply_gl_render_target(GfxContext* gfx, GfxTexture* texture) {
   switch(texture->desc.type) {
     case GFX_TEXTURE_RENDER_TARGET:
       glNamedFramebufferTexture(gfx->framebuffer_id, GL_COLOR_ATTACHMENT0, texture->id, 0);
-      break;
-    case GFX_TEXTURE_DEPTH_TARGET:
-      glNamedFramebufferRenderbuffer(gfx->framebuffer_id, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, texture->id);
-      gfx->framebuffer_clear_bits |= GL_DEPTH_BUFFER_BIT;
-      break;
-    case GFX_TEXTURE_STENCIL_TARGET:
-      glNamedFramebufferRenderbuffer(gfx->framebuffer_id, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, texture->id);
-      gfx->framebuffer_clear_bits |= GL_STENCIL_BUFFER_BIT;
       break;
     case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
       glNamedFramebufferRenderbuffer(gfx->framebuffer_id, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, texture->id);
@@ -1268,6 +1267,12 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   
   // Creating the texutre based on its type
   texture->id = create_gl_texture(desc.type);
+
+  // Setting texture parameters
+  glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
+  glTextureParameteri(texture->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
+  glTextureParameteri(texture->id, GL_TEXTURE_MIN_FILTER, min_filter);
+  glTextureParameteri(texture->id, GL_TEXTURE_MAG_FILTER, mag_filter);
   
   // Filling the texture with the data based on its type
   update_gl_texture_storage(texture, in_format, gl_format, gl_pixel_type);
@@ -1275,13 +1280,7 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   // Generating some mipmaps
   glGenerateTextureMipmap(texture->id);
 
-  // Setting texture parameters
-  glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
-  glTextureParameteri(texture->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
-  glTextureParameteri(texture->id, GL_TEXTURE_MIN_FILTER, min_filter);
-  glTextureParameteri(texture->id, GL_TEXTURE_MAG_FILTER, mag_filter);
-
-  // @TEMP 
+  // Set the render target texture (if it is so) to the framebuffer 
   apply_gl_render_target(gfx, texture);
 
   return texture;
@@ -1318,18 +1317,18 @@ void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc) {
   // Updating the filters
   GLenum min_filter, mag_filter;
   get_texture_gl_filter(desc.filter, &min_filter, &mag_filter); 
-  
-  // updating the whole texture
-  update_gl_texture_storage(texture, in_format, gl_format, gl_pixel_type);
-
-  // Re-generate some mipmaps
-  glGenerateTextureMipmap(texture->id);
 
   // Set texture parameters again
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
   glTextureParameteri(texture->id, GL_TEXTURE_MIN_FILTER, min_filter);
   glTextureParameteri(texture->id, GL_TEXTURE_MAG_FILTER, mag_filter);
+  
+  // updating the whole texture
+  update_gl_texture_storage(texture, in_format, gl_format, gl_pixel_type);
+
+  // Re-generate some mipmaps
+  glGenerateTextureMipmap(texture->id);
 }
 
 /// Texture functions 
@@ -1414,6 +1413,13 @@ void gfx_cubemap_update(GfxCubemap* cubemap, const GfxCubemapDesc& desc) {
   // Updating the filters
   GLenum min_filter, mag_filter;
   get_texture_gl_filter(desc.filter, &min_filter, &mag_filter); 
+  
+  // Re-setting the parameters
+  glTextureParameteri(cubemap->id, GL_TEXTURE_MIN_FILTER, min_filter);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_MAG_FILTER, mag_filter);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_R, gl_wrap_format);
 
   // Updating the storage
   glTextureStorage2D(cubemap->id, desc.mips, in_format, desc.width, desc.height);
@@ -1428,13 +1434,6 @@ void gfx_cubemap_update(GfxCubemap* cubemap, const GfxCubemapDesc& desc) {
                         gl_pixel_type,               // Type
                         desc.data[i]);               // Pixels
   }
-  
-  // Re-setting the parameters
-  glTextureParameteri(cubemap->id, GL_TEXTURE_MIN_FILTER, min_filter);
-  glTextureParameteri(cubemap->id, GL_TEXTURE_MAG_FILTER, mag_filter);
-  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
-  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
-  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_R, gl_wrap_format);
 }
 
 /// Cubemap functions 
