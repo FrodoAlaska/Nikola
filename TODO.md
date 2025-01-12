@@ -1,11 +1,10 @@
 # URGENT TODO: 
 - Add framebuffers and custom render targets
-- Better debuging output using DSA
 - A function to sub image or slice a texture 
 - Put some thought into instancing
 
 # FIXES
-- EMPTY FOR NOW
+- (GL) Add a `GFX_CONTEXT_NONE`?
 
 # FUTURE TODO: 
 - Audio context and audio buffers
@@ -18,7 +17,7 @@
 - Blending is not completely correct in D3D11
 
 # TEST: 
-- (OpenGL) Shader attribute semantics (e.g, does Mat4 work there)
+- (GL) Shader attribute semantics (e.g, does Mat4 work there)
 
 # EXAMPLES: 
 - Post-processing example

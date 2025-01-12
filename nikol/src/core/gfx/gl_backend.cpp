@@ -155,35 +155,59 @@ static void check_supported_gl_version(const i32 major, const i32 minor) {
                "OpenGL versions less than 4.2 are not supported");
 }
 
-static void gl_check_error(const i8* func_name) {
-  GLenum err = glGetError(); 
+static const char* gl_get_error_source(GLenum src) {
+  switch(src) {
+    case GL_DEBUG_SOURCE_API: 
+      return "API";
+    case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+      return "WINDOW_SYSTEM";
+    case GL_DEBUG_SOURCE_SHADER_COMPILER:
+      return "SHADER";
+    case GL_DEBUG_SOURCE_THIRD_PARTY:
+      return "THIRD_PARTY";
+    case GL_DEBUG_SOURCE_APPLICATION:
+      return "APPLICATION";
+    case GL_DEBUG_SOURCE_OTHER:
+      return "OTHER";
+    default:
+      return "DEF";
+  }
+}
 
-  switch(err) {
-    case GL_INVALID_ENUM: 
-      NIKOL_LOG_ERROR("GL_ERROR: FUNC = %s, ERR = GL_INVALID_ENUM", func_name);
+static const char* get_gl_error_type(GLenum type) {
+  switch(type) {
+    case GL_DEBUG_TYPE_ERROR:
+      return "ERROR";
+    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+      return "DEPRECATED";
+    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+      return "UNDEFINED_BEHAVIOR";
+    case GL_DEBUG_TYPE_PORTABILITY:
+      return "PORTABILITY";
+    case GL_DEBUG_TYPE_PERFORMANCE:
+      return "PERFORMANCE";
+    case GL_DEBUG_TYPE_OTHER:
+      return "OTHER";
+    default:
+      return "DEF";
+  }
+}
+
+static void gl_error_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei len, const GLchar* msg, const void* usr_param) {
+  switch(severity) {
+    case GL_DEBUG_SEVERITY_HIGH: 
+      NIKOL_LOG_FATAL("GL-BACKEND: %s-%s (ID = %i): %s", gl_get_error_source(source), get_gl_error_type(type), id, msg);
       break;
-    case GL_INVALID_VALUE: 
-      NIKOL_LOG_ERROR("GL_ERROR: FUNC = %s, ERR = GL_INVALID_VALUE", func_name);
+    case GL_DEBUG_SEVERITY_MEDIUM: 
+      NIKOL_LOG_ERROR("GL-BACKEND: %s-%s (ID = %i): %s", gl_get_error_source(source), get_gl_error_type(type), id, msg);
       break;
-    case GL_INVALID_OPERATION: 
-      NIKOL_LOG_ERROR("GL_ERROR: FUNC = %s, ERR = GL_INVALID_OPERATION", func_name);
+    case GL_DEBUG_SEVERITY_LOW: 
+      NIKOL_LOG_WARN("GL-BACKEND: %s-%s (ID = %i): %s", gl_get_error_source(source), get_gl_error_type(type), id, msg);
       break;
-    case GL_STACK_OVERFLOW: 
-      NIKOL_LOG_ERROR("GL_ERROR: FUNC = %s, ERR = GL_STACK_OVERFLOW", func_name);
+    case GL_DEBUG_SEVERITY_NOTIFICATION: 
+      NIKOL_LOG_DEBUG("GL-BACKEND: %s-%s (ID = %i): %s", gl_get_error_source(source), get_gl_error_type(type), id, msg);
       break;
-    case GL_STACK_UNDERFLOW: 
-      NIKOL_LOG_ERROR("GL_ERROR: FUNC = %s, ERR = GL_STACK_UNDERFLOW", func_name);
-      break;
-    case GL_OUT_OF_MEMORY: 
-      NIKOL_LOG_ERROR("GL_ERROR: FUNC = %s, ERR = GL_OUT_OF_MEMORY", func_name);
-      break;
-    case GL_INVALID_FRAMEBUFFER_OPERATION: 
-      NIKOL_LOG_ERROR("GL_ERROR: FUNC = %s, ERR = GL_INVALID_FRAMEBUFFER_OPERATION", func_name);
-      break;
-    case GL_CONTEXT_LOST: 
-      NIKOL_LOG_ERROR("GL_ERROR: FUNC = %s, ERR = GL_CONTEXT_LOST", func_name);
-      break;
-    case GL_NO_ERROR:
+    default:
       break;
   }
 }
@@ -565,20 +589,14 @@ static bool is_semantic_attrib(const GfxLayoutType layout) {
 
 static void set_vertex_attrib(const u32 vao, const GfxLayoutDesc& layout, const sizei index, sizei* offset) {
   glEnableVertexArrayAttrib(vao, index);
-  gl_check_error("glEnableVertexArrayAttrib");
 
   GLenum gl_comp_type = get_layout_type(layout.type);
   sizei comp_count    = get_layout_count(layout.type);
   sizei size          = get_layout_size(layout.type);
 
   glVertexArrayAttribFormat(vao, index, comp_count, gl_comp_type, false, *offset);
-  gl_check_error("glVertexArrayAttribIFormat");
-  
   glVertexArrayBindingDivisor(vao, index, layout.instance_rate);
-  gl_check_error("glVertexArrayBindingDivisor");
-  
   glVertexArrayAttribBinding(vao, index, 0);
-  gl_check_error("glVertexArrayAttribBinding");
 
   *offset += size;
 }
@@ -797,22 +815,18 @@ static GLenum create_gl_texture(const GfxTextureType type) {
   switch(type) {
     case GFX_TEXTURE_1D:
       glCreateTextures(GL_TEXTURE_1D, 1, &id);
-      gl_check_error("glCreateTextures 1D");
       break;
     case GFX_TEXTURE_2D:
     case GFX_TEXTURE_RENDER_TARGET:
       glCreateTextures(GL_TEXTURE_2D, 1, &id);
-      gl_check_error("glCreateTextures 2D");
       break;
     case GFX_TEXTURE_3D:
       glCreateTextures(GL_TEXTURE_3D, 1, &id);
-      gl_check_error("glCreateTextures 3D");
       break;
     case GFX_TEXTURE_STENCIL_TARGET:
     case GFX_TEXTURE_DEPTH_TARGET:
     case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
       glCreateRenderbuffers(1, &id);
-      gl_check_error("glCreateRenderbuffers");
       break;
     default:
       break;
@@ -825,8 +839,6 @@ static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format, GLe
   switch(texture->desc.type) {
     case GFX_TEXTURE_1D: 
       glTextureStorage1D(texture->id, texture->desc.mips, in_format, texture->desc.width);
-      gl_check_error("glTextureStorage2D");
-      
       glTextureSubImage1D(texture->id, 
                           texture->desc.mips, 
                           0, 
@@ -834,12 +846,9 @@ static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format, GLe
                           gl_format, 
                           gl_pixel_type, 
                           texture->desc.data);
-      gl_check_error("glTextureSubImage1D");
       break;
     case GFX_TEXTURE_2D:
       glTextureStorage2D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height);
-      gl_check_error("glTextureStorage2D");
-      
       glTextureSubImage2D(texture->id, 
                           0, 
                           0, 0,
@@ -847,12 +856,9 @@ static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format, GLe
                           gl_format, 
                           gl_pixel_type, 
                           texture->desc.data);
-      gl_check_error("glTextureSubImage2D");
       break;
     case GFX_TEXTURE_3D:
       glTextureStorage3D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height, texture->desc.height);
-      gl_check_error("glTextureStorage3D");
-
       glTextureSubImage3D(texture->id, 
                           texture->desc.mips, 
                           0, 0, 0,
@@ -860,12 +866,9 @@ static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format, GLe
                           gl_format, 
                           gl_pixel_type, 
                           texture->desc.data);
-      gl_check_error("glTextureSubImage3D");
       break;
     case GFX_TEXTURE_RENDER_TARGET:
       glTextureStorage2D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height);
-      gl_check_error("glTextureStorage2D");
-
       glTextureSubImage2D(texture->id, 
                           0, 
                           0, 0,
@@ -873,13 +876,11 @@ static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format, GLe
                           gl_format, 
                           gl_pixel_type, 
                           NULL);
-      gl_check_error("glTextureSubImage2D");
       break;
     case GFX_TEXTURE_DEPTH_TARGET:
     case GFX_TEXTURE_STENCIL_TARGET:
     case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
       glNamedRenderbufferStorage(texture->id, in_format, texture->desc.width, texture->desc.height);
-      gl_check_error("glNamedRenderbufferStorage");
       break;
     default:
       break;
@@ -890,19 +891,15 @@ static void apply_gl_render_target(u32 fbo, GfxTexture* texture) {
   switch(texture->desc.type) {
     case GFX_TEXTURE_RENDER_TARGET:
       glNamedFramebufferTexture(fbo, GL_COLOR_ATTACHMENT0, texture->id, 0);
-      gl_check_error("glNamedFramebufferTexture");
       break;
     case GFX_TEXTURE_DEPTH_TARGET:
       glNamedFramebufferRenderbuffer(fbo, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, texture->id);
-      gl_check_error("glNamedFramebufferRenderbuffer");
       break;
     case GFX_TEXTURE_STENCIL_TARGET:
       glNamedFramebufferRenderbuffer(fbo, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, texture->id);
-      gl_check_error("glNamedFramebufferRenderbuffer");
       break;
     case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
       glNamedFramebufferRenderbuffer(fbo, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, texture->id);
-      gl_check_error("glNamedFramebufferRenderbuffer");
       break;
     default:
       break;
@@ -932,9 +929,13 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
     return nullptr;
   }
 
+#if NIKOL_BUILD_DEBUG == 1 
+  glEnable(GL_DEBUG_OUTPUT);
+  glDebugMessageCallback(gl_error_callback, nullptr);
+#endif
+
   // Framebuffer init
   glCreateFramebuffers(1, &gfx->framebuffer_id); 
-  gl_check_error("glCreateFramebuffers");
 
   // Setting the window context to this OpenGL context 
   window_set_current_context(desc.window);
@@ -1269,14 +1270,12 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
 
   // Generating some mipmaps
   glGenerateTextureMipmap(texture->id);
-  gl_check_error("glGenerateTextureMipmap");
 
   // Setting texture parameters
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
   glTextureParameteri(texture->id, GL_TEXTURE_MIN_FILTER, min_filter);
   glTextureParameteri(texture->id, GL_TEXTURE_MAG_FILTER, mag_filter);
-  gl_check_error("glTextureParameteri");
 
   return texture;
 }
@@ -1318,7 +1317,6 @@ void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc) {
 
   // Re-generate some mipmaps
   glGenerateTextureMipmap(texture->id);
-  gl_check_error("glGenerateTextureMipmap");
 
   // Set texture parameters again
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
@@ -1354,10 +1352,15 @@ GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc& desc) {
   get_texture_gl_filter(desc.filter, &min_filter, &mag_filter); 
 
   glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &cubemap->id);
-  gl_check_error("glCreateTextures");
+  
+  // Setting some parameters
+  glTextureParameteri(cubemap->id, GL_TEXTURE_MIN_FILTER, min_filter);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_MAG_FILTER, mag_filter);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_R, gl_wrap_format);
     
   glTextureStorage2D(cubemap->id, desc.mips, in_format, desc.width, desc.height);
-  gl_check_error("glTextureStorage2D");
 
   // Set the texture for each face in the cubemap
   for(sizei i = 0; i < desc.faces_count; i++) {
@@ -1368,15 +1371,7 @@ GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc& desc) {
                         gl_format,                   // Format
                         gl_pixel_type,               // Type
                         desc.data[i]);               // Pixels
-    gl_check_error("glTextureStorage3D");
   }
-  
-  glTextureParameteri(cubemap->id, GL_TEXTURE_MIN_FILTER, min_filter);
-  glTextureParameteri(cubemap->id, GL_TEXTURE_MAG_FILTER, mag_filter);
-  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
-  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
-  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_R, gl_wrap_format);
-  gl_check_error("glTextureParameteri");
 
   return cubemap;
 }
@@ -1415,7 +1410,6 @@ void gfx_cubemap_update(GfxCubemap* cubemap, const GfxCubemapDesc& desc) {
 
   // Updating the storage
   glTextureStorage2D(cubemap->id, desc.mips, in_format, desc.width, desc.height);
-  gl_check_error("glTextureStorage2D");
 
   // Updating the texture image
   for(sizei i = 0; i < desc.faces_count; i++) {
@@ -1426,7 +1420,6 @@ void gfx_cubemap_update(GfxCubemap* cubemap, const GfxCubemapDesc& desc) {
                         gl_format,                   // Format
                         gl_pixel_type,               // Type
                         desc.data[i]);               // Pixels
-    gl_check_error("glTextureStorage3D");
   }
   
   // Re-setting the parameters
@@ -1435,7 +1428,6 @@ void gfx_cubemap_update(GfxCubemap* cubemap, const GfxCubemapDesc& desc) {
   glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
   glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
   glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_R, gl_wrap_format);
-  gl_check_error("glTextureParameteri");
 }
 
 /// Cubemap functions 
