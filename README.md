@@ -1,7 +1,5 @@
 # *Nikol*
 A cross-platform framework for window creation, input handling, audio playback, and rendering using OpenGL 4.5+ or Direct3D11.
-
-<video src="assets/vids/devlog-7.mp4" width="320" height="240" controls>Vid</video>
  
 # Features 
 - A fully documented single header file for every functionality in the library.
