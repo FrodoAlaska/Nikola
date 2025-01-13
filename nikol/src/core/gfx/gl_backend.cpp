@@ -40,12 +40,17 @@ namespace nikol { // Start of nikol
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxContext
 struct GfxContext {
-  GfxContextDesc desc;
-
+  GfxContextDesc desc = {};
   GfxStates states;
-  sizei buffer_bits = 0;
 
-  bool has_vsync = false;
+  bool has_vsync         = false;
+  u32 default_clear_bits = 0;
+
+  u32 framebuffer_id         = 0;
+  u32 framebuffer_clear_bits = 0;
+
+  u32 current_clear_bits  = 0;
+  u32 current_framebuffer = 0;
 };
 /// GfxContext
 ///---------------------------------------------------------------------------------------------------------------------
@@ -53,12 +58,13 @@ struct GfxContext {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxBuffer  
 struct GfxBuffer {
+  GfxBufferDesc desc = {};
+  GfxContext* gfx    = nullptr;
+
   u32 id;
 
   GLenum gl_buff_type; 
   GLenum gl_buff_usage;
-
-  GfxBufferDesc desc;
 };
 /// GfxBuffer  
 ///---------------------------------------------------------------------------------------------------------------------
@@ -66,18 +72,14 @@ struct GfxBuffer {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxShader
 struct GfxShader {
+  GfxContext* gfx = nullptr;
+
   u32 id, vert_id, frag_id;
 
   i8* vert_src; 
   i8* frag_src;
   
   i32 vert_src_len, frag_src_len;
-
-  GfxBuffer* vertex_uniforms[UNIFORM_BUFFERS_MAX];
-  GfxBuffer* fragment_uniforms[UNIFORM_BUFFERS_MAX];
-
-  sizei vertex_uniforms_count   = 0; 
-  sizei fragment_uniforms_count = 0;
 };
 /// GfxShader
 ///---------------------------------------------------------------------------------------------------------------------
@@ -85,15 +87,30 @@ struct GfxShader {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxTexture
 struct GfxTexture {
+  GfxTextureDesc desc = {};
+  GfxContext* gfx     = nullptr;
+
   u32 id;
 };
 /// GfxTexture
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// GfxCubemap
+struct GfxCubemap {
+  GfxCubemapDesc desc = {};
+  GfxContext* gfx     = nullptr;
+  
+  u32 id;
+};
+/// GfxCubemap
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// GfxPipeline
 struct GfxPipeline {
-  GfxPipelineDesc desc;
+  GfxPipelineDesc desc = {};
+  GfxContext* gfx      = nullptr;
 
   u32 vertex_array;
 
@@ -106,6 +123,9 @@ struct GfxPipeline {
   GfxDrawMode draw_mode;
 
   GfxShader* shader;
+
+  u32 cubemaps[CUBEMAPS_MAX] = {};
+  sizei cubemaps_count       = 0;
 
   u32 textures[TEXTURES_MAX] = {};
   sizei textures_count       = 0;
@@ -137,35 +157,59 @@ static void check_supported_gl_version(const i32 major, const i32 minor) {
                "OpenGL versions less than 4.2 are not supported");
 }
 
-static void gl_check_error(const i8* func_name) {
-  GLenum err = glGetError(); 
+static const char* gl_get_error_source(GLenum src) {
+  switch(src) {
+    case GL_DEBUG_SOURCE_API: 
+      return "API";
+    case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+      return "WINDOW_SYSTEM";
+    case GL_DEBUG_SOURCE_SHADER_COMPILER:
+      return "SHADER";
+    case GL_DEBUG_SOURCE_THIRD_PARTY:
+      return "THIRD_PARTY";
+    case GL_DEBUG_SOURCE_APPLICATION:
+      return "APPLICATION";
+    case GL_DEBUG_SOURCE_OTHER:
+      return "OTHER";
+    default:
+      return "DEF";
+  }
+}
 
-  switch(err) {
-    case GL_INVALID_ENUM: 
-      NIKOL_LOG_ERROR("GL_ERROR: FUNC = %s, ERR = GL_INVALID_ENUM", func_name);
+static const char* get_gl_error_type(GLenum type) {
+  switch(type) {
+    case GL_DEBUG_TYPE_ERROR:
+      return "ERROR";
+    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+      return "DEPRECATED";
+    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+      return "UNDEFINED_BEHAVIOR";
+    case GL_DEBUG_TYPE_PORTABILITY:
+      return "PORTABILITY";
+    case GL_DEBUG_TYPE_PERFORMANCE:
+      return "PERFORMANCE";
+    case GL_DEBUG_TYPE_OTHER:
+      return "OTHER";
+    default:
+      return "DEF";
+  }
+}
+
+static void gl_error_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei len, const GLchar* msg, const void* usr_param) {
+  switch(severity) {
+    case GL_DEBUG_SEVERITY_HIGH: 
+      NIKOL_LOG_FATAL("GL-BACKEND: %s-%s (ID = %i): %s", gl_get_error_source(source), get_gl_error_type(type), id, msg);
       break;
-    case GL_INVALID_VALUE: 
-      NIKOL_LOG_ERROR("GL_ERROR: FUNC = %s, ERR = GL_INVALID_VALUE", func_name);
+    case GL_DEBUG_SEVERITY_MEDIUM: 
+      NIKOL_LOG_ERROR("GL-BACKEND: %s-%s (ID = %i): %s", gl_get_error_source(source), get_gl_error_type(type), id, msg);
       break;
-    case GL_INVALID_OPERATION: 
-      NIKOL_LOG_ERROR("GL_ERROR: FUNC = %s, ERR = GL_INVALID_OPERATION", func_name);
+    case GL_DEBUG_SEVERITY_LOW: 
+      NIKOL_LOG_WARN("GL-BACKEND: %s-%s (ID = %i): %s", gl_get_error_source(source), get_gl_error_type(type), id, msg);
       break;
-    case GL_STACK_OVERFLOW: 
-      NIKOL_LOG_ERROR("GL_ERROR: FUNC = %s, ERR = GL_STACK_OVERFLOW", func_name);
+    case GL_DEBUG_SEVERITY_NOTIFICATION: 
+      NIKOL_LOG_DEBUG("GL-BACKEND: %s-%s (ID = %i): %s", gl_get_error_source(source), get_gl_error_type(type), id, msg);
       break;
-    case GL_STACK_UNDERFLOW: 
-      NIKOL_LOG_ERROR("GL_ERROR: FUNC = %s, ERR = GL_STACK_UNDERFLOW", func_name);
-      break;
-    case GL_OUT_OF_MEMORY: 
-      NIKOL_LOG_ERROR("GL_ERROR: FUNC = %s, ERR = GL_OUT_OF_MEMORY", func_name);
-      break;
-    case GL_INVALID_FRAMEBUFFER_OPERATION: 
-      NIKOL_LOG_ERROR("GL_ERROR: FUNC = %s, ERR = GL_INVALID_FRAMEBUFFER_OPERATION", func_name);
-      break;
-    case GL_CONTEXT_LOST: 
-      NIKOL_LOG_ERROR("GL_ERROR: FUNC = %s, ERR = GL_CONTEXT_LOST", func_name);
-      break;
-    case GL_NO_ERROR:
+    default:
       break;
   }
 }
@@ -271,11 +315,9 @@ static void set_state(GfxContext* gfx, const GfxStates state, const bool value) 
   switch(state) {
     case GFX_STATE_DEPTH:
       SET_GFX_STATE(value, GL_DEPTH_TEST);
-      SET_BUFFER_BIT(value, gfx->buffer_bits, GL_DEPTH_BUFFER_BIT);
       break;
     case GFX_STATE_STENCIL:
       SET_GFX_STATE(value, GL_STENCIL_TEST);
-      SET_BUFFER_BIT(value, gfx->buffer_bits, GL_STENCIL_BUFFER_BIT);
       break;
     case GFX_STATE_BLEND:
       SET_GFX_STATE(value, GL_BLEND);
@@ -286,15 +328,10 @@ static void set_state(GfxContext* gfx, const GfxStates state, const bool value) 
     case GFX_STATE_CULL:
       SET_GFX_STATE(value, GL_CULL_FACE);
       break;
-    case GFX_STATE_VSYNC:
-      gfx->has_vsync = value; 
-      break;
   }
 }
 
 static void set_depth_state(GfxContext* gfx) {
-  set_state(gfx, GFX_STATE_DEPTH, true);   
-
   GLenum func = get_gl_compare_func(gfx->desc.depth_desc.compare_func);
 
   glDepthFunc(func);
@@ -302,8 +339,6 @@ static void set_depth_state(GfxContext* gfx) {
 }
 
 static void set_stencil_state(GfxContext* gfx) {
-  set_state(gfx, GFX_STATE_STENCIL, true);   
-
   GLenum func  = get_gl_compare_func(gfx->desc.stencil_desc.compare_func);
   GLenum face  = get_gl_cull_mode(gfx->desc.stencil_desc.polygon_face); 
   GLenum sfail = get_gl_operation(gfx->desc.stencil_desc.stencil_fail_op); 
@@ -316,8 +351,6 @@ static void set_stencil_state(GfxContext* gfx) {
 }
 
 static void set_blend_state(GfxContext* gfx) {
-  set_state(gfx, GFX_STATE_BLEND, true);   
-
   GLenum src_color = get_gl_blend_mode(gfx->desc.blend_desc.src_color_blend);
   GLenum dst_color = get_gl_blend_mode(gfx->desc.blend_desc.dest_color_blend);
 
@@ -331,8 +364,6 @@ static void set_blend_state(GfxContext* gfx) {
 }
 
 static void set_cull_state(GfxContext* gfx) {
-  set_state(gfx, GFX_STATE_CULL, true);   
-
   GLenum front_face = get_gl_cull_order(gfx->desc.cull_desc.front_face);
   GLenum face       = get_gl_cull_mode(gfx->desc.cull_desc.cull_mode);
   
@@ -341,16 +372,21 @@ static void set_cull_state(GfxContext* gfx) {
 }
 
 static void set_gfx_states(GfxContext* gfx) {
+  set_depth_state(gfx);
+  set_stencil_state(gfx);
+  set_blend_state(gfx);
+  set_cull_state(gfx);
+
   if(IS_BIT_SET(gfx->states, GFX_STATE_DEPTH)) {
-    set_depth_state(gfx);
+    set_state(gfx, GFX_STATE_DEPTH, true);   
   }
   
   if(IS_BIT_SET(gfx->states, GFX_STATE_STENCIL)) {
-    set_stencil_state(gfx);
+    set_state(gfx, GFX_STATE_STENCIL, true);   
   }
   
   if(IS_BIT_SET(gfx->states, GFX_STATE_BLEND)) {
-    set_blend_state(gfx);
+    set_state(gfx, GFX_STATE_BLEND, true);   
   }
   
   if(IS_BIT_SET(gfx->states, GFX_STATE_MSAA)) {
@@ -358,11 +394,38 @@ static void set_gfx_states(GfxContext* gfx) {
   }
 
   if(IS_BIT_SET(gfx->states, GFX_STATE_CULL)) {
-    set_cull_state(gfx);
+    set_state(gfx, GFX_STATE_CULL, true);   
+  }
+}
+
+static void set_context_flags(GfxContext* gfx, const u32 flags) {
+  gfx->has_vsync           = false;
+  gfx->current_framebuffer = 0;
+  gfx->current_clear_bits  = 0;
+
+  if(IS_BIT_SET(flags, GFX_CONTEXT_FLAGS_NONE)) {
+    return;
   }
 
-  if(IS_BIT_SET(gfx->states, GFX_STATE_VSYNC)) {
-    set_state(gfx, GFX_STATE_VSYNC, true);
+  if(IS_BIT_SET(flags, GFX_CONTEXT_FLAGS_ENABLE_VSYNC)) {
+    gfx->has_vsync = true;
+  }
+
+  if(IS_BIT_SET(flags, GFX_CONTEXT_FLAGS_CUSTOM_RENDER_TARGET)) {
+    gfx->current_framebuffer = gfx->framebuffer_id;
+    gfx->current_clear_bits  = gfx->framebuffer_clear_bits;
+  }
+  
+  if(IS_BIT_SET(flags, GFX_CONTEXT_FLAGS_CLEAR_COLOR_BUFFER)) {
+    gfx->current_clear_bits |= GL_COLOR_BUFFER_BIT;
+  }
+  
+  if(IS_BIT_SET(flags, GFX_CONTEXT_FLAGS_CLEAR_DEPTH_BUFFER)) {
+    gfx->current_clear_bits |= GL_DEPTH_BUFFER_BIT;
+  }
+  
+  if(IS_BIT_SET(flags, GFX_CONTEXT_FLAGS_CLEAR_STENCIL_BUFFER)) {
+    gfx->current_clear_bits |= GL_STENCIL_BUFFER_BIT;
   }
 }
 
@@ -541,20 +604,14 @@ static bool is_semantic_attrib(const GfxLayoutType layout) {
 
 static void set_vertex_attrib(const u32 vao, const GfxLayoutDesc& layout, const sizei index, sizei* offset) {
   glEnableVertexArrayAttrib(vao, index);
-  gl_check_error("glEnableVertexArrayAttrib");
 
   GLenum gl_comp_type = get_layout_type(layout.type);
   sizei comp_count    = get_layout_count(layout.type);
   sizei size          = get_layout_size(layout.type);
 
   glVertexArrayAttribFormat(vao, index, comp_count, gl_comp_type, false, *offset);
-  gl_check_error("glVertexArrayAttribIFormat");
-  
   glVertexArrayBindingDivisor(vao, index, layout.instance_rate);
-  gl_check_error("glVertexArrayBindingDivisor");
-  
   glVertexArrayAttribBinding(vao, index, 0);
-  gl_check_error("glVertexArrayAttribBinding");
 
   *offset += size;
 }
@@ -679,32 +736,49 @@ static void check_shader_linker_error(const GfxShader* shader) {
   }
 }
 
-static void get_texture_format(const GfxTextureFormat format, GLenum* in_format, GLenum* base_format) {
+static void get_texture_gl_format(const GfxTextureFormat format, GLenum* in_format, GLenum* gl_format, GLenum* gl_type) {
   switch(format) {
     case GFX_TEXTURE_FORMAT_R8:
-      *in_format   = GL_R8;
-      *base_format = GL_RED; 
+      *in_format = GL_R8;
+      *gl_format = GL_RED;
+      *gl_type   = GL_UNSIGNED_BYTE;
+      break;
     case GFX_TEXTURE_FORMAT_R16:
-      *in_format   = GL_R16;
-      *base_format = GL_RED; 
+      *in_format = GL_R16;
+      *gl_format = GL_RED;
+      *gl_type   = GL_UNSIGNED_SHORT;
+      break;
     case GFX_TEXTURE_FORMAT_RG8:
-      *in_format   = GL_RG8;
-      *base_format = GL_RG; 
+      *in_format = GL_RG8;
+      *gl_format = GL_RG;
+      *gl_type   = GL_UNSIGNED_BYTE;
+      break;
     case GFX_TEXTURE_FORMAT_RG16:
-      *in_format   = GL_RG16;
-      *base_format = GL_RG; 
+      *in_format = GL_RG16;
+      *gl_format = GL_RG;
+      *gl_type   = GL_UNSIGNED_SHORT;
+      break;
     case GFX_TEXTURE_FORMAT_RGBA8:
-      *in_format   = GL_RGBA8;
-      *base_format = GL_RGBA; 
+      *in_format = GL_RGBA8;
+      *gl_format = GL_RGBA;
+      *gl_type   = GL_UNSIGNED_BYTE;
+      break;
     case GFX_TEXTURE_FORMAT_RGBA16:
-      *in_format   = GL_RGBA16;
-      *base_format = GL_RGBA; 
+      *in_format = GL_RGBA16;
+      *gl_format = GL_RGBA;
+      *gl_type   = GL_UNSIGNED_SHORT;
+      break;
+    case GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8:
+      *in_format = GL_DEPTH24_STENCIL8;
+      *gl_format = GL_DEPTH_STENCIL;
+      *gl_type   = GL_UNSIGNED_INT_24_8;
+      break;
     default:
       break;
   }
 }
 
-static void get_texture_filter(const GfxTextureFilter filter, GLenum* min, GLenum* mag) {
+static void get_texture_gl_filter(const GfxTextureFilter filter, GLenum* min, GLenum* mag) {
   switch(filter) {
     case GFX_TEXTURE_FILTER_MIN_MAG_LINEAR:
       *min = GL_LINEAR; 
@@ -730,10 +804,12 @@ static void get_texture_filter(const GfxTextureFilter filter, GLenum* min, GLenu
       *min = GL_LINEAR_MIPMAP_LINEAR; 
       *mag = GL_NEAREST;
       break;
+    default:
+      break;
   }
 }
 
-static GLenum get_texture_wrap(const GfxTextureWrap wrap) {
+static GLenum get_texture_gl_wrap(const GfxTextureWrap wrap) {
   switch(wrap) {
     case GFX_TEXTURE_WRAP_REPEAT: 
       return GL_REPEAT;
@@ -748,30 +824,95 @@ static GLenum get_texture_wrap(const GfxTextureWrap wrap) {
   }
 }
 
-static bool is_buffer_dynamic(const GfxBufferUsage& usage) {
-  return usage == GFX_BUFFER_USAGE_DYNAMIC_DRAW || 
-         usage == GFX_BUFFER_USAGE_DYNAMIC_READ;
+static GLenum create_gl_texture(const GfxTextureType type) {
+  u32 id = 0;
+
+  switch(type) {
+    case GFX_TEXTURE_1D:
+      glCreateTextures(GL_TEXTURE_1D, 1, &id);
+      break;
+    case GFX_TEXTURE_2D:
+    case GFX_TEXTURE_RENDER_TARGET:
+      glCreateTextures(GL_TEXTURE_2D, 1, &id);
+      break;
+    case GFX_TEXTURE_3D:
+      glCreateTextures(GL_TEXTURE_3D, 1, &id);
+      break;
+    case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
+      glCreateRenderbuffers(1, &id);
+      break;
+    default:
+      break;
+  } 
+
+  return id;
 }
 
-static void send_vertex_uniform_buffers(GfxShader* shader) {
-  if(shader->vertex_uniforms_count <= 0) {
-    return;
-  }
-
-  for(sizei i = 0; i < shader->vertex_uniforms_count; i++) {
-    GfxBuffer* buff = shader->vertex_uniforms[i];
-    glNamedBufferSubData(buff->id, 0, buff->desc.size, buff->desc.data);
+static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format, GLenum gl_format, GLenum gl_pixel_type) {
+  switch(texture->desc.type) {
+    case GFX_TEXTURE_1D: 
+      glTextureStorage1D(texture->id, texture->desc.mips, in_format, texture->desc.width);
+      glTextureSubImage1D(texture->id, 
+                          texture->desc.mips, 
+                          0, 
+                          texture->desc.width, 
+                          gl_format, 
+                          gl_pixel_type, 
+                          texture->desc.data);
+      break;
+    case GFX_TEXTURE_2D:
+      glTextureStorage2D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height);
+      glTextureSubImage2D(texture->id, 
+                          0, 
+                          0, 0,
+                          texture->desc.width, texture->desc.height,
+                          gl_format, 
+                          gl_pixel_type, 
+                          texture->desc.data);
+      break;
+    case GFX_TEXTURE_3D:
+      glTextureStorage3D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height, texture->desc.height);
+      glTextureSubImage3D(texture->id, 
+                          texture->desc.mips, 
+                          0, 0, 0,
+                          texture->desc.width, texture->desc.height, texture->desc.depth,
+                          gl_format, 
+                          gl_pixel_type, 
+                          texture->desc.data);
+      break;
+    case GFX_TEXTURE_RENDER_TARGET:
+      glTextureStorage2D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height);
+      glTextureSubImage2D(texture->id, 
+                          0, 
+                          0, 0,
+                          texture->desc.width, texture->desc.height,
+                          gl_format, 
+                          gl_pixel_type, 
+                          NULL);
+      break;
+    case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
+      glNamedRenderbufferStorage(texture->id, in_format, texture->desc.width, texture->desc.height);
+      break;
+    default:
+      break;
   }
 }
 
-static void send_fragment_uniform_buffers(GfxShader* shader) {
-  if(shader->fragment_uniforms_count <= 0) {
-    return;
+static void apply_gl_render_target(GfxContext* gfx, GfxTexture* texture) {
+  switch(texture->desc.type) {
+    case GFX_TEXTURE_RENDER_TARGET:
+      glNamedFramebufferTexture(gfx->framebuffer_id, GL_COLOR_ATTACHMENT0, texture->id, 0);
+      break;
+    case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
+      glNamedFramebufferRenderbuffer(gfx->framebuffer_id, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, texture->id);
+      gfx->framebuffer_clear_bits |= GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
+      break;
+    default:
+      break;
   }
 
-  for(sizei i = 0; i < shader->fragment_uniforms_count; i++) {
-    GfxBuffer* buff = shader->fragment_uniforms[i];
-    glNamedBufferSubData(buff->id, 0, buff->desc.size, buff->desc.data);
+  if(glCheckNamedFramebufferStatus(gfx->framebuffer_id, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    NIKOL_LOG_WARN("GL-ERROR: Framebuffer %i is incomplete", gfx->framebuffer_id);
   }
 }
 
@@ -785,15 +926,25 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
   GfxContext* gfx = (GfxContext*)memory_allocate(sizeof(GfxContext));
   memory_zero(gfx, sizeof(GfxContext)); 
   
-  gfx->desc        = desc;
-  gfx->buffer_bits = GL_COLOR_BUFFER_BIT;
+  gfx->desc               = desc;
+  gfx->default_clear_bits = GL_COLOR_BUFFER_BIT;
 
   // Glad init
   if(!gladLoadGL()) {
     NIKOL_LOG_FATAL("Could not create an OpenGL instance");
     return nullptr;
   }
-  
+
+  // Enabling debug output on debug builds only
+#if NIKOL_BUILD_DEBUG == 1 
+  glEnable(GL_DEBUG_OUTPUT);
+  glDebugMessageCallback(gl_error_callback, nullptr);
+#endif
+
+  // Framebuffer init
+  glCreateFramebuffers(1, &gfx->framebuffer_id); 
+  gfx->framebuffer_clear_bits = GL_COLOR_BUFFER_BIT;
+
   // Setting the window context to this OpenGL context 
   window_set_current_context(desc.window);
 
@@ -835,25 +986,31 @@ void gfx_context_shutdown(GfxContext* gfx) {
     return;
   }
 
+  glDeleteFramebuffers(1, &gfx->framebuffer_id);
+
   NIKOL_LOG_INFO("The graphics context was successfully destroyed");
   memory_free(gfx);
 }
 
-void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a) {
+GfxContextDesc& gfx_context_get_desc(GfxContext* gfx) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
-
-  glClear(gfx->buffer_bits);
-  glClearColor(r, g, b, a);
-}
-
-void gfx_context_present(GfxContext* gfx) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
-  window_swap_buffers(gfx->desc.window);
+  
+  return gfx->desc;
 }
 
 void gfx_context_set_state(GfxContext* gfx, const GfxStates state, const bool value) {
   NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
   set_state(gfx, state, value);
+}
+
+void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a, const u32 flags) {
+  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+ 
+  set_context_flags(gfx, flags);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, gfx->current_framebuffer);
+  glClear(gfx->current_clear_bits);
+  glClearColor(r, g, b, a);
 }
 
 void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc& pipe_desc) {
@@ -862,17 +1019,24 @@ void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const Gf
 
   // Updating the pipeline 
   pipeline->desc = pipe_desc;
- 
+  
   // Updating the shader
   pipeline->shader = pipe_desc.shader;
 
   // Updating the textures
   pipeline->textures_count = pipe_desc.textures_count; 
-  if(pipeline->textures_count > 0) {
-    for(sizei i = 0; i < pipeline->textures_count; i++) {
-      pipeline->textures[i] = pipe_desc.textures[i]->id;
-    }
+  for(sizei i = 0; i < pipeline->textures_count; i++) {
+    pipeline->textures[i] = pipe_desc.textures[i]->id;
   }
+
+  // Updating the cubemaps 
+  pipeline->cubemaps_count = pipe_desc.cubemaps_count; 
+  for(sizei i = 0; i < pipeline->cubemaps_count; i++) {
+    pipeline->cubemaps[i] = pipe_desc.cubemaps[i]->id;
+  }  
+
+  // Setting the depth mask state of the pipeline 
+  glDepthMask(pipe_desc.depth_mask);
 
   // Setting the stencil mask of the pipeline state
   glStencilMask(pipe_desc.stencil_ref);
@@ -880,9 +1044,11 @@ void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const Gf
   // Setting the blend color of the pipeline state
   const f32* blend_color = pipe_desc.blend_factor;
   glBlendColor(blend_color[0], blend_color[1], blend_color[2], blend_color[3]);
+}
 
-  // Bind the vertex array
-  glBindVertexArray(pipeline->vertex_array);
+void gfx_context_present(GfxContext* gfx) {
+  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+  window_swap_buffers(gfx->desc.window);
 }
 
 /// Context functions 
@@ -897,9 +1063,10 @@ GfxBuffer* gfx_buffer_create(GfxContext* gfx, const GfxBufferDesc& desc) {
   GfxBuffer* buff = (GfxBuffer*)memory_allocate(sizeof(GfxBuffer));
   memory_zero(buff, sizeof(GfxBuffer));
   
-  buff->desc            = desc;
-  buff->gl_buff_type    = get_buffer_type(desc.type);
-  buff->gl_buff_usage   = get_buffer_usage(desc.usage);
+  buff->desc          = desc;
+  buff->gfx           = gfx; 
+  buff->gl_buff_type  = get_buffer_type(desc.type);
+  buff->gl_buff_usage = get_buffer_usage(desc.usage);
 
   glCreateBuffers(1, &buff->id);
   glNamedBufferData(buff->id, desc.size, desc.data, buff->gl_buff_usage);
@@ -917,8 +1084,14 @@ void gfx_buffer_destroy(GfxBuffer* buff) {
   memory_free(buff);
 }
 
-void gfx_buffer_update(GfxContext* gfx, GfxBuffer* buff, const sizei offset, const sizei size, const void* data) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+GfxBufferDesc& gfx_buffer_get_desc(GfxBuffer* buffer) {
+  NIKOL_ASSERT(buffer, "Invalid GfxBuffer struct passed");
+
+  return buffer->desc;
+}
+
+void gfx_buffer_update(GfxBuffer* buff, const sizei offset, const sizei size, const void* data) {
+  NIKOL_ASSERT(buff->gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(buff, "Invalid GfxBuffer struct passed");
 
   buff->desc.size = size;
@@ -938,6 +1111,8 @@ GfxShader* gfx_shader_create(GfxContext* gfx, const i8* src) {
   
   GfxShader* shader = (GfxShader*)memory_allocate(sizeof(GfxShader));
   memory_zero(shader, sizeof(GfxShader));
+
+  shader->gfx = gfx;
 
   seperate_shader_src(src, shader);
 
@@ -981,26 +1156,87 @@ void gfx_shader_destroy(GfxShader* shader) {
   memory_free(shader);
 }
 
-void gfx_shader_attach_uniform(GfxContext* gfx, GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer, const u32 bind_point) {
+  NIKOL_ASSERT(shader->gfx, "Invalid GfxContext struct passed");
+  NIKOL_ASSERT(shader, "Invalid GfxShader struct passed");
+      
+  glBindBufferBase(GL_UNIFORM_BUFFER, bind_point, buffer->id);
+}
+
+i32 gfx_glsl_get_uniform_location(GfxShader* shader, const i8* uniform_name) {
   NIKOL_ASSERT(shader, "Invalid GfxShader struct passed");
 
-  switch (type) {
-    case GFX_SHADER_VERTEX: 
-      glBindBufferBase(GL_UNIFORM_BUFFER, shader->vertex_uniforms_count, buffer->id);
+  i32 loc = glGetUniformLocation(shader->id, uniform_name);
+  
+  // Cannot do anything with an invalid uniform name
+  if(loc == -1) {
+    NIKOL_LOG_WARN("Could not find shader uniform with name \'%s\'", uniform_name); 
+  }
+  
+  return loc;
+}
 
-      shader->vertex_uniforms[shader->vertex_uniforms_count] = buffer;
-      shader->vertex_uniforms_count++;
-      break;
-    case GFX_SHADER_PIXEL: 
-      glBindBufferBase(GL_UNIFORM_BUFFER, shader->fragment_uniforms_count, buffer->id);
+void gfx_glsl_upload_uniform_array(GfxShader* shader, const i32 location, const sizei count, const GfxLayoutType type, const void* data) {
+  NIKOL_ASSERT(shader, "Invalid GfxShader struct passed");
 
-      shader->fragment_uniforms[shader->fragment_uniforms_count] = buffer;
-      shader->fragment_uniforms_count++;
+  // Will not do anything with an invalid uniform
+  if(location == -1) {
+    return;
+  }
+
+  glUseProgram(shader->id);
+
+  switch(type) {
+    case GFX_LAYOUT_FLOAT1:
+      glUniform1fv(location, count, (f32*)data);
       break;
-    case GFX_SHADER_GEOMETRY: 
+    case GFX_LAYOUT_FLOAT2:
+      glUniform1fv(location, count, (f32*)data);
+      break;
+    case GFX_LAYOUT_FLOAT3:
+      glUniform1fv(location, count, (f32*)data);
+      break;
+    case GFX_LAYOUT_FLOAT4:
+      glUniform1fv(location, count, (f32*)data);
+      break;
+    case GFX_LAYOUT_INT1:
+      glUniform1iv(location, count, (i32*)data);
+      break;
+    case GFX_LAYOUT_INT2:
+      glUniform1iv(location, count, (i32*)data);
+      break;
+    case GFX_LAYOUT_INT3:
+      glUniform1iv(location, count, (i32*)data);
+      break;
+    case GFX_LAYOUT_INT4:
+      glUniform1iv(location, count, (i32*)data);
+      break;
+    case GFX_LAYOUT_UINT1:
+      glUniform1uiv(location, count, (u32*)data);
+      break;
+    case GFX_LAYOUT_UINT2:
+      glUniform1uiv(location, count, (u32*)data);
+      break;
+    case GFX_LAYOUT_UINT3:
+      glUniform1uiv(location, count, (u32*)data);
+      break;
+    case GFX_LAYOUT_UINT4:
+      glUniform1uiv(location, count, (u32*)data);
+      break;
+    case GFX_LAYOUT_MAT2:
+      glUniformMatrix2fv(location, count, GL_FALSE, (f32*)data);
+      break;
+    case GFX_LAYOUT_MAT3:
+      glUniformMatrix3fv(location, count, GL_FALSE, (f32*)data);
+      break;
+    case GFX_LAYOUT_MAT4:
+      glUniformMatrix4fv(location, count, GL_FALSE, (f32*)data);
       break;
   }
+}
+
+void gfx_glsl_upload_uniform(GfxShader* shader, const i32 location, const GfxLayoutType type, const void* data) {
+  gfx_glsl_upload_uniform_array(shader, location, 1, type, data);
 }
 
 /// Shader functions 
@@ -1014,38 +1250,38 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   
   GfxTexture* texture = (GfxTexture*)memory_allocate(sizeof(GfxTexture));
   memory_zero(texture, sizeof(GfxTexture));
-  
-  GLenum gl_wrap_format = get_texture_wrap(desc.wrap_mode);
  
-  GLenum in_format, base_format;
-  get_texture_format(desc.format, &in_format, &base_format);
-
-  GLenum min_filter, mag_filter;
-  get_texture_filter(desc.filter, &min_filter, &mag_filter); 
-
-  glCreateTextures(GL_TEXTURE_2D, 1, &texture->id);
-  gl_check_error("glCreateTextures");
-
-  glBindTexture(GL_TEXTURE_2D, texture->id);
-  glTexImage2D(GL_TEXTURE_2D, 
-               desc.depth, 
-               in_format, 
-               desc.width, 
-               desc.height, 
-               0, 
-               base_format, 
-               GL_UNSIGNED_BYTE, 
-               desc.data);
-  gl_check_error("glTexImage2D");
+  texture->desc = desc;
+  texture->gfx  = gfx;
   
-  glGenerateTextureMipmap(texture->id);
-  gl_check_error("glGenerateTextureMipmap");
+  // Getting the appropriate GL pixel format
+  GLenum in_format, gl_format, gl_pixel_type;
+  get_texture_gl_format(desc.format, &in_format, &gl_format, &gl_pixel_type);
 
+  // Getting the appropriate GL addressing modes
+  GLenum gl_wrap_format = get_texture_gl_wrap(desc.wrap_mode);
+  
+  // Getting the appropriate GL filters
+  GLenum min_filter, mag_filter;
+  get_texture_gl_filter(desc.filter, &min_filter, &mag_filter); 
+  
+  // Creating the texutre based on its type
+  texture->id = create_gl_texture(desc.type);
+
+  // Setting texture parameters
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
   glTextureParameteri(texture->id, GL_TEXTURE_MIN_FILTER, min_filter);
   glTextureParameteri(texture->id, GL_TEXTURE_MAG_FILTER, mag_filter);
-  gl_check_error("glTextureParameteri");
+  
+  // Filling the texture with the data based on its type
+  update_gl_texture_storage(texture, in_format, gl_format, gl_pixel_type);
+
+  // Generating some mipmaps
+  glGenerateTextureMipmap(texture->id);
+
+  // Set the render target texture (if it is so) to the framebuffer 
+  apply_gl_render_target(gfx, texture);
 
   return texture;
 }
@@ -1059,33 +1295,148 @@ void gfx_texture_destroy(GfxTexture* texture) {
   memory_free(texture);
 }
 
-void gfx_texture_update(GfxContext* gfx, GfxTexture* texture, const GfxTextureDesc& desc) {
-  GLenum gl_wrap_format = get_texture_wrap(desc.wrap_mode);
+GfxTextureDesc& gfx_texture_get_desc(GfxTexture* texture) {
+  NIKOL_ASSERT(texture, "Invalid GfxTexture struct passed");
+
+  return texture->desc;
+}
+
+void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc) {
+  NIKOL_ASSERT(texture->gfx, "Invalid GfxContext struct passed");
+  NIKOL_ASSERT(texture, "Invalid GfxTexture struct passed");
+ 
+  texture->desc = desc;
+
+  // Updating the formats
+  GLenum in_format, gl_format, gl_pixel_type;
+  get_texture_gl_format(desc.format, &in_format, &gl_format, &gl_pixel_type);
+
+  // Updating the addressing mode
+  GLenum gl_wrap_format = get_texture_gl_wrap(desc.wrap_mode);
   
-  GLenum in_format, base_format;
-  get_texture_format(desc.format, &in_format, &base_format);
-
+  // Updating the filters
   GLenum min_filter, mag_filter;
-  get_texture_filter(desc.filter, &min_filter, &mag_filter);
+  get_texture_gl_filter(desc.filter, &min_filter, &mag_filter); 
 
-  glTextureSubImage2D(texture->id, 
-                      desc.depth,
-                      0, 
-                      0, 
-                      desc.width, 
-                      desc.height,
-                      in_format,
-                      GL_UNSIGNED_BYTE, 
-                      desc.data);
-  glGenerateTextureMipmap(texture->id);
-
+  // Set texture parameters again
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
   glTextureParameteri(texture->id, GL_TEXTURE_MIN_FILTER, min_filter);
   glTextureParameteri(texture->id, GL_TEXTURE_MAG_FILTER, mag_filter);
+  
+  // updating the whole texture
+  update_gl_texture_storage(texture, in_format, gl_format, gl_pixel_type);
+
+  // Re-generate some mipmaps
+  glGenerateTextureMipmap(texture->id);
 }
 
 /// Texture functions 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Cubemap functions 
+
+GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc& desc) {
+  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+
+  GfxCubemap* cubemap = (GfxCubemap*)memory_allocate(sizeof(GfxCubemap));
+  memory_zero(cubemap, sizeof(GfxCubemap));
+
+  cubemap->gfx  = gfx;
+  cubemap->desc = desc;
+  
+  // Getting the appropriate GL pixel format
+  GLenum in_format, gl_format, gl_pixel_type;
+  get_texture_gl_format(desc.format, &in_format, &gl_format, &gl_pixel_type);
+
+  // Getting the appropriate GL addressing modes
+  GLenum gl_wrap_format = get_texture_gl_wrap(desc.wrap_mode);
+  
+  // Getting the appropriate GL filters
+  GLenum min_filter, mag_filter;
+  get_texture_gl_filter(desc.filter, &min_filter, &mag_filter); 
+
+  glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &cubemap->id);
+  
+  // Setting some parameters
+  glTextureParameteri(cubemap->id, GL_TEXTURE_MIN_FILTER, min_filter);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_MAG_FILTER, mag_filter);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_R, gl_wrap_format);
+    
+  glTextureStorage2D(cubemap->id, desc.mips, in_format, desc.width, desc.height);
+
+  // Set the texture for each face in the cubemap
+  for(sizei i = 0; i < desc.faces_count; i++) {
+    glTextureSubImage3D(cubemap->id,                 // Texture
+                        0,                           // Levels
+                        0, 0, i,                     // Offset (x, y, z)
+                        desc.width, desc.height, 1,  // Size (width, height, depth)
+                        gl_format,                   // Format
+                        gl_pixel_type,               // Type
+                        desc.data[i]);               // Pixels
+  }
+
+  return cubemap;
+}
+
+void gfx_cubemap_destroy(GfxCubemap* cubemap) {
+  if(!cubemap) {
+    return;
+  }
+  
+  glDeleteTextures(1, &cubemap->id);
+  memory_free(cubemap);
+}
+
+GfxCubemapDesc& gfx_cubemap_get_desc(GfxCubemap* cubemap) {
+  NIKOL_ASSERT(cubemap, "Invalid GfxCubemap struct passed");
+
+  return cubemap->desc;
+}
+
+void gfx_cubemap_update(GfxCubemap* cubemap, const GfxCubemapDesc& desc) {
+  NIKOL_ASSERT(cubemap->gfx, "Invalid GfxContext struct passed");
+  NIKOL_ASSERT(cubemap, "Invalid GfxCubemap struct passed");
+  
+  cubemap->desc = desc;
+  
+  // Updating the format
+  GLenum in_format, gl_format, gl_pixel_type;
+  get_texture_gl_format(desc.format, &in_format, &gl_format, &gl_pixel_type);
+
+  // Updating the addressing mode
+  GLenum gl_wrap_format = get_texture_gl_wrap(desc.wrap_mode);
+  
+  // Updating the filters
+  GLenum min_filter, mag_filter;
+  get_texture_gl_filter(desc.filter, &min_filter, &mag_filter); 
+  
+  // Re-setting the parameters
+  glTextureParameteri(cubemap->id, GL_TEXTURE_MIN_FILTER, min_filter);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_MAG_FILTER, mag_filter);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
+  glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_R, gl_wrap_format);
+
+  // Updating the storage
+  glTextureStorage2D(cubemap->id, desc.mips, in_format, desc.width, desc.height);
+
+  // Updating the texture image
+  for(sizei i = 0; i < desc.faces_count; i++) {
+    glTextureSubImage3D(cubemap->id,                 // Texture
+                        desc.mips,                   // Mipmaps 
+                        0, 0, i,                     // Offset (x, y, z)
+                        desc.width, desc.height, 1,  // Size (width, height, depth)
+                        gl_format,                   // Format
+                        gl_pixel_type,               // Type
+                        desc.data[i]);               // Pixels
+  }
+}
+
+/// Cubemap functions 
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1098,13 +1449,13 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc) {
   memory_zero(pipe, sizeof(GfxPipeline));
 
   pipe->desc = desc;
+  pipe->gfx  = gfx;
 
   // VAO init
   glCreateVertexArrays(1, &pipe->vertex_array);
 
   // Layout init 
   sizei stride = set_buffer_layout(pipe->vertex_array, desc.layout, desc.layout_count); 
-
   NIKOL_ASSERT(desc.vertex_buffer, "Must have a vertex buffer to create a GfxPipeline struct");
 
   // VBO init
@@ -1129,12 +1480,16 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc) {
 
   // Textures init
   pipe->textures_count = desc.textures_count; 
-  if(desc.textures_count > 0) {
-    for(sizei i = 0; i < desc.textures_count; i++) {
-      pipe->textures[i] = desc.textures[i]->id;
-    }
+  for(sizei i = 0; i < desc.textures_count; i++) {
+    pipe->textures[i] = desc.textures[i]->id;
   }
 
+  // Cubemaps init 
+  pipe->cubemaps_count = desc.cubemaps_count; 
+  for(sizei i = 0; i < desc.cubemaps_count; i++) {
+    pipe->cubemaps[i] = desc.cubemaps[i]->id;
+  }  
+    
   return pipe;
 }
 
@@ -1148,17 +1503,27 @@ void gfx_pipeline_destroy(GfxPipeline* pipeline) {
   memory_free(pipeline);
 }
 
-void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+GfxPipelineDesc& gfx_pipeline_get_desc(GfxPipeline* pipeline) {
+  NIKOL_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
+
+  return pipeline->desc;
+}
+
+void gfx_pipeline_draw_vertex(GfxPipeline* pipeline) {
+  NIKOL_ASSERT(pipeline->gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
   NIKOL_ASSERT(pipeline->vertex_buffer, "Must have a valid vertex buffer to draw");
 
+  // Bind the vertex array
+  glBindVertexArray(pipeline->vertex_array);
+
   // Bind the shader
   glUseProgram(pipeline->desc.shader->id);
-
-  // Setting the uniform buffers
-  send_vertex_uniform_buffers(pipeline->desc.shader); 
-  send_fragment_uniform_buffers(pipeline->desc.shader); 
+  
+  // Draw the cubemaps
+  if(pipeline->cubemaps_count > 0) {
+    glBindTextures(0, pipeline->cubemaps_count, pipeline->cubemaps);
+  } 
 
   // Draw the textures
   if(pipeline->textures_count > 0) {
@@ -1173,18 +1538,22 @@ void gfx_pipeline_draw_vertex(GfxContext* gfx, GfxPipeline* pipeline) {
   glBindVertexArray(0);
 }
 
-void gfx_pipeline_draw_index(GfxContext* gfx, GfxPipeline* pipeline) {
-  NIKOL_ASSERT(gfx, "Invalid GfxContext struct passed");
+void gfx_pipeline_draw_index(GfxPipeline* pipeline) {
+  NIKOL_ASSERT(pipeline->gfx, "Invalid GfxContext struct passed");
   NIKOL_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
   NIKOL_ASSERT(pipeline->vertex_buffer, "Must have a valid vertex buffer to draw");
   NIKOL_ASSERT(pipeline->index_buffer, "Must have a valid index buffer to draw");
 
+  // Bind the vertex array
+  glBindVertexArray(pipeline->vertex_array);
+
   // Bind the shader
   glUseProgram(pipeline->desc.shader->id);
 
-  // Setting the uniform buffers
-  send_vertex_uniform_buffers(pipeline->desc.shader); 
-  send_fragment_uniform_buffers(pipeline->desc.shader); 
+  // Draw the cubemaps
+  if(pipeline->cubemaps_count > 0) {
+    glBindTextures(0, pipeline->cubemaps_count, pipeline->cubemaps);
+  } 
 
   // Draw the textures
   if(pipeline->textures_count > 0) {

@@ -1,13 +1,14 @@
-# Nikol
-A cross-platform framework for window creation, input handling, and rendering using OpenGL or DirectX11. 
+# *Nikol*
+A cross-platform framework for window creation, input handling, audio playback, and rendering using OpenGL 4.5+ or Direct3D11.
 
 <video src="assets/vids/devlog-7.mp4" width="320" height="240" controls></video>
  
 # Features 
+- A fully documented single header file for every functionality in the library.
 - Cross-platform window creation. 
 - Gamepad, keyboard, and mouse input support.
 - Fully-configurable cross-platform rendering API using OpenGL (Linux) and DirectX11 (Windows).
-- Fully-integrated math library using GLM.
+- A cross-platform audio abstraction layer.
 
 # Dependencies
 - GLFW3 
@@ -15,15 +16,26 @@ A cross-platform framework for window creation, input handling, and rendering us
 - D3D11
 
 # Build Instructions
-// @TODO
+Run the following commands to build *Nikol* using _CMake_
 
-# Hello, Nikol
+```bash
+mkdir build 
+cd build 
+cmake .. 
+
+# For Linux
+make 
+
+# For Windows 
+cmake --build .
+```
+
+# Hello, *Nikol*
 Here's a simple example of the library. The example below will open a basic window and initialze a graphics context.
 
 ```c++
 #include <nikol_core.hpp>
 
-// Will choose the appropriate main entry based on the platform
 int main() {
   // Initialze the library
   if(!nikol::init()) {
@@ -38,7 +50,11 @@ int main() {
   }
 
   // Creating a graphics context
-  nikol::GfxContext* gfx = gfx_context_init(window, nikol::GFX_FLAGS_BLEND | nikol::GFX_FLAGS_DEPTH | nikol::GFX_FLAGS_STENCIL);
+  nikol::GfxContextDesc gfx_desc = {
+    .window = window,
+    .states = nikol::GFX_STATE_DEPTH | nikol::GFX_STATE_STENCIL,
+  };
+  nikol::GfxContext* gfx = nikol::gfx_context_init(gfx_desc);
   if(!gfx) {
     return -1;
   }
@@ -51,13 +67,13 @@ int main() {
     }
     
     // Clear the screen to black
-    nikol::gfx_context_clear(gfx, 0.0f, 0.0f, 0.0f, 1.0f);
-    
-    // Poll the window events
-    nikol::window_poll_events(window);
+    nikol::gfx_context_clear(gfx, 0.0f, 0.0f, 0.0f, 1.0f, nikol::GFX_CONTEXT_FLAGS_ENABLE_VSYNC);
     
     // Swap the internal window buffer
     nikol::gfx_context_present(gfx);
+    
+    // Poll the window events
+    nikol::window_poll_events(window);
   }
 
   // De-initialze
@@ -69,4 +85,4 @@ int main() {
 ```
 
 # More Examples 
-For more practical examples using the _Nikol_ engine, go to [NikolExamples]("https://github.com/FrodoAlaska/NikolExamples.git").
+For more practical examples using the *Nikol* engine, go to <a href="https://github.com/FrodoAlaska/NikolExamples">NikolExamples</a>

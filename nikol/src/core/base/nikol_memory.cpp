@@ -1,7 +1,7 @@
 #include "nikol/nikol_core.hpp"
 
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 
 //////////////////////////////////////////////////////////////////////////
 
