@@ -1,5 +1,5 @@
 # *Nikol*
-A cross-platform framework for window creation, input handling, audio playback, and rendering using OpenGL 4.5 or Direct3D11.
+A cross-platform framework for window creation, input handling, audio playback, and rendering using OpenGL 4.5+ or Direct3D11.
 
 # Features 
 - A fully documented single header file for every functionality in the library.
@@ -20,7 +20,12 @@ Run the following commands to build *Nikol* using _CMake_
 mkdir build 
 cd build 
 cmake .. 
-make (or use cmake --build . for Windows)
+
+# For Linux
+make 
+
+# For Windows 
+cmake --build .
 ```
 
 # Hello, *Nikol*
@@ -60,7 +65,7 @@ int main() {
     }
     
     // Clear the screen to black
-    nikol::gfx_context_clear(gfx, 0.0f, 0.0f, 0.0f, 1.0f);
+    nikol::gfx_context_clear(gfx, 0.0f, 0.0f, 0.0f, 1.0f, nikol::GFX_CONTEXT_FLAGS_ENABLE_VSYNC);
     
     // Swap the internal window buffer
     nikol::gfx_context_present(gfx);
