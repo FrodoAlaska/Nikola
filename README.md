@@ -1,6 +1,8 @@
 # Nikol
 A cross-platform framework for window creation, input handling, and rendering using OpenGL or DirectX11. 
 
+<video src="assets/vids/devlog-7.mp4" width="320" height="240" controls></video>
+ 
 # Features 
 - Cross-platform window creation. 
 - Gamepad, keyboard, and mouse input support.
