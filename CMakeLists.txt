@@ -10,7 +10,12 @@ set(NIKOL_LIBRARIES glfw)
 
 set(NIKOL_BUILD_OPTS -w)
 set(NIKOL_BUILD_DEFS GLFW_INCLUDE_NONE)
-set(NIKOL_BUILD_LIBS_DIR ${NIKOL_INCLUDE_DIR} ${NIKOL_LIBS_DIR} ${NIKOL_LIBS_DIR}/GLFW/include)
+set(NIKOL_BUILD_LIBS_DIR 
+  ${NIKOL_INCLUDE_DIR} 
+  ${NIKOL_LIBS_DIR} 
+  ${NIKOL_LIBS_DIR}/glfw/include
+  ${NIKOL_LIBS_DIR}/glm
+)
 
 set(NIKOL_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
 ############################################################
@@ -54,10 +59,19 @@ set(NIKOL_SOURCES
   # Core/Gfx
   ${NIKOL_SRC_DIR}/core/gfx/gl_backend.cpp
   ${NIKOL_SRC_DIR}/core/gfx/dx11_backend.cpp
+
+  # Engine/Math 
+  ${NIKOL_SRC_DIR}/engine/math/math_common.cpp
+  ${NIKOL_SRC_DIR}/engine/math/random.cpp
+  ${NIKOL_SRC_DIR}/engine/math/vector_types.cpp
+  ${NIKOL_SRC_DIR}/engine/math/matrix_types.cpp
+  ${NIKOL_SRC_DIR}/engine/math/quaternion.cpp
+  ${NIKOL_SRC_DIR}/engine/math/transform.cpp
 )
 
 set(NIKOL_HEADERS
   ${NIKOL_INCLUDE_DIR}/nikol_core.hpp
+  ${NIKOL_INCLUDE_DIR}/nikol_engine.hpp
 )
 ############################################################
 
