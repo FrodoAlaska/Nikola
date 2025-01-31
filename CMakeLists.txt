@@ -3,14 +3,15 @@ project(nikol)
 
 ### Project Variables ###
 ############################################################
-set(NIKOL_SRC_DIR nikol/src)
-set(NIKOL_INCLUDE_DIR nikol/include)
-set(NIKOL_LIBS_DIR libs)
-set(NIKOL_LIBRARIES glfw)
+set(NIKOL_SRC_DIR ${CMAKE_SOURCE_DIR}/nikol/src)
+set(NIKOL_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/nikol/include)
+set(NIKOL_LIBS_DIR ${CMAKE_SOURCE_DIR}/libs)
 
-set(NIKOL_BUILD_OPTS -w)
+set(NIKOL_BUILD_OPTS -Wall)
 set(NIKOL_BUILD_DEFS GLFW_INCLUDE_NONE)
-set(NIKOL_BUILD_LIBS_DIR 
+
+set(NIKOL_LIBRARIES glfw)
+set(NIKOL_INCLUDES 
   ${NIKOL_INCLUDE_DIR} 
   ${NIKOL_LIBS_DIR} 
   ${NIKOL_LIBS_DIR}/glfw/include
@@ -23,6 +24,7 @@ set(NIKOL_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
 ### Project Options ###
 ############################################################
 option(NIKOL_BUILD_SHARED "Build Nikol as a shared library" ON)
+option(NIKOL_BUILD_EXAMPLES "Build the examples with Nikol" ON)
 
 # Set it to shared
 if(NIKOL_BUILD_SHARED)
@@ -67,11 +69,18 @@ set(NIKOL_SOURCES
   ${NIKOL_SRC_DIR}/engine/math/matrix_types.cpp
   ${NIKOL_SRC_DIR}/engine/math/quaternion.cpp
   ${NIKOL_SRC_DIR}/engine/math/transform.cpp
+  
+  # Engine/Resources
+  ${NIKOL_SRC_DIR}/engine/resources/resource_manager.cpp
+  
+  # Engine/Resources/Loaders 
+  ${NIKOL_SRC_DIR}/engine/resources/loaders/texture_loader.cpp
+  ${NIKOL_SRC_DIR}/engine/resources/loaders/cubemap_loader.cpp
 )
 
 set(NIKOL_HEADERS
-  ${NIKOL_INCLUDE_DIR}/nikol_core.hpp
-  ${NIKOL_INCLUDE_DIR}/nikol_engine.hpp
+  ${NIKOL_INCLUDE_DIR}/nikol/nikol_core.hpp
+  ${NIKOL_INCLUDE_DIR}/nikol/nikol_engine.hpp
 )
 ############################################################
 
@@ -79,25 +88,33 @@ set(NIKOL_HEADERS
 ############################################################
 set(LIBS_SOURCES 
   ${NIKOL_LIBS_DIR}/glad/glad.c
+  ${NIKOL_LIBS_DIR}/stb/stb_image.cpp
 )
 ############################################################
 
 ### Final Build ###
 ############################################################
-add_library(${PROJECT_NAME} ${NIKOL_BUILD_TYPE} ${NIKOL_SOURCES} ${LIBS_SOURCES})
+add_library(${PROJECT_NAME} ${NIKOL_BUILD_TYPE} ${NIKOL_SOURCES} ${NIKOL_HEADERS} ${LIBS_SOURCES})
 ############################################################
 
 ### Linking ###
 ############################################################
-target_include_directories(${PROJECT_NAME} PUBLIC BEFORE ${NIKOL_BUILD_LIBS_DIR})
+target_include_directories(${PROJECT_NAME} PUBLIC BEFORE ${NIKOL_INCLUDES})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${NIKOL_LIBRARIES})
 ############################################################
 
 ### Compiling Options ###
 ############################################################
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 target_compile_definitions(${PROJECT_NAME} PUBLIC ${NIKOL_BUILD_DEFS})
 target_compile_options(${PROJECT_NAME} PUBLIC ${NIKOL_BUILD_OPTS})
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
+############################################################
+
+### Examples ###
+############################################################
+if(NIKOL_BUILD_EXAMPLES) 
+  add_subdirectory(examples)
+endif()
 ############################################################
 
 ### Library Install ###

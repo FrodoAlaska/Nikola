@@ -5,14 +5,35 @@
 #include <glm/glm.hpp>
 #include <glm/ext/quaternion_float.hpp>
 
+#include <string>
+#include <filesystem>
+#include <vector>
+#include <unordered_map>
+
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikol { // Start of nikol
 
 /// ----------------------------------------------------------------------
-/// *** Consts ***
+/// *** Typedefs ***
+
+using String       = std::string;
+
+using FilePath     = std::filesystem::path;
+
+template<typename T>
+using DynamicArray = std::vector<T>;
+
+template<typename K, typename V> 
+using HashMap      = std::unordered_map<K, V>;
+
+/// *** Typedefs ***
 /// ----------------------------------------------------------------------
 
+/// ----------------------------------------------------------------------
+/// *** Consts ***
+
+/// ----------------------------------------------------------------------
 /// Math consts 
 
 const f64 NIKOL_PI        = 3.14159265359;
@@ -34,67 +55,9 @@ const f64 NIKOL_FLOAT_MAX = 3.40282e+38F;
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// *** String ***
+/// *** Math ***
 
 /// ----------------------------------------------------------------------
-/// String
-struct String {
-  sizei length   = 0; 
-  sizei capacity = 5;
-  char* data     = nullptr;
-  
-  /// ----------------------------------------------------------------------
-  /// String operator overloads
-  
-  char& operator[](const sizei index);
-  
-  const char& operator[](const sizei index) const;
-  
-  String& operator=(const String& str);
-  
-  String& operator=(const char* str);
-  
-  /// String operator overloads
-  /// ----------------------------------------------------------------------
-};
-/// String
-/// ----------------------------------------------------------------------
-  
-/// ----------------------------------------------------------------------
-/// String operator overloads
-
-const bool operator==(const String& str1, const String& str2);
-const bool operator!=(const String& str1, const String& str2);
-
-void operator+(String& str, const String& other);
-void operator+(String& str, const char* other);
-void operator+=(String& str, const String& other);
-void operator+=(String& str, const char* other);
-
-void operator-(String& str, const String& other);
-void operator-(String& str, const char* other);
-void operator-=(String& str, const String& other);
-void operator-=(String& str, const char* other);
-
-/// String operator overloads
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
-/// String functions
-
-void string_destroy(String& str);
-
-const bool string_is_empty(String& str);
-
-/// String functions
-/// ----------------------------------------------------------------------
-
-/// *** String ***
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
-/// *** Math common ***
-
 /// Math common functions
 
 const f32 clamp_float(const f32 value, const f32 min, const f32 max);
@@ -130,12 +93,6 @@ const f32 remap(const f32 value, const f32 old_min, const f32 old_max, const f32
 /// Math common functions
 /// ----------------------------------------------------------------------
 
-/// *** Math common ***
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
-/// *** Math random ***
-
 /// ----------------------------------------------------------------------
 /// Math random functions
 
@@ -165,12 +122,6 @@ const u64 random_u64(const u64 min, const u64 max);
 
 /// Math random functions
 /// ----------------------------------------------------------------------
-
-/// *** Math random ***
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
-/// *** Math vector types ***
 
 /// ----------------------------------------------------------------------
 /// Vec2
@@ -266,12 +217,6 @@ const f32 vec4_distance(const Vec4& v1, const Vec4& v2);
 /// Vec4 functions
 /// ----------------------------------------------------------------------
 
-/// *** Math vector types ***
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
-/// *** Math matrix types ***
-
 /// ----------------------------------------------------------------------
 /// Mat3
 typedef glm::mat3 Mat3;
@@ -330,12 +275,6 @@ const f32* mat4_raw_data(const Mat4& mat);
 /// Mat4 functions
 /// ----------------------------------------------------------------------
 
-/// *** Math matrix types ***
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
-/// *** Math quaternion ***
-
 /// ----------------------------------------------------------------------
 /// Quat
 typedef glm::quat Quat;
@@ -364,12 +303,6 @@ const Mat4 quat_to_mat4(const Quat& q);
 /// Math Quat functions
 /// ----------------------------------------------------------------------
 
-/// *** Math quaternion ***
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
-/// *** Math transform ***
-
 /// ----------------------------------------------------------------------
 /// Transform
 struct Transform {
@@ -397,12 +330,6 @@ void transform_scale(Transform& trans, const Vec3& scale);
 /// Transform functions
 /// ----------------------------------------------------------------------
 
-/// *** Math transform ***
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
-/// *** Math vertex types ***
-
 /// ----------------------------------------------------------------------
 /// Vertex3D_PNUV (Position, Normal, U/V texture coords)
 struct Vertex3D_PNUV {
@@ -414,27 +341,39 @@ struct Vertex3D_PNUV {
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// Vertex3D_PNUV (Position, U/V texture coords, Color)
-struct Vertex3D_PUVC {
+/// Vertex3D_PCUV (Position, Color, U/V texture coords)
+struct Vertex3D_PCUV {
   Vec3 position;
-  Vec2 texture_coords;
   Vec4 color;
+  Vec2 texture_coords;
 };
-/// Vertex3D_PNUV (Position, U/V texture coords, Color)
+/// Vertex3D_PCUV (Position, Color, U/V texture coords)
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// Vertex3D_PNUVC (Position, Normal, U/V texture coords, Color (r, g, b, a))
-struct Vertex3D_PNUVC {
+/// Vertex3D_PNCUV (Position, Normal, Color (r, g, b, a), U/V texture coords)
+struct Vertex3D_PNCUV {
   Vec3 position;
   Vec3 normal;
-  Vec2 texture_coords;
   Vec4 color;
+  Vec2 texture_coords;
 };
-/// Vertex3D_PNUVC (Position, Normal, U/V texture coords, Color (r, g, b, a))
+/// Vertex3D_PNCUV (Position, Normal, Color (r, g, b, a), U/V texture coords)
 /// ----------------------------------------------------------------------
 
-/// *** Math vertex types ***
+/// ----------------------------------------------------------------------
+/// VertexType 
+enum VertexType {
+  /// A vertex with a position, a normal, and a U/V coordinate.
+  VERTEX_TYPE_PNUV = 13 << 0, 
+  
+  /// A vertex with a position, a color, and a U/V coordinate.
+  VERTEX_TYPE_PCUV = 13 << 1, 
+  
+  /// A vertex with a position, a normal, a color, and a U/V coordinate.
+  VERTEX_TYPE_PNCUV = 13 << 2, 
+};
+/// VertexType 
 /// ----------------------------------------------------------------------
 
 /// *** Math ***
@@ -444,13 +383,52 @@ struct Vertex3D_PNUVC {
 /// *** Resources ***
 
 /// ----------------------------------------------------------------------
+/// ResourceID
+typedef u64 ResourceUUID;
+
+struct ResourceID {
+  ResourceUUID uuid;
+
+  // Hashing the given `str` to a `ResourceUUID`
+  ResourceID(const String& str) {
+    u32 hash  = 2166136261u;
+    sizei len = str.length();
+
+    for(sizei i = 0; i < len; i++) {
+      hash ^= (u8)str[i];
+      hash *= 1677719;
+    }
+
+    uuid = hash;
+  }
+};
+/// ResourceID
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// ResourceType
+enum ResourceType {
+  RESOURCE_TYPE_BUFFER   = 14 << 0, 
+  RESOURCE_TYPE_TEXTURE  = 14 << 1, 
+  RESOURCE_TYPE_CUBEMAP  = 14 << 2,
+  RESOURCE_TYPE_SHADER   = 14 << 4,
+  RESOURCE_TYPE_MESH     = 14 << 5,
+  RESOURCE_TYPE_MATERIAL = 14 << 6,
+  RESOURCE_TYPE_SKYBOX   = 14 << 7,
+  RESOURCE_TYPE_MODEL    = 14 << 8,
+  RESOURCE_TYPE_FONT     = 14 << 9,
+};
+/// ResourceType
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// Mesh 
 struct Mesh {
-  nikol::GfxBuffer* vertex_buffer = nullptr; 
-  nikol::GfxBuffer* index_buffer  = nullptr;
+  ResourceID vertex_buffer; 
+  ResourceID index_buffer;
 
-  nikol::GfxPipeline* pipe         = nullptr;
-  nikol::GfxPipelineDesc pipe_desc = {};
+  GfxPipeline* pipe         = nullptr;
+  GfxPipelineDesc pipe_desc = {};
 };
 /// Mesh 
 /// ----------------------------------------------------------------------
@@ -458,14 +436,33 @@ struct Mesh {
 /// ----------------------------------------------------------------------
 /// Material 
 struct Material {
+  ResourceID diffuse_map;
+  ResourceID specular_map;
+  ResourceID shader; 
+  
+  ResourceID uniform_buffers[UNIFORM_BUFFERS_MAX];
+  sizei uniform_buffers_count = 0; 
 };
 /// Material 
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// Skybox
+struct Skybox {
+  ResourceID vertex_buffer;
+  ResourceID cubemap;
+  
+  GfxPipeline* pipe         = nullptr;
+  GfxPipelineDesc pipe_desc = {};
+};
+/// Skybox
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// Model 
 struct Model {
-
+  DynamicArray<ResourceID> meshes;
+  DynamicArray<ResourceID> materials;
 };
 /// Model 
 /// ----------------------------------------------------------------------
@@ -473,28 +470,128 @@ struct Model {
 /// ----------------------------------------------------------------------
 /// Font 
 struct Font {
+  struct Glyph {
+    i8 unicode; 
+    ResourceID texture;
 
+    u32 width, height;
+    u32 left, right, top, bottom;
+
+    i32 offset_x, offset_y;
+    i32 advance_x, kern, left_bearing;
+  };
+
+  f32 base_size;
+  f32 ascent, descent, line_gap;
+  f32 glyph_padding;
+
+  DynamicArray<Glyph> glyphs;
 };
 /// Font 
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// Texture loader functions
+
+void texture_loader_load(GfxTextureDesc* desc, 
+                         const FilePath& path, 
+                         const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
+                         const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
+                         const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
+
+void texture_loader_unload(GfxTextureDesc& desc);
+
+/// Texture loader functions
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// Cubemap loader functions
+
+void cubemap_loader_load(GfxCubemapDesc* desc, 
+                         const FilePath path[CUBEMAP_FACES_MAX], 
+                         const sizei faces_count,
+                         const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
+                         const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
+                         const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
+
+void cubemap_loader_load(GfxCubemapDesc* desc, 
+                         const FilePath& directory,
+                         const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
+                         const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
+                         const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
+
+void cubemap_loader_unload(GfxCubemapDesc& desc);
+
+/// Cubemap loader functions
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// ResourceStorage
+struct ResourceStorage;
+/// ResourceStorage
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// Resource storage functions
+
+void resource_manager_init(GfxContext* gfx);
+
+void resource_manager_destroy();
+
+const ResourceStorage* resource_manager_cache();
+
+void resource_manager_clear_cache();
+
+/// Resource storage functions
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// Resource storage functions
+
+ResourceStorage* resource_storage_create(const String& name, const FilePath& parent_dir);
+
+void resource_storage_clear(ResourceStorage* storage);
+
+void resource_storage_destroy(ResourceStorage* storage);
+
+ResourceUUID resource_storage_push_buffer(ResourceStorage* storage, const String& sid, const GfxBufferDesc& buff_desc);
+
+ResourceUUID resource_storage_push_texture(ResourceStorage* storage, const String& sid, const GfxTextureDesc& tex_desc);
+
+ResourceUUID resource_storage_push_cubemap(ResourceStorage* storage, const String& sid, const GfxCubemapDesc& cubemap_desc);
+
+ResourceUUID resource_storage_push_shader(ResourceStorage* storage, const String& sid, const String& shader_src);
+
+GfxBuffer* resource_storage_get_buffer(ResourceStorage* storage, const ResourceUUID& id);
+
+GfxTexture* resource_storage_get_texture(ResourceStorage* storage, const ResourceUUID& id);
+
+GfxCubemap* resource_storage_get_cubemap(ResourceStorage* storage, const ResourceUUID& id);
+
+GfxShader* resource_storage_get_shader(ResourceStorage* storage, const ResourceUUID& id);
+
+/// Resource storage functions
 /// ----------------------------------------------------------------------
 
 /// *** Resources ***
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// *** Loaders ***
+/// *** Renderer ***
 
 /// ----------------------------------------------------------------------
-/// Texture loader functions
-/// Texture loader functions
+/// Renderer functions
+
+void renderer_init(Window* window);
+
+void renderer_shutdown();
+
+const GfxContext* renderer_get_context();
+
+/// Renderer functions
 /// ----------------------------------------------------------------------
 
-/// ----------------------------------------------------------------------
-/// Cubemap loader functions
-/// Cubemap loader functions
-/// ----------------------------------------------------------------------
-
-/// *** Loaders ***
+/// *** Renderer ***
 /// ----------------------------------------------------------------------
 
 } // End of nikol

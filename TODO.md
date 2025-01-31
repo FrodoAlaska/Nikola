@@ -1,6 +1,6 @@
 # (Engine) TODO: 
-- Custom data structures -> dynamic arrays, file paths, and strings(?)
-- Resource loaders -> texture loader, obj/gltf/model loader, font loader
+- Resource loaders -> obj/gltf/model loader, font loader
+- A way to startup the engine and to setup an application callback
 - Design and implement a resource manager
 
 # (Core) TODO: 
@@ -23,6 +23,7 @@
 
 # TEST: 
 - (GL) Shader attribute semantics (e.g, does Mat4 work there)
+- (Engine) Test the resource loaders
 
 # FUTURE PLANS: 
 - (Audio) Audio context and audio buffers
