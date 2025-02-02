@@ -1,22 +1,22 @@
 cmake_minimum_required(VERSION 3.27)
-project(NikolExamples)
+project(NikolaExamples)
 
 ### Project Variables ###
 ############################################################
 set(EXAMPLES_SRC_DIR ${CMAKE_SOURCE_DIR}/examples)
 set(EXAMPLES_INCLUDE_DIR ${EXAMPLES_SRC_DIR})
 set(EXAMPLES_LIBS_DIR libs)
-set(EXAMPLES_LIBRARIES nikol)
+set(EXAMPLES_LIBRARIES nikola)
 
 set(EXAMPLES_INCLUDES 
-  ${NIKOL_INCLUDES}
+  ${NIKOLA_INCLUDES}
   ${EXAMPLES_INCLUDE_DIR}
 )
 
 if(WIN32)
-  set(NIKOL_LIBRARY ${NIKOL_OUTPUT_DIR}/nikol.lib)
+  set(NIKOLA_LIBRARY ${NIKOLA_OUTPUT_DIR}/nikola.dll)
 elseif(UNIX)
-  set(NIKOL_LIBRARY ${NIKOL_OUTPUT_DIR}/libnikol.a)
+  set(NIKOLA_LIBRARY ${NIKOLA_OUTPUT_DIR}/libnikola.so)
 endif()
 ############################################################
 
@@ -34,14 +34,14 @@ add_executable(${PROJECT_NAME} ${EXAMPLES_SOURCES})
 
 ### Linking ###
 ############################################################
-add_dependencies(${PROJECT_NAME} nikol)
+add_dependencies(${PROJECT_NAME} nikola)
 
 target_include_directories(${PROJECT_NAME} PUBLIC BEFORE ${EXAMPLES_INCLUDES})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${NIKOL_LIBRARY} glfw)
+target_link_libraries(${PROJECT_NAME} PUBLIC ${NIKOLA_LIBRARY} glfw)
 ############################################################
 
 ### Compiling Options ###
 ############################################################
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
-target_compile_options(${PROJECT_NAME} PUBLIC ${NIKOL_BUILD_OPTS})
+target_compile_options(${PROJECT_NAME} PUBLIC ${NIKOLA_BUILD_OPTS})
 ############################################################

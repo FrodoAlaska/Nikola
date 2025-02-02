@@ -6,7 +6,8 @@ A cross-platform framework for window creation, input handling, audio playback, 
 - Cross-platform window creation. 
 - Gamepad, keyboard, and mouse input support.
 - Fully-configurable cross-platform rendering API using OpenGL (Linux) and DirectX11 (Windows).
-- A cross-platform audio abstraction layer.
+- Robust resource manager 
+- Support for loading multiple image formats such as jpeg, png, bmp, tga, and way more. 
 
 # Dependencies
 - GLFW3 
@@ -34,7 +35,7 @@ cmake --build .
 Here's a simple example of the _core_ library working in action. The example below will open a basic window and initialze a graphics context.
 
 ```c++
-#include <nikola_core.hpp>
+#include <nikola/nikola_core.hpp>
 
 int main() {
   // Initialze the library
@@ -43,8 +44,8 @@ int main() {
   }
 
   // Openinig the window
-  nikola::i32 win_flags = nikola::WINDOW_FLAGS_FOCUS_ON_CREATE | nikol::WINDOW_FLAGS_GFX_HARDWARE;
-  nikola::Window* window = nikola::window_open("Hello, Nikol", 1366, 768, win_flags);
+  nikola::i32 win_flags = nikola::WINDOW_FLAGS_FOCUS_ON_CREATE | nikola::WINDOW_FLAGS_GFX_HARDWARE;
+  nikola::Window* window = nikola::window_open("Hello, Nikola", 1366, 768, win_flags);
   if(!window) {
     return -1;
   }
