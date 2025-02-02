@@ -76,6 +76,10 @@ set(NIKOL_SOURCES
   # Engine/Resources/Loaders 
   ${NIKOL_SRC_DIR}/engine/resources/loaders/texture_loader.cpp
   ${NIKOL_SRC_DIR}/engine/resources/loaders/cubemap_loader.cpp
+  
+  # Engine/Renderer 
+  ${NIKOL_SRC_DIR}/engine/renderer/camera.cpp
+  ${NIKOL_SRC_DIR}/engine/renderer/renderer.cpp
 )
 
 set(NIKOL_HEADERS

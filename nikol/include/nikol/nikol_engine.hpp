@@ -31,7 +31,7 @@ using HashMap      = std::unordered_map<K, V>;
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// *** Consts ***
+/// *** Math ***
 
 /// ----------------------------------------------------------------------
 /// Math consts 
@@ -50,12 +50,6 @@ const f64 NIKOL_FLOAT_MAX = 3.40282e+38F;
 
 /// Math consts 
 /// ----------------------------------------------------------------------
-
-/// *** Consts ***
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
-/// *** Math ***
 
 /// ----------------------------------------------------------------------
 /// Math common functions
@@ -383,29 +377,6 @@ enum VertexType {
 /// *** Resources ***
 
 /// ----------------------------------------------------------------------
-/// ResourceID
-typedef u64 ResourceUUID;
-
-struct ResourceID {
-  ResourceUUID uuid;
-
-  // Hashing the given `str` to a `ResourceUUID`
-  ResourceID(const String& str) {
-    u32 hash  = 2166136261u;
-    sizei len = str.length();
-
-    for(sizei i = 0; i < len; i++) {
-      hash ^= (u8)str[i];
-      hash *= 1677719;
-    }
-
-    uuid = hash;
-  }
-};
-/// ResourceID
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
 /// ResourceType
 enum ResourceType {
   RESOURCE_TYPE_BUFFER   = 14 << 0, 
@@ -419,6 +390,28 @@ enum ResourceType {
   RESOURCE_TYPE_FONT     = 14 << 9,
 };
 /// ResourceType
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// MeshType
+enum MeshType {
+  MESH_TYPE_CUBE     = 15 << 0, 
+  MESH_TYPE_CIRCLE   = 15 << 1, 
+  MESH_TYPE_CYLINDER = 15 << 2, 
+};
+/// MeshType
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// ResourceID
+typedef u64 ResourceID;
+/// ResourceID
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// ResourceStorage
+struct ResourceStorage;
+/// ResourceStorage
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -491,6 +484,38 @@ struct Font {
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// MeshLoader
+struct MeshLoader {
+  ResourceID vertex_buffer; 
+  ResourceID index_buffer; 
+
+  GfxPipelineDesc pipe_desc;
+};
+/// MeshLoader
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// MaterialLoader 
+struct MaterialLoader {
+  ResourceID diffuse_map;
+  ResourceID specular_map;
+  ResourceID shader;
+};
+/// MaterialLoader 
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// SkyboxLoader 
+struct SkyboxLoader {
+  ResourceID vertex_buffer; 
+  ResourceID cubemap; 
+
+  GfxPipelineDesc pipe_desc;
+};
+/// SkyboxLoader 
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// Texture loader functions
 
 void texture_loader_load(GfxTextureDesc* desc, 
@@ -526,21 +551,47 @@ void cubemap_loader_unload(GfxCubemapDesc& desc);
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// ResourceStorage
-struct ResourceStorage;
-/// ResourceStorage
+/// Mesh loader functions
+
+void mesh_loader_load(ResourceStorage* storage, MeshLoader* loader, const DynamicArray<Vertex3D_PCUV>& vertices, const DynamicArray<u32>& indices);
+
+void mesh_loader_load(ResourceStorage* storage, MeshLoader* loader, const DynamicArray<Vertex3D_PNUV>& vertices, const DynamicArray<u32>& indices);
+
+void mesh_loader_load(ResourceStorage* storage, MeshLoader* loader, const DynamicArray<Vertex3D_PNCUV>& vertices, const DynamicArray<u32>& indices);
+
+void mesh_loader_load(ResourceStorage* storage, MeshLoader* loader, const MeshType type);
+
+/// Mesh loader functions
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// Material loader functions
+
+void material_loader_load(ResourceStorage* storage, 
+                          MaterialLoader* loader, 
+                          const GfxTexture& diffuse, 
+                          const GfxTexture& specular, 
+                          const String& shader_src);
+
+/// Material loader functions
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// Skybox loader functions
+
+void skybox_loader_load(ResourceStorage* storage, SkyboxLoader* loader, const GfxCubemapDesc& cubemap);
+
+/// Skybox loader functions
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
 /// Resource storage functions
 
-void resource_manager_init(GfxContext* gfx);
+void resource_manager_init();
 
-void resource_manager_destroy();
+void resource_manager_shutdown();
 
 const ResourceStorage* resource_manager_cache();
-
-void resource_manager_clear_cache();
 
 /// Resource storage functions
 /// ----------------------------------------------------------------------
@@ -554,21 +605,31 @@ void resource_storage_clear(ResourceStorage* storage);
 
 void resource_storage_destroy(ResourceStorage* storage);
 
-ResourceUUID resource_storage_push_buffer(ResourceStorage* storage, const String& sid, const GfxBufferDesc& buff_desc);
+ResourceID resource_storage_push(ResourceStorage* storage, const GfxBufferDesc& buff_desc);
+ResourceID resource_storage_push(ResourceStorage* storage, const GfxTextureDesc& tex_desc);
+ResourceID resource_storage_push(ResourceStorage* storage, const GfxCubemapDesc& cubemap_desc);
+ResourceID resource_storage_push(ResourceStorage* storage, const String& shader_src);
+ResourceID resource_storage_push(ResourceStorage* storage, const MeshLoader& loader);
+ResourceID resource_storage_push(ResourceStorage* storage, const MaterialLoader& loader);
+ResourceID resource_storage_push(ResourceStorage* storage, const SkyboxLoader& loader);
 
-ResourceUUID resource_storage_push_texture(ResourceStorage* storage, const String& sid, const GfxTextureDesc& tex_desc);
+GfxBuffer* resource_storage_get_buffer(ResourceStorage* storage, const ResourceID& id);
 
-ResourceUUID resource_storage_push_cubemap(ResourceStorage* storage, const String& sid, const GfxCubemapDesc& cubemap_desc);
+GfxTexture* resource_storage_get_texture(ResourceStorage* storage, const ResourceID& id);
 
-ResourceUUID resource_storage_push_shader(ResourceStorage* storage, const String& sid, const String& shader_src);
+GfxCubemap* resource_storage_get_cubemap(ResourceStorage* storage, const ResourceID& id);
 
-GfxBuffer* resource_storage_get_buffer(ResourceStorage* storage, const ResourceUUID& id);
+GfxShader* resource_storage_get_shader(ResourceStorage* storage, const ResourceID& id);
 
-GfxTexture* resource_storage_get_texture(ResourceStorage* storage, const ResourceUUID& id);
+Mesh* resource_storage_get_mesh(ResourceStorage* storage, const ResourceID& id);
 
-GfxCubemap* resource_storage_get_cubemap(ResourceStorage* storage, const ResourceUUID& id);
+Material* resource_storage_get_material(ResourceStorage* storage, const ResourceID& id);
 
-GfxShader* resource_storage_get_shader(ResourceStorage* storage, const ResourceUUID& id);
+Model* resource_storage_get_model(ResourceStorage* storage, const ResourceID& id);
+
+Skybox* resource_storage_get_skybox(ResourceStorage* storage, const ResourceID& id);
+
+Font* resource_storage_get_font(ResourceStorage* storage, const ResourceID& id);
 
 /// Resource storage functions
 /// ----------------------------------------------------------------------
@@ -580,13 +641,95 @@ GfxShader* resource_storage_get_shader(ResourceStorage* storage, const ResourceU
 /// *** Renderer ***
 
 /// ----------------------------------------------------------------------
+/// Camera consts 
+
+const f32 CAMERA_MAX_DEGREES = 89.0f;
+
+const f32 CAMERA_MAX_ZOOM    = 180.0f;
+
+/// Camera consts 
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// Camera function pointers
+
+// Have to do this to fix underfined variable errors in the callback.
+struct Camera;
+
+/// A function callback to move the camera every frame.
+using CameraMoveFn = void(*)(Camera& camera);
+
+/// Camera function pointers
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// Camera 
+struct Camera {
+  f32 yaw, pitch;
+  f32 zoom, aspect_ratio;
+
+  f32 near        = 0.1f; 
+  f32 far         = 100.0f;
+  f32 sensitivity = 0.1f;
+
+  Vec3 position, up, direction, front;
+  Mat4 view, projection, view_projection;
+
+  CameraMoveFn move_fn;
+};
+/// Camera 
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// Camera functions
+
+void camera_create(Camera* cam, const f32 aspect_ratio, const Vec3& pos, const Vec3& target, const CameraMoveFn& move_fn);
+
+void camera_update(Camera& cam);
+
+/// Camera functions
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// RenderableType 
+enum RenderableType {
+  RENDERABLE_TYPE_MESH   = 16 << 0,
+  RENDERABLE_TYPE_MODEL  = 16 << 1,
+  RENDERABLE_TYPE_SKYBOX = 16 << 2,
+};
+/// RenderableType 
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// RenderCommand
+struct RenderCommand {
+  RenderableType render_type;
+
+  ResourceID renderable_id;
+  ResourceID material_id;
+  
+  Transform transform;
+};
+/// RenderCommand
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// Renderer functions
 
-void renderer_init(Window* window);
+void renderer_init(Window* window, const Vec4& clear_color);
 
 void renderer_shutdown();
 
 const GfxContext* renderer_get_context();
+
+void renderer_set_clear_color(const Vec4& clear_color);
+
+void renderer_begin(Camera& cam);
+
+void renderer_end();
+
+// @TEMP: The `res_storage` param is only temporary
+void renderer_queue_command(ResourceStorage* res_storage, const RenderCommand& command);
 
 /// Renderer functions
 /// ----------------------------------------------------------------------

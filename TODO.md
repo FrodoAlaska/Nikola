@@ -1,4 +1,5 @@
 # (Engine) TODO: 
+- Rename the engine to *nikola*. It's about time, man.
 - Resource loaders -> obj/gltf/model loader, font loader
 - A way to startup the engine and to setup an application callback
 - Design and implement a resource manager
@@ -33,5 +34,6 @@
 
 # EXAMPLES: 
 - An obj loader
+- A mirror example using custom render targets?
 - A simple and small drawing app
 - A simple image manipulation app

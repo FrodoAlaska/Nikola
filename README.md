@@ -1,4 +1,4 @@
-# *Nikol*
+# *Nikola*
 A cross-platform framework for window creation, input handling, audio playback, and rendering using OpenGL 4.5+ or Direct3D11.
  
 # Features 
@@ -12,9 +12,11 @@ A cross-platform framework for window creation, input handling, audio playback, 
 - GLFW3 
 - GLAD
 - D3D11
+- STB 
+- GLM
 
 # Build Instructions
-Run the following commands to build *Nikol* using _CMake_
+Run the following commands to build *Nikola* using _CMake_
 
 ```bash
 mkdir build 
@@ -28,59 +30,56 @@ make
 cmake --build .
 ```
 
-# Hello, *Nikol*
-Here's a simple example of the library. The example below will open a basic window and initialze a graphics context.
+# Hello, *Nikola*
+Here's a simple example of the _core_ library working in action. The example below will open a basic window and initialze a graphics context.
 
 ```c++
-#include <nikol_core.hpp>
+#include <nikola_core.hpp>
 
 int main() {
   // Initialze the library
-  if(!nikol::init()) {
+  if(!nikola::init()) {
     return -1;
   }
 
   // Openinig the window
-  nikol::i32 win_flags = nikol::WINDOW_FLAGS_FOCUS_ON_CREATE | nikol::WINDOW_FLAGS_GFX_HARDWARE;
-  nikol::Window* window = nikol::window_open("Hello, Nikol", 1366, 768, win_flags);
+  nikola::i32 win_flags = nikola::WINDOW_FLAGS_FOCUS_ON_CREATE | nikol::WINDOW_FLAGS_GFX_HARDWARE;
+  nikola::Window* window = nikola::window_open("Hello, Nikol", 1366, 768, win_flags);
   if(!window) {
     return -1;
   }
 
   // Creating a graphics context
-  nikol::GfxContextDesc gfx_desc = {
+  nikola::GfxContextDesc gfx_desc = {
     .window = window,
-    .states = nikol::GFX_STATE_DEPTH | nikol::GFX_STATE_STENCIL,
+    .states = nikola::GFX_STATE_DEPTH | nikola::GFX_STATE_STENCIL,
   };
-  nikol::GfxContext* gfx = nikol::gfx_context_init(gfx_desc);
+  nikola::GfxContext* gfx = nikola::gfx_context_init(gfx_desc);
   if(!gfx) {
     return -1;
   }
 
   // Main loop
-  while(nikol::window_is_open(window)) {
+  while(nikola::window_is_open(window)) {
     // Will stop the application when F1 is pressed
-    if(nikol::input_key_pressed(nikol::KEY_F1)) {
+    if(nikola::input_key_pressed(nikola::KEY_F1)) {
       break;
     }
     
     // Clear the screen to black
-    nikol::gfx_context_clear(gfx, 0.0f, 0.0f, 0.0f, 1.0f, nikol::GFX_CONTEXT_FLAGS_ENABLE_VSYNC);
+    nikola::gfx_context_clear(gfx, 0.0f, 0.0f, 0.0f, 1.0f, nikola::GFX_CONTEXT_FLAGS_ENABLE_VSYNC);
     
     // Swap the internal window buffer
-    nikol::gfx_context_present(gfx);
+    nikola::gfx_context_present(gfx);
     
     // Poll the window events
-    nikol::window_poll_events(window);
+    nikola::window_poll_events(window);
   }
 
   // De-initialze
-  nikol::gfx_context_shutdown(gfx);
-  nikol::window_close(window);
-  nikol::shutdown();
+  nikola::gfx_context_shutdown(gfx);
+  nikola::window_close(window);
+  nikola::shutdown();
 }
 
 ```
-
-# More Examples 
-For more practical examples using the *Nikol* engine, go to <a href="https://github.com/FrodoAlaska/NikolExamples">NikolExamples</a>
