@@ -74,7 +74,7 @@ static T get_resource(ResourceStorage* storage, HashMap<ResourceID, T>& map, con
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// Resource storage functions
+/// Resource manager functions
 
 void resource_manager_init() {
   const GfxContext* gfx = renderer_get_context();
@@ -102,15 +102,14 @@ const ResourceStorage* resource_manager_cache() {
   return s_manager.cached_storage;
 }
 
-/// Resource storage functions
+/// Resource manager functions
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
 /// Resource storage functions
 
 ResourceStorage* resource_storage_create(const String& name, const FilePath& parent_dir) {
-  ResourceStorage* res = (ResourceStorage*)memory_allocate(sizeof(ResourceStorage));
-  memory_zero(res, sizeof(ResourceStorage));
+  ResourceStorage* res = new ResourceStorage; //memory_allocate(sizeof(ResourceStorage));
 
   res->name                     = name; 
   res->parent_dir               = parent_dir;
@@ -127,6 +126,11 @@ void resource_storage_clear(ResourceStorage* storage) {
   storage->textures.clear();
   storage->cubemaps.clear();
   storage->shaders.clear();
+  storage->meshes.clear();
+  storage->materials.clear();
+  storage->skyboxes.clear();
+  storage->models.clear();
+  storage->fonts.clear();
   
   NIKOLA_LOG_INFO("Resource storage \'%s\' was successfully destroyed", storage->name.c_str());
 }
@@ -143,7 +147,7 @@ void resource_storage_destroy(ResourceStorage* storage) {
   DESTROY_RESOURCE_MAP(storage, shaders, gfx_shader_destroy);
 
   s_manager.storages.erase(storage->name);
-  memory_free(storage);
+  delete storage; //memory_free(storage);
 }
 
 ResourceID resource_storage_push(ResourceStorage* storage, const GfxBufferDesc& buff_desc) {

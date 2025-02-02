@@ -7,7 +7,6 @@ set(NIKOLA_SRC_DIR ${CMAKE_SOURCE_DIR}/nikola/src)
 set(NIKOLA_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/nikola/include)
 set(NIKOLA_LIBS_DIR ${CMAKE_SOURCE_DIR}/libs)
 
-set(NIKOLA_BUILD_OPTS -Wall)
 set(NIKOLA_BUILD_DEFS GLFW_INCLUDE_NONE)
 
 set(NIKOLA_LIBRARIES glfw)
@@ -19,11 +18,23 @@ set(NIKOLA_INCLUDES
 )
 
 set(NIKOLA_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
+
+# Set platform-specific variables  
+if(WIN32)
+  set(NIKOLA_BUILD_FLAGS
+    /W0 
+  )
+elseif(UNIX OR LINUX)
+  set(NIKOLA_BUILD_FLAGS
+    -lm 
+    -w
+  )
+endif()
 ############################################################
 
 ### Project Options ###
 ############################################################
-option(NIKOLA_BUILD_SHARED "Build Nikola as a shared library" ON)
+option(NIKOLA_BUILD_SHARED "Build Nikola as a shared library" OFF)
 option(NIKOLA_BUILD_EXAMPLES "Build the examples with Nikola" ON)
 
 # Set it to shared
@@ -109,9 +120,9 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${NIKOLA_LIBRARIES})
 
 ### Compiling Options ###
 ############################################################
+target_compile_options(${PROJECT_NAME} PUBLIC ${NIKOLA_BUILD_FLAGS})
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 target_compile_definitions(${PROJECT_NAME} PUBLIC ${NIKOLA_BUILD_DEFS})
-target_compile_options(${PROJECT_NAME} PUBLIC ${NIKOLA_BUILD_OPTS})
 ############################################################
 
 ### Examples ###

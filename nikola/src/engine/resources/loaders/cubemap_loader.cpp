@@ -39,7 +39,7 @@ void cubemap_loader_load(GfxCubemapDesc* desc,
 
   i32 width, height, channels; 
   for(sizei i = 0; i < faces_count; i++) {
-    desc->data[i] = stbi_load(path[i].c_str(), &width, &height, &channels, 4); 
+    desc->data[i] = stbi_load((const char*)path[i].c_str(), &width, &height, &channels, 4); 
     if(!desc->data[i]) {
       NIKOLA_LOG_ERROR("Could not load cubemap face at \'%s\'", path[i].c_str());
     }
@@ -65,7 +65,7 @@ void cubemap_loader_load(GfxCubemapDesc* desc,
   u32 count = 0;
   for(auto& p : std::filesystem::recursive_directory_iterator(directory)) {
     // We only care about indivisual files with the supported extensions
-    if(!p.is_regular_file() && !is_valid_extension(p.path().extension())) {
+    if(!p.is_regular_file() && !is_valid_extension(p.path().extension().string())) {
       continue;
     }
 

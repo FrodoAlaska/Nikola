@@ -1,10 +1,10 @@
 # (Engine) TODO: 
-- Rename the engine to *nikola*. It's about time, man.
-- Resource loaders -> obj/gltf/model loader, font loader
 - A way to startup the engine and to setup an application callback
+- Resource loaders -> obj/gltf/model loader, font loader
 - Design and implement a resource manager
 
 # (Core) TODO: 
+- Potentially fix the memory allocater functions
 - A function to sub image or slice a texture 
 - Put some thought into instancing
 

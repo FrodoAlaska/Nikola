@@ -6,18 +6,20 @@ project(NikolaExamples)
 set(EXAMPLES_SRC_DIR ${CMAKE_SOURCE_DIR}/examples)
 set(EXAMPLES_INCLUDE_DIR ${EXAMPLES_SRC_DIR})
 set(EXAMPLES_LIBS_DIR libs)
-set(EXAMPLES_LIBRARIES nikola)
+
+if(WIN32)
+  # Thanks, CMake...
+  set(NIKOLA_LIBRARY_DIR ${NIKOLA_OUTPUT_DIR}/"$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>"/nikola.lib)
+elseif(UNIX OR LINUX)
+  set(NIKOLA_LIBRARY_DIR ${NIKOLA_OUTPUT_DIR}/libnikola.a)
+endif()
+
+set(EXAMPLES_LIBRARIES ${NIKOLA_LIBRARY_DIR} glfw)
 
 set(EXAMPLES_INCLUDES 
   ${NIKOLA_INCLUDES}
   ${EXAMPLES_INCLUDE_DIR}
 )
-
-if(WIN32)
-  set(NIKOLA_LIBRARY ${NIKOLA_OUTPUT_DIR}/nikola.dll)
-elseif(UNIX)
-  set(NIKOLA_LIBRARY ${NIKOLA_OUTPUT_DIR}/libnikola.so)
-endif()
 ############################################################
 
 ### Project Sources ###
@@ -37,11 +39,11 @@ add_executable(${PROJECT_NAME} ${EXAMPLES_SOURCES})
 add_dependencies(${PROJECT_NAME} nikola)
 
 target_include_directories(${PROJECT_NAME} PUBLIC BEFORE ${EXAMPLES_INCLUDES})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${NIKOLA_LIBRARY} glfw)
+target_link_libraries(${PROJECT_NAME} PUBLIC ${EXAMPLES_LIBRARIES})
 ############################################################
 
 ### Compiling Options ###
 ############################################################
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
-target_compile_options(${PROJECT_NAME} PUBLIC ${NIKOLA_BUILD_OPTS})
+target_compile_options(${PROJECT_NAME} PUBLIC ${NIKOLA_BUILD_FLAGS})
 ############################################################
