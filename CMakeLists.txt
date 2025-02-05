@@ -35,7 +35,7 @@ endif()
 ### Project Options ###
 ############################################################
 option(NIKOLA_BUILD_SHARED "Build Nikola as a shared library" OFF)
-option(NIKOLA_BUILD_EXAMPLES "Build the examples with Nikola" ON)
+option(NIKOLA_BUILD_TESTBED "Build the testbeds with Nikola" ON)
 
 # Set it to shared
 if(NIKOLA_BUILD_SHARED)
@@ -72,6 +72,9 @@ set(NIKOLA_SOURCES
   # Core/Gfx
   ${NIKOLA_SRC_DIR}/core/gfx/gl_backend.cpp
   ${NIKOLA_SRC_DIR}/core/gfx/dx11_backend.cpp
+  
+  # Engine
+  ${NIKOLA_SRC_DIR}/engine/engine.cpp
 
   # Engine/Math 
   ${NIKOLA_SRC_DIR}/engine/math/math_common.cpp
@@ -127,8 +130,8 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC ${NIKOLA_BUILD_DEFS})
 
 ### Examples ###
 ############################################################
-if(NIKOLA_BUILD_EXAMPLES) 
-  add_subdirectory(examples)
+if(NIKOLA_BUILD_TESTBED) 
+  add_subdirectory(testbed)
 endif()
 ############################################################
 

@@ -1,9 +1,10 @@
 # (Engine) TODO: 
 - A way to startup the engine and to setup an application callback
+- The renderer... at least minimally. To render stuff and things
 - Resource loaders -> obj/gltf/model loader, font loader
-- Design and implement a resource manager
 
 # (Core) TODO: 
+- Seperate the `gl_backend.cpp` file into several files for better visualization
 - Potentially fix the memory allocater functions
 - A function to sub image or slice a texture 
 - Put some thought into instancing

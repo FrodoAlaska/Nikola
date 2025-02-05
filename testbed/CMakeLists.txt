@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.27)
-project(NikolaExamples)
+project(NikolaTestbed)
 
 ### Project Variables ###
 ############################################################
-set(EXAMPLES_SRC_DIR ${CMAKE_SOURCE_DIR}/examples)
-set(EXAMPLES_INCLUDE_DIR ${EXAMPLES_SRC_DIR})
-set(EXAMPLES_LIBS_DIR libs)
+set(TESTBED_SRC_DIR ${CMAKE_SOURCE_DIR}/testbed)
+set(TESTBED_INCLUDE_DIR ${TESTBED_SRC_DIR})
+set(TESTBED_LIBS_DIR libs)
 
 if(WIN32)
   # Thanks, CMake...
@@ -14,32 +14,33 @@ elseif(UNIX OR LINUX)
   set(NIKOLA_LIBRARY_DIR ${NIKOLA_OUTPUT_DIR}/libnikola.a)
 endif()
 
-set(EXAMPLES_LIBRARIES ${NIKOLA_LIBRARY_DIR} glfw)
+set(TESTBED_LIBRARIES ${NIKOLA_LIBRARY_DIR} glfw)
 
-set(EXAMPLES_INCLUDES 
+set(TESTBED_INCLUDES 
   ${NIKOLA_INCLUDES}
-  ${EXAMPLES_INCLUDE_DIR}
+  ${TESTBED_INCLUDE_DIR}
 )
 ############################################################
 
 ### Project Sources ###
 ############################################################
-set(EXAMPLES_SOURCES 
-  ${EXAMPLES_SRC_DIR}/basic_example/main.cpp
+set(TESTBED_SOURCES 
+  ${TESTBED_SRC_DIR}/engine_testbed/main.cpp
+  ${TESTBED_SRC_DIR}/engine_testbed/app.cpp
 )
 ############################################################
 
 ### Final Build ###
 ############################################################
-add_executable(${PROJECT_NAME} ${EXAMPLES_SOURCES})
+add_executable(${PROJECT_NAME} ${TESTBED_SOURCES})
 ############################################################
 
 ### Linking ###
 ############################################################
 add_dependencies(${PROJECT_NAME} nikola)
 
-target_include_directories(${PROJECT_NAME} PUBLIC BEFORE ${EXAMPLES_INCLUDES})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${EXAMPLES_LIBRARIES})
+target_include_directories(${PROJECT_NAME} PUBLIC BEFORE ${TESTBED_INCLUDES})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${TESTBED_LIBRARIES})
 ############################################################
 
 ### Compiling Options ###

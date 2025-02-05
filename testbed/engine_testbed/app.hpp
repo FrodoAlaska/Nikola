@@ -1,0 +1,15 @@
+#pragma once
+
+#include <nikola/nikola_engine.hpp>
+
+/// ----------------------------------------------------------------------
+/// App functions 
+
+nikola::App* app_init(nikola::Window* window);
+void app_shutdown(nikola::App* app);
+
+void app_update(nikola::App* app);
+void app_render(nikola::App* app);
+
+/// App functions 
+/// ----------------------------------------------------------------------

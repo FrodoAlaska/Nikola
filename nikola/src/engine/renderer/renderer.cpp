@@ -79,19 +79,22 @@ void renderer_set_clear_color(const Vec4& clear_color) {
   s_renderer.clear_color = clear_color;
 }
 
-void renderer_begin(Camera& cam) {
-  Vec4 col = s_renderer.clear_color;
-  gfx_context_clear(s_renderer.context, col.r, col.g, col.b, col.a, s_renderer.clear_flags);
-
+void renderer_pre_pass(Camera& cam) {
   s_renderer.cam = cam;
-  s_renderer.render_queue.clear();
 }
 
-void renderer_end() {
+void renderer_begin_pass() {
+  Vec4 col = s_renderer.clear_color;
+  gfx_context_clear(s_renderer.context, col.r, col.g, col.b, col.a, s_renderer.clear_flags);
+}
+
+void renderer_end_pass() {
   for(auto& pipe : s_renderer.render_queue) {
     gfx_pipeline_draw_vertex(pipe); 
   }
+}
 
+void renderer_post_pass() {
   gfx_context_present(s_renderer.context);
 }
 

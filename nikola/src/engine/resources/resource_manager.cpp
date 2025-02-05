@@ -45,7 +45,6 @@ struct ResourceStorage {
   for(auto& [key, value] : storage->map) {               \
     clear_func(value);                                   \
   }                                                      \
-  storage->map.clear();                                  \
 }
 
 /// Macros (Unfortunately)

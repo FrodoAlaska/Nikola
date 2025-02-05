@@ -15,6 +15,18 @@
 namespace nikola { // Start of nikola
 
 /// ----------------------------------------------------------------------
+/// Macros 
+
+#if NIKOLA_PLATFORM_WINDOWS == 1
+  #define NIKOLA_MAIN() WINAPI WinMain(HINSTANCE inst, HINSTANCE prev_inst, PSTR cmd_line, int cmd_show)
+#elif NIKOLA_PLATFORM_LINUX == 1
+  #define NIKOLA_MAIN() main(int argc, char** argv)
+#endif
+
+/// Macros 
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// *** Typedefs ***
 
 using String       = std::string;
@@ -724,9 +736,13 @@ const GfxContext* renderer_get_context();
 
 void renderer_set_clear_color(const Vec4& clear_color);
 
-void renderer_begin(Camera& cam);
+void renderer_pre_pass(Camera& cam);
 
-void renderer_end();
+void renderer_begin_pass();
+
+void renderer_end_pass();
+
+void renderer_post_pass();
 
 // @TEMP: The `res_storage` param is only temporary
 void renderer_queue_command(ResourceStorage* res_storage, const RenderCommand& command);
@@ -735,6 +751,59 @@ void renderer_queue_command(ResourceStorage* res_storage, const RenderCommand& c
 /// ----------------------------------------------------------------------
 
 /// *** Renderer ***
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// *** Engine ***
+
+/// ----------------------------------------------------------------------
+/// App
+struct App;
+/// App
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// App callbacks
+
+using AppInitFn       = App*(*)(Window* window);
+
+using AppShutdownFn   = void(*)(App* app);
+
+using AppUpdateFn     = void(*)(App* app);
+
+using AppRenderPassFn = void(*)(App* app);
+
+/// App callbacks
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// App description
+struct AppDesc {
+  AppInitFn init_fn         = nullptr;
+  AppShutdownFn shutdown_fn = nullptr;
+  AppUpdateFn update_fn     = nullptr;
+  AppRenderPassFn render_fn = nullptr;
+ 
+  String window_title;
+  i32 window_width, window_height;
+  i32 window_flags;
+};
+/// App description 
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// Engine functions
+
+void engine_init(const AppDesc& desc);
+
+void engine_run();
+
+void engine_shutdown();
+
+/// Engine functions
+/// ----------------------------------------------------------------------
+
+/// *** Engine ***
 /// ----------------------------------------------------------------------
 
 } // End of nikola

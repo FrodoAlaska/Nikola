@@ -42,7 +42,7 @@ void camera_update(Camera& cam) {
   Vec2 mouse_offset; 
   input_mouse_offset(&mouse_offset.x, &mouse_offset.y);
 
-  if(!cam.move_fn) {
+  if(cam.move_fn) {
     cam.move_fn(cam);
   }
 
