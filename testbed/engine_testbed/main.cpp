@@ -3,7 +3,12 @@
 
 #include "app.hpp"
 
-int NIKOLA_MAIN() {
+// Yeah, unfortunate...
+#if NIKOLA_PLATFORM_WINDOWS == 1 
+#include <windows.h>
+#endif
+
+int engine_run(int argc, char** argv) {
   int win_flags = nikola::WINDOW_FLAGS_FOCUS_ON_CREATE | 
                   nikola::WINDOW_FLAGS_GFX_HARDWARE    | 
                   nikola::WINDOW_FLAGS_CENTER_MOUSE    |
@@ -24,4 +29,8 @@ int NIKOLA_MAIN() {
   nikola::engine_init(app_desc);
   nikola::engine_run();
   nikola::engine_shutdown();
+
+  return 0;
 }
+
+NIKOLA_MAIN(engine_run);

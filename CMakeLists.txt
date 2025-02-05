@@ -22,12 +22,12 @@ set(NIKOLA_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
 # Set platform-specific variables  
 if(WIN32)
   set(NIKOLA_BUILD_FLAGS
-    /W0 
+    "/W0"
   )
 elseif(UNIX OR LINUX)
   set(NIKOLA_BUILD_FLAGS
-    -lm 
-    -w
+    "-lm" 
+    "-w"
   )
 endif()
 ############################################################

@@ -1,6 +1,6 @@
 # (Engine) TODO: 
-- A way to startup the engine and to setup an application callback
 - The renderer... at least minimally. To render stuff and things
+- Audio in core
 - Resource loaders -> obj/gltf/model loader, font loader
 
 # (Core) TODO: 

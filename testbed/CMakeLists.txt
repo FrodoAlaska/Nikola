@@ -20,6 +20,12 @@ set(TESTBED_INCLUDES
   ${NIKOLA_INCLUDES}
   ${TESTBED_INCLUDE_DIR}
 )
+
+if(WIN32)
+  set(TESBED_EXE_TYPE "WIN32")
+else()
+  set(TESBED_EXE_TYPE "")
+endif()
 ############################################################
 
 ### Project Sources ###
@@ -32,7 +38,7 @@ set(TESTBED_SOURCES
 
 ### Final Build ###
 ############################################################
-add_executable(${PROJECT_NAME} ${TESTBED_SOURCES})
+add_executable(${PROJECT_NAME} ${TESBED_EXE_TYPE} ${TESTBED_SOURCES})
 ############################################################
 
 ### Linking ###

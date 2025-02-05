@@ -18,9 +18,24 @@ namespace nikola { // Start of nikola
 /// Macros 
 
 #if NIKOLA_PLATFORM_WINDOWS == 1
-  #define NIKOLA_MAIN() WINAPI WinMain(HINSTANCE inst, HINSTANCE prev_inst, PSTR cmd_line, int cmd_show)
+  
+  // Since Windows likes to bloat the application 
+  // with unnecessary crap, this define should disable 
+  // that completely.
+  #define WIN32_LEAN_AND_MEAN
+  
+  #define NIKOLA_MAIN(engine_main)                                                        \
+  int WINAPI WinMain(HINSTANCE inst, HINSTANCE prev_inst, LPSTR cmd_line, int cmd_show) { \
+    return engine_main(0, &cmd_line);                                                     \
+  }
+
 #elif NIKOLA_PLATFORM_LINUX == 1
-  #define NIKOLA_MAIN() main(int argc, char** argv)
+  
+  #define NIKOLA_MAIN(engine_main)  \
+  int main(int argc, char** argv) { \
+    return engine_main(argc, argv); \
+  }                                 \
+
 #endif
 
 /// Macros 
