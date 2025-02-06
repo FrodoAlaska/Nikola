@@ -1,9 +1,12 @@
 # (Engine) TODO: 
+- Also, maybe save off the `ResourceStorage` at the creation of each compound resource loader
+- Mesh loader, skybox loader, material loader
+- Define `NIKOLAAPI` and prepend it to all functions
 - The renderer... at least minimally. To render stuff and things
-- Audio in core
-- Resource loaders -> obj/gltf/model loader, font loader
+- NBRF importer
 
 # (Core) TODO: 
+- Audio
 - Seperate the `gl_backend.cpp` file into several files for better visualization
 - Potentially fix the memory allocater functions
 - A function to sub image or slice a texture 
@@ -32,9 +35,3 @@
 - (Window) Get rid of GLFW and do it the old-fashioned way? Misery.
 - (GFX) Context and window dissociation
 - (GFX) Add support for geometry shaders
-
-# EXAMPLES: 
-- An obj loader
-- A mirror example using custom render targets?
-- A simple and small drawing app
-- A simple image manipulation app

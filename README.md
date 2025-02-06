@@ -20,6 +20,10 @@ A cross-platform framework for window creation, input handling, audio playback, 
 Run the following commands to build *Nikola* using _CMake_
 
 ```bash
+git clone --recursive https://github.com/FrodoAlaska/Nikola.git
+```
+
+```bash
 mkdir build 
 cd build 
 cmake .. 

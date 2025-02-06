@@ -3,9 +3,9 @@ project(nikola)
 
 ### Project Variables ###
 ############################################################
-set(NIKOLA_SRC_DIR ${CMAKE_SOURCE_DIR}/nikola/src)
-set(NIKOLA_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/nikola/include)
-set(NIKOLA_LIBS_DIR ${CMAKE_SOURCE_DIR}/libs)
+set(NIKOLA_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/nikola/src)
+set(NIKOLA_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/nikola/include)
+set(NIKOLA_LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 
 set(NIKOLA_BUILD_DEFS GLFW_INCLUDE_NONE)
 
@@ -86,10 +86,13 @@ set(NIKOLA_SOURCES
   
   # Engine/Resources
   ${NIKOLA_SRC_DIR}/engine/resources/resource_manager.cpp
+  ${NIKOLA_SRC_DIR}/engine/resources/material.cpp
   
   # Engine/Resources/Loaders 
   ${NIKOLA_SRC_DIR}/engine/resources/loaders/texture_loader.cpp
   ${NIKOLA_SRC_DIR}/engine/resources/loaders/cubemap_loader.cpp
+  ${NIKOLA_SRC_DIR}/engine/resources/loaders/mesh_loader.cpp
+  ${NIKOLA_SRC_DIR}/engine/resources/loaders/material_loader.cpp
   
   # Engine/Renderer 
   ${NIKOLA_SRC_DIR}/engine/renderer/camera.cpp

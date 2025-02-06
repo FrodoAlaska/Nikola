@@ -3,7 +3,7 @@ project(NikolaTestbed)
 
 ### Project Variables ###
 ############################################################
-set(TESTBED_SRC_DIR ${CMAKE_SOURCE_DIR}/testbed)
+set(TESTBED_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(TESTBED_INCLUDE_DIR ${TESTBED_SRC_DIR})
 set(TESTBED_LIBS_DIR libs)
 

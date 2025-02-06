@@ -24,19 +24,18 @@ static Renderer s_renderer;
 /// ----------------------------------------------------------------------
 /// Private functions
 
-static void queue_mesh(ResourceStorage* storage, const RenderCommand& mesh_command) {
-  Mesh* mesh           = resource_storage_get_mesh(storage, mesh_command.renderable_id);
-  Material* material   = resource_storage_get_material(storage, mesh_command.material_id);
-  GfxShader* shader    = resource_storage_get_shader(storage, material->shader);
-  GfxTexture* diffuse  = resource_storage_get_texture(storage, material->diffuse_map);
+static void queue_mesh(const RenderCommand& mesh_command) {
+  Mesh* mesh           = resource_storage_get_mesh(mesh->resource_ref, mesh_command.renderable_id);
+  Material* material   = resource_storage_get_material(material->resource_ref, mesh_command.material_id);
+  GfxShader* shader    = resource_storage_get_shader(material->resource_ref, material->shader);
+  GfxTexture* diffuse  = resource_storage_get_texture(material->resource_ref, material->diffuse_map);
 
   mesh->pipe_desc.shader = shader;
   
   mesh->pipe_desc.textures[0]    = diffuse;
   mesh->pipe_desc.textures_count = 1;
 
-  i32 uni_loc = gfx_glsl_get_uniform_location(shader, "u_model");
-  gfx_glsl_upload_uniform(shader, uni_loc, GFX_LAYOUT_MAT4, mat4_raw_data(mesh_command.transform.transform));
+  material_set_model_matrix(material, mesh_command.transform.transform);
 
   gfx_context_apply_pipeline(s_renderer.context, mesh->pipe, mesh->pipe_desc);
   s_renderer.render_queue.push_back(mesh->pipe);
@@ -98,12 +97,10 @@ void renderer_post_pass() {
   gfx_context_present(s_renderer.context);
 }
 
-void renderer_queue_command(ResourceStorage* res_storage, const RenderCommand& command) {
-  NIKOLA_ASSERT(res_storage, "Cannot render with an invalid ResourceStorage");
-
+void renderer_queue_command(const RenderCommand& command) {
   switch(command.render_type) {
     case RENDERABLE_TYPE_MESH:
-      queue_mesh(res_storage, command);
+      queue_mesh(command);
       break;
     case RENDERABLE_TYPE_MODEL:
       // @TODO
