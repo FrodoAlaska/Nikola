@@ -12,7 +12,7 @@ namespace nikola { // Start of nikola
 
 void texture_loader_load(GfxTextureDesc* desc, const FilePath& path, const GfxTextureFormat format, const GfxTextureFilter filter, const GfxTextureWrap wrap) {
   i32 width, height, channels;
-  desc->data = stbi_load((const char*)path.c_str(), &width, &height, &channels, 4);
+  desc->data = stbi_load(path.string().c_str(), &width, &height, &channels, 4);
   
   if(!desc->data) {
     NIKOLA_LOG_ERROR("Could not load texture at \'%s\'", path.c_str());

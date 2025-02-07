@@ -755,7 +755,9 @@ struct Camera {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Camera functions
 
-void camera_create(Camera* cam, const f32 aspect_ratio, const Vec3& pos, const Vec3& target, const CameraMoveFn& move_fn);
+void camera_default_move_func(Camera& camera);
+
+void camera_create(Camera* cam, const f32 aspect_ratio, const Vec3& pos, const Vec3& target, const CameraMoveFn& move_fn = camera_default_move_func);
 
 void camera_update(Camera& cam);
 

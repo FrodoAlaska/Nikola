@@ -240,47 +240,64 @@ ResourceID resource_storage_push(ResourceStorage* storage, const SkyboxLoader& l
 
 GfxBuffer* resource_storage_get_buffer(ResourceStorage* storage, const ResourceID& id) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+  NIKOLA_ASSERT((id != INVALID_RESOURCE), "Cannot retrieve an invalid resource");
+
   return get_resource(storage, storage->buffers, id);
 }
 
 GfxTexture* resource_storage_get_texture(ResourceStorage* storage, const ResourceID& id) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+  NIKOLA_ASSERT((id != INVALID_RESOURCE), "Cannot retrieve an invalid resource");
+
   return get_resource(storage, storage->textures, id);
 }
 
 GfxCubemap* resource_storage_get_cubemap(ResourceStorage* storage, const ResourceID& id) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+  NIKOLA_ASSERT((id != INVALID_RESOURCE), "Cannot retrieve an invalid resource");
+
   return get_resource(storage, storage->cubemaps, id);
 }
 
 GfxShader* resource_storage_get_shader(ResourceStorage* storage, const ResourceID& id) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+  NIKOLA_ASSERT((id != INVALID_RESOURCE), "Cannot retrieve an invalid resource");
+
   return get_resource(storage, storage->shaders, id);
 }
 
 Mesh* resource_storage_get_mesh(ResourceStorage* storage, const ResourceID& id) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+  NIKOLA_ASSERT((id != INVALID_RESOURCE), "Cannot retrieve an invalid resource");
+
   return get_resource(storage, storage->meshes, id);
 }
 
 Material* resource_storage_get_material(ResourceStorage* storage, const ResourceID& id) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+  NIKOLA_ASSERT((id != INVALID_RESOURCE), "Cannot retrieve an invalid resource");
+
   return get_resource(storage, storage->materials, id);
 }
 
 Model* resource_storage_get_model(ResourceStorage* storage, const ResourceID& id) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+  NIKOLA_ASSERT((id != INVALID_RESOURCE), "Cannot retrieve an invalid resource");
+
   return get_resource(storage, storage->models, id);
 }
 
 Skybox* resource_storage_get_skybox(ResourceStorage* storage, const ResourceID& id) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
-  return get_resource(storage, storage->skyboxes, id);
+  NIKOLA_ASSERT((id != INVALID_RESOURCE), "Cannot retrieve an invalid resource");
 
+  return get_resource(storage, storage->skyboxes, id);
 }
 
 Font* resource_storage_get_font(ResourceStorage* storage, const ResourceID& id) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+  NIKOLA_ASSERT((id != INVALID_RESOURCE), "Cannot retrieve an invalid resource");
+
   return get_resource(storage, storage->fonts, id);
 }
 

@@ -49,8 +49,8 @@ static sizei get_vertex_type_size(VertexType type) {
 static void setup_mesh_pipe_desc(ResourceStorage* storage, MeshLoader* loader, VertexType type, void* vertices, sizei vertices_count, void* indices, sizei indices_count) {
   // Vertex buffer init 
   GfxBufferDesc vert_buff_desc = {
-    .size  = get_vertex_type_size(type) * vertices_count,
     .data  = vertices,
+    .size  = get_vertex_type_size(type) * vertices_count,
     .type  = GFX_BUFFER_VERTEX, 
     .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
   };
@@ -60,8 +60,8 @@ static void setup_mesh_pipe_desc(ResourceStorage* storage, MeshLoader* loader, V
   
   // Index buffer init
   GfxBufferDesc idx_buff_desc = {
-    .size  = sizeof(u32) * indices_count,
     .data  = indices,
+    .size  = sizeof(u32) * indices_count,
     .type  = GFX_BUFFER_INDEX, 
     .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
   };

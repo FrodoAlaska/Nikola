@@ -1,9 +1,10 @@
 # (Engine) TODO: 
-- Also, maybe save off the `ResourceStorage` at the creation of each compound resource loader
-- Mesh loader, skybox loader, material loader
+- Skybox loader, material loader
+- Have a check for the inner resources of the compound resource
 - Define `NIKOLAAPI` and prepend it to all functions
 - The renderer... at least minimally. To render stuff and things
 - NBRF importer
+- Finish up the rest of the resources (models, fonts, etc...)
 
 # (Core) TODO: 
 - Audio
