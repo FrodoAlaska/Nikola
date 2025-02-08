@@ -38,7 +38,7 @@ set(TESTBED_SOURCES
 
 ### Final Build ###
 ############################################################
-add_executable(${PROJECT_NAME} ${TESBED_EXE_TYPE} ${TESTBED_SOURCES})
+add_executable(${PROJECT_NAME} ${TESTBED_SOURCES})
 ############################################################
 
 ### Linking ###
@@ -47,6 +47,8 @@ add_dependencies(${PROJECT_NAME} nikola)
 
 target_include_directories(${PROJECT_NAME} PUBLIC BEFORE ${TESTBED_INCLUDES})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${TESTBED_LIBRARIES})
+
+file(COPY assets DESTINATION ${NIKOLA_OUTPUT_DIR})
 ############################################################
 
 ### Compiling Options ###

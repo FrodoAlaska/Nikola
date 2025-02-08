@@ -1,0 +1,36 @@
+### Header ####
+# 3 bytes - A 3 chatacter string "nbr" as a tag for the file
+# 1 byte - Version major
+# 1 byte - Version minor
+# 4 bytes - String length of the name
+# (name's length) bytes - A string representation of the resource's name
+# 2 byte - Resource type
+
+### Data (depending on the last 2 bytes of the header or, rather, the resource type) ###
+
+## Buffer ##
+# 4 bytes - buffer's length in bytes 
+# (buffer's length) bytes - buffer data/vertices
+
+## Texture ## 
+# 4 bytes - width 
+# 4 bytes - height 
+# 2 bytes - texture format 
+# 2 bytes - texture filter
+# 2 bytes - texture wrap mode 
+# (width * height) bytes - pixels
+
+## Cubemap ##
+etc.. 
+
+## Audio ## 
+etc.. 
+
+## 3D Model ## 
+etc..
+
+## Font ## 
+etc..
+
+
+nbr [--resource-type -rt] [--dir -d] [--recurse -r] <path> <output>

@@ -42,11 +42,11 @@ nikola::App* app_init(nikola::Window* window) {
 
   // Diffuse texture init
   nikola::GfxTextureDesc diffuse_desc;
-  nikola::texture_loader_load(&diffuse_desc, "assets/moon.jpg");
+  nikola::texture_loader_load(&diffuse_desc, "assets/opengl.png");
   
   // Material init
   nikola::MaterialLoader mat_loader;
-  nikola::material_loader_load(app->storage, &mat_loader, diffuse_desc, diffuse_desc, default3d_glsl_shader());
+  nikola::material_loader_load(app->storage, &mat_loader, diffuse_desc, diffuse_desc, default3d_shader());
   app->material_id = nikola::resource_storage_push(app->storage, mat_loader);
 
   // Transform init
@@ -91,7 +91,7 @@ void app_render(nikola::App* app) {
       nikola::transform_translate(app->transform, nikola::Vec3(i * 2.0f, 0.0f, j * 2.0f));
     
       rnd_cmd.transform = app->transform;
-      nikola::renderer_queue_command(rnd_cmd);
+      nikola::renderer_queue_command(app->storage, rnd_cmd);
     }
   }
 

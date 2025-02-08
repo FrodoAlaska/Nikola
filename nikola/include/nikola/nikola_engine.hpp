@@ -406,7 +406,13 @@ void transform_scale(Transform& trans, const Vec3& scale);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Resources consts
 
-const i32 INVALID_RESOURCE = -1;
+const i32 INVALID_RESOURCE                 = -1;
+
+const sizei MATERIAL_UNIFORM_BUFFERS_MAX   = 2;
+
+const sizei MATERIAL_MATRICES_BUFFER_INDEX = 0;
+
+const sizei MATERIAL_LIGHTING_BUFFER_INDEX = 1;
 
 /// Resources consts
 ///---------------------------------------------------------------------------------------------------------------------
@@ -479,12 +485,10 @@ struct Material {
   ResourceID diffuse_map  = INVALID_RESOURCE;
   ResourceID specular_map = INVALID_RESOURCE;
   ResourceID shader       = INVALID_RESOURCE; 
+  ResourceID uniform_buffers[MATERIAL_UNIFORM_BUFFERS_MAX];
   
   Vec4 color; 
   Mat4 model_matrix;
-  
-  ResourceID uniform_buffers[UNIFORM_BUFFERS_MAX];
-  sizei uniform_buffers_count = 0; 
 
   ResourceStorage* resource_ref;
 };
@@ -558,6 +562,7 @@ struct MaterialLoader {
   ResourceID diffuse_map  = INVALID_RESOURCE;
   ResourceID specular_map = INVALID_RESOURCE;
   ResourceID shader       = INVALID_RESOURCE;
+  ResourceID uniform_buffers[MATERIAL_UNIFORM_BUFFERS_MAX];
 };
 /// MaterialLoader 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -576,13 +581,15 @@ struct SkyboxLoader {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Material functions
 
-void material_set_diffuse_map(Material* mat, const ResourceID& diffuse_map);
+void material_set_diffuse(Material* mat, const ResourceID& diffuse_map);
 
-void material_set_specular_map(Material* mat, const ResourceID& specular_map);
+void material_set_specular(Material* mat, const ResourceID& specular_map);
 
 void material_set_color(Material* mat, const Vec4& color);
 
-void material_set_model_matrix(Material* mat, const Mat4& model);
+void material_set_transform(Material* mat, const Transform& transform);
+
+void material_set_matrcies_buffer(Material* mat, const Mat4& view_projection);
 
 /// Material functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -625,11 +632,12 @@ void cubemap_loader_unload(GfxCubemapDesc& desc);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Mesh loader functions
 
-void mesh_loader_load(ResourceStorage* storage, MeshLoader* loader, const DynamicArray<Vertex3D_PCUV>& vertices, const DynamicArray<u32>& indices);
-
-void mesh_loader_load(ResourceStorage* storage, MeshLoader* loader, const DynamicArray<Vertex3D_PNUV>& vertices, const DynamicArray<u32>& indices);
-
-void mesh_loader_load(ResourceStorage* storage, MeshLoader* loader, const DynamicArray<Vertex3D_PNCUV>& vertices, const DynamicArray<u32>& indices);
+void mesh_loader_load(ResourceStorage* storage, 
+                      MeshLoader* loader, 
+                      const ResourceID& vertex_buffer_id, 
+                      const VertexType vertex_type, 
+                      const ResourceID& index_buffer_id, 
+                      const sizei indices_count);
 
 void mesh_loader_load(ResourceStorage* storage, MeshLoader* loader, const MeshType type);
 
@@ -641,9 +649,9 @@ void mesh_loader_load(ResourceStorage* storage, MeshLoader* loader, const MeshTy
 
 void material_loader_load(ResourceStorage* storage, 
                           MaterialLoader* loader, 
-                          const GfxTextureDesc& diffuse, 
-                          const GfxTextureDesc& specular, 
-                          const String& shader_src);
+                          const ResourceID& diffuse_id, 
+                          const ResourceID& specular_id, 
+                          const ResourceID& shader_id);
 
 /// Material loader functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -796,7 +804,7 @@ void renderer_end_pass();
 
 void renderer_post_pass();
 
-void renderer_queue_command(const RenderCommand& command);
+void renderer_queue_command(ResourceStorage* storage, const RenderCommand& command);
 
 /// Renderer functions
 ///---------------------------------------------------------------------------------------------------------------------

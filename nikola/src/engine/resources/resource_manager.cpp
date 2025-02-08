@@ -208,10 +208,23 @@ ResourceID resource_storage_push(ResourceStorage* storage, const MaterialLoader&
 
   Material* material = (Material*)memory_allocate(sizeof(Material));
   memory_zero(material, sizeof(Material));
-
+ 
   material->diffuse_map  = loader.diffuse_map;
   material->specular_map = loader.specular_map;
   material->shader       = loader.shader;
+  
+  material->uniform_buffers[MATERIAL_MATRICES_BUFFER_INDEX] = loader.uniform_buffers[MATERIAL_MATRICES_BUFFER_INDEX];
+  material->uniform_buffers[MATERIAL_LIGHTING_BUFFER_INDEX] = loader.uniform_buffers[MATERIAL_LIGHTING_BUFFER_INDEX];
+
+  // Retrieve the core resources
+  GfxShader* shader       = resource_storage_get_shader(storage, material->shader);
+  GfxBuffer* mat_buffer   = resource_storage_get_buffer(storage, material->uniform_buffers[MATERIAL_MATRICES_BUFFER_INDEX]); 
+  GfxBuffer* light_buffer = resource_storage_get_buffer(storage, material->uniform_buffers[MATERIAL_LIGHTING_BUFFER_INDEX]); 
+
+  // Attach the preset uniform buffers to the shader
+  gfx_shader_attach_uniform(shader, GFX_SHADER_VERTEX, mat_buffer, MATERIAL_MATRICES_BUFFER_INDEX);
+  gfx_shader_attach_uniform(shader, GFX_SHADER_VERTEX, light_buffer, MATERIAL_LIGHTING_BUFFER_INDEX);
+  
   material->resource_ref = storage;
 
   ResourceID id          = generate_id();

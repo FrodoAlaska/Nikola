@@ -46,36 +46,6 @@ static sizei get_vertex_type_size(VertexType type) {
   }
 }
 
-static void setup_mesh_pipe_desc(ResourceStorage* storage, MeshLoader* loader, VertexType type, void* vertices, sizei vertices_count, void* indices, sizei indices_count) {
-  // Vertex buffer init 
-  GfxBufferDesc vert_buff_desc = {
-    .data  = vertices,
-    .size  = get_vertex_type_size(type) * vertices_count,
-    .type  = GFX_BUFFER_VERTEX, 
-    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
-  };
-  loader->vertex_buffer            = resource_storage_push(storage, vert_buff_desc);
-  loader->pipe_desc.vertex_buffer  = resource_storage_get_buffer(storage, loader->vertex_buffer);
-  loader->pipe_desc.vertices_count = vertices_count;  
-  
-  // Index buffer init
-  GfxBufferDesc idx_buff_desc = {
-    .data  = indices,
-    .size  = sizeof(u32) * indices_count,
-    .type  = GFX_BUFFER_INDEX, 
-    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
-  };
-  loader->index_buffer            = resource_storage_push(storage, idx_buff_desc);
-  loader->pipe_desc.index_buffer  = resource_storage_get_buffer(storage, loader->index_buffer);
-  loader->pipe_desc.indices_count = indices_count;  
-
-  // Layout init
-  get_layout_from_vertex_type(type, loader->pipe_desc);
-  
-  // Draw mode init
-  loader->pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
-}
-
 static void create_cube_mesh(ResourceStorage* storage, MeshLoader* loader) {
   DynamicArray<Vertex3D_PNUV> vertices = {
     // Position                 Normal                   UV coords
@@ -143,15 +113,23 @@ static void create_cube_mesh(ResourceStorage* storage, MeshLoader* loader) {
     22, 23, 20, 
   };
 
-  setup_mesh_pipe_desc(
-    storage, 
-    loader,
-    VERTEX_TYPE_PNUV, 
-    (void*)vertices.data(), 
-    vertices.size(), 
-    (void*)indices.data(),
-    indices.size()
-  );
+  GfxBufferDesc vert_buff = {
+    .data  = (void*)vertices.data(),
+    .size  = sizeof(Vertex3D_PNUV) * vertices.size(),
+    .type  = GFX_BUFFER_VERTEX,
+    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
+  };
+  ResourceID vert_id = resource_storage_push(storage, vert_buff);
+  
+  GfxBufferDesc index_buff = {
+    .data  = (void*)indices.data(),
+    .size  = sizeof(u32) * indices.size(),
+    .type  = GFX_BUFFER_INDEX,
+    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
+  };
+  ResourceID index_id = resource_storage_push(storage, index_buff);
+
+  mesh_loader_load(storage, loader, vert_id, VERTEX_TYPE_PNUV, index_id, indices.size());
 }
 
 /// Private functions  
@@ -160,40 +138,38 @@ static void create_cube_mesh(ResourceStorage* storage, MeshLoader* loader) {
 /// ----------------------------------------------------------------------
 /// Mesh loader functions
 
-void mesh_loader_load(ResourceStorage* storage, MeshLoader* loader, const DynamicArray<Vertex3D_PCUV>& vertices, const DynamicArray<u32>& indices) {
-  setup_mesh_pipe_desc(
-    storage, 
-    loader, 
-    VERTEX_TYPE_PCUV, 
-    (void*)vertices.data(), 
-    vertices.size(),
-    (void*)indices.data(),
-    indices.size()
-  );
-}
+void mesh_loader_load(ResourceStorage* storage, 
+                      MeshLoader* loader, 
+                      const ResourceID& vertex_buffer_id, 
+                      const VertexType vertex_type, 
+                      const ResourceID& index_buffer_id, 
+                      const sizei indices_count) {
+  NIKOLA_ASSERT(storage, "Cannot load with an invalid ResourceStorage");
+  NIKOLA_ASSERT(loader, "Cannot load with an invalid loader");
+  NIKOLA_ASSERT((vertex_buffer_id != INVALID_RESOURCE), "Cannot load a mesh with an invalid vertex buffer ID");
+  
+  // Default initialize the loader
+  memory_zero(loader, sizeof(MeshLoader));
+  
+  // Vertex buffer init 
+  loader->vertex_buffer            = vertex_buffer_id;
+  loader->pipe_desc.vertex_buffer  = resource_storage_get_buffer(storage, loader->vertex_buffer);
 
-void mesh_loader_load(ResourceStorage* storage, MeshLoader* loader, const DynamicArray<Vertex3D_PNUV>& vertices, const DynamicArray<u32>& indices) {
-  setup_mesh_pipe_desc(
-    storage, 
-    loader, 
-    VERTEX_TYPE_PNUV, 
-    (void*)vertices.data(), 
-    vertices.size(),
-    (void*)indices.data(),
-    indices.size()
-  );
-}
+  sizei vert_buff_size             = gfx_buffer_get_desc(loader->pipe_desc.vertex_buffer).size;
+  loader->pipe_desc.vertices_count = (get_vertex_type_size(vertex_type) / vert_buff_size);  
+  
+  // Index buffer init (only if available)
+  if(index_buffer_id != INVALID_RESOURCE) {
+    loader->index_buffer            = index_buffer_id;
+    loader->pipe_desc.index_buffer  = resource_storage_get_buffer(storage, loader->index_buffer);
+    loader->pipe_desc.indices_count = indices_count;  
+  }
 
-void mesh_loader_load(ResourceStorage* storage, MeshLoader* loader, const DynamicArray<Vertex3D_PNCUV>& vertices, const DynamicArray<u32>& indices) {
-  setup_mesh_pipe_desc(
-    storage, 
-    loader, 
-    VERTEX_TYPE_PNCUV, 
-    (void*)vertices.data(), 
-    vertices.size(),
-    (void*)indices.data(),
-    indices.size()
-  );
+  // Layout init
+  get_layout_from_vertex_type(vertex_type, loader->pipe_desc);
+  
+  // Draw mode init
+  loader->pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
 }
 
 void mesh_loader_load(ResourceStorage* storage, MeshLoader* loader, const MeshType type) {
