@@ -27,12 +27,10 @@ static Renderer s_renderer;
 static void queue_mesh(ResourceStorage* storage, const RenderCommand& mesh_command) {
   Mesh* mesh           = resource_storage_get_mesh(storage, mesh_command.renderable_id);
   Material* material   = resource_storage_get_material(storage, mesh_command.material_id);
-  GfxShader* shader    = resource_storage_get_shader(storage, material->shader);
-  GfxTexture* diffuse  = resource_storage_get_texture(storage, material->diffuse_map);
 
-  mesh->pipe_desc.shader = shader;
+  mesh->pipe_desc.shader = material->shader;
   
-  mesh->pipe_desc.textures[0]    = diffuse;
+  mesh->pipe_desc.textures[0]    = material->diffuse_map;
   mesh->pipe_desc.textures_count = 1;
 
   material_set_transform(material, mesh_command.transform);

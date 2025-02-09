@@ -93,6 +93,7 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/engine/resources/loaders/cubemap_loader.cpp
   ${NIKOLA_SRC_DIR}/engine/resources/loaders/mesh_loader.cpp
   ${NIKOLA_SRC_DIR}/engine/resources/loaders/material_loader.cpp
+  ${NIKOLA_SRC_DIR}/engine/resources/loaders/skybox_loader.cpp
   
   # Engine/Renderer 
   ${NIKOLA_SRC_DIR}/engine/renderer/camera.cpp

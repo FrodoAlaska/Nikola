@@ -1,7 +1,6 @@
 # (Engine) TODO: 
-- Skybox loader, material loader
-- Have a check for the inner resources of the compound resource
 - Define `NIKOLAAPI` and prepend it to all functions
+- Documentation
 - The renderer... at least minimally. To render stuff and things
 - NBRF importer
 - Finish up the rest of the resources (models, fonts, etc...)
@@ -23,9 +22,7 @@
 - EMPTY FOR NOW...
 
 # (Core) BUGS: 
-- (GL) MSAA still does not work well (configure the samples in the context not in the window... somehow)
-- (D3D11) MSAA in D3D11 needs to be configured some more
-- (D3D11) Blending is not completely correct in D3D11
+- EMPTY FOR NOW...
 
 # TEST: 
 - (GL) Shader attribute semantics (e.g, does Mat4 work there)
@@ -36,3 +33,4 @@
 - (Window) Get rid of GLFW and do it the old-fashioned way? Misery.
 - (GFX) Context and window dissociation
 - (GFX) Add support for geometry shaders
+- (UI) Start working on the editor (basically a wrapper around ImGui)

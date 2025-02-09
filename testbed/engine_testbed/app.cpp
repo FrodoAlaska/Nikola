@@ -43,10 +43,14 @@ nikola::App* app_init(nikola::Window* window) {
   // Diffuse texture init
   nikola::GfxTextureDesc diffuse_desc;
   nikola::texture_loader_load(&diffuse_desc, "assets/opengl.png");
-  
+  nikola::ResourceID diffuse_id = nikola::resource_storage_push(app->storage, diffuse_desc); 
+
+  // Shader init
+  nikola::ResourceID shader_id = nikola::resource_storage_push(app->storage, default3d_shader());
+
   // Material init
   nikola::MaterialLoader mat_loader;
-  nikola::material_loader_load(app->storage, &mat_loader, diffuse_desc, diffuse_desc, default3d_shader());
+  nikola::material_loader_load(app->storage, &mat_loader, diffuse_id, nikola::INVALID_RESOURCE, shader_id);
   app->material_id = nikola::resource_storage_push(app->storage, mat_loader);
 
   // Transform init

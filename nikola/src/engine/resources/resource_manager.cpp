@@ -188,15 +188,23 @@ ResourceID resource_storage_push(ResourceStorage* storage, const String& shader_
 ResourceID resource_storage_push(ResourceStorage* storage, const MeshLoader& loader) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
+  // Allocate the mesh
   Mesh* mesh = (Mesh*)memory_allocate(sizeof(Mesh));
   memory_zero(mesh, sizeof(Mesh));
 
-  mesh->vertex_buffer = loader.vertex_buffer; 
-  mesh->index_buffer  = loader.index_buffer;
-  mesh->pipe_desc     = loader.pipe_desc;
-  mesh->pipe          = gfx_pipeline_create(s_manager.gfx_context, mesh->pipe_desc);
-  mesh->resource_ref  = storage;
+  // Retrive the vertex buffer
+  mesh->vertex_buffer = resource_storage_get_buffer(storage, loader.vertex_buffer);
 
+  // Retrieve the index buffer (if there's one)
+  if(loader.index_buffer != INVALID_RESOURCE) {
+    mesh->index_buffer = resource_storage_get_buffer(storage, loader.index_buffer);
+  }
+
+  // Create the pipeline
+  mesh->pipe_desc = loader.pipe_desc;
+  mesh->pipe      = gfx_pipeline_create(s_manager.gfx_context, mesh->pipe_desc);
+
+  // New mesh added!
   ResourceID id       = generate_id();
   storage->meshes[id] = mesh;
 
@@ -205,28 +213,32 @@ ResourceID resource_storage_push(ResourceStorage* storage, const MeshLoader& loa
 
 ResourceID resource_storage_push(ResourceStorage* storage, const MaterialLoader& loader) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
-
+  
+  // Allocate the material
   Material* material = (Material*)memory_allocate(sizeof(Material));
   memory_zero(material, sizeof(Material));
- 
-  material->diffuse_map  = loader.diffuse_map;
-  material->specular_map = loader.specular_map;
-  material->shader       = loader.shader;
-  
-  material->uniform_buffers[MATERIAL_MATRICES_BUFFER_INDEX] = loader.uniform_buffers[MATERIAL_MATRICES_BUFFER_INDEX];
-  material->uniform_buffers[MATERIAL_LIGHTING_BUFFER_INDEX] = loader.uniform_buffers[MATERIAL_LIGHTING_BUFFER_INDEX];
 
-  // Retrieve the core resources
-  GfxShader* shader       = resource_storage_get_shader(storage, material->shader);
-  GfxBuffer* mat_buffer   = resource_storage_get_buffer(storage, material->uniform_buffers[MATERIAL_MATRICES_BUFFER_INDEX]); 
-  GfxBuffer* light_buffer = resource_storage_get_buffer(storage, material->uniform_buffers[MATERIAL_LIGHTING_BUFFER_INDEX]); 
+  // Retrieve the diffuse texture
+  material->diffuse_map = resource_storage_get_texture(storage, loader.diffuse_map);
 
-  // Attach the preset uniform buffers to the shader
-  gfx_shader_attach_uniform(shader, GFX_SHADER_VERTEX, mat_buffer, MATERIAL_MATRICES_BUFFER_INDEX);
-  gfx_shader_attach_uniform(shader, GFX_SHADER_VERTEX, light_buffer, MATERIAL_LIGHTING_BUFFER_INDEX);
-  
-  material->resource_ref = storage;
+  // Rertieve the shader 
+  material->shader      = resource_storage_get_shader(storage, loader.shader);
 
+  // Retrieve the specular texture (if there's one)
+  if(loader.specular_map != INVALID_RESOURCE) {
+    material->diffuse_map = resource_storage_get_texture(storage, loader.specular_map);
+  } 
+
+  // Retrieve all of the uniform buffers (if any)
+  for(sizei i = 0; i < MATERIAL_UNIFORM_BUFFERS_MAX; i++) {
+    if(loader.uniform_buffers[i] == INVALID_RESOURCE) {
+      continue;
+    }
+
+    material->uniform_buffers[i] = resource_storage_get_buffer(storage, loader.uniform_buffers[i]);
+  }
+
+  // New material added!
   ResourceID id          = generate_id();
   storage->materials[id] = material;
 
@@ -236,15 +248,21 @@ ResourceID resource_storage_push(ResourceStorage* storage, const MaterialLoader&
 ResourceID resource_storage_push(ResourceStorage* storage, const SkyboxLoader& loader) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
+  // Allocate the skybox
   Skybox* skybox = (Skybox*)memory_allocate(sizeof(Skybox));
   memory_zero(skybox, sizeof(Skybox));
 
-  skybox->vertex_buffer = loader.vertex_buffer;
-  skybox->cubemap       = loader.cubemap;
-  skybox->pipe_desc     = loader.pipe_desc;
-  skybox->pipe          = gfx_pipeline_create(s_manager.gfx_context, skybox->pipe_desc);
-  skybox->resource_ref  = storage;
+  // Cubemap init
+  skybox->cubemap       = resource_storage_get_cubemap(storage, loader.cubemap);
 
+  // Vertex buffer init
+  skybox->vertex_buffer = resource_storage_get_buffer(storage, loader.vertex_buffer);
+
+  // Create the pipeline 
+  skybox->pipe_desc = loader.pipe_desc;
+  skybox->pipe      = gfx_pipeline_create(s_manager.gfx_context, skybox->pipe_desc);
+
+  // New skybox added!
   ResourceID id         = generate_id();
   storage->skyboxes[id] = skybox;
 

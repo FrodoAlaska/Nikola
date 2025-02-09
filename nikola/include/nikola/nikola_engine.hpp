@@ -468,13 +468,11 @@ struct ResourceStorage;
 ///---------------------------------------------------------------------------------------------------------------------
 /// Mesh 
 struct Mesh {
-  ResourceID vertex_buffer = INVALID_RESOURCE; 
-  ResourceID index_buffer  = INVALID_RESOURCE;
+  GfxBuffer* vertex_buffer = nullptr; 
+  GfxBuffer* index_buffer  = nullptr;
 
   GfxPipeline* pipe         = nullptr;
   GfxPipelineDesc pipe_desc = {};
-
-  ResourceStorage* resource_ref;
 };
 /// Mesh 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -482,15 +480,13 @@ struct Mesh {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Material 
 struct Material {
-  ResourceID diffuse_map  = INVALID_RESOURCE;
-  ResourceID specular_map = INVALID_RESOURCE;
-  ResourceID shader       = INVALID_RESOURCE; 
-  ResourceID uniform_buffers[MATERIAL_UNIFORM_BUFFERS_MAX];
+  GfxTexture* diffuse_map  = nullptr;
+  GfxTexture* specular_map = nullptr;
+  GfxShader* shader        = nullptr; 
+  GfxBuffer* uniform_buffers[MATERIAL_UNIFORM_BUFFERS_MAX];
   
   Vec4 color; 
   Mat4 model_matrix;
-
-  ResourceStorage* resource_ref;
 };
 /// Material 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -498,13 +494,11 @@ struct Material {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Skybox
 struct Skybox {
-  ResourceID vertex_buffer = INVALID_RESOURCE;
-  ResourceID cubemap       = INVALID_RESOURCE;
+  GfxBuffer* vertex_buffer = nullptr;
+  GfxCubemap* cubemap      = nullptr;
   
   GfxPipeline* pipe         = nullptr;
   GfxPipelineDesc pipe_desc = {};
-
-  ResourceStorage* resource_ref;
 };
 /// Skybox
 ///---------------------------------------------------------------------------------------------------------------------
@@ -512,10 +506,8 @@ struct Skybox {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Model 
 struct Model {
-  DynamicArray<ResourceID> meshes;
-  DynamicArray<ResourceID> materials;
-
-  ResourceStorage* resource_ref;
+  DynamicArray<Mesh*> meshes;
+  DynamicArray<Material*> materials;
 };
 /// Model 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -525,7 +517,7 @@ struct Model {
 struct Font {
   struct Glyph {
     i8 unicode; 
-    ResourceID texture = INVALID_RESOURCE;
+    GfxTexture* texture = nullptr;
 
     u32 width, height;
     u32 left, right, top, bottom;
@@ -539,8 +531,6 @@ struct Font {
   f32 glyph_padding;
 
   DynamicArray<Glyph> glyphs;
-
-  ResourceStorage* resource_ref;
 };
 /// Font 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -550,6 +540,7 @@ struct Font {
 struct MeshLoader {
   ResourceID vertex_buffer = INVALID_RESOURCE; 
   ResourceID index_buffer  = INVALID_RESOURCE; 
+  ResourceID uniform_buffers[MATERIAL_UNIFORM_BUFFERS_MAX];
 
   GfxPipelineDesc pipe_desc;
 };
@@ -580,10 +571,6 @@ struct SkyboxLoader {
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// Material functions
-
-void material_set_diffuse(Material* mat, const ResourceID& diffuse_map);
-
-void material_set_specular(Material* mat, const ResourceID& specular_map);
 
 void material_set_color(Material* mat, const Vec4& color);
 
@@ -653,13 +640,15 @@ void material_loader_load(ResourceStorage* storage,
                           const ResourceID& specular_id, 
                           const ResourceID& shader_id);
 
+void material_loader_attach_uniform(ResourceStorage* storage, MaterialLoader* loader, const sizei index, const ResourceID& buffer_id);
+
 /// Material loader functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// Skybox loader functions
 
-void skybox_loader_load(ResourceStorage* storage, SkyboxLoader* loader, const GfxCubemapDesc& cubemap);
+void skybox_loader_load(ResourceStorage* storage, SkyboxLoader* loader, const ResourceID& cubemap_id);
 
 /// Skybox loader functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -686,11 +675,17 @@ void resource_storage_clear(ResourceStorage* storage);
 void resource_storage_destroy(ResourceStorage* storage);
 
 ResourceID resource_storage_push(ResourceStorage* storage, const GfxBufferDesc& buff_desc);
+
 ResourceID resource_storage_push(ResourceStorage* storage, const GfxTextureDesc& tex_desc);
+
 ResourceID resource_storage_push(ResourceStorage* storage, const GfxCubemapDesc& cubemap_desc);
+
 ResourceID resource_storage_push(ResourceStorage* storage, const String& shader_src);
+
 ResourceID resource_storage_push(ResourceStorage* storage, const MeshLoader& loader);
+
 ResourceID resource_storage_push(ResourceStorage* storage, const MaterialLoader& loader);
+
 ResourceID resource_storage_push(ResourceStorage* storage, const SkyboxLoader& loader);
 
 GfxBuffer* resource_storage_get_buffer(ResourceStorage* storage, const ResourceID& id);
