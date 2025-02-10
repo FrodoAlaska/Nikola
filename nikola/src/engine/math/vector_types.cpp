@@ -42,6 +42,10 @@ const f32 vec2_angle(const Vec2& point1, const Vec2& point2) {
   return nikola::atan(diff.y, diff.x);
 }
 
+const String vec2_to_string(const Vec2& vec) {
+  return "X = " + std::to_string(vec.x) + ", Y = " + std::to_string(vec.y);
+}
+
 /// Vec2 functions
 /// ----------------------------------------------------------------------
 
@@ -76,6 +80,10 @@ const f32 vec3_distance(const Vec3& v1, const Vec3& v2) {
   return (v2 - v1).length();
 }
 
+const String vec3_to_string(const Vec3& vec) {
+  return "X = " + std::to_string(vec.x) + ", Y = " + std::to_string(vec.y) + ", Z = " + std::to_string(vec.z);
+}
+
 /// Vec3 functions
 /// ----------------------------------------------------------------------
 
@@ -104,6 +112,13 @@ const f32 vec4_dot(const Vec4& v1, const Vec4& v2) {
 
 const f32 vec4_distance(const Vec4& v1, const Vec4& v2) {
   return (v2 - v1).length();
+}
+
+const String vec4_to_string(const Vec4& vec) {
+  return "X = " + std::to_string(vec.x)   + 
+         ", Y = " + std::to_string(vec.y) + 
+         ", Z = " + std::to_string(vec.z) + 
+         ", W = " + std::to_string(vec.w);
 }
 
 /// Vec4 functions

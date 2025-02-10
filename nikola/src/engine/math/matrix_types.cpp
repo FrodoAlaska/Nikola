@@ -31,6 +31,13 @@ const f32* mat3_raw_data(const Mat3& mat) {
   return glm::value_ptr(mat);
 }
 
+const String mat3_to_string(const Mat3& mat) {
+  return 
+    "{" + std::to_string(mat[0][0]) + ", " + std::to_string(mat[0][1]) + ", " + std::to_string(mat[0][1]) + "}\n"
+    "{" + std::to_string(mat[1][0]) + ", " + std::to_string(mat[1][1]) + ", " + std::to_string(mat[1][1]) + "}\n"
+    "{" + std::to_string(mat[2][0]) + ", " + std::to_string(mat[2][1]) + ", " + std::to_string(mat[2][1]) + "}";
+}
+
 /// Mat3 functions
 /// ----------------------------------------------------------------------
 
@@ -75,6 +82,14 @@ const Mat4 mat4_look_at(const Vec3& eye, const Vec3& center, const Vec3& up) {
 
 const f32* mat4_raw_data(const Mat4& mat) {
   return glm::value_ptr(mat);
+}
+
+const String mat4_to_string(const Mat4& mat) {
+  return 
+    "{" + std::to_string(mat[0][0]) + ", " + std::to_string(mat[0][1]) + ", " + std::to_string(mat[0][1]) + ", " + std::to_string(mat[0][2]) + "}\n"
+    "{" + std::to_string(mat[1][0]) + ", " + std::to_string(mat[1][1]) + ", " + std::to_string(mat[1][1]) + ", " + std::to_string(mat[1][2]) + "}\n"
+    "{" + std::to_string(mat[2][0]) + ", " + std::to_string(mat[2][1]) + ", " + std::to_string(mat[2][1]) + ", " + std::to_string(mat[2][2]) + "}\n"
+    "{" + std::to_string(mat[3][0]) + ", " + std::to_string(mat[3][1]) + ", " + std::to_string(mat[3][1]) + ", " + std::to_string(mat[3][2]) + "}";
 }
 
 /// Mat4 functions

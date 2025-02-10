@@ -908,7 +908,7 @@ static void apply_gl_render_target(GfxContext* gfx, GfxTexture* texture) {
       gfx->framebuffer_clear_bits |= GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
       break;
     default:
-      break;
+      return;
   }
 
   if(glCheckNamedFramebufferStatus(gfx->framebuffer_id, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {

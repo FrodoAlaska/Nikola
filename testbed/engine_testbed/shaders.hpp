@@ -22,7 +22,7 @@ inline const char* default3d_shader() {
     "void main() {\n"
     "  vs_out.tex_coords = aTextureCoords;\n"
     "\n"
-    "  gl_Position = u_view_projection * u_model * vec4(aPos, 1.0);\n"
+    "  gl_Position = u_view_projection * u_model * vec4(aPos, 1.0f);\n"
     "}"
     "\n"
     "#version 460 core\n"
@@ -39,7 +39,7 @@ inline const char* default3d_shader() {
     "uniform sampler2D u_texture;\n"
     "\n"
     "void main() {\n"
-    "  frag_color = vec4(1.0);//texture(u_texture, fs_in.tex_coords);\n"
+    "  frag_color = texture(u_texture, fs_in.tex_coords);\n"
     "};\n";
 }
 

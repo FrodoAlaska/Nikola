@@ -364,8 +364,6 @@ const Mat4 mat4_look_at(const Vec3& eye, const Vec3& center, const Vec3& up);
 
 const f32* mat4_raw_data(const Mat4& mat);
 
-const String mat4_to_string(const Mat4& mat);
-
 /// Mat4 functions
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -786,7 +784,6 @@ struct RenderCommand {
   ResourceID material_id;
   
   Transform transform;
-  ResourceStorage* storage;
 };
 /// RenderCommand
 ///---------------------------------------------------------------------------------------------------------------------
@@ -810,7 +807,7 @@ void renderer_end_pass();
 
 void renderer_post_pass();
 
-void renderer_queue_command(const RenderCommand& command);
+void renderer_queue_command(ResourceStorage* storage, const RenderCommand& command);
 
 /// Renderer functions
 ///---------------------------------------------------------------------------------------------------------------------

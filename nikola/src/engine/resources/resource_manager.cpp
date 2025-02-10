@@ -181,7 +181,7 @@ ResourceID resource_storage_push(ResourceStorage* storage, const String& shader_
 
   ResourceID id        = generate_id();
   storage->shaders[id] = gfx_shader_create(s_manager.gfx_context, shader_src.c_str());
-  
+
   return id;
 }
 
@@ -235,7 +235,9 @@ ResourceID resource_storage_push(ResourceStorage* storage, const MaterialLoader&
       continue;
     }
 
+    // Attaching the buffer to the shader
     material->uniform_buffers[i] = resource_storage_get_buffer(storage, loader.uniform_buffers[i]);
+    gfx_shader_attach_uniform(material->shader, GFX_SHADER_VERTEX, material->uniform_buffers[i], i);
   }
 
   // New material added!

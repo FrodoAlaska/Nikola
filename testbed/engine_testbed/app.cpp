@@ -11,7 +11,7 @@ struct nikola::App {
   nikola::Camera camera;
 
   nikola::ResourceStorage* storage;
-  nikola::ResourceID mesh_id, material_id;
+  nikola::ResourceID mesh_id, material_id, matrices_buffer_id;
   nikola::Transform transform;
 };
 /// App
@@ -48,13 +48,24 @@ nikola::App* app_init(nikola::Window* window) {
   // Shader init
   nikola::ResourceID shader_id = nikola::resource_storage_push(app->storage, default3d_shader());
 
+  // Matrices buffer init
+  nikola::GfxBufferDesc matrices_desc = {
+    .data  = nullptr, 
+    .size  = sizeof(nikola::Mat4),
+    .type  = nikola::GFX_BUFFER_UNIFORM, 
+    .usage = nikola::GFX_BUFFER_USAGE_DYNAMIC_DRAW,
+  };
+  nikola::ResourceID matrices_id = nikola::resource_storage_push(app->storage, matrices_desc);
+
   // Material init
   nikola::MaterialLoader mat_loader;
   nikola::material_loader_load(app->storage, &mat_loader, diffuse_id, nikola::INVALID_RESOURCE, shader_id);
+  nikola::material_loader_attach_uniform(app->storage, &mat_loader, nikola::MATERIAL_MATRICES_BUFFER_INDEX, matrices_id);
   app->material_id = nikola::resource_storage_push(app->storage, mat_loader);
 
   // Transform init
   nikola::transform_translate(app->transform, nikola::Vec3(10.0f, 0.0f, 10.0f));
+  nikola::transform_scale(app->transform, nikola::Vec3(1.0f));
 
   return app;
 }
@@ -71,6 +82,9 @@ void app_update(nikola::App* app) {
   }
 
   nikola::camera_update(app->camera);
+  
+  nikola::Material* material = nikola::resource_storage_get_material(app->storage, app->material_id);
+  nikola::material_set_matrices_buffer(material, app->camera.view_projection);
 }
 
 static float rotation_angle = 0.0f;
@@ -83,6 +97,8 @@ void app_render(nikola::App* app) {
     .render_type   = nikola::RENDERABLE_TYPE_MESH, 
     .renderable_id = app->mesh_id,
     .material_id   = app->material_id,
+    .transform     = app->transform, 
+    .storage       = app->storage,
   };
 
   constexpr int MESHES_MAX = 10;
@@ -95,7 +111,7 @@ void app_render(nikola::App* app) {
       nikola::transform_translate(app->transform, nikola::Vec3(i * 2.0f, 0.0f, j * 2.0f));
     
       rnd_cmd.transform = app->transform;
-      nikola::renderer_queue_command(app->storage, rnd_cmd);
+      nikola::renderer_queue_command(rnd_cmd);
     }
   }
 

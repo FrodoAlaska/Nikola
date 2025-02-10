@@ -43,9 +43,6 @@ void camera_default_move_func(Camera& camera) {
   else if(input_key_down(KEY_LEFT)) {
     camera.position -= vec3_normalize(vec3_cross(camera.front, camera.up)) * speed;
   }
-
-  // Don't move on the Y-axis if the camera fixed 
-  camera.position.y = 0.0f;
 }
 
 void camera_create(Camera* cam, const f32 aspect_ratio, const Vec3& pos, const Vec3& target, const CameraMoveFn& move_fn) {
@@ -54,8 +51,13 @@ void camera_create(Camera* cam, const f32 aspect_ratio, const Vec3& pos, const V
   cam->yaw   = -90.0f; 
   cam->pitch = 0.0f; 
 
-  cam->zoom         = 90.0f;
+  cam->zoom         = 45.0f;
   cam->aspect_ratio = aspect_ratio;
+
+  cam->near = 0.1f;
+  cam->far  = 100.0f;
+
+  cam->sensitivity = 0.1f;
 
   Vec3 look_dir(pos - target);
   Vec3 up_axis(0.0f, 1.0f, 0.0f);
@@ -79,10 +81,7 @@ void camera_create(Camera* cam, const f32 aspect_ratio, const Vec3& pos, const V
 void camera_update(Camera& cam) {
   cam.view            = mat4_look_at(cam.position, cam.position + cam.front, cam.up);
   cam.projection      = mat4_perspective((cam.zoom * nikola::DEG2RAD), cam.aspect_ratio, cam.near, cam.far);
-  cam.view_projection = cam.projection * cam.view;
-
-  Vec2 mouse_offset; 
-  input_mouse_offset(&mouse_offset.x, &mouse_offset.y);
+  cam.view_projection = (cam.projection * cam.view);
 
   if(cam.move_fn) {
     cam.move_fn(cam);

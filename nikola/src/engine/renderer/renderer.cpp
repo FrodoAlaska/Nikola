@@ -14,7 +14,7 @@ struct Renderer {
 
   u32 clear_flags = 0;
 
-  DynamicArray<GfxPipeline*> render_queue;
+  DynamicArray<RenderCommand> render_queue;
 };
 
 static Renderer s_renderer;
@@ -24,19 +24,19 @@ static Renderer s_renderer;
 /// ----------------------------------------------------------------------
 /// Private functions
 
-static void queue_mesh(ResourceStorage* storage, const RenderCommand& mesh_command) {
-  Mesh* mesh           = resource_storage_get_mesh(storage, mesh_command.renderable_id);
-  Material* material   = resource_storage_get_material(storage, mesh_command.material_id);
+static void render_mesh(const RenderCommand& command) {
+  Mesh* mesh           = resource_storage_get_mesh(command.storage, command.renderable_id);
+  Material* material   = resource_storage_get_material(command.storage, command.material_id);
+
+  material_set_transform(material, command.transform);
 
   mesh->pipe_desc.shader = material->shader;
   
   mesh->pipe_desc.textures[0]    = material->diffuse_map;
   mesh->pipe_desc.textures_count = 1;
 
-  material_set_transform(material, mesh_command.transform);
-
   gfx_context_apply_pipeline(s_renderer.context, mesh->pipe, mesh->pipe_desc);
-  s_renderer.render_queue.push_back(mesh->pipe);
+  gfx_pipeline_draw_index(mesh->pipe);
 }
 
 /// Private functions
@@ -86,27 +86,29 @@ void renderer_begin_pass() {
 }
 
 void renderer_end_pass() {
-  for(auto& pipe : s_renderer.render_queue) {
-    gfx_pipeline_draw_vertex(pipe); 
+  for(auto& command : s_renderer.render_queue) {
+    switch(command.render_type) {
+      case RENDERABLE_TYPE_MESH:
+        render_mesh(command);
+        break;
+      case RENDERABLE_TYPE_MODEL:
+        // @TODO
+        break;
+      case RENDERABLE_TYPE_SKYBOX:
+        // @TODO
+        break;
+    }
   }
+
+  s_renderer.render_queue.clear();
 }
 
 void renderer_post_pass() {
   gfx_context_present(s_renderer.context);
 }
 
-void renderer_queue_command(ResourceStorage* storage, const RenderCommand& command) {
-  switch(command.render_type) {
-    case RENDERABLE_TYPE_MESH:
-      queue_mesh(storage, command);
-      break;
-    case RENDERABLE_TYPE_MODEL:
-      // @TODO
-      break;
-    case RENDERABLE_TYPE_SKYBOX:
-      // @TODO
-      break;
-  }
+void renderer_queue_command(const RenderCommand& command) {
+  s_renderer.render_queue.push_back(command);
 }
 
 /// Renderer functions

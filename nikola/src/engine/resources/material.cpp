@@ -26,7 +26,7 @@ void material_set_transform(Material* mat, const Transform& transform) {
   gfx_glsl_upload_uniform(mat->shader, loc, GFX_LAYOUT_MAT4, mat4_raw_data(transform.transform));
 }
 
-void material_set_matrcies_buffer(Material* mat, const Mat4& view_projection) {
+void material_set_matrices_buffer(Material* mat, const Mat4& view_projection) {
   NIKOLA_ASSERT(mat, "Invalid Material passed");
   NIKOLA_ASSERT(mat->shader, "Invalid Material's matrices buffer");
   

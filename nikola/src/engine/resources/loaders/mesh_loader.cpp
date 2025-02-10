@@ -150,7 +150,8 @@ void mesh_loader_load(ResourceStorage* storage,
   
   // Default initialize the loader
   memory_zero(loader, sizeof(MeshLoader));
-  
+  loader->pipe_desc = {}; 
+
   // Vertex buffer init 
   loader->vertex_buffer            = vertex_buffer_id;
   loader->pipe_desc.vertex_buffer  = resource_storage_get_buffer(storage, loader->vertex_buffer);

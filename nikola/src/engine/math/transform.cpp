@@ -15,11 +15,9 @@ namespace nikola { // Start of nikola
 /// ----------------------------------------------------------------------
 /// Private functions
 static void update_transform(Transform& trans) {
-  Mat4 translate = mat4_translate(trans.position);
-  Mat4 rotate    = quat_to_mat4(trans.rotation);
-  Mat4 scale     = mat4_scale(trans.scale);
-
-  trans.transform = translate * rotate * scale;
+  trans.transform = mat4_translate(trans.position) *
+                    quat_to_mat4(trans.rotation)   *
+                    mat4_scale(trans.scale);
 }
 /// Private functions
 /// ----------------------------------------------------------------------

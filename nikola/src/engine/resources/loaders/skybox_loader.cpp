@@ -78,6 +78,7 @@ void skybox_loader_load(ResourceStorage* storage, SkyboxLoader* loader, const Re
   
   // Default initialize the loader
   memory_zero(loader, sizeof(SkyboxLoader));
+  loader->pipe_desc = {}; 
 
   // Vertex buffer init
   construct_cube_skybox(storage, loader);
