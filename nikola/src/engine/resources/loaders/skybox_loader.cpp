@@ -91,6 +91,7 @@ void skybox_loader_load(ResourceStorage* storage, SkyboxLoader* loader, const Re
   loader->pipe_desc.draw_mode    = GFX_DRAW_MODE_TRIANGLE;
 
   // Cubemap init
+  loader->cubemap                   = cubemap_id; 
   loader->pipe_desc.cubemaps[0]     = resource_storage_get_cubemap(storage, cubemap_id); 
   loader->pipe_desc.cubemaps_count  = 1; 
 }

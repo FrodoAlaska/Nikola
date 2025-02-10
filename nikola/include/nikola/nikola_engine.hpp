@@ -483,6 +483,8 @@ struct Mesh {
 
   GfxPipeline* pipe         = nullptr;
   GfxPipelineDesc pipe_desc = {};
+
+  ResourceStorage* storage_ref;
 };
 /// Mesh 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -497,6 +499,8 @@ struct Material {
   
   Vec4 color; 
   Mat4 model_matrix;
+
+  ResourceStorage* storage_ref;
 };
 /// Material 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -509,6 +513,8 @@ struct Skybox {
   
   GfxPipeline* pipe         = nullptr;
   GfxPipelineDesc pipe_desc = {};
+
+  ResourceStorage* storage_ref;
 };
 /// Skybox
 ///---------------------------------------------------------------------------------------------------------------------
@@ -518,6 +524,8 @@ struct Skybox {
 struct Model {
   DynamicArray<Mesh*> meshes;
   DynamicArray<Material*> materials;
+
+  ResourceStorage* storage_ref;
 };
 /// Model 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -541,6 +549,8 @@ struct Font {
   f32 glyph_padding;
 
   DynamicArray<Glyph> glyphs;
+
+  ResourceStorage* storage_ref;
 };
 /// Font 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -617,6 +627,7 @@ void cubemap_loader_load(GfxCubemapDesc* desc,
 
 void cubemap_loader_load(GfxCubemapDesc* desc, 
                          const FilePath& directory,
+                         const sizei faces_count,
                          const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
                          const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
                          const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);

@@ -205,6 +205,7 @@ ResourceID resource_storage_push(ResourceStorage* storage, const MeshLoader& loa
   mesh->pipe      = gfx_pipeline_create(s_manager.gfx_context, mesh->pipe_desc);
 
   // New mesh added!
+  mesh->storage_ref   = storage; 
   ResourceID id       = generate_id();
   storage->meshes[id] = mesh;
 
@@ -241,6 +242,7 @@ ResourceID resource_storage_push(ResourceStorage* storage, const MaterialLoader&
   }
 
   // New material added!
+  material->storage_ref   = storage; 
   ResourceID id          = generate_id();
   storage->materials[id] = material;
 
@@ -265,6 +267,7 @@ ResourceID resource_storage_push(ResourceStorage* storage, const SkyboxLoader& l
   skybox->pipe      = gfx_pipeline_create(s_manager.gfx_context, skybox->pipe_desc);
 
   // New skybox added!
+  skybox->storage_ref   = storage; 
   ResourceID id         = generate_id();
   storage->skyboxes[id] = skybox;
 

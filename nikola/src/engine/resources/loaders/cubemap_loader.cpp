@@ -35,11 +35,12 @@ void cubemap_loader_load(GfxCubemapDesc* desc,
                          const GfxTextureFormat format, 
                          const GfxTextureFilter filter, 
                          const GfxTextureWrap wrap) {
-  NIKOLA_ASSERT((faces_count > CUBEMAP_FACES_MAX), "Cannot load more than 6 faces in a cubemap");
+  NIKOLA_ASSERT((faces_count <= CUBEMAP_FACES_MAX), "Cannot load more than 6 faces in a cubemap");
+  memory_zero(desc, sizeof(GfxCubemapDesc));
 
   i32 width, height, channels; 
   for(sizei i = 0; i < faces_count; i++) {
-    desc->data[i] = stbi_load((const char*)path[i].c_str(), &width, &height, &channels, 4); 
+    desc->data[i] = stbi_load((const char*)path[i].string().c_str(), &width, &height, &channels, 4); 
     if(!desc->data[i]) {
       NIKOLA_LOG_ERROR("Could not load cubemap face at \'%s\'", path[i].c_str());
     }
@@ -47,7 +48,7 @@ void cubemap_loader_load(GfxCubemapDesc* desc,
 
   desc->width       = width; 
   desc->height      = height; 
-  desc->mips        = height; 
+  desc->mips        = 1; 
   desc->format      = format; 
   desc->filter      = filter; 
   desc->wrap_mode   = wrap; 
@@ -55,7 +56,7 @@ void cubemap_loader_load(GfxCubemapDesc* desc,
 }
 
 void cubemap_loader_load(GfxCubemapDesc* desc, 
-                         const FilePath directory, 
+                         const FilePath& directory, 
                          const sizei faces_count,
                          const GfxTextureFormat format, 
                          const GfxTextureFilter filter, 
@@ -72,7 +73,7 @@ void cubemap_loader_load(GfxCubemapDesc* desc,
     paths[count] = p.path(); 
     count++;
   }
-
+  
   cubemap_loader_load(desc, paths.data(), count, format, filter, wrap);
 }
 

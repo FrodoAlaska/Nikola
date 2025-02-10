@@ -10,7 +10,7 @@ namespace nikola { // Start of nikola
 struct Renderer {
   GfxContext* context = nullptr;
   Vec4 clear_color;
-  Camera cam;
+  Camera camera;
 
   u32 clear_flags = 0;
 
@@ -25,10 +25,11 @@ static Renderer s_renderer;
 /// Private functions
 
 static void render_mesh(const RenderCommand& command) {
-  Mesh* mesh           = resource_storage_get_mesh(command.storage, command.renderable_id);
-  Material* material   = resource_storage_get_material(command.storage, command.material_id);
+  Mesh* mesh         = resource_storage_get_mesh(command.storage, command.renderable_id);
+  Material* material = resource_storage_get_material(command.storage, command.material_id);
 
   material_set_transform(material, command.transform);
+  material_set_matrices_buffer(material, s_renderer.camera.view_projection);
 
   mesh->pipe_desc.shader = material->shader;
   
@@ -37,6 +38,24 @@ static void render_mesh(const RenderCommand& command) {
 
   gfx_context_apply_pipeline(s_renderer.context, mesh->pipe, mesh->pipe_desc);
   gfx_pipeline_draw_index(mesh->pipe);
+}
+
+static void render_skybox(const RenderCommand& command) {
+  Skybox* skybox     = resource_storage_get_skybox(command.storage, command.renderable_id); 
+  Material* material = resource_storage_get_material(command.storage, command.material_id);
+  
+  // Set the transform matrix and the constant/uniform buffer of the material. 
+  // We do this mess to remove the translation part of the matrix, taking 
+  // only the upper-left 3x3 matrix (that's where the rotation lives).
+  Mat4 new_proj = s_renderer.camera.projection * Mat4(Mat3(s_renderer.camera.view));  
+ 
+  // @TODO: Maybe not the best
+  material_set_matrices_buffer(material, new_proj);
+  
+  skybox->pipe_desc.shader = material->shader;
+
+  gfx_context_apply_pipeline(s_renderer.context, skybox->pipe, skybox->pipe_desc);
+  gfx_pipeline_draw_vertex(skybox->pipe);
 }
 
 /// Private functions
@@ -77,7 +96,7 @@ void renderer_set_clear_color(const Vec4& clear_color) {
 }
 
 void renderer_pre_pass(Camera& cam) {
-  s_renderer.cam = cam;
+  s_renderer.camera = cam;
 }
 
 void renderer_begin_pass() {
@@ -95,7 +114,7 @@ void renderer_end_pass() {
         // @TODO
         break;
       case RENDERABLE_TYPE_SKYBOX:
-        // @TODO
+        render_skybox(command);
         break;
     }
   }

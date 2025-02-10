@@ -13,6 +13,8 @@ struct nikola::App {
   nikola::ResourceStorage* storage;
   nikola::ResourceID mesh_id, material_id, matrices_buffer_id;
   nikola::Transform transform;
+
+  nikola::ResourceID skybox_id, skybox_material_id;
 };
 /// App
 /// ----------------------------------------------------------------------
@@ -45,8 +47,19 @@ nikola::App* app_init(nikola::Window* window) {
   nikola::texture_loader_load(&diffuse_desc, "assets/opengl.png");
   nikola::ResourceID diffuse_id = nikola::resource_storage_push(app->storage, diffuse_desc); 
 
+  // Cubemap texture init
+  nikola::GfxCubemapDesc cubemap_desc;
+  nikola::cubemap_loader_load(&cubemap_desc, "assets/NightSky", 6);
+  nikola::ResourceID cubemap_id = nikola::resource_storage_push(app->storage, cubemap_desc);
+
+  // Skybox init
+  nikola::SkyboxLoader sky_loader;
+  nikola::skybox_loader_load(app->storage, &sky_loader, cubemap_id);
+  app->skybox_id = nikola::resource_storage_push(app->storage, sky_loader);
+
   // Shader init
   nikola::ResourceID shader_id = nikola::resource_storage_push(app->storage, default3d_shader());
+  nikola::ResourceID sky_shader_id = nikola::resource_storage_push(app->storage, cubemap_shader_glsl());
 
   // Matrices buffer init
   nikola::GfxBufferDesc matrices_desc = {
@@ -62,6 +75,11 @@ nikola::App* app_init(nikola::Window* window) {
   nikola::material_loader_load(app->storage, &mat_loader, diffuse_id, nikola::INVALID_RESOURCE, shader_id);
   nikola::material_loader_attach_uniform(app->storage, &mat_loader, nikola::MATERIAL_MATRICES_BUFFER_INDEX, matrices_id);
   app->material_id = nikola::resource_storage_push(app->storage, mat_loader);
+
+  // Skybox material init
+  nikola::material_loader_load(app->storage, &mat_loader, diffuse_id, nikola::INVALID_RESOURCE, sky_shader_id);
+  nikola::material_loader_attach_uniform(app->storage, &mat_loader, nikola::MATERIAL_MATRICES_BUFFER_INDEX, matrices_id);
+  app->skybox_material_id = nikola::resource_storage_push(app->storage, mat_loader);
 
   // Transform init
   nikola::transform_translate(app->transform, nikola::Vec3(10.0f, 0.0f, 10.0f));
@@ -82,9 +100,6 @@ void app_update(nikola::App* app) {
   }
 
   nikola::camera_update(app->camera);
-  
-  nikola::Material* material = nikola::resource_storage_get_material(app->storage, app->material_id);
-  nikola::material_set_matrices_buffer(material, app->camera.view_projection);
 }
 
 static float rotation_angle = 0.0f;
@@ -106,14 +121,21 @@ void app_render(nikola::App* app) {
   float x = 1.0f + nikola::sin(nikola::niclock_get_time()) * 2.0f; 
   float y = nikola::sin(nikola::niclock_get_time() / 2.0f) * 1.0f;
 
+  // Render the cubes
   for(int i = 0; i < MESHES_MAX; i++) {
     for(int j = 0; j < MESHES_MAX; j++) {
       nikola::transform_translate(app->transform, nikola::Vec3(i * 2.0f, 0.0f, j * 2.0f));
-    
+      
       rnd_cmd.transform = app->transform;
       nikola::renderer_queue_command(rnd_cmd);
     }
   }
+
+  // Render the skybox 
+  rnd_cmd.render_type   = nikola::RENDERABLE_TYPE_SKYBOX; 
+  rnd_cmd.renderable_id = app->skybox_id; 
+  rnd_cmd.material_id   = app->skybox_material_id; 
+  nikola::renderer_queue_command(rnd_cmd);
 
   nikola::renderer_end_pass();
   nikola::renderer_post_pass();
