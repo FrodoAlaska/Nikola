@@ -46,7 +46,7 @@ typedef double f64;
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// DEFS
+/// *** DEFS ***
 
 /// Nikola only supports OpenGL versions greater than these.
 #define NIKOLA_GL_MINIMUM_MAJOR_VERSION 4
@@ -56,11 +56,32 @@ typedef double f64;
 #define NIKOLA_D3D11_MINIMUM_MAJOR_VERSION 11 
 #define NIKOLA_D3D11_MINIMUM_MINOR_VERSION 0 
 
-/// DEFS
+// Exports
+#ifdef NIKOLA_EXPORT 
+
+  // Window exports
+  #ifdef _MSC_VER
+    #define NIKOLA_API __declspec(dllexport) 
+  // Linux exports
+  #else
+    #define NIKOLA_API __attribute__((visibility("default"))) 
+  #endif
+
+#endif
+
+// Window imports
+#ifdef _MSC_VER 
+  #define NIKOLA_API __declspec(dllexport) 
+// Linux exports
+#else
+  #define NIKOLA_API __attribute__((visibility("default"))) 
+#endif
+
+/// *** DEFS ***
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// Macros 
+/// *** Macros ***
 
 /// Returns `true` if `other` is set in `bit`
 #define IS_BIT_SET(bit, other) ((bit & other) == other)
@@ -71,7 +92,7 @@ typedef double f64;
 /// Unsets/removes `other` from `bit`
 #define UNSET_BIT(bit, other)  (bit &= ~(other))
 
-/// Macros 
+/// *** Macros ***
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -105,16 +126,21 @@ typedef double f64;
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// *** Exports ***
+/// *** Exports ***
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// *** Library init ***
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// Library functions
 
 /// Initialze various different subsystems of Nikola. 
-const bool init();
+NIKOLA_API const bool init();
 
 /// Shutdown subsystems of the Nikola.
-void shutdown();
+NIKOLA_API void shutdown();
 
 /// Library functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -130,41 +156,41 @@ void shutdown();
 
 /// Allocate a memory block of size `size`.
 /// WARN: This function will assert if there's no suffient memory left.
-void* memory_allocate(const sizei size);
+NIKOLA_API void* memory_allocate(const sizei size);
 
 /// Re-allocate a block of memory `ptr` with a new size of `new_size`.
 /// WARN: This function will assert if `ptr` is a `nullptr`.
-void* memory_reallocate(void* ptr, const sizei new_size);
+NIKOLA_API void* memory_reallocate(void* ptr, const sizei new_size);
 
 /// Set the value of the memory block `ptr` with a size of `ptr_size` to `value`.
 /// WARN: This function will assert if `ptr` is a `nullptr`.
-void* memory_set(void* ptr, const i32 value, const sizei ptr_size);
+NIKOLA_API void* memory_set(void* ptr, const i32 value, const sizei ptr_size);
 
 /// Set the value of the memory block `ptr` of size `ptr_size` to 0.
 /// NOTE: This is equivalent to `memory_set(ptr, 0, ptr_size)`.
 /// WARN: This function will assert if `ptr` is a `nullptr`.
-void* memory_zero(void* ptr, const sizei ptr_size);
+NIKOLA_API void* memory_zero(void* ptr, const sizei ptr_size);
 
 /// Allocate `count` blocks of memory each with the size of `block_size`.
 /// NOTE: This is equivalent to `memory_allocate(block_size * count)`.
-void* memory_blocks_allocate(const sizei count, const sizei block_size);
+NIKOLA_API void* memory_blocks_allocate(const sizei count, const sizei block_size);
 
 /// Copy `src_size` bytes of `src` to the memory block `dest`. 
 /// WARN: This function will assert if `dest` or `src` are a `nullptr`.
-void* memory_copy(void* dest, const void* src, const sizei src_size);
+NIKOLA_API void* memory_copy(void* dest, const void* src, const sizei src_size);
 
 /// Free/reclaim the memory of the given `ptr`.
 /// WARN: This function will assert if `ptr` is a `nullptr`.
-void memory_free(void* ptr);
+NIKOLA_API void memory_free(void* ptr);
 
 /// Retrieve the amount of allocations made so far.
-const sizei memory_get_allocations_count();
+NIKOLA_API const sizei memory_get_allocations_count();
 
 /// Retrieve the amount of frees made so far. 
-const sizei memory_get_frees_count();
+NIKOLA_API const sizei memory_get_frees_count();
 
 /// Retrieve how many bytes have been allocated so far. 
-const sizei memory_get_allocation_bytes();
+NIKOLA_API const sizei memory_get_allocation_bytes();
 
 /// Memory functions 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -204,10 +230,10 @@ enum LogLevel {
 /// Logger functions
 
 /// Log an assertion with the given information.
-void logger_log_assert(const i8* expr, const i8* msg, const i8* file, const u32 line_num);
+NIKOLA_API void logger_log_assert(const i8* expr, const i8* msg, const i8* file, const u32 line_num);
 
 /// Log a specific log level with the given `msg` and any other parametars.
-void logger_log(const LogLevel lvl, const i8* msg, ...);
+NIKOLA_API void logger_log(const LogLevel lvl, const i8* msg, ...);
 
 /// Logger functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -429,17 +455,17 @@ using EventFireFn = bool(*)(const Event&, const void* dispatcher, const void* li
 /// Event functions
 
 /// Initialze the event system 
-void event_init();
+NIKOLA_API void event_init();
 
 /// Shutdown the event system and reclaim some memory 
-void event_shutdown();
+NIKOLA_API void event_shutdown();
 
 /// Attach the given `func` callback to an event of type `type`, passing in the `listener` as well.
-void event_listen(const EventType type, const EventFireFn& func, const void* listener = nullptr);
+NIKOLA_API void event_listen(const EventType type, const EventFireFn& func, const void* listener = nullptr);
 
 /// Call all callbacks associated with `event.type` and pass in the given `event` and the `dispatcher`. 
 /// Returns `true` on success.
-const bool event_dispatch(const Event& event, const void* dispatcher = nullptr);
+NIKOLA_API const bool event_dispatch(const Event& event, const void* dispatcher = nullptr);
 
 /// Event functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -686,75 +712,75 @@ enum GamepadButton {
 /// Input functions 
 
 /// Initialze the input system 
-void input_init();
+NIKOLA_API void input_init();
 
 /// Copying around input buffers
-void input_update(); 
+NIKOLA_API void input_update(); 
 
 /// Returns `true` if `key` was pressed this frame
-const bool input_key_pressed(const Key key);
+NIKOLA_API const bool input_key_pressed(const Key key);
 
 /// Returns `true` if `key` was released this frame
-const bool input_key_released(const Key key);
+NIKOLA_API const bool input_key_released(const Key key);
 
 /// Returns `true` if `key` is currently held down
-const bool input_key_down(const Key key);
+NIKOLA_API const bool input_key_down(const Key key);
 
 /// Returns `true` if `key` is currently held up
-const bool input_key_up(const Key key);
+NIKOLA_API const bool input_key_up(const Key key);
 
 /// Returns `true` if the mouse `button` was pressed this frame
-const bool input_button_pressed(const MouseButton button);
+NIKOLA_API const bool input_button_pressed(const MouseButton button);
 
 /// Returns `true` if the mouse `button` was released this frame
-const bool input_button_released(const MouseButton button);
+NIKOLA_API const bool input_button_released(const MouseButton button);
 
 /// Returns `true` if the mouse `button` is currently held up
-const bool input_button_down(const MouseButton button);
+NIKOLA_API const bool input_button_down(const MouseButton button);
 
 /// Returns `true` if the mouse `button` is currently held up
-const bool input_button_up(const MouseButton button);
+NIKOLA_API const bool input_button_up(const MouseButton button);
 
 /// The current position of the mouse relative to the screen
-void input_mouse_position(f32* x, f32* y);
+NIKOLA_API void input_mouse_position(f32* x, f32* y);
 
 /// The amount the mouse moved by since the last frame
-void input_mouse_offset(f32* x, f32* y);
+NIKOLA_API void input_mouse_offset(f32* x, f32* y);
 
 /// Get the mouse's scroll wheel value
-const f32 input_mouse_scroll_value();
+NIKOLA_API const f32 input_mouse_scroll_value();
 
 /// Enable/disable the mouse cursor
-void input_cursor_show(const bool show);
+NIKOLA_API void input_cursor_show(const bool show);
 
 /// Returns _true_ if the cursor has entered the window surface and _false_ 
 /// if the cursor left the window surface. 
-const bool input_cursor_on_screen();
+NIKOLA_API const bool input_cursor_on_screen();
 
 /// Returns the _current_ connection status of the given joystick `id`
-const bool input_gamepad_connected(const JoystickID id);
+NIKOLA_API const bool input_gamepad_connected(const JoystickID id);
 
 /// Returns a number between -1.0f and 1.0f for the joystick's axes or bumbers.
 ///
 /// NOTE: This functions returns will fill in the given `x` and `y` floats. The X and Y  
 /// corresponds with the axis's directions. However, for the triggers, the X and Y 
 /// correspond to the left (X) and right (Y) triggers.
-void input_gamepad_axis_value(const JoystickID id, const GamepadAxis axis, f32* x, f32* y);
+NIKOLA_API void input_gamepad_axis_value(const JoystickID id, const GamepadAxis axis, f32* x, f32* y);
 
 /// Returns `true` if `button` of the gamepad `id` was pressed this frame  
-const bool input_gamepad_button_pressed(const JoystickID id, const GamepadButton button);
+NIKOLA_API const bool input_gamepad_button_pressed(const JoystickID id, const GamepadButton button);
 
 /// Returns `true` if `button` of the gamepad `id` was released this frame  
-const bool input_gamepad_button_released(const JoystickID id, const GamepadButton button);
+NIKOLA_API const bool input_gamepad_button_released(const JoystickID id, const GamepadButton button);
 
 /// Returns `true` if `button` of the gamepad `id` is being pressed
-const bool input_gamepad_button_down(const JoystickID id, const GamepadButton button);
+NIKOLA_API const bool input_gamepad_button_down(const JoystickID id, const GamepadButton button);
 
 /// Returns `true` if `button` of the jgamepad `id` is not pressed currently
-const bool input_gamepad_button_up(const JoystickID id, const GamepadButton button);
+NIKOLA_API const bool input_gamepad_button_up(const JoystickID id, const GamepadButton button);
 
 /// Get the name of the given gamepad `id` as a string if available
-const i8* input_gamepad_get_name(const JoystickID id);
+NIKOLA_API const i8* input_gamepad_get_name(const JoystickID id);
 
 /// Input functions 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -841,68 +867,68 @@ enum WindowFlags {
 ///   - `WINDOW_FLAGS_GFX_HARDWARE`        = Set the graphics context to be hardware accelerated (i.e either using OpenGL or DirectX).
 ///   - `WINDOW_FLAGS_GFX_SOFTWARE`        = Set the graphics context to be software rendered
 /// 
-Window* window_open(const i8* title, const i32 width, const i32 height, i32 flags);
+NIKOLA_API Window* window_open(const i8* title, const i32 width, const i32 height, i32 flags);
 
 /// Closes the `window` context and clears up any memory.
-void window_close(Window* window);
+NIKOLA_API void window_close(Window* window);
 
 /// Poll events from the `window` context.
-void window_poll_events(Window* window);
+NIKOLA_API void window_poll_events(Window* window);
 
 /// Swap the internal buffer of the `window` context. 
 /// This might have no effect on some platforms.
-void window_swap_buffers(Window* window);
+NIKOLA_API void window_swap_buffers(Window* window);
 
 /// Returns `true` if the `window` context is still actively open. 
-const bool window_is_open(const Window* window);
+NIKOLA_API const bool window_is_open(const Window* window);
 
 /// Returns `true` if the `window` context is currently in fullscreen mode
-const bool window_is_fullscreen(const Window* window);
+NIKOLA_API const bool window_is_fullscreen(const Window* window);
 
 /// Returns `true` if the `window` context is currently focused
-const bool window_is_focused(const Window* window);
+NIKOLA_API const bool window_is_focused(const Window* window);
 
 /// Returns `true` if the `window` context is currently shown
-const bool window_is_shown(const Window* window);
+NIKOLA_API const bool window_is_shown(const Window* window);
 
 /// Retrieve the current size of the `window` context
-void window_get_size(const Window* window, i32* width, i32* height);
+NIKOLA_API void window_get_size(const Window* window, i32* width, i32* height);
 
 /// Retrieve the current title of the `window` context
-const i8* window_get_title(const Window* window);
+NIKOLA_API const i8* window_get_title(const Window* window);
 
 /// Retrieve the current size of the monitor
-void window_get_monitor_size(const Window* window, i32* width, i32* height);
+NIKOLA_API void window_get_monitor_size(const Window* window, i32* width, i32* height);
 
 /// Retrieve the aspect ratio of the `window` context
-const f32 window_get_aspect_ratio(const Window* window);
+NIKOLA_API const f32 window_get_aspect_ratio(const Window* window);
 
 /// Retrieve the refresh rate of the monitor 
-const f32 window_get_refresh_rate(const Window* window);
+NIKOLA_API const f32 window_get_refresh_rate(const Window* window);
 
 /// Retrieve the set window flags of `window`
-const WindowFlags window_get_flags(const Window* window);
+NIKOLA_API const WindowFlags window_get_flags(const Window* window);
 
 /// Retrieve the current position of the `window` context relative to the monitor
-void window_get_position(const Window* window, i32* x, i32* y);
+NIKOLA_API void window_get_position(const Window* window, i32* x, i32* y);
 
 /// Set the given `window` as the current active context
-void window_set_current_context(Window* window);
+NIKOLA_API void window_set_current_context(Window* window);
 
 /// Either disable or enable fullscreen mode on the `window` context.
-void window_set_fullscreen(Window* window, const bool fullscreen);
+NIKOLA_API void window_set_fullscreen(Window* window, const bool fullscreen);
 
 /// Either show or hide the `window` context.
-void window_set_show(Window* window, const bool show);
+NIKOLA_API void window_set_show(Window* window, const bool show);
 
 /// Set the size of the `window` to `width` and `height`.
-void window_set_size(Window* window, const i32 width, const i32 height);
+NIKOLA_API void window_set_size(Window* window, const i32 width, const i32 height);
 
 /// Set the title of the `window` to `title`.
-void window_set_title(Window* window, const i8* title);
+NIKOLA_API void window_set_title(Window* window, const i8* title);
 
 /// Set the position of the `window` to `x_pos` and `y_pos`..
-void window_set_position(Window* window, const i32 x_pos, const i32 y_pos);
+NIKOLA_API void window_set_position(Window* window, const i32 x_pos, const i32 y_pos);
 
 /// Window functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -920,16 +946,16 @@ void window_set_position(Window* window, const i32 x_pos, const i32 y_pos);
 
 /// Updates the values of the time, FPS (frames per second), and the delta time.
 /// NOTE: This must be called every frame.
-void niclock_update();
+NIKOLA_API void niclock_update();
 
 /// Retrieve the time passed since the CPU was turned on.
-const f64 niclock_get_time(); 
+NIKOLA_API const f64 niclock_get_time(); 
 
 /// Retrieve the current FPS (frames per second) of the application
-const f64 niclock_get_fps();
+NIKOLA_API const f64 niclock_get_fps();
 
 /// Retrieve the time passed between each frame. 
-const f64 niclock_get_delta_time();
+NIKOLA_API const f64 niclock_get_delta_time();
 
 /// Clock functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1764,18 +1790,18 @@ struct GfxPipelineDesc {
 /// 
 /// @NOTE: Later on, with any function, if an instance of `GfxContext` 
 /// is passed as a `nullptr`, the function will assert. 
-GfxContext* gfx_context_init(const GfxContextDesc& desc);
+NIKOLA_API GfxContext* gfx_context_init(const GfxContextDesc& desc);
 
 /// Free/reclaim any memory `gfx` has consumed. 
 /// This function will do any required de-initialization of the graphics API.
-void gfx_context_shutdown(GfxContext* gfx);
+NIKOLA_API void gfx_context_shutdown(GfxContext* gfx);
 
 /// Retrieve the internal `GfxContextDesc` of `gfx`
-GfxContextDesc& gfx_context_get_desc(GfxContext* gfx);
+NIKOLA_API GfxContextDesc& gfx_context_get_desc(GfxContext* gfx);
 
 /// Set any `state` of the context `gfx` to `value`. 
 /// i.e, this function can turn on or off the `state` in the given `gfx` context.
-void gfx_context_set_state(GfxContext* gfx, const GfxStates state, const bool value);
+NIKOLA_API void gfx_context_set_state(GfxContext* gfx, const GfxStates state, const bool value);
 
 /// Clear the buffers of the currently active states, sets the clear color as `{r, g, b, a}`, 
 /// and sets any required actions of `flags` (which can be `OR`ed together).
@@ -1787,17 +1813,17 @@ void gfx_context_set_state(GfxContext* gfx, const GfxStates state, const bool va
 ///   - `GFX_CONTEXT_FLAGS_CLEAR_COLOR_BUFFER`     = Clear the color buffer of the current context. 
 ///   - `GFX_CONTEXT_FLAGS_CLEAR_DEPTH_BUFFER`     = Clear the depth buffer of the current context.
 ///   - `GFX_CONTEXT_FLAGS_CLEAR_STENCIL_BUFFER`   = Clear the stencil buffer of the current context.
-void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a, const u32 flags);
+NIKOLA_API void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a, const u32 flags);
 
 /// Apply the `pipeline` using the updated `pipe_desc` in the current `gfx`. 
 /// This function will update the references of the shader, buffers, and textures in `pipeline` using `pipe_desc` 
 /// as well as set up all the currently active states.
-void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc& pipe_desc);
+NIKOLA_API void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc& pipe_desc);
 
 /// Switch to the back buffer or, rather, present the back buffer to the screen. 
 /// 
 /// @NOTE: This function will be affected by vsync. 
-void gfx_context_present(GfxContext* gfx);
+NIKOLA_API void gfx_context_present(GfxContext* gfx);
 
 /// Context functions 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1806,16 +1832,16 @@ void gfx_context_present(GfxContext* gfx);
 /// Buffer functions 
 
 /// Allocate and return a `GfxBuffer` object, using the information in `desc`.
-GfxBuffer* gfx_buffer_create(GfxContext* gfx, const GfxBufferDesc& desc);
+NIKOLA_API GfxBuffer* gfx_buffer_create(GfxContext* gfx, const GfxBufferDesc& desc);
 
 /// Free/reclaim any memory taken by `buff`.
-void gfx_buffer_destroy(GfxBuffer* buff);
+NIKOLA_API void gfx_buffer_destroy(GfxBuffer* buff);
 
 /// Retrieve the internal `GfxBufferDesc` of `buffer`
-GfxBufferDesc& gfx_buffer_get_desc(GfxBuffer* buffer);
+NIKOLA_API GfxBufferDesc& gfx_buffer_get_desc(GfxBuffer* buffer);
 
 /// Update the contents of `buff` starting at `offset` with `data` of size `size`.
-void gfx_buffer_update(GfxBuffer* buff, const sizei offset, const sizei size, const void* data);
+NIKOLA_API void gfx_buffer_update(GfxBuffer* buff, const sizei offset, const sizei size, const void* data);
 
 /// Buffer functions 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1830,10 +1856,10 @@ void gfx_buffer_update(GfxBuffer* buff, const sizei offset, const sizei size, co
 /// one will be the vertex shader and the second will be the pixel/fragment shader. 
 /// 
 /// @NOTE: Unfortunately, geometry shaders are not currently supported.
-GfxShader* gfx_shader_create(GfxContext* gfx, const i8* src);
+NIKOLA_API GfxShader* gfx_shader_create(GfxContext* gfx, const i8* src);
 
 /// Free/reclaim any memory consumed by `shader`.
-void gfx_shader_destroy(GfxShader* shader);
+NIKOLA_API void gfx_shader_destroy(GfxShader* shader);
 
 /// Attaches the uniform `buffer` to the `shader` of type `type` to point `bind_point`. 
 /// Any updates to `buffer` will have an effect on the `shader`.
@@ -1841,16 +1867,16 @@ void gfx_shader_destroy(GfxShader* shader);
 /// @NOTE: For GLSL (OpenGL), you _need_ to specify the binding point of the uniform buffer in the shader itself. For example, 
 /// do something like, `layout (std140, binding = 0)`. Now the uniform buffer will be bound to the point `0` and the shader 
 /// can easily find it. 
-void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer, const u32 bind_point);
+NIKOLA_API void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer, const u32 bind_point);
 
 /// Only for GLSL (OpenGL), retrieve the location of the `uniform_name` in the `shader`.
-i32 gfx_glsl_get_uniform_location(GfxShader* shader, const i8* uniform_name);
+NIKOLA_API i32 gfx_glsl_get_uniform_location(GfxShader* shader, const i8* uniform_name);
 
 /// Only for GLSL (OpenGL), upload a uniform array with `count` elements of type `type` with `data` at `location` to `shader`. 
-void gfx_glsl_upload_uniform_array(GfxShader* shader, const i32 location, const sizei count, const GfxLayoutType type, const void* data);
+NIKOLA_API void gfx_glsl_upload_uniform_array(GfxShader* shader, const i32 location, const sizei count, const GfxLayoutType type, const void* data);
 
 /// Only for GLSL (OpenGL), upload a uniform of type `type` with `data` at `location` to `shader`. 
-void gfx_glsl_upload_uniform(GfxShader* shader, const i32 location, const GfxLayoutType type, const void* data);
+NIKOLA_API void gfx_glsl_upload_uniform(GfxShader* shader, const i32 location, const GfxLayoutType type, const void* data);
 
 /// Shader functions 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1859,18 +1885,18 @@ void gfx_glsl_upload_uniform(GfxShader* shader, const i32 location, const GfxLay
 /// Texture functions 
 
 /// Allocate and return a `GfxTexture` from the information provided by `desc`. 
-GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc);
+NIKOLA_API GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc);
 
 /// Reclaim/free any memory allocated by `texture`.
-void gfx_texture_destroy(GfxTexture* texture);
+NIKOLA_API void gfx_texture_destroy(GfxTexture* texture);
 
 /// Retrieve the internal `GfxTextureDesc` of `texture`
-GfxTextureDesc& gfx_texture_get_desc(GfxTexture* texture);
+NIKOLA_API GfxTextureDesc& gfx_texture_get_desc(GfxTexture* texture);
 
 /// Update the `texture`'s information from the given `desc`.
 ///
 /// @NOTE: This will resend the pixels of `texture` to the GPU with the new information provided by `desc`.
-void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc);
+NIKOLA_API void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc);
 
 /// Texture functions 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1879,18 +1905,18 @@ void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc);
 /// Cubemap functions 
 
 /// Allocate and return a `GfxCubemap` from the information provided by `desc`. 
-GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc& desc);
+NIKOLA_API GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc& desc);
 
 /// Reclaim/free any memory allocated by `texture`.
-void gfx_cubemap_destroy(GfxCubemap* cubemap);
+NIKOLA_API void gfx_cubemap_destroy(GfxCubemap* cubemap);
 
 /// Retrieve the internal `GfxCubemapDesc` of `cubemap`
-GfxCubemapDesc& gfx_cubemap_get_desc(GfxCubemap* cubemap);
+NIKOLA_API GfxCubemapDesc& gfx_cubemap_get_desc(GfxCubemap* cubemap);
 
 /// Update the `cubemap`'s information from the given `desc`.
 ///
 /// @NOTE: This will resend the pixels of `cubemap` to the GPU with the new information provided by `desc`.
-void gfx_cubemap_update(GfxCubemap* cubemap, const GfxCubemapDesc& desc);
+NIKOLA_API void gfx_cubemap_update(GfxCubemap* cubemap, const GfxCubemapDesc& desc);
 
 /// Cubemap functions 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1899,19 +1925,19 @@ void gfx_cubemap_update(GfxCubemap* cubemap, const GfxCubemapDesc& desc);
 /// Pipeline functions 
 
 /// Allocate and return a `GfxPipeline` from the information provided by `desc`.
-GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc);
+NIKOLA_API GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc);
 
 /// Reclaim/free any memory allocated by `pipeline`.
-void gfx_pipeline_destroy(GfxPipeline* pipeline);
+NIKOLA_API void gfx_pipeline_destroy(GfxPipeline* pipeline);
 
 /// Retrieve the internal `GfxPipelineDesc` of `pipeline`
-GfxPipelineDesc& gfx_pipeline_get_desc(GfxPipeline* pipeline);
+NIKOLA_API GfxPipelineDesc& gfx_pipeline_get_desc(GfxPipeline* pipeline);
 
 /// Draw the contents of the `vertex_buffer` in `pipeline`.
-void gfx_pipeline_draw_vertex(GfxPipeline* pipeline);
+NIKOLA_API void gfx_pipeline_draw_vertex(GfxPipeline* pipeline);
 
 /// Draw the contents of the `vertex_buffer` using the `index_buffer` in `pipeline`.
-void gfx_pipeline_draw_index(GfxPipeline* pipeline);
+NIKOLA_API void gfx_pipeline_draw_index(GfxPipeline* pipeline);
 
 /// Pipeline functions 
 ///---------------------------------------------------------------------------------------------------------------------

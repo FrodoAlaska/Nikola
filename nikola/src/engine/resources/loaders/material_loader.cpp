@@ -36,13 +36,12 @@ void material_loader_load(ResourceStorage* storage,
   }
 }
 
-void material_loader_attach_uniform(ResourceStorage* storage, MaterialLoader* loader, const sizei index, const ResourceID& buffer_id) {
+void material_loader_attach_uniform(ResourceStorage* storage, MaterialLoader& loader, const sizei index, const ResourceID& buffer_id) {
   NIKOLA_ASSERT(storage, "Cannot load with an invalid ResourceStorage");
-  NIKOLA_ASSERT(loader, "Cannot load with an invalid loader");
   NIKOLA_ASSERT((buffer_id != INVALID_RESOURCE), "Cannot attach an invalid uniform buffer id to a material");
   NIKOLA_ASSERT(((index >= MATERIAL_MATRICES_BUFFER_INDEX) && (index <= MATERIAL_LIGHTING_BUFFER_INDEX)), "Invalid index passed as uniform buffer index of a material");
 
-  loader->uniform_buffers[index] = buffer_id;
+  loader.uniform_buffers[index] = buffer_id;
 }
 
 /// Material loader functions

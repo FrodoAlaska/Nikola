@@ -1,8 +1,6 @@
 # (Engine) TODO: 
-- Define `NIKOLAAPI` and prepend it to all functions
-- Documentation
-- The renderer... at least minimally. To render stuff and things
 - NBRF importer
+- The renderer... at least minimally. To render stuff and things
 - Finish up the rest of the resources (models, fonts, etc...)
 
 # (Core) TODO: 

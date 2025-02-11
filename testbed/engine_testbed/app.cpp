@@ -73,12 +73,12 @@ nikola::App* app_init(nikola::Window* window) {
   // Material init
   nikola::MaterialLoader mat_loader;
   nikola::material_loader_load(app->storage, &mat_loader, diffuse_id, nikola::INVALID_RESOURCE, shader_id);
-  nikola::material_loader_attach_uniform(app->storage, &mat_loader, nikola::MATERIAL_MATRICES_BUFFER_INDEX, matrices_id);
+  nikola::material_loader_attach_uniform(app->storage, mat_loader, nikola::MATERIAL_MATRICES_BUFFER_INDEX, matrices_id);
   app->material_id = nikola::resource_storage_push(app->storage, mat_loader);
 
   // Skybox material init
   nikola::material_loader_load(app->storage, &mat_loader, diffuse_id, nikola::INVALID_RESOURCE, sky_shader_id);
-  nikola::material_loader_attach_uniform(app->storage, &mat_loader, nikola::MATERIAL_MATRICES_BUFFER_INDEX, matrices_id);
+  nikola::material_loader_attach_uniform(app->storage, mat_loader, nikola::MATERIAL_MATRICES_BUFFER_INDEX, matrices_id);
   app->skybox_material_id = nikola::resource_storage_push(app->storage, mat_loader);
 
   // Transform init

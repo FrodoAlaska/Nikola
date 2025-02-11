@@ -23,7 +23,8 @@ namespace nikola { // Start of nikola
   // with unnecessary crap, this define should disable 
   // that completely.
   #define WIN32_LEAN_AND_MEAN
-  
+ 
+  /// The entry point to a C++ application
   #define NIKOLA_MAIN(engine_main)                                                        \
   int WINAPI WinMain(HINSTANCE inst, HINSTANCE prev_inst, LPSTR cmd_line, int cmd_show) { \
     return engine_main(0, &cmd_line);                                                     \
@@ -31,6 +32,7 @@ namespace nikola { // Start of nikola
 
 #elif NIKOLA_PLATFORM_LINUX == 1
   
+  /// The entry point to a C++ application
   #define NIKOLA_MAIN(engine_main)  \
   int main(int argc, char** argv) { \
     return engine_main(argc, argv); \
@@ -44,13 +46,17 @@ namespace nikola { // Start of nikola
 /// ----------------------------------------------------------------------
 /// *** Typedefs ***
 
+/// An ASCII string
 using String       = std::string;
 
+/// A file path structure to aid with file operations 
 using FilePath     = std::filesystem::path;
 
+/// A dynamically-sized array
 template<typename T>
 using DynamicArray = std::vector<T>;
 
+/// A key-value pair hash map
 template<typename K, typename V> 
 using HashMap      = std::unordered_map<K, V>;
 
@@ -63,16 +69,22 @@ using HashMap      = std::unordered_map<K, V>;
 ///---------------------------------------------------------------------------------------------------------------------
 /// Math consts 
 
+/// The value of pi
 const f64 PI        = 3.14159265359;
 
+/// A multiplier to convert a value from radians to degrees
 const f32 RAD2DEG   = (180.0f / PI);
 
+/// A multiplier to convert a value from degrees to radians
 const f32 DEG2RAD   = (PI / 180.0f);
 
+/// The value of epsilon
 const f64 EPSILON   = 1.192092896e-07f;
 
+/// The minimum possible float value
 const f64 FLOAT_MIN = -3.40282e+38F;
 
+/// The maximum possible float value
 const f64 FLOAT_MAX = 3.40282e+38F;
 
 /// Math consts 
@@ -198,35 +210,50 @@ struct Vertex3D_PNCUV {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Math common functions
 
-const f32 clamp_float(const f32 value, const f32 min, const f32 max);
+/// Clamp the float `value` between `min` and `max`
+NIKOLA_API const f32 clamp_float(const f32 value, const f32 min, const f32 max);
 
-const i32 clamp_int(const i32 value, const i32 min, const i32 max);
+/// Clamp the int `value` between `min` and `max`
+NIKOLA_API const i32 clamp_int(const i32 value, const i32 min, const i32 max);
 
-const f64 cos(const f64 x);
+/// Returns the cosine of `x`
+NIKOLA_API const f64 cos(const f64 x);
 
-const f64 sin(const f64 x);
+/// Returns the sine of `x`
+NIKOLA_API const f64 sin(const f64 x);
 
-const f64 tan(const f64 x);
+/// Returns the tangent of `x`
+NIKOLA_API const f64 tan(const f64 x);
 
-const f64 atan(const f64 x);
+/// Returns the tangent of `x`
+NIKOLA_API const f64 atan(const f64 x);
 
-const f64 atan(const f64 y, const f64 x);
+/// Returns the tangent of `y` and `x`
+NIKOLA_API const f64 atan(const f64 y, const f64 x);
 
-const f64 floor(const f64 x);
+/// Returns the floored value of `x`
+NIKOLA_API const f64 floor(const f64 x);
 
-const f64 sqrt(const f64 x);
+/// Returns the square root of `x`
+NIKOLA_API const f64 sqrt(const f64 x);
 
-const f32 min_float(const f32 x, const f32 y);
+/// Returns the lesser value between `x` and `y`
+NIKOLA_API const f32 min_float(const f32 x, const f32 y);
 
-const f32 max_float(const f32 x, const f32 y);
+/// Returns the greater value between `x` and `y`
+NIKOLA_API const f32 max_float(const f32 x, const f32 y);
 
-const i32 min_int(const i32 x, const i32 y);
+/// Returns the lesser value between `x` and `y`
+NIKOLA_API const i32 min_int(const i32 x, const i32 y);
 
-const i32 max_int(const i32 x, const i32 y);
+/// Returns the greater value between `x` and `y`
+NIKOLA_API const i32 max_int(const i32 x, const i32 y);
 
-const f32 lerp(const f32 start, const f32 end, const f32 amount);
+/// Returns the linear interpolation from `start` to `end` by `amount`
+NIKOLA_API const f32 lerp(const f32 start, const f32 end, const f32 amount);
 
-const f32 remap(const f32 value, const f32 old_min, const f32 old_max, const f32 new_min, const f32 new_max);
+/// Returns the re mapped `value` from `old_min` - `old_max` to `new_min` to `new_max`
+NIKOLA_API const f32 remap(const f32 value, const f32 old_min, const f32 old_max, const f32 new_min, const f32 new_max);
 
 /// Math common functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -234,29 +261,41 @@ const f32 remap(const f32 value, const f32 old_min, const f32 old_max, const f32
 ///---------------------------------------------------------------------------------------------------------------------
 /// Math random functions
 
-const f32 random_f32();
+/// Returns a random 32-bit float value
+NIKOLA_API const f32 random_f32();
 
-const f32 random_f32(const f32 min, const f32 max);
+/// Returns a random 32-bit float value between `min` and `max`
+NIKOLA_API const f32 random_f32(const f32 min, const f32 max);
 
-const f64 random_f64();
+/// Returns a random 64-bit float value
+NIKOLA_API const f64 random_f64();
 
-const f64 random_f64(const f64 min, const f64 max);
+/// Returns a random 64-bit float value between `min` and `max`
+NIKOLA_API const f64 random_f64(const f64 min, const f64 max);
 
-const i32 random_i32();
+/// Returns a random 32-bit signed int value
+NIKOLA_API const i32 random_i32();
 
-const i32 random_i32(const i32 min, const i32 max);
+/// Returns a random 32-bit signed int value between `min` and `max`
+NIKOLA_API const i32 random_i32(const i32 min, const i32 max);
 
-const i64 random_i64();
+/// Returns a random 64-bit signed int value
+NIKOLA_API const i64 random_i64();
 
-const i64 random_i64(const i64 min, const i64 max);
+/// Returns a random 64-bit signed int value between `min` and `max`
+NIKOLA_API const i64 random_i64(const i64 min, const i64 max);
 
-const u32 random_u32();
+/// Returns a random 32-bit unsigned int value
+NIKOLA_API const u32 random_u32();
 
-const u32 random_u32(const u32 min, const u32 max);
+/// Returns a random 32-bit unsigned int value between `min` and `max`
+NIKOLA_API const u32 random_u32(const u32 min, const u32 max);
 
-const u64 random_u64();
+/// Returns a random 64-bit unsigned int value
+NIKOLA_API const u64 random_u64();
 
-const u64 random_u64(const u64 min, const u64 max);
+/// Returns a random 64-bit unsigned int value between `min` and `max`
+NIKOLA_API const u64 random_u64(const u64 min, const u64 max);
 
 /// Math random functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -264,21 +303,29 @@ const u64 random_u64(const u64 min, const u64 max);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Vec2 functions
 
-const Vec2 vec2_normalize(const Vec2& v);
+/// Returns the normalized vector of `v`
+NIKOLA_API const Vec2 vec2_normalize(const Vec2& v);
 
-const Vec2 vec2_clamp(const Vec2& value, const Vec2& min, const Vec2& max);
+/// Returns the clamped `value` between `min` and `max`
+NIKOLA_API const Vec2 vec2_clamp(const Vec2& value, const Vec2& min, const Vec2& max);
 
-const Vec2 vec2_min(const Vec2& v1, const Vec2& v2);
+/// Returns the lesser vector between `v1` and `v2`
+NIKOLA_API const Vec2 vec2_min(const Vec2& v1, const Vec2& v2);
 
-const Vec2 vec2_max(const Vec2& v1, const Vec2& v2);
+/// Returns the greater vector between `v1` and `v2`
+NIKOLA_API const Vec2 vec2_max(const Vec2& v1, const Vec2& v2);
 
-const f32 vec2_dot(const Vec2& v1, const Vec2& v2);
+/// Returns the dot product between `v1` and `v2`
+NIKOLA_API const f32 vec2_dot(const Vec2& v1, const Vec2& v2);
 
-const f32 vec2_distance(const Vec2& v1, const Vec2& v2);
+/// Returns the distance between `v1` and `v2`
+NIKOLA_API const f32 vec2_distance(const Vec2& v1, const Vec2& v2);
 
-const f32 vec2_angle(const Vec2& point1, const Vec2& point2);
+/// Returns the angle in radians between `point1` and `point2`
+NIKOLA_API const f32 vec2_angle(const Vec2& point1, const Vec2& point2);
 
-const String vec2_to_string(const Vec2& vec);
+/// Returns the string representation of `vec`
+NIKOLA_API const String vec2_to_string(const Vec2& vec);
 
 /// Vec2 functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -286,21 +333,29 @@ const String vec2_to_string(const Vec2& vec);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Vec3 functions
 
-const Vec3 vec3_normalize(const Vec3& v);
+/// Returns the normalized vector of `v`
+NIKOLA_API const Vec3 vec3_normalize(const Vec3& v);
 
-const Vec3 vec3_clamp(const Vec3& value, const Vec3& min, const Vec3& max);
+/// Returns the clamped `value` between `min` and `max`
+NIKOLA_API const Vec3 vec3_clamp(const Vec3& value, const Vec3& min, const Vec3& max);
 
-const Vec3 vec3_min(const Vec3& v1, const Vec3& v2);
+/// Returns the lesser vector between `v1` and `v2`
+NIKOLA_API const Vec3 vec3_min(const Vec3& v1, const Vec3& v2);
 
-const Vec3 vec3_max(const Vec3& v1, const Vec3& v2);
+/// Returns the greater vector between `v1` and `v2`
+NIKOLA_API const Vec3 vec3_max(const Vec3& v1, const Vec3& v2);
 
-const Vec3 vec3_cross(const Vec3& v1, const Vec3& v2);
+/// Returns the dot product between `v1` and `v2`
+NIKOLA_API const f32 vec3_dot(const Vec3& v1, const Vec3& v2);
 
-const f32 vec3_dot(const Vec3& v1, const Vec3& v2);
+/// Returns the cross product between `v1` and `v2`
+NIKOLA_API const Vec3 vec3_cross(const Vec3& v1, const Vec3& v2);
 
-const f32 vec3_distance(const Vec3& v1, const Vec3& v2);
+/// Returns the distance between `point1` and `point2`
+NIKOLA_API const f32 vec3_distance(const Vec3& v1, const Vec3& v2);
 
-const String vec3_to_string(const Vec3& vec);
+/// Returns the string representation of `vec`
+NIKOLA_API const String vec3_to_string(const Vec3& vec);
 
 /// Vec3 functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -308,19 +363,26 @@ const String vec3_to_string(const Vec3& vec);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Vec4 functions
 
-const Vec4 vec4_normalize(const Vec4& v);
+/// Returns the normalized vector of `v`
+NIKOLA_API const Vec4 vec4_normalize(const Vec4& v);
 
-const Vec4 vec4_clamp(const Vec4& value, const Vec4& min, const Vec4& max);
+/// Returns the clamped `value` between `min` and `max`
+NIKOLA_API const Vec4 vec4_clamp(const Vec4& value, const Vec4& min, const Vec4& max);
 
-const Vec4 vec4_min(const Vec4& v1, const Vec4& v2);
+/// Returns the lesser vector between `v1` and `v2`
+NIKOLA_API const Vec4 vec4_min(const Vec4& v1, const Vec4& v2);
 
-const Vec4 vec4_max(const Vec4& v1, const Vec4& v2);
+/// Returns the greater vector between `v1` and `v2`
+NIKOLA_API const Vec4 vec4_max(const Vec4& v1, const Vec4& v2);
 
-const f32 vec4_dot(const Vec4& v1, const Vec4& v2);
+/// Returns the dot product between `v1` and `v2`
+NIKOLA_API const f32 vec4_dot(const Vec4& v1, const Vec4& v2);
 
-const f32 vec4_distance(const Vec4& v1, const Vec4& v2);
+/// Returns the distance between `point1` and `point2`
+NIKOLA_API const f32 vec4_distance(const Vec4& v1, const Vec4& v2);
 
-const String vec4_to_string(const Vec4& vec);
+/// Returns the string representation of `vec`
+NIKOLA_API const String vec4_to_string(const Vec4& vec);
 
 /// Vec4 functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -328,15 +390,20 @@ const String vec4_to_string(const Vec4& vec);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Mat3 functions
 
-const f32 mat3_det(const Mat3& mat);
+/// Returns the determinant value of `mat` 
+NIKOLA_API const f32 mat3_det(const Mat3& mat);
 
-const Mat3 mat3_transpose(const Mat3& mat);
+/// Returns the transposed matrix of `mat` 
+NIKOLA_API const Mat3 mat3_transpose(const Mat3& mat);
 
-const Mat3 mat3_inverse(const Mat3& mat);
+/// Returns the inverse matrix of `mat` 
+NIKOLA_API const Mat3 mat3_inverse(const Mat3& mat);
 
-const f32* mat3_raw_data(const Mat3& mat);
+/// Returns the raw array of floats of `mat` 
+NIKOLA_API const f32* mat3_raw_data(const Mat3& mat);
 
-const String mat3_to_string(const Mat3& mat);
+/// Returns the string representation of `mat3`
+NIKOLA_API const String mat3_to_string(const Mat3& mat);
 
 /// Mat3 functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -344,27 +411,40 @@ const String mat3_to_string(const Mat3& mat);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Mat4 functions
 
-const f32 mat4_det(const Mat4& mat);
+/// Returns the determinant value of `mat` 
+NIKOLA_API const f32 mat4_det(const Mat4& mat);
 
-const Mat4 mat4_transpose(const Mat4& mat);
+/// Returns the transposed matrix of `mat` 
+NIKOLA_API const Mat4 mat4_transpose(const Mat4& mat);
 
-const Mat4 mat4_inverse(const Mat4& mat);
+/// Returns the inverse matrix of `mat` 
+NIKOLA_API const Mat4 mat4_inverse(const Mat4& mat);
 
-const Mat4 mat4_translate(const Vec3& position);
+/// Returns the translation matrix affected by `position`
+NIKOLA_API const Mat4 mat4_translate(const Vec3& position);
 
-const Mat4 mat4_rotate(const Vec3& axis, const f32 angle);
+/// Returns the roation matrix affected by `axis` and `angle`
+NIKOLA_API const Mat4 mat4_rotate(const Vec3& axis, const f32 angle);
 
-const Mat4 mat4_scale(const Vec3& scale);
+/// Returns the sclae matrix affected by `scale`
+NIKOLA_API const Mat4 mat4_scale(const Vec3& scale);
 
-const Mat4 mat4_perspective(const f32 fov, const f32 aspect_ratio, const f32 near, const f32 far);
+/// Generates a 4x4 matrix for a symmetric perspective view frustrum, using the left hand coordinate system.
+///
+/// @NOTE: The fov is in radians.
+NIKOLA_API const Mat4 mat4_perspective(const f32 fov, const f32 aspect_ratio, const f32 near, const f32 far);
 
-const Mat4 mat4_ortho(const f32 left, const f32 right, const f32 bottom, const f32 top);
+/// Generates a 4x4 matrix for a orthographic view frustrum, using the left hand coordinate system
+NIKOLA_API const Mat4 mat4_ortho(const f32 left, const f32 right, const f32 bottom, const f32 top);
 
-const Mat4 mat4_look_at(const Vec3& eye, const Vec3& center, const Vec3& up);
+/// Generates a 4x4 look at view matrix, using ther left handed coordinate system 
+NIKOLA_API const Mat4 mat4_look_at(const Vec3& eye, const Vec3& center, const Vec3& up);
 
-const f32* mat4_raw_data(const Mat4& mat);
+/// Returns the raw array of floats of `mat` 
+NIKOLA_API const f32* mat4_raw_data(const Mat4& mat);
 
-const String mat4_to_string(const Mat4& mat);
+/// Returns the string representation of `mat3`
+NIKOLA_API const String mat4_to_string(const Mat4& mat);
 
 /// Mat4 functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -372,21 +452,29 @@ const String mat4_to_string(const Mat4& mat);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Math Quat functions
 
-const f32 quat_dot(const Quat& q1, const Quat& q2);
+/// Returns the dot product between `q1` and `q2`
+NIKOLA_API const f32 quat_dot(const Quat& q1, const Quat& q2);
 
-const Quat quat_normalize(const Quat& q);
+/// Returns the normalized quaternion of `q`
+NIKOLA_API const Quat quat_normalize(const Quat& q);
 
-const Quat quat_lerp(const Quat& start, const Quat& end, const f32 amount);
+/// Returns the linearly interpolated quaternion from `start` to `end` by `amount`
+NIKOLA_API const Quat quat_lerp(const Quat& start, const Quat& end, const f32 amount);
 
-const Quat quat_set_mat3(const Mat3& mat);
+/// Sets and returns the rotation of a quaternion using the given 3x3 `mat`
+NIKOLA_API const Quat quat_set_mat3(const Mat3& mat);
 
-const Quat quat_set_mat4(const Mat4& mat);
+/// Sets and returns the rotation of a quaternion using the given 4x4 `mat`
+NIKOLA_API const Quat quat_set_mat4(const Mat4& mat);
 
-const Quat quat_angle_axis(const Vec3& axis, const f32 angle);
+/// Rotates and returns a quaternion using the given `axis` by `angle` in radians
+NIKOLA_API const Quat quat_angle_axis(const Vec3& axis, const f32 angle);
 
-const Mat3 quat_to_mat3(const Quat& q);
+/// Convert the given `q` to a 3x3 rotation matrix
+NIKOLA_API const Mat3 quat_to_mat3(const Quat& q);
 
-const Mat4 quat_to_mat4(const Quat& q);
+/// Convert the given `q` to a 4x4 rotation matrix
+NIKOLA_API const Mat4 quat_to_mat4(const Quat& q);
 
 /// Math Quat functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -394,15 +482,21 @@ const Mat4 quat_to_mat4(const Quat& q);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Transform functions
 
-void transform_translate(Transform& trans, const Vec3& pos);
+/// Translate the given `trans` by `pos`
+NIKOLA_API void transform_translate(Transform& trans, const Vec3& pos);
 
-void transform_rotate(Transform& trans, const Quat& rot);
+/// Rotate the given `trans` by `rot`
+NIKOLA_API void transform_rotate(Transform& trans, const Quat& rot);
 
-void transform_rotate(Transform& trans, const Vec4& axis_angle);
+/// Rotate the given `trans` by `axis_angle`, using `x, y, z` as the axis and 
+/// `z` as the angle in radians.
+NIKOLA_API void transform_rotate(Transform& trans, const Vec4& axis_angle);
 
-void transform_rotate(Transform& trans, const Vec3& axis, const f32 angle);
+/// Rotate the given `trans` by `angle` in radians around `axis` 
+NIKOLA_API void transform_rotate(Transform& trans, const Vec3& axis, const f32 angle);
 
-void transform_scale(Transform& trans, const Vec3& scale);
+/// Scale the given `trans` by `scale`
+NIKOLA_API void transform_scale(Transform& trans, const Vec3& scale);
 
 /// Transform functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -416,12 +510,16 @@ void transform_scale(Transform& trans, const Vec3& scale);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Resources consts
 
+/// A value to indicate an unwanted or invalid resource
 const i32 INVALID_RESOURCE                 = -1;
 
+/// The maximum amount of declared uniform buffers in all materials
 const sizei MATERIAL_UNIFORM_BUFFERS_MAX   = 2;
 
+/// The index of the matrices uniform buffer within all materials
 const sizei MATERIAL_MATRICES_BUFFER_INDEX = 0;
 
+/// The index of the lighting uniform buffer within all materials
 const sizei MATERIAL_LIGHTING_BUFFER_INDEX = 1;
 
 /// Resources consts
@@ -430,14 +528,31 @@ const sizei MATERIAL_LIGHTING_BUFFER_INDEX = 1;
 ///---------------------------------------------------------------------------------------------------------------------
 /// ResourceType
 enum ResourceType {
+  /// A flag to denote a `GfxBuffer` resource
   RESOURCE_TYPE_BUFFER   = 14 << 0, 
+
+  /// A flag to denote a `GfxTexture` resource
   RESOURCE_TYPE_TEXTURE  = 14 << 1, 
+  
+  /// A flag to denote a `GfxCubemap` resource
   RESOURCE_TYPE_CUBEMAP  = 14 << 2,
+  
+  /// A flag to denote a `GfxShader` resource
   RESOURCE_TYPE_SHADER   = 14 << 4,
+  
+  /// A flag to denote a `Mesh` resource
   RESOURCE_TYPE_MESH     = 14 << 5,
+  
+  /// A flag to denote a `Material` resource
   RESOURCE_TYPE_MATERIAL = 14 << 6,
+  
+  /// A flag to denote a `Skybox` resource
   RESOURCE_TYPE_SKYBOX   = 14 << 7,
+  
+  /// A flag to denote a `Model` resource
   RESOURCE_TYPE_MODEL    = 14 << 8,
+  
+  /// A flag to denote a `Font` resource
   RESOURCE_TYPE_FONT     = 14 << 9,
 };
 /// ResourceType
@@ -446,8 +561,13 @@ enum ResourceType {
 ///---------------------------------------------------------------------------------------------------------------------
 /// MeshType
 enum MeshType {
+  /// A predefined cube mesh
   MESH_TYPE_CUBE     = 15 << 0, 
+  
+  /// A predefined circle mesh
   MESH_TYPE_CIRCLE   = 15 << 1, 
+  
+  /// A predefined cylinder mesh
   MESH_TYPE_CYLINDER = 15 << 2, 
 };
 /// MeshType
@@ -456,8 +576,13 @@ enum MeshType {
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderableType 
 enum RenderableType {
+  /// Will commence a mesh rendering operation
   RENDERABLE_TYPE_MESH   = 16 << 0,
+  
+  /// Will commence a model rendering operation
   RENDERABLE_TYPE_MODEL  = 16 << 1,
+  
+  /// Will commence a skybox rendering operation
   RENDERABLE_TYPE_SKYBOX = 16 << 2,
 };
 /// RenderableType 
@@ -592,11 +717,14 @@ struct SkyboxLoader {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Material functions
 
-void material_set_color(Material* mat, const Vec4& color);
+/// Set the color value of the associated shader in `mat` to `color`
+NIKOLA_API void material_set_color(Material* mat, const Vec4& color);
 
-void material_set_transform(Material* mat, const Transform& transform);
+/// Set the transform value of the associated shader in `mat` to `transform`
+NIKOLA_API void material_set_transform(Material* mat, const Transform& transform);
 
-void material_set_matrices_buffer(Material* mat, const Mat4& view_projection);
+/// Set the matrices uniform buffer of the associated shader in `mat` to `view_projection`
+NIKOLA_API void material_set_matrices_buffer(Material* mat, const Mat4& view_projection);
 
 /// Material functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -604,13 +732,21 @@ void material_set_matrices_buffer(Material* mat, const Mat4& view_projection);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Texture loader functions
 
-void texture_loader_load(GfxTextureDesc* desc, 
-                         const FilePath& path, 
-                         const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
-                         const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-                         const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
+/// Fill the information of `desc` by the texture loaded from `path` as well as 
+/// `format`, `filter`, and `wrap`. 
+///
+/// Default values: 
+///   - `format` = `GFX_TEXTURE_FORMAT_RGBA8`.
+///   - `filter` = `GFX_TEXTURE_FILTER_MIN_MAG_NEAREST`.
+///   - `wrap`   = `GFX_TEXTURE_WRAP_CLAMP`.
+NIKOLA_API void texture_loader_load(GfxTextureDesc* desc, 
+                                    const FilePath& path, 
+                                    const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
+                                    const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
+                                    const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
 
-void texture_loader_unload(GfxTextureDesc& desc);
+/// Free the previously loaded pixels by `desc`
+NIKOLA_API void texture_loader_unload(GfxTextureDesc& desc);
 
 /// Texture loader functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -618,21 +754,36 @@ void texture_loader_unload(GfxTextureDesc& desc);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Cubemap loader functions
 
-void cubemap_loader_load(GfxCubemapDesc* desc, 
-                         const FilePath path[CUBEMAP_FACES_MAX], 
-                         const sizei faces_count,
-                         const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
-                         const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-                         const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
+/// Fill the information of `desc` by the `faces_count` amount of cube faces loaded from 
+/// all the given `path`s as well as `format`, `filter`, and `wrap`. 
+///
+/// Default values: 
+///   - `format` = `GFX_TEXTURE_FORMAT_RGBA8`.
+///   - `filter` = `GFX_TEXTURE_FILTER_MIN_MAG_NEAREST`.
+///   - `wrap`   = `GFX_TEXTURE_WRAP_CLAMP`.
+NIKOLA_API void cubemap_loader_load(GfxCubemapDesc* desc, 
+                                    const FilePath path[CUBEMAP_FACES_MAX], 
+                                    const sizei faces_count,
+                                    const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
+                                    const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
+                                    const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
 
-void cubemap_loader_load(GfxCubemapDesc* desc, 
-                         const FilePath& directory,
-                         const sizei faces_count,
-                         const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
-                         const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-                         const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
+/// Recursively go through `directory` to attain all of the `faces_count` amount of 
+/// cube faces to fill `desc`, while providing values for `format`, `filter`, and `wrap`.
+///
+/// Default values: 
+///   - `format` = `GFX_TEXTURE_FORMAT_RGBA8`.
+///   - `filter` = `GFX_TEXTURE_FILTER_MIN_MAG_NEAREST`.
+///   - `wrap`   = `GFX_TEXTURE_WRAP_CLAMP`.
+NIKOLA_API void cubemap_loader_load(GfxCubemapDesc* desc, 
+                                    const FilePath& directory,
+                                    const sizei faces_count,
+                                    const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
+                                    const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
+                                    const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
 
-void cubemap_loader_unload(GfxCubemapDesc& desc);
+/// Free the previously loaded pixels by `desc`
+NIKOLA_API void cubemap_loader_unload(GfxCubemapDesc& desc);
 
 /// Cubemap loader functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -640,14 +791,22 @@ void cubemap_loader_unload(GfxCubemapDesc& desc);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Mesh loader functions
 
-void mesh_loader_load(ResourceStorage* storage, 
-                      MeshLoader* loader, 
-                      const ResourceID& vertex_buffer_id, 
-                      const VertexType vertex_type, 
-                      const ResourceID& index_buffer_id, 
-                      const sizei indices_count);
+/// Use the given `storage` to retrieve the buffers `vertex_buffer_id` and `index_buffer_id`
+/// in order to fill the information in `loader`. A `vertex_type` must be provided to 
+/// calculate the stride, while `indices_count` will be used in case `index_buffer_id` 
+/// is not set to `INVALID_RESOURCE`.
+///
+/// @NOTE: The value of `index_buffer_id` can be set to `INVALID_RESOURCE` to be ignored.
+/// The same cannot be said for `vertex_buffer_id`.
+NIKOLA_API void mesh_loader_load(ResourceStorage* storage, 
+                                 MeshLoader* loader, 
+                                 const ResourceID& vertex_buffer_id, 
+                                 const VertexType vertex_type, 
+                                 const ResourceID& index_buffer_id, 
+                                 const sizei indices_count);
 
-void mesh_loader_load(ResourceStorage* storage, MeshLoader* loader, const MeshType type);
+/// Use the given `storage` to fill the information in `loader` by a predefined mesh of `type`.
+NIKOLA_API void mesh_loader_load(ResourceStorage* storage, MeshLoader* loader, const MeshType type);
 
 /// Mesh loader functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -655,13 +814,20 @@ void mesh_loader_load(ResourceStorage* storage, MeshLoader* loader, const MeshTy
 ///---------------------------------------------------------------------------------------------------------------------
 /// Material loader functions
 
-void material_loader_load(ResourceStorage* storage, 
-                          MaterialLoader* loader, 
-                          const ResourceID& diffuse_id, 
-                          const ResourceID& specular_id, 
-                          const ResourceID& shader_id);
+/// Use the given `storage` to check for the availability and retrieve `diffuse_id`, 
+/// `specular_id`, and `shader_id` in order to fill the information in `loader`.
+///
+/// @NOTE: The resource `specular_id` is allowed to be set to `INVALID_RESOURCE` 
+/// but not the others.
+NIKOLA_API void material_loader_load(ResourceStorage* storage, 
+                                     MaterialLoader* loader, 
+                                     const ResourceID& diffuse_id, 
+                                     const ResourceID& specular_id, 
+                                     const ResourceID& shader_id);
 
-void material_loader_attach_uniform(ResourceStorage* storage, MaterialLoader* loader, const sizei index, const ResourceID& buffer_id);
+/// Use the given `storage` to check for the availability and retrieve uniform `buffer_id` in order 
+/// to attach it at `index` in the associated shader in `loader`.
+NIKOLA_API void material_loader_attach_uniform(ResourceStorage* storage, MaterialLoader& loader, const sizei index, const ResourceID& buffer_id);
 
 /// Material loader functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -669,7 +835,9 @@ void material_loader_attach_uniform(ResourceStorage* storage, MaterialLoader* lo
 ///---------------------------------------------------------------------------------------------------------------------
 /// Skybox loader functions
 
-void skybox_loader_load(ResourceStorage* storage, SkyboxLoader* loader, const ResourceID& cubemap_id);
+/// Use the given `storage` to check for the availability and retrieve `cubemap_id` in 
+/// order to fill the information in `loader`.
+NIKOLA_API void skybox_loader_load(ResourceStorage* storage, SkyboxLoader* loader, const ResourceID& cubemap_id);
 
 /// Skybox loader functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -677,11 +845,14 @@ void skybox_loader_load(ResourceStorage* storage, SkyboxLoader* loader, const Re
 ///---------------------------------------------------------------------------------------------------------------------
 /// Resource manager functions
 
-void resource_manager_init();
+/// Initialize the global resource manager as well as the global cache.
+NIKOLA_API void resource_manager_init();
 
-void resource_manager_shutdown();
+/// Free/reclaim any memory consumed by the global resource manager.
+NIKOLA_API void resource_manager_shutdown();
 
-const ResourceStorage* resource_manager_cache();
+/// Retrieve the internal global cache of the resource manager.
+NIKOLA_API const ResourceStorage* resource_manager_cache();
 
 /// Resource manager functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -689,43 +860,87 @@ const ResourceStorage* resource_manager_cache();
 ///---------------------------------------------------------------------------------------------------------------------
 /// Resource storage functions
 
-ResourceStorage* resource_storage_create(const String& name, const FilePath& parent_dir);
+/// Allocate and return a `ResourceStorage` with `name` and `parent_dir`.
+NIKOLA_API ResourceStorage* resource_storage_create(const String& name, const FilePath& parent_dir);
 
-void resource_storage_clear(ResourceStorage* storage);
+/// Clear all of resources in `storage`.
+NIKOLA_API void resource_storage_clear(ResourceStorage* storage);
 
-void resource_storage_destroy(ResourceStorage* storage);
+/// Clear and destroy all of resources in `storage`.
+NIKOLA_API void resource_storage_destroy(ResourceStorage* storage);
 
-ResourceID resource_storage_push(ResourceStorage* storage, const GfxBufferDesc& buff_desc);
+/// Allocate a new `GfxBuffer` using `buff_desc`, store it in `storage`, and return a `ResourceID` 
+/// to identify it.
+NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const GfxBufferDesc& buff_desc);
 
-ResourceID resource_storage_push(ResourceStorage* storage, const GfxTextureDesc& tex_desc);
+/// Allocate a new `GfxTexture` using `tex_desc`, store it in `storage`, and return a `ResourceID` 
+/// to identify it.
+NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const GfxTextureDesc& tex_desc);
 
-ResourceID resource_storage_push(ResourceStorage* storage, const GfxCubemapDesc& cubemap_desc);
+/// Allocate a new `GfxCubemap` using `cubemap_desc`, store it in `storage`, and return a `ResourceID` 
+/// to identify it.
+NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const GfxCubemapDesc& cubemap_desc);
 
-ResourceID resource_storage_push(ResourceStorage* storage, const String& shader_src);
+/// Allocate a new `GfxShader` using `shader_src`, store it in `storage`, and return a `ResourceID` 
+/// to identify it.
+NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const String& shader_src);
 
-ResourceID resource_storage_push(ResourceStorage* storage, const MeshLoader& loader);
+/// Allocate a new `Mesh` using `loader`, store it in `storage`, and return a `ResourceID` 
+/// to identify it.
+NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const MeshLoader& loader);
 
-ResourceID resource_storage_push(ResourceStorage* storage, const MaterialLoader& loader);
+/// Allocate a new `Material` using `loader`, store it in `storage`, and return a `ResourceID` 
+/// to identify it.
+NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const MaterialLoader& loader);
 
-ResourceID resource_storage_push(ResourceStorage* storage, const SkyboxLoader& loader);
+/// Allocate a new `Skybox` using `loader`, store it in `storage`, and return a `ResourceID` 
+/// to identify it.
+NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const SkyboxLoader& loader);
 
-GfxBuffer* resource_storage_get_buffer(ResourceStorage* storage, const ResourceID& id);
+/// Retrieve `GfxBuffer` identified by `id` in `storage`. 
+///
+/// @NOTE: This function will assert if `id` is not found in `storage`.
+NIKOLA_API GfxBuffer* resource_storage_get_buffer(ResourceStorage* storage, const ResourceID& id);
 
-GfxTexture* resource_storage_get_texture(ResourceStorage* storage, const ResourceID& id);
+/// Retrieve `GfxTexture` identified by `id` in `storage`. 
+///
+/// @NOTE: This function will assert if `id` is not found in `storage`.
+NIKOLA_API GfxTexture* resource_storage_get_texture(ResourceStorage* storage, const ResourceID& id);
 
-GfxCubemap* resource_storage_get_cubemap(ResourceStorage* storage, const ResourceID& id);
+/// Retrieve `GfxCubemap` identified by `id` in `storage`. 
+///
+/// @NOTE: This function will assert if `id` is not found in `storage`.
+NIKOLA_API GfxCubemap* resource_storage_get_cubemap(ResourceStorage* storage, const ResourceID& id);
 
-GfxShader* resource_storage_get_shader(ResourceStorage* storage, const ResourceID& id);
+/// Retrieve `GfxShader` identified by `id` in `storage`. 
+///
+/// @NOTE: This function will assert if `id` is not found in `storage`.
+NIKOLA_API GfxShader* resource_storage_get_shader(ResourceStorage* storage, const ResourceID& id);
 
-Mesh* resource_storage_get_mesh(ResourceStorage* storage, const ResourceID& id);
+/// Retrieve `Mesh` identified by `id` in `storage`. 
+///
+/// @NOTE: This function will assert if `id` is not found in `storage`.
+NIKOLA_API Mesh* resource_storage_get_mesh(ResourceStorage* storage, const ResourceID& id);
 
-Material* resource_storage_get_material(ResourceStorage* storage, const ResourceID& id);
+/// Retrieve `Material` identified by `id` in `storage`. 
+///
+/// @NOTE: This function will assert if `id` is not found in `storage`.
+NIKOLA_API Material* resource_storage_get_material(ResourceStorage* storage, const ResourceID& id);
 
-Model* resource_storage_get_model(ResourceStorage* storage, const ResourceID& id);
+/// Retrieve `Model` identified by `id` in `storage`. 
+///
+/// @NOTE: This function will assert if `id` is not found in `storage`.
+NIKOLA_API Model* resource_storage_get_model(ResourceStorage* storage, const ResourceID& id);
 
-Skybox* resource_storage_get_skybox(ResourceStorage* storage, const ResourceID& id);
+/// Retrieve `Skybox` identified by `id` in `storage`. 
+///
+/// @NOTE: This function will assert if `id` is not found in `storage`.
+NIKOLA_API Skybox* resource_storage_get_skybox(ResourceStorage* storage, const ResourceID& id);
 
-Font* resource_storage_get_font(ResourceStorage* storage, const ResourceID& id);
+/// Retrieve `Font` identified by `id` in `storage`. 
+///
+/// @NOTE: This function will assert if `id` is not found in `storage`.
+NIKOLA_API Font* resource_storage_get_font(ResourceStorage* storage, const ResourceID& id);
 
 /// Resource storage functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -739,8 +954,10 @@ Font* resource_storage_get_font(ResourceStorage* storage, const ResourceID& id);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Camera consts 
 
+/// The maximum degrees the camera can achieve 
 const f32 CAMERA_MAX_DEGREES = 89.0f;
 
+/// The maximum amount of zoom the camera can achieve
 const f32 CAMERA_MAX_ZOOM    = 180.0f;
 
 /// Camera consts 
@@ -779,11 +996,14 @@ struct Camera {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Camera functions
 
-void camera_default_move_func(Camera& camera);
+/// The default function callback to use in order to move `camera`.
+NIKOLA_API void camera_default_move_func(Camera& camera);
 
-void camera_create(Camera* cam, const f32 aspect_ratio, const Vec3& pos, const Vec3& target, const CameraMoveFn& move_fn = camera_default_move_func);
+/// Fill the information in `cam` using the given values.
+NIKOLA_API void camera_create(Camera* cam, const f32 aspect_ratio, const Vec3& pos, const Vec3& target, const CameraMoveFn& move_fn = camera_default_move_func);
 
-void camera_update(Camera& cam);
+/// Update the internal matrices of `cam` and call the associated `CameraMoveFn`. 
+NIKOLA_API void camera_update(Camera& cam);
 
 /// Camera functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -805,23 +1025,28 @@ struct RenderCommand {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Renderer functions
 
-void renderer_init(Window* window, const Vec4& clear_color);
+/// Initialize the global renderer using the given `window` for dimensions 
+/// and `clear_color` as the default background color.
+NIKOLA_API void renderer_init(Window* window, const Vec4& clear_color);
 
-void renderer_shutdown();
+/// Free/reclaim any memory consumed by the global renderer
+NIKOLA_API void renderer_shutdown();
 
-const GfxContext* renderer_get_context();
+/// Retrieve the internal `GfxContext` of the global renderer.
+NIKOLA_API const GfxContext* renderer_get_context();
 
-void renderer_set_clear_color(const Vec4& clear_color);
+/// Set the background color of the global renderer to `clear_color`
+NIKOLA_API void renderer_set_clear_color(const Vec4& clear_color);
 
-void renderer_pre_pass(Camera& cam);
+NIKOLA_API void renderer_pre_pass(Camera& cam);
 
-void renderer_begin_pass();
+NIKOLA_API void renderer_begin_pass();
 
-void renderer_end_pass();
+NIKOLA_API void renderer_end_pass();
 
-void renderer_post_pass();
+NIKOLA_API void renderer_post_pass();
 
-void renderer_queue_command(const RenderCommand& command);
+NIKOLA_API void renderer_queue_command(const RenderCommand& command);
 
 /// Renderer functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -841,12 +1066,16 @@ struct App;
 ///---------------------------------------------------------------------------------------------------------------------
 /// App callbacks
 
+/// A function callback to allocate and initialize a `App` struct.
 using AppInitFn       = App*(*)(Window* window);
 
+/// A function callback to free/reclaim any memory consumed by a `App` struct.
 using AppShutdownFn   = void(*)(App* app);
 
+/// A function callback to update a `App` struct.
 using AppUpdateFn     = void(*)(App* app);
 
+/// A function callback to render a `App` struct.
 using AppRenderPassFn = void(*)(App* app);
 
 /// App callbacks
@@ -870,11 +1099,18 @@ struct AppDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Engine functions
 
-void engine_init(const AppDesc& desc);
+/// Initialize all of the engine sub-systems in order as well as 
+/// allocate and initialize a new `App` struct using the information 
+/// given in `desc`.
+NIKOLA_API void engine_init(const AppDesc& desc);
 
-void engine_run();
+/// Run a loop, updating and rendering the `App` struct allocated earlier 
+/// as well as any engine sub-systems.
+NIKOLA_API void engine_run();
 
-void engine_shutdown();
+/// Free/reclaim and shutdown any and all engine sub-systems as well 
+/// as the `App` struct.
+NIKOLA_API void engine_shutdown();
 
 /// Engine functions
 ///---------------------------------------------------------------------------------------------------------------------
