@@ -75,6 +75,7 @@ set(NIKOLA_SOURCES
   
   # Engine
   ${NIKOLA_SRC_DIR}/engine/engine.cpp
+  ${NIKOLA_SRC_DIR}/engine/filesystem.cpp
 
   # Engine/Math 
   ${NIKOLA_SRC_DIR}/engine/math/math_common.cpp

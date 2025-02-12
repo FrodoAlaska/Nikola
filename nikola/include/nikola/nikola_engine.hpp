@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <vector>
 #include <unordered_map>
+#include <fstream>
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -48,9 +49,6 @@ namespace nikola { // Start of nikola
 
 /// An ASCII string
 using String       = std::string;
-
-/// A file path structure to aid with file operations 
-using FilePath     = std::filesystem::path;
 
 /// A dynamically-sized array
 template<typename T>
@@ -505,6 +503,77 @@ NIKOLA_API void transform_scale(Transform& trans, const Vec3& scale);
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// *** File system ***
+
+///---------------------------------------------------------------------------------------------------------------------
+/// FilePath
+using FilePath = std::filesystem::path;
+/// FilePath
+///---------------------------------------------------------------------------------------------------------------------
+
+
+///---------------------------------------------------------------------------------------------------------------------
+/// File
+using File = std::fstream;
+/// File
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// FileOpenMode
+enum FileOpenMode {
+  FILE_OPEN_READ       = 14 << 0,
+  
+  FILE_OPEN_WRITE      = 14 << 1,
+  
+  FILE_OPEN_BINARY     = 14 << 2,
+  
+  FILE_OPEN_APPEND     = 14 << 3,
+  
+  FILE_OPEN_TRUNCATE   = 14 << 4,
+  
+  FILE_OPEN_AT_END     = 14 << 5,
+
+  FILE_OPEN_READ_WRITE = 14 << 6
+};
+/// FileOpenMode
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// File functions
+
+NIKOLA_API bool file_open(File* file, const char* path, const u32 mode);
+
+NIKOLA_API bool file_open(File* file, const FilePath& path, const u32 mode);
+
+NIKOLA_API void file_close(File& file);
+
+NIKOLA_API void file_seek_write(File& file, const sizei pos);
+
+NIKOLA_API void file_seek_read(File& file, const sizei pos);
+
+NIKOLA_API const sizei file_tell_write(File& file);
+
+NIKOLA_API const sizei file_tell_read(File& file);
+
+NIKOLA_API sizei file_get_size(File& file);
+
+NIKOLA_API bool file_is_empty(File& file);
+
+NIKOLA_API void file_write_bytes(File& file, const void* buff, const sizei buff_size, const sizei offset = 0);
+
+NIKOLA_API void file_read_bytes(File& file, void* out_buff, const sizei size, const sizei offset = 0);
+
+NIKOLA_API void file_write_string(File& file, const String& string, const sizei offset = 0);
+
+NIKOLA_API String file_read_string(File& file, const sizei offset = 0);
+
+/// File functions
+///---------------------------------------------------------------------------------------------------------------------
+
+/// *** File system ***
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// *** Resources ***
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -529,31 +598,31 @@ const sizei MATERIAL_LIGHTING_BUFFER_INDEX = 1;
 /// ResourceType
 enum ResourceType {
   /// A flag to denote a `GfxBuffer` resource
-  RESOURCE_TYPE_BUFFER   = 14 << 0, 
+  RESOURCE_TYPE_BUFFER   = 15 << 0, 
 
   /// A flag to denote a `GfxTexture` resource
-  RESOURCE_TYPE_TEXTURE  = 14 << 1, 
+  RESOURCE_TYPE_TEXTURE  = 15 << 1, 
   
   /// A flag to denote a `GfxCubemap` resource
-  RESOURCE_TYPE_CUBEMAP  = 14 << 2,
+  RESOURCE_TYPE_CUBEMAP  = 15 << 2,
   
   /// A flag to denote a `GfxShader` resource
-  RESOURCE_TYPE_SHADER   = 14 << 4,
+  RESOURCE_TYPE_SHADER   = 15 << 4,
   
   /// A flag to denote a `Mesh` resource
-  RESOURCE_TYPE_MESH     = 14 << 5,
+  RESOURCE_TYPE_MESH     = 15 << 5,
   
   /// A flag to denote a `Material` resource
-  RESOURCE_TYPE_MATERIAL = 14 << 6,
+  RESOURCE_TYPE_MATERIAL = 15 << 6,
   
   /// A flag to denote a `Skybox` resource
-  RESOURCE_TYPE_SKYBOX   = 14 << 7,
+  RESOURCE_TYPE_SKYBOX   = 15 << 7,
   
   /// A flag to denote a `Model` resource
-  RESOURCE_TYPE_MODEL    = 14 << 8,
+  RESOURCE_TYPE_MODEL    = 15 << 8,
   
   /// A flag to denote a `Font` resource
-  RESOURCE_TYPE_FONT     = 14 << 9,
+  RESOURCE_TYPE_FONT     = 15 << 9,
 };
 /// ResourceType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -562,13 +631,13 @@ enum ResourceType {
 /// MeshType
 enum MeshType {
   /// A predefined cube mesh
-  MESH_TYPE_CUBE     = 15 << 0, 
+  MESH_TYPE_CUBE     = 16 << 0, 
   
   /// A predefined circle mesh
-  MESH_TYPE_CIRCLE   = 15 << 1, 
+  MESH_TYPE_CIRCLE   = 16 << 1, 
   
   /// A predefined cylinder mesh
-  MESH_TYPE_CYLINDER = 15 << 2, 
+  MESH_TYPE_CYLINDER = 16 << 2, 
 };
 /// MeshType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -577,13 +646,13 @@ enum MeshType {
 /// RenderableType 
 enum RenderableType {
   /// Will commence a mesh rendering operation
-  RENDERABLE_TYPE_MESH   = 16 << 0,
+  RENDERABLE_TYPE_MESH   = 17 << 0,
   
   /// Will commence a model rendering operation
-  RENDERABLE_TYPE_MODEL  = 16 << 1,
+  RENDERABLE_TYPE_MODEL  = 17 << 1,
   
   /// Will commence a skybox rendering operation
-  RENDERABLE_TYPE_SKYBOX = 16 << 2,
+  RENDERABLE_TYPE_SKYBOX = 17 << 2,
 };
 /// RenderableType 
 ///---------------------------------------------------------------------------------------------------------------------

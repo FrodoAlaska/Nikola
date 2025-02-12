@@ -1,4 +1,5 @@
 # (Engine) TODO: 
+- A file API to make file operations easier
 - NBRF importer
 - The renderer... at least minimally. To render stuff and things
 - Finish up the rest of the resources (models, fonts, etc...)
