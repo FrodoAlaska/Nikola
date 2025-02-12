@@ -24,6 +24,9 @@ int main(int argc, char** argv) {
     .window_width  = 1366, 
     .window_height = 738, 
     .window_flags  = win_flags,
+
+    .args_values = argv, 
+    .args_count  = argc,
   };
 
   nikola::engine_init(app_desc);

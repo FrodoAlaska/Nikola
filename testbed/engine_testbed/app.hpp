@@ -5,7 +5,7 @@
 /// ----------------------------------------------------------------------
 /// App functions 
 
-nikola::App* app_init(nikola::Window* window);
+nikola::App* app_init(const nikola::Args& args, nikola::Window* window);
 void app_shutdown(nikola::App* app);
 
 void app_update(nikola::App* app);

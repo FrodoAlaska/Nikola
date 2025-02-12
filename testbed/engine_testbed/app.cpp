@@ -22,11 +22,11 @@ struct nikola::App {
 /// ----------------------------------------------------------------------
 /// App functions 
 
-nikola::App* app_init(nikola::Window* window) {
+nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // App init
   nikola::App* app = (nikola::App*)nikola::memory_allocate(sizeof(nikola::App));
   nikola::memory_zero(app, sizeof(nikola::App));
-  
+
   // Window init
   app->window = window;
 

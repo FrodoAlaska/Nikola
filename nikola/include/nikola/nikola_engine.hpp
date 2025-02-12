@@ -1064,10 +1064,16 @@ struct App;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// Args 
+using Args = DynamicArray<String>;  
+/// Args 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// App callbacks
 
 /// A function callback to allocate and initialize a `App` struct.
-using AppInitFn       = App*(*)(Window* window);
+using AppInitFn       = App*(*)(const Args& args, Window* window);
 
 /// A function callback to free/reclaim any memory consumed by a `App` struct.
 using AppShutdownFn   = void(*)(App* app);
@@ -1092,6 +1098,9 @@ struct AppDesc {
   String window_title;
   i32 window_width, window_height;
   i32 window_flags;
+
+  char** args_values = nullptr; 
+  i32 args_count     = 0;
 };
 /// App description 
 ///---------------------------------------------------------------------------------------------------------------------

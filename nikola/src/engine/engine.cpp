@@ -66,9 +66,15 @@ void engine_init(const AppDesc& desc) {
   // Listening to any interesting events
   event_listen(EVENT_APP_QUIT, quit_app_callback);
 
+  // Check for any command line arguments
+  Args cli_args; 
+  for(u32 i = 0; i < desc.args_count; i++) {
+    cli_args.push_back(desc.args_values[i]);
+  }
+
   // App init 
   NIKOLA_ASSERT(s_engine.app_desc.init_fn, "Cannot start the engine with an invalid application initialization callback");
-  s_engine.app = s_engine.app_desc.init_fn(s_engine.window);
+  s_engine.app = s_engine.app_desc.init_fn(cli_args, s_engine.window);
 
   NIKOLA_LOG_INFO("Successfully initialized the application \'%s\'", desc.window_title.c_str());
 }
