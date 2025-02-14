@@ -656,11 +656,11 @@ NIKOLA_API void nbr_file_load(NBRFile* nbr, const FilePath& path);
 
 NIKOLA_API void nbr_file_unload(NBRFile& nbr);
 
-NIKOLA_API void nbr_file_save(NBRFile& nbr, GfxTexture* texture, const FilePath& path);
+NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const FilePath& path);
 
-NIKOLA_API void nbr_file_save(NBRFile& nbr, GfxCubemap* cubemap, const FilePath& path);
+NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path);
 
-NIKOLA_API void nbr_file_save(NBRFile& nbr, GfxShader* shader, const FilePath& path);
+NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FilePath& path);
 
 /// NBR file functions
 ///---------------------------------------------------------------------------------------------------------------------

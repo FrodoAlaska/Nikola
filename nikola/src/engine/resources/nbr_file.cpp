@@ -103,6 +103,10 @@ static void load_by_type(NBRFile& nbr) {
 }
 
 static void save_header(NBRFile& nbr) {
+  nbr.identifier    = NBR_VALID_IDENTIFIER;
+  nbr.major_version = NBR_VALID_MAJOR_VERSION;
+  nbr.minor_version = NBR_VALID_MINOR_VERSION;
+
   // Save the identifier
   file_write_bytes(nbr.file_handle, &nbr.identifier, sizeof(nbr.identifier));
 
@@ -176,9 +180,7 @@ void nbr_file_unload(NBRFile& nbr) {
   }
 }
 
-void nbr_file_save(NBRFile& nbr, GfxTexture* texture, const FilePath& path) {
-  NIKOLA_ASSERT(texture, "Cannot save an invalid resource to an NBR file");
-
+void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const FilePath& path) {
   // Must open the file
   if(!file_open(&nbr.file_handle, path, FILE_OPEN_WRITE | FILE_OPEN_BINARY)) {
     NIKOLA_LOG_ERROR("Could not open NBR file at \'%s\'", path.string().c_str());
@@ -189,34 +191,22 @@ void nbr_file_save(NBRFile& nbr, GfxTexture* texture, const FilePath& path) {
   nbr.resource_type = (i16)RESOURCE_TYPE_TEXTURE; 
   save_header(nbr);
 
-  // Allocate a new texture 
-  nbr.body_data            = (void*)memory_allocate(sizeof(NBRTexture));
-  NBRTexture* nbr_texture  = (NBRTexture*)nbr.body_data;
-
-  // Retrieve the description in order to convert it to an NBR format
-  GfxTextureDesc& tex_desc = gfx_texture_get_desc(texture); 
-
-  // Convert the given texture to an NBR format
-  nbr_texture->width    = tex_desc.width;
-  nbr_texture->height   = tex_desc.height;
-  nbr_texture->channels = (i8)get_texture_channels(tex_desc.format);
-  nbr_texture->pixels   = (u8*)tex_desc.data;
-
   // Save width and height
-  file_write_bytes(nbr.file_handle, &nbr_texture->width, sizeof(nbr_texture->width));
-  file_write_bytes(nbr.file_handle, &nbr_texture->height, sizeof(nbr_texture->height));
+  file_write_bytes(nbr.file_handle, &texture.width, sizeof(texture.width));
+  file_write_bytes(nbr.file_handle, &texture.height, sizeof(texture.height));
 
   // Save the channels
-  file_write_bytes(nbr.file_handle, &nbr_texture->channels, sizeof(nbr_texture->channels));
+  file_write_bytes(nbr.file_handle, &texture.channels, sizeof(texture.channels));
  
   // Save the pixels
-  sizei data_size = (nbr_texture->width * nbr_texture->height) * sizeof(u8);
-  file_write_bytes(nbr.file_handle, &nbr_texture->pixels, data_size);
+  sizei data_size = (texture.width * texture.height) * sizeof(u8);
+  file_write_bytes(nbr.file_handle, &texture.pixels, data_size);
+
+  // Always remember to close the file
+  file_close(nbr.file_handle);
 }
 
-void nbr_file_save(NBRFile& nbr, GfxCubemap* cubemap, const FilePath& path) {
-  NIKOLA_ASSERT(cubemap, "Cannot save an invalid resource to an NBR file");
-
+void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path) {
   // Must open the file
   if(!file_open(&nbr.file_handle, path, FILE_OPEN_WRITE | FILE_OPEN_BINARY)) {
     NIKOLA_LOG_ERROR("Could not open NBR file at \'%s\'", path.string().c_str());
@@ -227,44 +217,27 @@ void nbr_file_save(NBRFile& nbr, GfxCubemap* cubemap, const FilePath& path) {
   nbr.resource_type = (i16)RESOURCE_TYPE_CUBEMAP; 
   save_header(nbr);
 
-  // Allocate a new texture 
-  nbr.body_data            = (void*)memory_allocate(sizeof(NBRCubemap));
-  NBRCubemap* nbr_cubemap  = (NBRCubemap*)nbr.body_data;
-
-  // Retrieve the description in order to convert it to an NBR format
-  GfxCubemapDesc& cube_desc = gfx_cubemap_get_desc(cubemap); 
-
-  // Convert the given cubemap to an NBR format
-  nbr_cubemap->width       = cube_desc.width;
-  nbr_cubemap->height      = cube_desc.height;
-  nbr_cubemap->channels    = (i8)get_texture_channels(cube_desc.format);
-  nbr_cubemap->faces_count = (i8)cube_desc.faces_count;
-  
-  // Convert all of the pixesl
-  for(sizei i = 0; i < nbr_cubemap->faces_count; i++) {
-    nbr_cubemap->pixels[i] = (u8*)cube_desc.data[i];
-  }
-
   // Save width and height
-  file_write_bytes(nbr.file_handle, &nbr_cubemap->width, sizeof(nbr_cubemap->width));
-  file_write_bytes(nbr.file_handle, &nbr_cubemap->height, sizeof(nbr_cubemap->height));
+  file_write_bytes(nbr.file_handle, &cubemap.width, sizeof(cubemap.width));
+  file_write_bytes(nbr.file_handle, &cubemap.height, sizeof(cubemap.height));
 
   // Save the channels
-  file_write_bytes(nbr.file_handle, &nbr_cubemap->channels, sizeof(nbr_cubemap->channels));
+  file_write_bytes(nbr.file_handle, &cubemap.channels, sizeof(cubemap.channels));
 
   // Save the faces count
-  file_write_bytes(nbr.file_handle, &nbr_cubemap->faces_count, sizeof(nbr_cubemap->faces_count));
+  file_write_bytes(nbr.file_handle, &cubemap.faces_count, sizeof(cubemap.faces_count));
 
   // Save the pixels for each face
-  sizei data_size = (nbr_cubemap->width * nbr_cubemap->height) * sizeof(u8);
-  for(sizei i = 0; i < nbr_cubemap->faces_count; i++) {
-    file_write_bytes(nbr.file_handle, &nbr_cubemap->pixels[i], data_size);
+  sizei data_size = (cubemap.width * cubemap.height) * sizeof(u8);
+  for(sizei i = 0; i < cubemap.faces_count; i++) {
+    file_write_bytes(nbr.file_handle, &cubemap.pixels[i], data_size);
   }
+
+  // Always remember to close the file
+  file_close(nbr.file_handle);
 }
 
-void nbr_file_save(NBRFile& nbr, GfxShader* shader, const FilePath& path) {
-  NIKOLA_ASSERT(shader, "Cannot save an invalid resource to an NBR file");
-
+void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FilePath& path) {
   // Must open the file
   if(!file_open(&nbr.file_handle, path, FILE_OPEN_WRITE | FILE_OPEN_BINARY)) {
     NIKOLA_LOG_ERROR("Could not open NBR file at \'%s\'", path.string().c_str());
@@ -274,24 +247,19 @@ void nbr_file_save(NBRFile& nbr, GfxShader* shader, const FilePath& path) {
   // Save the header first
   nbr.resource_type = (i16)RESOURCE_TYPE_SHADER; 
   save_header(nbr);
-
-  // Get the shader's source string
-  const i8* shader_src = gfx_shader_get_source(shader);
-
-  // Allocate a new texture 
-  nbr.body_data          = (void*)memory_allocate(String(shader_src).length());
-  NBRShader* nbr_shader  = (NBRShader*)nbr.body_data;
  
   // Convert the given shader to an NBR format
-  *nbr_shader    = shader_src;
-  u32 src_length = (u32)nbr_shader->length();
-  i8* src_str    = (i8*)nbr_shader->c_str();
+  u32 src_length = (u32)shader.length();
+  i8* src_str    = (i8*)shader.c_str();
 
   // Save the length of the shader's code string 
   file_write_bytes(nbr.file_handle, &src_length, sizeof(src_length));
 
   // Save the shader's code string
   file_write_bytes(nbr.file_handle, &src_str, src_length * sizeof(i8));
+
+  // Always remember to close the file
+  file_close(nbr.file_handle);
 }
 
 /// NBR (Nikola Binary Resource) functions
