@@ -13,7 +13,6 @@ A cross-platform framework for window creation, input handling, audio playback, 
 - GLFW3 
 - GLAD
 - D3D11
-- STB 
 - GLM
 
 # Build Instructions

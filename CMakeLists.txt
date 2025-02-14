@@ -112,7 +112,6 @@ set(NIKOLA_HEADERS
 ############################################################
 set(LIBS_SOURCES 
   ${NIKOLA_LIBS_DIR}/glad/glad.c
-  ${NIKOLA_LIBS_DIR}/stb/stb_image.cpp
 )
 ############################################################
 

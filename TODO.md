@@ -1,5 +1,5 @@
 # (Engine) TODO: 
-- NBRF importer
+- Finish up the NBR importer
 - Document the nbr and filesystem sections
 - Finish up the rest of the resources (models, fonts, etc...)
 - The renderer... at least minimally. To render stuff and things
