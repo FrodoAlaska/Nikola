@@ -182,7 +182,7 @@ void nbr_file_unload(NBRFile& nbr) {
 
 void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const FilePath& path) {
   // Must open the file
-  if(!file_open(&nbr.file_handle, path, FILE_OPEN_WRITE | FILE_OPEN_BINARY)) {
+  if(!file_open(&nbr.file_handle, path, FILE_OPEN_WRITE | FILE_OPEN_BINARY | FILE_OPEN_TRUNCATE)) {
     NIKOLA_LOG_ERROR("Could not open NBR file at \'%s\'", path.string().c_str());
     return;
   }
@@ -208,7 +208,7 @@ void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const FilePath& path
 
 void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path) {
   // Must open the file
-  if(!file_open(&nbr.file_handle, path, FILE_OPEN_WRITE | FILE_OPEN_BINARY)) {
+  if(!file_open(&nbr.file_handle, path, FILE_OPEN_WRITE | FILE_OPEN_BINARY | FILE_OPEN_TRUNCATE)) {
     NIKOLA_LOG_ERROR("Could not open NBR file at \'%s\'", path.string().c_str());
     return;
   }
@@ -239,7 +239,7 @@ void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path
 
 void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FilePath& path) {
   // Must open the file
-  if(!file_open(&nbr.file_handle, path, FILE_OPEN_WRITE | FILE_OPEN_BINARY)) {
+  if(!file_open(&nbr.file_handle, path, FILE_OPEN_WRITE | FILE_OPEN_BINARY | FILE_OPEN_TRUNCATE)) {
     NIKOLA_LOG_ERROR("Could not open NBR file at \'%s\'", path.string().c_str());
     return;
   }
