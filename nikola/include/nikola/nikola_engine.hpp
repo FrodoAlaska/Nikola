@@ -547,6 +547,8 @@ NIKOLA_API bool file_open(File* file, const FilePath& path, const u32 mode);
 
 NIKOLA_API void file_close(File& file);
 
+NIKOLA_API bool file_is_open(File& file);
+
 NIKOLA_API void file_seek_write(File& file, const sizei pos);
 
 NIKOLA_API void file_seek_read(File& file, const sizei pos);
@@ -571,6 +573,99 @@ NIKOLA_API String file_read_string(File& file, const sizei offset = 0);
 ///---------------------------------------------------------------------------------------------------------------------
 
 /// *** File system ***
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// ** NBR (Nikola Binary Resource) ***
+
+///---------------------------------------------------------------------------------------------------------------------
+/// NBR consts
+
+/// A value present at the top of each `.nbr` file to denote 
+/// a valid `.nbr` file. 
+///
+/// @NOTE: The value is the sum of the ASCII hex codes of `n`, `b`, and `r`.
+const i8 NBR_VALID_IDENTIFIER     = 322;
+
+/// The currently valid major version of any `.nbr` file
+const i16 NBR_VALID_MAJOR_VERSION = 0;
+
+/// The currently valid minor version of any `.nbr` file
+const i16 NBR_VALID_MINOR_VERSION = 1;
+
+/// NBR consts
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// NBRTexture
+struct NBRTexture {
+  u32 width, height; 
+  i8 channels; 
+
+  void* pixels = nullptr;
+};
+/// NBRTexture
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// NBRCubemap
+struct NBRCubemap {
+  u32 width, height; 
+  i8 channels; 
+  u8 faces_count;
+
+  u8* pixels[CUBEMAP_FACES_MAX];
+};
+/// NBRCubemap
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// NBRShader
+using NBRShader = String;
+/// NBRShader
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// NBRFile 
+struct NBRFile {
+  FilePath path;
+  File file_handle;
+
+  /// A 1-byte value to correctly identify an NBR file
+  i8 identifier;                 
+
+  /// A 2-bytes value for the major version of the file  
+  i16 major_version;
+  
+  /// A 2-bytes value for the minor version of the file  
+  i16 minor_version; 
+
+  /// A 2-bytes value for the resource type to be parsed
+  i16 resource_type;                
+
+  /// The actual data of the file
+  void* body_data; 
+};
+/// NBRFile
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// NBR file functions
+
+NIKOLA_API void nbr_file_load(NBRFile* nbr, const FilePath& path);
+
+NIKOLA_API void nbr_file_unload(NBRFile& nbr);
+
+NIKOLA_API void nbr_file_save(NBRFile& nbr, GfxTexture* texture, const FilePath& path);
+
+NIKOLA_API void nbr_file_save(NBRFile& nbr, GfxCubemap* cubemap, const FilePath& path);
+
+NIKOLA_API void nbr_file_save(NBRFile& nbr, GfxShader* shader, const FilePath& path);
+
+/// NBR file functions
+///---------------------------------------------------------------------------------------------------------------------
+
+/// ** NBR (Nikola Binary Resource) ***
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -750,40 +845,6 @@ struct Font {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// MeshLoader
-struct MeshLoader {
-  ResourceID vertex_buffer = INVALID_RESOURCE; 
-  ResourceID index_buffer  = INVALID_RESOURCE; 
-  ResourceID uniform_buffers[MATERIAL_UNIFORM_BUFFERS_MAX];
-
-  GfxPipelineDesc pipe_desc;
-};
-/// MeshLoader
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// MaterialLoader 
-struct MaterialLoader {
-  ResourceID diffuse_map  = INVALID_RESOURCE;
-  ResourceID specular_map = INVALID_RESOURCE;
-  ResourceID shader       = INVALID_RESOURCE;
-  ResourceID uniform_buffers[MATERIAL_UNIFORM_BUFFERS_MAX];
-};
-/// MaterialLoader 
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// SkyboxLoader 
-struct SkyboxLoader {
-  ResourceID vertex_buffer = INVALID_RESOURCE; 
-  ResourceID cubemap       = INVALID_RESOURCE; 
-
-  GfxPipelineDesc pipe_desc;
-};
-/// SkyboxLoader 
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
 /// Material functions
 
 /// Set the color value of the associated shader in `mat` to `color`
@@ -795,120 +856,11 @@ NIKOLA_API void material_set_transform(Material* mat, const Transform& transform
 /// Set the matrices uniform buffer of the associated shader in `mat` to `view_projection`
 NIKOLA_API void material_set_matrices_buffer(Material* mat, const Mat4& view_projection);
 
+/// Use the internal `storage_ref` of `mat` to check for the availability and retrieve uniform `buffer_id` in order 
+/// to attach it at `index` in the associated shader in `mat`.
+NIKOLA_API void material_attach_uniform(Material* mat, const sizei index, const ResourceID& buffer_id);
+
 /// Material functions
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// Texture loader functions
-
-/// Fill the information of `desc` by the texture loaded from `path` as well as 
-/// `format`, `filter`, and `wrap`. 
-///
-/// Default values: 
-///   - `format` = `GFX_TEXTURE_FORMAT_RGBA8`.
-///   - `filter` = `GFX_TEXTURE_FILTER_MIN_MAG_NEAREST`.
-///   - `wrap`   = `GFX_TEXTURE_WRAP_CLAMP`.
-NIKOLA_API void texture_loader_load(GfxTextureDesc* desc, 
-                                    const FilePath& path, 
-                                    const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
-                                    const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-                                    const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
-
-/// Free the previously loaded pixels by `desc`
-NIKOLA_API void texture_loader_unload(GfxTextureDesc& desc);
-
-/// Texture loader functions
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// Cubemap loader functions
-
-/// Fill the information of `desc` by the `faces_count` amount of cube faces loaded from 
-/// all the given `path`s as well as `format`, `filter`, and `wrap`. 
-///
-/// Default values: 
-///   - `format` = `GFX_TEXTURE_FORMAT_RGBA8`.
-///   - `filter` = `GFX_TEXTURE_FILTER_MIN_MAG_NEAREST`.
-///   - `wrap`   = `GFX_TEXTURE_WRAP_CLAMP`.
-NIKOLA_API void cubemap_loader_load(GfxCubemapDesc* desc, 
-                                    const FilePath path[CUBEMAP_FACES_MAX], 
-                                    const sizei faces_count,
-                                    const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
-                                    const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-                                    const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
-
-/// Recursively go through `directory` to attain all of the `faces_count` amount of 
-/// cube faces to fill `desc`, while providing values for `format`, `filter`, and `wrap`.
-///
-/// Default values: 
-///   - `format` = `GFX_TEXTURE_FORMAT_RGBA8`.
-///   - `filter` = `GFX_TEXTURE_FILTER_MIN_MAG_NEAREST`.
-///   - `wrap`   = `GFX_TEXTURE_WRAP_CLAMP`.
-NIKOLA_API void cubemap_loader_load(GfxCubemapDesc* desc, 
-                                    const FilePath& directory,
-                                    const sizei faces_count,
-                                    const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
-                                    const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-                                    const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
-
-/// Free the previously loaded pixels by `desc`
-NIKOLA_API void cubemap_loader_unload(GfxCubemapDesc& desc);
-
-/// Cubemap loader functions
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// Mesh loader functions
-
-/// Use the given `storage` to retrieve the buffers `vertex_buffer_id` and `index_buffer_id`
-/// in order to fill the information in `loader`. A `vertex_type` must be provided to 
-/// calculate the stride, while `indices_count` will be used in case `index_buffer_id` 
-/// is not set to `INVALID_RESOURCE`.
-///
-/// @NOTE: The value of `index_buffer_id` can be set to `INVALID_RESOURCE` to be ignored.
-/// The same cannot be said for `vertex_buffer_id`.
-NIKOLA_API void mesh_loader_load(ResourceStorage* storage, 
-                                 MeshLoader* loader, 
-                                 const ResourceID& vertex_buffer_id, 
-                                 const VertexType vertex_type, 
-                                 const ResourceID& index_buffer_id, 
-                                 const sizei indices_count);
-
-/// Use the given `storage` to fill the information in `loader` by a predefined mesh of `type`.
-NIKOLA_API void mesh_loader_load(ResourceStorage* storage, MeshLoader* loader, const MeshType type);
-
-/// Mesh loader functions
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// Material loader functions
-
-/// Use the given `storage` to check for the availability and retrieve `diffuse_id`, 
-/// `specular_id`, and `shader_id` in order to fill the information in `loader`.
-///
-/// @NOTE: The resource `specular_id` is allowed to be set to `INVALID_RESOURCE` 
-/// but not the others.
-NIKOLA_API void material_loader_load(ResourceStorage* storage, 
-                                     MaterialLoader* loader, 
-                                     const ResourceID& diffuse_id, 
-                                     const ResourceID& specular_id, 
-                                     const ResourceID& shader_id);
-
-/// Use the given `storage` to check for the availability and retrieve uniform `buffer_id` in order 
-/// to attach it at `index` in the associated shader in `loader`.
-NIKOLA_API void material_loader_attach_uniform(ResourceStorage* storage, MaterialLoader& loader, const sizei index, const ResourceID& buffer_id);
-
-/// Material loader functions
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// Skybox loader functions
-
-/// Use the given `storage` to check for the availability and retrieve `cubemap_id` in 
-/// order to fill the information in `loader`.
-NIKOLA_API void skybox_loader_load(ResourceStorage* storage, SkyboxLoader* loader, const ResourceID& cubemap_id);
-
-/// Skybox loader functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -929,7 +881,9 @@ NIKOLA_API const ResourceStorage* resource_manager_cache();
 ///---------------------------------------------------------------------------------------------------------------------
 /// Resource storage functions
 
-/// Allocate and return a `ResourceStorage` with `name` and `parent_dir`.
+/// Allocate and return a `ResourceStorage` with `name` and `parent_dir`. 
+///
+/// @NOTE: Any `_push` function that takes a `path` will be prefixed with the given `parent_dir`.
 NIKOLA_API ResourceStorage* resource_storage_create(const String& name, const FilePath& parent_dir);
 
 /// Clear all of resources in `storage`.
@@ -942,29 +896,78 @@ NIKOLA_API void resource_storage_destroy(ResourceStorage* storage);
 /// to identify it.
 NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const GfxBufferDesc& buff_desc);
 
-/// Allocate a new `GfxTexture` using `tex_desc`, store it in `storage`, and return a `ResourceID` 
-/// to identify it.
-NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const GfxTextureDesc& tex_desc);
+/// Allocate a new `GfxTexture` using `desc`, store it in `storage`,
+/// and return a `ResourceID` to identify it.
+NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const GfxTextureDesc& desc);
 
-/// Allocate a new `GfxCubemap` using `cubemap_desc`, store it in `storage`, and return a `ResourceID` 
-/// to identify it.
-NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const GfxCubemapDesc& cubemap_desc);
+/// Allocate a new `GfxTexture` using the texture retrieved from the `nbr_path`, 
+/// store it in `storage`, and return a `ResourceID` to identify it.
+///
+/// Default values: 
+///   - `format` = `GFX_TEXTURE_FORMAT_RGBA8`.
+///   - `filter` = `GFX_TEXTURE_FILTER_MIN_MAG_NEAREST`.
+///   - `wrap`   = `GFX_TEXTURE_WRAP_CLAMP`.
+NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, 
+                                            const FilePath& nbr_path,
+                                            const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
+                                            const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
+                                            const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
+
+/// Allocate a new `GfxCubemap` using `desc`, store it in `storage`,
+/// and return a `ResourceID` to identify it.
+NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const GfxCubemapDesc& desc);
+
+/// Allocate a new `GfxCubemap` with `faces_count` using the cubemap retrieved from the `nbr_path`, 
+/// store it in `storage`, and return a `ResourceID` to identify it.
+///
+/// Default values: 
+///   - `format` = `GFX_TEXTURE_FORMAT_RGBA8`.
+///   - `filter` = `GFX_TEXTURE_FILTER_MIN_MAG_NEAREST`.
+///   - `wrap`   = `GFX_TEXTURE_WRAP_CLAMP`.
+NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, 
+                                            const FilePath& nbr_path,
+                                            const sizei faces_count,
+                                            const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
+                                            const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
+                                            const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
 
 /// Allocate a new `GfxShader` using `shader_src`, store it in `storage`, and return a `ResourceID` 
 /// to identify it.
 NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const String& shader_src);
 
-/// Allocate a new `Mesh` using `loader`, store it in `storage`, and return a `ResourceID` 
-/// to identify it.
-NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const MeshLoader& loader);
+/// Allocate a new `Mesh` using `vertex_buffer_id` and `index_buffer_id`, 
+/// store it in `storage`, return a `ResourceID` to identified it. 
+///
+/// A `vertex_type` must be provided to 
+/// calculate the stride, while `indices_count` will be used in case `index_buffer_id` 
+/// is not set to `INVALID_RESOURCE`.
+///
+/// @NOTE: The value of `index_buffer_id` can be set to `INVALID_RESOURCE` to be ignored.
+/// The same cannot be said for `vertex_buffer_id`.
+NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, 
+                                            const ResourceID& vertex_buffer_id, 
+                                            const VertexType vertex_type, 
+                                            const ResourceID& index_buffer_id, 
+                                            const sizei indices_count);
 
-/// Allocate a new `Material` using `loader`, store it in `storage`, and return a `ResourceID` 
-/// to identify it.
-NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const MaterialLoader& loader);
+/// Allocate a new `Mesh` using a predefined mesh `type`, 
+/// store it in `storage`, return a `ResourceID` to identified it. 
+NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const MeshType type);
 
-/// Allocate a new `Skybox` using `loader`, store it in `storage`, and return a `ResourceID` 
-/// to identify it.
-NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const SkyboxLoader& loader);
+/// Allocate a new `Material` using the textures `diffuse_id` and `specular_id`
+/// and the shader `shader_id`, store it in `storage`, and 
+/// return a `ResourceID` to identify it.
+///
+/// @NOTE: Only the resource `specular_id` is allowed 
+/// to be set to `INVALID_RESOURCE` but not the others.
+NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage,
+                                            const ResourceID& diffuse_id, 
+                                            const ResourceID& specular_id, 
+                                            const ResourceID& shader_id);
+
+/// Allocate a new `Skybox` using the previously-added `cubemap_id`, store it in `storage`, 
+/// and return a `ResourceID` to identify it.
+NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const ResourceID& cubemap_id);
 
 /// Retrieve `GfxBuffer` identified by `id` in `storage`. 
 ///

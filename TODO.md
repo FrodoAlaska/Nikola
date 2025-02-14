@@ -1,8 +1,8 @@
 # (Engine) TODO: 
-- A file API to make file operations easier
 - NBRF importer
-- The renderer... at least minimally. To render stuff and things
+- Document the nbr and filesystem sections
 - Finish up the rest of the resources (models, fonts, etc...)
+- The renderer... at least minimally. To render stuff and things
 
 # (Core) TODO: 
 - Audio

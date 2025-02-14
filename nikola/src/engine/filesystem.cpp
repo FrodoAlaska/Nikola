@@ -61,6 +61,10 @@ void file_close(File& file) {
   }
 }
 
+bool file_is_open(File& file) {
+  return file.is_open();
+}
+
 void file_seek_write(File& file, const sizei pos) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
   

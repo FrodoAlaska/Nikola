@@ -1,6 +1,12 @@
 #include "nikola/nikola_core.hpp"
 #include "nikola/nikola_engine.hpp"
 
+#include "loaders/texture_loader.hpp"
+#include "loaders/cubemap_loader.hpp"
+#include "loaders/mesh_loader.hpp"
+#include "loaders/material_loader.hpp"
+#include "loaders/skybox_loader.hpp"
+
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola
@@ -158,13 +164,39 @@ ResourceID resource_storage_push(ResourceStorage* storage, const GfxBufferDesc& 
   return id;
 }
 
-ResourceID resource_storage_push(ResourceStorage* storage, const GfxTextureDesc& tex_desc) {
+ResourceID resource_storage_push(ResourceStorage* storage, const GfxTextureDesc& desc) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
   ResourceID id         = generate_id();
-  storage->textures[id] = gfx_texture_create(s_manager.gfx_context, tex_desc);
+  storage->textures[id] = gfx_texture_create(s_manager.gfx_context, desc);
   
   return id;
+}
+
+ResourceID resource_storage_push(ResourceStorage* storage, 
+                                 const FilePath& nbr_path,
+                                 const GfxTextureFormat format, 
+                                 const GfxTextureFilter filter, 
+                                 const GfxTextureWrap wrap) {
+  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+
+  // Load the NBR file
+  NBRFile nbr;
+  nbr_file_load(&nbr, storage->parent_dir / nbr_path);
+
+  // Make sure it is the correct resource type
+  NIKOLA_ASSERT((nbr.resource_type == RESOURCE_TYPE_TEXTURE), "Expected RESOURCE_TYPE_TEXTURE");
+
+  // Convert the NBR format to a valid texture
+  GfxTextureDesc tex_desc = {};
+  NBRTexture* nbr_texture = (NBRTexture*)nbr.body_data;
+  texture_loader_load(&tex_desc, nbr_texture, format, filter, wrap);
+
+  // Remember to close the NBR
+  nbr_file_unload(nbr);
+
+  // New texture added!
+  return resource_storage_push(storage, tex_desc);
 }
 
 ResourceID resource_storage_push(ResourceStorage* storage, const GfxCubemapDesc& cubemap_desc) {
@@ -176,6 +208,33 @@ ResourceID resource_storage_push(ResourceStorage* storage, const GfxCubemapDesc&
   return id;
 }
 
+ResourceID resource_storage_push(ResourceStorage* storage, 
+                                 const FilePath& nbr_path,
+                                 const sizei faces_count,
+                                 const GfxTextureFormat format, 
+                                 const GfxTextureFilter filter, 
+                                 const GfxTextureWrap wrap) {
+  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+
+  // Load the NBR file
+  NBRFile nbr;
+  nbr_file_load(&nbr, storage->parent_dir / nbr_path);
+
+  // Make sure it is the correct resource type
+  NIKOLA_ASSERT((nbr.resource_type == RESOURCE_TYPE_CUBEMAP), "Expected RESOURCE_TYPE_CUBEMAP");
+
+  // Convert the NBR format to a valid cubemap
+  GfxCubemapDesc cube_desc = {};
+  NBRCubemap* nbr_cubemap = (NBRCubemap*)nbr.body_data;
+  cubemap_loader_load(&cube_desc, nbr_cubemap);
+
+  // Remember to close the NBR
+  nbr_file_unload(nbr);
+
+  // New cubemap added!
+  return resource_storage_push(storage, cube_desc);
+}
+
 ResourceID resource_storage_push(ResourceStorage* storage, const String& shader_src) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
@@ -185,24 +244,22 @@ ResourceID resource_storage_push(ResourceStorage* storage, const String& shader_
   return id;
 }
 
-ResourceID resource_storage_push(ResourceStorage* storage, const MeshLoader& loader) {
+NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, 
+                                            const ResourceID& vertex_buffer_id, 
+                                            const VertexType vertex_type, 
+                                            const ResourceID& index_buffer_id, 
+                                            const sizei indices_count) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
   // Allocate the mesh
   Mesh* mesh = (Mesh*)memory_allocate(sizeof(Mesh));
   memory_zero(mesh, sizeof(Mesh));
 
-  // Retrive the vertex buffer
-  mesh->vertex_buffer = resource_storage_get_buffer(storage, loader.vertex_buffer);
-
-  // Retrieve the index buffer (if there's one)
-  if(loader.index_buffer != INVALID_RESOURCE) {
-    mesh->index_buffer = resource_storage_get_buffer(storage, loader.index_buffer);
-  }
+  // Use the loader to set up the mesh
+  mesh_loader_load(storage, mesh, vertex_buffer_id, vertex_type, index_buffer_id, indices_count);
 
   // Create the pipeline
-  mesh->pipe_desc = loader.pipe_desc;
-  mesh->pipe      = gfx_pipeline_create(s_manager.gfx_context, mesh->pipe_desc);
+  mesh->pipe = gfx_pipeline_create(s_manager.gfx_context, mesh->pipe_desc);
 
   // New mesh added!
   mesh->storage_ref   = storage; 
@@ -212,59 +269,60 @@ ResourceID resource_storage_push(ResourceStorage* storage, const MeshLoader& loa
   return id;
 }
 
-ResourceID resource_storage_push(ResourceStorage* storage, const MaterialLoader& loader) {
+NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const MeshType type) {
+  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+
+  // Allocate the mesh
+  Mesh* mesh = (Mesh*)memory_allocate(sizeof(Mesh));
+  memory_zero(mesh, sizeof(Mesh));
+
+  // Use the loader to set up the mesh
+  mesh_loader_load(storage, mesh, type);
+
+  // Create the pipeline
+  mesh->pipe = gfx_pipeline_create(s_manager.gfx_context, mesh->pipe_desc);
+
+  // New mesh added!
+  mesh->storage_ref   = storage; 
+  ResourceID id       = generate_id();
+  storage->meshes[id] = mesh;
+
+  return id;
+}
+
+NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage,
+                                            const ResourceID& diffuse_id, 
+                                            const ResourceID& specular_id, 
+                                            const ResourceID& shader_id) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
   
   // Allocate the material
   Material* material = (Material*)memory_allocate(sizeof(Material));
   memory_zero(material, sizeof(Material));
 
-  // Retrieve the diffuse texture
-  material->diffuse_map = resource_storage_get_texture(storage, loader.diffuse_map);
-
-  // Rertieve the shader 
-  material->shader      = resource_storage_get_shader(storage, loader.shader);
-
-  // Retrieve the specular texture (if there's one)
-  if(loader.specular_map != INVALID_RESOURCE) {
-    material->diffuse_map = resource_storage_get_texture(storage, loader.specular_map);
-  } 
-
-  // Retrieve all of the uniform buffers (if any)
-  for(sizei i = 0; i < MATERIAL_UNIFORM_BUFFERS_MAX; i++) {
-    if(loader.uniform_buffers[i] == INVALID_RESOURCE) {
-      continue;
-    }
-
-    // Attaching the buffer to the shader
-    material->uniform_buffers[i] = resource_storage_get_buffer(storage, loader.uniform_buffers[i]);
-    gfx_shader_attach_uniform(material->shader, GFX_SHADER_VERTEX, material->uniform_buffers[i], i);
-  }
+  // Use the loader to set up the material
+  material_loader_load(storage, material, diffuse_id, specular_id, shader_id);
 
   // New material added!
-  material->storage_ref   = storage; 
+  material->storage_ref  = storage; 
   ResourceID id          = generate_id();
   storage->materials[id] = material;
 
   return id;
 }
 
-ResourceID resource_storage_push(ResourceStorage* storage, const SkyboxLoader& loader) {
+NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const ResourceID& cubemap_id) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
   // Allocate the skybox
   Skybox* skybox = (Skybox*)memory_allocate(sizeof(Skybox));
   memory_zero(skybox, sizeof(Skybox));
-
-  // Cubemap init
-  skybox->cubemap       = resource_storage_get_cubemap(storage, loader.cubemap);
-
-  // Vertex buffer init
-  skybox->vertex_buffer = resource_storage_get_buffer(storage, loader.vertex_buffer);
+  
+  // Use the loader to set up the skybox
+  skybox_loader_load(storage, skybox, cubemap_id);
 
   // Create the pipeline 
-  skybox->pipe_desc = loader.pipe_desc;
-  skybox->pipe      = gfx_pipeline_create(s_manager.gfx_context, skybox->pipe_desc);
+  skybox->pipe = gfx_pipeline_create(s_manager.gfx_context, skybox->pipe_desc);
 
   // New skybox added!
   skybox->storage_ref   = storage; 

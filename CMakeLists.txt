@@ -88,6 +88,7 @@ set(NIKOLA_SOURCES
   # Engine/Resources
   ${NIKOLA_SRC_DIR}/engine/resources/resource_manager.cpp
   ${NIKOLA_SRC_DIR}/engine/resources/material.cpp
+  ${NIKOLA_SRC_DIR}/engine/resources/nbr_file.cpp
   
   # Engine/Resources/Loaders 
   ${NIKOLA_SRC_DIR}/engine/resources/loaders/texture_loader.cpp

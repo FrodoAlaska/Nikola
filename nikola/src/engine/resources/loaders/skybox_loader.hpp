@@ -1,0 +1,13 @@
+#pragma once
+
+#include "nikola/nikola_engine.hpp"
+
+//////////////////////////////////////////////////////////////////////////
+
+namespace nikola { // Start of nikola
+
+void skybox_loader_load(ResourceStorage* storage, Skybox* sky, const ResourceID& cubemap_id);
+
+} // End of nikola
+
+//////////////////////////////////////////////////////////////////////////

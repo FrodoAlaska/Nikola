@@ -1861,6 +1861,9 @@ NIKOLA_API GfxShader* gfx_shader_create(GfxContext* gfx, const i8* src);
 /// Free/reclaim any memory consumed by `shader`.
 NIKOLA_API void gfx_shader_destroy(GfxShader* shader);
 
+/// Retrieve the internal shader source string
+NIKOLA_API const i8* gfx_shader_get_source(GfxShader* shader);
+
 /// Attaches the uniform `buffer` to the `shader` of type `type` to point `bind_point`. 
 /// Any updates to `buffer` will have an effect on the `shader`.
 /// 

@@ -78,6 +78,7 @@ struct GfxShader {
 
   i8* vert_src; 
   i8* frag_src;
+  i8* full_src;
   
   i32 vert_src_len, frag_src_len;
 };
@@ -667,6 +668,9 @@ static sizei set_buffer_layout(const u32 vao, const GfxLayoutDesc* layout, const
 static void seperate_shader_src(const i8* src, GfxShader* shader) {
   sizei src_len = strlen(src);
   
+  shader->full_src = (i8*)memory_allocate(src_len);
+  strcpy(shader->full_src, src); 
+
   sizei vert_start = 0;
   sizei frag_start = 0;
 
@@ -1151,9 +1155,14 @@ void gfx_shader_destroy(GfxShader* shader) {
  
   memory_free(shader->vert_src);
   memory_free(shader->frag_src);
+  memory_free(shader->full_src);
   glDeleteProgram(shader->id);
 
   memory_free(shader);
+}
+
+const i8* gfx_shader_get_source(GfxShader* shader) {
+  return shader->full_src;
 }
 
 void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer, const u32 bind_point) {

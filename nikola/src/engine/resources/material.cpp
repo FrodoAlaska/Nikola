@@ -35,6 +35,14 @@ void material_set_matrices_buffer(Material* mat, const Mat4& view_projection) {
   gfx_buffer_update(mat_buff, 0, sizeof(Mat4), mat4_raw_data(view_projection));
 }
 
+void material_attach_uniform(Material* mat, const sizei index, const ResourceID& buffer_id) {
+  NIKOLA_ASSERT(mat->storage_ref, "Invalid resource storage refrence in Material");
+  NIKOLA_ASSERT((buffer_id != INVALID_RESOURCE), "Cannot attach an invalid uniform buffer id to a material");
+  NIKOLA_ASSERT(((index >= MATERIAL_MATRICES_BUFFER_INDEX) && (index <= MATERIAL_LIGHTING_BUFFER_INDEX)), "Invalid index passed as uniform buffer index of a material");
+
+  mat->uniform_buffers[index] = resource_storage_get_buffer(mat->storage_ref, buffer_id);
+}
+
 /// Material functions
 ///---------------------------------------------------------------------------------------------------------------------
 
