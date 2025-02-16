@@ -40,7 +40,7 @@ static void load_texture(NBRFile& nbr) {
   // Load the pixels
   sizei data_size = (texture->width * texture->height);
   texture->pixels = (u8*)memory_allocate(data_size);
-  file_read_bytes(nbr.file_handle, &texture->pixels, data_size);
+  file_read_bytes(nbr.file_handle, texture->pixels, data_size);
 } 
 
 static void load_cubemap(NBRFile& nbr) {
@@ -80,6 +80,7 @@ static void load_shader(NBRFile& nbr) {
   NBRShader* shader = (NBRShader*)nbr.body_data; 
 
   *shader = str;
+  memory_free(src_str);
 }
 
 static void load_by_type(NBRFile& nbr, const FilePath& path) {
@@ -99,6 +100,30 @@ static void load_by_type(NBRFile& nbr, const FilePath& path) {
       break;
     default:
       NIKOLA_LOG_ERROR("Cannot load specified resource type at NBR file \'%s\'", path.string().c_str());
+      break;
+  }
+}
+
+static void unload_by_type(NBRFile& nbr) {
+  switch(nbr.resource_type) {
+    case RESOURCE_TYPE_TEXTURE: {
+      NBRTexture* tex = (NBRTexture*)nbr.body_data;
+      memory_free(tex->pixels);
+    } break;
+    case RESOURCE_TYPE_CUBEMAP: {
+      NBRCubemap* cube = (NBRCubemap*)nbr.body_data;
+      for(sizei i = 0; i < cube->faces_count; i++) {
+        memory_free(cube->pixels[i]);
+      }
+    }
+      break;
+    case RESOURCE_TYPE_SHADER:
+      break;
+    case RESOURCE_TYPE_MODEL:
+      break;
+    case RESOURCE_TYPE_FONT:
+      break;
+    default:
       break;
   }
 }
@@ -178,6 +203,7 @@ void nbr_file_unload(NBRFile& nbr) {
   file_close(nbr.file_handle);
 
   if(nbr.body_data) {
+    unload_by_type(nbr);
     memory_free(nbr.body_data);
   }
 }
