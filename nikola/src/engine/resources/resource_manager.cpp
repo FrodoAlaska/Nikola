@@ -191,12 +191,16 @@ ResourceID resource_storage_push(ResourceStorage* storage,
   GfxTextureDesc tex_desc = {};
   NBRTexture* nbr_texture = (NBRTexture*)nbr.body_data;
   texture_loader_load(&tex_desc, nbr_texture, format, filter, wrap);
+ 
+  // Create the texture 
+  ResourceID id         = generate_id();
+  storage->textures[id] = gfx_texture_create(s_manager.gfx_context, tex_desc);
 
   // Remember to close the NBR
   nbr_file_unload(nbr);
 
   // New texture added!
-  return resource_storage_push(storage, tex_desc);
+  return id;
 }
 
 ResourceID resource_storage_push(ResourceStorage* storage, const GfxCubemapDesc& cubemap_desc) {

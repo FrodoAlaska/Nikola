@@ -8,17 +8,17 @@ namespace nikola { // Start of nikola
 ///---------------------------------------------------------------------------------------------------------------------
 /// Private functions
 
-static bool check_nbr_validity(NBRFile& file) {
+static bool check_nbr_validity(NBRFile& file, const FilePath& path) {
   // Check for the validity of the identifier
   if(file.identifier != NBR_VALID_IDENTIFIER) {
-    NIKOLA_LOG_ERROR("Invalid identifier found in NBR file at \'%s\'", file.path.string().c_str());
+    NIKOLA_LOG_ERROR("Invalid identifier found in NBR file at \'%s\'. Expected \'%i\' got \'%i\'", path.string().c_str(), NBR_VALID_IDENTIFIER, file.identifier);
     return false;
   }  
 
   // Check for the validity of the versions
   bool is_valid_version = ((file.major_version == NBR_VALID_MAJOR_VERSION) || (file.minor_version == NBR_VALID_MINOR_VERSION));
   if(!is_valid_version) {
-    NIKOLA_LOG_ERROR("Invalid version found in NBR file at \'%s\'", file.path.string().c_str());
+    NIKOLA_LOG_ERROR("Invalid version found in NBR file at \'%s\'", path.string().c_str());
     return false;
   }
 
@@ -33,12 +33,13 @@ static void load_texture(NBRFile& nbr) {
   // Load the width and height 
   file_read_bytes(nbr.file_handle, &texture->width, sizeof(texture->width));  
   file_read_bytes(nbr.file_handle, &texture->height, sizeof(texture->height));  
-
+  
   // Load the channels
   file_read_bytes(nbr.file_handle, &texture->channels, sizeof(texture->channels));  
 
   // Load the pixels
-  sizei data_size = (texture->width * texture->height) * sizeof(u8);
+  sizei data_size = (texture->width * texture->height);
+  texture->pixels = (u8*)memory_allocate(data_size);
   file_read_bytes(nbr.file_handle, &texture->pixels, data_size);
 } 
 
@@ -81,7 +82,7 @@ static void load_shader(NBRFile& nbr) {
   *shader = str;
 }
 
-static void load_by_type(NBRFile& nbr) {
+static void load_by_type(NBRFile& nbr, const FilePath& path) {
   switch(nbr.resource_type) {
     case RESOURCE_TYPE_TEXTURE:
       load_texture(nbr);
@@ -97,29 +98,25 @@ static void load_by_type(NBRFile& nbr) {
     case RESOURCE_TYPE_FONT:
       break;
     default:
-      NIKOLA_LOG_ERROR("Cannot load specified resource type at NBR file \'%s\'", nbr.path.string().c_str());
+      NIKOLA_LOG_ERROR("Cannot load specified resource type at NBR file \'%s\'", path.string().c_str());
       break;
   }
 }
 
-static sizei save_header(NBRFile& nbr) {
-  sizei offset = 0;
-
+static void save_header(NBRFile& nbr) {
   nbr.identifier    = NBR_VALID_IDENTIFIER;
   nbr.major_version = NBR_VALID_MAJOR_VERSION;
   nbr.minor_version = NBR_VALID_MINOR_VERSION;
 
   // Save the identifier
-  offset += file_write_bytes(nbr.file_handle, &nbr.identifier, sizeof(nbr.identifier));
+  file_write_bytes(nbr.file_handle, &nbr.identifier, sizeof(nbr.identifier));
 
   // Save the major and minor versions
-  offset += file_write_bytes(nbr.file_handle, &nbr.major_version, sizeof(nbr.major_version), offset);
-  offset += file_write_bytes(nbr.file_handle, &nbr.minor_version, sizeof(nbr.minor_version), offset);
+  file_write_bytes(nbr.file_handle, &nbr.major_version, sizeof(nbr.major_version));
+  file_write_bytes(nbr.file_handle, &nbr.minor_version, sizeof(nbr.minor_version));
 
   // Save the resource type
-  offset += file_write_bytes(nbr.file_handle, &nbr.resource_type, sizeof(nbr.resource_type), offset);
-
-  return offset;
+  file_write_bytes(nbr.file_handle, &nbr.resource_type, sizeof(nbr.resource_type));
 }
 
 static i32 get_texture_channels(GfxTextureFormat format) {
@@ -149,30 +146,29 @@ void nbr_file_load(NBRFile* nbr, const FilePath& path) {
   NIKOLA_ASSERT((path.extension().string() == ".nbr"), "An NBR file with an invalid extension");
 
   // Open the NBR file
-  nbr->path = path;
-  if(!file_open(&nbr->file_handle, path, FILE_OPEN_READ | FILE_OPEN_BINARY)) {
+  if(!file_open(&nbr->file_handle, path.string().c_str(), FILE_OPEN_READ | FILE_OPEN_BINARY)) {
     NIKOLA_LOG_ERROR("Cannot load NBR file at \'%s\'", path.string().c_str());
     return;
   }
 
   // Read the identifier
-  sizei offset = file_read_bytes(nbr->file_handle, &nbr->identifier, sizeof(nbr->identifier));
+  file_read_bytes(nbr->file_handle, &nbr->identifier, sizeof(nbr->identifier));
 
   // Read the major and minor versions
-  offset += file_read_bytes(nbr->file_handle, &nbr->major_version, sizeof(nbr->major_version));
-  offset += file_read_bytes(nbr->file_handle, &nbr->minor_version, sizeof(nbr->minor_version));
+  file_read_bytes(nbr->file_handle, &nbr->major_version, sizeof(nbr->major_version));
+  file_read_bytes(nbr->file_handle, &nbr->minor_version, sizeof(nbr->minor_version));
 
   // Read the resource type
-  offset += file_read_bytes(nbr->file_handle, &nbr->resource_type, sizeof(nbr->resource_type));
+  file_read_bytes(nbr->file_handle, &nbr->resource_type, sizeof(nbr->resource_type));
 
   // Make sure everything is looking good
-  if(!check_nbr_validity(*nbr)) {
+  if(!check_nbr_validity(*nbr, path)) {
     file_close(nbr->file_handle);
     return;
   }
 
   // Load the specified resource type and store it in `nbr.body_data`
-  load_by_type(*nbr);
+  load_by_type(*nbr, path);
 
   // Close the file as it is not needed anymore 
   file_close(nbr->file_handle);
@@ -195,18 +191,18 @@ void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const FilePath& path
 
   // Save the header first
   nbr.resource_type = (i16)RESOURCE_TYPE_TEXTURE; 
-  sizei offset = save_header(nbr);
+  save_header(nbr);
 
   // Save width and height
-  offset += file_write_bytes(nbr.file_handle, &texture.width, sizeof(texture.width));
-  offset += file_write_bytes(nbr.file_handle, &texture.height, sizeof(texture.height), offset);
+  file_write_bytes(nbr.file_handle, &texture.width, sizeof(texture.width));
+  file_write_bytes(nbr.file_handle, &texture.height, sizeof(texture.height));
 
   // Save the channels
-  offset += file_write_bytes(nbr.file_handle, &texture.channels, sizeof(texture.channels), offset);
+  file_write_bytes(nbr.file_handle, &texture.channels, sizeof(texture.channels));
  
   // Save the pixels
   sizei data_size = (texture.width * texture.height) * sizeof(u8);
-  offset += file_write_bytes(nbr.file_handle, &texture.pixels, data_size, offset);
+  file_write_bytes(nbr.file_handle, &texture.pixels, data_size);
 
   // Always remember to close the file
   file_close(nbr.file_handle);
@@ -221,22 +217,22 @@ void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path
 
   // Save the header first
   nbr.resource_type = (i16)RESOURCE_TYPE_CUBEMAP; 
-  sizei offset = save_header(nbr);
+  save_header(nbr);
 
   // Save width and height
-  offset += file_write_bytes(nbr.file_handle, &cubemap.width, sizeof(cubemap.width));
-  offset += file_write_bytes(nbr.file_handle, &cubemap.height, sizeof(cubemap.height));
+  file_write_bytes(nbr.file_handle, &cubemap.width, sizeof(cubemap.width));
+  file_write_bytes(nbr.file_handle, &cubemap.height, sizeof(cubemap.height));
 
   // Save the channels
-  offset += file_write_bytes(nbr.file_handle, &cubemap.channels, sizeof(cubemap.channels));
+  file_write_bytes(nbr.file_handle, &cubemap.channels, sizeof(cubemap.channels));
 
   // Save the faces count
-  offset += file_write_bytes(nbr.file_handle, &cubemap.faces_count, sizeof(cubemap.faces_count));
+  file_write_bytes(nbr.file_handle, &cubemap.faces_count, sizeof(cubemap.faces_count));
 
   // Save the pixels for each face
   sizei data_size = (cubemap.width * cubemap.height) * sizeof(u8);
   for(sizei i = 0; i < cubemap.faces_count; i++) {
-    offset += file_write_bytes(nbr.file_handle, &cubemap.pixels[i], data_size);
+    file_write_bytes(nbr.file_handle, &cubemap.pixels[i], data_size);
   }
 
   // Always remember to close the file
@@ -252,17 +248,17 @@ void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FilePath& path) 
 
   // Save the header first
   nbr.resource_type = (i16)RESOURCE_TYPE_SHADER; 
-  sizei offset = save_header(nbr);
+  save_header(nbr);
  
   // Convert the given shader to an NBR format
   u32 src_length = (u32)shader.length();
   i8* src_str    = (i8*)shader.c_str();
 
   // Save the length of the shader's code string 
-  offset += file_write_bytes(nbr.file_handle, &src_length, sizeof(src_length), offset);
+  file_write_bytes(nbr.file_handle, &src_length, sizeof(src_length));
 
   // Save the shader's code string
-  offset += file_write_bytes(nbr.file_handle, &src_str, src_length * sizeof(i8), offset);
+  file_write_bytes(nbr.file_handle, &src_str, src_length * sizeof(i8));
 
   // Always remember to close the file
   file_close(nbr.file_handle);

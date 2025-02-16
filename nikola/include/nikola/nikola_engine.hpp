@@ -584,8 +584,8 @@ NIKOLA_API String file_read_string(File& file, const sizei offset = 0);
 /// A value present at the top of each `.nbr` file to denote 
 /// a valid `.nbr` file. 
 ///
-/// @NOTE: The value is the sum of the ASCII hex codes of `n`, `b`, and `r`.
-const i8 NBR_VALID_IDENTIFIER     = 322;
+/// @NOTE: The value is the summed average of the ASCII hex codes of `n`, `b`, and `r`.
+const u8 NBR_VALID_IDENTIFIER     = 107;
 
 /// The currently valid major version of any `.nbr` file
 const i16 NBR_VALID_MAJOR_VERSION = 0;
@@ -632,7 +632,7 @@ struct NBRFile {
   File file_handle;
 
   /// A 1-byte value to correctly identify an NBR file
-  i8 identifier;                 
+  u8 identifier;                 
 
   /// A 2-bytes value for the major version of the file  
   i16 major_version;

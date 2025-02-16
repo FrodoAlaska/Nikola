@@ -1,8 +1,6 @@
 #include "nikola/nikola_core.hpp"
 #include "nikola/nikola_engine.hpp"
 
-#include <fstream>
-
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola {
@@ -12,31 +10,31 @@ static std::ios::openmode get_mode(const u32 mode) {
   std::ios::openmode cpp_mode;
 
   if(IS_BIT_SET(mode, FILE_OPEN_READ)) {
-    cpp_mode |= std::ios::in;
+    cpp_mode = (std::ios::openmode)(cpp_mode | std::ios::in);
   }
   
   if(IS_BIT_SET(mode, FILE_OPEN_WRITE)) {
-    cpp_mode |= std::ios::out;
+    cpp_mode = (std::ios::openmode)(cpp_mode | std::ios::out);
   }
   
   if(IS_BIT_SET(mode, FILE_OPEN_BINARY)) {
-    cpp_mode |= std::ios::binary;
+    cpp_mode = (std::ios::openmode)(cpp_mode | std::ios::binary);
   }
   
   if(IS_BIT_SET(mode, FILE_OPEN_APPEND)) {
-    cpp_mode |= std::ios::app;
+    cpp_mode = (std::ios::openmode)(cpp_mode | std::ios::app);
   }
   
   if(IS_BIT_SET(mode, FILE_OPEN_TRUNCATE)) {
-    cpp_mode |= std::ios::trunc;
+    cpp_mode = (std::ios::openmode)(cpp_mode | std::ios::trunc);
   }
   
   if(IS_BIT_SET(mode, FILE_OPEN_AT_END)) {
-    cpp_mode |= std::ios::ate;
+    cpp_mode = (std::ios::openmode)(cpp_mode | std::ios::ate);
   }
   
   if(IS_BIT_SET(mode, FILE_OPEN_READ_WRITE)) {
-    cpp_mode |= (std::ios::in | std::ios::out);
+    cpp_mode = (std::ios::openmode)(cpp_mode | (std::ios::in | std::ios::out));
   }
 
   return cpp_mode;
@@ -61,9 +59,7 @@ bool file_open(File* file, const FilePath& path, const u32 mode) {
 }
 
 void file_close(File& file) {
-  if(file.is_open()) {
-    file.close();
-  }
+  // file.close();
 }
 
 bool file_is_open(File& file) {
@@ -98,7 +94,7 @@ const sizei file_get_size(File& file) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
   
   file_seek_read(file, std::ios::end);
-  sizei size = file_tell_write(file);
+  sizei size = file_tell_read(file);
   file_seek_read(file, std::ios::beg);
 
   return size;
@@ -120,7 +116,7 @@ const sizei file_write_bytes(File& file, const void* buff, const sizei buff_size
 const sizei file_read_bytes(File& file, void* out_buff, const sizei size, const sizei offset) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
   
-  file.read((char*)&out_buff, size + offset);
+  file.read((char*)out_buff, size + offset);
   return (size + offset);
 }
 
