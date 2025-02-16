@@ -5,7 +5,7 @@ debug_path="build-debug"
 release_path="build-release"
 
 # Options
-build_threads="1"
+build_threads="4"
 build_config="Debug"
 build_path="$debug_path"
 
@@ -91,6 +91,6 @@ done
 #########################################################
 echo -e "${blue} Building the '$build_config' configuration of Nikola..."
 cd ../$build_path
-cmake .. -DCMAKE_BUILD_TYPE=$build_config && make -j $build_threads
+cmake .. -DCMAKE_BUILD_TYPE=$build_config && cmake --build . -j $build_threads
 cd ..
 #########################################################

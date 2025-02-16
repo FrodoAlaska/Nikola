@@ -35,7 +35,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::camera_create(&app->camera, aspect_ratio, nikola::Vec3(10.0f, 0.0f, 10.0f), nikola::Vec3(-3.0f, 0.0f, 0.0f));
 
   // Resource storage init 
-  app->storage = nikola::resource_storage_create("app_res", "/home/mohamed/Dev/C++/Nikola/testbed/res");
+  app->storage = nikola::resource_storage_create("app_res", std::filesystem::current_path() / "res");
 
   // Mesh init
   app->mesh_id = nikola::resource_storage_push(app->storage, nikola::MESH_TYPE_CUBE);

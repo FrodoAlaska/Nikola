@@ -7,13 +7,6 @@ set(TESTBED_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(TESTBED_INCLUDE_DIR ${TESTBED_SRC_DIR})
 set(TESTBED_LIBS_DIR libs)
 
-if(WIN32)
-  # Thanks, CMake...
-  set(NIKOLA_LIBRARY_DIR ${NIKOLA_OUTPUT_DIR}/"$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>"/nikola.lib)
-elseif(UNIX OR LINUX)
-  set(NIKOLA_LIBRARY_DIR ${NIKOLA_OUTPUT_DIR}/libnikola.a)
-endif()
-
 set(TESTBED_LIBRARIES ${NIKOLA_LIBRARY_DIR} glfw)
 
 set(TESTBED_INCLUDES 

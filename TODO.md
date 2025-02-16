@@ -1,8 +1,7 @@
 # (Engine) TODO: 
-- Improve the build environment and the docs for it
 - Test NBR
 - Document the nbr and filesystem sections
-- Build scripts
+- Update README
 - Finish up the rest of the resources (models, fonts, etc...)
 - The renderer... at least minimally. To render stuff and things
 

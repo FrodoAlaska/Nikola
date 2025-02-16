@@ -171,7 +171,7 @@ void nbr_file_load(NBRFile* nbr, const FilePath& path) {
   NIKOLA_ASSERT((path.extension().string() == ".nbr"), "An NBR file with an invalid extension");
 
   // Open the NBR file
-  if(!file_open(&nbr->file_handle, path.string().c_str(), FILE_OPEN_READ | FILE_OPEN_BINARY)) {
+  if(!file_open(&nbr->file_handle, path, FILE_OPEN_READ | FILE_OPEN_BINARY)) {
     NIKOLA_LOG_ERROR("Cannot load NBR file at \'%s\'", path.string().c_str());
     return;
   }

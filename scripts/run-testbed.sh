@@ -7,6 +7,7 @@ release_path="build-release"
 # Options
 build_config="debug"
 build_path="$debug_path"
+test_name="testbed"
 
 # Some fun colors
 red="\033[0;31m"
@@ -18,6 +19,7 @@ show_help() {
   echo -e "${red} An easy to use run script to run the testbeds of Nikola"
   echo -e "${red}    --debug  -d: Run the debug configuration of the testbeds"
   echo -e "${red}    --rel    -r: Run the release configuration of the testbeds"
+  echo -e "${red}    --test   -t: Run a specific test"
 }
 #########################################################
 
@@ -43,6 +45,10 @@ while [[ $i -le $# ]]; do
       build_config="release" 
       build_path=$release_path 
       ;; 
+    -t | --test) 
+      ((i++))
+      test_name="${!i}"
+      ;; 
     *) 
       echo -e "${red}Unsupported argument '$arg' passed" 
       show_help 
@@ -58,7 +64,7 @@ done
 #########################################################
 
 echo -e "${blue} Running NikolaTestbed..."
-cd ../$build_path/testbed
-make && ./NikolaTestbed
+cd ../$build_path/$test_name
+cmake --build . && ./NikolaTestbed
 cd ../../
 #########################################################

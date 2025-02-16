@@ -134,6 +134,8 @@ String file_read_string(File& file, const sizei offset) {
 
   String out_str;
   file >> out_str;
+
+  return out_str;
 }
 
 /// File functions

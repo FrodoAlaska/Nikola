@@ -34,8 +34,9 @@ endif()
 
 ### Project Options ###
 ############################################################
-option(NIKOLA_BUILD_SHARED "Build Nikola as a shared library" OFF)
+option(NIKOLA_BUILD_SHARED  "Build Nikola as a shared library" OFF)
 option(NIKOLA_BUILD_TESTBED "Build the testbeds with Nikola" ON)
+option(NIKOLA_BUILD_NBR     "Build the NBR tool with Nikola" ON)
 
 # Set it to shared
 if(NIKOLA_BUILD_SHARED)
@@ -44,6 +45,13 @@ if(NIKOLA_BUILD_SHARED)
 else()
   set(NIKOLA_BUILD_TYPE STATIC)
   set(BUILD_SHARED_LIBS OFF)
+endif()
+
+if(WIN32)
+  # Thanks, CMake...
+  set(NIKOLA_LIBRARY_DIR ${NIKOLA_OUTPUT_DIR}/"$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>"/nikola.lib)
+elseif(LINUX)
+  set(NIKOLA_LIBRARY_DIR ${NIKOLA_OUTPUT_DIR}/libnikola.a)
 endif()
 ############################################################
 
@@ -133,10 +141,14 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 target_compile_definitions(${PROJECT_NAME} PUBLIC ${NIKOLA_BUILD_DEFS})
 ############################################################
 
-### Examples ###
+### Sub Projects ###
 ############################################################
 if(NIKOLA_BUILD_TESTBED) 
   add_subdirectory(testbed)
+endif()
+
+if(NIKOLA_BUILD_NBR) 
+  add_subdirectory(NBR)
 endif()
 ############################################################
 
