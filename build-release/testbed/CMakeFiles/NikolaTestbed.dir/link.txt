@@ -1,1 +1,0 @@
-/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/NikolaTestbed.dir/engine_testbed/main.cpp.o CMakeFiles/NikolaTestbed.dir/engine_testbed/app.cpp.o -o NikolaTestbed  ../libnikola.a ../libs/glfw/src/libglfw3.a /usr/lib/x86_64-linux-gnu/librt.a -lm -ldl 
