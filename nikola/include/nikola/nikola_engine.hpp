@@ -557,13 +557,13 @@ NIKOLA_API const sizei file_tell_write(File& file);
 
 NIKOLA_API const sizei file_tell_read(File& file);
 
-NIKOLA_API sizei file_get_size(File& file);
+NIKOLA_API const sizei file_get_size(File& file);
 
 NIKOLA_API bool file_is_empty(File& file);
 
-NIKOLA_API void file_write_bytes(File& file, const void* buff, const sizei buff_size, const sizei offset = 0);
+NIKOLA_API const sizei file_write_bytes(File& file, const void* buff, const sizei buff_size, const sizei offset = 0);
 
-NIKOLA_API void file_read_bytes(File& file, void* out_buff, const sizei size, const sizei offset = 0);
+NIKOLA_API const sizei file_read_bytes(File& file, void* out_buff, const sizei size, const sizei offset = 0);
 
 NIKOLA_API void file_write_string(File& file, const String& string, const sizei offset = 0);
 

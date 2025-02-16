@@ -35,7 +35,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::camera_create(&app->camera, aspect_ratio, nikola::Vec3(10.0f, 0.0f, 10.0f), nikola::Vec3(-3.0f, 0.0f, 0.0f));
 
   // Resource storage init
-  app->storage = nikola::resource_storage_create("app_res", "assets");
+  app->storage = nikola::resource_storage_create("app_res", "res");
 
   // Mesh init
   app->mesh_id = nikola::resource_storage_push(app->storage, nikola::MESH_TYPE_CUBE);
@@ -44,10 +44,10 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::ResourceID diffuse_id = nikola::resource_storage_push(app->storage, nikola::FilePath("opengl.nbr")); 
 
   // Cubemap texture init
-  nikola::ResourceID cubemap_id = nikola::resource_storage_push(app->storage, nikola::FilePath("NightSky.nbr"), 6);
+  // nikola::ResourceID cubemap_id = nikola::resource_storage_push(app->storage, nikola::FilePath("NightSky.nbr"), 6);
 
   // Skybox init
-  app->skybox_id = nikola::resource_storage_push(app->storage, cubemap_id);
+  // app->skybox_id = nikola::resource_storage_push(app->storage, cubemap_id);
 
   // Shader init
   nikola::ResourceID shader_id     = nikola::resource_storage_push(app->storage, nikola::String(default3d_shader()));
@@ -124,10 +124,10 @@ void app_render(nikola::App* app) {
   }
 
   // Render the skybox 
-  rnd_cmd.render_type   = nikola::RENDERABLE_TYPE_SKYBOX; 
-  rnd_cmd.renderable_id = app->skybox_id; 
-  rnd_cmd.material_id   = app->skybox_material_id; 
-  nikola::renderer_queue_command(rnd_cmd);
+  // rnd_cmd.render_type   = nikola::RENDERABLE_TYPE_SKYBOX; 
+  // rnd_cmd.renderable_id = app->skybox_id; 
+  // rnd_cmd.material_id   = app->skybox_material_id; 
+  // nikola::renderer_queue_command(rnd_cmd);
 
   nikola::renderer_end_pass();
   nikola::renderer_post_pass();

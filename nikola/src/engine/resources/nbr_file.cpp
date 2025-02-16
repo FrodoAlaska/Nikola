@@ -102,20 +102,24 @@ static void load_by_type(NBRFile& nbr) {
   }
 }
 
-static void save_header(NBRFile& nbr) {
+static sizei save_header(NBRFile& nbr) {
+  sizei offset = 0;
+
   nbr.identifier    = NBR_VALID_IDENTIFIER;
   nbr.major_version = NBR_VALID_MAJOR_VERSION;
   nbr.minor_version = NBR_VALID_MINOR_VERSION;
 
   // Save the identifier
-  file_write_bytes(nbr.file_handle, &nbr.identifier, sizeof(nbr.identifier));
+  offset += file_write_bytes(nbr.file_handle, &nbr.identifier, sizeof(nbr.identifier));
 
   // Save the major and minor versions
-  file_write_bytes(nbr.file_handle, &nbr.major_version, sizeof(nbr.major_version));
-  file_write_bytes(nbr.file_handle, &nbr.minor_version, sizeof(nbr.minor_version));
+  offset += file_write_bytes(nbr.file_handle, &nbr.major_version, sizeof(nbr.major_version), offset);
+  offset += file_write_bytes(nbr.file_handle, &nbr.minor_version, sizeof(nbr.minor_version), offset);
 
   // Save the resource type
-  file_write_bytes(nbr.file_handle, &nbr.resource_type, sizeof(nbr.resource_type));
+  offset += file_write_bytes(nbr.file_handle, &nbr.resource_type, sizeof(nbr.resource_type), offset);
+
+  return offset;
 }
 
 static i32 get_texture_channels(GfxTextureFormat format) {
@@ -142,24 +146,27 @@ static i32 get_texture_channels(GfxTextureFormat format) {
 
 void nbr_file_load(NBRFile* nbr, const FilePath& path) {
   NIKOLA_ASSERT(nbr, "Cannot load an invalid NBR file");
-  NIKOLA_ASSERT((nbr->path.extension().string() == "nbr"), "An NBR file with an invalid extension");
+  NIKOLA_ASSERT((path.extension().string() == ".nbr"), "An NBR file with an invalid extension");
 
+  // Open the NBR file
+  nbr->path = path;
   if(!file_open(&nbr->file_handle, path, FILE_OPEN_READ | FILE_OPEN_BINARY)) {
-    NIKOLA_LOG_ERROR("Cannot open NBR file at \'%s\'", path.string().c_str());
+    NIKOLA_LOG_ERROR("Cannot load NBR file at \'%s\'", path.string().c_str());
     return;
-  } 
+  }
 
   // Read the identifier
-  file_read_bytes(nbr->file_handle, &nbr->identifier, sizeof(nbr->identifier));
+  sizei offset = file_read_bytes(nbr->file_handle, &nbr->identifier, sizeof(nbr->identifier));
 
   // Read the major and minor versions
-  file_read_bytes(nbr->file_handle, &nbr->major_version, sizeof(nbr->major_version));
-  file_read_bytes(nbr->file_handle, &nbr->minor_version, sizeof(nbr->minor_version));
+  offset += file_read_bytes(nbr->file_handle, &nbr->major_version, sizeof(nbr->major_version));
+  offset += file_read_bytes(nbr->file_handle, &nbr->minor_version, sizeof(nbr->minor_version));
 
   // Read the resource type
-  file_read_bytes(nbr->file_handle, &nbr->resource_type, sizeof(nbr->resource_type));
+  offset += file_read_bytes(nbr->file_handle, &nbr->resource_type, sizeof(nbr->resource_type));
 
   // Make sure everything is looking good
+  NIKOLA_LOG_TRACE("OFF = %zu", offset); 
   if(!check_nbr_validity(*nbr)) {
     file_close(nbr->file_handle);
     return;
@@ -182,11 +189,14 @@ void nbr_file_unload(NBRFile& nbr) {
 
 void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const FilePath& path) {
   // Must open the file
-  file_open(&nbr.file_handle, path, FILE_OPEN_WRITE | FILE_OPEN_BINARY);
+  if(!file_open(&nbr.file_handle, path, FILE_OPEN_WRITE | FILE_OPEN_BINARY)) {
+    NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.string().c_str());
+    return;
+  }
 
   // Save the header first
   nbr.resource_type = (i16)RESOURCE_TYPE_TEXTURE; 
-  save_header(nbr);
+  sizei offset = save_header(nbr);
 
   // Save width and height
   file_write_bytes(nbr.file_handle, &texture.width, sizeof(texture.width));
@@ -205,7 +215,10 @@ void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const FilePath& path
 
 void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path) {
   // Must open the file
-  file_open(&nbr.file_handle, path, FILE_OPEN_WRITE | FILE_OPEN_BINARY);
+  if(!file_open(&nbr.file_handle, path, FILE_OPEN_WRITE | FILE_OPEN_BINARY)) {
+    NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.string().c_str());
+    return;
+  }
 
   // Save the header first
   nbr.resource_type = (i16)RESOURCE_TYPE_CUBEMAP; 
@@ -233,7 +246,10 @@ void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path
 
 void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FilePath& path) {
   // Must open the file
-  file_open(&nbr.file_handle, path, FILE_OPEN_WRITE | FILE_OPEN_BINARY);
+  if(!file_open(&nbr.file_handle, path, FILE_OPEN_WRITE | FILE_OPEN_BINARY)) {
+    NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.string().c_str());
+    return;
+  }
 
   // Save the header first
   nbr.resource_type = (i16)RESOURCE_TYPE_SHADER; 
