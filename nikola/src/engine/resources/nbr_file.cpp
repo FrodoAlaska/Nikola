@@ -166,7 +166,6 @@ void nbr_file_load(NBRFile* nbr, const FilePath& path) {
   offset += file_read_bytes(nbr->file_handle, &nbr->resource_type, sizeof(nbr->resource_type));
 
   // Make sure everything is looking good
-  NIKOLA_LOG_TRACE("OFF = %zu", offset); 
   if(!check_nbr_validity(*nbr)) {
     file_close(nbr->file_handle);
     return;
@@ -199,15 +198,15 @@ void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const FilePath& path
   sizei offset = save_header(nbr);
 
   // Save width and height
-  file_write_bytes(nbr.file_handle, &texture.width, sizeof(texture.width));
-  file_write_bytes(nbr.file_handle, &texture.height, sizeof(texture.height));
+  offset += file_write_bytes(nbr.file_handle, &texture.width, sizeof(texture.width));
+  offset += file_write_bytes(nbr.file_handle, &texture.height, sizeof(texture.height), offset);
 
   // Save the channels
-  file_write_bytes(nbr.file_handle, &texture.channels, sizeof(texture.channels));
+  offset += file_write_bytes(nbr.file_handle, &texture.channels, sizeof(texture.channels), offset);
  
   // Save the pixels
   sizei data_size = (texture.width * texture.height) * sizeof(u8);
-  file_write_bytes(nbr.file_handle, &texture.pixels, data_size);
+  offset += file_write_bytes(nbr.file_handle, &texture.pixels, data_size, offset);
 
   // Always remember to close the file
   file_close(nbr.file_handle);
@@ -222,22 +221,22 @@ void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path
 
   // Save the header first
   nbr.resource_type = (i16)RESOURCE_TYPE_CUBEMAP; 
-  save_header(nbr);
+  sizei offset = save_header(nbr);
 
   // Save width and height
-  file_write_bytes(nbr.file_handle, &cubemap.width, sizeof(cubemap.width));
-  file_write_bytes(nbr.file_handle, &cubemap.height, sizeof(cubemap.height));
+  offset += file_write_bytes(nbr.file_handle, &cubemap.width, sizeof(cubemap.width));
+  offset += file_write_bytes(nbr.file_handle, &cubemap.height, sizeof(cubemap.height));
 
   // Save the channels
-  file_write_bytes(nbr.file_handle, &cubemap.channels, sizeof(cubemap.channels));
+  offset += file_write_bytes(nbr.file_handle, &cubemap.channels, sizeof(cubemap.channels));
 
   // Save the faces count
-  file_write_bytes(nbr.file_handle, &cubemap.faces_count, sizeof(cubemap.faces_count));
+  offset += file_write_bytes(nbr.file_handle, &cubemap.faces_count, sizeof(cubemap.faces_count));
 
   // Save the pixels for each face
   sizei data_size = (cubemap.width * cubemap.height) * sizeof(u8);
   for(sizei i = 0; i < cubemap.faces_count; i++) {
-    file_write_bytes(nbr.file_handle, &cubemap.pixels[i], data_size);
+    offset += file_write_bytes(nbr.file_handle, &cubemap.pixels[i], data_size);
   }
 
   // Always remember to close the file
@@ -253,17 +252,17 @@ void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FilePath& path) 
 
   // Save the header first
   nbr.resource_type = (i16)RESOURCE_TYPE_SHADER; 
-  save_header(nbr);
+  sizei offset = save_header(nbr);
  
   // Convert the given shader to an NBR format
   u32 src_length = (u32)shader.length();
   i8* src_str    = (i8*)shader.c_str();
 
   // Save the length of the shader's code string 
-  file_write_bytes(nbr.file_handle, &src_length, sizeof(src_length));
+  offset += file_write_bytes(nbr.file_handle, &src_length, sizeof(src_length), offset);
 
   // Save the shader's code string
-  file_write_bytes(nbr.file_handle, &src_str, src_length * sizeof(i8));
+  offset += file_write_bytes(nbr.file_handle, &src_str, src_length * sizeof(i8), offset);
 
   // Always remember to close the file
   file_close(nbr.file_handle);

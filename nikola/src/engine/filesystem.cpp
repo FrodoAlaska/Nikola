@@ -1,6 +1,8 @@
 #include "nikola/nikola_core.hpp"
 #include "nikola/nikola_engine.hpp"
 
+#include <fstream>
+
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola {
@@ -52,7 +54,10 @@ bool file_open(File* file, const char* path, const u32 mode) {
 }
 
 bool file_open(File* file, const FilePath& path, const u32 mode) {
-  return file_open(file, path.string().c_str(), mode);
+  NIKOLA_ASSERT(file, "Cannot open an invalid File handle");
+
+  file->open(path, get_mode(mode));
+  return file->is_open();
 }
 
 void file_close(File& file) {
