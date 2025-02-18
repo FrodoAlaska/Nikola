@@ -63,7 +63,7 @@ static void construct_cube_skybox(ResourceStorage* storage, Skybox* sky) {
     .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
   };
 
-  ResourceID buffer_id          = resource_storage_push(storage, vert_desc);
+  ResourceID buffer_id          = resource_storage_push_buffer(storage, vert_desc);
   sky->vertex_buffer            = resource_storage_get_buffer(storage, buffer_id);
   sky->pipe_desc.vertex_buffer  = sky->vertex_buffer;
   sky->pipe_desc.vertices_count = 36;

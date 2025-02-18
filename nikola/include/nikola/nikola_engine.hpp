@@ -610,15 +610,15 @@ NIKOLA_API const sizei file_write_bytes(File& file, const void* buff, const size
 /// @NOTE: This function will raise an error if `file` is not opened.
 NIKOLA_API const sizei file_read_bytes(File& file, void* out_buff, const sizei size, const sizei offset = 0);
 
-/// Write the given `string` with `offset` into `file`.
+/// Write the given `string` into `file`.
 ///
 /// @NOTE: This function will raise an error if `file` is not opened.
-NIKOLA_API void file_write_string(File& file, const String& string, const sizei offset = 0);
+NIKOLA_API void file_write_string(File& file, const String& string);
 
-/// Return the read string in `file` with `offset`.
+/// Return the read string in `file`.
 ///
 /// @NOTE: This function will raise an error if `file` is not opened.
-NIKOLA_API String file_read_string(File& file, const sizei offset = 0);
+NIKOLA_API String file_read_string(File& file);
 
 /// File functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -945,11 +945,11 @@ NIKOLA_API void resource_storage_destroy(ResourceStorage* storage);
 
 /// Allocate a new `GfxBuffer` using `buff_desc`, store it in `storage`, and return a `ResourceID` 
 /// to identify it.
-NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const GfxBufferDesc& buff_desc);
+NIKOLA_API ResourceID resource_storage_push_buffer(ResourceStorage* storage, const GfxBufferDesc& buff_desc);
 
 /// Allocate a new `GfxTexture` using `desc`, store it in `storage`,
 /// and return a `ResourceID` to identify it.
-NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const GfxTextureDesc& desc);
+NIKOLA_API ResourceID resource_storage_push_texture(ResourceStorage* storage, const GfxTextureDesc& desc);
 
 /// Allocate a new `GfxTexture` using the texture retrieved from the `nbr_path`, 
 /// store it in `storage`, and return a `ResourceID` to identify it.
@@ -958,37 +958,38 @@ NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const GfxT
 ///   - `format` = `GFX_TEXTURE_FORMAT_RGBA8`.
 ///   - `filter` = `GFX_TEXTURE_FILTER_MIN_MAG_NEAREST`.
 ///   - `wrap`   = `GFX_TEXTURE_WRAP_CLAMP`.
-NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, 
-                                            const FilePath& nbr_path,
-                                            const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
-                                            const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-                                            const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
+NIKOLA_API ResourceID resource_storage_push_texture(ResourceStorage* storage, 
+                                                    const FilePath& nbr_path,
+                                                    const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
+                                                    const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
+                                                    const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
 
 /// Allocate a new `GfxCubemap` using `desc`, store it in `storage`,
 /// and return a `ResourceID` to identify it.
-NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const GfxCubemapDesc& desc);
+NIKOLA_API ResourceID resource_storage_push_cubemap(ResourceStorage* storage, const GfxCubemapDesc& desc);
 
-/// Allocate a new `GfxCubemap` with `faces_count` using the cubemap retrieved from the `nbr_path`, 
+/// Allocate a new `GfxCubemap` using the cubemap retrieved from the `nbr_path`, 
 /// store it in `storage`, and return a `ResourceID` to identify it.
 ///
 /// Default values: 
 ///   - `format` = `GFX_TEXTURE_FORMAT_RGBA8`.
 ///   - `filter` = `GFX_TEXTURE_FILTER_MIN_MAG_NEAREST`.
 ///   - `wrap`   = `GFX_TEXTURE_WRAP_CLAMP`.
-NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, 
-                                            const FilePath& nbr_path,
-                                            const sizei faces_count,
-                                            const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
-                                            const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-                                            const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
+///
+/// @NOTE: The number of faces of the cubemap will be determined inside the NBR file.
+NIKOLA_API ResourceID resource_storage_push_cubemap(ResourceStorage* storage, 
+                                                    const FilePath& nbr_path,
+                                                    const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
+                                                    const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
+                                                    const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
 
 /// Allocate a new `GfxShader` using `shader_src`, store it in `storage`, and return a `ResourceID` 
 /// to identify it.
-NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const String& shader_src);
+NIKOLA_API ResourceID resource_storage_push_shader(ResourceStorage* storage, const String& shader_src);
 
 /// Allocate a new `GfxShader` using `shader_src` using the shader retrieved from the `nbr_path`, 
 /// store it in `storage`, and return a `ResourceID` to identify it.
-NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const FilePath& nbr_path);
+NIKOLA_API ResourceID resource_storage_push_shader(ResourceStorage* storage, const FilePath& nbr_path);
 
 /// Allocate a new `Mesh` using `vertex_buffer_id` and `index_buffer_id`, 
 /// store it in `storage`, return a `ResourceID` to identified it. 
@@ -999,15 +1000,15 @@ NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const File
 ///
 /// @NOTE: The value of `index_buffer_id` can be set to `INVALID_RESOURCE` to be ignored.
 /// The same cannot be said for `vertex_buffer_id`.
-NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, 
-                                            const ResourceID& vertex_buffer_id, 
-                                            const VertexType vertex_type, 
-                                            const ResourceID& index_buffer_id, 
-                                            const sizei indices_count);
+NIKOLA_API ResourceID resource_storage_push_mesh(ResourceStorage* storage, 
+                                                 const ResourceID& vertex_buffer_id, 
+                                                 const VertexType vertex_type, 
+                                                 const ResourceID& index_buffer_id, 
+                                                 const sizei indices_count);
 
 /// Allocate a new `Mesh` using a predefined mesh `type`, 
 /// store it in `storage`, return a `ResourceID` to identified it. 
-NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const MeshType type);
+NIKOLA_API ResourceID resource_storage_push_mesh(ResourceStorage* storage, const MeshType type);
 
 /// Allocate a new `Material` using the textures `diffuse_id` and `specular_id`
 /// and the shader `shader_id`, store it in `storage`, and 
@@ -1015,14 +1016,14 @@ NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const Mesh
 ///
 /// @NOTE: Only the resource `specular_id` is allowed 
 /// to be set to `INVALID_RESOURCE` but not the others.
-NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage,
-                                            const ResourceID& diffuse_id, 
-                                            const ResourceID& specular_id, 
-                                            const ResourceID& shader_id);
+NIKOLA_API ResourceID resource_storage_push_material(ResourceStorage* storage,
+                                                     const ResourceID& diffuse_id, 
+                                                     const ResourceID& specular_id, 
+                                                     const ResourceID& shader_id);
 
 /// Allocate a new `Skybox` using the previously-added `cubemap_id`, store it in `storage`, 
 /// and return a `ResourceID` to identify it.
-NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const ResourceID& cubemap_id);
+NIKOLA_API ResourceID resource_storage_push_skybox(ResourceStorage* storage, const ResourceID& cubemap_id);
 
 /// Retrieve `GfxBuffer` identified by `id` in `storage`. 
 ///

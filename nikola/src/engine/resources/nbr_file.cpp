@@ -76,15 +76,18 @@ static void load_shader(NBRFile& nbr) {
   // Load the length
   u32 src_length = 0;
   file_read_bytes(nbr.file_handle, &src_length, sizeof(src_length));
+  src_length += 1; 
 
   // Load the src string
   i8* src_str = (i8*)memory_allocate(src_length); 
-  file_read_bytes(nbr.file_handle, &src_str, src_length);
+  file_read_bytes(nbr.file_handle, src_str, src_length - 1);
+  src_str[src_length - 1] = '\0';
+ 
   shader = String(src_str, src_length);
-  
+
   // Allocate some space for the resource and assign it
-  nbr.body_data = memory_allocate(sizeof(shader));
-  memory_copy(nbr.body_data, &shader, sizeof(shader));
+  nbr.body_data = memory_allocate(src_length);
+  memory_copy(nbr.body_data, src_str, src_length);
 
   // Goodbye, extra string
   memory_free(src_str);
@@ -282,7 +285,7 @@ void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FilePath& path) 
   // Save the header first
   nbr.resource_type = (i16)RESOURCE_TYPE_SHADER; 
   save_header(nbr);
- 
+
   // Convert the given shader to an NBR format
   u32 src_length = (u32)shader.length();
   i8* src_str    = (i8*)shader.c_str();

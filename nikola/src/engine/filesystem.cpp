@@ -1,6 +1,8 @@
 #include "nikola/nikola_core.hpp"
 #include "nikola/nikola_engine.hpp"
 
+#include <sstream>
+
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola {
@@ -120,22 +122,19 @@ const sizei file_read_bytes(File& file, void* out_buff, const sizei size, const 
   return (size + offset);
 }
 
-void file_write_string(File& file, const String& string, const sizei offset) {
+void file_write_string(File& file, const String& string) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
   
-  file_seek_write(file, offset);
   file << string;
 }
 
-String file_read_string(File& file, const sizei offset) {
+String file_read_string(File& file) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
 
-  file_seek_read(file, offset);
+  std::stringstream ss;
+  ss << file.rdbuf();
 
-  String out_str;
-  file >> out_str;
-
-  return out_str;
+  return ss.str();
 }
 
 /// File functions

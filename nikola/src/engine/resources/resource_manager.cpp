@@ -155,7 +155,7 @@ void resource_storage_destroy(ResourceStorage* storage) {
   delete storage; //memory_free(storage);
 }
 
-ResourceID resource_storage_push(ResourceStorage* storage, const GfxBufferDesc& buff_desc) {
+ResourceID resource_storage_push_buffer(ResourceStorage* storage, const GfxBufferDesc& buff_desc) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
   ResourceID id        = generate_id();
@@ -164,7 +164,7 @@ ResourceID resource_storage_push(ResourceStorage* storage, const GfxBufferDesc& 
   return id;
 }
 
-ResourceID resource_storage_push(ResourceStorage* storage, const GfxTextureDesc& desc) {
+ResourceID resource_storage_push_texture(ResourceStorage* storage, const GfxTextureDesc& desc) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
   ResourceID id         = generate_id();
@@ -173,11 +173,11 @@ ResourceID resource_storage_push(ResourceStorage* storage, const GfxTextureDesc&
   return id;
 }
 
-ResourceID resource_storage_push(ResourceStorage* storage, 
-                                 const FilePath& nbr_path,
-                                 const GfxTextureFormat format, 
-                                 const GfxTextureFilter filter, 
-                                 const GfxTextureWrap wrap) {
+ResourceID resource_storage_push_texture(ResourceStorage* storage, 
+                                         const FilePath& nbr_path,
+                                         const GfxTextureFormat format, 
+                                         const GfxTextureFilter filter, 
+                                         const GfxTextureWrap wrap) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
   // Load the NBR file
@@ -203,7 +203,7 @@ ResourceID resource_storage_push(ResourceStorage* storage,
   return id;
 }
 
-ResourceID resource_storage_push(ResourceStorage* storage, const GfxCubemapDesc& cubemap_desc) {
+ResourceID resource_storage_push_cubemap(ResourceStorage* storage, const GfxCubemapDesc& cubemap_desc) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
   ResourceID id         = generate_id();
@@ -212,12 +212,11 @@ ResourceID resource_storage_push(ResourceStorage* storage, const GfxCubemapDesc&
   return id;
 }
 
-ResourceID resource_storage_push(ResourceStorage* storage, 
-                                 const FilePath& nbr_path,
-                                 const sizei faces_count,
-                                 const GfxTextureFormat format, 
-                                 const GfxTextureFilter filter, 
-                                 const GfxTextureWrap wrap) {
+ResourceID resource_storage_push_cubemap(ResourceStorage* storage, 
+                                         const FilePath& nbr_path,
+                                         const GfxTextureFormat format, 
+                                         const GfxTextureFilter filter, 
+                                         const GfxTextureWrap wrap) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
   // Load the NBR file
@@ -243,7 +242,7 @@ ResourceID resource_storage_push(ResourceStorage* storage,
   return id;
 }
 
-ResourceID resource_storage_push(ResourceStorage* storage, const String& shader_src) {
+ResourceID resource_storage_push_shader(ResourceStorage* storage, const String& shader_src) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
   ResourceID id        = generate_id();
@@ -252,7 +251,7 @@ ResourceID resource_storage_push(ResourceStorage* storage, const String& shader_
   return id;
 }
 
-ResourceID resource_storage_push(ResourceStorage* storage, const FilePath& nbr_path) {
+ResourceID resource_storage_push_shader(ResourceStorage* storage, const FilePath& nbr_path) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
   
   // Load the NBR file
@@ -263,12 +262,11 @@ ResourceID resource_storage_push(ResourceStorage* storage, const FilePath& nbr_p
   NIKOLA_ASSERT((nbr.resource_type == RESOURCE_TYPE_SHADER), "Expected RESOURCE_TYPE_SHADER");
 
   // Convert the NBR format to a valid shader
-  NBRShader* nbr_shader  = (NBRShader*)nbr.body_data;
-  const char* shader_src = nbr_shader->c_str();
-  
+  const char* nbr_shader  = (const char*)nbr.body_data;
+
   // Create the shader
-  ResourceID id         = generate_id();
-  storage->shaders[id] = gfx_shader_create(s_manager.gfx_context, shader_src);
+  ResourceID id        = generate_id();
+  storage->shaders[id] = gfx_shader_create(s_manager.gfx_context, nbr_shader);
 
   // Remember to close the NBR
   nbr_file_unload(nbr);
@@ -277,11 +275,11 @@ ResourceID resource_storage_push(ResourceStorage* storage, const FilePath& nbr_p
   return id;
 }
 
-NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, 
-                                            const ResourceID& vertex_buffer_id, 
-                                            const VertexType vertex_type, 
-                                            const ResourceID& index_buffer_id, 
-                                            const sizei indices_count) {
+NIKOLA_API ResourceID resource_storage_push_mesh(ResourceStorage* storage, 
+                                                 const ResourceID& vertex_buffer_id, 
+                                                 const VertexType vertex_type, 
+                                                 const ResourceID& index_buffer_id, 
+                                                 const sizei indices_count) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
   // Allocate the mesh
@@ -302,7 +300,7 @@ NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage,
   return id;
 }
 
-NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const MeshType type) {
+NIKOLA_API ResourceID resource_storage_push_mesh(ResourceStorage* storage, const MeshType type) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
   // Allocate the mesh
@@ -323,10 +321,10 @@ NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const Mesh
   return id;
 }
 
-NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage,
-                                            const ResourceID& diffuse_id, 
-                                            const ResourceID& specular_id, 
-                                            const ResourceID& shader_id) {
+NIKOLA_API ResourceID resource_storage_push_material(ResourceStorage* storage,
+                                                     const ResourceID& diffuse_id, 
+                                                     const ResourceID& specular_id, 
+                                                     const ResourceID& shader_id) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
   
   // Allocate the material
@@ -344,7 +342,7 @@ NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage,
   return id;
 }
 
-NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const ResourceID& cubemap_id) {
+NIKOLA_API ResourceID resource_storage_push_skybox(ResourceStorage* storage, const ResourceID& cubemap_id) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
   // Allocate the skybox

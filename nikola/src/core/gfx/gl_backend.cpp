@@ -1112,7 +1112,7 @@ void gfx_buffer_update(GfxBuffer* buff, const sizei offset, const sizei size, co
 
 GfxShader* gfx_shader_create(GfxContext* gfx, const i8* src) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
-  
+
   GfxShader* shader = (GfxShader*)memory_allocate(sizeof(GfxShader));
   memory_zero(shader, sizeof(GfxShader));
 

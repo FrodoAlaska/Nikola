@@ -38,20 +38,20 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   app->storage = nikola::resource_storage_create("app_res", std::filesystem::current_path() / "res" / "nbr");
 
   // Mesh init
-  app->mesh_id = nikola::resource_storage_push(app->storage, nikola::MESH_TYPE_CUBE);
+  app->mesh_id = nikola::resource_storage_push_mesh(app->storage, nikola::MESH_TYPE_CUBE);
 
   // Diffuse texture init
-  nikola::ResourceID diffuse_id = nikola::resource_storage_push(app->storage, nikola::FilePath("dx11.nbr")); 
+  nikola::ResourceID diffuse_id = nikola::resource_storage_push_texture(app->storage, nikola::FilePath("dx11.nbr")); 
 
   // Cubemap texture init
-  nikola::ResourceID cubemap_id = nikola::resource_storage_push(app->storage, nikola::FilePath("NightSky.nbr"), 6);
+  nikola::ResourceID cubemap_id = nikola::resource_storage_push_cubemap(app->storage, nikola::FilePath("NightSky.nbr"));
 
   // Skybox init
-  app->skybox_id = nikola::resource_storage_push(app->storage, cubemap_id);
+  app->skybox_id = nikola::resource_storage_push_skybox(app->storage, cubemap_id);
 
   // Shader init
-  nikola::ResourceID shader_id     = nikola::resource_storage_push(app->storage, nikola::String(default3d_shader()));
-  nikola::ResourceID sky_shader_id = nikola::resource_storage_push(app->storage, nikola::String(cubemap_shader_glsl()));
+  nikola::ResourceID shader_id     = nikola::resource_storage_push_shader(app->storage, nikola::FilePath("default3d.nbr"));
+  nikola::ResourceID sky_shader_id = nikola::resource_storage_push_shader(app->storage, nikola::FilePath("cubemap.nbr"));
 
   // Matrices buffer init
   nikola::GfxBufferDesc matrices_desc = {
@@ -60,16 +60,15 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
     .type  = nikola::GFX_BUFFER_UNIFORM, 
     .usage = nikola::GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
-  nikola::ResourceID matrices_id = nikola::resource_storage_push(app->storage, matrices_desc);
-
+  nikola::ResourceID matrices_id = nikola::resource_storage_push_buffer(app->storage, matrices_desc);
 
   // Material init
-  app->material_id      = nikola::resource_storage_push(app->storage, diffuse_id, nikola::INVALID_RESOURCE, shader_id);
+  app->material_id      = nikola::resource_storage_push_material(app->storage, diffuse_id, nikola::INVALID_RESOURCE, shader_id);
   nikola::Material* mat = nikola::resource_storage_get_material(app->storage, app->material_id); 
   nikola::material_attach_uniform(mat, nikola::MATERIAL_MATRICES_BUFFER_INDEX, matrices_id);
 
   // Skybox material init
-  app->skybox_material_id   = nikola::resource_storage_push(app->storage, diffuse_id, nikola::INVALID_RESOURCE, sky_shader_id);
+  app->skybox_material_id   = nikola::resource_storage_push_material(app->storage, diffuse_id, nikola::INVALID_RESOURCE, sky_shader_id);
   nikola::Material* sky_mat = nikola::resource_storage_get_material(app->storage, app->skybox_material_id); 
   nikola::material_attach_uniform(sky_mat, nikola::MATERIAL_MATRICES_BUFFER_INDEX, matrices_id);
 

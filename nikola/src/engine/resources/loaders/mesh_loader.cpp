@@ -121,7 +121,7 @@ static void create_cube_mesh(ResourceStorage* storage, Mesh* mesh) {
     .type  = GFX_BUFFER_VERTEX,
     .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
   };
-  ResourceID vert_id = resource_storage_push(storage, vert_buff);
+  ResourceID vert_id = resource_storage_push_buffer(storage, vert_buff);
   
   GfxBufferDesc index_buff = {
     .data  = (void*)indices.data(),
@@ -129,7 +129,7 @@ static void create_cube_mesh(ResourceStorage* storage, Mesh* mesh) {
     .type  = GFX_BUFFER_INDEX,
     .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
   };
-  ResourceID index_id = resource_storage_push(storage, index_buff);
+  ResourceID index_id = resource_storage_push_buffer(storage, index_buff);
 
   mesh_loader_load(storage, mesh, vert_id, VERTEX_TYPE_PNUV, index_id, indices.size());
 }
@@ -159,7 +159,7 @@ void mesh_loader_load(ResourceStorage* storage,
   mesh->pipe_desc.vertex_buffer  = mesh->vertex_buffer;
 
   // Calculate the number of vertices in the vertex buffer
-  sizei vert_buff_size             = gfx_buffer_get_desc(mesh->pipe_desc.vertex_buffer).size;
+  sizei vert_buff_size           = gfx_buffer_get_desc(mesh->pipe_desc.vertex_buffer).size;
   mesh->pipe_desc.vertices_count = (get_vertex_type_size(vertex_type) / vert_buff_size);  
   
   // Index buffer init (only if available)

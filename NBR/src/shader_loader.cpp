@@ -14,7 +14,7 @@ namespace nbr { // Start of nikola
 
 bool shader_loader_load(nikola::NBRShader* shader, const nikola::FilePath& path) {
   nikola::File file;
-  if(!nikola::file_open(&file, path, nikola::FILE_OPEN_READ)) {
+  if(!nikola::file_open(&file, path, (nikola::i32)std::ios::in)) {
     return false;
   }
 

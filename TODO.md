@@ -1,5 +1,4 @@
 # (Engine) TODO: 
-- Push a whole directory to the resource storage
 - 3D models
 - Render models 
 - Batch rendering 
