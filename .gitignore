@@ -8,6 +8,7 @@ out/
 dist/
 Debug/
 Release/
+res/
 
 # Ignore compiled object files and binaries
 *.o

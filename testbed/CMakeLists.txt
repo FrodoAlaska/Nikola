@@ -40,8 +40,6 @@ add_dependencies(${PROJECT_NAME} nikola)
 
 target_include_directories(${PROJECT_NAME} PUBLIC BEFORE ${TESTBED_INCLUDES})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${TESTBED_LIBRARIES})
-
-file(COPY res DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 ############################################################
 
 ### Compiling Options ###

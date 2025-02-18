@@ -44,7 +44,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::ResourceID diffuse_id = nikola::resource_storage_push_texture(app->storage, nikola::FilePath("dx11.nbr")); 
 
   // Cubemap texture init
-  nikola::ResourceID cubemap_id = nikola::resource_storage_push_cubemap(app->storage, nikola::FilePath("NightSky.nbr"));
+  nikola::ResourceID cubemap_id = nikola::resource_storage_push_cubemap(app->storage, nikola::FilePath("Skybox.nbr"));
 
   // Skybox init
   app->skybox_id = nikola::resource_storage_push_skybox(app->storage, cubemap_id);
