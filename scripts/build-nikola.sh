@@ -5,9 +5,9 @@ debug_path="build-debug"
 release_path="build-release"
 
 # Options
-build_threads="4"
 build_config="Debug"
 build_path="$debug_path"
+build_flags=""
 
 # Some fun colors
 red="\033[0;31m"
@@ -29,16 +29,6 @@ create_config_dir() {
     mkdir ../$build_path
   fi
 }
-
-fresh_build() {
-  # Delete the build directories if they exist
-  rm -rf ../$debug_path
-  rm -rf ../$release_path
-
-  # Create directories for both build configurations
-  echo -e "${blue}Creating a debug and release directories..."
-  mkdir ../$debug_path ../$release_path
-}
 #########################################################
 
 ### Main loop ###
@@ -56,7 +46,7 @@ while [[ $i -le $# ]]; do
 
   case "$arg" in  
     -n | --new) 
-      fresh_build 
+      build_flags+=" --target clean"
       ;; 
     -d | --debug) 
       build_config="Debug" 
@@ -69,7 +59,7 @@ while [[ $i -le $# ]]; do
       create_config_dir
       ;; 
     -j | --jobs) 
-      build_threads=$arg 
+      build_flags+="-j $arg" 
       ((i++))
       ;; 
     -h | --help) 
@@ -91,6 +81,6 @@ done
 #########################################################
 echo -e "${blue} Building the '$build_config' configuration of Nikola..."
 cd ../$build_path
-cmake .. -DCMAKE_BUILD_TYPE=$build_config && cmake --build . -j $build_threads
+cmake .. -DCMAKE_BUILD_TYPE=$build_config && cmake --build . $build_flags
 cd ..
 #########################################################

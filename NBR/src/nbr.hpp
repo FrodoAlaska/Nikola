@@ -60,13 +60,13 @@ bool parser_init(const nikola::DynamicArray<ArgToken>& tokens);
 /// *** Loaders ***
 
 /// ----------------------------------------------------------------------
-/// STB Image loader functions
+/// Image loader functions
 
-bool stb_loader_load_texture(nikola::NBRTexture* texture, const nikola::FilePath& path);
+bool image_loader_load_texture(nikola::NBRTexture* texture, const nikola::FilePath& path);
 
-bool stb_loader_load_cubemap(nikola::NBRCubemap* cube, const nikola::FilePath& dir);
+bool image_loader_load_cubemap(nikola::NBRCubemap* cube, const nikola::FilePath& dir);
 
-/// STB Image loader functions
+/// Image loader functions
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -78,11 +78,11 @@ bool shader_loader_load(nikola::NBRShader* shader, const nikola::FilePath& path)
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// ASSIMP loader functions
+/// Model loader functions
 
 nikola::Model* assimp_loader_load_model(const nikola::FilePath& path); 
 
-/// ASSIMP loader functions
+/// Model loader functions
 /// ----------------------------------------------------------------------
 
 /// *** Loaders ***

@@ -1,9 +1,10 @@
 # (Engine) TODO: 
-- Test NBR
-- Document the nbr and filesystem sections
-- Update README
-- Finish up the rest of the resources (models, fonts, etc...)
-- The renderer... at least minimally. To render stuff and things
+- Push a whole directory to the resource storage
+- 3D models
+- Render models 
+- Batch rendering 
+- Fonts 
+- Render fonts
 
 # (Core) TODO: 
 - Audio
@@ -13,7 +14,7 @@
 - Put some thought into instancing
 
 # (Engine) FIXES:
-- EMPTY FOR NOW...
+- Make the resource loaders faster and less memory intensive
 
 # (Core) FIXES:
 - EMPTY FOR NOW...
@@ -34,3 +35,4 @@
 - (GFX) Context and window dissociation
 - (GFX) Add support for geometry shaders
 - (UI) Start working on the editor (basically a wrapper around ImGui)
+- Phyiscs. Yes. Just physics.

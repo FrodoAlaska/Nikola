@@ -32,7 +32,7 @@ set(NBR_SOURCES
   ${NBR_SRC_DIR}/nbr_args_lexer.cpp
   ${NBR_SRC_DIR}/nbr_args_parser.cpp
   
-  ${NBR_SRC_DIR}/stb_image_loader.cpp
+  ${NBR_SRC_DIR}/image_loader.cpp
   ${NBR_SRC_DIR}/shader_loader.cpp
 )
 ############################################################

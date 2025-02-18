@@ -1,38 +1,48 @@
-# Prerequisites
-*.d
+# Ignore build directories
+build/
+build-debug/
+build-release/
+bin/
+obj/
+out/
+dist/
+Debug/
+Release/
 
-# Compiled Object files
-*.slo
-*.lo
+# Ignore compiled object files and binaries
 *.o
 *.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
+*.exe
+*.dll
 *.so
 *.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
 *.a
 *.lib
 
-# Executables
-*.exe
-*.out
-*.app
+# Ignore temporary files
+*.log
+*.tmp
+*.cache
+*.bak
 
-# Nikola ignores
-/build-debug/
-/build-release/
-/.cache/
-TODO.md
+# Ignore CMake and Makefile artifacts
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+
+# Ignore Visual Studio-specific files
+*.vcxproj*
+*.sln
+*.ncb
+*.suo
+*.user
+*.pdb
+*.ipch
+*.tlog
+*.lastbuildstate
+
+# Ignore package manager files (optional)
+node_modules/
+.vscode/
+.idea/

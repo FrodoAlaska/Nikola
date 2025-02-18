@@ -5,5 +5,5 @@ A tool to convert any intermediary format to the *Nikola Binary Resource* foramt
 ## Usage 
 
 ```bash
-nbr export [--resoruce-type -rt] [--dir -d] [--recursive -r] <path> <output>
+nbr [--resoruce-type -rt] [--dir -d] [--recursive -r] <path> <output>
 ```

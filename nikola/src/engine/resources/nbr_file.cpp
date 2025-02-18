@@ -26,46 +26,53 @@ static bool check_nbr_validity(NBRFile& file, const FilePath& path) {
 }
 
 static void load_texture(NBRFile& nbr) {
-  // Allocate some space for the resource and assign it
-  nbr.body_data       = memory_allocate(sizeof(NBRTexture));
-  NBRTexture* texture = (NBRTexture*)nbr.body_data; 
+  NBRTexture texture; 
 
   // Load the width and height 
-  file_read_bytes(nbr.file_handle, &texture->width, sizeof(texture->width));  
-  file_read_bytes(nbr.file_handle, &texture->height, sizeof(texture->height));  
+  file_read_bytes(nbr.file_handle, &texture.width, sizeof(texture.width));  
+  file_read_bytes(nbr.file_handle, &texture.height, sizeof(texture.height));  
   
   // Load the channels
-  file_read_bytes(nbr.file_handle, &texture->channels, sizeof(texture->channels));  
+  file_read_bytes(nbr.file_handle, &texture.channels, sizeof(texture.channels));  
 
   // Load the pixels
-  sizei data_size = (texture->width * texture->height);
-  texture->pixels = (u8*)memory_allocate(data_size);
-  file_read_bytes(nbr.file_handle, texture->pixels, data_size);
-} 
+  sizei data_size = (texture.width * texture.height) * texture.channels;
+  texture.pixels  = memory_allocate(data_size);
+  file_read_bytes(nbr.file_handle, texture.pixels, data_size);
+  
+  // Allocate some space for the resource and assign it
+  nbr.body_data = memory_allocate(sizeof(texture));
+  memory_copy(nbr.body_data, &texture, sizeof(texture)); 
+}
 
 static void load_cubemap(NBRFile& nbr) {
-  // Allocate some space for the resource and assign it
-  nbr.body_data       = memory_allocate(sizeof(NBRCubemap));
-  NBRCubemap* cubemap = (NBRCubemap*)nbr.body_data; 
+  NBRCubemap cubemap; 
 
   // Load the width and height 
-  file_read_bytes(nbr.file_handle, &cubemap->width, sizeof(cubemap->width));  
-  file_read_bytes(nbr.file_handle, &cubemap->height, sizeof(cubemap->height));  
+  file_read_bytes(nbr.file_handle, &cubemap.width, sizeof(cubemap.width));  
+  file_read_bytes(nbr.file_handle, &cubemap.height, sizeof(cubemap.height));  
 
   // Load the channels
-  file_read_bytes(nbr.file_handle, &cubemap->channels, sizeof(cubemap->channels));  
+  file_read_bytes(nbr.file_handle, &cubemap.channels, sizeof(cubemap.channels));  
 
   // Load the faces count
-  file_read_bytes(nbr.file_handle, &cubemap->faces_count, sizeof(cubemap->faces_count));  
+  file_read_bytes(nbr.file_handle, &cubemap.faces_count, sizeof(cubemap.faces_count));  
 
   // Load the pixels
-  sizei data_size = (cubemap->width * cubemap->height) * sizeof(u8);
-  for(sizei i = 0; i < cubemap->faces_count; i++) {
-    file_read_bytes(nbr.file_handle, &cubemap->pixels[i], data_size);
+  sizei data_size = (cubemap.width * cubemap.height) * cubemap.channels;
+  for(sizei i = 0; i < cubemap.faces_count; i++) {
+    cubemap.pixels[i] = (u8*)memory_allocate(data_size);
+    file_read_bytes(nbr.file_handle, cubemap.pixels[i], data_size);
   }
+  
+  // Allocate some space for the resource and assign it
+  nbr.body_data = memory_allocate(sizeof(cubemap));
+  memory_copy(nbr.body_data, &cubemap, sizeof(cubemap)); 
 }
 
 static void load_shader(NBRFile& nbr) {
+  NBRShader shader; 
+  
   // Load the length
   u32 src_length = 0;
   file_read_bytes(nbr.file_handle, &src_length, sizeof(src_length));
@@ -73,13 +80,13 @@ static void load_shader(NBRFile& nbr) {
   // Load the src string
   i8* src_str = (i8*)memory_allocate(src_length); 
   file_read_bytes(nbr.file_handle, &src_str, src_length);
-
+  shader = String(src_str, src_length);
+  
   // Allocate some space for the resource and assign it
-  String str        = String(src_str, src_length);
-  nbr.body_data     = memory_allocate(sizeof(str));
-  NBRShader* shader = (NBRShader*)nbr.body_data; 
+  nbr.body_data = memory_allocate(sizeof(shader));
+  memory_copy(nbr.body_data, &shader, sizeof(shader));
 
-  *shader = str;
+  // Goodbye, extra string
   memory_free(src_str);
 }
 
@@ -171,7 +178,7 @@ void nbr_file_load(NBRFile* nbr, const FilePath& path) {
   NIKOLA_ASSERT((path.extension().string() == ".nbr"), "An NBR file with an invalid extension");
 
   // Open the NBR file
-  if(!file_open(&nbr->file_handle, path, FILE_OPEN_READ | FILE_OPEN_BINARY)) {
+  if(!file_open(&nbr->file_handle, path, (i32)(std::ios::in | std::ios::binary))) {
     NIKOLA_LOG_ERROR("Cannot load NBR file at \'%s\'", path.string().c_str());
     return;
   }
@@ -210,7 +217,7 @@ void nbr_file_unload(NBRFile& nbr) {
 
 void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const FilePath& path) {
   // Must open the file
-  if(!file_open(&nbr.file_handle, path, FILE_OPEN_WRITE | FILE_OPEN_BINARY)) {
+  if(!file_open(&nbr.file_handle, path, (i32)(std::ios::out | std::ios::binary))) {
     NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.string().c_str());
     return;
   }
@@ -222,21 +229,21 @@ void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const FilePath& path
   // Save width and height
   file_write_bytes(nbr.file_handle, &texture.width, sizeof(texture.width));
   file_write_bytes(nbr.file_handle, &texture.height, sizeof(texture.height));
-
+  
   // Save the channels
   file_write_bytes(nbr.file_handle, &texture.channels, sizeof(texture.channels));
  
   // Save the pixels
-  sizei data_size = (texture.width * texture.height) * sizeof(u8);
-  file_write_bytes(nbr.file_handle, &texture.pixels, data_size);
-
+  sizei data_size = (texture.width * texture.height) * texture.channels;
+  file_write_bytes(nbr.file_handle, texture.pixels, data_size);
+  
   // Always remember to close the file
   file_close(nbr.file_handle);
 }
 
 void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path) {
   // Must open the file
-  if(!file_open(&nbr.file_handle, path, FILE_OPEN_WRITE | FILE_OPEN_BINARY)) {
+  if(!file_open(&nbr.file_handle, path, (i32)(std::ios::out | std::ios::binary))) {
     NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.string().c_str());
     return;
   }
@@ -256,9 +263,9 @@ void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path
   file_write_bytes(nbr.file_handle, &cubemap.faces_count, sizeof(cubemap.faces_count));
 
   // Save the pixels for each face
-  sizei data_size = (cubemap.width * cubemap.height) * sizeof(u8);
+  sizei data_size = (cubemap.width * cubemap.height) * cubemap.channels;
   for(sizei i = 0; i < cubemap.faces_count; i++) {
-    file_write_bytes(nbr.file_handle, &cubemap.pixels[i], data_size);
+    file_write_bytes(nbr.file_handle, cubemap.pixels[i], data_size);
   }
 
   // Always remember to close the file
@@ -267,7 +274,7 @@ void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path
 
 void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FilePath& path) {
   // Must open the file
-  if(!file_open(&nbr.file_handle, path, FILE_OPEN_WRITE | FILE_OPEN_BINARY)) {
+  if(!file_open(&nbr.file_handle, path, (i32)(std::ios::out | std::ios::binary))) {
     NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.string().c_str());
     return;
   }
@@ -284,7 +291,7 @@ void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FilePath& path) 
   file_write_bytes(nbr.file_handle, &src_length, sizeof(src_length));
 
   // Save the shader's code string
-  file_write_bytes(nbr.file_handle, &src_str, src_length * sizeof(i8));
+  file_write_bytes(nbr.file_handle, src_str, src_length);
 
   // Always remember to close the file
   file_close(nbr.file_handle);

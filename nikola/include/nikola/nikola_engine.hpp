@@ -521,18 +521,25 @@ using File = std::fstream;
 ///---------------------------------------------------------------------------------------------------------------------
 /// FileOpenMode
 enum FileOpenMode {
+  /// Open a file in read-only mode.
   FILE_OPEN_READ       = 14 << 0,
-  
+ 
+  /// Open a file in write-only mode.
   FILE_OPEN_WRITE      = 14 << 1,
-  
+ 
+  /// Open a binary file.
   FILE_OPEN_BINARY     = 14 << 2,
-  
+ 
+  /// Open a file and append any extra data at the end of the file.
   FILE_OPEN_APPEND     = 14 << 3,
-  
+ 
+  /// Open a file and remove any existing data within.
   FILE_OPEN_TRUNCATE   = 14 << 4,
-  
+ 
+  /// Open a file and start at the end.
   FILE_OPEN_AT_END     = 14 << 5,
 
+  /// Open a file in read and write mode.
   FILE_OPEN_READ_WRITE = 14 << 6
 };
 /// FileOpenMode
@@ -541,32 +548,76 @@ enum FileOpenMode {
 ///---------------------------------------------------------------------------------------------------------------------
 /// File functions
 
+/// Open `file` with OR'd flags `mode` at C-string `path`, and return `true` if 
+/// the operation was successfull and `false` otherwise.
+///
+/// `mode`:
+///   - `FILE_OPEN_READ`       = Open `file` in read-only mode.
+///   - `FILE_OPEN_WRITE`      = Open `file` in write-only mode.
+///   - `FILE_OPEN_BINARY`     = Open `file` in binary mode.
+///   - `FILE_OPEN_APPEND`     = Open `file` and append any new data at the end.
+///   - `FILE_OPEN_TRUNCATE`   = Open `file` and delete any existing data.
+///   - `FILE_OPEN_AT_END`     = Open `file` and start at the very end.
+///   - `FILE_OPEN_READ_WRITE` = Open `file` in read and write mode.
 NIKOLA_API bool file_open(File* file, const char* path, const u32 mode);
 
+/// Open `file` with OR'd flags `mode` at `FilePath` `path`, and return `true` if 
+/// the operation was successfull and `false` otherwise.
+///
+/// `mode`:
+///   - `FILE_OPEN_READ`       = Open `file` in read-only mode.
+///   - `FILE_OPEN_WRITE`      = Open `file` in write-only mode.
+///   - `FILE_OPEN_BINARY`     = Open `file` in binary mode.
+///   - `FILE_OPEN_APPEND`     = Open `file` and append any new data at the end.
+///   - `FILE_OPEN_TRUNCATE`   = Open `file` and delete any existing data.
+///   - `FILE_OPEN_AT_END`     = Open `file` and start at the very end.
+///   - `FILE_OPEN_READ_WRITE` = Open `file` in read and write mode.
 NIKOLA_API bool file_open(File* file, const FilePath& path, const u32 mode);
 
+/// Close `file` if it is open.
 NIKOLA_API void file_close(File& file);
 
+/// Return `ture` if `file` is currently open and `false` otherwise.
 NIKOLA_API bool file_is_open(File& file);
 
+/// Seek the write pointer in `file` to `pos`.
 NIKOLA_API void file_seek_write(File& file, const sizei pos);
 
+/// Seek the read pointer in `file` to `pos`.
 NIKOLA_API void file_seek_read(File& file, const sizei pos);
 
+/// Return the current position of the write pointer in `file`.
 NIKOLA_API const sizei file_tell_write(File& file);
 
+/// Return the current position of the read pointer in `file`.
 NIKOLA_API const sizei file_tell_read(File& file);
 
+/// Return the current size in bytes of `file`.
 NIKOLA_API const sizei file_get_size(File& file);
 
+/// Return `true` if `file` is currently empty and `false` otherwise.
 NIKOLA_API bool file_is_empty(File& file);
 
+/// Write the `buff` of `buff_size` size in bytes with an `offset` in `file` and return 
+/// the amount of bytes written (i.e `buff_size` + `offset`).
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
 NIKOLA_API const sizei file_write_bytes(File& file, const void* buff, const sizei buff_size, const sizei offset = 0);
 
+/// Read data into `out_buff` with `size` size in bytes with an `offset` in `file` 
+/// and return the amount of bytes read (i.e `size` + `offset`).
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
 NIKOLA_API const sizei file_read_bytes(File& file, void* out_buff, const sizei size, const sizei offset = 0);
 
+/// Write the given `string` with `offset` into `file`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
 NIKOLA_API void file_write_string(File& file, const String& string, const sizei offset = 0);
 
+/// Return the read string in `file` with `offset`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
 NIKOLA_API String file_read_string(File& file, const sizei offset = 0);
 
 /// File functions
@@ -934,6 +985,10 @@ NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage,
 /// Allocate a new `GfxShader` using `shader_src`, store it in `storage`, and return a `ResourceID` 
 /// to identify it.
 NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const String& shader_src);
+
+/// Allocate a new `GfxShader` using `shader_src` using the shader retrieved from the `nbr_path`, 
+/// store it in `storage`, and return a `ResourceID` to identify it.
+NIKOLA_API ResourceID resource_storage_push(ResourceStorage* storage, const FilePath& nbr_path);
 
 /// Allocate a new `Mesh` using `vertex_buffer_id` and `index_buffer_id`, 
 /// store it in `storage`, return a `ResourceID` to identified it. 

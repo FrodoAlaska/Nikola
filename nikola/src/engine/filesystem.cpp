@@ -47,19 +47,19 @@ static std::ios::openmode get_mode(const u32 mode) {
 bool file_open(File* file, const char* path, const u32 mode) {
   NIKOLA_ASSERT(file, "Cannot open an invalid File handle");
 
-  file->open(path, get_mode(mode));
+  file->open(path, (std::ios::openmode)(mode));
   return file->is_open();
 }
 
 bool file_open(File* file, const FilePath& path, const u32 mode) {
   NIKOLA_ASSERT(file, "Cannot open an invalid File handle");
 
-  file->open(path, get_mode(mode));
+  file->open(path, (std::ios::openmode)(mode));
   return file->is_open();
 }
 
 void file_close(File& file) {
-  // file.close();
+  file.close();
 }
 
 bool file_is_open(File& file) {

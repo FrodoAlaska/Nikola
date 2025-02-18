@@ -157,7 +157,7 @@ static void create_nbr_texture() {
   for(auto& path : s_parser.src_paths) {
     nikola::FilePath final_path = s_parser.nbr_output_dir / path.filename().replace_extension("nbr");
 
-    stb_loader_load_texture(&texture, path);
+    image_loader_load_texture(&texture, path);
     nikola::nbr_file_save(nbr, texture, final_path);
 
     printf("Converting \'%s\' to \'%s\'...\n", path.string().c_str(), final_path.string().c_str());
@@ -171,10 +171,10 @@ static void create_nbr_cubemap() {
   for(auto& path : s_parser.src_paths) {
     nikola::FilePath final_path = s_parser.nbr_output_dir / path.filename().replace_extension("nbr");
 
-    stb_loader_load_cubemap(&cubemap, path);
+    image_loader_load_cubemap(&cubemap, path);
     nikola::nbr_file_save(nbr, cubemap, final_path);
 
-    printf("Converting \'%s\' to \'%s\'.nbr\n", path.string().c_str(), final_path.string().c_str());
+    printf("Converting cubemap faces at \'%s\' to \'%s\'\n", path.string().c_str(), final_path.string().c_str());
   }
 }
 
@@ -188,7 +188,7 @@ static void create_nbr_shader() {
     shader_loader_load(&shader, path);
     nikola::nbr_file_save(nbr, shader, final_path);
 
-    printf("Converting \'%s\' to \'%s\'.nbr\n", path.string().c_str(), final_path.string().c_str());
+    printf("Converting shader \'%s\' to \'%s\'\n", path.string().c_str(), final_path.string().c_str());
   }
 }
 

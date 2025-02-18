@@ -41,6 +41,7 @@ void material_attach_uniform(Material* mat, const sizei index, const ResourceID&
   NIKOLA_ASSERT(((index >= MATERIAL_MATRICES_BUFFER_INDEX) && (index <= MATERIAL_LIGHTING_BUFFER_INDEX)), "Invalid index passed as uniform buffer index of a material");
 
   mat->uniform_buffers[index] = resource_storage_get_buffer(mat->storage_ref, buffer_id);
+  gfx_shader_attach_uniform(mat->shader, GFX_SHADER_VERTEX, mat->uniform_buffers[index], index);
 }
 
 /// Material functions

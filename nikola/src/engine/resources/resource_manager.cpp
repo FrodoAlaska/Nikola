@@ -146,10 +146,10 @@ void resource_storage_destroy(ResourceStorage* storage) {
   }
 
   // Get rid of every resource in the storage
-  DESTROY_RESOURCE_MAP(storage, buffers, gfx_buffer_destroy);
-  DESTROY_RESOURCE_MAP(storage, textures, gfx_texture_destroy);
-  DESTROY_RESOURCE_MAP(storage, cubemaps, gfx_cubemap_destroy);
-  DESTROY_RESOURCE_MAP(storage, shaders, gfx_shader_destroy);
+  // DESTROY_RESOURCE_MAP(storage, buffers, gfx_buffer_destroy);
+  // DESTROY_RESOURCE_MAP(storage, textures, gfx_texture_destroy);
+  // DESTROY_RESOURCE_MAP(storage, cubemaps, gfx_cubemap_destroy);
+  // DESTROY_RESOURCE_MAP(storage, shaders, gfx_shader_destroy);
 
   s_manager.storages.erase(storage->name);
   delete storage; //memory_free(storage);
@@ -188,10 +188,10 @@ ResourceID resource_storage_push(ResourceStorage* storage,
   NIKOLA_ASSERT((nbr.resource_type == RESOURCE_TYPE_TEXTURE), "Expected RESOURCE_TYPE_TEXTURE");
 
   // Convert the NBR format to a valid texture
-  GfxTextureDesc tex_desc = {};
   NBRTexture* nbr_texture = (NBRTexture*)nbr.body_data;
+  GfxTextureDesc tex_desc;
   texture_loader_load(&tex_desc, nbr_texture, format, filter, wrap);
- 
+
   // Create the texture 
   ResourceID id         = generate_id();
   storage->textures[id] = gfx_texture_create(s_manager.gfx_context, tex_desc);
@@ -228,15 +228,19 @@ ResourceID resource_storage_push(ResourceStorage* storage,
   NIKOLA_ASSERT((nbr.resource_type == RESOURCE_TYPE_CUBEMAP), "Expected RESOURCE_TYPE_CUBEMAP");
 
   // Convert the NBR format to a valid cubemap
-  GfxCubemapDesc cube_desc = {};
   NBRCubemap* nbr_cubemap = (NBRCubemap*)nbr.body_data;
+  GfxCubemapDesc cube_desc;
   cubemap_loader_load(&cube_desc, nbr_cubemap);
+
+  // Create the cubemap
+  ResourceID id         = generate_id();
+  storage->cubemaps[id] = gfx_cubemap_create(s_manager.gfx_context, cube_desc);
 
   // Remember to close the NBR
   nbr_file_unload(nbr);
 
   // New cubemap added!
-  return resource_storage_push(storage, cube_desc);
+  return id;
 }
 
 ResourceID resource_storage_push(ResourceStorage* storage, const String& shader_src) {
@@ -245,6 +249,31 @@ ResourceID resource_storage_push(ResourceStorage* storage, const String& shader_
   ResourceID id        = generate_id();
   storage->shaders[id] = gfx_shader_create(s_manager.gfx_context, shader_src.c_str());
 
+  return id;
+}
+
+ResourceID resource_storage_push(ResourceStorage* storage, const FilePath& nbr_path) {
+  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+  
+  // Load the NBR file
+  NBRFile nbr;
+  nbr_file_load(&nbr, storage->parent_dir / nbr_path);
+  
+  // Make sure it is the correct resource type
+  NIKOLA_ASSERT((nbr.resource_type == RESOURCE_TYPE_SHADER), "Expected RESOURCE_TYPE_SHADER");
+
+  // Convert the NBR format to a valid shader
+  NBRShader* nbr_shader  = (NBRShader*)nbr.body_data;
+  const char* shader_src = nbr_shader->c_str();
+  
+  // Create the shader
+  ResourceID id         = generate_id();
+  storage->shaders[id] = gfx_shader_create(s_manager.gfx_context, shader_src);
+
+  // Remember to close the NBR
+  nbr_file_unload(nbr);
+
+  // New shader added!
   return id;
 }
 

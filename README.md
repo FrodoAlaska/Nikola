@@ -1,19 +1,19 @@
 # *Nikola*
-A cross-platform framework for window creation, input handling, audio playback, and rendering using OpenGL 4.5+ or Direct3D11.
+A cross-platform framework for window creation, input handling, audio playback, and rendering using OpenGL 4.5+.
  
 # Features 
 - A fully documented single header file for every functionality in the library.
 - Cross-platform window creation. 
 - Gamepad, keyboard, and mouse input support.
-- Fully-configurable cross-platform rendering API using OpenGL (Linux) and DirectX11 (Windows).
-- Robust resource manager 
+- Fully-configurable cross-platform rendering API using OpenGL 4.5+.
+- Robust resource manager with a custom resource format (NBR).
 - Support for loading multiple image formats such as jpeg, png, bmp, tga, and way more. 
 
 # Dependencies
 - GLFW3 
 - GLAD
-- D3D11
 - GLM
+- STB
 
 # Build Instructions
 Run the following commands to build *Nikola* using _CMake_

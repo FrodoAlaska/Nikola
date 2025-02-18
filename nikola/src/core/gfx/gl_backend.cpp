@@ -1256,7 +1256,7 @@ void gfx_glsl_upload_uniform(GfxShader* shader, const i32 location, const GfxLay
 
 GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
-  
+
   GfxTexture* texture = (GfxTexture*)memory_allocate(sizeof(GfxTexture));
   memory_zero(texture, sizeof(GfxTexture));
  
@@ -1282,7 +1282,7 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
   glTextureParameteri(texture->id, GL_TEXTURE_MIN_FILTER, min_filter);
   glTextureParameteri(texture->id, GL_TEXTURE_MAG_FILTER, mag_filter);
-  
+
   // Filling the texture with the data based on its type
   update_gl_texture_storage(texture, in_format, gl_format, gl_pixel_type);
 
