@@ -41,6 +41,7 @@ set(NBR_SOURCES
 ############################################################
 set(LIBS_SOURCES 
   ${NBR_LIBS_DIR}/stb/stb_image.cpp
+  ${NBR_LIBS_DIR}/cgltf/cgltf.cpp
 )
 ############################################################
 

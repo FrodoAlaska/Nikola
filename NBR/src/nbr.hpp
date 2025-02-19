@@ -80,7 +80,7 @@ bool shader_loader_load(nikola::NBRShader* shader, const nikola::FilePath& path)
 /// ----------------------------------------------------------------------
 /// Model loader functions
 
-nikola::Model* assimp_loader_load_model(const nikola::FilePath& path); 
+bool model_loader_load(nikola::NBRModel* model, const nikola::FilePath& path); 
 
 /// Model loader functions
 /// ----------------------------------------------------------------------
