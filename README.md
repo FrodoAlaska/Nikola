@@ -60,7 +60,7 @@ cmake --build .
 
 Now the second way to build *Nikola* is to use the build scripts found in the `scripts` directory. There are a few build scripts but there are only two important ones: `build-nikola.sh` for Linux and `build-nikola.ps1` for Windows. Each script takes in a few flags to make both the development and build process easier. 
 
-```bash
+```
    --clean          = Have a new fresh build"              
    --debug          = Build for the debug configuration"   
    --rel            = Build for the release configuration" 
