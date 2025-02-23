@@ -3,8 +3,6 @@
 #include <nikola/nikola_core.hpp>
 #include <nikola/nikola_engine.hpp>
 
-#include <stb/stb_image.h>
-
 //////////////////////////////////////////////////////////////////////////
 
 namespace nbr { // Start of nikola

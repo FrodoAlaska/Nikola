@@ -7,10 +7,11 @@ set(NBR_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(NBR_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(NBR_LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 
-set(NBR_LIBRARIES ${NIKOLA_LIBRARY_DIR} glfw)
+set(NBR_LIBRARIES ${NIKOLA_LIBRARY_DIR} glfw assimp)
 set(NBR_INCLUDES 
   ${NBR_INCLUDE_DIR} 
   ${NBR_LIBS_DIR} 
+  ${NBR_LIBS_DIR}/assimp/include
   ${NIKOLA_INCLUDES}
 )
 
@@ -34,6 +35,7 @@ set(NBR_SOURCES
   
   ${NBR_SRC_DIR}/image_loader.cpp
   ${NBR_SRC_DIR}/shader_loader.cpp
+  ${NBR_SRC_DIR}/model_loader.cpp
 )
 ############################################################
 
@@ -42,7 +44,26 @@ set(NBR_SOURCES
 set(LIBS_SOURCES 
   ${NBR_LIBS_DIR}/stb/stb_image.cpp
   ${NBR_LIBS_DIR}/cgltf/cgltf.cpp
+  ${NBR_LIBS_DIR}/fast_obj/fast_obj.cpp
 )
+############################################################
+
+### Dependencies ###
+############################################################
+# Setting some options for ASSIMP
+set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF)
+set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF)
+set(ASSIMP_BUILD_SAMPLES                  OFF)
+set(ASSIMP_BUILD_TESTS                    OFF)
+set(ASSIMP_BUILD_ASSIMP_VIEW              OFF)
+set(ASSIMP_BUILD_ASSIMP_TOOLS             OFF)
+set(ASSIMP_NO_EXPORT                      OFF)
+
+set(ASSIMP_BUILD_OBJ_IMPORTER             ON)
+set(ASSIMP_BUILD_FBX_IMPORTER             ON)
+set(ASSIMP_BUILD_GLTF_IMPORTER            ON)
+
+add_subdirectory(libs/assimp)
 ############################################################
 
 ### Final Build ###

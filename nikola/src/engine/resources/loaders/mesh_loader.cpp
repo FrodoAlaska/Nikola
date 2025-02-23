@@ -160,7 +160,7 @@ void mesh_loader_load(ResourceStorage* storage,
 
   // Calculate the number of vertices in the vertex buffer
   sizei vert_buff_size           = gfx_buffer_get_desc(mesh->pipe_desc.vertex_buffer).size;
-  mesh->pipe_desc.vertices_count = (get_vertex_type_size(vertex_type) / vert_buff_size);  
+  mesh->pipe_desc.vertices_count = (vert_buff_size / get_vertex_type_size(vertex_type));  
   
   // Index buffer init (only if available)
   if(index_buffer_id != INVALID_RESOURCE) {

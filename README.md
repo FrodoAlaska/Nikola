@@ -1,5 +1,12 @@
 # *Nikola*
+
 A cross-platform framework for window creation, input handling, audio playback, and rendering using OpenGL 4.5+.
+
+# Dependencies
+- GLFW3 
+- GLAD
+- GLM
+- STB
  
 # Features 
 - A fully documented single header file for every functionality in the library.
@@ -8,12 +15,17 @@ A cross-platform framework for window creation, input handling, audio playback, 
 - Fully-configurable cross-platform rendering API using OpenGL 4.5+.
 - Robust resource manager with a custom resource format (NBR).
 - Support for loading multiple image formats such as jpeg, png, bmp, tga, and way more. 
+- Full support for loading 3D models using the following formats: OBJ, FBX, and GLTF.
 
-# Dependencies
-- GLFW3 
-- GLAD
-- GLM
-- STB
+# Missing Features
+
+Some missing features are not currently in the works (Long-term) while others are planned for the future (Short-term). Some other features may _never_ be implemented since it does not fit the current philosophy of the engine (Never).
+
+- 3D animations (Long-term)
+- Audio (Short-term)
+- Physcis (Short-term)
+- Lightweight Editor (Short-term)
+- Scripting (Never)
 
 # Build Instructions
 Run the following commands to build *Nikola* using _CMake_

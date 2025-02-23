@@ -25,54 +25,134 @@ static bool check_nbr_validity(NBRFile& file, const FilePath& path) {
   return true;
 }
 
-static void load_texture(NBRFile& nbr) {
-  NBRTexture texture; 
-
-  // Load the width and height 
-  file_read_bytes(nbr.file_handle, &texture.width, sizeof(texture.width));  
-  file_read_bytes(nbr.file_handle, &texture.height, sizeof(texture.height));  
+static void write_texture(NBRFile& nbr, const NBRTexture& texture) {
+  // Save width and height
+  file_write_bytes(nbr.file_handle, &texture.width, sizeof(texture.width));
+  file_write_bytes(nbr.file_handle, &texture.height, sizeof(texture.height));
   
-  // Load the channels
-  file_read_bytes(nbr.file_handle, &texture.channels, sizeof(texture.channels));  
-
-  // Load the pixels
+  // Save the channels
+  file_write_bytes(nbr.file_handle, &texture.channels, sizeof(texture.channels));
+ 
+  // Save the pixels
   sizei data_size = (texture.width * texture.height) * texture.channels;
-  texture.pixels  = memory_allocate(data_size);
-  file_read_bytes(nbr.file_handle, texture.pixels, data_size);
-  
-  // Allocate some space for the resource and assign it
-  nbr.body_data = memory_allocate(sizeof(texture));
-  memory_copy(nbr.body_data, &texture, sizeof(texture)); 
+  file_write_bytes(nbr.file_handle, texture.pixels, data_size);
 }
 
-static void load_cubemap(NBRFile& nbr) {
-  NBRCubemap cubemap; 
+static void write_cubemap(NBRFile& nbr, const NBRCubemap& cubemap) {
+  // Save width and height
+  file_write_bytes(nbr.file_handle, &cubemap.width, sizeof(cubemap.width));
+  file_write_bytes(nbr.file_handle, &cubemap.height, sizeof(cubemap.height));
 
-  // Load the width and height 
-  file_read_bytes(nbr.file_handle, &cubemap.width, sizeof(cubemap.width));  
-  file_read_bytes(nbr.file_handle, &cubemap.height, sizeof(cubemap.height));  
+  // Save the channels
+  file_write_bytes(nbr.file_handle, &cubemap.channels, sizeof(cubemap.channels));
 
-  // Load the channels
-  file_read_bytes(nbr.file_handle, &cubemap.channels, sizeof(cubemap.channels));  
+  // Save the faces count
+  file_write_bytes(nbr.file_handle, &cubemap.faces_count, sizeof(cubemap.faces_count));
 
-  // Load the faces count
-  file_read_bytes(nbr.file_handle, &cubemap.faces_count, sizeof(cubemap.faces_count));  
-
-  // Load the pixels
+  // Save the pixels for each face
   sizei data_size = (cubemap.width * cubemap.height) * cubemap.channels;
   for(sizei i = 0; i < cubemap.faces_count; i++) {
-    cubemap.pixels[i] = (u8*)memory_allocate(data_size);
-    file_read_bytes(nbr.file_handle, cubemap.pixels[i], data_size);
+    file_write_bytes(nbr.file_handle, cubemap.pixels[i], data_size);
   }
-  
-  // Allocate some space for the resource and assign it
-  nbr.body_data = memory_allocate(sizeof(cubemap));
-  memory_copy(nbr.body_data, &cubemap, sizeof(cubemap)); 
 }
 
-static void load_shader(NBRFile& nbr) {
-  NBRShader shader; 
+static void write_shader(NBRFile& nbr, const NBRShader& shader) {
+  // Convert the given shader to an NBR format
+  u32 src_length = (u32)shader.length();
+  i8* src_str    = (i8*)shader.c_str();
+
+  // Save the length of the shader's code string 
+  file_write_bytes(nbr.file_handle, &src_length, sizeof(src_length));
+
+  // Save the shader's code string
+  file_write_bytes(nbr.file_handle, src_str, src_length);
+}
+
+static void write_material(NBRFile& nbr, const NBRMaterial& material) {
+  // Save the ambient color 
+  file_write_bytes(nbr.file_handle, material.ambient, sizeof(f32) * 3); 
+
+  // Save the diffuse color 
+  file_write_bytes(nbr.file_handle, material.diffuse, sizeof(f32) * 3); 
   
+  // Save the specular color 
+  file_write_bytes(nbr.file_handle, material.specular, sizeof(f32) * 3); 
+ 
+  // Save the texture indices
+  file_write_bytes(nbr.file_handle, &material.diffuse_index, sizeof(i8)); 
+  file_write_bytes(nbr.file_handle, &material.specular_index, sizeof(i8)); 
+}
+
+static void write_mesh(NBRFile& nbr, const NBRMesh& mesh) {
+  // Save the vertex type
+  file_write_bytes(nbr.file_handle, &mesh.vertex_type, sizeof(u8));
+
+  // Save the vertices
+  file_write_bytes(nbr.file_handle, &mesh.vertices_count, sizeof(u32));
+  file_write_bytes(nbr.file_handle, mesh.vertices, sizeof(f32) * mesh.vertices_count);
+
+  // Save the indices
+  file_write_bytes(nbr.file_handle, &mesh.indices_count, sizeof(u32));
+  file_write_bytes(nbr.file_handle, mesh.indices, sizeof(u32) * mesh.indices_count);
+
+  // Save the material index
+  file_write_bytes(nbr.file_handle, &mesh.material_index, sizeof(u8));
+}
+
+static void write_model(NBRFile& nbr, const NBRModel& model) {
+  // Save the meshes
+  file_write_bytes(nbr.file_handle, &model.meshes_count, sizeof(u16));
+  for(sizei i = 0; i < model.meshes_count; i++) {
+    write_mesh(nbr, model.meshes[i]);
+  }
+
+  // Save the materials
+  file_write_bytes(nbr.file_handle, &model.materials_count, sizeof(u8));
+  for(sizei i = 0; i < model.materials_count; i++) {
+    write_material(nbr, model.materials[i]);
+  }
+
+  // Save the textures
+  file_write_bytes(nbr.file_handle, &model.textures_count, sizeof(u8));
+  for(sizei i = 0; i < model.textures_count; i++) {
+    write_texture(nbr, model.textures[i]);
+  }
+}
+
+static void read_texture(NBRFile& nbr, NBRTexture* texture) {
+  // Load the width and height 
+  file_read_bytes(nbr.file_handle, &texture->width, sizeof(texture->width));  
+  file_read_bytes(nbr.file_handle, &texture->height, sizeof(texture->height));  
+  
+  // Load the channels
+  file_read_bytes(nbr.file_handle, &texture->channels, sizeof(texture->channels));  
+
+  // Load the pixels
+  sizei data_size = (texture->width * texture->height) * texture->channels;
+  texture->pixels  = memory_allocate(data_size);
+  file_read_bytes(nbr.file_handle, texture->pixels, data_size);
+}
+
+static void read_cubemap(NBRFile& nbr, NBRCubemap* cubemap) {
+  // Load the width and height 
+  file_read_bytes(nbr.file_handle, &cubemap->width, sizeof(cubemap->width));  
+  file_read_bytes(nbr.file_handle, &cubemap->height, sizeof(cubemap->height));  
+
+  // Load the channels
+  file_read_bytes(nbr.file_handle, &cubemap->channels, sizeof(cubemap->channels));  
+
+  // Load the faces count
+  file_read_bytes(nbr.file_handle, &cubemap->faces_count, sizeof(cubemap->faces_count));  
+
+  // Load the pixels
+  sizei data_size = (cubemap->width * cubemap->height) * cubemap->channels;
+  for(sizei i = 0; i < cubemap->faces_count; i++) {
+    cubemap->pixels[i] = (u8*)memory_allocate(data_size);
+    file_read_bytes(nbr.file_handle, cubemap->pixels[i], data_size);
+  }
+}
+
+static void read_shader(NBRFile& nbr, NBRShader* shader) {
   // Load the length
   u32 src_length = 0;
   file_read_bytes(nbr.file_handle, &src_length, sizeof(src_length));
@@ -83,14 +163,136 @@ static void load_shader(NBRFile& nbr) {
   file_read_bytes(nbr.file_handle, src_str, src_length - 1);
   src_str[src_length - 1] = '\0';
  
-  shader = String(src_str, src_length);
-
-  // Allocate some space for the resource and assign it
-  nbr.body_data = memory_allocate(src_length);
-  memory_copy(nbr.body_data, src_str, src_length);
+  *shader = String(src_str, src_length);
 
   // Goodbye, extra string
   memory_free(src_str);
+}
+
+static void read_material(NBRFile& nbr, NBRMaterial* material) {
+  // Load the ambient color 
+  file_read_bytes(nbr.file_handle, material->ambient, sizeof(f32) * 3); 
+
+  // Load the diffuse color 
+  file_read_bytes(nbr.file_handle, material->diffuse, sizeof(f32) * 3); 
+  
+  // Load the specular color 
+  file_read_bytes(nbr.file_handle, material->specular, sizeof(f32) * 3); 
+ 
+  // Load the texture indices
+  file_read_bytes(nbr.file_handle, &material->diffuse_index, sizeof(i8)); 
+  file_read_bytes(nbr.file_handle, &material->specular_index, sizeof(i8)); 
+}
+
+static void read_mesh(NBRFile& nbr, NBRMesh* mesh) {
+  // Load the vertex type
+  file_read_bytes(nbr.file_handle, &mesh->vertex_type, sizeof(u8));
+
+  // Load the vertices
+  file_read_bytes(nbr.file_handle, &mesh->vertices_count, sizeof(u32));
+  mesh->vertices = (f32*)memory_allocate(sizeof(f32) * mesh->vertices_count); 
+  file_read_bytes(nbr.file_handle, mesh->vertices, sizeof(f32) * mesh->vertices_count);
+
+  // Load the indices
+  file_read_bytes(nbr.file_handle, &mesh->indices_count, sizeof(u32));
+  mesh->indices = (u32*)memory_allocate(sizeof(u32) * mesh->indices_count); 
+  file_read_bytes(nbr.file_handle, mesh->indices, sizeof(u32) * mesh->indices_count);
+
+  // Load the material index
+  file_read_bytes(nbr.file_handle, &mesh->material_index, sizeof(u8));
+}
+
+static void read_model(NBRFile& nbr, NBRModel* model) {
+  // Load the meshes
+  file_read_bytes(nbr.file_handle, &model->meshes_count, sizeof(u16));
+  model->meshes = (NBRMesh*)memory_allocate(sizeof(NBRMesh) * model->meshes_count); 
+  for(sizei i = 0; i < model->meshes_count; i++) {
+    read_mesh(nbr, &model->meshes[i]);
+  }
+
+  // Load the materials 
+  file_read_bytes(nbr.file_handle, &model->materials_count, sizeof(u8));
+  model->materials = (NBRMaterial*)memory_allocate(sizeof(NBRMaterial) * model->materials_count); 
+  for(sizei i = 0; i < model->materials_count; i++) {
+    read_material(nbr, &model->materials[i]); 
+  }
+
+  // Load the textures 
+  file_read_bytes(nbr.file_handle, &model->textures_count, sizeof(u8));
+  model->textures = (NBRTexture*)memory_allocate(sizeof(NBRTexture) * model->textures_count); 
+  for(sizei i = 0; i < model->textures_count; i++) {
+    read_texture(nbr, &model->textures[i]);
+  }
+}
+
+static void load_texture(NBRFile& nbr) {
+  // Read the resource from the file 
+  NBRTexture texture; 
+  read_texture(nbr, &texture); 
+
+  // Allocate some space for the resource and assign it
+  nbr.body_data = memory_allocate(sizeof(texture));
+  memory_copy(nbr.body_data, &texture, sizeof(texture)); 
+}
+
+static void load_cubemap(NBRFile& nbr) {
+  // Read the resource from the file 
+  NBRCubemap cubemap; 
+  read_cubemap(nbr, &cubemap); 
+  
+  // Allocate some space for the resource and assign it
+  nbr.body_data = memory_allocate(sizeof(cubemap));
+  memory_copy(nbr.body_data, &cubemap, sizeof(cubemap)); 
+}
+
+static void load_shader(NBRFile& nbr) {
+  // Read the resource from the file 
+  NBRShader shader; 
+  read_shader(nbr, &shader); 
+
+  // Allocate some space for the resource and assign it
+  nbr.body_data = memory_allocate(shader.size());
+  memory_copy(nbr.body_data, shader.c_str(), shader.size());
+}
+
+static void load_model(NBRFile& nbr) {
+  // Read the resource from the file 
+  NBRModel model; 
+  read_model(nbr, &model);
+
+  // Allocate some space for the resource and assign it
+  nbr.body_data = memory_allocate(sizeof(model));
+  memory_copy(nbr.body_data, &model, sizeof(model)); 
+}
+
+static void unload_texture(NBRFile& nbr) {
+  NBRTexture* tex = (NBRTexture*)nbr.body_data;
+  memory_free(tex->pixels);
+}
+
+static void unload_cubemap(NBRFile& nbr) {
+  NBRCubemap* cube = (NBRCubemap*)nbr.body_data;
+  
+  for(sizei i = 0; i < cube->faces_count; i++) {
+    memory_free(cube->pixels[i]);
+  }
+}
+
+static void unload_model(NBRFile& nbr) {
+  NBRModel* model = (NBRModel*)nbr.body_data;
+
+  for(sizei i = 0; i < model->meshes_count; i++) {
+    memory_free(model->meshes[i].vertices);
+    memory_free(model->meshes[i].indices);
+  }
+
+  for(sizei i = 0; i < model->textures_count; i++) {
+    memory_free(model->textures[i].pixels);
+  }
+
+  memory_free(model->meshes);
+  memory_free(model->materials);
+  memory_free(model->textures);
 }
 
 static void load_by_type(NBRFile& nbr, const FilePath& path) {
@@ -105,6 +307,7 @@ static void load_by_type(NBRFile& nbr, const FilePath& path) {
       load_shader(nbr);
       break;
     case RESOURCE_TYPE_MODEL:
+      load_model(nbr);
       break;
     case RESOURCE_TYPE_FONT:
       break;
@@ -116,20 +319,16 @@ static void load_by_type(NBRFile& nbr, const FilePath& path) {
 
 static void unload_by_type(NBRFile& nbr) {
   switch(nbr.resource_type) {
-    case RESOURCE_TYPE_TEXTURE: {
-      NBRTexture* tex = (NBRTexture*)nbr.body_data;
-      memory_free(tex->pixels);
-    } break;
-    case RESOURCE_TYPE_CUBEMAP: {
-      NBRCubemap* cube = (NBRCubemap*)nbr.body_data;
-      for(sizei i = 0; i < cube->faces_count; i++) {
-        memory_free(cube->pixels[i]);
-      }
-    }
+    case RESOURCE_TYPE_TEXTURE:
+      unload_texture(nbr);
+      break;
+    case RESOURCE_TYPE_CUBEMAP:
+      unload_cubemap(nbr);
       break;
     case RESOURCE_TYPE_SHADER:
       break;
     case RESOURCE_TYPE_MODEL:
+      unload_model(nbr);
       break;
     case RESOURCE_TYPE_FONT:
       break;
@@ -229,17 +428,9 @@ void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const FilePath& path
   nbr.resource_type = (i16)RESOURCE_TYPE_TEXTURE; 
   save_header(nbr);
 
-  // Save width and height
-  file_write_bytes(nbr.file_handle, &texture.width, sizeof(texture.width));
-  file_write_bytes(nbr.file_handle, &texture.height, sizeof(texture.height));
-  
-  // Save the channels
-  file_write_bytes(nbr.file_handle, &texture.channels, sizeof(texture.channels));
- 
-  // Save the pixels
-  sizei data_size = (texture.width * texture.height) * texture.channels;
-  file_write_bytes(nbr.file_handle, texture.pixels, data_size);
-  
+  // Write the texture 
+  write_texture(nbr, texture); 
+
   // Always remember to close the file
   file_close(nbr.file_handle);
 }
@@ -255,21 +446,8 @@ void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path
   nbr.resource_type = (i16)RESOURCE_TYPE_CUBEMAP; 
   save_header(nbr);
 
-  // Save width and height
-  file_write_bytes(nbr.file_handle, &cubemap.width, sizeof(cubemap.width));
-  file_write_bytes(nbr.file_handle, &cubemap.height, sizeof(cubemap.height));
-
-  // Save the channels
-  file_write_bytes(nbr.file_handle, &cubemap.channels, sizeof(cubemap.channels));
-
-  // Save the faces count
-  file_write_bytes(nbr.file_handle, &cubemap.faces_count, sizeof(cubemap.faces_count));
-
-  // Save the pixels for each face
-  sizei data_size = (cubemap.width * cubemap.height) * cubemap.channels;
-  for(sizei i = 0; i < cubemap.faces_count; i++) {
-    file_write_bytes(nbr.file_handle, cubemap.pixels[i], data_size);
-  }
+  // Write the cubemap
+  write_cubemap(nbr, cubemap);
 
   // Always remember to close the file
   file_close(nbr.file_handle);
@@ -286,15 +464,26 @@ void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FilePath& path) 
   nbr.resource_type = (i16)RESOURCE_TYPE_SHADER; 
   save_header(nbr);
 
-  // Convert the given shader to an NBR format
-  u32 src_length = (u32)shader.length();
-  i8* src_str    = (i8*)shader.c_str();
+  // Write the shader 
+  write_shader(nbr, shader);
 
-  // Save the length of the shader's code string 
-  file_write_bytes(nbr.file_handle, &src_length, sizeof(src_length));
+  // Always remember to close the file
+  file_close(nbr.file_handle);
+}
 
-  // Save the shader's code string
-  file_write_bytes(nbr.file_handle, src_str, src_length);
+void nbr_file_save(NBRFile& nbr, const NBRModel& model, const FilePath& path) {
+  // Must open the file
+  if(!file_open(&nbr.file_handle, path, (i32)(std::ios::out | std::ios::binary))) {
+    NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.string().c_str());
+    return;
+  }
+
+  // Save the header first
+  nbr.resource_type = (i16)RESOURCE_TYPE_MODEL; 
+  save_header(nbr);
+
+  // Write the model 
+  write_model(nbr, model);
 
   // Always remember to close the file
   file_close(nbr.file_handle);

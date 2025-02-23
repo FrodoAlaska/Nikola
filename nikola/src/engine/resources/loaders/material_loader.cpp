@@ -18,7 +18,6 @@ void material_loader_load(ResourceStorage* storage,
   NIKOLA_ASSERT(storage, "Cannot load with an invalid ResourceStorage");
   NIKOLA_ASSERT(mat, "Invalid Material passed to material loader function");
   NIKOLA_ASSERT((diffuse_id != INVALID_RESOURCE), "Cannot load a material with an invalid diffuse texture ID");
-  NIKOLA_ASSERT((shader_id != INVALID_RESOURCE), "Cannot load a material with an invalid shader ID");
 
   // Default initialize the loader
   memory_zero(mat, sizeof(Material));
@@ -32,7 +31,9 @@ void material_loader_load(ResourceStorage* storage,
   } 
 
   // Shader init 
-  mat->shader = resource_storage_get_shader(storage, shader_id);
+  if(shader_id != INVALID_RESOURCE) {
+    mat->shader = resource_storage_get_shader(storage, shader_id);
+  } 
 }
 
 /// Material loader functions

@@ -49,7 +49,7 @@ endif()
 
 if(WIN32)
   # Thanks, CMake...
-  set(NIKOLA_LIBRARY_DIR ${NIKOLA_OUTPUT_DIR}/"$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>"/nikola.lib)
+  set(NIKOLA_LIBRARY_DIR ${NIKOLA_OUTPUT_DIR}/"$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>"/nikolad.lib)
 elseif(LINUX)
   set(NIKOLA_LIBRARY_DIR ${NIKOLA_OUTPUT_DIR}/libnikola.a)
 endif()
@@ -99,8 +99,6 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/engine/resources/nbr_file.cpp
   
   # Engine/Resources/Loaders 
-  ${NIKOLA_SRC_DIR}/engine/resources/loaders/texture_loader.cpp
-  ${NIKOLA_SRC_DIR}/engine/resources/loaders/cubemap_loader.cpp
   ${NIKOLA_SRC_DIR}/engine/resources/loaders/mesh_loader.cpp
   ${NIKOLA_SRC_DIR}/engine/resources/loaders/material_loader.cpp
   ${NIKOLA_SRC_DIR}/engine/resources/loaders/skybox_loader.cpp

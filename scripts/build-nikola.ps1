@@ -33,14 +33,14 @@ function Log-Msg {
 }
 
 function Show-Help {
-  Log-Msg -msg "[Usage]: .\build-nikola.ps1 [options]"                      -log_level "WARN"
-  Log-Msg -msg "An easy to use build script to build Nikola on Windows"     -log_level "WARN"
+  Log-Msg -msg "[Usage]: .\build-nikola.ps1 [options]"                  -log_level "WARN"
+  Log-Msg -msg "An easy to use build script to build Nikola on Windows" -log_level "WARN"
   Log-Msg -msg "   --clean       = Have a new fresh build"              -log_level "WARN"
   Log-Msg -msg "   --debug       = Build for the debug configuration"   -log_level "WARN"
   Log-Msg -msg "   --rel         = Build for the release configuration" -log_level "WARN"
   Log-Msg -msg "   --jobs        = Threads to use when building"        -log_level "WARN"
-  Log-Msg -msg "   --run-testbed = Run the testbed examples"           -log_level "WARN"
-  Log-Msg -msg "   --reload-res  = Reload the resources cache"         -log_level "WARN"
+  Log-Msg -msg "   --run-testbed = Run the testbed examples"            -log_level "WARN"
+  Log-Msg -msg "   --reload-res  = Reload the resources cache"          -log_level "WARN"
   Log-Msg -msg "   --help        = Display this help message"           -log_level "WARN"
 }
 
@@ -88,7 +88,7 @@ for ($i = 0; $i -lt $Args.Count; $i++) {
     "--clean"       { $build_flags += "--target clean " }
     "--debug"       { Check-Build-Dir -dir $debug_dir;   $build_config = "Debug" }
     "--rel"         { Check-Build-Dir -dir $release_dir; $build_config = "Release" }
-    "--jobs"        { $build_flags += "--parallel 4" }
+    "--jobs"        { $i++; $build_flags += "--parallel $($args[$i])" }
     "--run-testbed" { $can_run_testbed = $true }
     "--reload-res"  { $can_reload_res  = $true }
     "--help"        { Show-Help; exit 1 }
@@ -120,7 +120,7 @@ cd $working_dir
 ### Run ### 
 
 if($can_reload_res) {
-  .\reload-resources.ps1 "..\$build_dir\NBR\$build_config" "..\$build_dir\res"
+  .\reload-resources.ps1 "$build_dir\NBR\$build_config" "..\res" "$build_dir\testbed\res"
   Check-Exit-Code -msg "Failed to reload resources..."
 }
 

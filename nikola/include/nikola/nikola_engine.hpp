@@ -677,21 +677,45 @@ using NBRShader = String;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// NBRMaterial
+struct NBRMaterial {
+  f32 ambient[3];
+  f32 diffuse[3];
+  f32 specular[3];
+
+  i8 diffuse_index;
+  i8 specular_index;
+};
+/// NBRMaterial
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// NBRMesh 
+struct NBRMesh {
+  u8 vertex_type; 
+
+  u32 vertices_count; 
+  f32* vertices;
+
+  u32 indices_count; 
+  u32* indices;
+
+  u8 material_index;
+};
+/// NBRMesh 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// NBRModel 
 struct NBRModel {
-  u8 vertex_type;  
+  u16 meshes_count;
+  NBRMesh* meshes;
 
-  void** vertices    = nullptr;
-  u16 vertices_count = 0;
+  u8 materials_count; 
+  NBRMaterial* materials;
 
-  u32* indices      = nullptr;
-  u16 indices_count = 0;
-
-  NBRTexture* diffuse_textures = nullptr;
-  u8 diffuse_count             = 0;
-
-  NBRTexture* specular_textures = nullptr;
-  u8 specular_count             = 0;
+  u8 textures_count;
+  NBRTexture* textures;
 };
 /// NBRModel 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -732,6 +756,8 @@ NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const Fil
 NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path);
 
 NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FilePath& path);
+
+NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRModel& model, const FilePath& path);
 
 /// NBR file functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -857,7 +883,10 @@ struct Material {
   GfxShader* shader        = nullptr; 
   GfxBuffer* uniform_buffers[MATERIAL_UNIFORM_BUFFERS_MAX];
   
-  Vec4 color; 
+  Vec4 ambient_color;
+  Vec4 diffuse_color; 
+  Vec4 specular_color;
+
   Mat4 model_matrix;
 
   ResourceStorage* storage_ref;
@@ -884,6 +913,7 @@ struct Skybox {
 struct Model {
   DynamicArray<Mesh*> meshes;
   DynamicArray<Material*> materials;
+  DynamicArray<u8> material_indices;
 
   ResourceStorage* storage_ref;
 };
@@ -927,9 +957,8 @@ NIKOLA_API void material_set_transform(Material* mat, const Transform& transform
 /// Set the matrices uniform buffer of the associated shader in `mat` to `view_projection`
 NIKOLA_API void material_set_matrices_buffer(Material* mat, const Mat4& view_projection);
 
-/// Use the internal `storage_ref` of `mat` to check for the availability and retrieve uniform `buffer_id` in order 
-/// to attach it at `index` in the associated shader in `mat`.
-NIKOLA_API void material_attach_uniform(Material* mat, const sizei index, const ResourceID& buffer_id);
+/// Attach the uniform `buffer_id` at `index` in the associated shader in `mat`.
+NIKOLA_API void material_attach_uniform(Material* mat, const sizei index, const GfxBuffer* buffer);
 
 /// Material functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1007,7 +1036,7 @@ NIKOLA_API ResourceID resource_storage_push_cubemap(ResourceStorage* storage,
 /// to identify it.
 NIKOLA_API ResourceID resource_storage_push_shader(ResourceStorage* storage, const String& shader_src);
 
-/// Allocate a new `GfxShader` using `shader_src` using the shader retrieved from the `nbr_path`, 
+/// Allocate a new `GfxShader` using the shader retrieved from the `nbr_path`, 
 /// store it in `storage`, and return a `ResourceID` to identify it.
 NIKOLA_API ResourceID resource_storage_push_shader(ResourceStorage* storage, const FilePath& nbr_path);
 
@@ -1034,16 +1063,21 @@ NIKOLA_API ResourceID resource_storage_push_mesh(ResourceStorage* storage, const
 /// and the shader `shader_id`, store it in `storage`, and 
 /// return a `ResourceID` to identify it.
 ///
-/// @NOTE: Only the resource `specular_id` is allowed 
-/// to be set to `INVALID_RESOURCE` but not the others.
+/// @NOTE: Besides the `diffuse_id` resource, the `specular_id` 
+/// and `shader_id` resources can be set to `INVALID_RESOURCE`. In fact, 
+/// both of these resources are set to `INVALID_RESOURCE` by default.
 NIKOLA_API ResourceID resource_storage_push_material(ResourceStorage* storage,
                                                      const ResourceID& diffuse_id, 
-                                                     const ResourceID& specular_id, 
-                                                     const ResourceID& shader_id);
+                                                     const ResourceID& specular_id = INVALID_RESOURCE, 
+                                                     const ResourceID& shader_id   = INVALID_RESOURCE);
 
 /// Allocate a new `Skybox` using the previously-added `cubemap_id`, store it in `storage`, 
 /// and return a `ResourceID` to identify it.
 NIKOLA_API ResourceID resource_storage_push_skybox(ResourceStorage* storage, const ResourceID& cubemap_id);
+
+/// Allocate a new `Model` using the `NBRModel` retrieved from the `nbr_path`, 
+/// store it in `storage`, and return a `ResourceID` to identify it.
+NIKOLA_API ResourceID resource_storage_push_model(ResourceStorage* storage, const FilePath& nbr_path);
 
 /// Retrieve `GfxBuffer` identified by `id` in `storage`. 
 ///
@@ -1185,6 +1219,9 @@ NIKOLA_API const GfxContext* renderer_get_context();
 
 /// Set the background color of the global renderer to `clear_color`
 NIKOLA_API void renderer_set_clear_color(const Vec4& clear_color);
+
+// @TODO: Change this to a set of defaults later.
+NIKOLA_API const GfxBuffer* renderer_default_matrices_buffer();
 
 NIKOLA_API void renderer_pre_pass(Camera& cam);
 

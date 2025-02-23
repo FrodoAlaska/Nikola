@@ -1,15 +1,21 @@
 # Not enough arguments given
-if ($Args.Count -le 2) {
-  Write-Host "[Usage]: .\reload-resources.ps1 <nbr_path> <resources_dir>" -ForgroundColor yellow
-  exit 1
-}
+# if ($Args.Count -le 3) {
+#   Write-Host "[Usage]: .\reload-resources.ps1 <nbr_path> <resources_dir> <output_dir>" -ForegroundColor yellow
+#   exit 1
+# }
 
-$res_dir  = $($args[0])
-$nbr_path = $($args[1]) 
+$nbr_path = "$($args[0])\nbr.exe"
+$res_dir  = $($args[1])
+$out_dir  = $($args[2])
 
-$nbr_path -rt TEXTURE -d "$res_dir\textures" "$res_dir\nbr"
+# & $nbr_path -rt "TEXTURE" -d "$res_dir\textures" "$out_dir\nbr"
+#
+# & $nbr_path -rt "CUBEMAP" "$res_dir\cubemaps\NightSky" "$out_dir\nbr"
+# & $nbr_path -rt "CUBEMAP" "$res_dir\cubemaps\Skybox" "$out_dir\nbr"
 
-$nbr_path -rt CUBEMAP "$res_dir\cubemaps\NightSky" "$res_dir\nbr"
-$nbr_path -rt CUBEMAP "$res_dir\cubemaps\Skybox" "$res_dir\nbr"
+# & $nbr_path -rt "SHADER" -d "$res_dir\shaders" "$out_dir\nbr"
 
-$nbr_path -rt SHADER -d "$res_dir\shaders" "$res_dir\nbr"
+# & $nbr_path -rt "MODEL" "$res_dir\models\cottage_home\cottage_obj.obj" "$out_dir\nbr"
+& $nbr_path -rt "MODEL" "$res_dir\models\SittingBaby\baby.obj" "$out_dir\nbr"
+# & $nbr_path -rt "MODEL" "$res_dir\models\backpack\backpack.obj" "$out_dir\nbr"
+# & $nbr_path -rt "MODEL" "$res_dir\models\Kerner\Karner_C.obj" "$out_dir\nbr"

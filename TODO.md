@@ -1,9 +1,10 @@
 # (Engine) TODO: 
-- 3D models
 - Render models 
+- LICENSE, you fuck.
+- Font loading 
 - Batch rendering 
-- Fonts 
-- Render fonts
+- Render 2D and 3D fonts
+- Better resource IDs generation
 
 # (Core) TODO: 
 - Audio
@@ -13,6 +14,7 @@
 - Put some thought into instancing
 
 # (Engine) FIXES:
+- Fix the various memory leaks in `NBR` and `resource_manager`
 - Make the resource loaders faster and less memory intensive
 
 # (Core) FIXES:
@@ -35,3 +37,5 @@
 - (GFX) Add support for geometry shaders
 - (UI) Start working on the editor (basically a wrapper around ImGui)
 - Phyiscs. Yes. Just physics.
+- GPU particles
+- Hot reloading

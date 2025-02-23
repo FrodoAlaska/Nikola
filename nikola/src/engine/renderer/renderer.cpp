@@ -9,6 +9,8 @@ namespace nikola { // Start of nikola
 /// Renderer
 struct Renderer {
   GfxContext* context = nullptr;
+  GfxBuffer* matrices_buffer;
+
   Vec4 clear_color;
   Camera camera;
 
@@ -29,7 +31,6 @@ static void render_mesh(const RenderCommand& command) {
   Material* material = resource_storage_get_material(command.storage, command.material_id);
 
   material_set_transform(material, command.transform);
-  material_set_matrices_buffer(material, s_renderer.camera.view_projection);
 
   mesh->pipe_desc.shader = material->shader;
   
@@ -58,6 +59,26 @@ static void render_skybox(const RenderCommand& command) {
   gfx_pipeline_draw_vertex(skybox->pipe);
 }
 
+static void render_model(const RenderCommand& command) {
+  Model* model  = resource_storage_get_model(command.storage, command.renderable_id);
+  Material* mat = resource_storage_get_material(command.storage, command.material_id);
+
+  material_set_transform(mat, command.transform);
+  
+  for(sizei i = 0; i < model->meshes.size(); i++) {
+    Mesh* mesh              = model->meshes[i];
+    Material* mesh_material = model->materials[model->material_indices[i] - 1]; 
+    mesh_material->shader   = mat->shader; 
+
+    mesh->pipe_desc.shader         = mesh_material->shader;
+    mesh->pipe_desc.textures[0]    = mesh_material->diffuse_map;
+    mesh->pipe_desc.textures_count = 1;
+
+    gfx_context_apply_pipeline(s_renderer.context, mesh->pipe, mesh->pipe_desc);
+    gfx_pipeline_draw_index(mesh->pipe);
+  }
+}
+
 /// Private functions
 /// ----------------------------------------------------------------------
 
@@ -74,6 +95,14 @@ void renderer_init(Window* window, const Vec4& clear_clear) {
   s_renderer.context = gfx_context_init(gfx_desc);
   NIKOLA_ASSERT(s_renderer.context, "Failed to initialize the graphics context");
 
+  GfxBufferDesc buff_desc = {
+    .data  = nullptr, 
+    .size  = sizeof(Mat4),
+    .type  = GFX_BUFFER_UNIFORM,
+    .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
+  };
+  s_renderer.matrices_buffer = gfx_buffer_create(s_renderer.context, buff_desc);
+
   s_renderer.clear_color = clear_clear;
   s_renderer.clear_flags = GFX_CONTEXT_FLAGS_CLEAR_COLOR_BUFFER |  
                            GFX_CONTEXT_FLAGS_CLEAR_STENCIL_BUFFER | 
@@ -83,6 +112,7 @@ void renderer_init(Window* window, const Vec4& clear_clear) {
 }
 
 void renderer_shutdown() {
+  gfx_buffer_destroy(s_renderer.matrices_buffer);
   gfx_context_shutdown(s_renderer.context);
   NIKOLA_LOG_INFO("Successfully shutdown the renderer context");
 }
@@ -95,8 +125,13 @@ void renderer_set_clear_color(const Vec4& clear_color) {
   s_renderer.clear_color = clear_color;
 }
 
+const GfxBuffer* renderer_default_matrices_buffer() {
+  return s_renderer.matrices_buffer;
+}
+
 void renderer_pre_pass(Camera& cam) {
   s_renderer.camera = cam;
+  gfx_buffer_update(s_renderer.matrices_buffer, 0, sizeof(Mat4), mat4_raw_data(cam.view_projection));
 }
 
 void renderer_begin_pass() {
@@ -111,7 +146,7 @@ void renderer_end_pass() {
         render_mesh(command);
         break;
       case RENDERABLE_TYPE_MODEL:
-        // @TODO
+        render_model(command);
         break;
       case RENDERABLE_TYPE_SKYBOX:
         render_skybox(command);

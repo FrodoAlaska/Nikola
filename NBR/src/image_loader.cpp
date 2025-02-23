@@ -48,7 +48,7 @@ bool image_loader_load_texture(nikola::NBRTexture* texture, const nikola::FilePa
 
   texture->width    = width;
   texture->height   = height;
-  texture->channels = (nikola::u8)channels;
+  texture->channels = 4; // Sadly, sometimes the loader depicts the cubemap faces with 3 components instead of 4, so we have to force it.
 
   return true;
 }

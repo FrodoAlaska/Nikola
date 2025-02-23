@@ -192,6 +192,20 @@ static void create_nbr_shader() {
   }
 }
 
+static void create_nbr_model() {
+  nikola::NBRModel model;
+  nikola::NBRFile nbr;
+  
+  for(auto& path : s_parser.src_paths) {
+    nikola::FilePath final_path = s_parser.nbr_output_dir / path.filename().replace_extension("nbr");
+
+    model_loader_load(&model, path);
+    nikola::nbr_file_save(nbr, model, final_path);
+
+    printf("Converting model at \'%s\' to \'%s\'\n", path.string().c_str(), final_path.string().c_str());
+  }
+}
+
 static void create_nbr_file() {
   switch(s_parser.current_res_type) {
     case nikola::RESOURCE_TYPE_TEXTURE:
@@ -204,6 +218,7 @@ static void create_nbr_file() {
       create_nbr_shader();
       break;
     case nikola::RESOURCE_TYPE_MODEL:
+      create_nbr_model();
       break;
     case nikola::RESOURCE_TYPE_FONT:
       break;
