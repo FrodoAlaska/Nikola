@@ -1,9 +1,3 @@
-# Not enough arguments given
-# if ($Args.Count -le 3) {
-#   Write-Host "[Usage]: .\reload-resources.ps1 <nbr_path> <resources_dir> <output_dir>" -ForegroundColor yellow
-#   exit 1
-# }
-
 $nbr_path = "$($args[0])\nbr.exe"
 $res_dir  = $($args[1])
 $out_dir  = $($args[2])

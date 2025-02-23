@@ -1,13 +1,20 @@
 #!/bin/bash
 
+# Will make sure to exit on any failed command
+set -e
+
 # Variables for an easier time
-debug_path="build-debug"
-release_path="build-release"
+debug_path="../build-debug"
+release_path="../build-release"
+working_dir="./"
 
 # Options
 build_config="Debug"
 build_path="$debug_path"
 build_flags=""
+
+can_run_testbed=0
+can_reload_res=0
 
 # Some fun colors
 red="\033[0;31m"
@@ -27,8 +34,8 @@ show_help() {
 }
 
 create_config_dir() {
-  if [[ ! -d ../$build_path ]]; then
-    mkdir ../$build_path
+  if [[ ! -d $build_path ]]; then
+    mkdir $build_path
   fi
 }
 #########################################################
@@ -47,24 +54,26 @@ while [[ $i -le $# ]]; do
   arg="${!i}"
 
   case "$arg" in  
-    -n | --new) 
+    --clean) 
       build_flags+=" --target clean"
       ;; 
-    -d | --debug) 
+    --debug) 
       build_config="Debug" 
       build_path=$debug_path 
       create_config_dir
       ;;
-    -r | --rel) 
+    --rel) 
       build_config="Release" 
       build_path=$release_path 
       create_config_dir
       ;; 
-    -j | --jobs) 
-      build_flags+="-j $arg" 
+    --jobs) 
+      build_flags+="--parallel $arg" 
       ((i++))
       ;; 
-    -h | --help) 
+    --run-testbed) 
+      ;;
+    --help) 
       show_help 
       exit 
       ;; 
@@ -82,7 +91,21 @@ done
 ### Build process ###
 #########################################################
 echo -e "${blue} Building the '$build_config' configuration of Nikola..."
-cd ../$build_path
-cmake .. -DCMAKE_BUILD_TYPE=$build_config && cmake --build . $build_flags
-cd ..
+cd $build_path
+
+cmake .. -DCMAKE_BUILD_TYPE=$build_config 
+cmake --build . $build_flags
+
+cd $working_dir
+#########################################################
+
+### Run ### 
+#########################################################
+if [[ $can_run_testbed ]]; then
+  ./run-testbed.sh "--{$build_config,,}"
+fi
+
+if [[ $can_reload_res -eq 1 ]]; then
+  ./reload-resources.sh "$build_dir/NBR/" "../res" "$build_dir/testbed/res"
+fi
 #########################################################

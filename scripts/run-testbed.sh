@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # Variables for an easier time
-debug_path="build-debug"
-release_path="build-release"
+debug_path="../build-debug"
+release_path="../build-release"
+working_dir="./"
 
 # Options
 build_config="debug"
@@ -19,7 +20,6 @@ show_help() {
   echo -e "${red} An easy to use run script to run the testbeds of Nikola"
   echo -e "${red}    --debug  -d: Run the debug configuration of the testbeds"
   echo -e "${red}    --rel    -r: Run the release configuration of the testbeds"
-  echo -e "${red}    --test   -t: Run a specific test"
 }
 #########################################################
 
@@ -37,17 +37,13 @@ while [[ $i -le $# ]]; do
   arg="${!i}"
 
   case "$arg" in  
-    -d | --debug) 
+    --debug) 
       build_config="debug" 
       build_path=$debug_path 
       ;;
-    -r | --rel) 
+    --rel) 
       build_config="release" 
       build_path=$release_path 
-      ;; 
-    -t | --test) 
-      ((i++))
-      test_name="${!i}"
       ;; 
     *) 
       echo -e "${red}Unsupported argument '$arg' passed" 
@@ -63,8 +59,11 @@ done
 ### Run process ###
 #########################################################
 
-echo -e "${blue} Running NikolaTestbed..."
-cd ../$build_path/$test_name
-cmake --build . && ./NikolaTestbed
-cd ../../
+echo -e "${blue} Running $test_name..."
+cd $build_path/$test_name
+
+cmake --build . 
+./NikolaTestbed
+
+cd $working_dir
 #########################################################
