@@ -17,11 +17,13 @@ blue="\033[0;34m"
 #########################################################
 show_help() {
   echo -e "${red} An easy to use build script to build Nikola on Linux"
-  echo -e "${red}    --new    -n: Create a new fresh build"
-  echo -e "${red}    --debug  -d: Build a debug configuration"
-  echo -e "${red}    --rel    -r: Build a release configuration"
-  echo -e "${red}    --jobs   -j: Threads to use when building"
-  echo -e "${red}    --help   -h: Display this help message"
+  echo -e "${red}   --clean          = Have a new fresh build"              
+  echo -e "${red}   --debug          = Build for the debug configuration"   
+  echo -e "${red}   --rel            = Build for the release configuration" 
+  echo -e "${red}   --jobs [threads] = Threads to use when building"        
+  echo -e "${red}   --run-testbed    = Run the testbed examples"            
+  echo -e "${red}   --reload-res     = Reload the resources cache"          
+  echo -e "${red}   --help           = Display this help message"           
 }
 
 create_config_dir() {

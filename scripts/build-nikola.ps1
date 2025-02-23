@@ -35,13 +35,13 @@ function Log-Msg {
 function Show-Help {
   Log-Msg -msg "[Usage]: .\build-nikola.ps1 [options]"                  -log_level "WARN"
   Log-Msg -msg "An easy to use build script to build Nikola on Windows" -log_level "WARN"
-  Log-Msg -msg "   --clean       = Have a new fresh build"              -log_level "WARN"
-  Log-Msg -msg "   --debug       = Build for the debug configuration"   -log_level "WARN"
-  Log-Msg -msg "   --rel         = Build for the release configuration" -log_level "WARN"
-  Log-Msg -msg "   --jobs        = Threads to use when building"        -log_level "WARN"
-  Log-Msg -msg "   --run-testbed = Run the testbed examples"            -log_level "WARN"
-  Log-Msg -msg "   --reload-res  = Reload the resources cache"          -log_level "WARN"
-  Log-Msg -msg "   --help        = Display this help message"           -log_level "WARN"
+  Log-Msg -msg "   --clean          = Have a new fresh build"              -log_level "WARN"
+  Log-Msg -msg "   --debug          = Build for the debug configuration"   -log_level "WARN"
+  Log-Msg -msg "   --rel            = Build for the release configuration" -log_level "WARN"
+  Log-Msg -msg "   --jobs [threads] = Threads to use when building"        -log_level "WARN"
+  Log-Msg -msg "   --run-testbed    = Run the testbed examples"            -log_level "WARN"
+  Log-Msg -msg "   --reload-res     = Reload the resources cache"          -log_level "WARN"
+  Log-Msg -msg "   --help           = Display this help message"           -log_level "WARN"
 }
 
 function Check-Build-Dir {

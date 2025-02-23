@@ -1,9 +1,9 @@
 # (Engine) TODO: 
-- Render models 
-- LICENSE, you fuck.
+- Better build scripts for Linux
 - Font loading 
 - Batch rendering 
 - Render 2D and 3D fonts
+- Better materials
 - Better resource IDs generation
 
 # (Core) TODO: 

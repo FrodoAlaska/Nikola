@@ -99,7 +99,7 @@ void app_render(nikola::App* app) {
   };
 
   constexpr int MESHES_MAX = 10;
-  rotation_angle += 0.1f;
+  rotation_angle += 0.01f;
   float x = 1.0f + nikola::sin(nikola::niclock_get_time()) * 2.0f; 
   float y = nikola::sin(nikola::niclock_get_time() / 2.0f) * 1.0f;
 
@@ -115,6 +115,7 @@ void app_render(nikola::App* app) {
 
   nikola::transform_translate(rnd_cmd.transform, nikola::Vec3(10.0f, 0.0f, 10.0f));
   nikola::transform_scale(rnd_cmd.transform, nikola::Vec3(1.0f));
+  nikola::transform_rotate(rnd_cmd.transform, nikola::Vec3(0.0f, 1.0f, 0.0f), rotation_angle);
 
   // Render the model
   rnd_cmd.render_type   = nikola::RENDERABLE_TYPE_MODEL; 
@@ -126,7 +127,7 @@ void app_render(nikola::App* app) {
   rnd_cmd.render_type   = nikola::RENDERABLE_TYPE_SKYBOX; 
   rnd_cmd.renderable_id = app->skybox_id; 
   rnd_cmd.material_id   = app->skybox_material_id; 
-  // nikola::renderer_queue_command(rnd_cmd);
+  nikola::renderer_queue_command(rnd_cmd);
 
   nikola::renderer_end_pass();
   nikola::renderer_post_pass();
