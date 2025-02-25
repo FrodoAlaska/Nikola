@@ -1,9 +1,9 @@
 # (Engine) TODO: 
-- Better build scripts for Linux
+- Check the todos in the code and fix little things
 - Font loading 
 - Batch rendering 
 - Render 2D and 3D fonts
-- Better materials
+- Better materials/shaders
 - Better resource IDs generation
 
 # (Core) TODO: 
@@ -15,7 +15,7 @@
 
 # (Engine) FIXES:
 - Fix the various memory leaks in `NBR` and `resource_manager`
-- Make the resource loaders faster and less memory intensive
+- Unload the resources without crash
 
 # (Core) FIXES:
 - EMPTY FOR NOW...
@@ -28,7 +28,6 @@
 
 # TEST: 
 - (GL) Shader attribute semantics (e.g, does Mat4 work there)
-- (Engine) Test the resource loaders
 
 # FUTURE PLANS: 
 - (Audio) Audio context and audio buffers

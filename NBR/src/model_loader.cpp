@@ -157,7 +157,7 @@ static void load_scene_materials(const aiScene* scene, ObjData* data) {
   data->materials.reserve(scene->mNumMaterials);
 
   // Go through each material in the scene 
-  for(nikola::sizei i = 1; i < scene->mNumMaterials; i++) {
+  for(nikola::sizei i = 0; i < scene->mNumMaterials; i++) {
     aiMaterial* material = scene->mMaterials[i];
     nikola::NBRMaterial nbr_material; 
   
@@ -178,13 +178,16 @@ static void load_scene_materials(const aiScene* scene, ObjData* data) {
     nbr_material.diffuse[0]  = diffuse.r;  nbr_material.diffuse[1]  = diffuse.g;  nbr_material.diffuse[2]  = diffuse.b;
     nbr_material.specular[0] = specular.r; nbr_material.specular[1] = specular.g; nbr_material.specular[2] = specular.b;
 
-    // Get the diffuse textures
-    nbr_material.diffuse_index = 0;
+    // Load the diffuse and specular textures
     load_material_texture(material, aiTextureType_DIFFUSE, data); 
-
-    // Get the specular textures
-    nbr_material.specular_index = 0;
     load_material_texture(material, aiTextureType_SPECULAR, data); 
+   
+    // Get the diffuse index
+    nbr_material.diffuse_index = data->textures.size() == 0 ? 0 : data->textures.size() - 1;
+
+    // Get the diffuse index
+    nbr_material.specular_index = 0;
+    material->Get(AI_MATKEY_TEXTURE_SPECULAR(i), nbr_material.specular_index);
 
     // Add a new material
     data->materials.push_back(nbr_material); 

@@ -59,7 +59,63 @@ struct ResourceStorage {
 /// ----------------------------------------------------------------------
 /// Private functions 
 
-ResourceID generate_id() {
+static const char* buffer_type_str(const GfxBufferType type) {
+  switch(type) {
+    case GFX_BUFFER_VERTEX: 
+      return "GFX_BUFFER_VERTEX";
+    case GFX_BUFFER_INDEX: 
+      return "GFX_BUFFER_INDEX";
+    case GFX_BUFFER_UNIFORM: 
+      return "GFX_BUFFER_UNIFORM";
+    default:
+      return "INVALID BUFFER TYPE";
+  }
+}
+
+static const char* texture_type_str(const GfxTextureType type) {
+  switch(type) {
+    case GFX_TEXTURE_1D:
+      return "GFX_TEXTURE_1D";
+    case GFX_TEXTURE_2D:
+      return "GFX_TEXTURE_2D";
+    case GFX_TEXTURE_3D:
+      return "GFX_TEXTURE_3D";
+    case GFX_TEXTURE_RENDER_TARGET:
+      return "GFX_TEXTURE_RENDER_TARGET";
+    case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
+      return "GFX_TEXTURE_DEPTH_STENCIL_TARGET";
+    default:
+      return "INVALID TEXTURE TYPE";
+  }
+}
+
+static const char* vertex_type_str(const VertexType type) {
+  switch(type) {
+    case VERTEX_TYPE_PNUV:
+      return "VERTEX_TYPE_PNUV";
+    case VERTEX_TYPE_PCUV:
+      return "VERTEX_TYPE_PCUV";
+    case VERTEX_TYPE_PNCUV:
+      return "VERTEX_TYPE_PNCUV";
+    default:
+      return "INVALID VERTEX TYPE";
+  }
+}
+
+static const char* mesh_type_str(const MeshType type) {
+  switch(type) {
+    case MESH_TYPE_CUBE:
+      return "MESH_TYPE_CUBE";
+    case MESH_TYPE_CIRCLE:
+      return "VERTEX_TYPE_PCUV";
+    case MESH_TYPE_CYLINDER:
+      return "MESH_TYPE_CYLINDER";
+    default:
+      return "INVALID MESH TYPE";
+  }
+}
+
+static ResourceID generate_id() {
   return random_u64(); // @TODO: Make something more complex than this
 }
 
@@ -255,7 +311,7 @@ void resource_storage_destroy(ResourceStorage* storage) {
     return;
   }
 
-  // Get rid of every resource in the storage
+  // @TODO: Get rid of every resource in the storage
   // DESTROY_RESOURCE_MAP(storage, buffers, gfx_buffer_destroy);
   // DESTROY_RESOURCE_MAP(storage, textures, gfx_texture_destroy);
   // DESTROY_RESOURCE_MAP(storage, cubemaps, gfx_cubemap_destroy);
@@ -270,7 +326,10 @@ ResourceID resource_storage_push_buffer(ResourceStorage* storage, const GfxBuffe
 
   ResourceID id        = generate_id();
   storage->buffers[id] = gfx_buffer_create(s_manager.gfx_context, buff_desc);
-  
+ 
+  NIKOLA_LOG_INFO("Storage \'%s\' pushed buffer:", storage->name.c_str());
+  NIKOLA_LOG_INFO("     Size = %zu", buff_desc.size);
+  NIKOLA_LOG_INFO("     Type = %s", buffer_type_str(buff_desc.type));
   return id;
 }
 
@@ -280,6 +339,9 @@ ResourceID resource_storage_push_texture(ResourceStorage* storage, const GfxText
   ResourceID id         = generate_id();
   storage->textures[id] = gfx_texture_create(s_manager.gfx_context, desc);
   
+  NIKOLA_LOG_INFO("Storage \'%s\' pushed texture:", storage->name.c_str());
+  NIKOLA_LOG_INFO("     Size = %i X %i", desc.width, desc.height);
+  NIKOLA_LOG_INFO("     Type = %s", texture_type_str(desc.type));
   return id;
 }
 
@@ -314,6 +376,10 @@ ResourceID resource_storage_push_texture(ResourceStorage* storage,
   nbr_file_unload(nbr);
 
   // New texture added!
+  NIKOLA_LOG_INFO("Storage \'%s\' pushed texture:", storage->name.c_str());
+  NIKOLA_LOG_INFO("     Size = %i X %i", tex_desc.width, tex_desc.height);
+  NIKOLA_LOG_INFO("     Type = %s", texture_type_str(tex_desc.type));
+  NIKOLA_LOG_INFO("     Path = %s", nbr_path.string().c_str());
   return id;
 }
 
@@ -323,6 +389,9 @@ ResourceID resource_storage_push_cubemap(ResourceStorage* storage, const GfxCube
   ResourceID id         = generate_id();
   storage->cubemaps[id] = gfx_cubemap_create(s_manager.gfx_context, cubemap_desc);
   
+  NIKOLA_LOG_INFO("Storage \'%s\' pushed cubemap:", storage->name.c_str());
+  NIKOLA_LOG_INFO("     Size  = %i X %i", cubemap_desc.width, cubemap_desc.height);
+  NIKOLA_LOG_INFO("     Faces = %i", cubemap_desc.faces_count);
   return id;
 }
 
@@ -358,6 +427,10 @@ ResourceID resource_storage_push_cubemap(ResourceStorage* storage,
   nbr_file_unload(nbr);
 
   // New cubemap added!
+  NIKOLA_LOG_INFO("Storage \'%s\' pushed cubemap:", storage->name.c_str());
+  NIKOLA_LOG_INFO("     Size  = %i X %i", cube_desc.width, cube_desc.height);
+  NIKOLA_LOG_INFO("     Faces = %i", cube_desc.faces_count);
+  NIKOLA_LOG_INFO("     Path  = %s", nbr_path.string().c_str());
   return id;
 }
 
@@ -367,6 +440,8 @@ ResourceID resource_storage_push_shader(ResourceStorage* storage, const String& 
   ResourceID id        = generate_id();
   storage->shaders[id] = gfx_shader_create(s_manager.gfx_context, shader_src.c_str());
 
+  NIKOLA_LOG_INFO("Storage \'%s\' pushed shader:", storage->name.c_str());
+  NIKOLA_LOG_INFO("     Source length  = %zu", shader_src.size());
   return id;
 }
 
@@ -391,6 +466,9 @@ ResourceID resource_storage_push_shader(ResourceStorage* storage, const FilePath
   nbr_file_unload(nbr);
 
   // New shader added!
+  NIKOLA_LOG_INFO("Storage \'%s\' pushed shader:", storage->name.c_str());
+  NIKOLA_LOG_INFO("     Source length  = %zu", String(nbr_shader).size());
+  NIKOLA_LOG_INFO("     Path           = %s", nbr_path.string().c_str());
   return id;
 }
 
@@ -411,11 +489,16 @@ ResourceID resource_storage_push_mesh(ResourceStorage* storage,
   // Create the pipeline
   mesh->pipe = gfx_pipeline_create(s_manager.gfx_context, mesh->pipe_desc);
 
-  // New mesh added!
+  // Create the mesh
   mesh->storage_ref   = storage; 
   ResourceID id       = generate_id();
   storage->meshes[id] = mesh;
 
+  // New mesh added!
+  NIKOLA_LOG_INFO("Storage \'%s\' pushed mesh:", storage->name.c_str());
+  NIKOLA_LOG_INFO("     Vertex type  = %s", vertex_type_str(vertex_type));
+  NIKOLA_LOG_INFO("     Vertices     = %zu", mesh->pipe_desc.vertices_count);
+  NIKOLA_LOG_INFO("     Indices      = %zu", indices_count);
   return id;
 }
 
@@ -432,11 +515,16 @@ ResourceID resource_storage_push_mesh(ResourceStorage* storage, const MeshType t
   // Create the pipeline
   mesh->pipe = gfx_pipeline_create(s_manager.gfx_context, mesh->pipe_desc);
 
-  // New mesh added!
+  // Create mesh
   mesh->storage_ref   = storage; 
   ResourceID id       = generate_id();
   storage->meshes[id] = mesh;
-
+ 
+  // New mesh added!
+  NIKOLA_LOG_INFO("Storage \'%s\' pushed mesh:", storage->name.c_str());
+  NIKOLA_LOG_INFO("     Mesh type  = %s", mesh_type_str(type));
+  NIKOLA_LOG_INFO("     Vertices   = %zu", mesh->pipe_desc.vertices_count);
+  NIKOLA_LOG_INFO("     Indices    = %zu", mesh->pipe_desc.indices_count);
   return id;
 }
 
@@ -458,11 +546,13 @@ ResourceID resource_storage_push_material(ResourceStorage* storage,
     material_attach_uniform(material, MATERIAL_MATRICES_BUFFER_INDEX, s_manager.cached_storage->buffers[s_manager.matrices_buffer]);
   }
 
-  // New material added!
+  // Create material
   material->storage_ref  = storage; 
   ResourceID id          = generate_id();
   storage->materials[id] = material;
 
+  // New material added!
+  NIKOLA_LOG_INFO("Storage \'%s\' pushed material", storage->name.c_str());
   return id;
 }
 
@@ -479,11 +569,15 @@ ResourceID resource_storage_push_skybox(ResourceStorage* storage, const Resource
   // Create the pipeline 
   skybox->pipe = gfx_pipeline_create(s_manager.gfx_context, skybox->pipe_desc);
 
-  // New skybox added!
+  // Create skybox
   skybox->storage_ref   = storage; 
   ResourceID id         = generate_id();
   storage->skyboxes[id] = skybox;
 
+  // New skybox added!
+  NIKOLA_LOG_INFO("Storage \'%s\' pushed skybox:", storage->name.c_str());
+  NIKOLA_LOG_INFO("     Vertices = %zu", skybox->pipe_desc.vertices_count);
+  NIKOLA_LOG_INFO("     Indices  = %zu", skybox->pipe_desc.indices_count);
   return id;
 }
 
@@ -510,6 +604,11 @@ ResourceID resource_storage_push_model(ResourceStorage* storage, const FilePath&
   // Remember to close the NBR
   nbr_file_unload(nbr);
 
+  NIKOLA_LOG_INFO("Storage \'%s\' pushed model:", storage->name.c_str());
+  NIKOLA_LOG_INFO("     Meshes    = %zu", model->meshes.size());
+  NIKOLA_LOG_INFO("     Materials = %zu", model->materials.size());
+  NIKOLA_LOG_INFO("     Textures  = %i", nbr_model->textures_count);
+  NIKOLA_LOG_INFO("     Path      = %s", nbr_path.string().c_str());
   return id;
 }
 

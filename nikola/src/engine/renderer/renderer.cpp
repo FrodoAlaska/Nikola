@@ -67,7 +67,7 @@ static void render_model(const RenderCommand& command) {
   
   for(sizei i = 0; i < model->meshes.size(); i++) {
     Mesh* mesh              = model->meshes[i];
-    Material* mesh_material = model->materials[model->material_indices[i] - 1]; 
+    Material* mesh_material = model->materials[model->material_indices[i]]; 
     mesh_material->shader   = mat->shader; 
 
     mesh->pipe_desc.shader         = mesh_material->shader;
