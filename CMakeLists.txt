@@ -51,7 +51,7 @@ if(WIN32)
   # Thanks, CMake...
   set(NIKOLA_LIBRARY_DIR ${NIKOLA_OUTPUT_DIR}/"$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>"/nikolad.lib)
 elseif(LINUX)
-  set(NIKOLA_LIBRARY_DIR ${NIKOLA_OUTPUT_DIR}/libnikola.a)
+  set(NIKOLA_LIBRARY_DIR ${NIKOLA_OUTPUT_DIR}/libnikolad.a)
 endif()
 ############################################################
 

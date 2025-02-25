@@ -6,7 +6,7 @@ set -e
 # Variables for an easier time
 debug_path="../build-debug"
 release_path="../build-release"
-working_dir="./"
+working_dir="$(pwd)"
 
 # Options
 build_config="Debug"
@@ -68,10 +68,14 @@ while [[ $i -le $# ]]; do
       create_config_dir
       ;; 
     --jobs) 
-      build_flags+="--parallel $arg" 
       ((i++))
+      build_flags+="--parallel ${!i}" 
       ;; 
     --run-testbed) 
+      can_run_testbed=1
+      ;;
+    --reload-res) 
+      can_reload_res=1
       ;;
     --help) 
       show_help 
@@ -97,12 +101,13 @@ cmake .. -DCMAKE_BUILD_TYPE=$build_config
 cmake --build . $build_flags
 
 cd $working_dir
+echo $working_dir
 #########################################################
 
 ### Run ### 
 #########################################################
-if [[ $can_run_testbed ]]; then
-  ./run-testbed.sh "--{$build_config,,}"
+if [[ $can_run_testbed -eq 1 ]]; then
+  ./run-testbed.sh "--${build_config,,}"
 fi
 
 if [[ $can_reload_res -eq 1 ]]; then

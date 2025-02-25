@@ -3,7 +3,7 @@
 # Variables for an easier time
 debug_path="../build-debug"
 release_path="../build-release"
-working_dir="./"
+working_dir="$(pwd)"
 
 # Options
 build_config="debug"
