@@ -182,10 +182,10 @@ void mesh_loader_load(ResourceStorage* storage, Mesh* mesh, const MeshType type)
       create_cube_mesh(storage, mesh);
       break;
     case MESH_TYPE_CIRCLE:
-      // @TODO
+      // @TODO: Make a circle mesh
       break;
     case MESH_TYPE_CYLINDER:
-      // @TODO
+      // @TODO: Make a cylinder mesh
       break;
   }
 }

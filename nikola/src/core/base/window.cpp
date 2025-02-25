@@ -267,7 +267,7 @@ static void set_window_hints(Window* window) {
   }
   
   if(IS_BIT_SET(window->flags, WINDOW_FLAGS_GFX_SOFTWARE)) {
-    // @TODO
+    // @TODO: Software renderer?
   }
 }
 
