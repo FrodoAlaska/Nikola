@@ -1,8 +1,8 @@
 # (Engine) TODO: 
 * General 
     - Probably create my own `DynamicAllocater` instead of the STL one
+    - The filesystem is, well, fucked. It crashes when we pass our flags to the `open` function
 * NBR 
-    - Fix the memory leaks when loading 
     - Be able to rename an output file 
 * Resources 
     - Weird texture placements in certain models

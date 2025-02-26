@@ -238,6 +238,24 @@ bool model_loader_load(nikola::NBRModel* model, const nikola::FilePath& path) {
   return true;
 }
 
+void model_loader_unload(nikola::NBRModel& model) {
+  // Unload meshes
+  for(nikola::sizei i = 0; i < model.meshes_count; i++) {
+    nikola::memory_free(model.meshes[i].vertices); 
+    nikola::memory_free(model.meshes[i].indices); 
+  }
+  nikola::memory_free(model.meshes);
+
+  // Unload materials 
+  nikola::memory_free(model.materials);
+
+  // Unload textures 
+  for(nikola::sizei i = 0; i < model.textures_count; i++) {
+    image_loader_unload_texture(model.textures[i]);
+  }
+  nikola::memory_free(model.textures);
+}
+
 /// Model loader functions
 /// ----------------------------------------------------------------------
 

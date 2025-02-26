@@ -66,6 +66,10 @@ bool image_loader_load_texture(nikola::NBRTexture* texture, const nikola::FilePa
 
 bool image_loader_load_cubemap(nikola::NBRCubemap* cube, const nikola::FilePath& dir);
 
+void image_loader_unload_texture(nikola::NBRTexture& texture);
+
+void image_loader_unload_cubemap(nikola::NBRCubemap& cubemap);
+
 /// Image loader functions
 /// ----------------------------------------------------------------------
 
@@ -81,6 +85,8 @@ bool shader_loader_load(nikola::NBRShader* shader, const nikola::FilePath& path)
 /// Model loader functions
 
 bool model_loader_load(nikola::NBRModel* model, const nikola::FilePath& path); 
+
+void model_loader_unload(nikola::NBRModel& model); 
 
 /// Model loader functions
 /// ----------------------------------------------------------------------

@@ -156,11 +156,19 @@ static void create_nbr_texture() {
 
   for(auto& path : s_parser.src_paths) {
     nikola::FilePath final_path = s_parser.nbr_output_dir / path.filename().replace_extension("nbr");
+  
+    // Load the texture
+    bool loaded = image_loader_load_texture(&texture, path);
+    if(!loaded) {
+      printf("Failed to load resource at \'%s\'", path.string().c_str());
+      continue;
+    }
 
-    image_loader_load_texture(&texture, path);
+    // Save the texture
     nikola::nbr_file_save(nbr, texture, final_path);
 
-    printf("Converting \'%s\' to \'%s\'...\n", path.string().c_str(), final_path.string().c_str());
+    image_loader_unload_texture(texture);
+    printf("Converted texture \'%s\' to \'%s\'...\n", path.string().c_str(), final_path.string().c_str());
   }
 }
 
@@ -171,10 +179,18 @@ static void create_nbr_cubemap() {
   for(auto& path : s_parser.src_paths) {
     nikola::FilePath final_path = s_parser.nbr_output_dir / path.filename().replace_extension("nbr");
 
-    image_loader_load_cubemap(&cubemap, path);
+    // Load the cubemap
+    bool loaded = image_loader_load_cubemap(&cubemap, path);
+    if(!loaded) {
+      printf("Failed to load resource at \'%s\'", path.string().c_str());
+      continue;
+    }
+  
+    // Save the cubemap
     nikola::nbr_file_save(nbr, cubemap, final_path);
 
-    printf("Converting cubemap faces at \'%s\' to \'%s\'\n", path.string().c_str(), final_path.string().c_str());
+    image_loader_unload_cubemap(cubemap);
+    printf("Converted cubemap \'%s\' to \'%s\'...\n", path.string().c_str(), final_path.string().c_str());
   }
 }
 
@@ -185,10 +201,17 @@ static void create_nbr_shader() {
   for(auto& path : s_parser.src_paths) {
     nikola::FilePath final_path = s_parser.nbr_output_dir / path.filename().replace_extension("nbr");
 
-    shader_loader_load(&shader, path);
+    // Load the shader
+    bool loaded = shader_loader_load(&shader, path);
+    if(!loaded) {
+      printf("Failed to load resource at \'%s\'", path.string().c_str());
+      continue;
+    }
+
+    // Save the shader
     nikola::nbr_file_save(nbr, shader, final_path);
 
-    printf("Converting shader \'%s\' to \'%s\'\n", path.string().c_str(), final_path.string().c_str());
+    printf("Converted shader \'%s\' to \'%s\'...\n", path.string().c_str(), final_path.string().c_str());
   }
 }
 
@@ -199,10 +222,18 @@ static void create_nbr_model() {
   for(auto& path : s_parser.src_paths) {
     nikola::FilePath final_path = s_parser.nbr_output_dir / path.filename().replace_extension("nbr");
 
-    model_loader_load(&model, path);
+    // Load the model
+    bool loaded = model_loader_load(&model, path);
+    if(!loaded) {
+      printf("Failed to load resource at \'%s\'", path.string().c_str());
+      continue;
+    }
+
+    // Save model
     nikola::nbr_file_save(nbr, model, final_path);
 
-    printf("Converting model at \'%s\' to \'%s\'\n", path.string().c_str(), final_path.string().c_str());
+    model_loader_unload(model);
+    printf("Converted model at \'%s\' to \'%s\'\n", path.string().c_str(), final_path.string().c_str());
   }
 }
 

@@ -82,6 +82,24 @@ bool image_loader_load_cubemap(nikola::NBRCubemap* cube, const nikola::FilePath&
   return true;
 }
 
+void image_loader_unload_texture(nikola::NBRTexture& texture) {
+  if(!texture.pixels) {
+    return;
+  }
+  
+  stbi_image_free(texture.pixels);
+}
+
+void image_loader_unload_cubemap(nikola::NBRCubemap& cubemap) {
+  for(nikola::sizei i = 0; i < cubemap.faces_count; i++) {
+    if(!cubemap.pixels[i]) {
+      continue;
+    }
+
+    stbi_image_free(cubemap.pixels[i]);
+  }
+}
+
 /// Image loader functions
 /// ----------------------------------------------------------------------
 

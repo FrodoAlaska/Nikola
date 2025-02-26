@@ -17,6 +17,8 @@ bool shader_loader_load(nikola::NBRShader* shader, const nikola::FilePath& path)
   }
 
   *shader = nikola::file_read_string(file);
+  nikola::file_close(file);
+
   return true;
 }
 
