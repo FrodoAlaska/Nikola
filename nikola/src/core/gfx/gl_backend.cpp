@@ -668,7 +668,7 @@ static sizei set_buffer_layout(const u32 vao, const GfxLayoutDesc* layout, const
 static void seperate_shader_src(const i8* src, GfxShader* shader) {
   sizei src_len = strlen(src);
   
-  shader->full_src = (i8*)memory_allocate(src_len);
+  shader->full_src = (i8*)memory_allocate(src_len + 1);
   strcpy(shader->full_src, src); 
 
   sizei vert_start = 0;
@@ -1152,7 +1152,7 @@ void gfx_shader_destroy(GfxShader* shader) {
   if(!shader) {
     return;
   }
- 
+  
   memory_free(shader->vert_src);
   memory_free(shader->frag_src);
   memory_free(shader->full_src);

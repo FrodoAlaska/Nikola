@@ -112,7 +112,6 @@ void renderer_init(Window* window, const Vec4& clear_clear) {
 }
 
 void renderer_shutdown() {
-  gfx_buffer_destroy(s_renderer.matrices_buffer);
   gfx_context_shutdown(s_renderer.context);
   NIKOLA_LOG_INFO("Successfully shutdown the renderer context");
 }

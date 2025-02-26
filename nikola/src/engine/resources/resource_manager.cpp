@@ -47,10 +47,16 @@ struct ResourceStorage {
 /// ----------------------------------------------------------------------
 /// Macros (Unfortunately)
 
-#define DESTROY_RESOURCE_MAP(storage, map, clear_func) { \
-  for(auto& [key, value] : storage->map) {               \
-    clear_func(value);                                   \
-  }                                                      \
+#define DESTROY_CORE_RESOURCE_MAP(storage, map, clear_func) { \
+  for(auto& [key, value] : storage->map) {                    \
+    clear_func(value);                                        \
+  }                                                           \
+}
+
+#define DESTROY_COMP_RESOURCE_MAP(storage, map) { \
+  for(auto& [key, value] : storage->map) {        \
+    delete value;                                 \
+  }                                               \
 }
 
 /// Macros (Unfortunately)
@@ -157,23 +163,7 @@ static void convert_from_nbr(ResourceStorage* storage, const NBRModel* nbr, Mode
   model->materials.reserve(nbr->materials_count);
   model->material_indices.reserve(nbr->meshes_count);
   
-  nikola::DynamicArray<ResourceID> texture_ids; // @FIX: This is bad. Don't do this!
-
-  // Create a dummy texture for when there are no textures to use
-  // @FIX: Maybe make put this somewhere else and reuse it?  
-  // u32 pixels = 0xffffffff; 
-  // GfxTextureDesc dummy_desc = {
-  //   .width     = 1, 
-  //   .height    = 1, 
-  //   .depth     = 0, 
-  //   .mips      = 1, 
-  //   .type      = GFX_TEXTURE_2D, 
-  //   .format    = GFX_TEXTURE_FORMAT_RGBA8, 
-  //   .filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-  //   .wrap_mode = GFX_TEXTURE_WRAP_CLAMP,
-  //   .data      = &pixels,
-  // };
-  // texture_ids.push_back(resource_storage_push_texture(storage, dummy_desc));
+  nikola::DynamicArray<ResourceID> texture_ids; // @FIX (Resource): This is bad. Don't do this!
 
   // Convert the textures
   for(sizei i = 0; i < nbr->textures_count; i++) {
@@ -249,7 +239,8 @@ void resource_manager_init() {
 
   s_manager.gfx_context     = (GfxContext*)gfx;
   s_manager.cached_storage  = resource_storage_create("cache", "resource_cache/");
-  
+ 
+  // @FIX (Renderer): Awful. Just... no. Simply, no. 
   ResourceID buff_id                         = generate_id();
   s_manager.cached_storage->buffers[buff_id] = (GfxBuffer*)renderer_default_matrices_buffer();
   s_manager.matrices_buffer                  = buff_id; 
@@ -297,13 +288,14 @@ void resource_storage_clear(ResourceStorage* storage) {
   storage->textures.clear();
   storage->cubemaps.clear();
   storage->shaders.clear();
+
   storage->meshes.clear();
   storage->materials.clear();
   storage->skyboxes.clear();
   storage->models.clear();
   storage->fonts.clear();
   
-  NIKOLA_LOG_INFO("Resource storage \'%s\' was successfully destroyed", storage->name.c_str());
+  NIKOLA_LOG_INFO("Resource storage \'%s\' was successfully cleared", storage->name.c_str());
 }
 
 void resource_storage_destroy(ResourceStorage* storage) {
@@ -311,14 +303,25 @@ void resource_storage_destroy(ResourceStorage* storage) {
     return;
   }
 
-  // @TODO: Get rid of every resource in the storage
-  // DESTROY_RESOURCE_MAP(storage, buffers, gfx_buffer_destroy);
-  // DESTROY_RESOURCE_MAP(storage, textures, gfx_texture_destroy);
-  // DESTROY_RESOURCE_MAP(storage, cubemaps, gfx_cubemap_destroy);
-  // DESTROY_RESOURCE_MAP(storage, shaders, gfx_shader_destroy);
+  String storage_name = storage->name; // @FIX (String): Copying around strings? Great.
+
+  // Destroy core resources
+  DESTROY_CORE_RESOURCE_MAP(storage, buffers, gfx_buffer_destroy);
+  DESTROY_CORE_RESOURCE_MAP(storage, textures, gfx_texture_destroy);
+  DESTROY_CORE_RESOURCE_MAP(storage, cubemaps, gfx_cubemap_destroy);
+  DESTROY_CORE_RESOURCE_MAP(storage, shaders, gfx_shader_destroy);
+
+  // Destroy compound resources
+  DESTROY_COMP_RESOURCE_MAP(storage, meshes);
+  DESTROY_COMP_RESOURCE_MAP(storage, materials);
+  DESTROY_COMP_RESOURCE_MAP(storage, skyboxes);
+  DESTROY_COMP_RESOURCE_MAP(storage, models);
+  DESTROY_COMP_RESOURCE_MAP(storage, fonts);
 
   s_manager.storages.erase(storage->name);
-  delete storage; //memory_free(storage);
+  delete storage;
+  
+  NIKOLA_LOG_INFO("Resource storage \'%s\' was successfully destroyed", storage_name.c_str());
 }
 
 ResourceID resource_storage_push_buffer(ResourceStorage* storage, const GfxBufferDesc& buff_desc) {
@@ -480,8 +483,7 @@ ResourceID resource_storage_push_mesh(ResourceStorage* storage,
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
   // Allocate the mesh
-  Mesh* mesh = (Mesh*)memory_allocate(sizeof(Mesh));
-  memory_zero(mesh, sizeof(Mesh));
+  Mesh* mesh = new Mesh{};
 
   // Use the loader to set up the mesh
   mesh_loader_load(storage, mesh, vertex_buffer_id, vertex_type, index_buffer_id, indices_count);
@@ -506,8 +508,7 @@ ResourceID resource_storage_push_mesh(ResourceStorage* storage, const MeshType t
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
   // Allocate the mesh
-  Mesh* mesh = (Mesh*)memory_allocate(sizeof(Mesh));
-  memory_zero(mesh, sizeof(Mesh));
+  Mesh* mesh = new Mesh{};
 
   // Use the loader to set up the mesh
   mesh_loader_load(storage, mesh, type);
@@ -535,8 +536,7 @@ ResourceID resource_storage_push_material(ResourceStorage* storage,
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
   
   // Allocate the material
-  Material* material = (Material*)memory_allocate(sizeof(Material));
-  memory_zero(material, sizeof(Material));
+  Material* material = new Material{};
 
   // Use the loader to set up the material
   material_loader_load(storage, material, diffuse_id, specular_id, shader_id);
@@ -560,8 +560,7 @@ ResourceID resource_storage_push_skybox(ResourceStorage* storage, const Resource
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
   // Allocate the skybox
-  Skybox* skybox = (Skybox*)memory_allocate(sizeof(Skybox));
-  memory_zero(skybox, sizeof(Skybox));
+  Skybox* skybox = new Skybox{};
   
   // Use the loader to set up the skybox
   skybox_loader_load(storage, skybox, cubemap_id);
@@ -588,9 +587,8 @@ ResourceID resource_storage_push_model(ResourceStorage* storage, const FilePath&
   NBRFile nbr;
   nbr_file_load(&nbr, storage->parent_dir / nbr_path);
 
-  // @TODO: Allocate the model
-  Model* model = new Model{};//(Model*)memory_allocate(sizeof(Model));
-  // memory_zero(model, sizeof(Model));
+  // Allocate the model
+  Model* model = new Model{};
   
   // Convert the NBR format to a valid model
   NBRModel* nbr_model = (NBRModel*)nbr.body_data; 

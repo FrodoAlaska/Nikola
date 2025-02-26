@@ -1,10 +1,11 @@
 # (Engine) TODO: 
 * General 
-    - Check the todos in the code and fix little things
     - Probably create my own `DynamicAllocater` instead of the STL one
+* NBR 
+    - Fix the memory leaks when loading 
+    - Be able to rename an output file 
 * Resources 
-    - Fix the various memory leaks in `NBR` and `resource_manager`
-    - Unload the resources without crash
+    - Weird texture placements in certain models
     - Better resource IDs generation. Maybe use handles? Perhaps make the IDs more like indices?
     - Font loading 
     - A memory pool/arena for resources?
@@ -12,6 +13,7 @@
     - Better materials/shaders. Have preset variable names as consts that could be given to functions which will send the intended uniforms so the shader.
     - Maybe let the material have a hashmap to store all of the uniform locations a priori?
     - Basic lighting
+    - Have a basic default teture to be used for various reasons?
     - Create a `RendererDefault` struct to hold all of the initial default values.
     - Batch rendering 
     - Render 2D and 3D fonts
@@ -24,6 +26,7 @@
     - Batch logging? 
     - Log into a file
 * GFX 
+    - Perhaps have a `GfxShaderDesc` where all of the source strings for the shaders exist. If one of the shader's source is `nullptr`, then we know it does not need to be added.
     - Seperate the `gl_backend.cpp` file into several files for better visualization
     - A function to sub image or slice a texture 
     - Put some thought into instancing
