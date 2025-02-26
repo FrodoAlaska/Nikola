@@ -1,11 +1,14 @@
 # (Engine) TODO: 
+* Demo 
+    - Just a bunch of people spining while the Nutcracker by Tchaikovsy plays in the background. First there's only one model that spins, then a few, then a whole _building_, and so on.
+
 * General 
-    - Probably create my own `DynamicAllocater` instead of the STL one
+    - Probably create my own `DynamicArray` instead of the STL one
     - The filesystem is, well, fucked. It crashes when we pass our flags to the `open` function
 * NBR 
     - Be able to rename an output file 
 * Resources 
-    - Weird texture placements in certain models
+    - Document the NBR section
     - Better resource IDs generation. Maybe use handles? Perhaps make the IDs more like indices?
     - Font loading 
     - A memory pool/arena for resources?

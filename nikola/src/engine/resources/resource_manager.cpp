@@ -170,7 +170,7 @@ static void convert_from_nbr(ResourceStorage* storage, const NBRModel* nbr, Mode
     GfxTextureDesc desc; 
     desc.format    = GFX_TEXTURE_FORMAT_RGBA8; 
     desc.filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST; 
-    desc.wrap_mode = GFX_TEXTURE_WRAP_CLAMP;
+    desc.wrap_mode = GFX_TEXTURE_WRAP_MIRROR;
     convert_from_nbr(&nbr->textures[i], &desc);
   
     texture_ids.push_back(resource_storage_push_texture(storage, desc));
