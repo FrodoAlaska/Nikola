@@ -650,9 +650,13 @@ const i16 NBR_VALID_MINOR_VERSION = 1;
 ///---------------------------------------------------------------------------------------------------------------------
 /// NBRTexture
 struct NBRTexture {
+  /// The width and height of the texture.
   u32 width, height; 
+
+  /// The number of channel components per pixel.
   i8 channels; 
 
+  /// The raw pixel data.
   void* pixels = nullptr;
 };
 /// NBRTexture
@@ -661,10 +665,18 @@ struct NBRTexture {
 ///---------------------------------------------------------------------------------------------------------------------
 /// NBRCubemap
 struct NBRCubemap {
+  /// The width and height of all of the faces.
   u32 width, height; 
+  
+  /// The number of channel components per pixel.
   i8 channels; 
+  
+  /// The amount of faces in `pixels`.
   u8 faces_count;
 
+  /// An array of raw pixel data for each face.
+  ///
+  /// @NOTE: This array can only go to `CUBEMAP_FACES_MAX`;
   u8* pixels[CUBEMAP_FACES_MAX];
 };
 /// NBRCubemap
@@ -679,11 +691,23 @@ using NBRShader = String;
 ///---------------------------------------------------------------------------------------------------------------------
 /// NBRMaterial
 struct NBRMaterial {
+  /// An RGB value array of the ambient color.
   f32 ambient[3];
+  
+  /// An RGB value array of the diffuse color.
   f32 diffuse[3];
+  
+  /// An RGB value array of the specular color.
   f32 specular[3];
 
+  /// The diffuse index into the `textures` array in `NBRModel`.
+  ///
+  /// @NOTE: This index will be `0` if there is no diffuse texture present
   i8 diffuse_index;
+  
+  /// The diffuse index into the `textures` array in `NBRModel`.
+  ///
+  /// @NOTE: This index will be `0` if there is no specular texture present
   i8 specular_index;
 };
 /// NBRMaterial
@@ -692,14 +716,26 @@ struct NBRMaterial {
 ///---------------------------------------------------------------------------------------------------------------------
 /// NBRMesh 
 struct NBRMesh {
+  /// A value from the `VertexType` enum to denote the 
+  /// stride of `vertices`.
   u8 vertex_type; 
 
+  /// The total number of vertices in `vertices`.
   u32 vertices_count; 
+  
+  /// A `float` array of all the vertices.
   f32* vertices;
 
+  /// The total number of indices in `indices`. 
   u32 indices_count; 
+
+  /// An `unsigned int` array of the indices.
   u32* indices;
 
+  /// An index into the `matrices` array in `NBRModel`. 
+  ///
+  /// @NOTE: This value will be `0` if no materials are present 
+  /// in this mesh. 
   u8 material_index;
 };
 /// NBRMesh 
@@ -708,13 +744,22 @@ struct NBRMesh {
 ///---------------------------------------------------------------------------------------------------------------------
 /// NBRModel 
 struct NBRModel {
+  /// The total number of meshes in the `meshes` array.
   u16 meshes_count;
+
+  /// An array of `NBRMesh`.
   NBRMesh* meshes;
 
+  /// The total number of materials in `materials`.
   u8 materials_count; 
+
+  /// An array of `NBRMaterial`.
   NBRMaterial* materials;
 
+  /// The total number of textures in `textures`.
   u8 textures_count;
+
+  /// An array of `NBRTexture`.
   NBRTexture* textures;
 };
 /// NBRModel 
@@ -723,22 +768,25 @@ struct NBRModel {
 ///---------------------------------------------------------------------------------------------------------------------
 /// NBRFile 
 struct NBRFile {
+  /// A reference to the initial given file path.
   FilePath path;
+
+  /// The internal handle for the opened file.
   File file_handle;
 
-  /// A 1-byte value to correctly identify an NBR file
+  /// A 1-byte value to correctly identify an NBR file.
   u8 identifier;                 
 
-  /// A 2-bytes value for the major version of the file  
+  /// A 2-bytes value for the major version of the file.
   i16 major_version;
   
-  /// A 2-bytes value for the minor version of the file  
+  /// A 2-bytes value for the minor version of the file. 
   i16 minor_version; 
 
-  /// A 2-bytes value for the resource type to be parsed
+  /// A 2-bytes value for the resource type to be parsed.
   i16 resource_type;                
 
-  /// The actual data of the file
+  /// The actual data of the file.
   void* body_data; 
 };
 /// NBRFile
@@ -747,16 +795,23 @@ struct NBRFile {
 ///---------------------------------------------------------------------------------------------------------------------
 /// NBR file functions
 
+/// Open and load the appropriate data found at `path` into the given `nbr`.
 NIKOLA_API void nbr_file_load(NBRFile* nbr, const FilePath& path);
 
+/// Reclaim/free any memory consumed by `nbr`.
 NIKOLA_API void nbr_file_unload(NBRFile& nbr);
 
+/// Save the given `texture` at `path` using `nbr`'s information.
 NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const FilePath& path);
 
+
+/// Save the given `cubemap` at `path` using `nbr`'s information.
 NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path);
 
+/// Save the given `shader` at `path` using `nbr`'s information.
 NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FilePath& path);
 
+/// Save the given `model` at `path` using `nbr`'s information.
 NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRModel& model, const FilePath& path);
 
 /// NBR file functions

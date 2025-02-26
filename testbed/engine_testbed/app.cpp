@@ -65,7 +65,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   app->skybox_material_id = nikola::resource_storage_push_material(app->storage, diffuse_id, nikola::INVALID_RESOURCE, sky_shader_id);
 
   // Model init
-  app->model_id = nikola::resource_storage_push_model(app->storage, "Karner_C.nbr");
+  app->model_id = nikola::resource_storage_push_model(app->storage, "bridge.nbr");
 
   return app;
 }
