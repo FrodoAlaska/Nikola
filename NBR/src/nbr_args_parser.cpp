@@ -210,7 +210,8 @@ static void create_nbr_shader() {
 
     // Save the shader
     nikola::nbr_file_save(nbr, shader, final_path);
-
+  
+    shader_loader_unload(shader);
     printf("Converted shader \'%s\' to \'%s\'...\n", path.string().c_str(), final_path.string().c_str());
   }
 }

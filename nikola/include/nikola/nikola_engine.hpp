@@ -684,7 +684,19 @@ struct NBRCubemap {
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// NBRShader
-using NBRShader = String;
+struct NBRShader {
+  /// The total amount of characters in the `vertex_source` string.
+  u16 vertex_length; 
+
+  /// The full string representation of the vertex shader.
+  i8* vertex_source; 
+
+  /// The total amount of characters in the `pixel_source` string.
+  u16 pixel_length; 
+  
+  /// The full string representation of the pixel/fragment shader.
+  i8* pixel_source;
+};
 /// NBRShader
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -1087,9 +1099,9 @@ NIKOLA_API ResourceID resource_storage_push_cubemap(ResourceStorage* storage,
                                                     const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
                                                     const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
 
-/// Allocate a new `GfxShader` using `shader_src`, store it in `storage`, and return a `ResourceID` 
+/// Allocate a new `GfxShader` using `shader_desc`, store it in `storage`, and return a `ResourceID` 
 /// to identify it.
-NIKOLA_API ResourceID resource_storage_push_shader(ResourceStorage* storage, const String& shader_src);
+NIKOLA_API ResourceID resource_storage_push_shader(ResourceStorage* storage, const GfxShaderDesc& shader_desc);
 
 /// Allocate a new `GfxShader` using the shader retrieved from the `nbr_path`, 
 /// store it in `storage`, and return a `ResourceID` to identify it.

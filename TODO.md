@@ -1,10 +1,11 @@
 # (Engine) TODO: 
 * Demos
     - Just a bunch of people spining while the Nutcracker by Tchaikovsy plays in the background. First there's only one model that spins, then a few, then a whole _building_, and so on.
-
+    - An ominious spinning behelit under some nice lighting effects with the Guts theme playing in the background.
 * General 
     - Probably create my own `DynamicArray` instead of the STL one
     - The filesystem is, well, fucked. It crashes when we pass our flags to the `open` function
+    - Perhaps a better wrapper around `std::filesystem`.
 * NBR 
     - Be able to rename an output file 
 * Resources 
@@ -28,7 +29,6 @@
     - Batch logging? 
     - Log into a file
 * GFX 
-    - Perhaps have a `GfxShaderDesc` where all of the source strings for the shaders exist. If one of the shader's source is `nullptr`, then we know it does not need to be added.
     - Seperate the `gl_backend.cpp` file into several files for better visualization
     - A function to sub image or slice a texture 
     - Put some thought into instancing

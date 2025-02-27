@@ -437,14 +437,15 @@ ResourceID resource_storage_push_cubemap(ResourceStorage* storage,
   return id;
 }
 
-ResourceID resource_storage_push_shader(ResourceStorage* storage, const String& shader_src) {
+ResourceID resource_storage_push_shader(ResourceStorage* storage, const GfxShaderDesc& shader_desc) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
   ResourceID id        = generate_id();
-  storage->shaders[id] = gfx_shader_create(s_manager.gfx_context, shader_src.c_str());
+  storage->shaders[id] = gfx_shader_create(s_manager.gfx_context, shader_desc);
 
   NIKOLA_LOG_INFO("Storage \'%s\' pushed shader:", storage->name.c_str());
-  NIKOLA_LOG_INFO("     Source length  = %zu", shader_src.size());
+  NIKOLA_LOG_INFO("     Vertex source length = %zu", strlen(shader_desc.vertex_source));
+  NIKOLA_LOG_INFO("     Pixel source length  = %zu", strlen(shader_desc.pixel_source));
   return id;
 }
 
@@ -459,18 +460,20 @@ ResourceID resource_storage_push_shader(ResourceStorage* storage, const FilePath
   NIKOLA_ASSERT((nbr.resource_type == RESOURCE_TYPE_SHADER), "Expected RESOURCE_TYPE_SHADER");
 
   // Convert the NBR format to a valid shader
-  const char* nbr_shader  = (const char*)nbr.body_data;
+  NBRShader* nbr_shader  = (NBRShader*)nbr.body_data;
+  GfxShaderDesc shader_desc = {
+    .vertex_source = nbr_shader->vertex_source,
+    .pixel_source  = nbr_shader->pixel_source,
+  };
 
   // Create the shader
-  ResourceID id        = generate_id();
-  storage->shaders[id] = gfx_shader_create(s_manager.gfx_context, nbr_shader);
+  ResourceID id = resource_storage_push_shader(storage, shader_desc);
 
   // Remember to close the NBR
   nbr_file_unload(nbr);
 
   // New shader added!
   NIKOLA_LOG_INFO("Storage \'%s\' pushed shader:", storage->name.c_str());
-  NIKOLA_LOG_INFO("     Source length  = %zu", String(nbr_shader).size());
   NIKOLA_LOG_INFO("     Path           = %s", nbr_path.string().c_str());
   return id;
 }

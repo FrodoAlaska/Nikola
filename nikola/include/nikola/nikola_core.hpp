@@ -1590,6 +1590,18 @@ struct GfxBufferDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// GfxShaderDesc
+struct GfxShaderDesc {
+  /// The full source code for the vertex shader. 
+  const i8* vertex_source = nullptr;
+
+  /// The full source code for the pixel/fragment shader. 
+  const i8* pixel_source  = nullptr;
+};
+/// GfxShaderDesc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// GfxLayoutDesc
 struct GfxLayoutDesc {
   /// The name of the layout attribute. 
@@ -1849,20 +1861,14 @@ NIKOLA_API void gfx_buffer_update(GfxBuffer* buff, const sizei offset, const siz
 ///---------------------------------------------------------------------------------------------------------------------
 /// Shader functions 
 
-/// Allocate and return a `GfxShader`, passing the given `src`. 
-/// 
-/// @NOTE: For glsl (OpenGL), both the vertex and the fragment shader should be combined into one. 
-/// The function will look for the `#version` declarative to separate the two or more shaders. The first 
-/// one will be the vertex shader and the second will be the pixel/fragment shader. 
-/// 
-/// @NOTE: Unfortunately, geometry shaders are not currently supported.
-NIKOLA_API GfxShader* gfx_shader_create(GfxContext* gfx, const i8* src);
+/// Allocate and return a `GfxShader`, using the information given in `desc`. 
+NIKOLA_API GfxShader* gfx_shader_create(GfxContext* gfx, const GfxShaderDesc& desc);
 
 /// Free/reclaim any memory consumed by `shader`.
 NIKOLA_API void gfx_shader_destroy(GfxShader* shader);
 
-/// Retrieve the internal shader source string
-NIKOLA_API const i8* gfx_shader_get_source(GfxShader* shader);
+/// Retrieve the internal `GfxShaderDesc` of `shader`.
+NIKOLA_API GfxShaderDesc& gfx_shader_get_source(GfxShader* shader);
 
 /// Attaches the uniform `buffer` to the `shader` of type `type` to point `bind_point`. 
 /// Any updates to `buffer` will have an effect on the `shader`.

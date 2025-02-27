@@ -78,6 +78,8 @@ void image_loader_unload_cubemap(nikola::NBRCubemap& cubemap);
 
 bool shader_loader_load(nikola::NBRShader* shader, const nikola::FilePath& path);
 
+void shader_loader_unload(nikola::NBRShader& shader);
+
 /// Shader loader functions
 /// ----------------------------------------------------------------------
 

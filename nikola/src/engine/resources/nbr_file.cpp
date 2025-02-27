@@ -57,15 +57,17 @@ static void write_cubemap(NBRFile& nbr, const NBRCubemap& cubemap) {
 }
 
 static void write_shader(NBRFile& nbr, const NBRShader& shader) {
-  // Convert the given shader to an NBR format
-  u32 src_length = (u32)shader.length();
-  i8* src_str    = (i8*)shader.c_str();
+  // Save the length of the vertex shader's code string 
+  file_write_bytes(nbr.file_handle, &shader.vertex_length, sizeof(u16));
 
-  // Save the length of the shader's code string 
-  file_write_bytes(nbr.file_handle, &src_length, sizeof(src_length));
+  // Save the vertex shader's code string
+  file_write_bytes(nbr.file_handle, shader.vertex_source, sizeof(i8) * shader.vertex_length);
+  
+  // Save the length of the pixel shader's code string 
+  file_write_bytes(nbr.file_handle, &shader.pixel_length, sizeof(u16));
 
-  // Save the shader's code string
-  file_write_bytes(nbr.file_handle, src_str, src_length);
+  // Save the pixel shader's code string
+  file_write_bytes(nbr.file_handle, shader.pixel_source, sizeof(i8) * shader.pixel_length);
 }
 
 static void write_material(NBRFile& nbr, const NBRMaterial& material) {
@@ -153,20 +155,23 @@ static void read_cubemap(NBRFile& nbr, NBRCubemap* cubemap) {
 }
 
 static void read_shader(NBRFile& nbr, NBRShader* shader) {
-  // Load the length
-  u32 src_length = 0;
-  file_read_bytes(nbr.file_handle, &src_length, sizeof(src_length));
-  src_length += 1; 
+  // Load the vertex length
+  file_read_bytes(nbr.file_handle, &shader->vertex_length, sizeof(u16));
+  shader->vertex_length += 1;
 
-  // Load the src string
-  i8* src_str = (i8*)memory_allocate(src_length); 
-  file_read_bytes(nbr.file_handle, src_str, src_length - 1);
-  src_str[src_length - 1] = '\0';
+  // Load the vertex source string
+  shader->vertex_source = (i8*)memory_allocate(shader->vertex_length); 
+  file_read_bytes(nbr.file_handle, shader->vertex_source, shader->vertex_length - 1);
+  shader->vertex_source[shader->vertex_length - 1] = '\0';
  
-  *shader = String(src_str, src_length);
+  // Load the pixel length
+  file_read_bytes(nbr.file_handle, &shader->pixel_length, sizeof(u16));
+  shader->pixel_length += 1;
 
-  // Goodbye, extra string
-  memory_free(src_str);
+  // Load the pixel source string
+  shader->pixel_source = (i8*)memory_allocate(shader->pixel_length); 
+  file_read_bytes(nbr.file_handle, shader->pixel_source, shader->pixel_length - 1);
+  shader->pixel_source[shader->pixel_length - 1] = '\0';
 }
 
 static void read_material(NBRFile& nbr, NBRMaterial* material) {
@@ -251,8 +256,8 @@ static void load_shader(NBRFile& nbr) {
   read_shader(nbr, &shader); 
 
   // Allocate some space for the resource and assign it
-  nbr.body_data = memory_allocate(shader.size());
-  memory_copy(nbr.body_data, shader.c_str(), shader.size());
+  nbr.body_data = memory_allocate(sizeof(NBRShader));
+  memory_copy(nbr.body_data, &shader, sizeof(NBRShader));
 }
 
 static void load_model(NBRFile& nbr) {
@@ -276,6 +281,13 @@ static void unload_cubemap(NBRFile& nbr) {
   for(sizei i = 0; i < cube->faces_count; i++) {
     memory_free(cube->pixels[i]);
   }
+}
+
+static void unload_shader(NBRFile& nbr) {
+  NBRShader* shader = (NBRShader*)nbr.body_data;
+
+  memory_free(shader->vertex_source);
+  memory_free(shader->pixel_source);
 }
 
 static void unload_model(NBRFile& nbr) {
@@ -326,6 +338,7 @@ static void unload_by_type(NBRFile& nbr) {
       unload_cubemap(nbr);
       break;
     case RESOURCE_TYPE_SHADER:
+      unload_shader(nbr);
       break;
     case RESOURCE_TYPE_MODEL:
       unload_model(nbr);

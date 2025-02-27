@@ -72,15 +72,10 @@ struct GfxBuffer {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxShader
 struct GfxShader {
-  GfxContext* gfx = nullptr;
+  GfxContext* gfx    = nullptr;
+  GfxShaderDesc desc = {};
 
   u32 id, vert_id, frag_id;
-
-  i8* vert_src; 
-  i8* frag_src;
-  i8* full_src;
-  
-  i32 vert_src_len, frag_src_len;
 };
 /// GfxShader
 ///---------------------------------------------------------------------------------------------------------------------
@@ -665,57 +660,6 @@ static sizei set_buffer_layout(const u32 vao, const GfxLayoutDesc* layout, const
   return stride;
 }
 
-static void seperate_shader_src(const i8* src, GfxShader* shader) {
-  sizei src_len = strlen(src);
-  
-  shader->full_src = (i8*)memory_allocate(src_len + 1);
-  strcpy(shader->full_src, src); 
-
-  sizei vert_start = 0;
-  sizei frag_start = 0;
-
-  // Find the vertex start
-  for(sizei i = 0; i < src_len; i++) {
-    if(src[i] != '#') { 
-      continue;
-    }
-
-    // We found the start
-    vert_start = i; 
-    break;
-  }
-
-  // Find the frag start.
-  // There's no point going from the beginning of the string. 
-  // Just start from where we last stopped.
-  for(sizei i = vert_start + 1; i < src_len; i++) {
-    if(src[i] != '#') { 
-      continue;
-    }
-
-    // We found the start
-    frag_start = i; 
-    break;
-  }
-
-  // Calculate where each shader ends
-  sizei frag_end = src_len;
-
-  shader->frag_src_len = frag_end - frag_start;
-  shader->vert_src_len = frag_start - 1;
-
-  // // Allocate new strings
-  shader->vert_src = (i8*)memory_allocate(shader->vert_src_len);
-  memory_zero(shader->vert_src, shader->vert_src_len);
-
-  shader->frag_src = (i8*)memory_allocate(shader->frag_src_len);
-  memory_zero(shader->frag_src, shader->frag_src_len);
-
-  // Copying the correct strings over 
-  memory_copy(shader->vert_src, src, shader->vert_src_len);
-  memory_copy(shader->frag_src, &src[frag_start], shader->frag_src_len);
-}
-
 static void check_shader_compile_error(const sizei shader) {
   i32 success;
   i8 log_info[512];
@@ -1110,25 +1054,29 @@ void gfx_buffer_update(GfxBuffer* buff, const sizei offset, const sizei size, co
 ///---------------------------------------------------------------------------------------------------------------------
 /// Shader functions 
 
-GfxShader* gfx_shader_create(GfxContext* gfx, const i8* src) {
+GfxShader* gfx_shader_create(GfxContext* gfx, const GfxShaderDesc& desc) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
+  NIKOLA_ASSERT(desc.vertex_source, "Invalid Vertex source passed to the shader");
+  NIKOLA_ASSERT(desc.pixel_source, "Invalid Pixel source passed to the shader");
 
   GfxShader* shader = (GfxShader*)memory_allocate(sizeof(GfxShader));
   memory_zero(shader, sizeof(GfxShader));
 
-  shader->gfx = gfx;
+  shader->gfx  = gfx;
+  shader->desc = desc;
 
-  seperate_shader_src(src, shader);
+  i32 vert_src_len = strlen(shader->desc.vertex_source);
+  i32 frag_src_len = strlen(shader->desc.pixel_source);
 
   // Vertex shader
   shader->vert_id = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(shader->vert_id, 1, &shader->vert_src, &shader->vert_src_len); 
+  glShaderSource(shader->vert_id, 1, &shader->desc.vertex_source, &vert_src_len); 
   glCompileShader(shader->vert_id);
   check_shader_compile_error(shader->vert_id);
     
   // Fragment shader
   shader->frag_id = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(shader->frag_id, 1, &shader->frag_src, &shader->frag_src_len); 
+  glShaderSource(shader->frag_id, 1, &shader->desc.pixel_source, &frag_src_len); 
   glCompileShader(shader->frag_id);
   check_shader_compile_error(shader->frag_id);
 
@@ -1153,16 +1101,12 @@ void gfx_shader_destroy(GfxShader* shader) {
     return;
   }
   
-  memory_free(shader->vert_src);
-  memory_free(shader->frag_src);
-  memory_free(shader->full_src);
   glDeleteProgram(shader->id);
-
   memory_free(shader);
 }
 
-const i8* gfx_shader_get_source(GfxShader* shader) {
-  return shader->full_src;
+GfxShaderDesc& gfx_shader_get_source(GfxShader* shader) {
+  return shader->desc;
 }
 
 void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer, const u32 bind_point) {
