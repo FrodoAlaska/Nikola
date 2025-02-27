@@ -30,13 +30,18 @@ static void render_mesh(const RenderCommand& command) {
   Mesh* mesh         = resource_storage_get_mesh(command.storage, command.renderable_id);
   Material* material = resource_storage_get_material(command.storage, command.material_id);
 
-  material_set_transform(material, command.transform);
+  // Setting uniforms
+  material->model_matrix = command.transform.transform; 
 
-  mesh->pipe_desc.shader = material->shader;
-  
+  // Uploading the uniforms
+  material_use(material);  
+
+  // Setting up the pipeline
+  mesh->pipe_desc.shader         = material->shader;
   mesh->pipe_desc.textures[0]    = material->diffuse_map;
-  mesh->pipe_desc.textures_count = 1;
+  mesh->pipe_desc.textures_count = material->diffuse_map ? 1 : 0; // Only set a texutre if there's one in the material
 
+  // Render the mesh
   gfx_context_apply_pipeline(s_renderer.context, mesh->pipe, mesh->pipe_desc);
   gfx_pipeline_draw_index(mesh->pipe);
 }
@@ -44,17 +49,11 @@ static void render_mesh(const RenderCommand& command) {
 static void render_skybox(const RenderCommand& command) {
   Skybox* skybox     = resource_storage_get_skybox(command.storage, command.renderable_id); 
   Material* material = resource_storage_get_material(command.storage, command.material_id);
-  
-  // Set the transform matrix and the constant/uniform buffer of the material. 
-  // We do this mess to remove the translation part of the matrix, taking 
-  // only the upper-left 3x3 matrix (that's where the rotation lives).
-  Mat4 new_proj = s_renderer.camera.projection * Mat4(Mat3(s_renderer.camera.view));  
- 
-  // @TODO: Maybe not the best
-  material_set_matrices_buffer(material, new_proj);
-  
+
+  // Setting up the pipeline
   skybox->pipe_desc.shader = material->shader;
 
+  // Render the skybox
   gfx_context_apply_pipeline(s_renderer.context, skybox->pipe, skybox->pipe_desc);
   gfx_pipeline_draw_vertex(skybox->pipe);
 }
@@ -63,17 +62,30 @@ static void render_model(const RenderCommand& command) {
   Model* model  = resource_storage_get_model(command.storage, command.renderable_id);
   Material* mat = resource_storage_get_material(command.storage, command.material_id);
 
-  material_set_transform(mat, command.transform);
-  
   for(sizei i = 0; i < model->meshes.size(); i++) {
     Mesh* mesh              = model->meshes[i];
     Material* mesh_material = model->materials[model->material_indices[i]]; 
     mesh_material->shader   = mat->shader; 
 
+    // Setting uniforms
+    //
+    // @NOTE: Each material has its own valid colors and model. However, we also 
+    // want OUR own materials to influence the model. So, we _apply_ our model matrix 
+    // and colors to the material.
+    mat->model_matrix   = command.transform.transform; 
+    mesh_material->ambient_color  = mat->ambient_color; 
+    mesh_material->diffuse_color  = mat->diffuse_color; 
+    mesh_material->specular_color = mat->specular_color; 
+
+    // Upload the uniforms 
+    material_use(mat);
+
+    // Setting up the pipeline for each mesh
     mesh->pipe_desc.shader         = mesh_material->shader;
     mesh->pipe_desc.textures[0]    = mesh_material->diffuse_map;
     mesh->pipe_desc.textures_count = 1;
 
+    // Render the mesh
     gfx_context_apply_pipeline(s_renderer.context, mesh->pipe, mesh->pipe_desc);
     gfx_pipeline_draw_index(mesh->pipe);
   }
@@ -97,7 +109,7 @@ void renderer_init(Window* window, const Vec4& clear_clear) {
 
   GfxBufferDesc buff_desc = {
     .data  = nullptr, 
-    .size  = sizeof(Mat4),
+    .size  = sizeof(Mat4) * 2,
     .type  = GFX_BUFFER_UNIFORM,
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
@@ -130,7 +142,10 @@ const GfxBuffer* renderer_default_matrices_buffer() {
 
 void renderer_pre_pass(Camera& cam) {
   s_renderer.camera = cam;
-  gfx_buffer_update(s_renderer.matrices_buffer, 0, sizeof(Mat4), mat4_raw_data(cam.view_projection));
+
+  // Updating the internal matrices buffer for each shader
+  gfx_buffer_update(s_renderer.matrices_buffer, 0, sizeof(Mat4), mat4_raw_data(cam.view));
+  gfx_buffer_update(s_renderer.matrices_buffer, sizeof(Mat4), sizeof(Mat4), mat4_raw_data(cam.projection));
 }
 
 void renderer_begin_pass() {

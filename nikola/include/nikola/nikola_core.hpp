@@ -1879,6 +1879,8 @@ NIKOLA_API GfxShaderDesc& gfx_shader_get_source(GfxShader* shader);
 NIKOLA_API void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer, const u32 bind_point);
 
 /// Only for GLSL (OpenGL), retrieve the location of the `uniform_name` in the `shader`.
+///
+/// @NOTE: If `uniform_name` is not found within `shader`, the function will return `-1`.
 NIKOLA_API i32 gfx_glsl_get_uniform_location(GfxShader* shader, const i8* uniform_name);
 
 /// Only for GLSL (OpenGL), upload a uniform array with `count` elements of type `type` with `data` at `location` to `shader`. 

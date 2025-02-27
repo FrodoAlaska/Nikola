@@ -854,16 +854,16 @@ const sizei MATERIAL_LIGHTING_BUFFER_INDEX = 1;
 const u32 MATERIAL_UNIFORMS_MAX           = 4;
 
 /// The name of the ambient color uniform in materials. 
-#define MATERIAL_UNIFORM_AMBIENT_COLOR  "u_ambient_color" 
+const const i8* MATERIAL_UNIFORM_AMBIENT_COLOR   = "u_ambient_color"; 
 
 /// The name of the diffuse color uniform in materials. 
-#define MATERIAL_UNIFORM_DIFFUSE_COLOR  "u_diffuse_color" 
+const i8* MATERIAL_UNIFORM_DIFFUSE_COLOR   = "u_diffuse_color"; 
 
 /// The name of the specular color uniform in materials. 
-#define MATERIAL_UNIFORM_SPECULAR_COLOR "u_specular_color"
+const i8* MATERIAL_UNIFORM_SPECULAR_COLOR  = "u_specular_color"; 
 
 /// The name of the model transform uniform in materials. 
-#define MATERIAL_UNIFORM_MODEL_MATRIX   "u_model" 
+const i8* MATERIAL_UNIFORM_MODEL_MATRIX    = "u_model"; 
 
 /// Resources consts
 ///---------------------------------------------------------------------------------------------------------------------

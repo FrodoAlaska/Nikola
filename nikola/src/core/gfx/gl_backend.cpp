@@ -1118,15 +1118,8 @@ void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxB
 
 i32 gfx_glsl_get_uniform_location(GfxShader* shader, const i8* uniform_name) {
   NIKOLA_ASSERT(shader, "Invalid GfxShader struct passed");
-
-  i32 loc = glGetUniformLocation(shader->id, uniform_name);
   
-  // Cannot do anything with an invalid uniform name
-  if(loc == -1) {
-    NIKOLA_LOG_WARN("Could not find shader uniform with name \'%s\'", uniform_name); 
-  }
-  
-  return loc;
+  return glGetUniformLocation(shader->id, uniform_name);
 }
 
 void gfx_glsl_upload_uniform_array(GfxShader* shader, const i32 location, const sizei count, const GfxLayoutType type, const void* data) {
@@ -1134,6 +1127,7 @@ void gfx_glsl_upload_uniform_array(GfxShader* shader, const i32 location, const 
 
   // Will not do anything with an invalid uniform
   if(location == -1) {
+    NIKOLA_LOG_WARN("Cannot set uniform with location -1");
     return;
   }
 
@@ -1144,37 +1138,37 @@ void gfx_glsl_upload_uniform_array(GfxShader* shader, const i32 location, const 
       glUniform1fv(location, count, (f32*)data);
       break;
     case GFX_LAYOUT_FLOAT2:
-      glUniform1fv(location, count, (f32*)data);
+      glUniform2fv(location, count, (f32*)data);
       break;
     case GFX_LAYOUT_FLOAT3:
-      glUniform1fv(location, count, (f32*)data);
+      glUniform3fv(location, count, (f32*)data);
       break;
     case GFX_LAYOUT_FLOAT4:
-      glUniform1fv(location, count, (f32*)data);
+      glUniform4fv(location, count, (f32*)data);
       break;
     case GFX_LAYOUT_INT1:
       glUniform1iv(location, count, (i32*)data);
       break;
     case GFX_LAYOUT_INT2:
-      glUniform1iv(location, count, (i32*)data);
+      glUniform2iv(location, count, (i32*)data);
       break;
     case GFX_LAYOUT_INT3:
-      glUniform1iv(location, count, (i32*)data);
+      glUniform3iv(location, count, (i32*)data);
       break;
     case GFX_LAYOUT_INT4:
-      glUniform1iv(location, count, (i32*)data);
+      glUniform4iv(location, count, (i32*)data);
       break;
     case GFX_LAYOUT_UINT1:
       glUniform1uiv(location, count, (u32*)data);
       break;
     case GFX_LAYOUT_UINT2:
-      glUniform1uiv(location, count, (u32*)data);
+      glUniform2uiv(location, count, (u32*)data);
       break;
     case GFX_LAYOUT_UINT3:
-      glUniform1uiv(location, count, (u32*)data);
+      glUniform3uiv(location, count, (u32*)data);
       break;
     case GFX_LAYOUT_UINT4:
-      glUniform1uiv(location, count, (u32*)data);
+      glUniform4uiv(location, count, (u32*)data);
       break;
     case GFX_LAYOUT_MAT2:
       glUniformMatrix2fv(location, count, GL_FALSE, (f32*)data);

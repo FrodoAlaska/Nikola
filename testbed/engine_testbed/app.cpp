@@ -120,7 +120,6 @@ void app_render(nikola::App* app) {
   // Render the model
   rnd_cmd.render_type   = nikola::RENDERABLE_TYPE_MODEL; 
   rnd_cmd.renderable_id = app->model_id; 
-  rnd_cmd.material_id   = app->material_id; 
   nikola::renderer_queue_command(rnd_cmd);
   
   // Render the skybox 

@@ -13,8 +13,6 @@
     - Font loading 
     - A memory pool/arena for resources?
 * Renderer 
-    - Better materials/shaders. Have preset variable names as consts that could be given to functions which will send the intended uniforms so the shader.
-    - Maybe let the material have a hashmap to store all of the uniform locations a priori?
     - Basic lighting
     - Have a basic default teture to be used for various reasons?
     - Create a `RendererDefault` struct to hold all of the initial default values.
@@ -32,7 +30,6 @@
     - Seperate the `gl_backend.cpp` file into several files for better visualization
     - A function to sub image or slice a texture 
     - Put some thought into instancing
-    - Add support for geometry shaders
 * Audio 
     - Audio context and audio buffers
 
@@ -47,6 +44,7 @@
 
 # FUTURE PLANS: 
 - (UI) Start working on the editor (basically a wrapper around ImGui)
+- NUSL: Nikola Uniform Shading Language
 - Phyiscs. Yes. Just physics.
 - GPU particles
 - Hot reloading

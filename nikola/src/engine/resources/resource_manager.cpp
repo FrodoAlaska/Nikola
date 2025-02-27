@@ -544,18 +544,17 @@ ResourceID resource_storage_push_material(ResourceStorage* storage,
   // Use the loader to set up the material
   material_loader_load(storage, material, diffuse_id, specular_id, shader_id);
 
-  // Attach a default matrices buffer
-  if(material->shader) {
-    material_attach_uniform(material, MATERIAL_MATRICES_BUFFER_INDEX, s_manager.cached_storage->buffers[s_manager.matrices_buffer]);
-  }
-
   // Create material
   material->storage_ref  = storage; 
   ResourceID id          = generate_id();
   storage->materials[id] = material;
 
-  // New material added!
-  NIKOLA_LOG_INFO("Storage \'%s\' pushed material", storage->name.c_str());
+  // New material added
+  NIKOLA_LOG_INFO("Storage \'%s\' pushed material %p:", storage->name.c_str(), material);
+  NIKOLA_LOG_INFO("     Uniforms count = \'%zu\'", material->uniform_locations.size());
+  NIKOLA_LOG_INFO("     Ambient color  = \'%s\'", vec3_to_string(material->ambient_color).c_str());
+  NIKOLA_LOG_INFO("     Diffuse color  = \'%s\'", vec3_to_string(material->diffuse_color).c_str());
+  NIKOLA_LOG_INFO("     Specular color = \'%s\'", vec3_to_string(material->specular_color).c_str());
   return id;
 }
 
