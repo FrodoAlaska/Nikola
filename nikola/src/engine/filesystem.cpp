@@ -10,8 +10,8 @@ namespace nikola {
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// Private functions
-static std::ios::openmode get_mode(const u32 mode) {
-  std::ios::openmode cpp_mode;
+static std::ios::openmode get_mode(const i32 mode) {
+  std::ios::openmode cpp_mode = 0;
 
   if(IS_BIT_SET(mode, FILE_OPEN_READ)) {
     cpp_mode = (std::ios::openmode)(cpp_mode | std::ios::in);
@@ -173,17 +173,17 @@ bool filepath_is_absolute(const FilePath& path) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// File functions
 
-bool file_open(File* file, const char* path, const u32 mode) {
+bool file_open(File* file, const char* path, const i32 mode) {
   NIKOLA_ASSERT(file, "Cannot open an invalid File handle");
 
-  file->open(path, (std::ios::openmode)(mode));
+  file->open(path, get_mode(mode));
   return file->is_open();
 }
 
-bool file_open(File* file, const FilePath& path, const u32 mode) {
+bool file_open(File* file, const FilePath& path, const i32 mode) {
   NIKOLA_ASSERT(file, "Cannot open an invalid File handle");
 
-  file->open(path, (std::ios::openmode)(mode));
+  file->open(path, get_mode(mode));
   return file->is_open();
 }
 

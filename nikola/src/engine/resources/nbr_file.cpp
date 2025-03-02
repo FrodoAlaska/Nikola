@@ -25,6 +25,24 @@ static bool check_nbr_validity(NBRFile& file, const FilePath& path) {
   return true;
 }
 
+static bool open_for_load(NBRFile& nbr, const FilePath& path) {
+  if(!file_open(&nbr.file_handle, path, (i32)(FILE_OPEN_READ | FILE_OPEN_BINARY))) {
+    NIKOLA_LOG_ERROR("Cannot load NBR file at \'%s\'", path.c_str());
+    return false;
+  }
+
+  return true;
+}
+
+static bool open_for_save(NBRFile& nbr, const FilePath& path) {
+  if(!file_open(&nbr.file_handle, path, (i32)(FILE_OPEN_WRITE | FILE_OPEN_BINARY))) {
+    NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.c_str());
+    return false;
+  }
+
+  return true;
+}
+
 static void write_texture(NBRFile& nbr, const NBRTexture& texture) {
   // Save width and height
   file_write_bytes(nbr.file_handle, &texture.width, sizeof(texture.width));
@@ -393,8 +411,7 @@ void nbr_file_load(NBRFile* nbr, const FilePath& path) {
   NIKOLA_ASSERT((filepath_extension(path) == ".nbr"), "An NBR file with an invalid extension");
 
   // Open the NBR file
-  if(!file_open(&nbr->file_handle, path, (i32)(std::ios::in | std::ios::binary))) {
-    NIKOLA_LOG_ERROR("Cannot load NBR file at \'%s\'", path.c_str());
+  if(!open_for_load(*nbr, path)) {
     return;
   }
 
@@ -432,8 +449,7 @@ void nbr_file_unload(NBRFile& nbr) {
 
 void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const FilePath& path) {
   // Must open the file
-  if(!file_open(&nbr.file_handle, path, (i32)(std::ios::out | std::ios::binary))) {
-    NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.c_str());
+  if(!open_for_save(nbr, path)) {
     return;
   }
 
@@ -450,8 +466,7 @@ void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const FilePath& path
 
 void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path) {
   // Must open the file
-  if(!file_open(&nbr.file_handle, path, (i32)(std::ios::out | std::ios::binary))) {
-    NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.c_str());
+  if(!open_for_save(nbr, path)) {
     return;
   }
 
@@ -468,8 +483,7 @@ void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path
 
 void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FilePath& path) {
   // Must open the file
-  if(!file_open(&nbr.file_handle, path, (i32)(std::ios::out | std::ios::binary))) {
-    NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.c_str());
+  if(!open_for_save(nbr, path)) {
     return;
   }
 
@@ -486,8 +500,7 @@ void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FilePath& path) 
 
 void nbr_file_save(NBRFile& nbr, const NBRModel& model, const FilePath& path) {
   // Must open the file
-  if(!file_open(&nbr.file_handle, path, (i32)(std::ios::out | std::ios::binary))) {
-    NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.c_str());
+  if(!open_for_save(nbr, path)) {
     return;
   }
 

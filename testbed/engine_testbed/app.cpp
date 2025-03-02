@@ -36,7 +36,9 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::camera_create(&app->camera, aspect_ratio, nikola::Vec3(10.0f, 0.0f, 10.0f), nikola::Vec3(-3.0f, 0.0f, 0.0f));
 
   // Resource storage init 
-  app->storage = nikola::resource_storage_create("app_res", "res/nbr");
+  nikola::FilePath current_path = nikola::filesystem_current_path();
+  nikola::FilePath res_path = nikola::filepath_append(current_path, "res\\nbr");
+  app->storage = nikola::resource_storage_create("app_res", res_path);
 
   // Transform init
   nikola::transform_translate(app->transform, nikola::Vec3(10.0f, 0.0f, 10.0f));

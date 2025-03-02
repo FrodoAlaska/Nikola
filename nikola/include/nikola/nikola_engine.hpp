@@ -676,7 +676,7 @@ NIKOLA_API bool filepath_is_absolute(const FilePath& path);
 ///   - `FILE_OPEN_TRUNCATE`   = Open `file` and delete any existing data.
 ///   - `FILE_OPEN_AT_END`     = Open `file` and start at the very end.
 ///   - `FILE_OPEN_READ_WRITE` = Open `file` in read and write mode.
-NIKOLA_API bool file_open(File* file, const char* path, const u32 mode);
+NIKOLA_API bool file_open(File* file, const char* path, const i32 mode);
 
 /// Open `file` with OR'd flags `mode` at `FilePath` `path`, and return `true` if 
 /// the operation was successfull and `false` otherwise.
@@ -689,7 +689,7 @@ NIKOLA_API bool file_open(File* file, const char* path, const u32 mode);
 ///   - `FILE_OPEN_TRUNCATE`   = Open `file` and delete any existing data.
 ///   - `FILE_OPEN_AT_END`     = Open `file` and start at the very end.
 ///   - `FILE_OPEN_READ_WRITE` = Open `file` in read and write mode.
-NIKOLA_API bool file_open(File* file, const FilePath& path, const u32 mode);
+NIKOLA_API bool file_open(File* file, const FilePath& path, const i32 mode);
 
 /// Close `file` if it is open.
 NIKOLA_API void file_close(File& file);

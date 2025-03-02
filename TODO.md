@@ -1,5 +1,5 @@
 # Plan 
-[] 1. Work on the `general` side of the engine TODOs. Fix the filsystem API and have a wrapper around `std::filesystem::path` and replace any code that uses the old API. 
+[X] 1. Work on the `general` side of the engine TODOs. Fix the filsystem API and have a wrapper around `std::filesystem::path` and replace any code that uses the old API. 
 [] 2. Build a wrapper around ImGui and start working on an easy-to-use and completely custommizable editor as well as everything in the `UI` section of the engine TODOs. 
 [] 3. Work to improve the renderer. We are probably going to impelement a deffered renderer in order to improve perforamance and to easily get post-processing effects applied. 
     - Make sure to read a _bunch_ about other renderers. 
