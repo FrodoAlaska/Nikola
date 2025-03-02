@@ -36,7 +36,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::camera_create(&app->camera, aspect_ratio, nikola::Vec3(10.0f, 0.0f, 10.0f), nikola::Vec3(-3.0f, 0.0f, 0.0f));
 
   // Resource storage init 
-  app->storage = nikola::resource_storage_create("app_res", std::filesystem::current_path() / "res" / "nbr");
+  app->storage = nikola::resource_storage_create("app_res", "res/nbr");
 
   // Transform init
   nikola::transform_translate(app->transform, nikola::Vec3(10.0f, 0.0f, 10.0f));
@@ -46,17 +46,17 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   app->mesh_id = nikola::resource_storage_push_mesh(app->storage, nikola::MESH_TYPE_CUBE);
 
   // Diffuse texture init
-  nikola::ResourceID diffuse_id = nikola::resource_storage_push_texture(app->storage, nikola::FilePath("dx11.nbr")); 
+  nikola::ResourceID diffuse_id = nikola::resource_storage_push_texture(app->storage, "dx11.nbr"); 
 
   // Cubemap texture init
-  nikola::ResourceID cubemap_id = nikola::resource_storage_push_cubemap(app->storage, nikola::FilePath("NightSky.nbr"));
+  nikola::ResourceID cubemap_id = nikola::resource_storage_push_cubemap(app->storage, "NightSky.nbr");
 
   // Skybox init
   app->skybox_id = nikola::resource_storage_push_skybox(app->storage, cubemap_id);
 
   // Shader init
-  nikola::ResourceID shader_id     = nikola::resource_storage_push_shader(app->storage, nikola::FilePath("default3d.nbr"));
-  nikola::ResourceID sky_shader_id = nikola::resource_storage_push_shader(app->storage, nikola::FilePath("cubemap.nbr"));
+  nikola::ResourceID shader_id     = nikola::resource_storage_push_shader(app->storage, "default3d.nbr");
+  nikola::ResourceID sky_shader_id = nikola::resource_storage_push_shader(app->storage, "cubemap.nbr");
 
   // Material init
   app->material_id = nikola::resource_storage_push_material(app->storage, diffuse_id, nikola::INVALID_RESOURCE, shader_id);
@@ -65,7 +65,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   app->skybox_material_id = nikola::resource_storage_push_material(app->storage, diffuse_id, nikola::INVALID_RESOURCE, sky_shader_id);
 
   // Model init
-  app->model_id = nikola::resource_storage_push_model(app->storage, "bridge.nbr");
+  app->model_id = nikola::resource_storage_push_model(app->storage, "behelit.nbr");
 
   return app;
 }
@@ -114,8 +114,8 @@ void app_render(nikola::App* app) {
   // }
 
   nikola::transform_translate(rnd_cmd.transform, nikola::Vec3(10.0f, 0.0f, 10.0f));
-  nikola::transform_scale(rnd_cmd.transform, nikola::Vec3(1.0f));
-  nikola::transform_rotate(rnd_cmd.transform, nikola::Vec3(1.0f, 0.0f, 0.0f), -90.0f * nikola::DEG2RAD);
+  nikola::transform_scale(rnd_cmd.transform, nikola::Vec3(0.1f));
+  // nikola::transform_rotate(rnd_cmd.transform, nikola::Vec3(1.0f, 0.0f, 0.0f), -90.0f * nikola::DEG2RAD);
 
   // Render the model
   rnd_cmd.render_type   = nikola::RENDERABLE_TYPE_MODEL; 

@@ -11,14 +11,14 @@ namespace nikola { // Start of nikola
 static bool check_nbr_validity(NBRFile& file, const FilePath& path) {
   // Check for the validity of the identifier
   if(file.identifier != NBR_VALID_IDENTIFIER) {
-    NIKOLA_LOG_ERROR("Invalid identifier found in NBR file at \'%s\'. Expected \'%i\' got \'%i\'", path.string().c_str(), NBR_VALID_IDENTIFIER, file.identifier);
+    NIKOLA_LOG_ERROR("Invalid identifier found in NBR file at \'%s\'. Expected \'%i\' got \'%i\'", path.c_str(), NBR_VALID_IDENTIFIER, file.identifier);
     return false;
   }  
 
   // Check for the validity of the versions
   bool is_valid_version = ((file.major_version == NBR_VALID_MAJOR_VERSION) || (file.minor_version == NBR_VALID_MINOR_VERSION));
   if(!is_valid_version) {
-    NIKOLA_LOG_ERROR("Invalid version found in NBR file at \'%s\'", path.string().c_str());
+    NIKOLA_LOG_ERROR("Invalid version found in NBR file at \'%s\'", path.c_str());
     return false;
   }
 
@@ -324,7 +324,7 @@ static void load_by_type(NBRFile& nbr, const FilePath& path) {
     case RESOURCE_TYPE_FONT:
       break;
     default:
-      NIKOLA_LOG_ERROR("Cannot load specified resource type at NBR file \'%s\'", path.string().c_str());
+      NIKOLA_LOG_ERROR("Cannot load specified resource type at NBR file \'%s\'", path.c_str());
       break;
   }
 }
@@ -390,11 +390,11 @@ static i32 get_texture_channels(GfxTextureFormat format) {
 
 void nbr_file_load(NBRFile* nbr, const FilePath& path) {
   NIKOLA_ASSERT(nbr, "Cannot load an invalid NBR file");
-  NIKOLA_ASSERT((path.extension().string() == ".nbr"), "An NBR file with an invalid extension");
+  NIKOLA_ASSERT((filepath_extension(path) == ".nbr"), "An NBR file with an invalid extension");
 
   // Open the NBR file
   if(!file_open(&nbr->file_handle, path, (i32)(std::ios::in | std::ios::binary))) {
-    NIKOLA_LOG_ERROR("Cannot load NBR file at \'%s\'", path.string().c_str());
+    NIKOLA_LOG_ERROR("Cannot load NBR file at \'%s\'", path.c_str());
     return;
   }
 
@@ -433,7 +433,7 @@ void nbr_file_unload(NBRFile& nbr) {
 void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const FilePath& path) {
   // Must open the file
   if(!file_open(&nbr.file_handle, path, (i32)(std::ios::out | std::ios::binary))) {
-    NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.string().c_str());
+    NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.c_str());
     return;
   }
 
@@ -451,7 +451,7 @@ void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const FilePath& path
 void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path) {
   // Must open the file
   if(!file_open(&nbr.file_handle, path, (i32)(std::ios::out | std::ios::binary))) {
-    NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.string().c_str());
+    NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.c_str());
     return;
   }
 
@@ -469,7 +469,7 @@ void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path
 void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FilePath& path) {
   // Must open the file
   if(!file_open(&nbr.file_handle, path, (i32)(std::ios::out | std::ios::binary))) {
-    NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.string().c_str());
+    NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.c_str());
     return;
   }
 
@@ -487,7 +487,7 @@ void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FilePath& path) 
 void nbr_file_save(NBRFile& nbr, const NBRModel& model, const FilePath& path) {
   // Must open the file
   if(!file_open(&nbr.file_handle, path, (i32)(std::ios::out | std::ios::binary))) {
-    NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.string().c_str());
+    NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.c_str());
     return;
   }
 

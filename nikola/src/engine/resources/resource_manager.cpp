@@ -354,10 +354,10 @@ ResourceID resource_storage_push_texture(ResourceStorage* storage,
                                          const GfxTextureFilter filter, 
                                          const GfxTextureWrap wrap) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
-
+ 
   // Load the NBR file
   NBRFile nbr;
-  nbr_file_load(&nbr, storage->parent_dir / nbr_path);
+  nbr_file_load(&nbr, filepath_append(storage->parent_dir, nbr_path));
 
   // Make sure it is the correct resource type
   NIKOLA_ASSERT((nbr.resource_type == RESOURCE_TYPE_TEXTURE), "Expected RESOURCE_TYPE_TEXTURE");
@@ -382,7 +382,7 @@ ResourceID resource_storage_push_texture(ResourceStorage* storage,
   NIKOLA_LOG_INFO("Storage \'%s\' pushed texture:", storage->name.c_str());
   NIKOLA_LOG_INFO("     Size = %i X %i", tex_desc.width, tex_desc.height);
   NIKOLA_LOG_INFO("     Type = %s", texture_type_str(tex_desc.type));
-  NIKOLA_LOG_INFO("     Path = %s", nbr_path.string().c_str());
+  NIKOLA_LOG_INFO("     Path = %s", nbr_path.c_str());
   return id;
 }
 
@@ -407,7 +407,7 @@ ResourceID resource_storage_push_cubemap(ResourceStorage* storage,
 
   // Load the NBR file
   NBRFile nbr;
-  nbr_file_load(&nbr, storage->parent_dir / nbr_path);
+  nbr_file_load(&nbr, filepath_append(storage->parent_dir, nbr_path));
 
   // Make sure it is the correct resource type
   NIKOLA_ASSERT((nbr.resource_type == RESOURCE_TYPE_CUBEMAP), "Expected RESOURCE_TYPE_CUBEMAP");
@@ -433,7 +433,7 @@ ResourceID resource_storage_push_cubemap(ResourceStorage* storage,
   NIKOLA_LOG_INFO("Storage \'%s\' pushed cubemap:", storage->name.c_str());
   NIKOLA_LOG_INFO("     Size  = %i X %i", cube_desc.width, cube_desc.height);
   NIKOLA_LOG_INFO("     Faces = %i", cube_desc.faces_count);
-  NIKOLA_LOG_INFO("     Path  = %s", nbr_path.string().c_str());
+  NIKOLA_LOG_INFO("     Path  = %s", nbr_path.c_str());
   return id;
 }
 
@@ -454,7 +454,7 @@ ResourceID resource_storage_push_shader(ResourceStorage* storage, const FilePath
   
   // Load the NBR file
   NBRFile nbr;
-  nbr_file_load(&nbr, storage->parent_dir / nbr_path);
+  nbr_file_load(&nbr, filepath_append(storage->parent_dir, nbr_path));
   
   // Make sure it is the correct resource type
   NIKOLA_ASSERT((nbr.resource_type == RESOURCE_TYPE_SHADER), "Expected RESOURCE_TYPE_SHADER");
@@ -474,7 +474,7 @@ ResourceID resource_storage_push_shader(ResourceStorage* storage, const FilePath
 
   // New shader added!
   NIKOLA_LOG_INFO("Storage \'%s\' pushed shader:", storage->name.c_str());
-  NIKOLA_LOG_INFO("     Path           = %s", nbr_path.string().c_str());
+  NIKOLA_LOG_INFO("     Path = %s", nbr_path.c_str());
   return id;
 }
 
@@ -550,7 +550,7 @@ ResourceID resource_storage_push_material(ResourceStorage* storage,
   storage->materials[id] = material;
 
   // New material added
-  NIKOLA_LOG_INFO("Storage \'%s\' pushed material %p:", storage->name.c_str(), material);
+  NIKOLA_LOG_INFO("Storage \'%s\' pushed material:", storage->name.c_str());
   NIKOLA_LOG_INFO("     Uniforms count = \'%zu\'", material->uniform_locations.size());
   NIKOLA_LOG_INFO("     Ambient color  = \'%s\'", vec3_to_string(material->ambient_color).c_str());
   NIKOLA_LOG_INFO("     Diffuse color  = \'%s\'", vec3_to_string(material->diffuse_color).c_str());
@@ -587,7 +587,7 @@ ResourceID resource_storage_push_model(ResourceStorage* storage, const FilePath&
   
   // Load the NBR file
   NBRFile nbr;
-  nbr_file_load(&nbr, storage->parent_dir / nbr_path);
+  nbr_file_load(&nbr, filepath_append(storage->parent_dir, nbr_path));
 
   // Allocate the model
   Model* model = new Model{};
@@ -608,7 +608,7 @@ ResourceID resource_storage_push_model(ResourceStorage* storage, const FilePath&
   NIKOLA_LOG_INFO("     Meshes    = %zu", model->meshes.size());
   NIKOLA_LOG_INFO("     Materials = %zu", model->materials.size());
   NIKOLA_LOG_INFO("     Textures  = %i", nbr_model->textures_count);
-  NIKOLA_LOG_INFO("     Path      = %s", nbr_path.string().c_str());
+  NIKOLA_LOG_INFO("     Path      = %s", nbr_path.c_str());
   return id;
 }
 

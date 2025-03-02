@@ -62,6 +62,9 @@ static void render_model(const RenderCommand& command) {
   Model* model  = resource_storage_get_model(command.storage, command.renderable_id);
   Material* mat = resource_storage_get_material(command.storage, command.material_id);
 
+  // Set our "parent" transform
+  mat->model_matrix = command.transform.transform; 
+
   for(sizei i = 0; i < model->meshes.size(); i++) {
     Mesh* mesh              = model->meshes[i];
     Material* mesh_material = model->materials[model->material_indices[i]]; 
@@ -72,7 +75,6 @@ static void render_model(const RenderCommand& command) {
     // @NOTE: Each material has its own valid colors and model. However, we also 
     // want OUR own materials to influence the model. So, we _apply_ our model matrix 
     // and colors to the material.
-    mat->model_matrix   = command.transform.transform; 
     mesh_material->ambient_color  = mat->ambient_color; 
     mesh_material->diffuse_color  = mat->diffuse_color; 
     mesh_material->specular_color = mat->specular_color; 

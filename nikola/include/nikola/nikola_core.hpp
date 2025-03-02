@@ -126,11 +126,6 @@ typedef double f64;
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// *** Exports ***
-/// *** Exports ***
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
 /// *** Library init ***
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -216,7 +211,7 @@ NIKOLA_API const sizei memory_get_allocation_bytes();
 ///---------------------------------------------------------------------------------------------------------------------
 /// Log level
 enum LogLevel {
-  LOG_LEVEL_TRACE = 0,
+  LOG_LEVEL_TRACE,
   LOG_LEVEL_DEBUG, 
   LOG_LEVEL_INFO,
   LOG_LEVEL_WARN,
@@ -314,21 +309,6 @@ NIKOLA_API void logger_log(const LogLevel lvl, const i8* msg, ...);
           }                                                             \
         }
 /// Assert macro 
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// Debug asserts
-#if NIKOLA_DEBUG_BUILD == 1 
-#define NIKOLA_ASSERT_DEBUG(expr, msg) {                              \
-        if(expr) {                                                    \
-        }                                                             \
-        else {                                                        \
-          nikola::logger_log_assert(#expr, msg, __FILE__, __LINE__);  \
-          DEBUG_BREAK();                                              \
-        }                                                             \
-}                                                       
-#endif
-/// Debug asserts
 ///---------------------------------------------------------------------------------------------------------------------
 
 #endif
@@ -942,10 +922,11 @@ NIKOLA_API void window_set_position(Window* window, const i32 x_pos, const i32 y
 ///---------------------------------------------------------------------------------------------------------------------
 /// Clock functions
 
-/// NOTE: Every function has an "ni" prefix to avoid any confusion with the C clock library.
+/// @NOTE: Every function has an "ni" prefix to avoid any confusion with the C clock library.
 
 /// Updates the values of the time, FPS (frames per second), and the delta time.
-/// NOTE: This must be called every frame.
+/// 
+/// @NOTE: This must be called every frame.
 NIKOLA_API void niclock_update();
 
 /// Retrieve the time passed since the CPU was turned on.

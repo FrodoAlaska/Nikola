@@ -25,7 +25,7 @@ struct ObjData {
 /// ----------------------------------------------------------------------
 /// Private functions
 
-static bool is_valid_extension(const nikola::String& ext) {
+static bool is_valid_extension(const nikola::FilePath& ext) {
   return ext == ".obj" || 
          ext == ".fbx" || 
          ext == ".gltf";
@@ -148,7 +148,7 @@ static void load_material_texture(aiMaterial* material, aiTextureType type, ObjD
 
     // Convert into our `NBRTexture`
     nikola::NBRTexture texture;
-    image_loader_load_texture(&texture, data->parent_dir / nikola::FilePath(str.C_Str()));
+    image_loader_load_texture(&texture, nikola::filepath_append(data->parent_dir, str.C_Str()));
     data->textures.push_back(texture);
   }
 }
@@ -201,22 +201,24 @@ static void load_scene_materials(const aiScene* scene, ObjData* data) {
 /// Model loader functions
 
 bool model_loader_load(nikola::NBRModel* model, const nikola::FilePath& path) {
-  if(!is_valid_extension(path.extension().string())) {
-    NIKOLA_LOG_ERROR("No valid model loader for \'%s\'", path.extension().string().c_str());
+  nikola::FilePath ext = nikola::filepath_extension(path);
+
+  if(!is_valid_extension(ext)) {
+    NIKOLA_LOG_ERROR("No valid model loader for \'%s\'", ext.c_str());
     return false;
   } 
 
   // Load Assimp file
   Assimp::Importer imp; 
-  const aiScene* scene = imp.ReadFile(path.string(), aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals);
+  const aiScene* scene = imp.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals);
   if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-    NIKOLA_LOG_ERROR("Could not load Model at \'%s\', %s", path.string().c_str(), imp.GetErrorString());
+    NIKOLA_LOG_ERROR("Could not load Model at %s", imp.GetErrorString());
     return false;
   }
 
   // Loading everything into `ObjData`
   ObjData data; 
-  data.parent_dir = path.parent_path(); // Usually, `path` will refer to the 3D model file directly so we need its immediate parent
+  data.parent_dir = nikola::filepath_parent_path(path); // Usually, `path` will refer to the 3D model file directly so we need its immediate parent
   
   // Meshes init 
   load_scene_meshes(scene, &data, scene->mRootNode);

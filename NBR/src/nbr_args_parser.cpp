@@ -19,7 +19,7 @@ const int RESOURCE_TYPES_MAX = 6;
 
 /// ----------------------------------------------------------------------
 /// Macros
-#define RAISE_ERROR(msg, ...) {printf(msg, ##__VA_ARGS__); exit(-1);}
+#define RAISE_ERROR(msg, ...) {NIKOLA_LOG_ERROR(msg, ##__VA_ARGS__); exit(-1);}
 /// Macros
 /// ----------------------------------------------------------------------
 
@@ -40,6 +40,16 @@ struct ArgParser {
 
 static ArgParser s_parser = {};
 /// ArgParser
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// Callbacks 
+
+static void directory_iterate_func(const nikola::FilePath& base_dir, nikola::FilePath current_path, void* user_data) {
+  s_parser.src_paths.push_back(current_path);
+}
+
+/// Callbacks 
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -105,7 +115,7 @@ static nikola::ResourceType get_resource_type(const nikola::String& res_type) {
     return nikola::RESOURCE_TYPE_FONT;
   }
 
-  RAISE_ERROR("Unkown resource type given \'%s\'\n", res_type.c_str());
+  RAISE_ERROR("NBR: Unkown resource type given \'%s\'", res_type.c_str());
 }
 
 static void check_resource_literal() {
@@ -113,7 +123,7 @@ static void check_resource_literal() {
 
   // The next token should be the param
   if(param.type != ARG_TOKEN_PARAM) {
-    RAISE_ERROR("Expected an argument passed after \'%s\'\n", param.arg.c_str());
+    RAISE_ERROR("NBR: Expected an argument passed after \'%s\'", param.arg.c_str());
   }
 
   // Convert the argument into a valid resource type enum
@@ -125,7 +135,7 @@ static void check_final_path() {
   ArgToken next_token   = token_consume();
 
   // Set a default output as the current directory
-  s_parser.nbr_output_dir = std::filesystem::current_path();
+  s_parser.nbr_output_dir = nikola::filesystem_current_path();
 
   // The optional output param has been set
   if(next_token.type != ARG_TOKEN_EOF) {
@@ -134,15 +144,11 @@ static void check_final_path() {
 
   // Recursively go through the directories and add the paths for later
   if(s_parser.can_recurse && s_parser.is_directory) {
-    for(auto& p : std::filesystem::recursive_directory_iterator(s_parser.resource_dir)) {
-      s_parser.src_paths.push_back(p.path());
-    }
+    nikola::filesystem_directory_recurse_iterate(s_parser.resource_dir, directory_iterate_func);
   }
   // Just go over one directory
   else if(s_parser.is_directory) {
-    for(auto& p : std::filesystem::directory_iterator(s_parser.resource_dir)) {
-      s_parser.src_paths.push_back(p.path());
-    }
+    nikola::filesystem_directory_iterate(s_parser.resource_dir, directory_iterate_func);
   }
   // It is just a single file otherwise
   else {
@@ -155,12 +161,14 @@ static void create_nbr_texture() {
   nikola::NBRFile nbr;
 
   for(auto& path : s_parser.src_paths) {
-    nikola::FilePath final_path = s_parser.nbr_output_dir / path.filename().replace_extension("nbr");
+    // Construct the final path
+    nikola::FilePath final_path = nikola::filepath_append(s_parser.nbr_output_dir, nikola::filepath_filename(path)); 
+    nikola::filepath_set_extension(final_path, "nbr");
   
     // Load the texture
     bool loaded = image_loader_load_texture(&texture, path);
     if(!loaded) {
-      printf("Failed to load resource at \'%s\'", path.string().c_str());
+      NIKOLA_LOG_ERROR("NBR: Failed to load resource at \'%s\'", path.c_str());
       continue;
     }
 
@@ -168,7 +176,7 @@ static void create_nbr_texture() {
     nikola::nbr_file_save(nbr, texture, final_path);
 
     image_loader_unload_texture(texture);
-    printf("Converted texture \'%s\' to \'%s\'...\n", path.string().c_str(), final_path.string().c_str());
+    NIKOLA_LOG_INFO("NBR: Converted texture \'%s\' to \'%s\'...", path.c_str(), final_path.c_str());
   }
 }
 
@@ -177,12 +185,14 @@ static void create_nbr_cubemap() {
   nikola::NBRFile nbr;
   
   for(auto& path : s_parser.src_paths) {
-    nikola::FilePath final_path = s_parser.nbr_output_dir / path.filename().replace_extension("nbr");
+    // Construct the final path
+    nikola::FilePath final_path = nikola::filepath_append(s_parser.nbr_output_dir, nikola::filepath_filename(path)); 
+    nikola::filepath_set_extension(final_path, "nbr");
 
     // Load the cubemap
     bool loaded = image_loader_load_cubemap(&cubemap, path);
     if(!loaded) {
-      printf("Failed to load resource at \'%s\'", path.string().c_str());
+      NIKOLA_LOG_ERROR("NBR: Failed to load resource at \'%s\'", path.c_str());
       continue;
     }
   
@@ -190,7 +200,7 @@ static void create_nbr_cubemap() {
     nikola::nbr_file_save(nbr, cubemap, final_path);
 
     image_loader_unload_cubemap(cubemap);
-    printf("Converted cubemap \'%s\' to \'%s\'...\n", path.string().c_str(), final_path.string().c_str());
+    NIKOLA_LOG_INFO("NBR: Converted cubemap \'%s\' to \'%s\'...", path.c_str(), final_path.c_str());
   }
 }
 
@@ -199,12 +209,14 @@ static void create_nbr_shader() {
   nikola::NBRFile nbr;
   
   for(auto& path : s_parser.src_paths) {
-    nikola::FilePath final_path = s_parser.nbr_output_dir / path.filename().replace_extension("nbr");
+    // Construct the final path
+    nikola::FilePath final_path = nikola::filepath_append(s_parser.nbr_output_dir, nikola::filepath_filename(path)); 
+    nikola::filepath_set_extension(final_path, "nbr");
 
     // Load the shader
     bool loaded = shader_loader_load(&shader, path);
     if(!loaded) {
-      printf("Failed to load resource at \'%s\'", path.string().c_str());
+      NIKOLA_LOG_ERROR("NBR: Failed to load resource at \'%s\'", path.c_str());
       continue;
     }
 
@@ -212,7 +224,7 @@ static void create_nbr_shader() {
     nikola::nbr_file_save(nbr, shader, final_path);
   
     shader_loader_unload(shader);
-    printf("Converted shader \'%s\' to \'%s\'...\n", path.string().c_str(), final_path.string().c_str());
+    NIKOLA_LOG_INFO("NBR: Converted shader \'%s\' to \'%s\'...", path.c_str(), final_path.c_str());
   }
 }
 
@@ -221,12 +233,14 @@ static void create_nbr_model() {
   nikola::NBRFile nbr;
   
   for(auto& path : s_parser.src_paths) {
-    nikola::FilePath final_path = s_parser.nbr_output_dir / path.filename().replace_extension("nbr");
+    // Construct the final path
+    nikola::FilePath final_path = nikola::filepath_append(s_parser.nbr_output_dir, nikola::filepath_filename(path)); 
+    nikola::filepath_set_extension(final_path, "nbr");
 
     // Load the model
     bool loaded = model_loader_load(&model, path);
     if(!loaded) {
-      printf("Failed to load resource at \'%s\'", path.string().c_str());
+      NIKOLA_LOG_ERROR("NBR: Failed to load resource at \'%s\'", path.c_str());
       continue;
     }
 
@@ -234,7 +248,7 @@ static void create_nbr_model() {
     nikola::nbr_file_save(nbr, model, final_path);
 
     model_loader_unload(model);
-    printf("Converted model at \'%s\' to \'%s\'\n", path.string().c_str(), final_path.string().c_str());
+    NIKOLA_LOG_INFO("NBR: Converted model \'%s\' to \'%s\'...", path.c_str(), final_path.c_str());
   }
 }
 

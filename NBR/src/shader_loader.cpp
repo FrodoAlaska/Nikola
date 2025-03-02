@@ -32,11 +32,11 @@ bool shader_loader_load(nikola::NBRShader* shader, const nikola::FilePath& path)
 
   // Make sure the identifiers actually exist
   if(vert_iden_pos == shader_src.npos) {
-    printf("[NBR-ERROR]: Could not find Vertex identifier in shader at \'%s\'\n", path.string().c_str());
+    NIKOLA_LOG_ERROR("NBR: Could not find Vertex identifier in shader at \'%s\'", path.c_str());
   }
 
   if(frag_iden_pos == shader_src.npos) {
-    printf("[NBR-ERROR]: Could not find Pixel identifier in shader at \'%s\'\n", path.string().c_str());
+    NIKOLA_LOG_ERROR("NBR: Could not find Pixel identifier in shader at \'%s\'", path.c_str());
   }
 
   // Actually seperate the string

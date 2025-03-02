@@ -6,7 +6,6 @@
 #include <glm/ext/quaternion_float.hpp>
 
 #include <string>
-#include <filesystem>
 #include <vector>
 #include <unordered_map>
 #include <fstream>
@@ -506,19 +505,6 @@ NIKOLA_API void transform_scale(Transform& trans, const Vec3& scale);
 /// *** File system ***
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// FilePath
-using FilePath = std::filesystem::path;
-/// FilePath
-///---------------------------------------------------------------------------------------------------------------------
-
-
-///---------------------------------------------------------------------------------------------------------------------
-/// File
-using File = std::fstream;
-/// File
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
 /// FileOpenMode
 enum FileOpenMode {
   /// Open a file in read-only mode.
@@ -543,6 +529,137 @@ enum FileOpenMode {
   FILE_OPEN_READ_WRITE = 14 << 6
 };
 /// FileOpenMode
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// FilePath
+using FilePath = String;
+/// FilePath
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// File
+using File = std::fstream;
+/// File
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// FileIterateFunc callback
+using FileIterateFunc = void(*)(const FilePath& base_dir, FilePath current_path, void* user_data);
+/// FileIterateFunc callback
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Filesystem functions
+
+/// Iterate through the given `dir`, calling `iter_func` for each entry and passing `user_data`.
+NIKOLA_API void filesystem_directory_iterate(const FilePath& dir, const FileIterateFunc& iter_func, const void* user_data = nullptr);
+
+/// Recursively iterate through the given `dir`, calling `iter_func` for each entry and passing `user_data`.
+NIKOLA_API void filesystem_directory_recurse_iterate(const FilePath& dir, const FileIterateFunc& iter_func, const void* user_data = nullptr);
+
+/// Get the current full path of the running process.
+NIKOLA_API FilePath filesystem_current_path();
+
+/// Check if the path at `path` exists.
+NIKOLA_API bool filesystem_exists(const FilePath& path);
+
+/// Filesystem functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// FilePath functions
+
+/// Append the given `other` to `base` and return the result.
+///
+/// @NOTE: This function will adhere to the specific operating systems's seperator.
+NIKOLA_API FilePath filepath_append(FilePath& base, const FilePath& other);
+
+/// Retrieve the root name (for example, `C:` on Windows) of `path`.
+/// 
+/// @EXAMPLE: The root namt would be `C:` on Windows.
+NIKOLA_API FilePath filepath_root_name(const FilePath& path);
+
+/// Retrieve the root directory of `path`.
+/// 
+/// @EXAMPLE: The root directory would be `\` on Windows.
+NIKOLA_API FilePath filepath_root_dir(const FilePath& path);
+
+/// Retrieve the full root path of `path`.
+/// 
+/// @EXAMPLE: The root path would be `C:\` on Windows.
+NIKOLA_API FilePath filepath_root_path(const FilePath& path);
+
+/// Retrieve the full relative path of `path`. 
+///
+/// @EXAMPLE: The relative path of `C:\res\shaders\shader.nbr` would be `res\shaders\shader.nbr`.
+NIKOLA_API FilePath filepath_relative_path(const FilePath& path);
+
+/// Retrieve the full parent path of `path`. 
+///
+/// @EXAMPLE: The parent path of `res/shaders/shader.nbr` would be `res/shaders/`.
+NIKOLA_API FilePath filepath_parent_path(const FilePath& path);
+
+/// Retrieve the filename of `path`.
+///
+/// @EXAMPLE: The filename of `res/shaders/shader.nbr` would be `shader.nbr`.
+NIKOLA_API FilePath filepath_filename(const FilePath& path);
+
+/// Retrieve the stem of `path`.
+///
+/// @EXAMPLE: The stem of `res/shaders/shader.nbr` would be `shader`.
+NIKOLA_API FilePath filepath_stem(const FilePath& path);
+
+/// Retrieve the extension of `path`.
+///
+/// @EXAMPLE: The extension of `res/shaders/shader.nbr` would be `.nbr`.
+NIKOLA_API FilePath filepath_extension(const FilePath& path);
+
+/// Set the filename of `path` to the given `name`.
+NIKOLA_API void filepath_set_filename(FilePath& path, const FilePath& name);
+
+/// Set the extension of `path` to the given `ext`.
+NIKOLA_API void filepath_set_extension(FilePath& path, const FilePath& ext);
+
+/// Remove the filename of `path`. 
+///
+/// @EXAMPLE: The path `res/shaders/shader.nbr` will become `res/shaders/`
+NIKOLA_API void filepath_remove_filename(FilePath& path);
+
+/// Check if `path` has a root name.
+NIKOLA_API bool filepath_has_root_name(const FilePath& path);
+
+/// Check if `path` has a root directory.
+NIKOLA_API bool filepath_has_root_dir(const FilePath& path);
+
+/// Check if `path` has a root path.
+NIKOLA_API bool filepath_has_root_path(const FilePath& path);
+
+/// Check if `path` has a ralative path.
+NIKOLA_API bool filepath_has_relative_path(const FilePath& path);
+
+/// Check if `path` has a parent path.
+NIKOLA_API bool filepath_has_parent_path(const FilePath& path);
+
+/// Check if `path` has a filename.
+NIKOLA_API bool filepath_has_filename(const FilePath& path);
+
+/// Check if `path` has a stem.
+NIKOLA_API bool filepath_has_stem(const FilePath& path);
+
+/// Check if `path` has an extension.
+NIKOLA_API bool filepath_has_extension(const FilePath& path);
+
+/// Check if `path` is an empty string.
+NIKOLA_API bool filepath_is_empty(const FilePath& path);
+
+/// Check if `path` is a relative path.
+NIKOLA_API bool filepath_is_relative(const FilePath& path);
+
+/// Check if `path` is an absolute path.
+NIKOLA_API bool filepath_is_absolute(const FilePath& path);
+
+/// FilePath functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
