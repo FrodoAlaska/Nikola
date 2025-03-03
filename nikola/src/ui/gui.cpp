@@ -139,7 +139,7 @@ void gui_settings_debug() {
 void gui_settings_camera(Camera* camera) {
   // Information
   // -------------------------------------------------------------------
-  ImGui::SeparatorText("");
+  ImGui::SeparatorText("##xx");
   ImGui::Text("Postiion: %s", vec3_to_string(camera->position).c_str());  
   ImGui::Text("Yaw: %f", camera->yaw);
   ImGui::Text("Pitch: %f", camera->pitch);
@@ -147,7 +147,7 @@ void gui_settings_camera(Camera* camera) {
 
   // Editables
   // -------------------------------------------------------------------
-  ImGui::SeparatorText("");
+  ImGui::SeparatorText("##xx");
   ImGui::SliderFloat("Zoom", &camera->zoom, CAMERA_MAX_ZOOM, 0.0f, "Zoom: %.3f");
   ImGui::SliderFloat("Near", &camera->near, 0.1f, 1000.0f, "Near: %.3f");
   ImGui::SliderFloat("Far", &camera->far, 0.1f, 1000.0f, "Far: %.3f");
@@ -166,20 +166,100 @@ void gui_settings_renderer() {
  
   // Editables
   // -------------------------------------------------------------------
-  ImGui::SeparatorText("");
+  ImGui::SeparatorText("##xx");
   ImGui::ColorPicker4("Clear color", &s_gui.render_clear_color[0], ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
   renderer_set_clear_color(s_gui.render_clear_color);
   // -------------------------------------------------------------------
 }
 
-void gui_settings_material(Material* material) {
+void gui_settings_material(const char* name, Material* material) {
+  ImGui::SeparatorText(name); 
+
   // Colors 
   // -------------------------------------------------------------------
-  ImGui::SeparatorText("Colors"); 
+  ImGui::PushID(name); 
   ImGui::SliderFloat3("Ambient", &material->ambient_color[0], 0.0f, 1.0f);
   ImGui::SliderFloat3("Diffuse", &material->diffuse_color[0], 0.0f, 1.0f);
   ImGui::SliderFloat3("Specular", &material->specular_color[0], 0.0f, 1.0f);
+  ImGui::PopID(); 
   // -------------------------------------------------------------------
+}
+
+static Vec4 rotation = Vec4(1.0f);
+
+void gui_settings_transform(const char* name, Transform* transform) {
+  f32 scale = transform->scale.x;
+  
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+ 
+  // SRT translation
+  // -------------------------------------------------------------------
+  ImGui::DragFloat3("Position", &transform->position[0], 0.01f);
+  ImGui::DragFloat("Scale", &scale, 0.01f);
+  ImGui::DragFloat3("Rotation Axis", &rotation[0], 0.01f, 0.0f, 1.0f);
+  ImGui::DragFloat("Rotation Angle", &rotation[3], 0.01f);
+  // -------------------------------------------------------------------
+  
+  ImGui::PopID(); 
+
+  // Applying the new values
+  nikola::transform_translate(*transform, transform->position);
+  nikola::transform_scale(*transform, Vec3(scale));
+  nikola::transform_rotate(*transform, rotation);
+}
+
+void gui_settings_texture(const char* name, GfxTexture* texture) {
+  GfxTextureDesc tex_desc = gfx_texture_get_desc(texture); 
+
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+
+  // Size
+  // -------------------------------------------------------------------
+  Vec2 size = Vec2(tex_desc.width, tex_desc.height);
+  ImGui::SliderFloat2("Size", &size[0], 0.1f, 5120.0f, "%.3f"); 
+
+  tex_desc.width  = size.x;
+  tex_desc.height = size.y;
+  // -------------------------------------------------------------------
+ 
+  // Mipmap levels
+  // -------------------------------------------------------------------
+  i32 mips = tex_desc.mips; 
+  ImGui::SliderInt("Mipmaps", &mips, 0, 5);
+
+  tex_desc.mips = mips;
+  // -------------------------------------------------------------------
+ 
+  // Format
+  // -------------------------------------------------------------------
+  i32 format = (i32)tex_desc.format;
+  ImGui::Combo("Format", &format, "R8\0R16\0RG8\0RG16\0RGBA8\0RGBA16\0Depth24 Stencil8\0");  
+
+  tex_desc.format = (GfxTextureFormat)format;
+  // -------------------------------------------------------------------
+  
+  // Filter
+  // -------------------------------------------------------------------
+  i32 filter = (i32)tex_desc.filter;
+  ImGui::Combo("Filter", &filter, "MinMagLinear\0MinMagNearest\0MinLinearMagNearest\0MinNearestMagLinear\0MinTrilinearMagLinear\0MinTrilinearMagNearest\0");  
+
+  tex_desc.filter = (GfxTextureFilter)filter;
+  // -------------------------------------------------------------------
+  
+  // Wrap
+  // -------------------------------------------------------------------
+  i32 wrap = (i32)tex_desc.wrap_mode;
+  ImGui::Combo("Addressing Mode", &wrap, "Repeat\0Mirror\0Clamp\0Border Color\0");  
+
+  tex_desc.wrap_mode = (GfxTextureWrap)wrap;
+  // -------------------------------------------------------------------
+
+  ImGui::PopID(); 
+
+  // Applying the chnages
+  gfx_texture_update(texture, tex_desc);
 }
 
 /// Editor functions

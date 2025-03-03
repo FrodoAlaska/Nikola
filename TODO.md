@@ -1,19 +1,20 @@
 # Plan 
 [X] 1. Work on the `general` side of the engine TODOs. Fix the filsystem API and have a wrapper around `std::filesystem::path` and replace any code that uses the old API. 
-[] 2. Create an easy-to-use and completely customizable editor as well as everything in the `UI` section of the engine TODOs. 
-[] 3. Work to improve the renderer. 
+[x] 2. Create an easy-to-use and completely customizable editor.
+[] 3. Work to improve the 3D renderer. 
     - We are probably going to impelement a deffered renderer in order to improve perforamance and to easily get post-processing effects applied. 
 [] 4. Make any viable demos in the `Demos` section with the new tools that you have now.
+[] 5. Create 2D batch renderer that can handle basic shapes and textures.
 
 ## (Engine) TODO: 
 * General 
-    - Switch from `git submodule` to `FetchContent` for fetching dependencies
+    - Switch from `git submodule` to `FetchContent` for fetching dependencies and perhaps rework the whole CMake section a bit.
     - Probably create my own `DynamicArray` instead of the STL one
 * All about the UI 
-    - Make a panel for each editable type in the engine.
     - Make a batch renderer that renders basic shapes, 2D textures, and texts. 
     - Make a UICanvas/game canvas system and test it throughly.
     - Write some documentation for the whole editor section.
+    - Keep adding types as they arise.
 * Renderer 
     - Basic lighting
     - Configure post-processing step and some dope deffered rendering 
@@ -55,9 +56,9 @@
 - (GL) Shader attribute semantics (e.g, does Mat4 work there)
 
 ## FUTURE PLANS: 
-- NUSL: Nikola Uniform Shading Language
+- NUSL: Nikola Uniform Shading Language. 
+- Some kind of level serlializer?
 - Phyiscs. Yes. Just physics.
 - GPU particles
 - Hot reloading
-- Some kind of level serlializer?
 - Multi-threading

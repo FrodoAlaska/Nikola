@@ -30,7 +30,11 @@ NIKOLA_API void gui_settings_resource(ResourceStorage* storage);
 
 NIKOLA_API void gui_settings_renderer();
 
-NIKOLA_API void gui_settings_material(Material* material);
+NIKOLA_API void gui_settings_material(const char* name, Material* material);
+
+NIKOLA_API void gui_settings_transform(const char* name, Transform* transform);
+
+NIKOLA_API void gui_settings_texture(const char* name, GfxTexture* texture);
 
 /// GUI functions
 ///---------------------------------------------------------------------------------------------------------------------

@@ -138,12 +138,14 @@ static T get_resource(ResourceStorage* storage, HashMap<ResourceID, T>& map, con
 }
 
 static void convert_from_nbr(const NBRTexture* nbr, GfxTextureDesc* desc) {
-  desc->width     = nbr->width; 
-  desc->height    = nbr->height; 
-  desc->depth     = 0; 
-  desc->mips      = 1; 
-  desc->type      = GFX_TEXTURE_2D; 
-  desc->data      = nbr->pixels;
+  desc->width  = nbr->width; 
+  desc->height = nbr->height; 
+  desc->depth  = 0; 
+  desc->mips   = 1; 
+  desc->type   = GFX_TEXTURE_2D; 
+  desc->data   = memory_allocate(nbr->width * nbr->height * nbr->channels);
+
+  memory_copy(desc->data, nbr->pixels, nbr->width * nbr->height * nbr->channels);
 }
 
 static void convert_from_nbr(const NBRCubemap* nbr, GfxCubemapDesc* desc) {

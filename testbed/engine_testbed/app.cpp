@@ -14,15 +14,16 @@ struct nikola::App {
   nikola::Camera camera;
 
   bool has_editor;
+  nikola::Transform transform;
 
   nikola::ResourceStorage* storage;
-  nikola::Transform transform;
 
   nikola::ResourceID mesh_id, material_id;
   nikola::ResourceID skybox_id, skybox_material_id;
   nikola::ResourceID model_id;
 
-  nikola::Material* material;
+  nikola::Material* material; 
+  nikola::Material* skybox_material;
 };
 /// App
 /// ----------------------------------------------------------------------
@@ -50,7 +51,11 @@ static void render_app_ui(nikola::App* app) {
   nikola::gui_end_panel();
   
   nikola::gui_begin_panel("Resources");
-  nikola::gui_settings_material(app->material);
+  nikola::gui_settings_material("Material", app->material);
+  nikola::gui_end_panel();
+
+  nikola::gui_begin_panel("Transforms");
+  nikola::gui_settings_transform("Model transform", &app->transform);
   nikola::gui_end_panel();
 
   nikola::gui_end();
@@ -78,6 +83,10 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   float aspect_ratio = nikola::window_get_aspect_ratio(app->window);
   nikola::camera_create(&app->camera, aspect_ratio, nikola::Vec3(10.0f, 0.0f, 10.0f), nikola::Vec3(-3.0f, 0.0f, 0.0f));
 
+  // Transform init
+  nikola::transform_translate(app->transform, nikola::Vec3(10.0f, 0.0f, 10.0f));
+  nikola::transform_scale(app->transform, nikola::Vec3(0.1f));
+
   // Resource storage init 
   nikola::FilePath current_path = nikola::filesystem_current_path();
   nikola::FilePath res_path = nikola::filepath_append(current_path, "res\\nbr");
@@ -85,7 +94,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // Transform init
   nikola::transform_translate(app->transform, nikola::Vec3(10.0f, 0.0f, 10.0f));
-  nikola::transform_scale(app->transform, nikola::Vec3(1.0f));
+  nikola::transform_scale(app->transform, nikola::Vec3(0.1f));
 
   // Mesh init
   app->mesh_id = nikola::resource_storage_push_mesh(app->storage, nikola::MESH_TYPE_CUBE);
@@ -109,6 +118,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // Skybox material init
   app->skybox_material_id = nikola::resource_storage_push_material(app->storage, diffuse_id, nikola::INVALID_RESOURCE, sky_shader_id);
+  app->skybox_material    = nikola::resource_storage_get_material(app->storage, app->skybox_material_id);
 
   // Model init
   app->model_id = nikola::resource_storage_push_model(app->storage, "behelit.nbr");
@@ -154,12 +164,8 @@ void app_render(nikola::App* app) {
     .storage       = app->storage,
   };
 
-  constexpr int MESHES_MAX = 10;
-  rotation_angle += 0.01f;
-  float x = 1.0f + nikola::sin(nikola::niclock_get_time()) * 2.0f; 
-  float y = nikola::sin(nikola::niclock_get_time() / 2.0f) * 1.0f;
-
   // Render the cubes
+  // constexpr int MESHES_MAX = 10;
   // for(int i = 0; i < MESHES_MAX; i++) {
   //   for(int j = 0; j < MESHES_MAX; j++) {
   //     nikola::transform_translate(app->transform, nikola::Vec3(i * 2.0f, 0.0f, j * 2.0f));
@@ -169,9 +175,7 @@ void app_render(nikola::App* app) {
   //   }
   // }
 
-  nikola::transform_translate(rnd_cmd.transform, nikola::Vec3(10.0f, 0.0f, 10.0f));
-  nikola::transform_scale(rnd_cmd.transform, nikola::Vec3(0.1f));
-  // nikola::transform_rotate(rnd_cmd.transform, nikola::Vec3(1.0f, 0.0f, 0.0f), -90.0f * nikola::DEG2RAD);
+  nikola::transform_rotate(rnd_cmd.transform, nikola::Vec3(1.0f, 0.0f, 0.0f), -90.0f * nikola::DEG2RAD);
 
   // Render the model
   rnd_cmd.render_type   = nikola::RENDERABLE_TYPE_MODEL; 
