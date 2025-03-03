@@ -1,19 +1,19 @@
 # Plan 
 [X] 1. Work on the `general` side of the engine TODOs. Fix the filsystem API and have a wrapper around `std::filesystem::path` and replace any code that uses the old API. 
-[] 2. Build a wrapper around ImGui and start working on an easy-to-use and completely custommizable editor as well as everything in the `UI` section of the engine TODOs. 
-[] 3. Work to improve the renderer. We are probably going to impelement a deffered renderer in order to improve perforamance and to easily get post-processing effects applied. 
-    - Make sure to read a _bunch_ about other renderers. 
+[] 2. Create an easy-to-use and completely customizable editor as well as everything in the `UI` section of the engine TODOs. 
+[] 3. Work to improve the renderer. 
+    - We are probably going to impelement a deffered renderer in order to improve perforamance and to easily get post-processing effects applied. 
 [] 4. Make any viable demos in the `Demos` section with the new tools that you have now.
 
 ## (Engine) TODO: 
 * General 
-    - The filesystem is, well, fucked. It crashes when we pass our flags to the `open` function
+    - Switch from `git submodule` to `FetchContent` for fetching dependencies
     - Probably create my own `DynamicArray` instead of the STL one
 * All about the UI 
-    - Get ImGui in here 
-    - Start working on the editor wrapper
+    - Make a panel for each editable type in the engine.
     - Make a batch renderer that renders basic shapes, 2D textures, and texts. 
     - Make a UICanvas/game canvas system and test it throughly.
+    - Write some documentation for the whole editor section.
 * Renderer 
     - Basic lighting
     - Configure post-processing step and some dope deffered rendering 
@@ -55,9 +55,9 @@
 - (GL) Shader attribute semantics (e.g, does Mat4 work there)
 
 ## FUTURE PLANS: 
-- (UI) Start working on the editor (basically a wrapper around ImGui)
 - NUSL: Nikola Uniform Shading Language
 - Phyiscs. Yes. Just physics.
 - GPU particles
 - Hot reloading
+- Some kind of level serlializer?
 - Multi-threading

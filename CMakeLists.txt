@@ -106,18 +106,45 @@ set(NIKOLA_SOURCES
   # Engine/Renderer 
   ${NIKOLA_SRC_DIR}/engine/renderer/camera.cpp
   ${NIKOLA_SRC_DIR}/engine/renderer/renderer.cpp
+  
+  # UI 
+  ${NIKOLA_SRC_DIR}/ui/gui.cpp
 )
 
 set(NIKOLA_HEADERS
   ${NIKOLA_INCLUDE_DIR}/nikola/nikola_core.hpp
   ${NIKOLA_INCLUDE_DIR}/nikola/nikola_engine.hpp
+  ${NIKOLA_INCLUDE_DIR}/nikola/nikola_ui.hpp
 )
 ############################################################
 
 ### Library Sources ###
 ############################################################
 set(LIBS_SOURCES 
+  # GLAD
   ${NIKOLA_LIBS_DIR}/glad/glad.c
+  
+  # ImGui
+  ${NIKOLA_LIBS_DIR}/imgui/backends/imgui_impl_dx11.cpp
+  ${NIKOLA_LIBS_DIR}/imgui/backends/imgui_impl_dx11.h
+  ${NIKOLA_LIBS_DIR}/imgui/backends/imgui_impl_glfw.cpp
+  ${NIKOLA_LIBS_DIR}/imgui/backends/imgui_impl_glfw.h
+  ${NIKOLA_LIBS_DIR}/imgui/backends/imgui_impl_opengl3.cpp
+  ${NIKOLA_LIBS_DIR}/imgui/backends/imgui_impl_opengl3.h
+  ${NIKOLA_LIBS_DIR}/imgui/backends/imgui_impl_opengl3_loader.h
+  ${NIKOLA_LIBS_DIR}/imgui/imconfig.h
+  ${NIKOLA_LIBS_DIR}/imgui/imgui.cpp
+  ${NIKOLA_LIBS_DIR}/imgui/imgui.h
+  ${NIKOLA_LIBS_DIR}/imgui/imgui_demo.cpp
+  ${NIKOLA_LIBS_DIR}/imgui/imgui_draw.cpp
+  ${NIKOLA_LIBS_DIR}/imgui/imgui_internal.h
+  ${NIKOLA_LIBS_DIR}/imgui/imgui_stdlib.cpp
+  ${NIKOLA_LIBS_DIR}/imgui/imgui_stdlib.h
+  ${NIKOLA_LIBS_DIR}/imgui/imgui_tables.cpp
+  ${NIKOLA_LIBS_DIR}/imgui/imgui_widgets.cpp
+  ${NIKOLA_LIBS_DIR}/imgui/imstb_rectpack.h
+  ${NIKOLA_LIBS_DIR}/imgui/imstb_textedit.h
+  ${NIKOLA_LIBS_DIR}/imgui/imstb_truetype.h
 )
 ############################################################
 

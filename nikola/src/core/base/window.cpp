@@ -405,6 +405,10 @@ void window_get_size(const Window* window, i32* width, i32* height) {
   *height = window->height;
 }
 
+void* window_get_handle(const Window* window) {
+  return window->handle;
+}
+
 const i8* window_get_title(const Window* window) {
   return glfwGetWindowTitle(window->handle);
 }

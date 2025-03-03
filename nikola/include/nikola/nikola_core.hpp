@@ -874,6 +874,9 @@ NIKOLA_API const bool window_is_shown(const Window* window);
 /// Retrieve the current size of the `window` context
 NIKOLA_API void window_get_size(const Window* window, i32* width, i32* height);
 
+/// Retrieve the internal native handle of `window`.
+NIKOLA_API void* window_get_handle(const Window* window);
+
 /// Retrieve the current title of the `window` context
 NIKOLA_API const i8* window_get_title(const Window* window);
 

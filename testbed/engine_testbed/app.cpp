@@ -3,6 +3,9 @@
 
 #include <nikola/nikola_core.hpp>
 #include <nikola/nikola_engine.hpp>
+#include <nikola/nikola_ui.hpp>
+
+#include <imgui/imgui.h>
 
 /// ----------------------------------------------------------------------
 /// App
@@ -10,14 +13,50 @@ struct nikola::App {
   nikola::Window* window;
   nikola::Camera camera;
 
+  bool has_editor;
+
   nikola::ResourceStorage* storage;
   nikola::Transform transform;
 
   nikola::ResourceID mesh_id, material_id;
   nikola::ResourceID skybox_id, skybox_material_id;
   nikola::ResourceID model_id;
+
+  nikola::Material* material;
 };
 /// App
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// Private functions 
+
+static void render_app_ui(nikola::App* app) {
+  if(!app->has_editor) {
+    return;
+  }
+
+  nikola::gui_begin();
+
+  nikola::gui_begin_panel("Debug");
+  nikola::gui_settings_debug();
+  nikola::gui_end_panel();
+  
+  nikola::gui_begin_panel("Camera");
+  nikola::gui_settings_camera(&app->camera);
+  nikola::gui_end_panel();
+  
+  nikola::gui_begin_panel("Renderer");
+  nikola::gui_settings_renderer();
+  nikola::gui_end_panel();
+  
+  nikola::gui_begin_panel("Resources");
+  nikola::gui_settings_material(app->material);
+  nikola::gui_end_panel();
+
+  nikola::gui_end();
+}
+
+/// Private functions 
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -30,6 +69,10 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // Window init
   app->window = window;
+
+  // Editor init
+  nikola::gui_init(window);
+  app->has_editor = false;
 
   // Camera init
   float aspect_ratio = nikola::window_get_aspect_ratio(app->window);
@@ -62,6 +105,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // Material init
   app->material_id = nikola::resource_storage_push_material(app->storage, diffuse_id, nikola::INVALID_RESOURCE, shader_id);
+  app->material    = nikola::resource_storage_get_material(app->storage, app->material_id);
 
   // Skybox material init
   app->skybox_material_id = nikola::resource_storage_push_material(app->storage, diffuse_id, nikola::INVALID_RESOURCE, sky_shader_id);
@@ -75,12 +119,20 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 void app_shutdown(nikola::App* app) {
   nikola::resource_storage_destroy(app->storage);
   nikola::memory_free(app);
+  nikola::gui_shutdown();
 }
 
 void app_update(nikola::App* app) {
+  // Close the window when `ESCAPE` is pressed
   if(nikola::input_key_down(nikola::KEY_ESCAPE)) {
     nikola::event_dispatch(nikola::Event{.type = nikola::EVENT_APP_QUIT});
     return;
+  }
+
+  // Active/deactive the editor
+  if(nikola::input_key_pressed(nikola::KEY_F1)) {
+    app->has_editor = !app->has_editor;
+    nikola::input_cursor_show(app->has_editor);
   }
 
   nikola::camera_update(app->camera);
@@ -90,6 +142,8 @@ static float rotation_angle = 0.0f;
 
 void app_render(nikola::App* app) {
   nikola::renderer_pre_pass(app->camera);
+
+  // Begin rendering objects
   nikola::renderer_begin_pass();
  
   nikola::RenderCommand rnd_cmd = {
@@ -130,7 +184,13 @@ void app_render(nikola::App* app) {
   rnd_cmd.material_id   = app->skybox_material_id; 
   nikola::renderer_queue_command(rnd_cmd);
 
+  // Render the objects
   nikola::renderer_end_pass();
+  
+  // Render UI
+  render_app_ui(app); 
+
+  // Some post-processing effects
   nikola::renderer_post_pass();
 }
 
