@@ -1,17 +1,20 @@
 # Plan 
-[X] 1. Work on the `general` side of the engine TODOs. Fix the filsystem API and have a wrapper around `std::filesystem::path` and replace any code that uses the old API. 
+[X] 1. Fix the filsystem API and have a wrapper around `std::filesystem::path` and replace any code that uses the old API. 
 [x] 2. Create an easy-to-use and completely customizable editor.
-[] 3. Work to improve the 3D renderer. 
-    - We are probably going to impelement a deffered renderer in order to improve perforamance and to easily get post-processing effects applied. 
+[] 3. Work to improve the renderer and make it more streamlined. 
+    - [x] Create a 2D batch renderer that can handle basic shapes and textures.
+    - [] A more pipelined post-processing system, using a deffered renderer.
+    - [] Apply some kind of lighting effects. 
+    - [] Refraction and global illumination. 
+
 [] 4. Make any viable demos in the `Demos` section with the new tools that you have now.
-[] 5. Create 2D batch renderer that can handle basic shapes and textures.
+[] 6. Start working on the audio backend.
 
 ## (Engine) TODO: 
 * General 
     - Switch from `git submodule` to `FetchContent` for fetching dependencies and perhaps rework the whole CMake section a bit.
     - Probably create my own `DynamicArray` instead of the STL one
 * All about the UI 
-    - Make a batch renderer that renders basic shapes, 2D textures, and texts. 
     - Make a UICanvas/game canvas system and test it throughly.
     - Write some documentation for the whole editor section.
     - Keep adding types as they arise.
@@ -56,9 +59,9 @@
 - (GL) Shader attribute semantics (e.g, does Mat4 work there)
 
 ## FUTURE PLANS: 
-- NUSL: Nikola Uniform Shading Language. 
 - Some kind of level serlializer?
 - Phyiscs. Yes. Just physics.
-- GPU particles
 - Hot reloading
+- NUSL: Nikola Uniform Shading Language. 
+- GPU particles
 - Multi-threading

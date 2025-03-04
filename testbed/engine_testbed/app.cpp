@@ -145,7 +145,9 @@ void app_update(nikola::App* app) {
     nikola::input_cursor_show(app->has_editor);
   }
 
-  nikola::camera_update(app->camera);
+  if(!app->has_editor) {
+    nikola::camera_update(app->camera);
+  }
 }
 
 static float rotation_angle = 0.0f;
@@ -175,8 +177,6 @@ void app_render(nikola::App* app) {
   //   }
   // }
 
-  nikola::transform_rotate(rnd_cmd.transform, nikola::Vec3(1.0f, 0.0f, 0.0f), -90.0f * nikola::DEG2RAD);
-
   // Render the model
   rnd_cmd.render_type   = nikola::RENDERABLE_TYPE_MODEL; 
   rnd_cmd.renderable_id = app->model_id; 
@@ -193,6 +193,14 @@ void app_render(nikola::App* app) {
   
   // Render UI
   render_app_ui(app); 
+
+  // Render 2D 
+  nikola::batch_renderer_begin();
+
+  nikola::batch_render_quad(nikola::Vec2(100.0f), nikola::Vec2(128.0f), nikola::Vec4(0.0f, 1.0f, 0.0f, 1.0f));
+  nikola::batch_render_texture(app->material->diffuse_map, nikola::Vec2(200.0f), nikola::Vec2(128.0f));
+
+  nikola::batch_renderer_end();
 
   // Some post-processing effects
   nikola::renderer_post_pass();

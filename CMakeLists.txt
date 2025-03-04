@@ -106,6 +106,7 @@ set(NIKOLA_SOURCES
   # Engine/Renderer 
   ${NIKOLA_SRC_DIR}/engine/renderer/camera.cpp
   ${NIKOLA_SRC_DIR}/engine/renderer/renderer.cpp
+  ${NIKOLA_SRC_DIR}/engine/renderer/batch_renderer.cpp
   
   # UI 
   ${NIKOLA_SRC_DIR}/ui/gui.cpp

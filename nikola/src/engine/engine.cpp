@@ -60,6 +60,9 @@ void engine_init(const AppDesc& desc) {
   // Renderer init 
   renderer_init(s_engine.window, Vec4(0.1f, 0.1f, 0.1f, 0.1f));
 
+  // Batch renderer init
+  batch_renderer_init();
+
   // Resource manager init 
   resource_manager_init();
   
@@ -97,6 +100,8 @@ void engine_shutdown() {
 
   resource_manager_shutdown();
   renderer_shutdown();
+  batch_renderer_shutdown();
+
   window_close(s_engine.window);
   shutdown();
   

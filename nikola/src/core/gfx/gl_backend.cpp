@@ -1239,11 +1239,6 @@ void gfx_texture_destroy(GfxTexture* texture) {
   }
   
   glDeleteTextures(1, &texture->id);
-  
-  if(texture->desc.data) {
-    memory_free(texture->desc.data); 
-  }
-
   memory_free(texture);
 }
 

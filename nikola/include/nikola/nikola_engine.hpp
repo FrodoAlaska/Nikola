@@ -1450,6 +1450,24 @@ NIKOLA_API void renderer_queue_command(const RenderCommand& command);
 /// Renderer functions
 ///---------------------------------------------------------------------------------------------------------------------
 
+///---------------------------------------------------------------------------------------------------------------------
+/// Batch renderer functions
+
+NIKOLA_API void batch_renderer_init();
+
+NIKOLA_API void batch_renderer_shutdown();
+
+NIKOLA_API void batch_renderer_begin();
+
+NIKOLA_API void batch_renderer_end();
+
+NIKOLA_API void batch_render_quad(const Vec2& position, const Vec2& size, const Vec4& color);
+
+NIKOLA_API void batch_render_texture(GfxTexture* texture, const Vec2& position, const Vec2& size, const Vec4& tint = Vec4(1.0f));
+
+/// Batch renderer functions
+///---------------------------------------------------------------------------------------------------------------------
+
 /// *** Renderer ***
 /// ----------------------------------------------------------------------
 
