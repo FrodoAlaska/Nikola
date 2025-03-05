@@ -4,9 +4,10 @@
 [] 3. Work to improve the renderer and make it more streamlined. 
     - [x] Create a 2D batch renderer that can handle basic shapes and textures.
     - [x] A more pipelined post-processing system.
-    - [] Reload shaders on the fly
+    - [] Reload shaders on the fly?
     - [] Apply the blin-phong lighting model. 
     - [] Refraction and global illumination. 
+    - [] Multiple render passes
 [] 4. Make any viable demos in the `Demos` section with the new tools that you have now.
 [] 6. Start working on the audio backend.
 
