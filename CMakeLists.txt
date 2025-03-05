@@ -79,7 +79,6 @@ set(NIKOLA_SOURCES
   
   # Core/Gfx
   ${NIKOLA_SRC_DIR}/core/gfx/gl_backend.cpp
-  ${NIKOLA_SRC_DIR}/core/gfx/dx11_backend.cpp
   
   # Engine
   ${NIKOLA_SRC_DIR}/engine/engine.cpp

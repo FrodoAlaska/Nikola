@@ -182,9 +182,10 @@ void gui_settings_renderer() {
     RENDER_EFFECT_BLUR,
     RENDER_EFFECT_EMBOSS,
     RENDER_EFFECT_EDGE_DETECT,
+    RENDER_EFFECT_PIXELIZE,
   };
 
-  ImGui::Combo("Effect", &current_effect, "None\0Greyscale\0Inversion\0Sharpen\0Blur\0Emboss\0Edge Detect\0", RENDER_EFFECTS_MAX);
+  ImGui::Combo("Effect", &current_effect, "None\0Greyscale\0Inversion\0Sharpen\0Blur\0Emboss\0Edge Detect\0Pixelize\0", RENDER_EFFECTS_MAX);
   renderer_apply_effect(effects[current_effect]);
   // -------------------------------------------------------------------
 }

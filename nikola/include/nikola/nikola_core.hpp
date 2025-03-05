@@ -52,10 +52,6 @@ typedef double f64;
 #define NIKOLA_GL_MINIMUM_MAJOR_VERSION 4
 #define NIKOLA_GL_MINIMUM_MINOR_VERSION 2
 
-/// Nikola only supports Direct3D11 versions greater than these.
-#define NIKOLA_D3D11_MINIMUM_MAJOR_VERSION 11 
-#define NIKOLA_D3D11_MINIMUM_MINOR_VERSION 0 
-
 // Exports
 #ifdef NIKOLA_EXPORT 
 
@@ -110,7 +106,6 @@ typedef double f64;
 /// Windows
 #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
 #define NIKOLA_PLATFORM_WINDOWS 1
-// @TODO: #define NIKOLA_GFX_CONTEXT_DX11
 #define NIKOLA_GFX_CONTEXT_OPENGL
 #ifndef _WIN64 
 #error "[NIKOLA-FATAL]: Only support 64-bit machines\n"
@@ -954,22 +949,25 @@ NIKOLA_API const f64 niclock_get_delta_time();
 // Consts
 
 /// The maximum amount of textures the GPU supports at a time. 
-const sizei TEXTURES_MAX        = 32;
+const sizei TEXTURES_MAX                = 32;
+
+/// The maximum amount of attachments that can be attached to a framebuffer. 
+const sizei FRAMEBUFFER_ATTACHMENTS_MAX = 8;
 
 /// The maximum amount of textures the GPU supports at a time. 
-const sizei CUBEMAPS_MAX        = 5;
+const sizei CUBEMAPS_MAX                = 5;
 
 /// The maximum amount of faces in a cubemap
-const sizei CUBEMAP_FACES_MAX   = 6;
+const sizei CUBEMAP_FACES_MAX           = 6;
 
 /// The maximum amount of uniform buffers to be created in a shader type.
-const sizei UNIFORM_BUFFERS_MAX = 16;
+const sizei UNIFORM_BUFFERS_MAX         = 16;
 
 /// The maximum number of elements a buffer's layout can have.
-const sizei LAYOUT_ELEMENTS_MAX = 32;
+const sizei LAYOUT_ELEMENTS_MAX         = 32;
 
 /// The maximum number of render targets to be bound at once.
-const sizei RENDER_TARGETS_MAX  = 8;
+const sizei RENDER_TARGETS_MAX          = 8;
 
 // Consts
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1119,34 +1117,22 @@ enum GfxCullOrder {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// GfxContextFlags 
-enum GfxContextFlags {
-  /// No flags will be used.
-  GFX_CONTEXT_FLAGS_NONE                   = 3 << 0,
-
-  /// Enable VSYNC in the graphics context
-  ///
-  /// @NOTE: VSYNC is disabled by default.
-  GFX_CONTEXT_FLAGS_ENABLE_VSYNC           = 3 << 1, 
-
-  /// Render to a custom render target.
-  ///
-  /// @NOTE: This should be set if the `render_targets` of `GfxPipeline` 
-  /// is to be used. Initially, the graphics context will render to the default render target.
-  GFX_CONTEXT_FLAGS_CUSTOM_RENDER_TARGET   = 3 << 2, 
+enum GfxClearFlags {
+  /// No buffers will be cleared.
+  GFX_CLEAR_FLAGS_NONE                   = 3 << 0,
   
   /// Clear the color buffer of the current context. 
-  GFX_CONTEXT_FLAGS_CLEAR_COLOR_BUFFER     = 3 << 3,
+  GFX_CLEAR_FLAGS_COLOR_BUFFER     = 3 << 1,
 
   /// Clear the depth buffer of the current context. 
   ///
   /// @NOTE: This flag will be ignored if the depth state is disabled.
-  GFX_CONTEXT_FLAGS_CLEAR_DEPTH_BUFFER     = 3 << 4,
+  GFX_CLEAR_FLAGS_DEPTH_BUFFER     = 3 << 2,
   
   /// Clear the stencil buffer of the current context. 
   ///
   /// @NOTE: This flag will be ignored if the stencil state is disabled.
-  GFX_CONTEXT_FLAGS_CLEAR_STENCIL_BUFFER   = 3 << 5,
+  GFX_CLEAR_FLAGS_STENCIL_BUFFER   = 3 << 3,
 };
 /// GfxContextFlags 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1275,8 +1261,14 @@ enum GfxTextureType {
   /// Creates a texture to be used as a render target.
   GFX_TEXTURE_RENDER_TARGET        = 8 << 3,
   
-  /// Creates a texture to be used as both the depth and stencil buffers.
-  GFX_TEXTURE_DEPTH_STENCIL_TARGET = 8 << 4,
+  /// Creates a texture to be used as the depth target.
+  GFX_TEXTURE_DEPTH_TARGET         = 8 << 4,
+  
+  /// Creates a texture to be used as the stencil target.
+  GFX_TEXTURE_STENCIL_TARGET       = 8 << 5,
+  
+  /// Creates a texture to be used as both the depth and stencil target.
+  GFX_TEXTURE_DEPTH_STENCIL_TARGET = 8 << 6,
 };
 /// GfxTextureType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1284,27 +1276,45 @@ enum GfxTextureType {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxTextureFormat
 enum GfxTextureFormat {
-  /// An 8 bits per pixel red channel texture format.
+  /// An `unsigned char` per pixel red channel texture format.
   GFX_TEXTURE_FORMAT_R8                 = 9 << 0,
   
-  /// A 16 bits per pixel red channel texture format.
+  /// An `unsigned short` per pixel red channel texture format.
   GFX_TEXTURE_FORMAT_R16                = 9 << 1,
+  
+  /// A `half float` per pixel red channel texture format.
+  GFX_TEXTURE_FORMAT_R16F               = 9 << 2,
+  
+  /// A `float` per pixel red channel texture format.
+  GFX_TEXTURE_FORMAT_R32F               = 9 << 3,
 
-  /// An 8 bits per pixel red and green channel texture format.
-  GFX_TEXTURE_FORMAT_RG8                = 9 << 2,
+  /// An `unsigned char` per pixel red and green channel texture format.
+  GFX_TEXTURE_FORMAT_RG8                = 9 << 4,
   
-  /// A 16 bits per pixel red and green channel texture format.
-  GFX_TEXTURE_FORMAT_RG16               = 9 << 3,
+  /// An `unsigned short` per pixel red and green channel texture format.
+  GFX_TEXTURE_FORMAT_RG16               = 9 << 5,
   
-  /// An 8 bits per pixel red, green, blue, and alpha channel texture format.
-  GFX_TEXTURE_FORMAT_RGBA8              = 9 << 4,
+  /// A `half float` per pixel red and green channel texture format.
+  GFX_TEXTURE_FORMAT_RG16F              = 9 << 6,
   
-  /// A 16 bits per pixel red, green, blue, and alpha channel texture format.
-  GFX_TEXTURE_FORMAT_RGBA16             = 9 << 5,
+  /// A `float` per pixel red and green channel texture format.
+  GFX_TEXTURE_FORMAT_RG32F              = 9 << 7,
+  
+  /// An `unsigned char` per pixel red, green, blue, and alpha channel texture format.
+  GFX_TEXTURE_FORMAT_RGBA8              = 9 << 8,
+  
+  /// An `unsigned short` bits per pixel red, green, blue, and alpha channel texture format.
+  GFX_TEXTURE_FORMAT_RGBA16             = 9 << 9,
+  
+  /// A `half float` per pixel red, green, blue, and alpha channel texture format.
+  GFX_TEXTURE_FORMAT_RGBA16F            = 9 << 10,
+  
+  /// A `float` per pixel red, green, blue, and alpha channel texture format.
+  GFX_TEXTURE_FORMAT_RGBA32F            = 9 << 11,
 
   /// A format to be used with the depth and stencil buffers where 
   /// the depth buffer gets 24 bits and the stencil buffer gets 8 bits.
-  GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8 = 9 << 6,
+  GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8 = 9 << 12,
 };
 /// GfxTextureFromat
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1372,6 +1382,12 @@ enum GfxShaderType {
 /// GfxContext
 struct GfxContext; 
 /// GfxContext
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxFramebuffer
+struct GfxFramebuffer;
+/// GfxFramebuffer
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1518,10 +1534,11 @@ struct GfxContextDesc {
   /// @NOTE: By default, no states are set. 
   u32 states                    = 0;
 
-  /// The pixel format of the swapchain image. 
-  /// 
-  /// @NOTE: By default, the value is `GFX_TEXTURE_FORMAT_RGBA8`.
-  GfxTextureFormat pixel_format = GFX_TEXTURE_FORMAT_RGBA8;
+  /// When set to `true`, the context will enable vsync. 
+  /// Otherwise, vsync will be turned off.
+  ///
+  /// @NOTE: By default, this value is set to `false`.
+  bool has_vsync                = false;
 
   /// The subsamples of the MSAA buffer. 
   /// 
@@ -1553,6 +1570,29 @@ struct GfxContextDesc {
   GfxCullDesc cull_desc         = {};
 };
 /// GfxContextDesc 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxFramebufferDesc
+struct GfxFramebufferDesc {
+  /// The RGBA values of the clear color.
+  ///
+  /// @NOTE: By default, the clear color is set to `{0, 0, 0, 0}`.
+  f32 clear_color[4] = {0, 0, 0, 0};
+
+  /// A bitwise ORed value `GfxClearFlags` that determine 
+  /// which buffers to clear every frame. 
+  u32 clear_flags       = 0;
+
+  /// An array of attachments up to `FRAMEBUFFER_ATTACHMENTS_MAX`. 
+  ///
+  /// @NOTE: Each texture in this array have one of the texture types `GFX_TEXTURE_*_TARGET`. 
+  GfxTexture* attachments[FRAMEBUFFER_ATTACHMENTS_MAX];
+
+  /// The amount of attachments in the `attachments` array.
+  sizei attachments_count = 0;
+};
+/// GfxFramebufferDesc
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1750,15 +1790,6 @@ struct GfxPipelineDesc {
   ///
   /// @NOTE: This is `{0, 0, 0, 0}` by default.
   f32 blend_factor[4]                = {0, 0, 0, 0};
-
-  /// The current render targets (up to RENDER_TARGETS_MAX) of the pipeline. 
-  GfxTexture* render_targets[RENDER_TARGETS_MAX];
-
-  /// The amount of render targets to use in `render_targets`.
-  ///
-  /// @NOTE: This is `0` by default and should be left as such 
-  /// if you wish to render to the default render target.
-  sizei render_targets_count         = 0;
 };
 /// GfxPipelineDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1799,17 +1830,11 @@ NIKOLA_API GfxContextDesc& gfx_context_get_desc(GfxContext* gfx);
 /// i.e, this function can turn on or off the `state` in the given `gfx` context.
 NIKOLA_API void gfx_context_set_state(GfxContext* gfx, const GfxStates state, const bool value);
 
-/// Clear the buffers of the currently active states, sets the clear color as `{r, g, b, a}`, 
-/// and sets any required actions of `flags` (which can be `OR`ed together).
-///
-/// `flags`:
-///   - `GFX_CONTEXT_FLAGS_NONE`                   = No flags will be used.
-///   - `GFX_CONTEXT_FLAGS_ENABLE_VSYNC`           = Enable VSYNC in the graphics context 
-///   - `GFX_CONTEXT_FLAGS_CUSTOM_RENDER_TARGET`   = Render to a custom render target. 
-///   - `GFX_CONTEXT_FLAGS_CLEAR_COLOR_BUFFER`     = Clear the color buffer of the current context. 
-///   - `GFX_CONTEXT_FLAGS_CLEAR_DEPTH_BUFFER`     = Clear the depth buffer of the current context.
-///   - `GFX_CONTEXT_FLAGS_CLEAR_STENCIL_BUFFER`   = Clear the stencil buffer of the current context.
-NIKOLA_API void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a, const u32 flags);
+/// Clear the context given the information in `framebuffer`. The clear flags 
+/// as well as the clear color will be sampled from `framebuffer`. However, 
+/// if `framebuffer` is set to `nullptr`, the context will clear the default 
+/// framebuffer instead.
+NIKOLA_API void gfx_context_clear(GfxContext* gfx, GfxFramebuffer* framebuffer);
 
 /// Apply the `pipeline` using the updated `pipe_desc` in the current `gfx`. 
 /// This function will update the references of the shader, buffers, and textures in `pipeline` using `pipe_desc` 
@@ -1822,6 +1847,21 @@ NIKOLA_API void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipelin
 NIKOLA_API void gfx_context_present(GfxContext* gfx);
 
 /// Context functions 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Framebuffer functions
+
+/// Allocate and return a `GfxFramebuffer` object, using the information in `desc`. 
+NIKOLA_API GfxFramebuffer* gfx_framebuffer_create(GfxContext* gfx, const GfxFramebufferDesc& desc);
+
+/// Free/reclaim any memory taken by `framebuffer`.
+NIKOLA_API void gfx_framebuffer_destroy(GfxFramebuffer* framebuffer);
+
+/// Retrieve the internal `GfxFramebufferDesc` of `framebuffer`
+NIKOLA_API GfxFramebufferDesc& gfx_framebuffer_get_desc(GfxFramebuffer* framebuffer);
+
+/// Framebuffer functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1862,16 +1902,16 @@ NIKOLA_API GfxShaderDesc& gfx_shader_get_source(GfxShader* shader);
 /// can easily find it. 
 NIKOLA_API void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer, const u32 bind_point);
 
-/// Only for GLSL (OpenGL), retrieve the location of the `uniform_name` in the `shader`.
+/// Lookup the `uniform_name` in `shader` and retrieve its location. 
 ///
-/// @NOTE: If `uniform_name` is not found within `shader`, the function will return `-1`.
-NIKOLA_API i32 gfx_glsl_get_uniform_location(GfxShader* shader, const i8* uniform_name);
+/// @NOTE: If `uniform_name` does NOT exist in `shader`, the returned value will be `-1`.
+NIKOLA_API i32 gfx_shader_uniform_lookup(GfxShader* shader, const i8* uniform_name);
 
-/// Only for GLSL (OpenGL), upload a uniform array with `count` elements of type `type` with `data` at `location` to `shader`. 
-NIKOLA_API void gfx_glsl_upload_uniform_array(GfxShader* shader, const i32 location, const sizei count, const GfxLayoutType type, const void* data);
+/// Upload a uniform array with `count` elements of type `type` with `data` at `location` to `shader`. 
+NIKOLA_API void gfx_shader_upload_uniform_array(GfxShader* shader, const i32 location, const sizei count, const GfxLayoutType type, const void* data);
 
-/// Only for GLSL (OpenGL), upload a uniform of type `type` with `data` at `location` to `shader`. 
-NIKOLA_API void gfx_glsl_upload_uniform(GfxShader* shader, const i32 location, const GfxLayoutType type, const void* data);
+/// Upload a uniform of type `type` with `data` at `location` to `shader`. 
+NIKOLA_API void gfx_shader_upload_uniform(GfxShader* shader, const i32 location, const GfxLayoutType type, const void* data);
 
 /// Shader functions 
 ///---------------------------------------------------------------------------------------------------------------------

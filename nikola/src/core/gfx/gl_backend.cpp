@@ -43,17 +43,21 @@ struct GfxContext {
   GfxContextDesc desc = {};
   GfxStates states;
 
-  bool has_vsync         = false;
-  u32 default_clear_bits = 0;
-
-  u32 framebuffer_id           = 0;
-  u32 framebuffer_clear_bits   = 0;
-  u32 frambuffer_targets_count = 0;
-
-  u32 current_clear_bits  = 0;
-  u32 current_framebuffer = 0;
+  bool has_vsync      = false;
 };
 /// GfxContext
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxFramebuffer
+struct GfxFramebuffer {
+  GfxFramebufferDesc desc = {};
+  
+  u32 clear_flags;
+  u32 id;
+  u32 color_buffers_count = 0;
+};
+/// GfxFramebuffer
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -395,34 +399,61 @@ static void set_gfx_states(GfxContext* gfx) {
   }
 }
 
-static void set_context_flags(GfxContext* gfx, const u32 flags) {
-  gfx->has_vsync           = false;
-  gfx->current_framebuffer = 0;
-  gfx->current_clear_bits  = 0;
+static u32 get_gl_clear_flags(const u32 flags) {
+  u32 gl_flags = 0;
 
-  if(IS_BIT_SET(flags, GFX_CONTEXT_FLAGS_NONE)) {
-    return;
-  }
-
-  if(IS_BIT_SET(flags, GFX_CONTEXT_FLAGS_ENABLE_VSYNC)) {
-    gfx->has_vsync = true;
-  }
-
-  if(IS_BIT_SET(flags, GFX_CONTEXT_FLAGS_CUSTOM_RENDER_TARGET)) {
-    gfx->current_framebuffer = gfx->framebuffer_id;
-    gfx->current_clear_bits  = gfx->framebuffer_clear_bits;
+  if(IS_BIT_SET(flags, GFX_CLEAR_FLAGS_COLOR_BUFFER)) {
+    gl_flags |= GL_COLOR_BUFFER_BIT;    
   }
   
-  if(IS_BIT_SET(flags, GFX_CONTEXT_FLAGS_CLEAR_COLOR_BUFFER)) {
-    gfx->current_clear_bits |= GL_COLOR_BUFFER_BIT;
+  if(IS_BIT_SET(flags, GFX_CLEAR_FLAGS_DEPTH_BUFFER)) {
+    gl_flags |= GL_DEPTH_BUFFER_BIT;    
   }
   
-  if(IS_BIT_SET(flags, GFX_CONTEXT_FLAGS_CLEAR_DEPTH_BUFFER)) {
-    gfx->current_clear_bits |= GL_DEPTH_BUFFER_BIT;
+  if(IS_BIT_SET(flags, GFX_CLEAR_FLAGS_STENCIL_BUFFER)) {
+    gl_flags |= GL_STENCIL_BUFFER_BIT;    
   }
+
+  return gl_flags;
+}
+
+static void framebuffer_attach(GfxFramebuffer* framebuffer, GfxTexture* attachment) {
+  NIKOLA_ASSERT(framebuffer, "Invalid GfxFramebuffer struct passed");
+  NIKOLA_ASSERT(attachment, "Invalid GfxTexture struct passed for attachment");
   
-  if(IS_BIT_SET(flags, GFX_CONTEXT_FLAGS_CLEAR_STENCIL_BUFFER)) {
-    gfx->current_clear_bits |= GL_STENCIL_BUFFER_BIT;
+  switch(attachment->desc.type) {
+    case GFX_TEXTURE_RENDER_TARGET:
+      glNamedFramebufferTexture(framebuffer->id, 
+                                GL_COLOR_ATTACHMENT0 + framebuffer->color_buffers_count, 
+                                attachment->id, 
+                                0);
+      framebuffer->color_buffers_count++;
+      break;
+    case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
+      glNamedFramebufferRenderbuffer(framebuffer->id, 
+                                     GL_DEPTH_STENCIL_ATTACHMENT, 
+                                     GL_RENDERBUFFER, 
+                                     attachment->id);
+      break;
+    case GFX_TEXTURE_DEPTH_TARGET:
+      glNamedFramebufferRenderbuffer(framebuffer->id, 
+                                     GL_DEPTH_ATTACHMENT, 
+                                     GL_RENDERBUFFER, 
+                                     attachment->id);
+      break;
+    case GFX_TEXTURE_STENCIL_TARGET:
+      glNamedFramebufferRenderbuffer(framebuffer->id, 
+                                     GL_STENCIL_ATTACHMENT, 
+                                     GL_RENDERBUFFER, 
+                                     attachment->id);
+      break;
+    default:
+      NIKOLA_LOG_FATAL("Cannot attach a non render target texture type");
+      return;
+  }
+
+  if(glCheckNamedFramebufferStatus(framebuffer->id, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    NIKOLA_LOG_WARN("GL-ERROR: Framebuffer %i is incomplete", framebuffer->id);
   }
 }
 
@@ -697,6 +728,16 @@ static void get_texture_gl_format(const GfxTextureFormat format, GLenum* in_form
       *gl_format = GL_RED;
       *gl_type   = GL_UNSIGNED_SHORT;
       break;
+    case GFX_TEXTURE_FORMAT_R16F:
+      *in_format = GL_R16F;
+      *gl_format = GL_RED;
+      *gl_type   = GL_FLOAT;
+      break;
+    case GFX_TEXTURE_FORMAT_R32F:
+      *in_format = GL_R32F;
+      *gl_format = GL_RED;
+      *gl_type   = GL_FLOAT;
+      break;
     case GFX_TEXTURE_FORMAT_RG8:
       *in_format = GL_RG8;
       *gl_format = GL_RG;
@@ -707,6 +748,16 @@ static void get_texture_gl_format(const GfxTextureFormat format, GLenum* in_form
       *gl_format = GL_RG;
       *gl_type   = GL_UNSIGNED_SHORT;
       break;
+    case GFX_TEXTURE_FORMAT_RG16F:
+      *in_format = GL_RG16F;
+      *gl_format = GL_RG;
+      *gl_type   = GL_FLOAT;
+      break;
+    case GFX_TEXTURE_FORMAT_RG32F:
+      *in_format = GL_RG32F;
+      *gl_format = GL_RG;
+      *gl_type   = GL_FLOAT;
+      break;
     case GFX_TEXTURE_FORMAT_RGBA8:
       *in_format = GL_RGBA8;
       *gl_format = GL_RGBA;
@@ -716,6 +767,16 @@ static void get_texture_gl_format(const GfxTextureFormat format, GLenum* in_form
       *in_format = GL_RGBA16;
       *gl_format = GL_RGBA;
       *gl_type   = GL_UNSIGNED_SHORT;
+      break;
+    case GFX_TEXTURE_FORMAT_RGBA16F:
+      *in_format = GL_RGBA16F;
+      *gl_format = GL_RGBA;
+      *gl_type   = GL_FLOAT;
+      break;
+    case GFX_TEXTURE_FORMAT_RGBA32F:
+      *in_format = GL_RGBA32F;
+      *gl_format = GL_RGBA;
+      *gl_type   = GL_FLOAT;
       break;
     case GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8:
       *in_format = GL_DEPTH24_STENCIL8;
@@ -839,30 +900,13 @@ static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format, GLe
                           gl_pixel_type, 
                           NULL);
       break;
+    case GFX_TEXTURE_DEPTH_TARGET:
+    case GFX_TEXTURE_STENCIL_TARGET:
     case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
       glNamedRenderbufferStorage(texture->id, in_format, texture->desc.width, texture->desc.height);
       break;
     default:
       break;
-  }
-}
-
-static void apply_gl_render_target(GfxContext* gfx, GfxTexture* texture) {
-  switch(texture->desc.type) {
-    case GFX_TEXTURE_RENDER_TARGET:
-      glNamedFramebufferTexture(gfx->framebuffer_id, GL_COLOR_ATTACHMENT0 + gfx->frambuffer_targets_count, texture->id, 0);
-      gfx->frambuffer_targets_count++;
-      break;
-    case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
-      glNamedFramebufferRenderbuffer(gfx->framebuffer_id, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, texture->id);
-      gfx->framebuffer_clear_bits |= GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
-      break;
-    default:
-      return;
-  }
-
-  if(glCheckNamedFramebufferStatus(gfx->framebuffer_id, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-    NIKOLA_LOG_WARN("GL-ERROR: Framebuffer %i is incomplete", gfx->framebuffer_id);
   }
 }
 
@@ -876,8 +920,7 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
   GfxContext* gfx = (GfxContext*)memory_allocate(sizeof(GfxContext));
   memory_zero(gfx, sizeof(GfxContext)); 
   
-  gfx->desc               = desc;
-  gfx->default_clear_bits = GL_COLOR_BUFFER_BIT;
+  gfx->desc = desc;
 
   // Glad init
   if(!gladLoadGL()) {
@@ -890,10 +933,6 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(gl_error_callback, nullptr);
 #endif
-
-  // Framebuffer init
-  glCreateFramebuffers(1, &gfx->framebuffer_id); 
-  gfx->framebuffer_clear_bits = GL_COLOR_BUFFER_BIT;
 
   // Setting the window context to this OpenGL context 
   window_set_current_context(desc.window);
@@ -936,8 +975,6 @@ void gfx_context_shutdown(GfxContext* gfx) {
     return;
   }
 
-  glDeleteFramebuffers(1, &gfx->framebuffer_id);
-
   NIKOLA_LOG_INFO("The graphics context was successfully destroyed");
   memory_free(gfx);
 }
@@ -953,14 +990,31 @@ void gfx_context_set_state(GfxContext* gfx, const GfxStates state, const bool va
   set_state(gfx, state, value);
 }
 
-void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a, const u32 flags) {
+void gfx_context_clear(GfxContext* gfx, GfxFramebuffer* framebuffer) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
- 
-  set_context_flags(gfx, flags);
 
-  glBindFramebuffer(GL_FRAMEBUFFER, gfx->current_framebuffer);
-  glClear(gfx->current_clear_bits);
-  glClearColor(r, g, b, a);
+  u32 framebuffer_id = 0; 
+  u32 clear_flags   = GL_COLOR_BUFFER_BIT;
+  f32 red           = 1.0f;
+  f32 green         = 1.0f;
+  f32 blue          = 1.0f;
+  f32 alpha         = 1.0f;
+
+  // There is a framebuffer present, therefore, we 
+  // should use it instead of the default one.
+  if(framebuffer) {
+    framebuffer_id = framebuffer->id; 
+    clear_flags    = framebuffer->clear_flags;
+
+    red   = framebuffer->desc.clear_color[0];
+    green = framebuffer->desc.clear_color[1];
+    blue  = framebuffer->desc.clear_color[2];
+    alpha = framebuffer->desc.clear_color[3];
+  }
+
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_id);
+  glClear(clear_flags);
+  glClearColor(red, green, blue, alpha);
 }
 
 void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc& pipe_desc) {
@@ -1002,6 +1056,46 @@ void gfx_context_present(GfxContext* gfx) {
 }
 
 /// Context functions 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Framebuffer functions
+
+GfxFramebuffer* gfx_framebuffer_create(GfxContext* gfx, const GfxFramebufferDesc& desc) {
+  NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
+
+  GfxFramebuffer* buff = (GfxFramebuffer*)memory_allocate(sizeof(GfxFramebuffer));
+  memory_zero(buff, sizeof(GfxFramebuffer));
+
+  buff->desc        = desc; 
+  buff->clear_flags = get_gl_clear_flags(desc.clear_flags);
+
+  glCreateFramebuffers(1, &buff->id);
+
+  // Attach all of the given attachments
+  for(sizei i = 0; i < desc.attachments_count; i++) {
+    framebuffer_attach(buff, desc.attachments[i]);
+  }
+
+  return buff;
+}
+
+void gfx_framebuffer_destroy(GfxFramebuffer* framebuffer) {
+  if(!framebuffer) {
+    return;
+  }
+
+  glDeleteFramebuffers(1, &framebuffer->id);
+  memory_free(framebuffer);
+}
+
+GfxFramebufferDesc& gfx_framebuffer_get_desc(GfxFramebuffer* framebuffer) {
+  NIKOLA_ASSERT(framebuffer, "Invalid GfxFramebuffer struct passed");
+
+  return framebuffer->desc;
+}
+
+/// Framebuffer functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1118,13 +1212,13 @@ void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxB
   glBindBufferBase(GL_UNIFORM_BUFFER, bind_point, buffer->id);
 }
 
-i32 gfx_glsl_get_uniform_location(GfxShader* shader, const i8* uniform_name) {
+i32 gfx_shader_uniform_lookup(GfxShader* shader, const i8* uniform_name) {
   NIKOLA_ASSERT(shader, "Invalid GfxShader struct passed");
   
   return glGetUniformLocation(shader->id, uniform_name);
 }
 
-void gfx_glsl_upload_uniform_array(GfxShader* shader, const i32 location, const sizei count, const GfxLayoutType type, const void* data) {
+void gfx_shader_upload_uniform_array(GfxShader* shader, const i32 location, const sizei count, const GfxLayoutType type, const void* data) {
   NIKOLA_ASSERT(shader, "Invalid GfxShader struct passed");
 
   // Will not do anything with an invalid uniform
@@ -1184,8 +1278,8 @@ void gfx_glsl_upload_uniform_array(GfxShader* shader, const i32 location, const 
   }
 }
 
-void gfx_glsl_upload_uniform(GfxShader* shader, const i32 location, const GfxLayoutType type, const void* data) {
-  gfx_glsl_upload_uniform_array(shader, location, 1, type, data);
+void gfx_shader_upload_uniform(GfxShader* shader, const i32 location, const GfxLayoutType type, const void* data) {
+  gfx_shader_upload_uniform_array(shader, location, 1, type, data);
 }
 
 /// Shader functions 
@@ -1228,9 +1322,6 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
 
   // Generating some mipmaps
   glGenerateTextureMipmap(texture->id);
-
-  // Set the render target texture (if it is so) to the framebuffer 
-  apply_gl_render_target(gfx, texture);
 
   return texture;
 }

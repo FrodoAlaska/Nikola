@@ -1375,8 +1375,10 @@ enum RenderEffectType {
   RENDER_EFFECT_EMBOSS      = 18 << 5,
 
   RENDER_EFFECT_EDGE_DETECT = 18 << 6, 
+  
+  RENDER_EFFECT_PIXELIZE    = 18 << 7, 
 
-  RENDER_EFFECTS_MAX        = 7,
+  RENDER_EFFECTS_MAX        = 8,
 };
 /// RenderEffectType
 ///---------------------------------------------------------------------------------------------------------------------

@@ -59,7 +59,7 @@ void material_loader_load(ResourceStorage* storage,
   
   // Adding only the valid uniforms in the shader
   for(sizei i = 0; i < MATERIAL_UNIFORMS_MAX; i++) {
-    i32 location = gfx_glsl_get_uniform_location(mat->shader, uniform_names[i]);
+    i32 location = gfx_shader_uniform_lookup(mat->shader, uniform_names[i]);
     
     // The uniform does not exist
     if(location == -1) {

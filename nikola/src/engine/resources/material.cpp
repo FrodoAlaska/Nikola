@@ -11,12 +11,12 @@ namespace nikola {
 static void check_and_send_uniform(Material* mat, const i8* name, GfxLayoutType type, const void* data) {
   // Send the uniform (only if it is valid)
   if(mat->uniform_locations.find(name) != mat->uniform_locations.end()) {
-    gfx_glsl_upload_uniform(mat->shader, mat->uniform_locations[name], type, data);
+    gfx_shader_upload_uniform(mat->shader, mat->uniform_locations[name], type, data);
     return;
   }
  
   // Get the new uniform location
-  i32 location = gfx_glsl_get_uniform_location(mat->shader, name);
+  i32 location = gfx_shader_uniform_lookup(mat->shader, name);
   
   // The uniform just does not exist in the shader at all 
   if(location != -1) {
@@ -26,7 +26,7 @@ static void check_and_send_uniform(Material* mat, const i8* name, GfxLayoutType 
   
   // Uniform does not exist. Cache it instead.
   mat->uniform_locations[name] = location; 
-  gfx_glsl_upload_uniform(mat->shader, location, type, data);
+  gfx_shader_upload_uniform(mat->shader, location, type, data);
   NIKOLA_LOG_DEBUG("Cache uniform \'%s\' in material...", name);
 }
 
