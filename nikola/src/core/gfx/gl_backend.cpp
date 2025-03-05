@@ -46,8 +46,9 @@ struct GfxContext {
   bool has_vsync         = false;
   u32 default_clear_bits = 0;
 
-  u32 framebuffer_id         = 0;
-  u32 framebuffer_clear_bits = 0;
+  u32 framebuffer_id           = 0;
+  u32 framebuffer_clear_bits   = 0;
+  u32 frambuffer_targets_count = 0;
 
   u32 current_clear_bits  = 0;
   u32 current_framebuffer = 0;
@@ -849,7 +850,8 @@ static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format, GLe
 static void apply_gl_render_target(GfxContext* gfx, GfxTexture* texture) {
   switch(texture->desc.type) {
     case GFX_TEXTURE_RENDER_TARGET:
-      glNamedFramebufferTexture(gfx->framebuffer_id, GL_COLOR_ATTACHMENT0, texture->id, 0);
+      glNamedFramebufferTexture(gfx->framebuffer_id, GL_COLOR_ATTACHMENT0 + gfx->frambuffer_targets_count, texture->id, 0);
+      gfx->frambuffer_targets_count++;
       break;
     case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
       glNamedFramebufferRenderbuffer(gfx->framebuffer_id, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, texture->id);

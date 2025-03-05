@@ -1360,6 +1360,28 @@ const f32 CAMERA_MAX_ZOOM    = 180.0f;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// RenderEffectType
+enum RenderEffectType {
+  RENDER_EFFECT_NONE        = 18 << 0, 
+ 
+  RENDER_EFFECT_GREYSCALE   = 18 << 1, 
+ 
+  RENDER_EFFECT_INVERSION   = 18 << 2, 
+ 
+  RENDER_EFFECT_SHARPEN     = 18 << 3, 
+ 
+  RENDER_EFFECT_BLUR        = 18 << 4, 
+  
+  RENDER_EFFECT_EMBOSS      = 18 << 5,
+
+  RENDER_EFFECT_EDGE_DETECT = 18 << 6, 
+
+  RENDER_EFFECTS_MAX        = 7,
+};
+/// RenderEffectType
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// Camera function pointers
 
 // Have to do this to fix underfined variable errors in the callback.
@@ -1389,20 +1411,13 @@ struct Camera {
 /// Camera 
 ///---------------------------------------------------------------------------------------------------------------------
 
-///---------------------------------------------------------------------------------------------------------------------
-/// Camera functions
-
-/// The default function callback to use in order to move `camera`.
-NIKOLA_API void camera_default_move_func(Camera& camera);
-
-/// Fill the information in `cam` using the given values.
-NIKOLA_API void camera_create(Camera* cam, const f32 aspect_ratio, const Vec3& pos, const Vec3& target, const CameraMoveFn& move_fn = camera_default_move_func);
-
-/// Update the internal matrices of `cam` and call the associated `CameraMoveFn`. 
-NIKOLA_API void camera_update(Camera& cam);
-
-/// Camera functions
-///---------------------------------------------------------------------------------------------------------------------
+/// ----------------------------------------------------------------------
+/// RenderData
+struct RenderData {
+  Camera camera;
+};
+/// RenderData
+/// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
 /// RenderCommand
@@ -1416,6 +1431,21 @@ struct RenderCommand {
   ResourceStorage* storage;
 };
 /// RenderCommand
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Camera functions
+
+/// The default function callback to use in order to move `camera`.
+NIKOLA_API void camera_default_move_func(Camera& camera);
+
+/// Fill the information in `cam` using the given values.
+NIKOLA_API void camera_create(Camera* cam, const f32 aspect_ratio, const Vec3& pos, const Vec3& target, const CameraMoveFn& move_fn = camera_default_move_func);
+
+/// Update the internal matrices of `cam` and call the associated `CameraMoveFn`. 
+NIKOLA_API void camera_update(Camera& cam);
+
+/// Camera functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1437,13 +1467,15 @@ NIKOLA_API void renderer_set_clear_color(const Vec4& clear_color);
 // @TODO: Change this to a set of defaults later.
 NIKOLA_API const GfxBuffer* renderer_default_matrices_buffer();
 
-NIKOLA_API void renderer_pre_pass(Camera& cam);
-
-NIKOLA_API void renderer_begin_pass();
+NIKOLA_API void renderer_begin_pass(RenderData& data);
 
 NIKOLA_API void renderer_end_pass();
 
-NIKOLA_API void renderer_post_pass();
+NIKOLA_API void renderer_present();
+
+NIKOLA_API void renderer_apply_effect(const RenderEffectType effect);
+
+NIKOLA_API RenderEffectType renderer_current_effect();
 
 NIKOLA_API void renderer_queue_command(const RenderCommand& command);
 

@@ -167,8 +167,25 @@ void gui_settings_renderer() {
   // Editables
   // -------------------------------------------------------------------
   ImGui::SeparatorText("##xx");
+ 
+  // Clear color
   ImGui::ColorPicker4("Clear color", &s_gui.render_clear_color[0], ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
   renderer_set_clear_color(s_gui.render_clear_color);
+
+  // Render effect
+  static i32 current_effect = 0;
+  RenderEffectType effects[] = {
+    RENDER_EFFECT_NONE,
+    RENDER_EFFECT_GREYSCALE,
+    RENDER_EFFECT_INVERSION,
+    RENDER_EFFECT_SHARPEN,
+    RENDER_EFFECT_BLUR,
+    RENDER_EFFECT_EMBOSS,
+    RENDER_EFFECT_EDGE_DETECT,
+  };
+
+  ImGui::Combo("Effect", &current_effect, "None\0Greyscale\0Inversion\0Sharpen\0Blur\0Emboss\0Edge Detect\0", RENDER_EFFECTS_MAX);
+  renderer_apply_effect(effects[current_effect]);
   // -------------------------------------------------------------------
 }
 
@@ -185,10 +202,10 @@ void gui_settings_material(const char* name, Material* material) {
   // -------------------------------------------------------------------
 }
 
-static Vec4 rotation = Vec4(1.0f);
 
 void gui_settings_transform(const char* name, Transform* transform) {
   f32 scale = transform->scale.x;
+  static Vec4 rotation = Vec4(1.0f);
   
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 

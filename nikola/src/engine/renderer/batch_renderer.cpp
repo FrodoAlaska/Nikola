@@ -255,7 +255,6 @@ void batch_renderer_end() {
 
 void batch_render_quad(const Vec2& position, const Vec2& size, const Vec4& color) {
   batch_render_texture(s_batch.white_texture, position, size, color); 
-  // BatchCall* batch = &s_batch.batches[0];
 }
 
 void batch_render_texture(GfxTexture* texture, const Vec2& position, const Vec2& size, const Vec4& tint) {

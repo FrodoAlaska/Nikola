@@ -3,10 +3,9 @@
 [x] 2. Create an easy-to-use and completely customizable editor.
 [] 3. Work to improve the renderer and make it more streamlined. 
     - [x] Create a 2D batch renderer that can handle basic shapes and textures.
-    - [] A more pipelined post-processing system, using a deffered renderer.
+    - [x] A more pipelined post-processing system.
     - [] Apply some kind of lighting effects. 
     - [] Refraction and global illumination. 
-
 [] 4. Make any viable demos in the `Demos` section with the new tools that you have now.
 [] 6. Start working on the audio backend.
 
@@ -19,12 +18,10 @@
     - Write some documentation for the whole editor section.
     - Keep adding types as they arise.
 * Renderer 
-    - Basic lighting
-    - Configure post-processing step and some dope deffered rendering 
-    - Render 2D and 3D fonts
+    - Perhaps, in the `pre_pass` function of the renderer, we can take a `RenderData` struct that can provide the renderer with all the required data for rendering a scene. For example, a camera, light positions, and so on.
     - Have a basic default teture to be used for various reasons?
     - Create a `RendererDefault` struct to hold all of the initial default values.
-    - Batch rendering 
+    - Render 2D and 3D fonts
 * Demos
     - Just a bunch of people spining while the Nutcracker by Tchaikovsy plays in the background. First there's only one model that spins, then a few, then a whole _building_, and so on.
     - An ominious spinning behelit under some nice lighting effects with the Guts theme playing in the background.
@@ -43,6 +40,7 @@
     - Batch logging? 
     - Log into a file
 * GFX 
+    - Since DirectX is out of the picture, remove the little bits and pieces of its effect.
     - Seperate the `gl_backend.cpp` file into several files for better visualization
     - A function to sub image or slice a texture 
     - Put some thought into instancing

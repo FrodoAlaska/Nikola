@@ -50,13 +50,13 @@ static void render_app_ui(nikola::App* app) {
   nikola::gui_settings_renderer();
   nikola::gui_end_panel();
   
-  nikola::gui_begin_panel("Resources");
-  nikola::gui_settings_material("Material", app->material);
-  nikola::gui_end_panel();
+  // nikola::gui_begin_panel("Resources");
+  // nikola::gui_settings_material("Material", app->material);
+  // nikola::gui_end_panel();
 
-  nikola::gui_begin_panel("Transforms");
-  nikola::gui_settings_transform("Model transform", &app->transform);
-  nikola::gui_end_panel();
+  // nikola::gui_begin_panel("Transforms");
+  // nikola::gui_settings_transform("Model transform", &app->transform);
+  // nikola::gui_end_panel();
 
   nikola::gui_end();
 }
@@ -153,10 +153,12 @@ void app_update(nikola::App* app) {
 static float rotation_angle = 0.0f;
 
 void app_render(nikola::App* app) {
-  nikola::renderer_pre_pass(app->camera);
+  nikola::RenderData render_dat = {
+    .camera = app->camera,
+  };
 
   // Begin rendering objects
-  nikola::renderer_begin_pass();
+  nikola::renderer_begin_pass(render_dat);
  
   nikola::RenderCommand rnd_cmd = {
     .render_type   = nikola::RENDERABLE_TYPE_MESH, 
@@ -197,13 +199,13 @@ void app_render(nikola::App* app) {
   // Render 2D 
   nikola::batch_renderer_begin();
 
-  nikola::batch_render_quad(nikola::Vec2(100.0f), nikola::Vec2(128.0f), nikola::Vec4(0.0f, 1.0f, 0.0f, 1.0f));
-  nikola::batch_render_texture(app->material->diffuse_map, nikola::Vec2(200.0f), nikola::Vec2(128.0f));
+  // nikola::batch_render_quad(nikola::Vec2(100.0f), nikola::Vec2(128.0f), nikola::Vec4(0.0f, 1.0f, 0.0f, 1.0f));
+  // nikola::batch_render_texture(app->material->diffuse_map, nikola::Vec2(200.0f), nikola::Vec2(128.0f));
 
   nikola::batch_renderer_end();
 
-  // Some post-processing effects
-  nikola::renderer_post_pass();
+  // End of the render loop...
+  nikola::renderer_present();
 }
 
 /// App functions 
