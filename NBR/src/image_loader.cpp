@@ -70,7 +70,7 @@ bool image_loader_load_texture(nikola::NBRTexture* texture, const nikola::FilePa
   texture->pixels = stbi_load(path.c_str(), &width, &height, NULL, 4);
 
   if(!texture->pixels) {
-    NIKOLA_LOG_ERROR("Could not load texture at %s", stbi_failure_reason());
+    NIKOLA_LOG_ERROR("Could not load texture at \'%s'\, %s", path.c_str(), stbi_failure_reason());
     return false;
   }
 

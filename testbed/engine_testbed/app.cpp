@@ -5,8 +5,6 @@
 #include <nikola/nikola_engine.hpp>
 #include <nikola/nikola_ui.hpp>
 
-#include <imgui/imgui.h>
-
 /// ----------------------------------------------------------------------
 /// App
 struct nikola::App {
@@ -14,7 +12,7 @@ struct nikola::App {
   nikola::Camera camera;
 
   bool has_editor;
-  nikola::Transform transform;
+  nikola::Transform transform, light_transform;
 
   nikola::ResourceStorage* storage;
 
@@ -38,13 +36,13 @@ static void render_app_ui(nikola::App* app) {
 
   nikola::gui_begin();
 
-  nikola::gui_begin_panel("Debug");
-  nikola::gui_settings_debug();
-  nikola::gui_end_panel();
+  // nikola::gui_begin_panel("Debug");
+  // nikola::gui_settings_debug();
+  // nikola::gui_end_panel();
   
-  nikola::gui_begin_panel("Camera");
-  nikola::gui_settings_camera(&app->camera);
-  nikola::gui_end_panel();
+  // nikola::gui_begin_panel("Camera");
+  // nikola::gui_settings_camera(&app->camera);
+  // nikola::gui_end_panel();
   
   nikola::gui_begin_panel("Renderer");
   nikola::gui_settings_renderer();
@@ -54,9 +52,9 @@ static void render_app_ui(nikola::App* app) {
   // nikola::gui_settings_material("Material", app->material);
   // nikola::gui_end_panel();
 
-  // nikola::gui_begin_panel("Transforms");
-  // nikola::gui_settings_transform("Model transform", &app->transform);
-  // nikola::gui_end_panel();
+  nikola::gui_begin_panel("Transforms");
+  nikola::gui_settings_transform("Transform", &app->transform);
+  nikola::gui_end_panel();
 
   nikola::gui_end();
 }
@@ -85,7 +83,10 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // Transform init
   nikola::transform_translate(app->transform, nikola::Vec3(10.0f, 0.0f, 10.0f));
-  nikola::transform_scale(app->transform, nikola::Vec3(0.1f));
+  nikola::transform_scale(app->transform, nikola::Vec3(1.0f));
+ 
+  // Light transform init
+  nikola::transform_translate(app->light_transform, nikola::Vec3(0.0f, 20.0f, 0.0f));
 
   // Resource storage init 
   nikola::FilePath current_path = nikola::filesystem_current_path();
@@ -94,7 +95,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // Transform init
   nikola::transform_translate(app->transform, nikola::Vec3(10.0f, 0.0f, 10.0f));
-  nikola::transform_scale(app->transform, nikola::Vec3(0.1f));
+  nikola::transform_scale(app->transform, nikola::Vec3(1.0f));
 
   // Mesh init
   app->mesh_id = nikola::resource_storage_push_mesh(app->storage, nikola::MESH_TYPE_CUBE);
@@ -121,7 +122,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   app->skybox_material    = nikola::resource_storage_get_material(app->storage, app->skybox_material_id);
 
   // Model init
-  app->model_id = nikola::resource_storage_push_model(app->storage, "behelit.nbr");
+  app->model_id = nikola::resource_storage_push_model(app->storage, "knight.nbr");
 
   return app;
 }
@@ -153,23 +154,22 @@ void app_update(nikola::App* app) {
 static float rotation_angle = 0.0f;
 
 void app_render(nikola::App* app) {
+  // Begin rendering objects
   nikola::RenderData render_dat = {
     .camera = app->camera,
   };
-
-  // Begin rendering objects
   nikola::renderer_begin_pass(render_dat);
- 
-  nikola::RenderCommand rnd_cmd = {
-    .render_type   = nikola::RENDERABLE_TYPE_MESH, 
-    .renderable_id = app->mesh_id,
-    .material_id   = app->material_id,
-    .transform     = app->transform, 
-    .storage       = app->storage,
-  };
+
+  nikola::RenderCommand rnd_cmd;
+  rnd_cmd.storage     = app->storage;
+  rnd_cmd.material_id = app->material_id;
+  rnd_cmd.transform   = app->transform; 
 
   // Render the cubes
+  // rnd_cmd.render_type   = nikola::RENDERABLE_TYPE_MESH, 
+  // rnd_cmd.renderable_id = app->mesh_id,
   // constexpr int MESHES_MAX = 10;
+  //
   // for(int i = 0; i < MESHES_MAX; i++) {
   //   for(int j = 0; j < MESHES_MAX; j++) {
   //     nikola::transform_translate(app->transform, nikola::Vec3(i * 2.0f, 0.0f, j * 2.0f));
@@ -178,6 +178,8 @@ void app_render(nikola::App* app) {
   //     nikola::renderer_queue_command(rnd_cmd);
   //   }
   // }
+
+  // nikola::transform_translate(app->light_transform, nikola::Vec3());
 
   // Render the model
   rnd_cmd.render_type   = nikola::RENDERABLE_TYPE_MODEL; 

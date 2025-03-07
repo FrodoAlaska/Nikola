@@ -9,12 +9,9 @@ namespace nikola { // Start of nikola
 /// Renderer
 struct Renderer {
   GfxContext* context = nullptr;
-  GfxBuffer* matrices_buffer;
 
   Vec4 clear_color;
   Camera camera;
-
-  u32 clear_flags = 0;
 
   DynamicArray<RenderCommand> render_queue;
 
@@ -26,6 +23,8 @@ struct Renderer {
 
   i32 effects_uniform_loc   = -1;
   u32 effect_value          = 0;
+
+  RendererDefaults defaults = {};
 };
 
 static Renderer s_renderer;
@@ -45,7 +44,7 @@ static void init_context(Window* window) {
   NIKOLA_ASSERT(s_renderer.context, "Failed to initialize the graphics context");
 }
 
-static GfxShaderDesc init_post_processing_shader() {
+static GfxShaderDesc init_effects_shader() {
   GfxShaderDesc desc = {};
 
   desc.vertex_source = 
@@ -187,7 +186,7 @@ static GfxShaderDesc init_post_processing_shader() {
     ""
     "vec4 pixelize() {\n"
     "  vec2 screen = vec2(1366, 720);\n"
-    "  float pixels   = 16.0;\n"
+    "  float pixels   = 8.0;\n"
     ""
     "  vec2 tex_coord = vec2(\n"
     "    pixels * (1.0 / screen.x),\n"
@@ -204,6 +203,32 @@ static GfxShaderDesc init_post_processing_shader() {
     "\n";
 
   return desc;
+}
+
+static void init_defaults() {
+  // Default texture init
+  u32 pixels = 0x00000000; 
+  GfxTextureDesc texture_desc = {
+    .width     = 1, 
+    .height    = 1, 
+    .depth     = 0, 
+    .mips      = 1, 
+    .type      = GFX_TEXTURE_2D,
+    .format    = GFX_TEXTURE_FORMAT_RGBA8, 
+    .filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
+    .wrap_mode = GFX_TEXTURE_WRAP_MIRROR, 
+    .data      = &pixels,
+  };
+  s_renderer.defaults.texture = gfx_texture_create(s_renderer.context, texture_desc);
+
+  // Matrices buffer init
+  GfxBufferDesc buff_desc = {
+    .data  = nullptr, 
+    .size  = sizeof(Mat4) * 2,
+    .type  = GFX_BUFFER_UNIFORM,
+    .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
+  };
+  s_renderer.defaults.matrices_buffer = gfx_buffer_create(s_renderer.context, buff_desc);
 }
 
 static void init_framebuffer(Window* window) {
@@ -289,8 +314,7 @@ static void init_pipeline() {
   s_renderer.pipe_desc.indices_count = 6;
 
   // Shader init
-  GfxShaderDesc shader_desc    = init_post_processing_shader();
-  s_renderer.pipe_desc.shader  = gfx_shader_create(s_renderer.context, shader_desc); 
+  s_renderer.pipe_desc.shader  = gfx_shader_create(s_renderer.context, init_effects_shader()); 
 
   // Uniform location init
   s_renderer.effects_uniform_loc = gfx_shader_uniform_lookup(s_renderer.pipe_desc.shader, "u_effect_index");
@@ -311,24 +335,34 @@ static void init_pipeline() {
   s_renderer.pipeline = gfx_pipeline_create(s_renderer.context, s_renderer.pipe_desc);
 }
 
-static void render_mesh(const RenderCommand& command) {
-  Mesh* mesh         = resource_storage_get_mesh(command.storage, command.renderable_id);
-  Material* material = resource_storage_get_material(command.storage, command.material_id);
-
+static void render_primitive(Mesh* mesh, Material* material, const Transform& transform) {
   // Setting uniforms
-  material->model_matrix = command.transform.transform; 
+  material->model_matrix = transform.transform; 
 
   // Uploading the uniforms
   material_use(material);  
 
   // Setting up the pipeline
-  mesh->pipe_desc.shader         = material->shader;
-  mesh->pipe_desc.textures[0]    = material->diffuse_map;
-  mesh->pipe_desc.textures_count = material->diffuse_map ? 1 : 0; // Only set a texutre if there's one in the material
+  mesh->pipe_desc.shader      = material->shader;
+  mesh->pipe_desc.textures[0] = material->diffuse_map; 
+  mesh->pipe_desc.textures[1] = material->specular_map; 
+
+  // @NOTE: Even though the `material` might not have a specular or diffuse map, 
+  // the resource manager will append a default texture in place of these 
+  // to ensure the pipeline keeps moving without checking for `nullptr`s all the time.
+  // Hence, there are _always_ textures available with each model.
+  mesh->pipe_desc.textures_count = 2; 
 
   // Render the mesh
   gfx_context_apply_pipeline(s_renderer.context, mesh->pipe, mesh->pipe_desc);
   gfx_pipeline_draw_index(mesh->pipe);
+}
+
+static void render_mesh(const RenderCommand& command) {
+  Mesh* mesh         = resource_storage_get_mesh(command.storage, command.renderable_id);
+  Material* material = resource_storage_get_material(command.storage, command.material_id);
+  
+  render_primitive(mesh, material, command.transform);
 }
 
 static void render_skybox(const RenderCommand& command) {
@@ -347,34 +381,23 @@ static void render_model(const RenderCommand& command) {
   Model* model  = resource_storage_get_model(command.storage, command.renderable_id);
   Material* mat = resource_storage_get_material(command.storage, command.material_id);
 
-  // Set our "parent" transform
-  mat->model_matrix = command.transform.transform; 
-
   for(sizei i = 0; i < model->meshes.size(); i++) {
     Mesh* mesh              = model->meshes[i];
     Material* mesh_material = model->materials[model->material_indices[i]]; 
-    mesh_material->shader   = mat->shader; 
 
     // Setting uniforms
     //
     // @NOTE: Each material has its own valid colors and model. However, we also 
     // want OUR own materials to influence the model. So, we _apply_ our model matrix 
     // and colors to the material.
-    mesh_material->ambient_color  = mat->ambient_color; 
-    mesh_material->diffuse_color  = mat->diffuse_color; 
-    mesh_material->specular_color = mat->specular_color; 
+    mesh_material->shader           = mat->shader; 
+    mesh_material->ambient_color    = mat->ambient_color; 
+    mesh_material->diffuse_color    = mat->diffuse_color; 
+    mesh_material->specular_color   = mat->specular_color; 
+    mesh_material->uniform_locations = mat->uniform_locations; // @TODO (Renderer): This is _extremely_ slow. 
 
-    // Upload the uniforms 
-    material_use(mat);
-
-    // Setting up the pipeline for each mesh
-    mesh->pipe_desc.shader         = mesh_material->shader;
-    mesh->pipe_desc.textures[0]    = mesh_material->diffuse_map;
-    mesh->pipe_desc.textures_count = 1;
-
-    // Render the mesh
-    gfx_context_apply_pipeline(s_renderer.context, mesh->pipe, mesh->pipe_desc);
-    gfx_pipeline_draw_index(mesh->pipe);
+    // Render the model's primitive
+    render_primitive(mesh, mesh_material, command.transform);
   }
 }
 
@@ -430,20 +453,14 @@ void renderer_init(Window* window, const Vec4& clear_clear) {
   init_context(window);
   s_renderer.clear_color = clear_clear;
 
+  // Defaults init
+  init_defaults();
+
   // Framebuffer init
   init_framebuffer(window);
 
   // Pipeline init
   init_pipeline();
-
-  // Matrices buffer init
-  GfxBufferDesc buff_desc = {
-    .data  = nullptr, 
-    .size  = sizeof(Mat4) * 2,
-    .type  = GFX_BUFFER_UNIFORM,
-    .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
-  };
-  s_renderer.matrices_buffer = gfx_buffer_create(s_renderer.context, buff_desc);
 
   NIKOLA_LOG_INFO("Successfully initialized the renderer context");
 }
@@ -464,15 +481,15 @@ void renderer_set_clear_color(const Vec4& clear_color) {
   s_renderer.clear_color = clear_color;
 }
 
-const GfxBuffer* renderer_default_matrices_buffer() {
-  return s_renderer.matrices_buffer;
+const RendererDefaults& renderer_get_defaults() {
+  return s_renderer.defaults;
 }
 
 void renderer_begin_pass(RenderData& data) {
   // Updating the internal matrices buffer for each shader
   s_renderer.camera = data.camera;
-  gfx_buffer_update(s_renderer.matrices_buffer, 0, sizeof(Mat4), mat4_raw_data(data.camera.view));
-  gfx_buffer_update(s_renderer.matrices_buffer, sizeof(Mat4), sizeof(Mat4), mat4_raw_data(data.camera.projection));
+  gfx_buffer_update(s_renderer.defaults.matrices_buffer, 0, sizeof(Mat4), mat4_raw_data(data.camera.view));
+  gfx_buffer_update(s_renderer.defaults.matrices_buffer, sizeof(Mat4), sizeof(Mat4), mat4_raw_data(data.camera.projection));
 
   // Clear the post-processing framebuffer
   Vec4 col = s_renderer.clear_color;

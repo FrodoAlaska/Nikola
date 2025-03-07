@@ -1,15 +1,30 @@
-# Plan 
-[X] 1. Fix the filsystem API and have a wrapper around `std::filesystem::path` and replace any code that uses the old API. 
-[x] 2. Create an easy-to-use and completely customizable editor.
-[] 3. Work to improve the renderer and make it more streamlined. 
+# Road To A Game 
+[X] 1. Filesystem
+[x] 2. GUI
+[] 3. Renderer v0.1
     - [x] Create a 2D batch renderer that can handle basic shapes and textures.
-    - [x] A more pipelined post-processing system.
+    - [x] A way to have default renderer resources (like the matrices buffer and a white texture).
+    - [x] Support for diffuse and specular maps.
+    - [x] Some of the textures on models get loaded weirdly
+    - [x] Need to find a better way to send default uniforms with materials.
+[] 4. Audio Backend v0.1 
+    - [] Create an audio backend with a context 
+    - [] A way to create an audio buffer that could be played with the context 
+[] 5. Audio System v0.1 
+    - [] 2D sound and music. 
+    - [] Control the pitch and volume of a sound.
+[] 6. Add more resources and improve it
+    - [] Fonts
+    - [] Add audio resources
     - [] Reload shaders on the fly?
-    - [] Apply the blin-phong lighting model. 
-    - [] Refraction and global illumination. 
+[] 7. Renderer v0.2. 
     - [] Multiple render passes
-[] 4. Make any viable demos in the `Demos` section with the new tools that you have now.
-[] 6. Start working on the audio backend.
+    - [] Better uniform and material system
+    - [] A more pipelined post-processing system.
+    - [] Apply the Blin-Phong shading model.
+    - [] Render 2D and 3D fonts
+    - [] ?
+[] 8. TBD
 
 ## (Engine) TODO: 
 * General 
@@ -20,9 +35,6 @@
     - Write some documentation for the whole editor section.
     - Keep adding types as they arise.
 * Renderer 
-    - Perhaps, in the `pre_pass` function of the renderer, we can take a `RenderData` struct that can provide the renderer with all the required data for rendering a scene. For example, a camera, light positions, and so on.
-    - Have a basic default teture to be used for various reasons?
-    - Create a `RendererDefault` struct to hold all of the initial default values.
     - Render 2D and 3D fonts
 * Demos
     - Just a bunch of people spining while the Nutcracker by Tchaikovsy plays in the background. First there's only one model that spins, then a few, then a whole _building_, and so on.

@@ -139,7 +139,7 @@ static void load_scene_meshes(const aiScene* scene, ObjData* data, aiNode* node)
   }
 }
 
-static void load_material_texture(aiMaterial* material, aiTextureType type, ObjData* data) {
+static void load_material_texture(aiMaterial* material, aiTextureType type, ObjData* data, nikola::i8* index) {
   nikola::sizei textures_count = material->GetTextureCount(type); 
 
   for(nikola::sizei i = 0; i < textures_count; i++) {
@@ -150,6 +150,9 @@ static void load_material_texture(aiMaterial* material, aiTextureType type, ObjD
     nikola::NBRTexture texture;
     image_loader_load_texture(&texture, nikola::filepath_append(data->parent_dir, str.C_Str()));
     data->textures.push_back(texture);
+
+    // Set the appropriate index of the newly loaded texture
+    *index = (nikola::i8)data->textures.size() - 1;
   }
 }
 
@@ -178,16 +181,13 @@ static void load_scene_materials(const aiScene* scene, ObjData* data) {
     nbr_material.diffuse[0]  = diffuse.r;  nbr_material.diffuse[1]  = diffuse.g;  nbr_material.diffuse[2]  = diffuse.b;
     nbr_material.specular[0] = specular.r; nbr_material.specular[1] = specular.g; nbr_material.specular[2] = specular.b;
 
-    // Load the diffuse and specular textures
-    load_material_texture(material, aiTextureType_DIFFUSE, data); 
-    load_material_texture(material, aiTextureType_SPECULAR, data); 
-   
-    // Get the diffuse index
-    nbr_material.diffuse_index = data->textures.size() == 0 ? 0 : data->textures.size() - 1;
+    // Set the default values for the texture indices
+    nbr_material.diffuse_index  = 0; 
+    nbr_material.specular_index = -1; 
 
-    // Get the diffuse index
-    nbr_material.specular_index = 0;
-    material->Get(AI_MATKEY_TEXTURE_SPECULAR(i), nbr_material.specular_index);
+    // Load the texture types and set the appropriate indices.
+    load_material_texture(material, aiTextureType_DIFFUSE, data, &nbr_material.diffuse_index); 
+    load_material_texture(material, aiTextureType_SPECULAR, data, &nbr_material.specular_index); 
 
     // Add a new material
     data->materials.push_back(nbr_material); 

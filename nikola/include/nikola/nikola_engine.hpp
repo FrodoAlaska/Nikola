@@ -968,16 +968,22 @@ const sizei MATERIAL_MATRICES_BUFFER_INDEX = 0;
 const sizei MATERIAL_LIGHTING_BUFFER_INDEX = 1;
 
 /// The maximum amount of preset uniforms. 
-const u32 MATERIAL_UNIFORMS_MAX           = 4;
+const u32 MATERIAL_UNIFORMS_MAX           = 6;
 
 /// The name of the ambient color uniform in materials. 
-#define MATERIAL_UNIFORM_AMBIENT_COLOR  "u_ambient_color" 
+#define MATERIAL_UNIFORM_AMBIENT_COLOR  "u_material.ambient" 
 
 /// The name of the diffuse color uniform in materials. 
-#define MATERIAL_UNIFORM_DIFFUSE_COLOR  "u_diffuse_color" 
+#define MATERIAL_UNIFORM_DIFFUSE_COLOR  "u_material.diffuse" 
 
 /// The name of the specular color uniform in materials. 
-#define MATERIAL_UNIFORM_SPECULAR_COLOR "u_specular_color"
+#define MATERIAL_UNIFORM_SPECULAR_COLOR "u_material.specular"
+
+/// The name of the shininess uniform in materials. 
+#define MATERIAL_UNIFORM_SHININESS      "u_material.shininess" 
+
+/// The name of the screen size uniform in materials. 
+#define MATERIAL_UNIFORM_SCREEN_SIZE    "u_material.screen_size" 
 
 /// The name of the model transform uniform in materials. 
 #define MATERIAL_UNIFORM_MODEL_MATRIX   "u_model" 
@@ -1085,7 +1091,10 @@ struct Material {
   Vec3 ambient_color;
   Vec3 diffuse_color; 
   Vec3 specular_color;
+  f32 shininess;
   Mat4 model_matrix;
+  Vec2 screen_size;
+
   HashMap<String, i32> uniform_locations;
 
   ResourceStorage* storage_ref;
@@ -1413,15 +1422,24 @@ struct Camera {
 /// Camera 
 ///---------------------------------------------------------------------------------------------------------------------
 
-/// ----------------------------------------------------------------------
+///---------------------------------------------------------------------------------------------------------------------
+/// RendererDefaults 
+struct RendererDefaults {
+  GfxTexture* texture        = nullptr;
+  GfxBuffer* matrices_buffer = nullptr;
+};
+/// RendererDefaults 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// RenderData
 struct RenderData {
   Camera camera;
 };
 /// RenderData
-/// ----------------------------------------------------------------------
+///---------------------------------------------------------------------------------------------------------------------
 
-/// ----------------------------------------------------------------------
+///---------------------------------------------------------------------------------------------------------------------
 /// RenderCommand
 struct RenderCommand {
   RenderableType render_type;
@@ -1466,8 +1484,8 @@ NIKOLA_API const GfxContext* renderer_get_context();
 /// Set the background color of the global renderer to `clear_color`
 NIKOLA_API void renderer_set_clear_color(const Vec4& clear_color);
 
-// @TODO: Change this to a set of defaults later.
-NIKOLA_API const GfxBuffer* renderer_default_matrices_buffer();
+/// Retrieve the internal default values of the renderer
+NIKOLA_API const RendererDefaults& renderer_get_defaults();
 
 NIKOLA_API void renderer_begin_pass(RenderData& data);
 

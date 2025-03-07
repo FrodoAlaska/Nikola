@@ -19,19 +19,24 @@ void material_loader_load(ResourceStorage* storage,
   NIKOLA_ASSERT(mat, "Invalid Material passed to material loader function");
   NIKOLA_ASSERT((diffuse_id != INVALID_RESOURCE), "Cannot load a material with an invalid diffuse texture ID");
 
-  // Diffuse texture init
-  mat->diffuse_map = resource_storage_get_texture(storage, diffuse_id);
-
-  // Specular texture init
-  if(specular_id != INVALID_RESOURCE) {
-    mat->specular_map = resource_storage_get_texture(storage, specular_id);
-  } 
+  const RendererDefaults render_defaults = renderer_get_defaults();
 
   // Set default values for the material
   mat->ambient_color  = Vec3(1.0f); 
   mat->diffuse_color  = Vec3(1.0f); 
   mat->specular_color = Vec3(1.0f); 
   mat->model_matrix   = Mat4(1.0f);
+  mat->shininess      = 1.0f;
+  mat->screen_size    = Vec2(1366.0f, 720.0f); // @TODO (Material): Change this to be more configurable. 
+  
+  // Diffuse texture init
+  mat->diffuse_map = resource_storage_get_texture(storage, diffuse_id);
+
+  // Specular texture init (if it is available)
+  mat->specular_map = render_defaults.texture; 
+  if(specular_id != INVALID_RESOURCE) {
+    mat->specular_map = resource_storage_get_texture(storage, specular_id);
+  } 
 
   // The values below can only be set if the shader is active
   if(shader_id == INVALID_RESOURCE) {
@@ -42,9 +47,7 @@ void material_loader_load(ResourceStorage* storage,
   mat->shader = resource_storage_get_shader(storage, shader_id);
  
   // Set a default matrices buffer 
-  // @TODO(Renderer/Reosurce): HAS to be a better way to do this...
-  GfxBuffer* matrix_buffer = (GfxBuffer*)renderer_default_matrices_buffer();
-  material_set_uniform_buffer(mat, MATERIAL_MATRICES_BUFFER_INDEX, matrix_buffer);
+  material_set_uniform_buffer(mat, MATERIAL_MATRICES_BUFFER_INDEX, render_defaults.matrices_buffer);
   
   // Reserve some space for the map
   mat->uniform_locations.reserve(MATERIAL_UNIFORMS_MAX);
@@ -54,6 +57,8 @@ void material_loader_load(ResourceStorage* storage,
     MATERIAL_UNIFORM_AMBIENT_COLOR, 
     MATERIAL_UNIFORM_DIFFUSE_COLOR,
     MATERIAL_UNIFORM_SPECULAR_COLOR,
+    MATERIAL_UNIFORM_SHININESS,
+    MATERIAL_UNIFORM_SCREEN_SIZE,
     MATERIAL_UNIFORM_MODEL_MATRIX,
   };
   

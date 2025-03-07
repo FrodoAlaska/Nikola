@@ -16,8 +16,6 @@ struct StorageManager {
 
   ResourceStorage* cached_storage = nullptr;
   GfxContext* gfx_context         = nullptr;
-
-  ResourceID matrices_buffer;
 };
 
 static StorageManager s_manager;
@@ -171,8 +169,8 @@ static void convert_from_nbr(ResourceStorage* storage, const NBRModel* nbr, Mode
   for(sizei i = 0; i < nbr->textures_count; i++) {
     GfxTextureDesc desc; 
     desc.format    = GFX_TEXTURE_FORMAT_RGBA8; 
-    desc.filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST; 
-    desc.wrap_mode = GFX_TEXTURE_WRAP_MIRROR;
+    desc.filter    = GFX_TEXTURE_FILTER_MIN_MAG_LINEAR; 
+    desc.wrap_mode = GFX_TEXTURE_WRAP_CLAMP;
     convert_from_nbr(&nbr->textures[i], &desc);
   
     texture_ids.push_back(resource_storage_push_texture(storage, desc));
@@ -183,18 +181,18 @@ static void convert_from_nbr(ResourceStorage* storage, const NBRModel* nbr, Mode
     // Load the diffuse map
     ResourceID diffuse_id  = texture_ids[nbr->materials[i].diffuse_index];
 
-    // The specular map can be invalid (depicted as 0) so we need 
+    // The specular map can be invalid (depicted as -1) so we need 
     // to check for that.
-    ResourceID specular_id = nbr->materials[i].specular_index == 0 ? INVALID_RESOURCE : texture_ids[nbr->materials[i].specular_index];
+    ResourceID specular_id = nbr->materials[i].specular_index == -1 ? INVALID_RESOURCE : texture_ids[nbr->materials[i].specular_index];
 
     // Create a new material 
     ResourceID mat_id = resource_storage_push_material(storage, diffuse_id, specular_id);
     Material* mat     = resource_storage_get_material(storage, mat_id);
 
     // Set the colors of the new material
-    mat->ambient_color  = Vec4(nbr->materials[i].ambient[0], nbr->materials[i].ambient[1], nbr->materials[i].ambient[2], 1.0f); 
-    mat->diffuse_color  = Vec4(nbr->materials[i].diffuse[0], nbr->materials[i].diffuse[1], nbr->materials[i].diffuse[2], 1.0f); 
-    mat->specular_color = Vec4(nbr->materials[i].specular[0], nbr->materials[i].specular[1], nbr->materials[i].specular[2], 1.0f); 
+    mat->ambient_color  = Vec3(nbr->materials[i].ambient[0], nbr->materials[i].ambient[1], nbr->materials[i].ambient[2]); 
+    mat->diffuse_color  = Vec3(nbr->materials[i].diffuse[0], nbr->materials[i].diffuse[1], nbr->materials[i].diffuse[2]); 
+    mat->specular_color = Vec3(nbr->materials[i].specular[0], nbr->materials[i].specular[1], nbr->materials[i].specular[2]); 
 
     // Add the material 
     model->materials.push_back(mat); 
@@ -222,10 +220,15 @@ static void convert_from_nbr(ResourceStorage* storage, const NBRModel* nbr, Mode
     
     // Create a new mesh 
     ResourceID mesh_id = resource_storage_push_mesh(storage, vert_buff_id, (VertexType)nbr->meshes[i].vertex_type, idx_buff_id, nbr->meshes[i].indices_count);
-    model->meshes.push_back(storage->meshes[mesh_id]);
     
+    Mesh* mesh         = storage->meshes[mesh_id];
+    u8 material_index  = nbr->meshes[i].material_index; 
+
     // Add a new index
-    model->material_indices.push_back(nbr->meshes[i].material_index);
+    model->material_indices.push_back(material_index);
+   
+    // Add the new mesh
+    model->meshes.push_back(mesh);
   }
 }
 
@@ -241,11 +244,19 @@ void resource_manager_init() {
 
   s_manager.gfx_context     = (GfxContext*)gfx;
   s_manager.cached_storage  = resource_storage_create("cache", "resource_cache/");
- 
-  // @FIX (Renderer): Awful. Just... no. Simply, no. 
-  ResourceID buff_id                         = generate_id();
-  s_manager.cached_storage->buffers[buff_id] = (GfxBuffer*)renderer_default_matrices_buffer();
-  s_manager.matrices_buffer                  = buff_id; 
+
+  const RendererDefaults render_defaults = renderer_get_defaults();
+
+  //
+  // @FIX (Resource/Renderer): Perhaps there is a better way than this to add 
+  // the default resources to the resource cache.
+  // 
+
+  // Add the default matrices buffer
+  s_manager.cached_storage->buffers[generate_id()] = (GfxBuffer*)render_defaults.matrices_buffer;
+  
+  // Add the default white texture 
+  s_manager.cached_storage->textures[generate_id()] = (GfxTexture*)render_defaults.texture;
 
   NIKOLA_LOG_INFO("Successfully initialized the resource manager");
 }
@@ -475,7 +486,6 @@ ResourceID resource_storage_push_shader(ResourceStorage* storage, const FilePath
   nbr_file_unload(nbr);
 
   // New shader added!
-  NIKOLA_LOG_INFO("Storage \'%s\' pushed shader:", storage->name.c_str());
   NIKOLA_LOG_INFO("     Path = %s", nbr_path.c_str());
   return id;
 }
@@ -539,6 +549,7 @@ ResourceID resource_storage_push_material(ResourceStorage* storage,
                                           const ResourceID& specular_id, 
                                           const ResourceID& shader_id) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+  NIKOLA_ASSERT((diffuse_id != INVALID_RESOURCE), "Cannot load a material with an invalid diffuse texture ID");
   
   // Allocate the material
   Material* material = new Material{};

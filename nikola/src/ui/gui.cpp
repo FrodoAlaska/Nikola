@@ -201,6 +201,11 @@ void gui_settings_material(const char* name, Material* material) {
   ImGui::SliderFloat3("Specular", &material->specular_color[0], 0.0f, 1.0f);
   ImGui::PopID(); 
   // -------------------------------------------------------------------
+ 
+  // Lighting values
+  // -------------------------------------------------------------------
+  ImGui::SliderFloat("Shininess", &material->shininess, 0.0f, 100.0f);
+  // -------------------------------------------------------------------
 }
 
 

@@ -19,7 +19,7 @@ static void check_and_send_uniform(Material* mat, const i8* name, GfxLayoutType 
   i32 location = gfx_shader_uniform_lookup(mat->shader, name);
   
   // The uniform just does not exist in the shader at all 
-  if(location != -1) {
+  if(location == -1) {
     NIKOLA_LOG_WARN("Could not find uniform \'%s\' in material", name);
     return;
   }
@@ -27,7 +27,15 @@ static void check_and_send_uniform(Material* mat, const i8* name, GfxLayoutType 
   // Uniform does not exist. Cache it instead.
   mat->uniform_locations[name] = location; 
   gfx_shader_upload_uniform(mat->shader, location, type, data);
-  NIKOLA_LOG_DEBUG("Cache uniform \'%s\' in material...", name);
+  NIKOLA_LOG_DEBUG("Cache uniform \'%s\' with location \'%i\' in material...", name, location);
+}
+
+static void send_preset_uniform(Material* mat, const i8* name, GfxLayoutType type, const void* data) {
+  // Send the preset uniform only if it exists in the cache 
+  if(mat->uniform_locations.find(name) != mat->uniform_locations.end()) {
+    gfx_shader_upload_uniform(mat->shader, mat->uniform_locations[name], type, data);
+    return;
+  }
 }
 
 /// Private functions
@@ -91,10 +99,12 @@ void material_use(Material* mat) {
   NIKOLA_ASSERT(mat->shader, "Invalid Material's shader");
 
   // Send all of the available uniforms
-  check_and_send_uniform(mat, MATERIAL_UNIFORM_AMBIENT_COLOR, GFX_LAYOUT_FLOAT3, &mat->ambient_color[0]);
-  check_and_send_uniform(mat, MATERIAL_UNIFORM_DIFFUSE_COLOR, GFX_LAYOUT_FLOAT3, &mat->diffuse_color[0]);
-  check_and_send_uniform(mat, MATERIAL_UNIFORM_SPECULAR_COLOR, GFX_LAYOUT_FLOAT3, &mat->specular_color[0]);
-  check_and_send_uniform(mat, MATERIAL_UNIFORM_MODEL_MATRIX, GFX_LAYOUT_MAT4, mat4_raw_data(mat->model_matrix));
+  send_preset_uniform(mat, MATERIAL_UNIFORM_AMBIENT_COLOR, GFX_LAYOUT_FLOAT3, &mat->ambient_color[0]);
+  send_preset_uniform(mat, MATERIAL_UNIFORM_DIFFUSE_COLOR, GFX_LAYOUT_FLOAT3, &mat->diffuse_color[0]);
+  send_preset_uniform(mat, MATERIAL_UNIFORM_SPECULAR_COLOR, GFX_LAYOUT_FLOAT3, &mat->specular_color[0]);
+  send_preset_uniform(mat, MATERIAL_UNIFORM_SHININESS, GFX_LAYOUT_FLOAT1, &mat->shininess);
+  send_preset_uniform(mat, MATERIAL_UNIFORM_SCREEN_SIZE, GFX_LAYOUT_FLOAT2, &mat->screen_size[0]);
+  send_preset_uniform(mat, MATERIAL_UNIFORM_MODEL_MATRIX, GFX_LAYOUT_MAT4, mat4_raw_data(mat->model_matrix));
 }
 
 /// Material functions
