@@ -50,9 +50,9 @@ static void render_app_ui(nikola::App* app) {
   // nikola::gui_settings_material("Material", app->material_id);
   // nikola::gui_end_panel();
 
-  nikola::gui_begin_panel("Transforms");
-  nikola::gui_settings_transform("Transform", &app->transform);
-  nikola::gui_end_panel();
+  // nikola::gui_begin_panel("Transforms");
+  // nikola::gui_settings_transform("Transform", &app->transform);
+  // nikola::gui_end_panel();
 
   nikola::gui_end();
 }

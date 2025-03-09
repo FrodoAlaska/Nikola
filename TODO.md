@@ -9,10 +9,10 @@
     - [x] Need to find a better way to send default uniforms with materials.
 [] 4. Resource Manager v0.3
     - [x] A better way to refer to the resources
-    - [] Find a way to list all of the required resources for an application (something like the NuGet `packages.config`) 
-    - [] Create a lexer and a parser for the `.nbrlist` file format in order to easily convert a number of resources into the `.nbr` format.
+    - [x] Find a way to list all of the required resources for an application
     - [] File watcher system using C++'s std::filesystem
     - [] Create some sort of system to load resources on the fly 
+    - [] Create a lexer and a parser for the `.nbrlist` file format in order to easily convert a number of resources into the `.nbr` format.
 [] 5. Audio System v0.1 
     - [] A plugin-like system so as not to tie the audio backend to one API?
     - [] Lay out what you actually want the audio system to be and what it does. 
