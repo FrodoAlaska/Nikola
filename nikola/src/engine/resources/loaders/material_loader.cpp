@@ -17,7 +17,7 @@ void material_loader_load(ResourceStorage* storage,
                           const ResourceID& shader_id) {
   NIKOLA_ASSERT(storage, "Cannot load with an invalid ResourceStorage");
   NIKOLA_ASSERT(mat, "Invalid Material passed to material loader function");
-  NIKOLA_ASSERT((diffuse_id != INVALID_RESOURCE), "Cannot load a material with an invalid diffuse texture ID");
+  NIKOLA_ASSERT(diffuse_id.storage, "Cannot load a material with an invalid diffuse texture ID");
 
   const RendererDefaults render_defaults = renderer_get_defaults();
 
@@ -30,24 +30,26 @@ void material_loader_load(ResourceStorage* storage,
   mat->screen_size    = Vec2(1366.0f, 720.0f); // @TODO (Material): Change this to be more configurable. 
   
   // Diffuse texture init
-  mat->diffuse_map = resource_storage_get_texture(storage, diffuse_id);
+  mat->diffuse_map = resource_storage_get_texture(diffuse_id);
 
   // Specular texture init (if it is available)
   mat->specular_map = render_defaults.texture; 
-  if(specular_id != INVALID_RESOURCE) {
-    mat->specular_map = resource_storage_get_texture(storage, specular_id);
+  if(specular_id.storage != nullptr) {
+    mat->specular_map = resource_storage_get_texture(specular_id);
   } 
 
   // The values below can only be set if the shader is active
-  if(shader_id == INVALID_RESOURCE) {
+  if(shader_id.storage == nullptr) {
     return;
   } 
     
   // Shader init 
-  mat->shader = resource_storage_get_shader(storage, shader_id);
+  mat->shader = resource_storage_get_shader(shader_id);
  
   // Set a default matrices buffer 
-  material_set_uniform_buffer(mat, MATERIAL_MATRICES_BUFFER_INDEX, render_defaults.matrices_buffer);
+  GfxBuffer* matrices_buffer                           = render_defaults.matrices_buffer;
+  mat->uniform_buffers[MATERIAL_MATRICES_BUFFER_INDEX] = matrices_buffer;
+  gfx_shader_attach_uniform(mat->shader, GFX_SHADER_VERTEX, matrices_buffer, MATERIAL_MATRICES_BUFFER_INDEX);
   
   // Reserve some space for the map
   mat->uniform_locations.reserve(MATERIAL_UNIFORMS_MAX);

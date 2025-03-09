@@ -15,13 +15,11 @@ struct nikola::App {
   nikola::Transform transform, light_transform;
 
   nikola::ResourceStorage* storage;
+  nikola::HashMap<nikola::String, nikola::ResourceID> resources;
 
   nikola::ResourceID mesh_id, material_id;
   nikola::ResourceID skybox_id, skybox_material_id;
   nikola::ResourceID model_id;
-
-  nikola::Material* material; 
-  nikola::Material* skybox_material;
 };
 /// App
 /// ----------------------------------------------------------------------
@@ -49,7 +47,7 @@ static void render_app_ui(nikola::App* app) {
   nikola::gui_end_panel();
   
   // nikola::gui_begin_panel("Resources");
-  // nikola::gui_settings_material("Material", app->material);
+  // nikola::gui_settings_material("Material", app->material_id);
   // nikola::gui_end_panel();
 
   nikola::gui_begin_panel("Transforms");
@@ -67,8 +65,7 @@ static void render_app_ui(nikola::App* app) {
 
 nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // App init
-  nikola::App* app = (nikola::App*)nikola::memory_allocate(sizeof(nikola::App));
-  nikola::memory_zero(app, sizeof(nikola::App));
+  nikola::App* app = new nikola::App{};
 
   // Window init
   app->window = window;
@@ -83,54 +80,48 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // Transform init
   nikola::transform_translate(app->transform, nikola::Vec3(10.0f, 0.0f, 10.0f));
-  nikola::transform_scale(app->transform, nikola::Vec3(1.0f));
+  nikola::transform_scale(app->transform, nikola::Vec3(0.1f));
  
   // Light transform init
   nikola::transform_translate(app->light_transform, nikola::Vec3(0.0f, 20.0f, 0.0f));
 
   // Resource storage init 
   nikola::FilePath current_path = nikola::filesystem_current_path();
-  nikola::FilePath res_path = nikola::filepath_append(current_path, "res\\nbr");
+  nikola::FilePath res_path = nikola::filepath_append(current_path, "res");
   app->storage = nikola::resource_storage_create("app_res", res_path);
 
   // Transform init
   nikola::transform_translate(app->transform, nikola::Vec3(10.0f, 0.0f, 10.0f));
-  nikola::transform_scale(app->transform, nikola::Vec3(1.0f));
+  nikola::transform_scale(app->transform, nikola::Vec3(0.1f));
 
   // Mesh init
   app->mesh_id = nikola::resource_storage_push_mesh(app->storage, nikola::MESH_TYPE_CUBE);
 
-  // Diffuse texture init
-  nikola::ResourceID diffuse_id = nikola::resource_storage_push_texture(app->storage, "dx11.nbr"); 
-
-  // Cubemap texture init
-  nikola::ResourceID cubemap_id = nikola::resource_storage_push_cubemap(app->storage, "NightSky.nbr");
+  // Resoruces init
+  nikola::resource_storage_push_dir(app->storage, &app->resources, "textures");
+  nikola::resource_storage_push_dir(app->storage, &app->resources, "shaders");
+  nikola::resource_storage_push_dir(app->storage, &app->resources, "cubemaps");
 
   // Skybox init
-  app->skybox_id = nikola::resource_storage_push_skybox(app->storage, cubemap_id);
-
-  // Shader init
-  nikola::ResourceID shader_id     = nikola::resource_storage_push_shader(app->storage, "default3d.nbr");
-  nikola::ResourceID sky_shader_id = nikola::resource_storage_push_shader(app->storage, "cubemap.nbr");
+  app->skybox_id = nikola::resource_storage_push_skybox(app->storage, app->resources["NightSky"]);
 
   // Material init
-  app->material_id = nikola::resource_storage_push_material(app->storage, diffuse_id, nikola::INVALID_RESOURCE, shader_id);
-  app->material    = nikola::resource_storage_get_material(app->storage, app->material_id);
+  app->material_id = nikola::resource_storage_push_material(app->storage, app->resources["logo"], nikola::ResourceID{}, app->resources["default3d"]);
 
   // Skybox material init
-  app->skybox_material_id = nikola::resource_storage_push_material(app->storage, diffuse_id, nikola::INVALID_RESOURCE, sky_shader_id);
-  app->skybox_material    = nikola::resource_storage_get_material(app->storage, app->skybox_material_id);
+  app->skybox_material_id = nikola::resource_storage_push_material(app->storage, app->resources["logo"], nikola::ResourceID{}, app->resources["cubemap"]);
 
   // Model init
-  app->model_id = nikola::resource_storage_push_model(app->storage, "knight.nbr");
+  app->model_id = nikola::resource_storage_push_model(app->storage, "models\\behelit.nbrmodel");
 
   return app;
 }
 
 void app_shutdown(nikola::App* app) {
   nikola::resource_storage_destroy(app->storage);
-  nikola::memory_free(app);
   nikola::gui_shutdown();
+
+  delete app;
 }
 
 void app_update(nikola::App* app) {
@@ -161,7 +152,6 @@ void app_render(nikola::App* app) {
   nikola::renderer_begin_pass(render_dat);
 
   nikola::RenderCommand rnd_cmd;
-  rnd_cmd.storage     = app->storage;
   rnd_cmd.material_id = app->material_id;
   rnd_cmd.transform   = app->transform; 
 

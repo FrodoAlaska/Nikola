@@ -185,8 +185,8 @@ static GfxShaderDesc init_effects_shader() {
     "}\n"
     ""
     "vec4 pixelize() {\n"
-    "  vec2 screen = vec2(1366, 720);\n"
-    "  float pixels   = 8.0;\n"
+    "  vec2 screen  = vec2(1366, 720);\n"
+    "  float pixels = 12.0;\n"
     ""
     "  vec2 tex_coord = vec2(\n"
     "    pixels * (1.0 / screen.x),\n"
@@ -335,12 +335,9 @@ static void init_pipeline() {
   s_renderer.pipeline = gfx_pipeline_create(s_renderer.context, s_renderer.pipe_desc);
 }
 
-static void render_primitive(Mesh* mesh, Material* material, const Transform& transform) {
+static void render_primitive(Mesh* mesh, Material* material, Transform& transform) {
   // Setting uniforms
   material->model_matrix = transform.transform; 
-
-  // Uploading the uniforms
-  material_use(material);  
 
   // Setting up the pipeline
   mesh->pipe_desc.shader      = material->shader;
@@ -358,16 +355,22 @@ static void render_primitive(Mesh* mesh, Material* material, const Transform& tr
   gfx_pipeline_draw_index(mesh->pipe);
 }
 
-static void render_mesh(const RenderCommand& command) {
-  Mesh* mesh         = resource_storage_get_mesh(command.storage, command.renderable_id);
-  Material* material = resource_storage_get_material(command.storage, command.material_id);
+static void render_mesh(RenderCommand& command) {
+  Mesh* mesh         = resource_storage_get_mesh(command.renderable_id);
+  Material* material = resource_storage_get_material(command.material_id);
+
+  // Uploading the uniforms
+  material_use(command.material_id);  
   
   render_primitive(mesh, material, command.transform);
 }
 
-static void render_skybox(const RenderCommand& command) {
-  Skybox* skybox     = resource_storage_get_skybox(command.storage, command.renderable_id); 
-  Material* material = resource_storage_get_material(command.storage, command.material_id);
+static void render_skybox(RenderCommand& command) {
+  Skybox* skybox     = resource_storage_get_skybox(command.renderable_id); 
+  Material* material = resource_storage_get_material(command.material_id);
+
+  // Uploading the uniforms
+  material_use(command.material_id);  
 
   // Setting up the pipeline
   skybox->pipe_desc.shader = material->shader;
@@ -377,9 +380,9 @@ static void render_skybox(const RenderCommand& command) {
   gfx_pipeline_draw_vertex(skybox->pipe);
 }
 
-static void render_model(const RenderCommand& command) {
-  Model* model  = resource_storage_get_model(command.storage, command.renderable_id);
-  Material* mat = resource_storage_get_material(command.storage, command.material_id);
+static void render_model(RenderCommand& command) {
+  Model* model  = resource_storage_get_model(command.renderable_id);
+  Material* mat = resource_storage_get_material(command.material_id);
 
   for(sizei i = 0; i < model->meshes.size(); i++) {
     Mesh* mesh              = model->meshes[i];
@@ -395,6 +398,9 @@ static void render_model(const RenderCommand& command) {
     mesh_material->diffuse_color    = mat->diffuse_color; 
     mesh_material->specular_color   = mat->specular_color; 
     mesh_material->uniform_locations = mat->uniform_locations; // @TODO (Renderer): This is _extremely_ slow. 
+
+    // Uploading the uniforms
+    material_use(command.material_id);  
 
     // Render the model's primitive
     render_primitive(mesh, mesh_material, command.transform);
@@ -536,7 +542,7 @@ RenderEffectType renderer_current_effect() {
   return effects[s_renderer.effect_value];
 }
 
-void renderer_queue_command(const RenderCommand& command) {
+void renderer_queue_command(RenderCommand& command) {
   s_renderer.render_queue.push_back(command);
 }
 

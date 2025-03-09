@@ -148,14 +148,13 @@ void mesh_loader_load(ResourceStorage* storage,
                       const sizei indices_count) {
   NIKOLA_ASSERT(storage, "Cannot load with an invalid ResourceStorage");
   NIKOLA_ASSERT(mesh, "Invalid Mesh passed to mesh loader function");
-  NIKOLA_ASSERT((vertex_buffer_id != INVALID_RESOURCE), "Cannot load a mesh with an invalid vertex buffer ID");
   
   // Default initialize the loader
   memory_zero(mesh, sizeof(Mesh));
   mesh->pipe_desc = {}; 
 
   // Vertex buffer init 
-  mesh->vertex_buffer            = resource_storage_get_buffer(storage, vertex_buffer_id);
+  mesh->vertex_buffer            = resource_storage_get_buffer(vertex_buffer_id);
   mesh->pipe_desc.vertex_buffer  = mesh->vertex_buffer;
 
   // Calculate the number of vertices in the vertex buffer
@@ -163,8 +162,8 @@ void mesh_loader_load(ResourceStorage* storage,
   mesh->pipe_desc.vertices_count = (vert_buff_size / get_vertex_type_size(vertex_type));  
   
   // Index buffer init (only if available)
-  if(index_buffer_id != INVALID_RESOURCE) {
-    mesh->index_buffer            = resource_storage_get_buffer(storage, index_buffer_id);
+  if(index_buffer_id.storage != nullptr) {
+    mesh->index_buffer            = resource_storage_get_buffer(index_buffer_id);
     mesh->pipe_desc.index_buffer  = mesh->index_buffer;
     mesh->pipe_desc.indices_count = indices_count;  
   }

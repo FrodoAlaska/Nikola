@@ -145,6 +145,9 @@ set(LIBS_SOURCES
   ${NIKOLA_LIBS_DIR}/imgui/imstb_rectpack.h
   ${NIKOLA_LIBS_DIR}/imgui/imstb_textedit.h
   ${NIKOLA_LIBS_DIR}/imgui/imstb_truetype.h
+
+  # Miniaudio 
+  ${NIKOLA_LIBS_DIR}/miniaudio/miniaudio.c
 )
 ############################################################
 

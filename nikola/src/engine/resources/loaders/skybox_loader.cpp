@@ -64,7 +64,7 @@ static void construct_cube_skybox(ResourceStorage* storage, Skybox* sky) {
   };
 
   ResourceID buffer_id          = resource_storage_push_buffer(storage, vert_desc);
-  sky->vertex_buffer            = resource_storage_get_buffer(storage, buffer_id);
+  sky->vertex_buffer            = resource_storage_get_buffer(buffer_id);
   sky->pipe_desc.vertex_buffer  = sky->vertex_buffer;
   sky->pipe_desc.vertices_count = 36;
 }
@@ -77,7 +77,7 @@ static void construct_cube_skybox(ResourceStorage* storage, Skybox* sky) {
 void skybox_loader_load(ResourceStorage* storage, Skybox* sky, const ResourceID& cubemap_id) {
   NIKOLA_ASSERT(storage, "Cannot load with an invalid ResourceStorage");
   NIKOLA_ASSERT(sky, "Invalid Skybox passed into skybox loader function");
-  NIKOLA_ASSERT((cubemap_id != INVALID_RESOURCE), "Cannot load a skybox with an invalid cubemap ID");
+  NIKOLA_ASSERT(cubemap_id.storage, "Cannot load a skybox with an invalid cubemap ID");
   
   // Default initialize the loader
   memory_zero(sky, sizeof(Skybox));
@@ -91,10 +91,10 @@ void skybox_loader_load(ResourceStorage* storage, Skybox* sky, const ResourceID&
   sky->pipe_desc.layout_count = 1;
   
   // Draw mode init 
-  sky->pipe_desc.draw_mode    = GFX_DRAW_MODE_TRIANGLE;
+  sky->pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
 
   // Cubemap init
-  sky->cubemap                   = resource_storage_get_cubemap(storage, cubemap_id); 
+  sky->cubemap                   = resource_storage_get_cubemap(cubemap_id); 
   sky->pipe_desc.cubemaps[0]     = sky->cubemap; 
   sky->pipe_desc.cubemaps_count  = 1; 
 }

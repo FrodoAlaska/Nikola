@@ -163,7 +163,6 @@ static void create_nbr_texture() {
   for(auto& path : s_parser.src_paths) {
     // Construct the final path
     nikola::FilePath final_path = nikola::filepath_append(s_parser.nbr_output_dir, nikola::filepath_filename(path)); 
-    nikola::filepath_set_extension(final_path, "nbr");
   
     // Load the texture
     bool loaded = image_loader_load_texture(&texture, path);
@@ -176,7 +175,7 @@ static void create_nbr_texture() {
     nikola::nbr_file_save(nbr, texture, final_path);
 
     image_loader_unload_texture(texture);
-    NIKOLA_LOG_INFO("NBR: Converted texture \'%s\' to \'%s\'...", path.c_str(), final_path.c_str());
+    NIKOLA_LOG_INFO("NBR: Converted texture \'%s\' to \'%s\'...", path.c_str(), nbr.path.c_str());
   }
 }
 
@@ -187,7 +186,6 @@ static void create_nbr_cubemap() {
   for(auto& path : s_parser.src_paths) {
     // Construct the final path
     nikola::FilePath final_path = nikola::filepath_append(s_parser.nbr_output_dir, nikola::filepath_filename(path)); 
-    nikola::filepath_set_extension(final_path, "nbr");
 
     // Load the cubemap
     bool loaded = image_loader_load_cubemap(&cubemap, path);
@@ -200,7 +198,7 @@ static void create_nbr_cubemap() {
     nikola::nbr_file_save(nbr, cubemap, final_path);
 
     image_loader_unload_cubemap(cubemap);
-    NIKOLA_LOG_INFO("NBR: Converted cubemap \'%s\' to \'%s\'...", path.c_str(), final_path.c_str());
+    NIKOLA_LOG_INFO("NBR: Converted cubemap \'%s\' to \'%s\'...", path.c_str(), nbr.path.c_str());
   }
 }
 
@@ -211,7 +209,6 @@ static void create_nbr_shader() {
   for(auto& path : s_parser.src_paths) {
     // Construct the final path
     nikola::FilePath final_path = nikola::filepath_append(s_parser.nbr_output_dir, nikola::filepath_filename(path)); 
-    nikola::filepath_set_extension(final_path, "nbr");
 
     // Load the shader
     bool loaded = shader_loader_load(&shader, path);
@@ -224,7 +221,7 @@ static void create_nbr_shader() {
     nikola::nbr_file_save(nbr, shader, final_path);
   
     shader_loader_unload(shader);
-    NIKOLA_LOG_INFO("NBR: Converted shader \'%s\' to \'%s\'...", path.c_str(), final_path.c_str());
+    NIKOLA_LOG_INFO("NBR: Converted shader \'%s\' to \'%s\'...", path.c_str(), nbr.path.c_str());
   }
 }
 
@@ -235,7 +232,6 @@ static void create_nbr_model() {
   for(auto& path : s_parser.src_paths) {
     // Construct the final path
     nikola::FilePath final_path = nikola::filepath_append(s_parser.nbr_output_dir, nikola::filepath_filename(path)); 
-    nikola::filepath_set_extension(final_path, "nbr");
 
     // Load the model
     bool loaded = model_loader_load(&model, path);
@@ -248,7 +244,7 @@ static void create_nbr_model() {
     nikola::nbr_file_save(nbr, model, final_path);
 
     model_loader_unload(model);
-    NIKOLA_LOG_INFO("NBR: Converted model \'%s\' to \'%s\'...", path.c_str(), final_path.c_str());
+    NIKOLA_LOG_INFO("NBR: Converted model \'%s\' to \'%s\'...", path.c_str(), nbr.path.c_str());
   }
 }
 

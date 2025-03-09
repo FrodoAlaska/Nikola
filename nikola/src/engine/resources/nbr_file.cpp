@@ -31,6 +31,7 @@ static bool open_for_load(NBRFile& nbr, const FilePath& path) {
     return false;
   }
 
+  nbr.path = (FilePath)path;
   return true;
 }
 
@@ -39,7 +40,8 @@ static bool open_for_save(NBRFile& nbr, const FilePath& path) {
     NIKOLA_LOG_ERROR("Cannot save NBR file at \'%s\'", path.c_str());
     return false;
   }
-
+  
+  nbr.path = (FilePath)path;
   return true;
 }
 
@@ -408,7 +410,6 @@ static i32 get_texture_channels(GfxTextureFormat format) {
 
 void nbr_file_load(NBRFile* nbr, const FilePath& path) {
   NIKOLA_ASSERT(nbr, "Cannot load an invalid NBR file");
-  NIKOLA_ASSERT((filepath_extension(path) == ".nbr"), "An NBR file with an invalid extension");
 
   // Open the NBR file
   if(!open_for_load(*nbr, path)) {
@@ -447,9 +448,22 @@ void nbr_file_unload(NBRFile& nbr) {
   }
 }
 
+const bool nbr_file_valid_extension(const FilePath& nbr_path) {
+  String ext = filepath_extension(nbr_path);
+
+  return ext == ".nbrtexture" || 
+         ext == ".nbrcubemap" || 
+         ext == ".nbrshader"  || 
+         ext == ".nbrmodel";
+}
+
 void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const FilePath& path) {
+  // Make sure to set the correct extension
+  FilePath nbr_path = path;
+  filepath_set_extension(nbr_path, "nbrtexture");
+
   // Must open the file
-  if(!open_for_save(nbr, path)) {
+  if(!open_for_save(nbr, nbr_path)) {
     return;
   }
 
@@ -465,8 +479,12 @@ void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const FilePath& path
 }
 
 void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path) {
+  // Make sure to set the correct extension
+  FilePath nbr_path = path;
+  filepath_set_extension(nbr_path, "nbrcubemap");
+
   // Must open the file
-  if(!open_for_save(nbr, path)) {
+  if(!open_for_save(nbr, nbr_path)) {
     return;
   }
 
@@ -482,8 +500,12 @@ void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path
 }
 
 void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FilePath& path) {
+  // Make sure to set the correct extension
+  FilePath nbr_path = path;
+  filepath_set_extension(nbr_path, "nbrshader");
+
   // Must open the file
-  if(!open_for_save(nbr, path)) {
+  if(!open_for_save(nbr, nbr_path)) {
     return;
   }
 
@@ -499,8 +521,12 @@ void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FilePath& path) 
 }
 
 void nbr_file_save(NBRFile& nbr, const NBRModel& model, const FilePath& path) {
+  // Make sure to set the correct extension
+  FilePath nbr_path = path;
+  filepath_set_extension(nbr_path, "nbrmodel");
+
   // Must open the file
-  if(!open_for_save(nbr, path)) {
+  if(!open_for_save(nbr, nbr_path)) {
     return;
   }
 

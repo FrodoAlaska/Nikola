@@ -7,24 +7,29 @@
     - [x] Support for diffuse and specular maps.
     - [x] Some of the textures on models get loaded weirdly
     - [x] Need to find a better way to send default uniforms with materials.
-[] 4. Audio Backend v0.1 
+[] 4. Resource Manager v0.3
+    - [x] A better way to refer to the resources
+    - [] Find a way to list all of the required resources for an application (something like the NuGet `packages.config`) 
+    - [] Create a lexer and a parser for the `.nbrlist` file format in order to easily convert a number of resources into the `.nbr` format.
+    - [] File watcher system using C++'s std::filesystem
+    - [] Create some sort of system to load resources on the fly 
+[] 5. Audio System v0.1 
+    - [] A plugin-like system so as not to tie the audio backend to one API?
+    - [] Lay out what you actually want the audio system to be and what it does. 
+    - [] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
     - [] Create an audio backend with a context 
     - [] A way to create an audio buffer that could be played with the context 
-[] 5. Audio System v0.1 
-    - [] 2D sound and music. 
+    - [] 2D and 3D sound and music. 
     - [] Control the pitch and volume of a sound.
-[] 6. Add more resources and improve it
-    - [] Fonts
-    - [] Add audio resources
-    - [] Reload shaders on the fly?
-[] 7. Renderer v0.2. 
+[] 6. Renderer v0.2. 
     - [] Multiple render passes
     - [] Better uniform and material system
     - [] A more pipelined post-processing system.
     - [] Apply the Blin-Phong shading model.
+    - [] Fonts
     - [] Render 2D and 3D fonts
     - [] ?
-[] 8. TBD
+[] 7. TBD
 
 ## (Engine) TODO: 
 * General 

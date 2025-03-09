@@ -28,16 +28,16 @@ struct ResourceStorage {
   String name; 
   FilePath parent_dir;
 
-  HashMap<ResourceID, GfxBuffer*> buffers;
-  HashMap<ResourceID, GfxTexture*> textures;
-  HashMap<ResourceID, GfxCubemap*> cubemaps;
-  HashMap<ResourceID, GfxShader*> shaders;
+  DynamicArray<GfxBuffer*> buffers;
+  DynamicArray<GfxTexture*> textures;
+  DynamicArray<GfxCubemap*> cubemaps;
+  DynamicArray<GfxShader*> shaders;
   
-  HashMap<ResourceID, Mesh*> meshes;
-  HashMap<ResourceID, Material*> materials;
-  HashMap<ResourceID, Skybox*> skyboxes;
-  HashMap<ResourceID, Model*> models;
-  HashMap<ResourceID, Font*> fonts;
+  DynamicArray<Mesh*> meshes;
+  DynamicArray<Material*> materials;
+  DynamicArray<Skybox*> skyboxes;
+  DynamicArray<Model*> models;
+  DynamicArray<Font*> fonts;
 };
 /// ResourceStorage 
 /// ----------------------------------------------------------------------
@@ -46,15 +46,22 @@ struct ResourceStorage {
 /// Macros (Unfortunately)
 
 #define DESTROY_CORE_RESOURCE_MAP(storage, map, clear_func) { \
-  for(auto& [key, value] : storage->map) {                    \
-    clear_func(value);                                        \
+  for(auto& res : storage->map) {                             \
+    clear_func(res);                                          \
   }                                                           \
 }
 
 #define DESTROY_COMP_RESOURCE_MAP(storage, map) { \
-  for(auto& [key, value] : storage->map) {        \
-    delete value;                                 \
+  for(auto& res : storage->map) {                 \
+    delete res;                                   \
   }                                               \
+}
+
+#define PUSH_RESOURCE(res_storage, resources, res, type, id) { \
+  res_storage->resources.push_back(res);                       \
+  id._type   = type;                                           \
+  id._id     = (u16)res_storage->resources.size() - 1;         \
+  id.storage = res_storage;                                    \
 }
 
 /// Macros (Unfortunately)
@@ -119,20 +126,13 @@ static const char* mesh_type_str(const MeshType type) {
   }
 }
 
-static ResourceID generate_id() {
-  return random_u64(); // @TODO: Make something more complex than this
-}
+template<typename T> 
+static T get_resource(const ResourceID& id, DynamicArray<T>& res, const ResourceType type) {
+  NIKOLA_ASSERT((id._type == type), "Invalid type when trying to retrieve a resource");
+  NIKOLA_ASSERT((id._id >= 0 && id._id <= (u16)res.size()), "Invalid ID when trying to retrieve a resource");
+  NIKOLA_ASSERT(id.storage, "Cannot push a resource to an invalid storage");
 
-template<typename T>
-static T get_resource(ResourceStorage* storage, HashMap<ResourceID, T>& map, const ResourceID& id, const char* res_name) {
-  // We cannot return a non-existing resource neither will 
-  // we add it to the storage 
-  if(map.find(id) == map.end()) {
-    NIKOLA_LOG_ERROR("Resource id \'%i\' of type \'%s\' does not exist in storage \'%s\'", id, res_name, storage->name.c_str());
-    return nullptr; 
-  }
-
-  return map[id];
+  return res[id._id];
 }
 
 static void convert_from_nbr(const NBRTexture* nbr, GfxTextureDesc* desc) {
@@ -183,11 +183,11 @@ static void convert_from_nbr(ResourceStorage* storage, const NBRModel* nbr, Mode
 
     // The specular map can be invalid (depicted as -1) so we need 
     // to check for that.
-    ResourceID specular_id = nbr->materials[i].specular_index == -1 ? INVALID_RESOURCE : texture_ids[nbr->materials[i].specular_index];
+    ResourceID specular_id = nbr->materials[i].specular_index == -1 ? ResourceID{} : texture_ids[nbr->materials[i].specular_index];
 
     // Create a new material 
     ResourceID mat_id = resource_storage_push_material(storage, diffuse_id, specular_id);
-    Material* mat     = resource_storage_get_material(storage, mat_id);
+    Material* mat     = resource_storage_get_material(mat_id);
 
     // Set the colors of the new material
     mat->ambient_color  = Vec3(nbr->materials[i].ambient[0], nbr->materials[i].ambient[1], nbr->materials[i].ambient[2]); 
@@ -221,7 +221,7 @@ static void convert_from_nbr(ResourceStorage* storage, const NBRModel* nbr, Mode
     // Create a new mesh 
     ResourceID mesh_id = resource_storage_push_mesh(storage, vert_buff_id, (VertexType)nbr->meshes[i].vertex_type, idx_buff_id, nbr->meshes[i].indices_count);
     
-    Mesh* mesh         = storage->meshes[mesh_id];
+    Mesh* mesh         = storage->meshes[mesh_id._id];
     u8 material_index  = nbr->meshes[i].material_index; 
 
     // Add a new index
@@ -232,7 +232,35 @@ static void convert_from_nbr(ResourceStorage* storage, const NBRModel* nbr, Mode
   }
 }
 
+static ResourceType get_resource_extension_type(const FilePath& path) {
+  FilePath ext = filepath_extension(path); 
+
+  if(ext == ".nbrtexture") {
+    return RESOURCE_TYPE_TEXTURE;
+  }
+  else if(ext == ".nbrcubemap") {
+    return RESOURCE_TYPE_CUBEMAP;
+  }
+  else if(ext == ".nbrshader") {
+    return RESOURCE_TYPE_SHADER;
+  }
+  else if(ext == ".nbrmodel") {
+    return RESOURCE_TYPE_MODEL;
+  }
+}
+
 /// Private functions 
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// Callbacks
+
+static void resource_entry_iterate(const FilePath& base, FilePath path, void* user_data) {
+  DynamicArray<FilePath>* paths = (DynamicArray<FilePath>*)user_data;
+  paths->push_back(path);
+}
+
+/// Callbacks
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -253,10 +281,12 @@ void resource_manager_init() {
   // 
 
   // Add the default matrices buffer
-  s_manager.cached_storage->buffers[generate_id()] = (GfxBuffer*)render_defaults.matrices_buffer;
+  ResourceID matrix_id;
+  PUSH_RESOURCE(s_manager.cached_storage, buffers, render_defaults.matrices_buffer, RESOURCE_TYPE_BUFFER, matrix_id);
   
-  // Add the default white texture 
-  s_manager.cached_storage->textures[generate_id()] = (GfxTexture*)render_defaults.texture;
+  // Add the default texture 
+  ResourceID texture_id;
+  PUSH_RESOURCE(s_manager.cached_storage, textures, render_defaults.texture, RESOURCE_TYPE_TEXTURE, texture_id);
 
   NIKOLA_LOG_INFO("Successfully initialized the resource manager");
 }
@@ -339,10 +369,12 @@ void resource_storage_destroy(ResourceStorage* storage) {
 
 ResourceID resource_storage_push_buffer(ResourceStorage* storage, const GfxBufferDesc& buff_desc) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+  
+  // Create the buffer
+  ResourceID id; 
+  GfxBuffer* buffer = gfx_buffer_create(s_manager.gfx_context, buff_desc);
+  PUSH_RESOURCE(storage, buffers, buffer, RESOURCE_TYPE_BUFFER, id);
 
-  ResourceID id        = generate_id();
-  storage->buffers[id] = gfx_buffer_create(s_manager.gfx_context, buff_desc);
- 
   NIKOLA_LOG_INFO("Storage \'%s\' pushed buffer:", storage->name.c_str());
   NIKOLA_LOG_INFO("     Size = %zu", buff_desc.size);
   NIKOLA_LOG_INFO("     Type = %s", buffer_type_str(buff_desc.type));
@@ -352,9 +384,11 @@ ResourceID resource_storage_push_buffer(ResourceStorage* storage, const GfxBuffe
 ResourceID resource_storage_push_texture(ResourceStorage* storage, const GfxTextureDesc& desc) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
-  ResourceID id         = generate_id();
-  storage->textures[id] = gfx_texture_create(s_manager.gfx_context, desc);
-  
+  // Create the texture
+  ResourceID id; 
+  GfxTexture* texture = gfx_texture_create(s_manager.gfx_context, desc);
+  PUSH_RESOURCE(storage, textures, texture, RESOURCE_TYPE_TEXTURE, id);
+
   NIKOLA_LOG_INFO("Storage \'%s\' pushed texture:", storage->name.c_str());
   NIKOLA_LOG_INFO("     Size = %i X %i", desc.width, desc.height);
   NIKOLA_LOG_INFO("     Type = %s", texture_type_str(desc.type));
@@ -385,8 +419,9 @@ ResourceID resource_storage_push_texture(ResourceStorage* storage,
   convert_from_nbr(nbr_texture, &tex_desc);
 
   // Create the texture 
-  ResourceID id         = generate_id();
-  storage->textures[id] = gfx_texture_create(s_manager.gfx_context, tex_desc);
+  ResourceID id; 
+  GfxTexture* texture = gfx_texture_create(s_manager.gfx_context, tex_desc);
+  PUSH_RESOURCE(storage, textures, texture, RESOURCE_TYPE_TEXTURE, id);
 
   // Remember to close the NBR
   nbr_file_unload(nbr);
@@ -402,8 +437,10 @@ ResourceID resource_storage_push_texture(ResourceStorage* storage,
 ResourceID resource_storage_push_cubemap(ResourceStorage* storage, const GfxCubemapDesc& cubemap_desc) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
-  ResourceID id         = generate_id();
-  storage->cubemaps[id] = gfx_cubemap_create(s_manager.gfx_context, cubemap_desc);
+  // Create the cubemap
+  ResourceID id; 
+  GfxCubemap* cubemap = gfx_cubemap_create(s_manager.gfx_context, cubemap_desc);
+  PUSH_RESOURCE(storage, cubemaps, cubemap, RESOURCE_TYPE_CUBEMAP, id);
   
   NIKOLA_LOG_INFO("Storage \'%s\' pushed cubemap:", storage->name.c_str());
   NIKOLA_LOG_INFO("     Size  = %i X %i", cubemap_desc.width, cubemap_desc.height);
@@ -436,8 +473,9 @@ ResourceID resource_storage_push_cubemap(ResourceStorage* storage,
   convert_from_nbr(nbr_cubemap, &cube_desc);
 
   // Create the cubemap
-  ResourceID id         = generate_id();
-  storage->cubemaps[id] = gfx_cubemap_create(s_manager.gfx_context, cube_desc);
+  ResourceID id; 
+  GfxCubemap* cubemap = gfx_cubemap_create(s_manager.gfx_context, cube_desc);
+  PUSH_RESOURCE(storage, cubemaps, cubemap, RESOURCE_TYPE_CUBEMAP, id);
 
   // Remember to close the NBR
   nbr_file_unload(nbr);
@@ -453,8 +491,10 @@ ResourceID resource_storage_push_cubemap(ResourceStorage* storage,
 ResourceID resource_storage_push_shader(ResourceStorage* storage, const GfxShaderDesc& shader_desc) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
 
-  ResourceID id        = generate_id();
-  storage->shaders[id] = gfx_shader_create(s_manager.gfx_context, shader_desc);
+  // Create the shader
+  ResourceID id; 
+  GfxShader* shader = gfx_shader_create(s_manager.gfx_context, shader_desc);
+  PUSH_RESOURCE(storage, shaders, shader, RESOURCE_TYPE_SHADER, id);
 
   NIKOLA_LOG_INFO("Storage \'%s\' pushed shader:", storage->name.c_str());
   NIKOLA_LOG_INFO("     Vertex source length = %zu", strlen(shader_desc.vertex_source));
@@ -507,9 +547,8 @@ ResourceID resource_storage_push_mesh(ResourceStorage* storage,
   mesh->pipe = gfx_pipeline_create(s_manager.gfx_context, mesh->pipe_desc);
 
   // Create the mesh
-  mesh->storage_ref   = storage; 
-  ResourceID id       = generate_id();
-  storage->meshes[id] = mesh;
+  ResourceID id; 
+  PUSH_RESOURCE(storage, meshes, mesh, RESOURCE_TYPE_MESH, id);
 
   // New mesh added!
   NIKOLA_LOG_INFO("Storage \'%s\' pushed mesh:", storage->name.c_str());
@@ -532,9 +571,8 @@ ResourceID resource_storage_push_mesh(ResourceStorage* storage, const MeshType t
   mesh->pipe = gfx_pipeline_create(s_manager.gfx_context, mesh->pipe_desc);
 
   // Create mesh
-  mesh->storage_ref   = storage; 
-  ResourceID id       = generate_id();
-  storage->meshes[id] = mesh;
+  ResourceID id; 
+  PUSH_RESOURCE(storage, meshes, mesh, RESOURCE_TYPE_MESH, id);
  
   // New mesh added!
   NIKOLA_LOG_INFO("Storage \'%s\' pushed mesh:", storage->name.c_str());
@@ -549,7 +587,7 @@ ResourceID resource_storage_push_material(ResourceStorage* storage,
                                           const ResourceID& specular_id, 
                                           const ResourceID& shader_id) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
-  NIKOLA_ASSERT((diffuse_id != INVALID_RESOURCE), "Cannot load a material with an invalid diffuse texture ID");
+  NIKOLA_ASSERT(diffuse_id.storage, "Cannot load a material with an invalid diffuse texture ID");
   
   // Allocate the material
   Material* material = new Material{};
@@ -558,9 +596,8 @@ ResourceID resource_storage_push_material(ResourceStorage* storage,
   material_loader_load(storage, material, diffuse_id, specular_id, shader_id);
 
   // Create material
-  material->storage_ref  = storage; 
-  ResourceID id          = generate_id();
-  storage->materials[id] = material;
+  ResourceID id;
+  PUSH_RESOURCE(storage, materials, material, RESOURCE_TYPE_MATERIAL, id);
 
   // New material added
   NIKOLA_LOG_INFO("Storage \'%s\' pushed material:", storage->name.c_str());
@@ -584,9 +621,8 @@ ResourceID resource_storage_push_skybox(ResourceStorage* storage, const Resource
   skybox->pipe = gfx_pipeline_create(s_manager.gfx_context, skybox->pipe_desc);
 
   // Create skybox
-  skybox->storage_ref   = storage; 
-  ResourceID id         = generate_id();
-  storage->skyboxes[id] = skybox;
+  ResourceID id;
+  PUSH_RESOURCE(storage, skyboxes, skybox, RESOURCE_TYPE_SKYBOX, id);
 
   // New skybox added!
   NIKOLA_LOG_INFO("Storage \'%s\' pushed skybox:", storage->name.c_str());
@@ -610,9 +646,8 @@ ResourceID resource_storage_push_model(ResourceStorage* storage, const FilePath&
   convert_from_nbr(storage, nbr_model, model);
 
   // New model added!
-  model->storage_ref  = storage; 
-  ResourceID id       = generate_id();
-  storage->models[id] = model;
+  ResourceID id;
+  PUSH_RESOURCE(storage, models, model, RESOURCE_TYPE_MODEL, id);
 
   // Remember to close the NBR
   nbr_file_unload(nbr);
@@ -625,67 +660,78 @@ ResourceID resource_storage_push_model(ResourceStorage* storage, const FilePath&
   return id;
 }
 
-GfxBuffer* resource_storage_get_buffer(ResourceStorage* storage, const ResourceID& id) {
+void resource_storage_push_dir(ResourceStorage* storage, 
+                               HashMap<String, ResourceID>* entries, 
+                               const FilePath& dir) {
   NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
-  NIKOLA_ASSERT((id != INVALID_RESOURCE), "Cannot retrieve an invalid resource");
+  NIKOLA_ASSERT(entries, "Cannot fill a resource entries map that is NULL");
+ 
+  // Create the full path 
+  FilePath full_path = filepath_append(storage->parent_dir, dir);
+ 
+  // Retrieve all of the paths
+  DynamicArray<FilePath> paths;
+  filesystem_directory_iterate(full_path, resource_entry_iterate, &paths);
 
-  return get_resource(storage, storage->buffers, id, "GfxBuffer");
+  // Start to create all of the reosource in the paths 
+  for(auto& path : paths) {
+    ResourceType type = get_resource_extension_type(path);
+    FilePath filename = filepath_filename(path);
+    filepath_set_extension(filename, "");
+
+    switch (type) {
+      case RESOURCE_TYPE_TEXTURE:
+        entries->emplace(filename, resource_storage_push_texture(storage, path));
+        continue;
+      case RESOURCE_TYPE_CUBEMAP:
+        entries->emplace(filename, resource_storage_push_cubemap(storage, path));
+        continue;
+      case RESOURCE_TYPE_SHADER:
+        entries->emplace(filename, resource_storage_push_shader(storage, path));
+        continue;
+      case RESOURCE_TYPE_MODEL:
+        entries->emplace(filename, resource_storage_push_model(storage, path));
+        continue;
+      default:
+        break;
+    }
+  }
 }
 
-GfxTexture* resource_storage_get_texture(ResourceStorage* storage, const ResourceID& id) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
-  NIKOLA_ASSERT((id != INVALID_RESOURCE), "Cannot retrieve an invalid resource");
-
-  return get_resource(storage, storage->textures, id, "GfxTexture");
+GfxBuffer* resource_storage_get_buffer(const ResourceID& id) {
+  return get_resource(id, id.storage->buffers, RESOURCE_TYPE_BUFFER);
 }
 
-GfxCubemap* resource_storage_get_cubemap(ResourceStorage* storage, const ResourceID& id) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
-  NIKOLA_ASSERT((id != INVALID_RESOURCE), "Cannot retrieve an invalid resource");
-
-  return get_resource(storage, storage->cubemaps, id, "GfxCubemap");
+GfxTexture* resource_storage_get_texture(const ResourceID& id) {
+  return get_resource(id, id.storage->textures, RESOURCE_TYPE_TEXTURE);
 }
 
-GfxShader* resource_storage_get_shader(ResourceStorage* storage, const ResourceID& id) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
-  NIKOLA_ASSERT((id != INVALID_RESOURCE), "Cannot retrieve an invalid resource");
-
-  return get_resource(storage, storage->shaders, id, "GfxShader");
+GfxCubemap* resource_storage_get_cubemap(const ResourceID& id) {
+  return get_resource(id, id.storage->cubemaps, RESOURCE_TYPE_CUBEMAP);
 }
 
-Mesh* resource_storage_get_mesh(ResourceStorage* storage, const ResourceID& id) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
-  NIKOLA_ASSERT((id != INVALID_RESOURCE), "Cannot retrieve an invalid resource");
-
-  return get_resource(storage, storage->meshes, id, "Mesh");
+GfxShader* resource_storage_get_shader(const ResourceID& id) {
+  return get_resource(id, id.storage->shaders, RESOURCE_TYPE_SHADER);
 }
 
-Material* resource_storage_get_material(ResourceStorage* storage, const ResourceID& id) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
-  NIKOLA_ASSERT((id != INVALID_RESOURCE), "Cannot retrieve an invalid resource");
-
-  return get_resource(storage, storage->materials, id, "Material");
+Mesh* resource_storage_get_mesh(const ResourceID& id) {
+  return get_resource(id, id.storage->meshes, RESOURCE_TYPE_MESH);
 }
 
-Model* resource_storage_get_model(ResourceStorage* storage, const ResourceID& id) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
-  NIKOLA_ASSERT((id != INVALID_RESOURCE), "Cannot retrieve an invalid resource");
-
-  return get_resource(storage, storage->models, id, "Model");
+Material* resource_storage_get_material(const ResourceID& id) {
+  return get_resource(id, id.storage->materials, RESOURCE_TYPE_MATERIAL);
 }
 
-Skybox* resource_storage_get_skybox(ResourceStorage* storage, const ResourceID& id) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
-  NIKOLA_ASSERT((id != INVALID_RESOURCE), "Cannot retrieve an invalid resource");
-
-  return get_resource(storage, storage->skyboxes, id, "Skybox");
+Skybox* resource_storage_get_skybox(const ResourceID& id) {
+  return get_resource(id, id.storage->skyboxes, RESOURCE_TYPE_SKYBOX);
 }
 
-Font* resource_storage_get_font(ResourceStorage* storage, const ResourceID& id) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
-  NIKOLA_ASSERT((id != INVALID_RESOURCE), "Cannot retrieve an invalid resource");
+Model* resource_storage_get_model(const ResourceID& id) {
+  return get_resource(id, id.storage->models, RESOURCE_TYPE_MODEL);
+}
 
-  return get_resource(storage, storage->fonts, id, "Font");
+Font* resource_storage_get_font(const ResourceID& id) {
+  return get_resource(id, id.storage->fonts, RESOURCE_TYPE_FONT);
 }
 
 /// Resource storage functions
