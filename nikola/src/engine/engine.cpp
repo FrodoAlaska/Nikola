@@ -85,7 +85,7 @@ void engine_init(const AppDesc& desc) {
 void engine_run() {
   while(s_engine.is_running) {
     // Update
-    CHECK_VALID_CALLBACK(s_engine.app_desc.update_fn, s_engine.app);
+    CHECK_VALID_CALLBACK(s_engine.app_desc.update_fn, s_engine.app, niclock_get_delta_time());
 
     // Render
     CHECK_VALID_CALLBACK(s_engine.app_desc.render_fn, s_engine.app);

@@ -186,7 +186,7 @@ static GfxShaderDesc init_effects_shader() {
     ""
     "vec4 pixelize() {\n"
     "  vec2 screen  = vec2(1366, 720);\n"
-    "  float pixels = 12.0;\n"
+    "  float pixels = 10.0;\n"
     ""
     "  vec2 tex_coord = vec2(\n"
     "    pixels * (1.0 / screen.x),\n"
@@ -356,8 +356,8 @@ static void render_primitive(Mesh* mesh, Material* material, Transform& transfor
 }
 
 static void render_mesh(RenderCommand& command) {
-  Mesh* mesh         = resource_storage_get_mesh(command.renderable_id);
-  Material* material = resource_storage_get_material(command.material_id);
+  Mesh* mesh         = resources_get_mesh(command.renderable_id);
+  Material* material = resources_get_material(command.material_id);
 
   // Uploading the uniforms
   material_use(command.material_id);  
@@ -366,14 +366,15 @@ static void render_mesh(RenderCommand& command) {
 }
 
 static void render_skybox(RenderCommand& command) {
-  Skybox* skybox     = resource_storage_get_skybox(command.renderable_id); 
-  Material* material = resource_storage_get_material(command.material_id);
+  Skybox* skybox     = resources_get_skybox(command.renderable_id); 
+  Material* material = resources_get_material(command.material_id);
 
   // Uploading the uniforms
   material_use(command.material_id);  
 
   // Setting up the pipeline
-  skybox->pipe_desc.shader = material->shader;
+  skybox->pipe_desc.shader      = material->shader;
+  skybox->pipe_desc.cubemaps[0] = skybox->cubemap;
 
   // Render the skybox
   gfx_context_apply_pipeline(s_renderer.context, skybox->pipe, skybox->pipe_desc);
@@ -381,29 +382,34 @@ static void render_skybox(RenderCommand& command) {
 }
 
 static void render_model(RenderCommand& command) {
-  Model* model  = resource_storage_get_model(command.renderable_id);
-  Material* mat = resource_storage_get_material(command.material_id);
+  Model* model  = resources_get_model(command.renderable_id);
+  Material* mat = resources_get_material(command.material_id);
+
+  mat->model_matrix = command.transform.transform;
 
   for(sizei i = 0; i < model->meshes.size(); i++) {
     Mesh* mesh              = model->meshes[i];
     Material* mesh_material = model->materials[model->material_indices[i]]; 
+
+    // Setting textures
+    mat->diffuse_map  = mesh_material->diffuse_map;
+    mat->specular_map = mesh_material->specular_map;
 
     // Setting uniforms
     //
     // @NOTE: Each material has its own valid colors and model. However, we also 
     // want OUR own materials to influence the model. So, we _apply_ our model matrix 
     // and colors to the material.
-    mesh_material->shader           = mat->shader; 
-    mesh_material->ambient_color    = mat->ambient_color; 
-    mesh_material->diffuse_color    = mat->diffuse_color; 
-    mesh_material->specular_color   = mat->specular_color; 
-    mesh_material->uniform_locations = mat->uniform_locations; // @TODO (Renderer): This is _extremely_ slow. 
+    // mesh_material->shader            = mat->shader; 
+    // mesh_material->ambient_color     = mat->ambient_color; 
+    // mesh_material->diffuse_color     = mat->diffuse_color; 
+    // mesh_material->specular_color    = mat->specular_color; 
 
     // Uploading the uniforms
     material_use(command.material_id);  
 
     // Render the model's primitive
-    render_primitive(mesh, mesh_material, command.transform);
+    render_primitive(mesh, mat, command.transform);
   }
 }
 

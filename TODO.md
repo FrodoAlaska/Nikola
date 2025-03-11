@@ -1,7 +1,7 @@
 # Road To A Game 
 [X] 1. Filesystem
 [x] 2. GUI
-[] 3. Renderer v0.1
+[x] 3. Renderer v0.1
     - [x] Create a 2D batch renderer that can handle basic shapes and textures.
     - [x] A way to have default renderer resources (like the matrices buffer and a white texture).
     - [x] Support for diffuse and specular maps.
@@ -10,17 +10,10 @@
 [] 4. Resource Manager v0.3
     - [x] A better way to refer to the resources
     - [x] Find a way to list all of the required resources for an application
+    - [] Resource groups
     - [] File watcher system using C++'s std::filesystem
     - [] Create some sort of system to load resources on the fly 
     - [] Create a lexer and a parser for the `.nbrlist` file format in order to easily convert a number of resources into the `.nbr` format.
-[] 5. Audio System v0.1 
-    - [] A plugin-like system so as not to tie the audio backend to one API?
-    - [] Lay out what you actually want the audio system to be and what it does. 
-    - [] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
-    - [] Create an audio backend with a context 
-    - [] A way to create an audio buffer that could be played with the context 
-    - [] 2D and 3D sound and music. 
-    - [] Control the pitch and volume of a sound.
 [] 6. Renderer v0.2. 
     - [] Multiple render passes
     - [] Better uniform and material system
@@ -29,6 +22,13 @@
     - [] Fonts
     - [] Render 2D and 3D fonts
     - [] ?
+[] 5. Audio System v0.1 
+    - [] Lay out what you actually want the audio system to be and what it does. 
+    - [] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
+    - [] Create an audio backend with a context 
+    - [] A way to create an audio buffer that could be played with the context 
+    - [] 2D and 3D sound and music. 
+    - [] A fully-fledged audio pipeline that can play, position, pitch, control the volume, and apply effects to sound and music
 [] 7. TBD
 
 ## (Engine) TODO: 
@@ -78,7 +78,6 @@
 ## FUTURE PLANS: 
 - Some kind of level serlializer?
 - Phyiscs. Yes. Just physics.
-- Hot reloading
 - NUSL: Nikola Uniform Shading Language. 
 - GPU particles
 - Multi-threading

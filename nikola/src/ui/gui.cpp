@@ -155,7 +155,8 @@ void gui_settings_camera(Camera* camera) {
   // -------------------------------------------------------------------
 }
 
-void gui_settings_resource(ResourceStorage* storage) {
+void gui_settings_resource(const u16 resource_group) {
+  // @TODO: ?
 }
 
 void gui_settings_renderer() {

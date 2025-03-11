@@ -45,49 +45,49 @@ static void send_preset_uniform(Material* mat, const i8* name, GfxLayoutType typ
 /// Material functions
 
 void material_set_uniform(ResourceID& mat_id, const i8* uniform_name, const i32 value) {
-  Material* mat = resource_storage_get_material(mat_id); 
+  Material* mat = resources_get_material(mat_id); 
   NIKOLA_ASSERT(mat->shader, "Invalid Material's shader");
   
   check_and_send_uniform(mat, uniform_name, GFX_LAYOUT_INT1, &value);
 }
 
 void material_set_uniform(ResourceID& mat_id, const i8* uniform_name, const f32 value) {
-  Material* mat = resource_storage_get_material(mat_id); 
+  Material* mat = resources_get_material(mat_id); 
   NIKOLA_ASSERT(mat->shader, "Invalid Material's shader");
   
   check_and_send_uniform(mat, uniform_name, GFX_LAYOUT_FLOAT1, &value);
 }
 
 void material_set_uniform(ResourceID& mat_id, const i8* uniform_name, const Vec2& value) {
-  Material* mat = resource_storage_get_material(mat_id); 
+  Material* mat = resources_get_material(mat_id); 
   NIKOLA_ASSERT(mat->shader, "Invalid Material's shader");
   
   check_and_send_uniform(mat, uniform_name, GFX_LAYOUT_FLOAT2, &value[0]);
 }
 
 void material_set_uniform(ResourceID& mat_id, const i8* uniform_name, const Vec3& value) {
-  Material* mat = resource_storage_get_material(mat_id); 
+  Material* mat = resources_get_material(mat_id); 
   NIKOLA_ASSERT(mat->shader, "Invalid Material's shader");
   
   check_and_send_uniform(mat, uniform_name, GFX_LAYOUT_FLOAT3, &value[0]);
 }
 
 void material_set_uniform(ResourceID& mat_id, const i8* uniform_name, const Vec4& value) {
-  Material* mat = resource_storage_get_material(mat_id); 
+  Material* mat = resources_get_material(mat_id); 
   NIKOLA_ASSERT(mat->shader, "Invalid Material's shader");
   
   check_and_send_uniform(mat, uniform_name, GFX_LAYOUT_FLOAT4, &value[0]);
 }
 
 void material_set_uniform(ResourceID& mat_id, const i8* uniform_name, const Mat4& value) {
-  Material* mat = resource_storage_get_material(mat_id); 
+  Material* mat = resources_get_material(mat_id); 
   NIKOLA_ASSERT(mat->shader, "Invalid Material's shader");
   
   check_and_send_uniform(mat, uniform_name, GFX_LAYOUT_MAT4, (void*)mat4_raw_data(value));
 }
 
 void material_set_uniform_buffer(ResourceID& mat_id, const sizei index, GfxBuffer* buffer) {
-  Material* mat = resource_storage_get_material(mat_id); 
+  Material* mat = resources_get_material(mat_id); 
   NIKOLA_ASSERT(mat->shader, "Invalid Material's shader");
   NIKOLA_ASSERT(buffer, "Invalid Material's shader");
   NIKOLA_ASSERT(((index >= MATERIAL_MATRICES_BUFFER_INDEX) && (index <= MATERIAL_LIGHTING_BUFFER_INDEX)), "Invalid index passed as uniform buffer index of a material");
@@ -96,8 +96,25 @@ void material_set_uniform_buffer(ResourceID& mat_id, const sizei index, GfxBuffe
   gfx_shader_attach_uniform(mat->shader, GFX_SHADER_VERTEX, mat->uniform_buffers[index], index);
 }
 
+void material_set_texture(ResourceID& mat_id, const MaterialTextureType type, const ResourceID& texture_id) {
+  NIKOLA_ASSERT((mat_id.group != RESOURCE_GROUP_INVALID), "Invalid Material passed");
+  NIKOLA_ASSERT((texture_id.group != RESOURCE_GROUP_INVALID), "Invalid texture ID passed to material");
+  
+  Material* mat   = resources_get_material(mat_id); 
+  GfxTexture* tex = resources_get_texture(texture_id);
+
+  switch(type) {
+    case MATERIAL_TEXTURE_DIFFUSE:
+      mat->diffuse_map = tex;
+      break;
+    case MATERIAL_TEXTURE_SPECULAR:
+      mat->specular_map = tex;
+      break;
+  }
+}
+
 void material_use(ResourceID& mat_id) {
-  Material* mat = resource_storage_get_material(mat_id); 
+  Material* mat = resources_get_material(mat_id); 
   NIKOLA_ASSERT(mat->shader, "Invalid Material's shader");
 
   // Send all of the available uniforms

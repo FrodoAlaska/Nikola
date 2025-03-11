@@ -26,7 +26,7 @@ NIKOLA_API void gui_settings_debug();
 
 NIKOLA_API void gui_settings_camera(Camera* camera);
 
-NIKOLA_API void gui_settings_resource(ResourceStorage* storage);
+NIKOLA_API void gui_settings_resource(const u16 resource_group);
 
 NIKOLA_API void gui_settings_renderer();
 

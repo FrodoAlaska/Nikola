@@ -10,23 +10,11 @@
 namespace nikola { // Start of nikola
 
 /// ----------------------------------------------------------------------
-/// StorageManager 
-struct StorageManager {
-  HashMap<String, ResourceStorage*> storages;
-
-  ResourceStorage* cached_storage = nullptr;
-  GfxContext* gfx_context         = nullptr;
-};
-
-static StorageManager s_manager;
-/// StorageManager 
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
-/// ResourceStorage 
-struct ResourceStorage {
+/// ResourceGroup 
+struct ResourceGroup {
   String name; 
   FilePath parent_dir;
+  u16 id;
 
   DynamicArray<GfxBuffer*> buffers;
   DynamicArray<GfxTexture*> textures;
@@ -38,31 +26,46 @@ struct ResourceStorage {
   DynamicArray<Skybox*> skyboxes;
   DynamicArray<Model*> models;
   DynamicArray<Font*> fonts;
+
+  HashMap<String, ResourceID> named_ids;
 };
-/// ResourceStorage 
+/// ResourceGroup 
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// ResourceManager 
+struct ResourceManager {
+  GfxContext* gfx_context = nullptr;
+  HashMap<u16, ResourceGroup> groups;
+};
+
+static ResourceManager s_manager;
+/// ResourceManager 
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
 /// Macros (Unfortunately)
 
-#define DESTROY_CORE_RESOURCE_MAP(storage, map, clear_func) { \
-  for(auto& res : storage->map) {                             \
-    clear_func(res);                                          \
-  }                                                           \
+#define DESTROY_CORE_RESOURCE_MAP(group, map, clear_func) { \
+  for(auto& res : group->map) {                             \
+    clear_func(res);                                        \
+  }                                                         \
 }
 
-#define DESTROY_COMP_RESOURCE_MAP(storage, map) { \
-  for(auto& res : storage->map) {                 \
-    delete res;                                   \
-  }                                               \
+#define DESTROY_COMP_RESOURCE_MAP(group, map) { \
+  for(auto& res : group->map) {                 \
+    delete res;                                 \
+  }                                             \
 }
 
-#define PUSH_RESOURCE(res_storage, resources, res, type, id) { \
-  res_storage->resources.push_back(res);                       \
-  id._type   = type;                                           \
-  id._id     = (u16)res_storage->resources.size() - 1;         \
-  id.storage = res_storage;                                    \
+#define PUSH_RESOURCE(group, resources, res, type, res_id) { \
+  group->resources.push_back(res);                           \
+  res_id._type = type;                                       \
+  res_id._id   = (u16)group->resources.size() - 1;           \
+  res_id.group = group->id;                                  \
 }
+
+#define GROUP_CHECK(group_id) NIKOLA_ASSERT((group_id != RESOURCE_CACHE_ID), "Cannot push a resource to an invalid group")
 
 /// Macros (Unfortunately)
 /// ----------------------------------------------------------------------
@@ -130,7 +133,7 @@ template<typename T>
 static T get_resource(const ResourceID& id, DynamicArray<T>& res, const ResourceType type) {
   NIKOLA_ASSERT((id._type == type), "Invalid type when trying to retrieve a resource");
   NIKOLA_ASSERT((id._id >= 0 && id._id <= (u16)res.size()), "Invalid ID when trying to retrieve a resource");
-  NIKOLA_ASSERT(id.storage, "Cannot push a resource to an invalid storage");
+  NIKOLA_ASSERT((id.group != RESOURCE_GROUP_INVALID), "Cannot retrieve a resource from an invalid group");
 
   return res[id._id];
 }
@@ -157,7 +160,7 @@ static void convert_from_nbr(const NBRCubemap* nbr, GfxCubemapDesc* desc) {
   }
 }
 
-static void convert_from_nbr(ResourceStorage* storage, const NBRModel* nbr, Model* model) {
+static void convert_from_nbr(const ResourceGroup* group, const NBRModel* nbr, Model* model) {
   // Make some space for the arrays for some better performance  
   model->meshes.reserve(nbr->meshes_count);
   model->materials.reserve(nbr->materials_count);
@@ -173,21 +176,23 @@ static void convert_from_nbr(ResourceStorage* storage, const NBRModel* nbr, Mode
     desc.wrap_mode = GFX_TEXTURE_WRAP_CLAMP;
     convert_from_nbr(&nbr->textures[i], &desc);
   
-    texture_ids.push_back(resource_storage_push_texture(storage, desc));
+    texture_ids.push_back(resources_push_texture(group->id, desc));
   }
 
   // Convert the material 
   for(sizei i = 0; i < nbr->materials_count; i++) {
-    // Load the diffuse map
-    ResourceID diffuse_id  = texture_ids[nbr->materials[i].diffuse_index];
-
-    // The specular map can be invalid (depicted as -1) so we need 
-    // to check for that.
-    ResourceID specular_id = nbr->materials[i].specular_index == -1 ? ResourceID{} : texture_ids[nbr->materials[i].specular_index];
-
     // Create a new material 
-    ResourceID mat_id = resource_storage_push_material(storage, diffuse_id, specular_id);
-    Material* mat     = resource_storage_get_material(mat_id);
+    ResourceID mat_id = resources_push_material(group->id, ResourceID{});
+    Material* mat     = resources_get_material(mat_id);
+
+    // Insert a valid diffuse texture 
+    mat->diffuse_map = resources_get_texture(texture_ids[nbr->materials[i].diffuse_index]);
+    
+    // Insert a valid specular texture 
+    i8 specular_index = nbr->materials[i].specular_index;
+    if(specular_index != -1) {
+      mat->specular_map = resources_get_texture(texture_ids[specular_index]);
+    }
 
     // Set the colors of the new material
     mat->ambient_color  = Vec3(nbr->materials[i].ambient[0], nbr->materials[i].ambient[1], nbr->materials[i].ambient[2]); 
@@ -197,7 +202,7 @@ static void convert_from_nbr(ResourceStorage* storage, const NBRModel* nbr, Mode
     // Add the material 
     model->materials.push_back(mat); 
   }
-
+  
   // Convert the vertices 
   for(sizei i = 0; i < nbr->meshes_count; i++) {
     // Create a vertex buffer
@@ -207,7 +212,7 @@ static void convert_from_nbr(ResourceStorage* storage, const NBRModel* nbr, Mode
       .type  = GFX_BUFFER_VERTEX, 
       .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
     };
-    ResourceID vert_buff_id = resource_storage_push_buffer(storage, buff_desc);
+    ResourceID vert_buff_id = resources_push_buffer(group->id, buff_desc);
     
     // Create a index buffer
     buff_desc = {
@@ -216,12 +221,12 @@ static void convert_from_nbr(ResourceStorage* storage, const NBRModel* nbr, Mode
       .type  = GFX_BUFFER_INDEX, 
       .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
     };
-    ResourceID idx_buff_id = resource_storage_push_buffer(storage, buff_desc);
+    ResourceID idx_buff_id = resources_push_buffer(group->id, buff_desc);
     
     // Create a new mesh 
-    ResourceID mesh_id = resource_storage_push_mesh(storage, vert_buff_id, (VertexType)nbr->meshes[i].vertex_type, idx_buff_id, nbr->meshes[i].indices_count);
+    ResourceID mesh_id = resources_push_mesh(group->id, vert_buff_id, (VertexType)nbr->meshes[i].vertex_type, idx_buff_id, nbr->meshes[i].indices_count);
     
-    Mesh* mesh         = storage->meshes[mesh_id._id];
+    Mesh* mesh         = resources_get_mesh(mesh_id);
     u8 material_index  = nbr->meshes[i].material_index; 
 
     // Add a new index
@@ -256,8 +261,34 @@ static ResourceType get_resource_extension_type(const FilePath& path) {
 /// Callbacks
 
 static void resource_entry_iterate(const FilePath& base, FilePath path, void* user_data) {
-  DynamicArray<FilePath>* paths = (DynamicArray<FilePath>*)user_data;
-  paths->push_back(path);
+  ResourceGroup* group = (ResourceGroup*)user_data;
+
+  if(!filesystem_exists(path)) {
+    NIKOLA_LOG_ERROR("Cannot push non-existent resource at \'%s\'", path.c_str());
+    return;
+  }
+  
+  ResourceType type = get_resource_extension_type(path);
+  FilePath filename = filepath_filename(path);
+  filepath_set_extension(filename, ""); // Need to remove the extension
+
+  switch (type) {
+    case RESOURCE_TYPE_TEXTURE:
+      group->named_ids[filename] = resources_push_texture(group->id, path);
+      break;
+    case RESOURCE_TYPE_CUBEMAP:
+      group->named_ids[filename] = resources_push_cubemap(group->id, path);
+      break;
+    case RESOURCE_TYPE_SHADER:
+      group->named_ids[filename] = resources_push_shader(group->id, path);
+      break;
+    case RESOURCE_TYPE_MODEL:
+      group->named_ids[filename] = resources_push_model(group->id, path);
+      break;
+    default:
+      NIKOLA_LOG_ERROR("Invalid resource type \'%s\'", path.c_str());
+      break;
+  }
 }
 
 /// Callbacks
@@ -270,8 +301,12 @@ void resource_manager_init() {
   const GfxContext* gfx = renderer_get_context();
   NIKOLA_ASSERT(gfx, "Invalid graphics context passed to the resource manager");
 
-  s_manager.gfx_context     = (GfxContext*)gfx;
-  s_manager.cached_storage  = resource_storage_create("cache", "resource_cache/");
+  s_manager.gfx_context               = (GfxContext*)gfx;
+  s_manager.groups[RESOURCE_CACHE_ID] = ResourceGroup {
+    .name       = "cache", 
+    .parent_dir = "resource_cache",
+    .id         = RESOURCE_CACHE_ID,
+  };
 
   const RendererDefaults render_defaults = renderer_get_defaults();
 
@@ -280,131 +315,126 @@ void resource_manager_init() {
   // the default resources to the resource cache.
   // 
 
+  ResourceGroup* group = &s_manager.groups[RESOURCE_CACHE_ID];
+
   // Add the default matrices buffer
   ResourceID matrix_id;
-  PUSH_RESOURCE(s_manager.cached_storage, buffers, render_defaults.matrices_buffer, RESOURCE_TYPE_BUFFER, matrix_id);
+  PUSH_RESOURCE(group, buffers, render_defaults.matrices_buffer, RESOURCE_TYPE_BUFFER, matrix_id);
   
   // Add the default texture 
   ResourceID texture_id;
-  PUSH_RESOURCE(s_manager.cached_storage, textures, render_defaults.texture, RESOURCE_TYPE_TEXTURE, texture_id);
+  PUSH_RESOURCE(group, textures, render_defaults.texture, RESOURCE_TYPE_TEXTURE, texture_id);
 
   NIKOLA_LOG_INFO("Successfully initialized the resource manager");
 }
 
 void resource_manager_shutdown() {
-  resource_storage_destroy(s_manager.cached_storage);
-  
-  // Get rid of any remaining storages
-  for(auto& [key, value] : s_manager.storages) {
-    resource_storage_destroy(value);
-  }
-  s_manager.storages.clear();
+  // Get rid of any cache group
+  resources_destroy_group(RESOURCE_CACHE_ID);
   
   NIKOLA_LOG_INFO("Successfully shutdown the resource manager");
 }
 
-const ResourceStorage* resource_manager_cache() {
-  return s_manager.cached_storage;
-}
+u16 resources_create_group(const String& name, const FilePath& parent_dir) {
+  u16 group_id               = random_u32(RESOURCE_CACHE_ID + 1, RESOURCE_GROUP_INVALID - 1); 
+  s_manager.groups[group_id] = ResourceGroup {
+    .name       = name, 
+    .parent_dir = parent_dir,
+    .id         = group_id,
+  };
 
-/// Resource manager functions
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
-/// Resource storage functions
-
-ResourceStorage* resource_storage_create(const String& name, const FilePath& parent_dir) {
-  ResourceStorage* res = new ResourceStorage; //memory_allocate(sizeof(ResourceStorage));
-
-  res->name                     = name; 
-  res->parent_dir               = parent_dir;
-  s_manager.storages[res->name] = res; 
-
-  NIKOLA_LOG_INFO("Successfully created a resource storage \'%s\'", res->name.c_str());
-  return res;
-}
-
-void resource_storage_clear(ResourceStorage* storage) {
-  NIKOLA_ASSERT(storage, "Cannot clear an invalid storage");
+  // A default resource for later
+  ResourceGroup* group = &s_manager.groups[group_id]; 
+  group->named_ids["invalid"] = ResourceID{}; 
   
-  storage->buffers.clear();
-  storage->textures.clear();
-  storage->cubemaps.clear();
-  storage->shaders.clear();
-
-  storage->meshes.clear();
-  storage->materials.clear();
-  storage->skyboxes.clear();
-  storage->models.clear();
-  storage->fonts.clear();
-  
-  NIKOLA_LOG_INFO("Resource storage \'%s\' was successfully cleared", storage->name.c_str());
+  NIKOLA_LOG_INFO("Successfully created a resource group \'%s\'", name.c_str());
+  return group_id;
 }
 
-void resource_storage_destroy(ResourceStorage* storage) {
-  if(!storage) {
+void resources_clear_group(const u16 group_id) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
+
+  group->buffers.clear();
+  group->textures.clear();
+  group->cubemaps.clear();
+  group->shaders.clear();
+
+  group->meshes.clear();
+  group->materials.clear();
+  group->skyboxes.clear();
+  group->models.clear();
+  group->fonts.clear();
+  
+  NIKOLA_LOG_INFO("Resource group \'%s\' was successfully cleared", group->name.c_str());
+}
+
+void resources_destroy_group(const u16 group_id) {
+  if(group_id == RESOURCE_GROUP_INVALID) {
+    NIKOLA_LOG_WARN("Cannot destroy an invalid resource group");
     return;
   }
 
-  String storage_name = storage->name; // @FIX (String): Copying around strings? Great.
+  ResourceGroup* group = &s_manager.groups[group_id];
 
   // Destroy core resources
-  DESTROY_CORE_RESOURCE_MAP(storage, buffers, gfx_buffer_destroy);
-  DESTROY_CORE_RESOURCE_MAP(storage, textures, gfx_texture_destroy);
-  DESTROY_CORE_RESOURCE_MAP(storage, cubemaps, gfx_cubemap_destroy);
-  DESTROY_CORE_RESOURCE_MAP(storage, shaders, gfx_shader_destroy);
+  DESTROY_CORE_RESOURCE_MAP(group, buffers, gfx_buffer_destroy);
+  DESTROY_CORE_RESOURCE_MAP(group, textures, gfx_texture_destroy);
+  DESTROY_CORE_RESOURCE_MAP(group, cubemaps, gfx_cubemap_destroy);
+  DESTROY_CORE_RESOURCE_MAP(group, shaders, gfx_shader_destroy);
 
   // Destroy compound resources
-  DESTROY_COMP_RESOURCE_MAP(storage, meshes);
-  DESTROY_COMP_RESOURCE_MAP(storage, materials);
-  DESTROY_COMP_RESOURCE_MAP(storage, skyboxes);
-  DESTROY_COMP_RESOURCE_MAP(storage, models);
-  DESTROY_COMP_RESOURCE_MAP(storage, fonts);
+  DESTROY_COMP_RESOURCE_MAP(group, meshes);
+  DESTROY_COMP_RESOURCE_MAP(group, materials);
+  DESTROY_COMP_RESOURCE_MAP(group, skyboxes);
+  DESTROY_COMP_RESOURCE_MAP(group, models);
+  DESTROY_COMP_RESOURCE_MAP(group, fonts);
 
-  s_manager.storages.erase(storage->name);
-  delete storage;
-  
-  NIKOLA_LOG_INFO("Resource storage \'%s\' was successfully destroyed", storage_name.c_str());
+  NIKOLA_LOG_INFO("Resource group \'%s\' was successfully destroyed", group->name.c_str());
+  s_manager.groups.erase(group_id);
 }
 
-ResourceID resource_storage_push_buffer(ResourceStorage* storage, const GfxBufferDesc& buff_desc) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
-  
+ResourceID resources_push_buffer(const u16 group_id, const GfxBufferDesc& buff_desc) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
+
   // Create the buffer
   ResourceID id; 
   GfxBuffer* buffer = gfx_buffer_create(s_manager.gfx_context, buff_desc);
-  PUSH_RESOURCE(storage, buffers, buffer, RESOURCE_TYPE_BUFFER, id);
+  PUSH_RESOURCE(group, buffers, buffer, RESOURCE_TYPE_BUFFER, id);
 
-  NIKOLA_LOG_INFO("Storage \'%s\' pushed buffer:", storage->name.c_str());
-  NIKOLA_LOG_INFO("     Size = %zu", buff_desc.size);
-  NIKOLA_LOG_INFO("     Type = %s", buffer_type_str(buff_desc.type));
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed buffer:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Size = %zu", buff_desc.size);
+  NIKOLA_LOG_DEBUG("     Type = %s", buffer_type_str(buff_desc.type));
   return id;
 }
 
-ResourceID resource_storage_push_texture(ResourceStorage* storage, const GfxTextureDesc& desc) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+ResourceID resources_push_texture(const u16 group_id, const GfxTextureDesc& desc) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
 
   // Create the texture
   ResourceID id; 
   GfxTexture* texture = gfx_texture_create(s_manager.gfx_context, desc);
-  PUSH_RESOURCE(storage, textures, texture, RESOURCE_TYPE_TEXTURE, id);
+  PUSH_RESOURCE(group, textures, texture, RESOURCE_TYPE_TEXTURE, id);
 
-  NIKOLA_LOG_INFO("Storage \'%s\' pushed texture:", storage->name.c_str());
-  NIKOLA_LOG_INFO("     Size = %i X %i", desc.width, desc.height);
-  NIKOLA_LOG_INFO("     Type = %s", texture_type_str(desc.type));
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed texture:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Size = %i X %i", desc.width, desc.height);
+  NIKOLA_LOG_DEBUG("     Type = %s", texture_type_str(desc.type));
   return id;
 }
 
-ResourceID resource_storage_push_texture(ResourceStorage* storage, 
-                                         const FilePath& nbr_path,
-                                         const GfxTextureFormat format, 
-                                         const GfxTextureFilter filter, 
-                                         const GfxTextureWrap wrap) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+ResourceID resources_push_texture(const u16 group_id, 
+                                  const FilePath& nbr_path,
+                                  const GfxTextureFormat format, 
+                                  const GfxTextureFilter filter, 
+                                  const GfxTextureWrap wrap) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
  
   // Load the NBR file
   NBRFile nbr;
-  nbr_file_load(&nbr, filepath_append(storage->parent_dir, nbr_path));
+  nbr_file_load(&nbr, filepath_append(group->parent_dir, nbr_path));
 
   // Make sure it is the correct resource type
   NIKOLA_ASSERT((nbr.resource_type == RESOURCE_TYPE_TEXTURE), "Expected RESOURCE_TYPE_TEXTURE");
@@ -421,43 +451,50 @@ ResourceID resource_storage_push_texture(ResourceStorage* storage,
   // Create the texture 
   ResourceID id; 
   GfxTexture* texture = gfx_texture_create(s_manager.gfx_context, tex_desc);
-  PUSH_RESOURCE(storage, textures, texture, RESOURCE_TYPE_TEXTURE, id);
+  PUSH_RESOURCE(group, textures, texture, RESOURCE_TYPE_TEXTURE, id);
 
   // Remember to close the NBR
   nbr_file_unload(nbr);
 
+  // Add the resource to the named resources
+  FilePath filename_without_ext = filepath_filename(nbr_path);
+  filepath_set_extension(filename_without_ext, "");
+  group->named_ids[filename_without_ext] = id;
+
   // New texture added!
-  NIKOLA_LOG_INFO("Storage \'%s\' pushed texture:", storage->name.c_str());
-  NIKOLA_LOG_INFO("     Size = %i X %i", tex_desc.width, tex_desc.height);
-  NIKOLA_LOG_INFO("     Type = %s", texture_type_str(tex_desc.type));
-  NIKOLA_LOG_INFO("     Path = %s", nbr_path.c_str());
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed texture:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Size = %i X %i", tex_desc.width, tex_desc.height);
+  NIKOLA_LOG_DEBUG("     Type = %s", texture_type_str(tex_desc.type));
+  NIKOLA_LOG_DEBUG("     Path = %s", nbr_path.c_str());
   return id;
 }
 
-ResourceID resource_storage_push_cubemap(ResourceStorage* storage, const GfxCubemapDesc& cubemap_desc) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+ResourceID resources_push_cubemap(const u16 group_id, const GfxCubemapDesc& cubemap_desc) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
 
   // Create the cubemap
   ResourceID id; 
   GfxCubemap* cubemap = gfx_cubemap_create(s_manager.gfx_context, cubemap_desc);
-  PUSH_RESOURCE(storage, cubemaps, cubemap, RESOURCE_TYPE_CUBEMAP, id);
+  PUSH_RESOURCE(group, cubemaps, cubemap, RESOURCE_TYPE_CUBEMAP, id);
   
-  NIKOLA_LOG_INFO("Storage \'%s\' pushed cubemap:", storage->name.c_str());
-  NIKOLA_LOG_INFO("     Size  = %i X %i", cubemap_desc.width, cubemap_desc.height);
-  NIKOLA_LOG_INFO("     Faces = %i", cubemap_desc.faces_count);
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed cubemap:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Size  = %i X %i", cubemap_desc.width, cubemap_desc.height);
+  NIKOLA_LOG_DEBUG("     Faces = %i", cubemap_desc.faces_count);
   return id;
 }
 
-ResourceID resource_storage_push_cubemap(ResourceStorage* storage, 
-                                         const FilePath& nbr_path,
-                                         const GfxTextureFormat format, 
-                                         const GfxTextureFilter filter, 
-                                         const GfxTextureWrap wrap) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+ResourceID resources_push_cubemap(const u16 group_id, 
+                                  const FilePath& nbr_path,
+                                  const GfxTextureFormat format, 
+                                  const GfxTextureFilter filter, 
+                                  const GfxTextureWrap wrap) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
 
   // Load the NBR file
   NBRFile nbr;
-  nbr_file_load(&nbr, filepath_append(storage->parent_dir, nbr_path));
+  nbr_file_load(&nbr, filepath_append(group->parent_dir, nbr_path));
 
   // Make sure it is the correct resource type
   NIKOLA_ASSERT((nbr.resource_type == RESOURCE_TYPE_CUBEMAP), "Expected RESOURCE_TYPE_CUBEMAP");
@@ -475,39 +512,46 @@ ResourceID resource_storage_push_cubemap(ResourceStorage* storage,
   // Create the cubemap
   ResourceID id; 
   GfxCubemap* cubemap = gfx_cubemap_create(s_manager.gfx_context, cube_desc);
-  PUSH_RESOURCE(storage, cubemaps, cubemap, RESOURCE_TYPE_CUBEMAP, id);
+  PUSH_RESOURCE(group, cubemaps, cubemap, RESOURCE_TYPE_CUBEMAP, id);
 
   // Remember to close the NBR
   nbr_file_unload(nbr);
 
+  // Add the resource to the named resources
+  FilePath filename_without_ext = filepath_filename(nbr_path);
+  filepath_set_extension(filename_without_ext, "");
+  group->named_ids[filename_without_ext] = id;
+
   // New cubemap added!
-  NIKOLA_LOG_INFO("Storage \'%s\' pushed cubemap:", storage->name.c_str());
-  NIKOLA_LOG_INFO("     Size  = %i X %i", cube_desc.width, cube_desc.height);
-  NIKOLA_LOG_INFO("     Faces = %i", cube_desc.faces_count);
-  NIKOLA_LOG_INFO("     Path  = %s", nbr_path.c_str());
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed cubemap:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Size  = %i X %i", cube_desc.width, cube_desc.height);
+  NIKOLA_LOG_DEBUG("     Faces = %i", cube_desc.faces_count);
+  NIKOLA_LOG_DEBUG("     Path  = %s", nbr_path.c_str());
   return id;
 }
 
-ResourceID resource_storage_push_shader(ResourceStorage* storage, const GfxShaderDesc& shader_desc) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+ResourceID resources_push_shader(const u16 group_id, const GfxShaderDesc& shader_desc) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
 
   // Create the shader
   ResourceID id; 
   GfxShader* shader = gfx_shader_create(s_manager.gfx_context, shader_desc);
-  PUSH_RESOURCE(storage, shaders, shader, RESOURCE_TYPE_SHADER, id);
+  PUSH_RESOURCE(group, shaders, shader, RESOURCE_TYPE_SHADER, id);
 
-  NIKOLA_LOG_INFO("Storage \'%s\' pushed shader:", storage->name.c_str());
-  NIKOLA_LOG_INFO("     Vertex source length = %zu", strlen(shader_desc.vertex_source));
-  NIKOLA_LOG_INFO("     Pixel source length  = %zu", strlen(shader_desc.pixel_source));
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed shader:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Vertex source length = %zu", strlen(shader_desc.vertex_source));
+  NIKOLA_LOG_DEBUG("     Pixel source length  = %zu", strlen(shader_desc.pixel_source));
   return id;
 }
 
-ResourceID resource_storage_push_shader(ResourceStorage* storage, const FilePath& nbr_path) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+ResourceID resources_push_shader(const u16 group_id, const FilePath& nbr_path) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
   
   // Load the NBR file
   NBRFile nbr;
-  nbr_file_load(&nbr, filepath_append(storage->parent_dir, nbr_path));
+  nbr_file_load(&nbr, filepath_append(group->parent_dir, nbr_path));
   
   // Make sure it is the correct resource type
   NIKOLA_ASSERT((nbr.resource_type == RESOURCE_TYPE_SHADER), "Expected RESOURCE_TYPE_SHADER");
@@ -520,221 +564,233 @@ ResourceID resource_storage_push_shader(ResourceStorage* storage, const FilePath
   };
 
   // Create the shader
-  ResourceID id = resource_storage_push_shader(storage, shader_desc);
+  ResourceID id = resources_push_shader(group_id, shader_desc);
 
   // Remember to close the NBR
   nbr_file_unload(nbr);
 
+  // Add the resource to the named resources
+  FilePath filename_without_ext = filepath_filename(nbr_path);
+  filepath_set_extension(filename_without_ext, "");
+  group->named_ids[filename_without_ext] = id;
+
   // New shader added!
-  NIKOLA_LOG_INFO("     Path = %s", nbr_path.c_str());
+  NIKOLA_LOG_DEBUG("     Path = %s", nbr_path.c_str());
   return id;
 }
 
-ResourceID resource_storage_push_mesh(ResourceStorage* storage, 
-                                      const ResourceID& vertex_buffer_id, 
-                                      const VertexType vertex_type, 
-                                      const ResourceID& index_buffer_id, 
-                                      const sizei indices_count) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+ResourceID resources_push_mesh(const u16 group_id, 
+                               const ResourceID& vertex_buffer_id, 
+                               const VertexType vertex_type, 
+                               const ResourceID& index_buffer_id, 
+                               const sizei indices_count) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
 
   // Allocate the mesh
   Mesh* mesh = new Mesh{};
 
   // Use the loader to set up the mesh
-  mesh_loader_load(storage, mesh, vertex_buffer_id, vertex_type, index_buffer_id, indices_count);
+  mesh_loader_load(group_id, mesh, vertex_buffer_id, vertex_type, index_buffer_id, indices_count);
 
   // Create the pipeline
   mesh->pipe = gfx_pipeline_create(s_manager.gfx_context, mesh->pipe_desc);
 
   // Create the mesh
   ResourceID id; 
-  PUSH_RESOURCE(storage, meshes, mesh, RESOURCE_TYPE_MESH, id);
+  PUSH_RESOURCE(group, meshes, mesh, RESOURCE_TYPE_MESH, id);
 
   // New mesh added!
-  NIKOLA_LOG_INFO("Storage \'%s\' pushed mesh:", storage->name.c_str());
-  NIKOLA_LOG_INFO("     Vertex type  = %s", vertex_type_str(vertex_type));
-  NIKOLA_LOG_INFO("     Vertices     = %zu", mesh->pipe_desc.vertices_count);
-  NIKOLA_LOG_INFO("     Indices      = %zu", indices_count);
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed mesh:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Vertex type  = %s", vertex_type_str(vertex_type));
+  NIKOLA_LOG_DEBUG("     Vertices     = %zu", mesh->pipe_desc.vertices_count);
+  NIKOLA_LOG_DEBUG("     Indices      = %zu", indices_count);
   return id;
 }
 
-ResourceID resource_storage_push_mesh(ResourceStorage* storage, const MeshType type) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+ResourceID resources_push_mesh(const u16 group_id, const MeshType type) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
 
   // Allocate the mesh
   Mesh* mesh = new Mesh{};
 
   // Use the loader to set up the mesh
-  mesh_loader_load(storage, mesh, type);
+  mesh_loader_load(group_id, mesh, type);
 
   // Create the pipeline
   mesh->pipe = gfx_pipeline_create(s_manager.gfx_context, mesh->pipe_desc);
 
   // Create mesh
   ResourceID id; 
-  PUSH_RESOURCE(storage, meshes, mesh, RESOURCE_TYPE_MESH, id);
+  PUSH_RESOURCE(group, meshes, mesh, RESOURCE_TYPE_MESH, id);
  
   // New mesh added!
-  NIKOLA_LOG_INFO("Storage \'%s\' pushed mesh:", storage->name.c_str());
-  NIKOLA_LOG_INFO("     Mesh type  = %s", mesh_type_str(type));
-  NIKOLA_LOG_INFO("     Vertices   = %zu", mesh->pipe_desc.vertices_count);
-  NIKOLA_LOG_INFO("     Indices    = %zu", mesh->pipe_desc.indices_count);
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed mesh:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Mesh type  = %s", mesh_type_str(type));
+  NIKOLA_LOG_DEBUG("     Vertices   = %zu", mesh->pipe_desc.vertices_count);
+  NIKOLA_LOG_DEBUG("     Indices    = %zu", mesh->pipe_desc.indices_count);
   return id;
 }
 
-ResourceID resource_storage_push_material(ResourceStorage* storage,
-                                          const ResourceID& diffuse_id, 
-                                          const ResourceID& specular_id, 
-                                          const ResourceID& shader_id) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
-  NIKOLA_ASSERT(diffuse_id.storage, "Cannot load a material with an invalid diffuse texture ID");
+ResourceID resources_push_material(const u16 group_id, const ResourceID& shader_id) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
   
   // Allocate the material
   Material* material = new Material{};
 
   // Use the loader to set up the material
-  material_loader_load(storage, material, diffuse_id, specular_id, shader_id);
+  material_loader_load(group_id, material, shader_id);
 
   // Create material
   ResourceID id;
-  PUSH_RESOURCE(storage, materials, material, RESOURCE_TYPE_MATERIAL, id);
+  PUSH_RESOURCE(group, materials, material, RESOURCE_TYPE_MATERIAL, id);
 
   // New material added
-  NIKOLA_LOG_INFO("Storage \'%s\' pushed material:", storage->name.c_str());
-  NIKOLA_LOG_INFO("     Uniforms count = \'%zu\'", material->uniform_locations.size());
-  NIKOLA_LOG_INFO("     Ambient color  = \'%s\'", vec3_to_string(material->ambient_color).c_str());
-  NIKOLA_LOG_INFO("     Diffuse color  = \'%s\'", vec3_to_string(material->diffuse_color).c_str());
-  NIKOLA_LOG_INFO("     Specular color = \'%s\'", vec3_to_string(material->specular_color).c_str());
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed material:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Uniforms count = \'%zu\'", material->uniform_locations.size());
+  NIKOLA_LOG_DEBUG("     Ambient color  = \'%s\'", vec3_to_string(material->ambient_color).c_str());
+  NIKOLA_LOG_DEBUG("     Diffuse color  = \'%s\'", vec3_to_string(material->diffuse_color).c_str());
+  NIKOLA_LOG_DEBUG("     Specular color = \'%s\'", vec3_to_string(material->specular_color).c_str());
   return id;
 }
 
-ResourceID resource_storage_push_skybox(ResourceStorage* storage, const ResourceID& cubemap_id) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+ResourceID resources_push_skybox(const u16 group_id, const ResourceID& cubemap_id) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
 
   // Allocate the skybox
   Skybox* skybox = new Skybox{};
   
   // Use the loader to set up the skybox
-  skybox_loader_load(storage, skybox, cubemap_id);
+  skybox_loader_load(group_id, skybox, cubemap_id);
 
   // Create the pipeline 
   skybox->pipe = gfx_pipeline_create(s_manager.gfx_context, skybox->pipe_desc);
 
   // Create skybox
   ResourceID id;
-  PUSH_RESOURCE(storage, skyboxes, skybox, RESOURCE_TYPE_SKYBOX, id);
+  PUSH_RESOURCE(group, skyboxes, skybox, RESOURCE_TYPE_SKYBOX, id);
 
   // New skybox added!
-  NIKOLA_LOG_INFO("Storage \'%s\' pushed skybox:", storage->name.c_str());
-  NIKOLA_LOG_INFO("     Vertices = %zu", skybox->pipe_desc.vertices_count);
-  NIKOLA_LOG_INFO("     Indices  = %zu", skybox->pipe_desc.indices_count);
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed skybox:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Vertices = %zu", skybox->pipe_desc.vertices_count);
+  NIKOLA_LOG_DEBUG("     Indices  = %zu", skybox->pipe_desc.indices_count);
   return id;
 }
 
-ResourceID resource_storage_push_model(ResourceStorage* storage, const FilePath& nbr_path) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
+ResourceID resources_push_model(const u16 group_id, const FilePath& nbr_path) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
   
   // Load the NBR file
   NBRFile nbr;
-  nbr_file_load(&nbr, filepath_append(storage->parent_dir, nbr_path));
+  nbr_file_load(&nbr, filepath_append(group->parent_dir, nbr_path));
 
   // Allocate the model
   Model* model = new Model{};
   
   // Convert the NBR format to a valid model
   NBRModel* nbr_model = (NBRModel*)nbr.body_data; 
-  convert_from_nbr(storage, nbr_model, model);
+  convert_from_nbr(group, nbr_model, model);
 
   // New model added!
   ResourceID id;
-  PUSH_RESOURCE(storage, models, model, RESOURCE_TYPE_MODEL, id);
+  PUSH_RESOURCE(group, models, model, RESOURCE_TYPE_MODEL, id);
 
   // Remember to close the NBR
   nbr_file_unload(nbr);
 
-  NIKOLA_LOG_INFO("Storage \'%s\' pushed model:", storage->name.c_str());
-  NIKOLA_LOG_INFO("     Meshes    = %zu", model->meshes.size());
-  NIKOLA_LOG_INFO("     Materials = %zu", model->materials.size());
-  NIKOLA_LOG_INFO("     Textures  = %i", nbr_model->textures_count);
-  NIKOLA_LOG_INFO("     Path      = %s", nbr_path.c_str());
+  // Add the resource to the named resources
+  FilePath filename_without_ext = filepath_filename(nbr_path);
+  filepath_set_extension(filename_without_ext, "");
+  group->named_ids[filename_without_ext] = id;
+
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed model:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Meshes    = %zu", model->meshes.size());
+  NIKOLA_LOG_DEBUG("     Materials = %zu", model->materials.size());
+  NIKOLA_LOG_DEBUG("     Textures  = %i", nbr_model->textures_count);
+  NIKOLA_LOG_DEBUG("     Path      = %s", nbr_path.c_str());
   return id;
 }
 
-void resource_storage_push_dir(ResourceStorage* storage, 
-                               HashMap<String, ResourceID>* entries, 
-                               const FilePath& dir) {
-  NIKOLA_ASSERT(storage, "Cannot push a resource to an invalid storage");
-  NIKOLA_ASSERT(entries, "Cannot fill a resource entries map that is NULL");
- 
+void resources_push_dir(const u16 group_id, const FilePath& dir) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
+
   // Create the full path 
-  FilePath full_path = filepath_append(storage->parent_dir, dir);
+  FilePath full_path = filepath_append(group->parent_dir, dir);
+
+  // Cannot proceed if the directory is invalid
+  if(!filesystem_exists(full_path)) {
+    NIKOLA_LOG_ERROR("Resource directory \'%s\' does not exist", dir.c_str());
+    return;
+  }
  
   // Retrieve all of the paths
-  DynamicArray<FilePath> paths;
-  filesystem_directory_iterate(full_path, resource_entry_iterate, &paths);
+  filesystem_directory_iterate(full_path, resource_entry_iterate, group);
+}
 
-  // Start to create all of the reosource in the paths 
-  for(auto& path : paths) {
-    ResourceType type = get_resource_extension_type(path);
-    FilePath filename = filepath_filename(path);
-    filepath_set_extension(filename, "");
-
-    switch (type) {
-      case RESOURCE_TYPE_TEXTURE:
-        entries->emplace(filename, resource_storage_push_texture(storage, path));
-        continue;
-      case RESOURCE_TYPE_CUBEMAP:
-        entries->emplace(filename, resource_storage_push_cubemap(storage, path));
-        continue;
-      case RESOURCE_TYPE_SHADER:
-        entries->emplace(filename, resource_storage_push_shader(storage, path));
-        continue;
-      case RESOURCE_TYPE_MODEL:
-        entries->emplace(filename, resource_storage_push_model(storage, path));
-        continue;
-      default:
-        break;
-    }
+ResourceID& resources_get_id(const u16 group_id, const nikola::String& filename) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
+ 
+  // The resource was not found
+  if(group->named_ids.find(filename) == group->named_ids.end()) {
+    NIKOLA_LOG_ERROR("Could not find resource \'%s\' in resource group \'%s\'", filename.c_str(), group->name.c_str());
+    return group->named_ids["invalid"];
   }
+
+  return group->named_ids[filename];
 }
 
-GfxBuffer* resource_storage_get_buffer(const ResourceID& id) {
-  return get_resource(id, id.storage->buffers, RESOURCE_TYPE_BUFFER);
+GfxBuffer* resources_get_buffer(const ResourceID& id) {
+  ResourceGroup* group = &s_manager.groups[id.group];
+  return get_resource(id, group->buffers, RESOURCE_TYPE_BUFFER);
 }
 
-GfxTexture* resource_storage_get_texture(const ResourceID& id) {
-  return get_resource(id, id.storage->textures, RESOURCE_TYPE_TEXTURE);
+GfxTexture* resources_get_texture(const ResourceID& id) {
+  ResourceGroup* group = &s_manager.groups[id.group];
+  return get_resource(id, group->textures, RESOURCE_TYPE_TEXTURE);
 }
 
-GfxCubemap* resource_storage_get_cubemap(const ResourceID& id) {
-  return get_resource(id, id.storage->cubemaps, RESOURCE_TYPE_CUBEMAP);
+GfxCubemap* resources_get_cubemap(const ResourceID& id) {
+  ResourceGroup* group = &s_manager.groups[id.group];
+  return get_resource(id, group->cubemaps, RESOURCE_TYPE_CUBEMAP);
 }
 
-GfxShader* resource_storage_get_shader(const ResourceID& id) {
-  return get_resource(id, id.storage->shaders, RESOURCE_TYPE_SHADER);
+GfxShader* resources_get_shader(const ResourceID& id) {
+  ResourceGroup* group = &s_manager.groups[id.group];
+  return get_resource(id, group->shaders, RESOURCE_TYPE_SHADER);
 }
 
-Mesh* resource_storage_get_mesh(const ResourceID& id) {
-  return get_resource(id, id.storage->meshes, RESOURCE_TYPE_MESH);
+Mesh* resources_get_mesh(const ResourceID& id) {
+  ResourceGroup* group = &s_manager.groups[id.group];
+  return get_resource(id, group->meshes, RESOURCE_TYPE_MESH);
 }
 
-Material* resource_storage_get_material(const ResourceID& id) {
-  return get_resource(id, id.storage->materials, RESOURCE_TYPE_MATERIAL);
+Material* resources_get_material(const ResourceID& id) {
+  ResourceGroup* group = &s_manager.groups[id.group];
+  return get_resource(id, group->materials, RESOURCE_TYPE_MATERIAL);
 }
 
-Skybox* resource_storage_get_skybox(const ResourceID& id) {
-  return get_resource(id, id.storage->skyboxes, RESOURCE_TYPE_SKYBOX);
+Skybox* resources_get_skybox(const ResourceID& id) {
+  ResourceGroup* group = &s_manager.groups[id.group];
+  return get_resource(id, group->skyboxes, RESOURCE_TYPE_SKYBOX);
 }
 
-Model* resource_storage_get_model(const ResourceID& id) {
-  return get_resource(id, id.storage->models, RESOURCE_TYPE_MODEL);
+Model* resources_get_model(const ResourceID& id) {
+  ResourceGroup* group = &s_manager.groups[id.group];
+  return get_resource(id, group->models, RESOURCE_TYPE_MODEL);
 }
 
-Font* resource_storage_get_font(const ResourceID& id) {
-  return get_resource(id, id.storage->fonts, RESOURCE_TYPE_FONT);
+Font* resources_get_font(const ResourceID& id) {
+  ResourceGroup* group = &s_manager.groups[id.group];
+  return get_resource(id, group->fonts, RESOURCE_TYPE_FONT);
 }
 
-/// Resource storage functions
+/// Resource manager functions
 /// ----------------------------------------------------------------------
 
 } // End of nikola

@@ -48,7 +48,7 @@ static sizei get_vertex_type_size(VertexType type) {
   }
 }
 
-static void create_cube_mesh(ResourceStorage* storage, Mesh* mesh) {
+static void create_cube_mesh(const u16 group_id, Mesh* mesh) {
   DynamicArray<Vertex3D_PNUV> vertices = {
     // Position                 Normal                   UV coords
     
@@ -121,7 +121,7 @@ static void create_cube_mesh(ResourceStorage* storage, Mesh* mesh) {
     .type  = GFX_BUFFER_VERTEX,
     .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
   };
-  ResourceID vert_id = resource_storage_push_buffer(storage, vert_buff);
+  ResourceID vert_id = resources_push_buffer(group_id, vert_buff);
   
   GfxBufferDesc index_buff = {
     .data  = (void*)indices.data(),
@@ -129,9 +129,9 @@ static void create_cube_mesh(ResourceStorage* storage, Mesh* mesh) {
     .type  = GFX_BUFFER_INDEX,
     .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
   };
-  ResourceID index_id = resource_storage_push_buffer(storage, index_buff);
+  ResourceID index_id = resources_push_buffer(group_id, index_buff);
 
-  mesh_loader_load(storage, mesh, vert_id, VERTEX_TYPE_PNUV, index_id, indices.size());
+  mesh_loader_load(group_id, mesh, vert_id, VERTEX_TYPE_PNUV, index_id, indices.size());
 }
 
 /// Private functions  
@@ -140,13 +140,12 @@ static void create_cube_mesh(ResourceStorage* storage, Mesh* mesh) {
 /// ----------------------------------------------------------------------
 /// Mesh loader functions
 
-void mesh_loader_load(ResourceStorage* storage, 
+void mesh_loader_load(const u16 group_id, 
                       Mesh* mesh, 
                       const ResourceID& vertex_buffer_id, 
                       const VertexType vertex_type, 
                       const ResourceID& index_buffer_id, 
                       const sizei indices_count) {
-  NIKOLA_ASSERT(storage, "Cannot load with an invalid ResourceStorage");
   NIKOLA_ASSERT(mesh, "Invalid Mesh passed to mesh loader function");
   
   // Default initialize the loader
@@ -154,7 +153,7 @@ void mesh_loader_load(ResourceStorage* storage,
   mesh->pipe_desc = {}; 
 
   // Vertex buffer init 
-  mesh->vertex_buffer            = resource_storage_get_buffer(vertex_buffer_id);
+  mesh->vertex_buffer            = resources_get_buffer(vertex_buffer_id);
   mesh->pipe_desc.vertex_buffer  = mesh->vertex_buffer;
 
   // Calculate the number of vertices in the vertex buffer
@@ -162,8 +161,8 @@ void mesh_loader_load(ResourceStorage* storage,
   mesh->pipe_desc.vertices_count = (vert_buff_size / get_vertex_type_size(vertex_type));  
   
   // Index buffer init (only if available)
-  if(index_buffer_id.storage != nullptr) {
-    mesh->index_buffer            = resource_storage_get_buffer(index_buffer_id);
+  if(index_buffer_id.group != RESOURCE_GROUP_INVALID) {
+    mesh->index_buffer            = resources_get_buffer(index_buffer_id);
     mesh->pipe_desc.index_buffer  = mesh->index_buffer;
     mesh->pipe_desc.indices_count = indices_count;  
   }
@@ -175,10 +174,10 @@ void mesh_loader_load(ResourceStorage* storage,
   mesh->pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
 }
 
-void mesh_loader_load(ResourceStorage* storage, Mesh* mesh, const MeshType type) {
+void mesh_loader_load(const u16 group_id, Mesh* mesh, const MeshType type) {
   switch(type) {
     case MESH_TYPE_CUBE:
-      create_cube_mesh(storage, mesh);
+      create_cube_mesh(group_id, mesh);
       break;
     case MESH_TYPE_CIRCLE:
       // @TODO: Make a circle mesh

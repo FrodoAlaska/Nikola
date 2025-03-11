@@ -10,14 +10,10 @@ namespace nikola {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Material loader functions
 
-void material_loader_load(ResourceStorage* storage, 
+void material_loader_load(const u16 group_id,  
                           Material* mat, 
-                          const ResourceID& diffuse_id, 
-                          const ResourceID& specular_id, 
                           const ResourceID& shader_id) {
-  NIKOLA_ASSERT(storage, "Cannot load with an invalid ResourceStorage");
   NIKOLA_ASSERT(mat, "Invalid Material passed to material loader function");
-  NIKOLA_ASSERT(diffuse_id.storage, "Cannot load a material with an invalid diffuse texture ID");
 
   const RendererDefaults render_defaults = renderer_get_defaults();
 
@@ -28,23 +24,18 @@ void material_loader_load(ResourceStorage* storage,
   mat->model_matrix   = Mat4(1.0f);
   mat->shininess      = 1.0f;
   mat->screen_size    = Vec2(1366.0f, 720.0f); // @TODO (Material): Change this to be more configurable. 
-  
-  // Diffuse texture init
-  mat->diffuse_map = resource_storage_get_texture(diffuse_id);
 
-  // Specular texture init (if it is available)
-  mat->specular_map = render_defaults.texture; 
-  if(specular_id.storage != nullptr) {
-    mat->specular_map = resource_storage_get_texture(specular_id);
-  } 
-
-  // The values below can only be set if the shader is active
-  if(shader_id.storage == nullptr) {
+  // Default textures init
+  mat->diffuse_map  = render_defaults.texture;
+  mat->specular_map = render_defaults.texture;
+ 
+  // Cannot go one with an invalid shader
+  if(shader_id.group == RESOURCE_GROUP_INVALID) {
     return;
-  } 
-    
+  }
+
   // Shader init 
-  mat->shader = resource_storage_get_shader(shader_id);
+  mat->shader = resources_get_shader(shader_id);
  
   // Set a default matrices buffer 
   GfxBuffer* matrices_buffer                           = render_defaults.matrices_buffer;
