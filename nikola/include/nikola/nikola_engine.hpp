@@ -501,12 +501,16 @@ NIKOLA_API void transform_scale(Transform& trans, const Vec3& scale);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Vertex functions
 
+/// Return the size in bytes of the vertex with `type`.
 NIKOLA_API const sizei vertex_type_size(const VertexType type); 
 
+/// Return the number of components in the vertex with `type`.
 NIKOLA_API const u8 vertex_type_components(const VertexType type); 
 
+/// Convert and return a string representation of the vertex with `type`.
 NIKOLA_API const char* vertex_type_str(const VertexType type); 
 
+/// Apply a layout of the vertex with `type`, returning the filled `layout` with `count` amount of layouts.
 NIKOLA_API void vertex_type_layout(const VertexType type, GfxLayoutDesc* layout, sizei* count); 
 
 /// Vertex functions
@@ -1253,16 +1257,22 @@ NIKOLA_API void material_use(ResourceID& mat_id);
 ///---------------------------------------------------------------------------------------------------------------------
 /// NBR importer functions
 
+/// Convert the `nbr` texture into a `GfxTextureDesc`.
 NIKOLA_API void nbr_import_texture(NBRTexture* nbr, GfxTextureDesc* desc);
 
+/// Convert the `nbr` cubemap into a `GfxCubemapDesc`.
 NIKOLA_API void nbr_import_cubemap(NBRCubemap* nbr, GfxCubemapDesc* desc);
 
+/// Convert the `nbr` shader into a `GfxShaderDesc`.
 NIKOLA_API void nbr_import_shader(NBRShader* nbr, GfxShaderDesc* desc);
 
+/// Convert the `nbr` mesh into a `Mesh`, using the `group_id`.
 NIKOLA_API void nbr_import_mesh(NBRMesh* nbr, const u16 group_id, Mesh* mesh);
 
+/// Convert the `nbr` material into a `Material`, using the `group_id`.
 NIKOLA_API void nbr_import_material(NBRMaterial* nbr, const u16 group_id, Material* material);
 
+/// Convert the `nbr` model into a `Model`, using the `group_id`.
 NIKOLA_API void nbr_import_model(NBRModel* nbr, const u16 group_id, Model* model);
 
 /// NBR importer functions

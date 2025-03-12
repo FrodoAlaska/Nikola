@@ -7,7 +7,7 @@
     - [x] Support for diffuse and specular maps.
     - [x] Some of the textures on models get loaded weirdly
     - [x] Need to find a better way to send default uniforms with materials.
-[] 4. Resource Manager v0.3
+[x] 4. Resource Manager v0.3
     - [x] A better way to refer to the resources
     - [x] Find a way to list all of the required resources for an application
     - [x] Resource groups
@@ -15,10 +15,14 @@
     - [x] Completely remove any pointer to resources. Just refer to resoruces with their IDs
     - [x] Implement `nbr_import` functions that will convert NBR resource formats into engine resource formats.
     - [x] Reload resources on the fly
-    - [] Improve the NBR converter tool
-    - [] Documentation for everything new
-[] 5. GUI v0.2 
-[] 6. Renderer v0.2. 
+    - [x] Documentation
+[] 5. NBR v0.2 
+    - [] Have the TOML file be a list of all the resoruces required by a game. The tool will read said TOML file and convert all of them to the `.nbr` format.
+    - [] Be able to rename an output file 
+    - [] Have the ability to go through a directory and convert cubemaps 
+    - [] If the `--resource-type` flag is omitted, let the tool "guess" which resource is being converted. Perhaps get rid of the glag all together? 
+[] 6. GUI v0.2 
+[] 7. Renderer v0.2. 
     - [] `material_set_shader_context`?
     - [] Multiple render passes
     - [] Better uniform and material system
@@ -27,7 +31,7 @@
     - [] Fonts
     - [] Render 2D and 3D fonts
     - [] ?
-[] 7. Audio System v0.1 
+[] 8. Audio System v0.1 
     - [] Lay out what you actually want the audio system to be and what it does. 
     - [] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
     - [] Create an audio backend with a context 
@@ -45,13 +49,7 @@
     - Keep adding types as they arise.
 * Renderer 
     - Render 2D and 3D fonts
-* NBR 
-    - Have the TOML file be a list of all the resoruces required by a game. The tool will read said TOML file and convert all of them to the `.nbr` format.
-    - Be able to rename an output file 
-    - Have the ability to go through a directory an convert cubemaps 
-    - If the `--resource-type` flag is omitted, let the tool "guess" which resource is being converted. Perhaps get rid of the glag all together? 
 * Resources 
-    - Font loading 
     - A memory pool/arena for resources?
 
 ## (Core) TODO: 
