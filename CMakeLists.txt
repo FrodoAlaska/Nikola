@@ -90,11 +90,13 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/engine/math/matrix_types.cpp
   ${NIKOLA_SRC_DIR}/engine/math/quaternion.cpp
   ${NIKOLA_SRC_DIR}/engine/math/transform.cpp
+  ${NIKOLA_SRC_DIR}/engine/math/vertex.cpp
   
   # Engine/Resources
   ${NIKOLA_SRC_DIR}/engine/resources/resource_manager.cpp
   ${NIKOLA_SRC_DIR}/engine/resources/material.cpp
   ${NIKOLA_SRC_DIR}/engine/resources/nbr_file.cpp
+  ${NIKOLA_SRC_DIR}/engine/resources/nbr_importer.cpp
 
   # Engine/filesystem
   ${NIKOLA_SRC_DIR}/engine/filesystem/file.cpp

@@ -10,44 +10,6 @@ namespace nikola { // Start of nikola
 /// ----------------------------------------------------------------------
 /// Private functions  
 
-static void get_layout_from_vertex_type(VertexType type, GfxPipelineDesc& desc) {
-  switch(type) {
-    case VERTEX_TYPE_PCUV: 
-      desc.layout[0]    = {"POSITION", GFX_LAYOUT_FLOAT3, 0};
-      desc.layout[1]    = {"COLOR", GFX_LAYOUT_FLOAT4, 0};
-      desc.layout[2]    = {"TEX", GFX_LAYOUT_FLOAT2, 0};
-      desc.layout_count = 3;
-      break;
-    case VERTEX_TYPE_PNUV: 
-      desc.layout[0]    = {"POSITION", GFX_LAYOUT_FLOAT3, 0};
-      desc.layout[1]    = {"NORMAL", GFX_LAYOUT_FLOAT3, 0};
-      desc.layout[2]    = {"TEX", GFX_LAYOUT_FLOAT2, 0};
-      desc.layout_count = 3;
-      break;
-    case VERTEX_TYPE_PNCUV: 
-      desc.layout[0]    = {"POSITION", GFX_LAYOUT_FLOAT3, 0};
-      desc.layout[1]    = {"NORMAL", GFX_LAYOUT_FLOAT3, 0};
-      desc.layout[2]    = {"COLOR", GFX_LAYOUT_FLOAT4, 0};
-      desc.layout[3]    = {"TEX", GFX_LAYOUT_FLOAT2, 0};
-      desc.layout_count = 4;
-      break;
-  }
-}
-
-static sizei get_vertex_type_size(VertexType type) {
-  switch(type) {
-    case VERTEX_TYPE_PCUV: 
-      return sizeof(Vertex3D_PCUV);
-      break;
-    case VERTEX_TYPE_PNUV: 
-      return sizeof(Vertex3D_PNUV);
-      break;
-    case VERTEX_TYPE_PNCUV: 
-      return sizeof(Vertex3D_PNCUV);
-      break;
-  }
-}
-
 static void create_cube_mesh(const u16 group_id, Mesh* mesh) {
   DynamicArray<Vertex3D_PNUV> vertices = {
     // Position                 Normal                   UV coords
@@ -115,23 +77,17 @@ static void create_cube_mesh(const u16 group_id, Mesh* mesh) {
     22, 23, 20, 
   };
 
-  GfxBufferDesc vert_buff = {
-    .data  = (void*)vertices.data(),
-    .size  = sizeof(Vertex3D_PNUV) * vertices.size(),
-    .type  = GFX_BUFFER_VERTEX,
-    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
+  NBRMesh nbr_mesh = {
+    .vertex_type = VERTEX_TYPE_PNUV, 
+    
+    .vertices_count = (u32)vertices.size(),
+    .vertices       = (f32*)vertices.data(),
+    
+    .indices_count = (u32)indices.size(),
+    .indices       = (u32*)indices.data(),
   };
-  ResourceID vert_id = resources_push_buffer(group_id, vert_buff);
-  
-  GfxBufferDesc index_buff = {
-    .data  = (void*)indices.data(),
-    .size  = sizeof(u32) * indices.size(),
-    .type  = GFX_BUFFER_INDEX,
-    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
-  };
-  ResourceID index_id = resources_push_buffer(group_id, index_buff);
 
-  mesh_loader_load(group_id, mesh, vert_id, VERTEX_TYPE_PNUV, index_id, indices.size());
+  nbr_import_mesh(&nbr_mesh, group_id, mesh);
 }
 
 /// Private functions  
@@ -139,40 +95,6 @@ static void create_cube_mesh(const u16 group_id, Mesh* mesh) {
 
 /// ----------------------------------------------------------------------
 /// Mesh loader functions
-
-void mesh_loader_load(const u16 group_id, 
-                      Mesh* mesh, 
-                      const ResourceID& vertex_buffer_id, 
-                      const VertexType vertex_type, 
-                      const ResourceID& index_buffer_id, 
-                      const sizei indices_count) {
-  NIKOLA_ASSERT(mesh, "Invalid Mesh passed to mesh loader function");
-  
-  // Default initialize the loader
-  memory_zero(mesh, sizeof(Mesh));
-  mesh->pipe_desc = {}; 
-
-  // Vertex buffer init 
-  mesh->vertex_buffer            = resources_get_buffer(vertex_buffer_id);
-  mesh->pipe_desc.vertex_buffer  = mesh->vertex_buffer;
-
-  // Calculate the number of vertices in the vertex buffer
-  sizei vert_buff_size           = gfx_buffer_get_desc(mesh->pipe_desc.vertex_buffer).size;
-  mesh->pipe_desc.vertices_count = (vert_buff_size / get_vertex_type_size(vertex_type));  
-  
-  // Index buffer init (only if available)
-  if(index_buffer_id.group != RESOURCE_GROUP_INVALID) {
-    mesh->index_buffer            = resources_get_buffer(index_buffer_id);
-    mesh->pipe_desc.index_buffer  = mesh->index_buffer;
-    mesh->pipe_desc.indices_count = indices_count;  
-  }
-
-  // Layout init
-  get_layout_from_vertex_type(vertex_type, mesh->pipe_desc);
-  
-  // Draw mode init
-  mesh->pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
-}
 
 void mesh_loader_load(const u16 group_id, Mesh* mesh, const MeshType type) {
   switch(type) {

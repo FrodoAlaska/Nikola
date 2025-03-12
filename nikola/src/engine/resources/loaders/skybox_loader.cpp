@@ -63,9 +63,8 @@ static void construct_cube_skybox(const u16 group_id, Skybox* sky) {
     .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
   };
 
-  ResourceID buffer_id          = resources_push_buffer(group_id, vert_desc);
-  sky->vertex_buffer            = resources_get_buffer(buffer_id);
-  sky->pipe_desc.vertex_buffer  = sky->vertex_buffer;
+  sky->vertex_buffer            = resources_push_buffer(group_id, vert_desc);
+  sky->pipe_desc.vertex_buffer  = resources_get_buffer(sky->vertex_buffer);
   sky->pipe_desc.vertices_count = 36;
 }
 /// Private functions
@@ -93,8 +92,8 @@ void skybox_loader_load(const u16 group_id, Skybox* sky, const ResourceID& cubem
   sky->pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
 
   // Cubemap init
-  sky->cubemap                   = resources_get_cubemap(cubemap_id); 
-  sky->pipe_desc.cubemaps[0]     = sky->cubemap; 
+  sky->cubemap                   = cubemap_id; 
+  sky->pipe_desc.cubemaps[0]     = resources_get_cubemap(sky->cubemap); 
   sky->pipe_desc.cubemaps_count  = 1; 
 }
 

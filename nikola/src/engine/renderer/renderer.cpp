@@ -340,9 +340,9 @@ static void render_primitive(Mesh* mesh, Material* material, Transform& transfor
   material->model_matrix = transform.transform; 
 
   // Setting up the pipeline
-  mesh->pipe_desc.shader      = material->shader;
-  mesh->pipe_desc.textures[0] = material->diffuse_map; 
-  mesh->pipe_desc.textures[1] = material->specular_map; 
+  mesh->pipe_desc.shader      = resources_get_shader(material->shader);
+  mesh->pipe_desc.textures[0] = resources_get_texture(material->diffuse_map); 
+  mesh->pipe_desc.textures[1] = resources_get_texture(material->specular_map); 
 
   // @NOTE: Even though the `material` might not have a specular or diffuse map, 
   // the resource manager will append a default texture in place of these 
@@ -373,8 +373,8 @@ static void render_skybox(RenderCommand& command) {
   material_use(command.material_id);  
 
   // Setting up the pipeline
-  skybox->pipe_desc.shader      = material->shader;
-  skybox->pipe_desc.cubemaps[0] = skybox->cubemap;
+  skybox->pipe_desc.shader      = resources_get_shader(material->shader);
+  skybox->pipe_desc.cubemaps[0] = resources_get_cubemap(skybox->cubemap);
 
   // Render the skybox
   gfx_context_apply_pipeline(s_renderer.context, skybox->pipe, skybox->pipe_desc);
@@ -388,8 +388,8 @@ static void render_model(RenderCommand& command) {
   mat->model_matrix = command.transform.transform;
 
   for(sizei i = 0; i < model->meshes.size(); i++) {
-    Mesh* mesh              = model->meshes[i];
-    Material* mesh_material = model->materials[model->material_indices[i]]; 
+    Mesh* mesh              = resources_get_mesh(model->meshes[i]);
+    Material* mesh_material = resources_get_material(model->materials[model->material_indices[i]]); 
 
     // Setting textures
     mat->diffuse_map  = mesh_material->diffuse_map;

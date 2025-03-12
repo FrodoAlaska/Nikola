@@ -12,10 +12,14 @@
     - [x] Find a way to list all of the required resources for an application
     - [x] Resource groups
     - [x] File watcher system using C++'s std::filesystem
+    - [x] Completely remove any pointer to resources. Just refer to resoruces with their IDs
+    - [x] Implement `nbr_import` functions that will convert NBR resource formats into engine resource formats.
     - [] Reload resources on the fly
-    - [] Create a lexer and a parser for the `.nbrlist` file format in order to easily convert a number of resources into the `.nbr` format.
+    - [] Improve the NBR converter tool
+    - [] Documentation for everything new
 [] 5. GUI v0.2 
 [] 6. Renderer v0.2. 
+    - [] `material_set_shader_context`?
     - [] Multiple render passes
     - [] Better uniform and material system
     - [] A more pipelined post-processing system.
@@ -41,15 +45,14 @@
     - Keep adding types as they arise.
 * Renderer 
     - Render 2D and 3D fonts
-* Demos
-    - Just a bunch of people spining while the Nutcracker by Tchaikovsy plays in the background. First there's only one model that spins, then a few, then a whole _building_, and so on.
-    - An ominious spinning behelit under some nice lighting effects with the Guts theme playing in the background.
 * NBR 
+    - Have the TOML file be a list of all the resoruces required by a game. The tool will read said TOML file and convert all of them to the `.nbr` format.
     - Be able to rename an output file 
+    - Have the ability to go through a directory an convert cubemaps 
+    - If the `--resource-type` flag is omitted, let the tool "guess" which resource is being converted. Perhaps get rid of the glag all together? 
 * Resources 
     - Font loading 
     - A memory pool/arena for resources?
-    - Perhaps a file that includes all of the paths for the resources to be loaded? 
 
 ## (Core) TODO: 
 * General

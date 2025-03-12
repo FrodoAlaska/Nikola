@@ -1,0 +1,153 @@
+#include "nikola/nikola_core.hpp"
+#include "nikola/nikola_engine.hpp"
+
+//////////////////////////////////////////////////////////////////////////
+
+namespace nikola { // Start of nikola 
+
+///---------------------------------------------------------------------------------------------------------------------
+/// NBR importer functions
+
+void nbr_import_texture(NBRTexture* nbr, GfxTextureDesc* desc) {
+  NIKOLA_ASSERT(nbr, "Invalid NBRTexture while importing");
+  NIKOLA_ASSERT(desc, "Invalid GfxTextureDesc while importing");
+
+  desc->width  = nbr->width; 
+  desc->height = nbr->height; 
+  desc->depth  = 0; 
+  desc->mips   = 1; 
+  desc->type   = GFX_TEXTURE_2D; 
+  desc->data   = nbr->pixels;
+}
+
+void nbr_import_cubemap(NBRCubemap* nbr, GfxCubemapDesc* desc) {
+  NIKOLA_ASSERT(nbr, "Invalid NBRCubemap while importing");
+  NIKOLA_ASSERT(desc, "Invalid GfxCubemapDesc while importing");
+  
+  desc->width       = nbr->width; 
+  desc->height      = nbr->height; 
+  desc->mips        = 1; 
+  desc->faces_count = nbr->faces_count; 
+
+  for(sizei i = 0; i < desc->faces_count; i++) {
+    desc->data[i] = nbr->pixels[i];
+  }
+}
+
+void nbr_import_shader(NBRShader* nbr, GfxShaderDesc* desc) {
+  NIKOLA_ASSERT(nbr, "Invalid NBRShader while importing");
+  NIKOLA_ASSERT(desc, "Invalid GfxShaderDesc while importing");
+
+  desc->vertex_source = nbr->vertex_source;
+  desc->pixel_source  = nbr->pixel_source;
+}
+
+void nbr_import_mesh(NBRMesh* nbr, const u16 group_id, Mesh* mesh) {
+  NIKOLA_ASSERT(nbr, "Invalid NBRMesh while importing");
+  NIKOLA_ASSERT(mesh, "Invalid Mesh while importing");
+  
+  // Default initialize the loader
+  mesh->pipe_desc = {}; 
+  
+  // Create a vertex buffer
+  GfxBufferDesc buff_desc = {
+    .data  = (void*)nbr->vertices,
+    .size  = nbr->vertices_count * sizeof(f32), 
+    .type  = GFX_BUFFER_VERTEX, 
+    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
+  };
+  mesh->vertex_buffer = resources_push_buffer(group_id, buff_desc);
+    
+  // Create a index buffer
+  buff_desc = {
+    .data  = (void*)nbr->indices,
+    .size  = nbr->indices_count * sizeof(u32), 
+    .type  = GFX_BUFFER_INDEX, 
+    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
+  };
+  mesh->index_buffer = resources_push_buffer(group_id, buff_desc);
+
+  // Vertex buffer init 
+  mesh->pipe_desc.vertex_buffer  = resources_get_buffer(mesh->vertex_buffer);
+  mesh->pipe_desc.vertices_count = nbr->vertices_count;  
+  
+  // Index buffer init
+  mesh->pipe_desc.index_buffer  = resources_get_buffer(mesh->index_buffer);
+  mesh->pipe_desc.indices_count = nbr->indices_count;  
+
+  // Layout init
+  vertex_type_layout((VertexType)nbr->vertex_type, mesh->pipe_desc.layout, &mesh->pipe_desc.layout_count);
+  
+  // Draw mode init
+  mesh->pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
+}
+
+void nbr_import_material(NBRMaterial* nbr, const u16 group_id, Material* material) {
+  NIKOLA_ASSERT(nbr, "Invalid NBRMaterial while importing");
+  NIKOLA_ASSERT(material, "Invalid Material while importing");
+  
+  material->ambient_color  = Vec3(nbr->ambient[0], nbr->ambient[1], nbr->ambient[2]); 
+  material->diffuse_color  = Vec3(nbr->diffuse[0], nbr->diffuse[1], nbr->diffuse[2]); 
+  material->specular_color = Vec3(nbr->specular[0], nbr->specular[1], nbr->specular[2]); 
+}
+
+void nbr_import_model(NBRModel* nbr, const u16 group_id, Model* model) {
+  NIKOLA_ASSERT(nbr, "Invalid NBRModel while importing");
+  NIKOLA_ASSERT(model, "Invalid Model while importing");
+  
+  // Make some space for the arrays for some better performance  
+  model->meshes.reserve(nbr->meshes_count);
+  model->materials.reserve(nbr->materials_count);
+  model->material_indices.reserve(nbr->meshes_count);
+  
+  DynamicArray<ResourceID> texture_ids; // @FIX (Resource): This is bad. Don't do this!
+
+  // Convert the textures
+  for(sizei i = 0; i < nbr->textures_count; i++) {
+    GfxTextureDesc desc; 
+    desc.format    = GFX_TEXTURE_FORMAT_RGBA8; 
+    desc.filter    = GFX_TEXTURE_FILTER_MIN_MAG_LINEAR; 
+    desc.wrap_mode = GFX_TEXTURE_WRAP_CLAMP;
+    nbr_import_texture(&nbr->textures[i], &desc);
+  
+    texture_ids.push_back(resources_push_texture(group_id, desc));
+  }
+  
+  // Convert the material 
+  for(sizei i = 0; i < nbr->materials_count; i++) {
+    // Create a new material 
+    ResourceID mat_id = resources_push_material(group_id, ResourceID{});
+    Material* mat     = resources_get_material(mat_id);
+
+    // Insert a valid diffuse texture 
+    mat->diffuse_map = texture_ids[nbr->materials[i].diffuse_index];
+    
+    // Insert a valid specular texture 
+    i8 specular_index = nbr->materials[i].specular_index;
+    if(specular_index != -1) {
+      mat->specular_map = texture_ids[specular_index];
+    }
+
+    // Convert the NBRMaterial into an engine Material
+    nbr_import_material(&nbr->materials[i], group_id, mat);
+
+    // Add the material 
+    model->materials.push_back(mat_id); 
+  }
+  
+  // Convert the vertices 
+  for(sizei i = 0; i < nbr->meshes_count; i++) {
+    // Create and add a new mesh
+    model->meshes.push_back(resources_push_mesh(group_id, nbr->meshes[i]));
+
+    // Add a new index
+    model->material_indices.push_back(nbr->meshes[i].material_index);
+  }
+}
+
+/// NBR importer functions
+///---------------------------------------------------------------------------------------------------------------------
+
+} // End of nikola
+
+//////////////////////////////////////////////////////////////////////////

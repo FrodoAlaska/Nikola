@@ -15,8 +15,6 @@ void material_loader_load(const u16 group_id,
                           const ResourceID& shader_id) {
   NIKOLA_ASSERT(mat, "Invalid Material passed to material loader function");
 
-  const RendererDefaults render_defaults = renderer_get_defaults();
-
   // Set default values for the material
   mat->ambient_color  = Vec3(1.0f); 
   mat->diffuse_color  = Vec3(1.0f); 
@@ -26,8 +24,8 @@ void material_loader_load(const u16 group_id,
   mat->screen_size    = Vec2(1366.0f, 720.0f); // @TODO (Material): Change this to be more configurable. 
 
   // Default textures init
-  mat->diffuse_map  = render_defaults.texture;
-  mat->specular_map = render_defaults.texture;
+  mat->diffuse_map  = resources_get_id(RESOURCE_CACHE_ID, "default_texture");
+  mat->specular_map = resources_get_id(RESOURCE_CACHE_ID, "default_texture");
  
   // Cannot go one with an invalid shader
   if(shader_id.group == RESOURCE_GROUP_INVALID) {
@@ -35,12 +33,15 @@ void material_loader_load(const u16 group_id,
   }
 
   // Shader init 
-  mat->shader = resources_get_shader(shader_id);
+  mat->shader = shader_id;
+  GfxShader* shader = resources_get_shader(mat->shader);
  
   // Set a default matrices buffer 
-  GfxBuffer* matrices_buffer                           = render_defaults.matrices_buffer;
-  mat->uniform_buffers[MATERIAL_MATRICES_BUFFER_INDEX] = matrices_buffer;
-  gfx_shader_attach_uniform(mat->shader, GFX_SHADER_VERTEX, matrices_buffer, MATERIAL_MATRICES_BUFFER_INDEX);
+  mat->uniform_buffers[MATERIAL_MATRICES_BUFFER_INDEX] = resources_get_id(RESOURCE_CACHE_ID, "matrix_buffer");
+  gfx_shader_attach_uniform(shader, 
+                            GFX_SHADER_VERTEX, 
+                            resources_get_buffer(mat->uniform_buffers[MATERIAL_MATRICES_BUFFER_INDEX]), 
+                            MATERIAL_MATRICES_BUFFER_INDEX);
   
   // Reserve some space for the map
   mat->uniform_locations.reserve(MATERIAL_UNIFORMS_MAX);
@@ -57,7 +58,7 @@ void material_loader_load(const u16 group_id,
   
   // Adding only the valid uniforms in the shader
   for(sizei i = 0; i < MATERIAL_UNIFORMS_MAX; i++) {
-    i32 location = gfx_shader_uniform_lookup(mat->shader, uniform_names[i]);
+    i32 location = gfx_shader_uniform_lookup(shader, uniform_names[i]);
     
     // The uniform does not exist
     if(location == -1) {

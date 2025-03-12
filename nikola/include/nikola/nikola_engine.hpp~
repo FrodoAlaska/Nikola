@@ -505,8 +505,6 @@ NIKOLA_API const sizei vertex_type_size(const VertexType type);
 
 NIKOLA_API const u8 vertex_type_components(const VertexType type); 
 
-NIKOLA_API const char* vertex_type_str(const VertexType type); 
-
 NIKOLA_API void vertex_type_layout(const VertexType type, GfxLayoutDesc* layout, sizei* count); 
 
 /// Vertex functions
@@ -1171,7 +1169,7 @@ struct Material {
 /// Skybox
 struct Skybox {
   ResourceID vertex_buffer = {};
-  ResourceID cubemap       = {};
+  ResoruceID cubemap       = {};
   
   GfxPipeline* pipe         = nullptr;
   GfxPipelineDesc pipe_desc = {};
@@ -1341,7 +1339,7 @@ NIKOLA_API ResourceID resources_push_shader(const u16 group_id, const FilePath& 
 ///
 /// @NOTE: This function is usually meant for loading a mesh from an NBR format. 
 /// Often it is used to load Models, for example.
-NIKOLA_API ResourceID resources_push_mesh(const u16 group_id, NBRMesh& nbr_mesh);
+NIKOLA_API ResourceID resources_push_mesh(const u16 group_id, const NBRMesh& mesh);
 
 /// Allocate a new `Mesh` using a predefined mesh `type`, 
 /// store it in `group_id`, return a `ResourceID` to identified it. 

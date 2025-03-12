@@ -65,7 +65,7 @@ static ResourceManager s_manager;
   res_id.group = group->id;                                  \
 }
 
-#define GROUP_CHECK(group_id) NIKOLA_ASSERT((group_id != RESOURCE_CACHE_ID), "Cannot push a resource to an invalid group")
+#define GROUP_CHECK(group_id) NIKOLA_ASSERT((group_id != RESOURCE_GROUP_INVALID), "Cannot push a resource to an invalid group")
 
 /// Macros (Unfortunately)
 /// ----------------------------------------------------------------------
@@ -103,19 +103,6 @@ static const char* texture_type_str(const GfxTextureType type) {
   }
 }
 
-static const char* vertex_type_str(const VertexType type) {
-  switch(type) {
-    case VERTEX_TYPE_PNUV:
-      return "VERTEX_TYPE_PNUV";
-    case VERTEX_TYPE_PCUV:
-      return "VERTEX_TYPE_PCUV";
-    case VERTEX_TYPE_PNCUV:
-      return "VERTEX_TYPE_PNCUV";
-    default:
-      return "INVALID VERTEX TYPE";
-  }
-}
-
 static const char* mesh_type_str(const MeshType type) {
   switch(type) {
     case MESH_TYPE_CUBE:
@@ -136,105 +123,6 @@ static T get_resource(const ResourceID& id, DynamicArray<T>& res, const Resource
   NIKOLA_ASSERT((id.group != RESOURCE_GROUP_INVALID), "Cannot retrieve a resource from an invalid group");
 
   return res[id._id];
-}
-
-static void convert_from_nbr(const NBRTexture* nbr, GfxTextureDesc* desc) {
-  desc->width  = nbr->width; 
-  desc->height = nbr->height; 
-  desc->depth  = 0; 
-  desc->mips   = 1; 
-  desc->type   = GFX_TEXTURE_2D; 
-  desc->data   = memory_allocate(nbr->width * nbr->height * nbr->channels);
-
-  memory_copy(desc->data, nbr->pixels, nbr->width * nbr->height * nbr->channels);
-}
-
-static void convert_from_nbr(const NBRCubemap* nbr, GfxCubemapDesc* desc) {
-  desc->width       = nbr->width; 
-  desc->height      = nbr->height; 
-  desc->mips        = 1; 
-  desc->faces_count = nbr->faces_count; 
-
-  for(sizei i = 0; i < desc->faces_count; i++) {
-    desc->data[i] = nbr->pixels[i];
-  }
-}
-
-static void convert_from_nbr(const ResourceGroup* group, const NBRModel* nbr, Model* model) {
-  // Make some space for the arrays for some better performance  
-  model->meshes.reserve(nbr->meshes_count);
-  model->materials.reserve(nbr->materials_count);
-  model->material_indices.reserve(nbr->meshes_count);
-  
-  nikola::DynamicArray<ResourceID> texture_ids; // @FIX (Resource): This is bad. Don't do this!
-
-  // Convert the textures
-  for(sizei i = 0; i < nbr->textures_count; i++) {
-    GfxTextureDesc desc; 
-    desc.format    = GFX_TEXTURE_FORMAT_RGBA8; 
-    desc.filter    = GFX_TEXTURE_FILTER_MIN_MAG_LINEAR; 
-    desc.wrap_mode = GFX_TEXTURE_WRAP_CLAMP;
-    convert_from_nbr(&nbr->textures[i], &desc);
-  
-    texture_ids.push_back(resources_push_texture(group->id, desc));
-  }
-
-  // Convert the material 
-  for(sizei i = 0; i < nbr->materials_count; i++) {
-    // Create a new material 
-    ResourceID mat_id = resources_push_material(group->id, ResourceID{});
-    Material* mat     = resources_get_material(mat_id);
-
-    // Insert a valid diffuse texture 
-    mat->diffuse_map = resources_get_texture(texture_ids[nbr->materials[i].diffuse_index]);
-    
-    // Insert a valid specular texture 
-    i8 specular_index = nbr->materials[i].specular_index;
-    if(specular_index != -1) {
-      mat->specular_map = resources_get_texture(texture_ids[specular_index]);
-    }
-
-    // Set the colors of the new material
-    mat->ambient_color  = Vec3(nbr->materials[i].ambient[0], nbr->materials[i].ambient[1], nbr->materials[i].ambient[2]); 
-    mat->diffuse_color  = Vec3(nbr->materials[i].diffuse[0], nbr->materials[i].diffuse[1], nbr->materials[i].diffuse[2]); 
-    mat->specular_color = Vec3(nbr->materials[i].specular[0], nbr->materials[i].specular[1], nbr->materials[i].specular[2]); 
-
-    // Add the material 
-    model->materials.push_back(mat); 
-  }
-  
-  // Convert the vertices 
-  for(sizei i = 0; i < nbr->meshes_count; i++) {
-    // Create a vertex buffer
-    GfxBufferDesc buff_desc = {
-      .data  = (void*)nbr->meshes[i].vertices,
-      .size  = nbr->meshes[i].vertices_count * sizeof(f32), 
-      .type  = GFX_BUFFER_VERTEX, 
-      .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
-    };
-    ResourceID vert_buff_id = resources_push_buffer(group->id, buff_desc);
-    
-    // Create a index buffer
-    buff_desc = {
-      .data  = (void*)nbr->meshes[i].indices,
-      .size  = nbr->meshes[i].indices_count * sizeof(u32), 
-      .type  = GFX_BUFFER_INDEX, 
-      .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
-    };
-    ResourceID idx_buff_id = resources_push_buffer(group->id, buff_desc);
-    
-    // Create a new mesh 
-    ResourceID mesh_id = resources_push_mesh(group->id, vert_buff_id, (VertexType)nbr->meshes[i].vertex_type, idx_buff_id, nbr->meshes[i].indices_count);
-    
-    Mesh* mesh         = resources_get_mesh(mesh_id);
-    u8 material_index  = nbr->meshes[i].material_index; 
-
-    // Add a new index
-    model->material_indices.push_back(material_index);
-   
-    // Add the new mesh
-    model->meshes.push_back(mesh);
-  }
 }
 
 static ResourceType get_resource_extension_type(const FilePath& path) {
@@ -306,11 +194,9 @@ static void resource_entry_update(const FileStatus status, const FilePath& path,
   ResourceGroup* group = (ResourceGroup*)user_data;
   ResourceID res_id    = resources_get_id(group->id, filename);
 
-  NIKOLA_LOG_TRACE("PATH = %s", path.c_str());
-
   // Load the NBR file
   NBRFile nbr;
-  nbr_file_load(&nbr, filepath_append(group->parent_dir, nbr_path));
+  nbr_file_load(&nbr, path);
 
   switch (res_id._type) {
     case RESOURCE_TYPE_TEXTURE:
@@ -358,10 +244,12 @@ void resource_manager_init() {
   // Add the default matrices buffer
   ResourceID matrix_id;
   PUSH_RESOURCE(group, buffers, render_defaults.matrices_buffer, RESOURCE_TYPE_BUFFER, matrix_id);
-  
+  group->named_ids["matrix_buffer"] = matrix_id;
+
   // Add the default texture 
   ResourceID texture_id;
   PUSH_RESOURCE(group, textures, render_defaults.texture, RESOURCE_TYPE_TEXTURE, texture_id);
+  group->named_ids["default_texture"] = texture_id;
 
   NIKOLA_LOG_INFO("Successfully initialized the resource manager");
 }
@@ -487,7 +375,7 @@ ResourceID resources_push_texture(const u16 group_id,
   tex_desc.wrap_mode = wrap;
 
   // Convert the NBR format to a valid texture
-  convert_from_nbr(nbr_texture, &tex_desc);
+  nbr_import_texture(nbr_texture, &tex_desc);
 
   // Create the texture 
   ResourceID id; 
@@ -546,9 +434,7 @@ ResourceID resources_push_cubemap(const u16 group_id,
   cube_desc.format    = format; 
   cube_desc.filter    = filter; 
   cube_desc.wrap_mode = wrap;
-
-  // Convert the NBR format to a valid cubemap
-  convert_from_nbr(nbr_cubemap, &cube_desc);
+  nbr_import_cubemap(nbr_cubemap, &cube_desc);
 
   // Create the cubemap
   ResourceID id; 
@@ -598,11 +484,9 @@ ResourceID resources_push_shader(const u16 group_id, const FilePath& nbr_path) {
   NIKOLA_ASSERT((nbr.resource_type == RESOURCE_TYPE_SHADER), "Expected RESOURCE_TYPE_SHADER");
 
   // Convert the NBR format to a valid shader
-  NBRShader* nbr_shader  = (NBRShader*)nbr.body_data;
-  GfxShaderDesc shader_desc = {
-    .vertex_source = nbr_shader->vertex_source,
-    .pixel_source  = nbr_shader->pixel_source,
-  };
+  NBRShader* nbr_shader     = (NBRShader*)nbr.body_data;
+  GfxShaderDesc shader_desc = {};
+  nbr_import_shader(nbr_shader, &shader_desc);
 
   // Create the shader
   ResourceID id = resources_push_shader(group_id, shader_desc);
@@ -620,19 +504,15 @@ ResourceID resources_push_shader(const u16 group_id, const FilePath& nbr_path) {
   return id;
 }
 
-ResourceID resources_push_mesh(const u16 group_id, 
-                               const ResourceID& vertex_buffer_id, 
-                               const VertexType vertex_type, 
-                               const ResourceID& index_buffer_id, 
-                               const sizei indices_count) {
+ResourceID resources_push_mesh(const u16 group_id, NBRMesh& nbr_mesh) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
   // Allocate the mesh
   Mesh* mesh = new Mesh{};
 
-  // Use the loader to set up the mesh
-  mesh_loader_load(group_id, mesh, vertex_buffer_id, vertex_type, index_buffer_id, indices_count);
+  // Convert the NBR mesh into the engine's mesh format 
+  nbr_import_mesh(&nbr_mesh, group_id, mesh);
 
   // Create the pipeline
   mesh->pipe = gfx_pipeline_create(s_manager.gfx_context, mesh->pipe_desc);
@@ -643,9 +523,9 @@ ResourceID resources_push_mesh(const u16 group_id,
 
   // New mesh added!
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed mesh:", group->name.c_str());
-  NIKOLA_LOG_DEBUG("     Vertex type  = %s", vertex_type_str(vertex_type));
+  NIKOLA_LOG_DEBUG("     Vertex type  = %s", vertex_type_str((VertexType)nbr_mesh.vertex_type));
   NIKOLA_LOG_DEBUG("     Vertices     = %zu", mesh->pipe_desc.vertices_count);
-  NIKOLA_LOG_DEBUG("     Indices      = %zu", indices_count);
+  NIKOLA_LOG_DEBUG("     Indices      = %zu", mesh->pipe_desc.indices_count);
   return id;
 }
 
@@ -734,7 +614,7 @@ ResourceID resources_push_model(const u16 group_id, const FilePath& nbr_path) {
   
   // Convert the NBR format to a valid model
   NBRModel* nbr_model = (NBRModel*)nbr.body_data; 
-  convert_from_nbr(group, nbr_model, model);
+  nbr_import_model(nbr_model, group_id, model);
 
   // New model added!
   ResourceID id;
