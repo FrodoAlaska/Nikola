@@ -142,6 +142,64 @@ static ResourceType get_resource_extension_type(const FilePath& path) {
   }
 }
 
+static void reload_texture(NBRFile& file, const ResourceID& id) {
+  GfxTexture* texture = resources_get_texture(id);  
+
+  // Create the new texture
+  NBRTexture* nbr_texture     = (NBRTexture*)file.body_data;
+  GfxTextureDesc texture_desc = gfx_texture_get_desc(texture);
+  nbr_import_texture(nbr_texture, &texture_desc);
+  
+  // Update the texture
+  gfx_texture_update(texture, texture_desc);
+}
+
+static void reload_cubemap(NBRFile& file, const ResourceID& id) {
+  GfxCubemap* cubemap = resources_get_cubemap(id);  
+
+  // Create the new cubemap
+  NBRCubemap* nbr_cubemap     = (NBRCubemap*)file.body_data;
+  GfxCubemapDesc cubemap_desc = gfx_cubemap_get_desc(cubemap);
+  nbr_import_cubemap(nbr_cubemap, &cubemap_desc);
+  
+  // Update the cubemap
+  gfx_cubemap_update(cubemap, cubemap_desc);
+}
+
+static void reload_shader(NBRFile& file, const ResourceID& id) {
+  GfxShader* shader = resources_get_shader(id);  
+
+  // Create the new shader
+  NBRShader* nbr_shader     = (NBRShader*)file.body_data;
+  GfxShaderDesc shader_desc = {};
+  nbr_import_shader(nbr_shader, &shader_desc);
+  
+  // Update the shader
+  gfx_shader_update(shader, shader_desc);
+}
+
+static void reload_core_resource(const ResourceGroup* group, const ResourceID& id, const FilePath& nbr_path) {
+  // Load the NBR file
+  NBRFile nbr;
+  nbr_file_load(&nbr, nbr_path);
+
+  switch (id._type) {
+    case RESOURCE_TYPE_TEXTURE:
+      reload_texture(nbr, id);
+      break;
+    case RESOURCE_TYPE_CUBEMAP:
+      reload_cubemap(nbr, id);
+      break;
+    case RESOURCE_TYPE_SHADER:
+      reload_shader(nbr, id);
+      break;
+    default:
+      break;
+  }
+
+  nbr_file_unload(nbr);
+} 
+
 /// Private functions 
 /// ----------------------------------------------------------------------
 
@@ -194,16 +252,11 @@ static void resource_entry_update(const FileStatus status, const FilePath& path,
   ResourceGroup* group = (ResourceGroup*)user_data;
   ResourceID res_id    = resources_get_id(group->id, filename);
 
-  // Load the NBR file
-  NBRFile nbr;
-  nbr_file_load(&nbr, path);
-
   switch (res_id._type) {
     case RESOURCE_TYPE_TEXTURE:
-      break;
     case RESOURCE_TYPE_CUBEMAP:
-      break;
     case RESOURCE_TYPE_SHADER:
+      reload_core_resource(group, res_id, path);
       break;
     case RESOURCE_TYPE_MODEL:
       break;

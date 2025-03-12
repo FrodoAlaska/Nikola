@@ -1186,8 +1186,6 @@ GfxShader* gfx_shader_create(GfxContext* gfx, const GfxShaderDesc& desc) {
   // Detaching
   glDetachShader(shader->id, shader->vert_id);
   glDetachShader(shader->id, shader->frag_id);
-  glDeleteShader(shader->vert_id);
-  glDeleteShader(shader->frag_id);
 
   return shader;
 }
@@ -1205,10 +1203,42 @@ GfxShaderDesc& gfx_shader_get_source(GfxShader* shader) {
   return shader->desc;
 }
 
+void gfx_shader_update(GfxShader* shader, const GfxShaderDesc& desc) {
+  NIKOLA_ASSERT(shader->gfx, "Invalid GfxContext struct passed");
+  NIKOLA_ASSERT(shader, "Invalid GfxShader struct passed");
+  NIKOLA_ASSERT(desc.vertex_source, "Invalid Vertex source passed to the shader");
+  NIKOLA_ASSERT(desc.pixel_source, "Invalid Pixel source passed to the shader");
+
+  shader->desc = desc;
+  
+  i32 vert_src_len = strlen(shader->desc.vertex_source);
+  i32 frag_src_len = strlen(shader->desc.pixel_source);
+  
+  // Vertex shader
+  glShaderSource(shader->vert_id, 1, &shader->desc.vertex_source, &vert_src_len); 
+  glCompileShader(shader->vert_id);
+  check_shader_compile_error(shader->vert_id);
+  
+  // Fragment shader
+  glShaderSource(shader->frag_id, 1, &shader->desc.pixel_source, &frag_src_len); 
+  glCompileShader(shader->frag_id);
+  check_shader_compile_error(shader->frag_id);
+
+  // Linking
+  glAttachShader(shader->id, shader->vert_id);
+  glAttachShader(shader->id, shader->frag_id);
+  glLinkProgram(shader->id);
+  check_shader_linker_error(shader);
+  
+  // Detaching
+  glDetachShader(shader->id, shader->vert_id);
+  glDetachShader(shader->id, shader->frag_id);
+}
+
 void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer, const u32 bind_point) {
   NIKOLA_ASSERT(shader->gfx, "Invalid GfxContext struct passed");
   NIKOLA_ASSERT(shader, "Invalid GfxShader struct passed");
-      
+   
   glBindBufferBase(GL_UNIFORM_BUFFER, bind_point, buffer->id);
 }
 
@@ -1467,7 +1497,7 @@ void gfx_cubemap_update(GfxCubemap* cubemap, const GfxCubemapDesc& desc) {
   // Updating the texture image
   for(sizei i = 0; i < desc.faces_count; i++) {
     glTextureSubImage3D(cubemap->id,                 // Texture
-                        desc.mips,                   // Mipmaps 
+                        0,                           // Levels 
                         0, 0, i,                     // Offset (x, y, z)
                         desc.width, desc.height, 1,  // Size (width, height, depth)
                         gl_format,                   // Format

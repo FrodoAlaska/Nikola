@@ -14,7 +14,7 @@
     - [x] File watcher system using C++'s std::filesystem
     - [x] Completely remove any pointer to resources. Just refer to resoruces with their IDs
     - [x] Implement `nbr_import` functions that will convert NBR resource formats into engine resource formats.
-    - [] Reload resources on the fly
+    - [x] Reload resources on the fly
     - [] Improve the NBR converter tool
     - [] Documentation for everything new
 [] 5. GUI v0.2 

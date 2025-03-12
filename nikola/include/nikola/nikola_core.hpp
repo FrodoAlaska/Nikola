@@ -1894,6 +1894,9 @@ NIKOLA_API void gfx_shader_destroy(GfxShader* shader);
 /// Retrieve the internal `GfxShaderDesc` of `shader`.
 NIKOLA_API GfxShaderDesc& gfx_shader_get_source(GfxShader* shader);
 
+/// Update the `shader`'s information from the given `desc`.
+NIKOLA_API void gfx_shader_update(GfxShader* shader, const GfxShaderDesc& desc);
+
 /// Attaches the uniform `buffer` to the `shader` of type `type` to point `bind_point`. 
 /// Any updates to `buffer` will have an effect on the `shader`.
 /// 
