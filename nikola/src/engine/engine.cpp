@@ -85,6 +85,7 @@ void engine_init(const AppDesc& desc) {
 void engine_run() {
   while(s_engine.is_running) {
     // Update
+    filewatcher_update(); 
     CHECK_VALID_CALLBACK(s_engine.app_desc.update_fn, s_engine.app, niclock_get_delta_time());
 
     // Render
@@ -99,6 +100,7 @@ void engine_shutdown() {
   CHECK_VALID_CALLBACK(s_engine.app_desc.shutdown_fn, s_engine.app);
 
   resource_manager_shutdown();
+  filewatcher_shutdown(); 
   renderer_shutdown();
   batch_renderer_shutdown();
 

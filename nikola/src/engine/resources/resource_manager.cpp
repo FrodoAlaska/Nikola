@@ -268,8 +268,8 @@ static void resource_entry_iterate(const FilePath& base, FilePath path, void* us
     return;
   }
   
-  ResourceType type = get_resource_extension_type(path);
   FilePath filename = filepath_filename(path);
+  ResourceType type = get_resource_extension_type(filename);
   filepath_set_extension(filename, ""); // Need to remove the extension
 
   switch (type) {
@@ -285,8 +285,46 @@ static void resource_entry_iterate(const FilePath& base, FilePath path, void* us
     case RESOURCE_TYPE_MODEL:
       group->named_ids[filename] = resources_push_model(group->id, path);
       break;
+    case RESOURCE_TYPE_FONT:
+      break;
     default:
       NIKOLA_LOG_ERROR("Invalid resource type \'%s\'", path.c_str());
+      break;
+  }
+}
+
+static void resource_entry_update(const FileStatus status, const FilePath& path, void* user_data) {
+  // We only care if the resource was modified 
+  if(status != FILE_STATUS_MODIFIED) {
+    return;
+  }
+ 
+  // Get the filename without the extension
+  FilePath filename = filepath_filename(path); 
+  filepath_set_extension(filename, "");
+
+  ResourceGroup* group = (ResourceGroup*)user_data;
+  ResourceID res_id    = resources_get_id(group->id, filename);
+
+  NIKOLA_LOG_TRACE("PATH = %s", path.c_str());
+
+  // Load the NBR file
+  NBRFile nbr;
+  nbr_file_load(&nbr, filepath_append(group->parent_dir, nbr_path));
+
+  switch (res_id._type) {
+    case RESOURCE_TYPE_TEXTURE:
+      break;
+    case RESOURCE_TYPE_CUBEMAP:
+      break;
+    case RESOURCE_TYPE_SHADER:
+      break;
+    case RESOURCE_TYPE_MODEL:
+      break;
+    case RESOURCE_TYPE_FONT:
+      break;
+    default:
+      NIKOLA_LOG_ERROR("Unknown resource type");
       break;
   }
 }
@@ -346,7 +384,10 @@ u16 resources_create_group(const String& name, const FilePath& parent_dir) {
   // A default resource for later
   ResourceGroup* group = &s_manager.groups[group_id]; 
   group->named_ids["invalid"] = ResourceID{}; 
-  
+ 
+  // Add a file watcher to the parent directory
+  filewatcher_add_dir(parent_dir, resource_entry_update, group, true);
+
   NIKOLA_LOG_INFO("Successfully created a resource group \'%s\'", name.c_str());
   return group_id;
 }
@@ -788,6 +829,9 @@ Model* resources_get_model(const ResourceID& id) {
 Font* resources_get_font(const ResourceID& id) {
   ResourceGroup* group = &s_manager.groups[id.group];
   return get_resource(id, group->fonts, RESOURCE_TYPE_FONT);
+}
+
+void resources_erase_by_id(const ResourceID& id) {
 }
 
 /// Resource manager functions

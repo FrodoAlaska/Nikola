@@ -8,12 +8,13 @@ $cubemap_out_dir  = "$out_dir\cubemaps"
 $models_out_dir   = "$out_dir\models"
 
 # Loading textures
-& $nbr_path -rt "TEXTURE" -d "$res_dir\textures" "$textures_out_dir"
+# & $nbr_path -rt "TEXTURE" -d "$res_dir\textures" "$textures_out_dir"
 
 # Loading cubemaps
-& $nbr_path -rt "CUBEMAP" "$res_dir\cubemaps\NightSky" "$cubemap_out_dir"
-& $nbr_path -rt "CUBEMAP" "$res_dir\cubemaps\gloomy" "$cubemap_out_dir"
-& $nbr_path -rt "CUBEMAP" "$res_dir\cubemaps\desert_cubemap" "$cubemap_out_dir"
+# & $nbr_path -rt "CUBEMAP" "$res_dir\cubemaps\NightSky" "$cubemap_out_dir"
+# & $nbr_path -rt "CUBEMAP" "$res_dir\cubemaps\gloomy" "$cubemap_out_dir"
+# & $nbr_path -rt "CUBEMAP" "$res_dir\cubemaps\desert_cubemap" "$cubemap_out_dir"
+# & $nbr_path -rt "CUBEMAP" "$res_dir\cubemaps\Skybox" "$cubemap_out_dir"
 
 # Loading shaders
 & $nbr_path -rt "SHADER" -d "$res_dir\shaders" "$shader_out_dir"

@@ -532,6 +532,21 @@ enum FileOpenMode {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// FileStatus
+enum FileStatus {
+  /// Used when a file gets created.
+  FILE_STATUS_CREATED  = 15 << 0, 
+  
+  /// Used when a file gets modified.
+  FILE_STATUS_MODIFIED = 15 << 2, 
+  
+  /// Used when a file gets deleted.
+  FILE_STATUS_DELETED  = 15 << 2, 
+};
+/// FileStatus
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// FilePath
 using FilePath = String;
 /// FilePath
@@ -550,6 +565,12 @@ using FileIterateFunc = void(*)(const FilePath& base_dir, FilePath current_path,
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// FileWatchFunc
+using FileWatchFunc = void(*)(const FileStatus status, const FilePath& path, void* user_data);
+/// FileWatchFunc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// Filesystem functions
 
 /// Iterate through the given `dir`, calling `iter_func` for each entry and passing `user_data`.
@@ -565,6 +586,25 @@ NIKOLA_API FilePath filesystem_current_path();
 NIKOLA_API bool filesystem_exists(const FilePath& path);
 
 /// Filesystem functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Filewatcher functions 
+
+/// Add the given file at `path` to the file watcher, with `callback` to be invoked later, passing in `user_data`.
+NIKOLA_API void filewatcher_add_file(const FilePath& path, const FileWatchFunc& callback, const void* user_data);
+
+/// Add all the files at `dir` to the file watcher, with `callback` to be invoked later, passing in `user_data`. 
+/// Depending on the state of the `recurse` flag, the function can iterate through `dir` either recursively or normally.
+NIKOLA_API void filewatcher_add_dir(const FilePath& dir, const FileWatchFunc& callback, const void* user_data, const bool recurse);
+
+/// Update the state of the files in the file watcher, checking their status and invoking any callbacks if needed. 
+NIKOLA_API void filewatcher_update();
+
+/// Shutdown the file watcher system.
+NIKOLA_API void filewatcher_shutdown();
+
+/// Filewatcher functions 
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1000,31 +1040,31 @@ const u32 MATERIAL_UNIFORMS_MAX            = 6;
 /// ResourceType
 enum ResourceType {
   /// A flag to denote a `GfxBuffer` resource
-  RESOURCE_TYPE_BUFFER   = 15 << 0, 
+  RESOURCE_TYPE_BUFFER   = 16 << 0, 
 
   /// A flag to denote a `GfxTexture` resource
-  RESOURCE_TYPE_TEXTURE  = 15 << 1, 
+  RESOURCE_TYPE_TEXTURE  = 16 << 1, 
   
   /// A flag to denote a `GfxCubemap` resource
-  RESOURCE_TYPE_CUBEMAP  = 15 << 2,
+  RESOURCE_TYPE_CUBEMAP  = 16 << 2,
   
   /// A flag to denote a `GfxShader` resource
-  RESOURCE_TYPE_SHADER   = 15 << 4,
+  RESOURCE_TYPE_SHADER   = 16 << 4,
   
   /// A flag to denote a `Mesh` resource
-  RESOURCE_TYPE_MESH     = 15 << 5,
+  RESOURCE_TYPE_MESH     = 16 << 5,
   
   /// A flag to denote a `Material` resource
-  RESOURCE_TYPE_MATERIAL = 15 << 6,
+  RESOURCE_TYPE_MATERIAL = 16 << 6,
   
   /// A flag to denote a `Skybox` resource
-  RESOURCE_TYPE_SKYBOX   = 15 << 7,
+  RESOURCE_TYPE_SKYBOX   = 16 << 7,
   
   /// A flag to denote a `Model` resource
-  RESOURCE_TYPE_MODEL    = 15 << 8,
+  RESOURCE_TYPE_MODEL    = 16 << 8,
   
   /// A flag to denote a `Font` resource
-  RESOURCE_TYPE_FONT     = 15 << 9,
+  RESOURCE_TYPE_FONT     = 16 << 9,
 };
 /// ResourceType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1033,13 +1073,13 @@ enum ResourceType {
 /// MeshType
 enum MeshType {
   /// A predefined cube mesh
-  MESH_TYPE_CUBE     = 16 << 0, 
+  MESH_TYPE_CUBE     = 17 << 0, 
   
   /// A predefined circle mesh
-  MESH_TYPE_CIRCLE   = 16 << 1, 
+  MESH_TYPE_CIRCLE   = 17 << 1, 
   
   /// A predefined cylinder mesh
-  MESH_TYPE_CYLINDER = 16 << 2, 
+  MESH_TYPE_CYLINDER = 17 << 2, 
 };
 /// MeshType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1048,13 +1088,13 @@ enum MeshType {
 /// MaterialTextureType
 enum MaterialTextureType {
   /// Indicate the diffuse texture in a `Material`.
-  MATERIAL_TEXTURE_DIFFUSE  = 17 << 0,
+  MATERIAL_TEXTURE_DIFFUSE  = 18 << 0,
   
   /// Indicate the specular texture in a `Material`.
-  MATERIAL_TEXTURE_SPECULAR = 17 << 1,
+  MATERIAL_TEXTURE_SPECULAR = 18 << 1,
   
   /// Indicate the normal texture in a `Material`.
-  MATERIAL_TEXTURE_NORMAL   = 17 << 2,
+  MATERIAL_TEXTURE_NORMAL   = 18 << 2,
 };
 /// MaterialTextureType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1377,13 +1417,13 @@ const f32 CAMERA_MAX_ZOOM    = 180.0f;
 /// RenderableType 
 enum RenderableType {
   /// Will commence a mesh rendering operation
-  RENDERABLE_TYPE_MESH   = 18 << 0,
+  RENDERABLE_TYPE_MESH   = 19 << 0,
   
   /// Will commence a model rendering operation
-  RENDERABLE_TYPE_MODEL  = 18 << 1,
+  RENDERABLE_TYPE_MODEL  = 19 << 1,
   
   /// Will commence a skybox rendering operation
-  RENDERABLE_TYPE_SKYBOX = 18 << 2,
+  RENDERABLE_TYPE_SKYBOX = 19 << 2,
 };
 /// RenderableType 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1391,21 +1431,21 @@ enum RenderableType {
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderEffectType
 enum RenderEffectType {
-  RENDER_EFFECT_NONE        = 19 << 0, 
+  RENDER_EFFECT_NONE        = 20 << 0, 
  
-  RENDER_EFFECT_GREYSCALE   = 19 << 1, 
+  RENDER_EFFECT_GREYSCALE   = 20 << 1, 
  
-  RENDER_EFFECT_INVERSION   = 19 << 2, 
+  RENDER_EFFECT_INVERSION   = 20 << 2, 
  
-  RENDER_EFFECT_SHARPEN     = 19 << 3, 
+  RENDER_EFFECT_SHARPEN     = 20 << 3, 
  
-  RENDER_EFFECT_BLUR        = 19 << 4, 
+  RENDER_EFFECT_BLUR        = 20 << 4, 
   
-  RENDER_EFFECT_EMBOSS      = 19 << 5,
+  RENDER_EFFECT_EMBOSS      = 20 << 5,
 
-  RENDER_EFFECT_EDGE_DETECT = 19 << 6, 
+  RENDER_EFFECT_EDGE_DETECT = 20 << 6, 
   
-  RENDER_EFFECT_PIXELIZE    = 19 << 7, 
+  RENDER_EFFECT_PIXELIZE    = 20 << 7, 
 
   RENDER_EFFECTS_MAX        = 8,
 };

@@ -82,7 +82,6 @@ set(NIKOLA_SOURCES
   
   # Engine
   ${NIKOLA_SRC_DIR}/engine/engine.cpp
-  ${NIKOLA_SRC_DIR}/engine/filesystem.cpp
 
   # Engine/Math 
   ${NIKOLA_SRC_DIR}/engine/math/math_common.cpp
@@ -96,7 +95,13 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/engine/resources/resource_manager.cpp
   ${NIKOLA_SRC_DIR}/engine/resources/material.cpp
   ${NIKOLA_SRC_DIR}/engine/resources/nbr_file.cpp
-  
+
+  # Engine/filesystem
+  ${NIKOLA_SRC_DIR}/engine/filesystem/file.cpp
+  ${NIKOLA_SRC_DIR}/engine/filesystem/filesystem.cpp
+  ${NIKOLA_SRC_DIR}/engine/filesystem/filepath.cpp
+  ${NIKOLA_SRC_DIR}/engine/filesystem/filewatcher.cpp
+
   # Engine/Resources/Loaders 
   ${NIKOLA_SRC_DIR}/engine/resources/loaders/mesh_loader.cpp
   ${NIKOLA_SRC_DIR}/engine/resources/loaders/material_loader.cpp

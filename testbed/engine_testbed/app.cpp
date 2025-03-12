@@ -143,7 +143,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   app->skyboxes.push_back(nikola::resources_push_skybox(app->res_group_id, nikola::resources_get_id(app->res_group_id, "gloomy")));
   app->skyboxes.push_back(nikola::resources_push_skybox(app->res_group_id, nikola::resources_get_id(app->res_group_id, "NightSky")));
   app->skyboxes.push_back(nikola::resources_push_skybox(app->res_group_id, nikola::resources_get_id(app->res_group_id, "desert_cubemap")));
-  app->skybox_id = app->skyboxes[1];
+  app->skybox_id = app->skyboxes[0];
 
   // Material init
   app->material_id = nikola::resources_push_material(app->res_group_id, nikola::resources_get_id(app->res_group_id, "default3d"));
@@ -194,26 +194,6 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 
   if(!app->has_editor) {
     nikola::camera_update(app->camera);
-  }
-
-  if(nikola::input_key_pressed(nikola::KEY_Q)) {
-    nikola::renderer_apply_effect(nikola::RENDER_EFFECT_PIXELIZE);
-  }
-  else if(nikola::input_key_pressed(nikola::KEY_E)) {
-    nikola::renderer_apply_effect(nikola::RENDER_EFFECT_NONE);
-  }
-
-  if(nikola::input_key_pressed(nikola::KEY_1)) {
-    app->current_prop  = &app->props[0];
-    app->skybox_id     = app->skyboxes[0]; 
-  }
-  else if(nikola::input_key_pressed(nikola::KEY_2)) {
-    app->current_prop  = &app->props[1];
-    app->skybox_id     = app->skyboxes[1]; 
-  }
-  else if(nikola::input_key_pressed(nikola::KEY_3)) {
-    app->current_prop  = &app->props[2];
-    app->skybox_id     = app->skyboxes[2]; 
   }
 } 
 
