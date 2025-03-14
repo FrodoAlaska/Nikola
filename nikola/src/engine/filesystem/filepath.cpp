@@ -102,6 +102,10 @@ bool filepath_is_absolute(const FilePath& path) {
   return std::filesystem::path(path).is_absolute();
 }
 
+bool filepath_is_dir(const FilePath& path) {
+  return std::filesystem::is_directory(path);
+}
+
 /// FilePath functions
 ///---------------------------------------------------------------------------------------------------------------------
 

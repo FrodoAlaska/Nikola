@@ -717,6 +717,9 @@ NIKOLA_API bool filepath_is_relative(const FilePath& path);
 /// Check if `path` is an absolute path.
 NIKOLA_API bool filepath_is_absolute(const FilePath& path);
 
+/// Check if `path` is a directory.
+NIKOLA_API bool filepath_is_dir(const FilePath& path);
+
 /// FilePath functions
 ///---------------------------------------------------------------------------------------------------------------------
 

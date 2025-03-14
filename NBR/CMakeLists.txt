@@ -30,8 +30,11 @@ set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
 ############################################################
 set(NBR_SOURCES 
   ${NBR_SRC_DIR}/main.cpp
-  ${NBR_SRC_DIR}/nbr_args_lexer.cpp
-  ${NBR_SRC_DIR}/nbr_args_parser.cpp
+  ${NBR_SRC_DIR}/nbr_list_lexer.cpp
+  ${NBR_SRC_DIR}/nbr_list_parser.cpp
+  ${NBR_SRC_DIR}/nbr_list.cpp
+  # ${NBR_SRC_DIR}/nbr_args_lexer.cpp
+  # ${NBR_SRC_DIR}/nbr_args_parser.cpp
   
   ${NBR_SRC_DIR}/image_loader.cpp
   ${NBR_SRC_DIR}/shader_loader.cpp

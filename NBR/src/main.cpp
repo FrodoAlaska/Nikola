@@ -3,17 +3,15 @@
 #include <nikola/nikola_core.hpp>
 
 int main(int argc, char** argv) {
-  nikola::DynamicArray<nbr::ArgToken> tokens; 
+  nbr::ListContext list; 
+  
+  // Setting default values
+  list.parent_dir = "..\\res";
+  list.bin_dir    = "..\\build-debug\\testbed\\res";
 
-  // Lex the CLI arguments
-  if(!nbr::lexer_init(&tokens, argc, argv)) {
-    return -1;
-  }
+  // Create the context
+  nbr::list_context_create(argv[1], &list);
 
-  // Parse the tokens and take action
-  if(!nbr::parser_init(tokens)) {
-    return -1;
-  }
-
-  return 0; 
+  // Convert the resources
+  nbr::list_context_convert_all(&list); 
 }

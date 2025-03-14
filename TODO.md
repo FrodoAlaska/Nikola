@@ -17,12 +17,12 @@
     - [x] Reload resources on the fly
     - [x] Documentation
 [] 5. NBR v0.2 
-    - [] Have the TOML file be a list of all the resoruces required by a game. The tool will read said TOML file and convert all of them to the `.nbr` format.
-    - [] Be able to rename an output file 
-    - [] Have the ability to go through a directory and convert cubemaps 
+    - [x] Have the `nbrlist` file be a list of all the resoruces required by a game. The tool will read said NBRList file and convert all of them to the `.nbr*` format.
+    - [x] Be able to rename an output file 
+    - [x] Have the ability to go through a directory and convert cubemaps 
     - [] If the `--resource-type` flag is omitted, let the tool "guess" which resource is being converted. Perhaps get rid of the glag all together? 
-[] 6. GUI v0.2 
-[] 7. Renderer v0.2. 
+    - [] Implement a job system or, rather, multi-threading for the tool to make conversions faster, especially for resources like 3D models.
+[] 6. Renderer v0.2. 
     - [] `material_set_shader_context`?
     - [] Multiple render passes
     - [] Better uniform and material system
@@ -31,6 +31,7 @@
     - [] Fonts
     - [] Render 2D and 3D fonts
     - [] ?
+[] 7. GUI v0.2 
 [] 8. Audio System v0.1 
     - [] Lay out what you actually want the audio system to be and what it does. 
     - [] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.

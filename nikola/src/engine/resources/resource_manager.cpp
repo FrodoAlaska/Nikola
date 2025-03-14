@@ -259,6 +259,7 @@ static void resource_entry_update(const FileStatus status, const FilePath& path,
       reload_core_resource(group, res_id, path);
       break;
     case RESOURCE_TYPE_MODEL:
+      // @TODO (Resource)
       break;
     case RESOURCE_TYPE_FONT:
       break;
