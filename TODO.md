@@ -20,8 +20,9 @@
     - [x] Have the `nbrlist` file be a list of all the resoruces required by a game. The tool will read said NBRList file and convert all of them to the `.nbr*` format.
     - [x] Be able to rename an output file 
     - [x] Have the ability to go through a directory and convert cubemaps 
-    - [] If the `--resource-type` flag is omitted, let the tool "guess" which resource is being converted. Perhaps get rid of the glag all together? 
+    - [x] If the `--resource-type` flag is omitted, let the tool "guess" which resource is being converted. Perhaps get rid of the glag all together? 
     - [] Implement a job system or, rather, multi-threading for the tool to make conversions faster, especially for resources like 3D models.
+    - [] Improve the README
 [] 6. Renderer v0.2. 
     - [] `material_set_shader_context`?
     - [] Multiple render passes

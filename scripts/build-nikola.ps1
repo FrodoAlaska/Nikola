@@ -40,7 +40,7 @@ function Show-Help {
   Log-Msg -msg "   --rel            = Build for the release configuration" -log_level "WARN"
   Log-Msg -msg "   --jobs [threads] = Threads to use when building"        -log_level "WARN"
   Log-Msg -msg "   --run-testbed    = Run the testbed examples"            -log_level "WARN"
-  Log-Msg -msg "   --reload-res     = Reload the resources cache"          -log_level "WARN"
+  Log-Msg -msg "   --reload-res     = Reload the resources in the .nbrlist file" -log_level "WARN"
   Log-Msg -msg "   --help           = Display this help message"           -log_level "WARN"
 }
 
@@ -120,7 +120,7 @@ cd $working_dir
 ### Run ### 
 
 if($can_reload_res) {
-  .\reload-resources.ps1 "$build_dir\NBR\$build_config" "..\res" "$build_dir\testbed\res"
+  .\reload-resources.ps1 "$build_dir\NBR\$build_config" "..\res" "$build_dir\testbed\res" "list_example"
   Check-Exit-Code -msg "Failed to reload resources..."
 }
 
