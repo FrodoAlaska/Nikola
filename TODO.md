@@ -21,7 +21,7 @@
     - [x] Be able to rename an output file 
     - [x] Have the ability to go through a directory and convert cubemaps 
     - [x] If the `--resource-type` flag is omitted, let the tool "guess" which resource is being converted. Perhaps get rid of the glag all together? 
-    - [] Implement a job system or, rather, multi-threading for the tool to make conversions faster, especially for resources like 3D models.
+    - [x] Implement a job system or, rather, multi-threading for the tool to make conversions faster, especially for resources like 3D models.
     - [] Improve the README
 [] 6. Renderer v0.2. 
     - [] `material_set_shader_context`?
@@ -32,8 +32,14 @@
     - [] Fonts
     - [] Render 2D and 3D fonts
     - [] ?
-[] 7. GUI v0.2 
-[] 8. Audio System v0.1 
+[] 7. Multi-threading v0.2 
+    - [] Which systems can benefit most from multi-threading? 
+    - [] Should we implement a job system? If yes, how can this be done within the confines of the engine? 
+    - [] Try to improve the load times for the resource manager as a test of the new multi-threading system.
+[] 8. GUI v0.2 
+    - [] A canvas system for 2D game UI.
+    - [] A better system to handle debug UI.
+[] 9. Audio System v0.1 
     - [] Lay out what you actually want the audio system to be and what it does. 
     - [] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
     - [] Create an audio backend with a context 
@@ -45,14 +51,14 @@
 * General 
     - Switch from `git submodule` to `FetchContent` for fetching dependencies and perhaps rework the whole CMake section a bit.
     - Probably create my own `DynamicArray` instead of the STL one
-* All about the UI 
-    - Make a UICanvas/game canvas system and test it throughly.
-    - Write some documentation for the whole editor section.
-    - Keep adding types as they arise.
 * Renderer 
     - Render 2D and 3D fonts
 * Resources 
     - A memory pool/arena for resources?
+* All about the UI 
+    - Make a UICanvas/game canvas system and test it throughly.
+    - Write some documentation for the whole editor section.
+    - Keep adding types as they arise.
 
 ## (Core) TODO: 
 * General
@@ -79,8 +85,8 @@
 - (GL) Shader attribute semantics (e.g, does Mat4 work there)
 
 ## FUTURE PLANS: 
+- Multi-threading
 - Some kind of level serlializer?
 - Phyiscs. Yes. Just physics.
-- NUSL: Nikola Uniform Shading Language. 
 - GPU particles
-- Multi-threading
+- NUSL: Nikola Uniform Shading Language. 

@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
   list.bin_dir    = list.parent_dir;
 
   // Extract the command line arguments
-  if(!lex_args(argc, argv, &list)) {
+  if (!lex_args(argc, argv, &list)) {
     return -1;
   }
  

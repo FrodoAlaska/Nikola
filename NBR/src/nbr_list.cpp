@@ -2,8 +2,7 @@
 
 #include <nikola/nikola_engine.hpp>
 
-#include <cstdlib>
-#include <cstdio>
+#include <thread>
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -28,107 +27,123 @@ static bool check_section_dirs(const ListSection& section) {
   return true;
 }
 
-static bool convert_texture(ListSection& section, const nikola::FilePath& path) {
+static bool convert_texture(nikola::FilePath& in_path, nikola::FilePath& save_path) {
   nikola::NBRTexture texture; 
   nikola::NBRFile nbr; 
 
-  if(!image_loader_load_texture(&texture, path)) {
+  if(!image_loader_load_texture(&texture, in_path)) {
     return false;
   }
    
   // Save the texture
-  nikola::nbr_file_save(nbr, texture, nikola::filepath_append(section.out_dir, nikola::filepath_filename(path)));
+  nikola::nbr_file_save(nbr, texture, nikola::filepath_append(save_path, nikola::filepath_filename(in_path)));
 
   // Unload the image
   image_loader_unload_texture(texture);
   
-  NIKOLA_LOG_INFO("[NBR]: Converted texture \'%s\' to \'%s\'...", path.c_str(), nbr.path.c_str());
+  NIKOLA_LOG_INFO("[NBR]: Converted texture \'%s\' to \'%s\'...", in_path.c_str(), nbr.path.c_str());
   return true;
 }
 
-static bool convert_cubemap(ListSection& section, const nikola::FilePath& path) {
+static bool convert_cubemap(nikola::FilePath& in_path, nikola::FilePath& save_path) {
   nikola::NBRCubemap cubemap; 
   nikola::NBRFile nbr; 
 
-  if(!image_loader_load_cubemap(&cubemap, path)) {
+  if(!image_loader_load_cubemap(&cubemap, in_path)) {
     return false;
   }
    
   // Save the cubemap
-  nikola::nbr_file_save(nbr, cubemap, nikola::filepath_append(section.out_dir, nikola::filepath_filename(path)));
+  nikola::nbr_file_save(nbr, cubemap, nikola::filepath_append(save_path, nikola::filepath_filename(in_path)));
 
   // Unload the image
   image_loader_unload_cubemap(cubemap);
   
-  NIKOLA_LOG_INFO("[NBR]: Converted cubemap \'%s\' to \'%s\'...", path.c_str(), nbr.path.c_str());
+  NIKOLA_LOG_INFO("[NBR]: Converted cubemap \'%s\' to \'%s\'...", in_path.c_str(), nbr.path.c_str());
   return true;
 }
 
-static bool convert_shader(ListSection& section, const nikola::FilePath& path) {
+static bool convert_shader(nikola::FilePath& in_path, nikola::FilePath& save_path) {
   nikola::NBRShader shader; 
   nikola::NBRFile nbr; 
 
-  if(!shader_loader_load(&shader, path)) {
+  if(!shader_loader_load(&shader, in_path)) {
     return false;
   }
 
   // Save the shader
-  nikola::nbr_file_save(nbr, shader, nikola::filepath_append(section.out_dir, nikola::filepath_filename(path)));
+  nikola::nbr_file_save(nbr, shader, nikola::filepath_append(save_path, nikola::filepath_filename(in_path)));
 
   // Unload the shader
   shader_loader_unload(shader);
   
-  NIKOLA_LOG_INFO("[NBR]: Converted shader \'%s\' to \'%s\'...", path.c_str(), nbr.path.c_str());
+  NIKOLA_LOG_INFO("[NBR]: Converted shader \'%s\' to \'%s\'...", in_path.c_str(), nbr.path.c_str());
   return true;
 }
 
-static bool convert_model(ListSection& section, const nikola::FilePath& path) {
+static bool convert_model(nikola::FilePath& in_path, nikola::FilePath& save_path) {
   nikola::NBRModel model; 
   nikola::NBRFile nbr; 
 
-  if(!model_loader_load(&model, path)) {
+  if(!model_loader_load(&model, in_path)) {
     return false;
   }
 
   // Save the model
-  nikola::nbr_file_save(nbr, model, nikola::filepath_append(section.out_dir, nikola::filepath_filename(path)));
+  nikola::nbr_file_save(nbr, model, nikola::filepath_append(save_path, nikola::filepath_filename(in_path)));
 
   // Unload the model
   model_loader_unload(model);
   
-  NIKOLA_LOG_INFO("[NBR]: Converted model \'%s\' to \'%s\'...", path.c_str(), nbr.path.c_str());
+  NIKOLA_LOG_INFO("[NBR]: Converted model \'%s\' to \'%s\'...", in_path.c_str(), nbr.path.c_str());
   return true;
 }
 
-static void convert_by_type(ListSection& section, const nikola::FilePath& path) {
-  switch(section.type) {
+static void convert_by_type(ListSection* section, nikola::FilePath& path) {
+  switch(section->type) {
     case nikola::RESOURCE_TYPE_TEXTURE:
-      convert_texture(section, path);
+      convert_texture(path, section->out_dir);
       break;
     case nikola::RESOURCE_TYPE_CUBEMAP:
-      convert_cubemap(section, path);
+      convert_cubemap(path, section->out_dir);
       break;
     case nikola::RESOURCE_TYPE_SHADER:
-      convert_shader(section, path);
+      convert_shader(path, section->out_dir);
       break;
     case nikola::RESOURCE_TYPE_MODEL:
-      convert_model(section, path);
+      convert_model(path, section->out_dir);
       break;
   }
 }
 
-/// Private functions
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
-/// Callbacks
-
 static void iterate_resources(const nikola::FilePath& base_dir, nikola::FilePath current_path, void* user_data) {
   ListSection* section = (ListSection*)user_data;
-  convert_by_type(*section, current_path);
+  convert_by_type(section, current_path);
+  // s_futures.push_back(std::async(convert_by_type, section, current_path.c_str()));
+}
+  
+static void load_resources(ListSection* section) {
+  using namespace std::chrono_literals;
+  std::this_thread::sleep_for(2000ms);
+ 
+  // Check if all the paths are correct
+  if(!check_section_dirs(*section)) {
+    return;
+  }
+
+  // Convert all the resource paths
+  for(auto& res : section->resources) {
+    if(nikola::filepath_is_dir(res)) {
+      nikola::filesystem_directory_iterate(res, iterate_resources, section);
+      continue;
+    }
+
+    convert_by_type(section, res);
+    // s_futures.push_back(std::async(convert_by_type, &section, section.resources[i].c_str()));
+  }
 }
 
-/// Callbacks
+/// Private functions
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -148,44 +163,34 @@ void list_context_create(const nikola::FilePath& path, ListContext* list) {
 }
 
 void list_context_convert_by_type(ListContext* list, const nikola::ResourceType type) {
+  // @TODO (Threads): Substitute this for a thread pool/job queue 
+  nikola::DynamicArray<std::thread> threads;
+ 
   for(auto& section : list->sections) {
     if(section.type != type) {
       continue;
     }
 
-    // Check if all the paths are correct
-    if(!check_section_dirs(section)) {
-      continue;
-    }
-
     // Convert all the resource paths
-    for(auto& res : section.resources) {
-      if(nikola::filepath_is_dir(res)) {
-        nikola::filesystem_directory_iterate(res, iterate_resources, &section);
-        continue;
-      }
-
-      convert_by_type(section, res);
-    }
+    threads.push_back(std::thread(load_resources, &section));
+  }
+  
+  for(auto& th : threads) {
+    th.join();
   }
 }
 
 void list_context_convert_all(ListContext* list) {
+  // @TODO (Threads): Substitute this for a thread pool/job queue 
+  nikola::DynamicArray<std::thread> threads;
+  
   for(auto& section : list->sections) {
-    // Check if all the paths are correct
-    if(!check_section_dirs(section)) {
-      continue;
-    }
-
     // Convert all the resource paths
-    for(auto& res : section.resources) {
-      if(nikola::filepath_is_dir(res)) {
-        nikola::filesystem_directory_iterate(res, iterate_resources, &section);
-        continue;
-      }
-
-      convert_by_type(section, res);
-    }
+    threads.push_back(std::thread(load_resources, &section));
+  }
+  
+  for(auto& th : threads) {
+    th.join();
   }
 }
 
