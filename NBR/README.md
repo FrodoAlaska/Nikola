@@ -8,7 +8,7 @@ Therefore, this tool's sole purpose is to convert any kind of _supported_ resour
 
 Below you will find all the resource formats that can be converted into the `.nbr*` format.
 
-*Images*: 
+- *Images*: 
     - PNG 
     - JPEG 
     - TIFF 
@@ -21,7 +21,7 @@ Below you will find all the resource formats that can be converted into the `.nb
     - PPM 
     - PGM
 
-*Models*: 
+- *Models*: 
     - OBJ 
     - FBX 
     - GLTF 

@@ -119,13 +119,9 @@ static void convert_by_type(ListSection* section, nikola::FilePath& path) {
 static void iterate_resources(const nikola::FilePath& base_dir, nikola::FilePath current_path, void* user_data) {
   ListSection* section = (ListSection*)user_data;
   convert_by_type(section, current_path);
-  // s_futures.push_back(std::async(convert_by_type, section, current_path.c_str()));
 }
   
 static void load_resources(ListSection* section) {
-  using namespace std::chrono_literals;
-  std::this_thread::sleep_for(2000ms);
- 
   // Check if all the paths are correct
   if(!check_section_dirs(*section)) {
     return;
@@ -139,7 +135,6 @@ static void load_resources(ListSection* section) {
     }
 
     convert_by_type(section, res);
-    // s_futures.push_back(std::async(convert_by_type, &section, section.resources[i].c_str()));
   }
 }
 
