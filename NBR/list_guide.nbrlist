@@ -1,0 +1,42 @@
+#
+# The directory where the `nbrlist` file will get its inputs from 
+# will be determined by the `--parent-dir, -pd` flag given from the command line. 
+# On the other hand, any generated `.nbr*` files will be outputed into the directory 
+# indicated by the `--bin-dir, -bd` flag from the command line.
+#
+
+:: TEXTURE # This indicates a new section
+# The parser is smart enough to know that the path below 
+# is actually a directory. This directory will also 
+# be prepended with the value of the `--parent-dir` flag. 
+textures/ # = parent_dir/textures/
+
+# Single files can also be used 
+textures/player/player_texture.png
+
+# A section can also take a parametar. The value is just the 
+# output directory (where the `.nbr*` files will be placed). 
+#
+# The parametar will be prepended by `bin_dir`, as mentioned. If left 
+# empty, the output directory will just be `bin_dir`.
+:: MODEL @nbr_models
+# The `$` symbol will indicate a local "variable" of sorts, which will 
+# be prepended to any subsequent paths.
+$models/ 
+player_model.gltf # parent_dir/models/player_model.gltf 
+enemies/zombie_model.fbx  # parent_dir/enemies/zombie_model.fbx
+
+:: CUBEMAP @nbr_cubemaps
+cubemaps/
+
+:: SHADER @basic_shaders
+$shaders/basic
+default3d_shader.glsl
+skybox_shader.glsl 
+
+# Sections with the same type can also be used in order 
+# to output a resource into different directories. 
+:: SHADER @effects_shaders
+$shaders/effects
+pixel_effect.glsl 
+bloom_effect.glsl
