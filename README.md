@@ -1,38 +1,40 @@
 # *Nikola*
 
-A cross-platform framework for window creation, input handling, audio playback, and rendering using OpenGL 4.5+.
+Nikola is a cross-platform framework for window creation, input handling, audio playback, and rendering using OpenGL 4.5+, designed for your game development and prototyping needs. Inspired by classic game engines like Doom, Quake, and the Source Engine, it is lightweight yet robust and flexible. A game engine creation tool, if you will.
 
-# Dependencies
+## Dependencies
 
-- Engine Dependencies:
-    - [GLFW3](https://github.com/glfw/glfw)
-    - [GLAD](https://github.com/Dav1dde/glad)
-    - [GLM](https://github.com/g-truc/glm)
+### Engine Dependencies:
+- [GLFW3](https://github.com/glfw/glfw)
+- [GLAD](https://github.com/Dav1dde/glad)
+- [GLM](https://github.com/g-truc/glm)
+- [ImGui](https://github.com/ocornut/imgui)
 
-- NBR Tool Dependencies:
-    - [STB](https://github.com/nothings/stb)
-    - [ASSIMP](https://github.com/assimp/assimp)
- 
-# Features 
-- A fully documented single header file for every functionality in the library.
-- Cross-platform window creation. 
-- Gamepad, keyboard, and mouse input support.
-- Fully-configurable cross-platform rendering API using OpenGL 4.5+.
-- Robust resource manager with a custom resource format (NBR).
-- Support for loading multiple image formats such as jpeg, png, bmp, tga, and way more. 
-- Full support for loading 3D models using the following formats: OBJ, FBX, and GLTF.
+### NBR Tool Dependencies:
+- [STB](https://github.com/nothings/stb)
+- [ASSIMP](https://github.com/assimp/assimp)
 
-# Missing Features
+## Features  
+- A fully documented, single-header implementation for each library module.  
+- Cross-platform window creation with OpenGL 4.5+.  
+- Gamepad, keyboard, and mouse input support.  
+- A flexible, configurable rendering API.  
+- A simple resource manager with a custom resource format (**NBR**) that supports hot-reloading of resources.  
+- Support for multiple image formats** including **JPEG, PNG, BMP, TGA, and more**.  
+- 3D model loading with support for **OBJ, FBX, and GLTF** formats.  
+- Integrated ImGui support, featuring an abstracted `editor` layer for editing engine-specific types through a GUI.  
+
+## Missing Features
 
 Some missing features are not currently in the works (Long-term) while others are planned for the future (Short-term). Some other features may _never_ be implemented since it does not fit the current philosophy of the engine (Never).
 
-- 3D animations (Long-term)
-- Audio (Short-term)
-- Physcis (Short-term)
-- Lightweight Editor (Short-term)
-- Scripting (Never)
+- 3D animations (*Long-term*)
+- Audio (*Short-term)
+- Physcis (*Short-term*)
+- Lightweight Editor (*Short-term*)
+- Scripting (*Never*)
 
-# Build Instructions
+## Build Instructions
 
 Before proceeding with any build or compilation step, *Nikola* needs to be cloned from the Git repo. 
 
