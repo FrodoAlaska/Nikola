@@ -1,7 +1,7 @@
 #include "mesh_loader.hpp"
 
-#include "nikola/nikola_core.hpp"
-#include "nikola/nikola_engine.hpp"
+#include "nikola/nikola_base.h"
+#include "nikola/nikola_resources.h"
 
 //////////////////////////////////////////////////////////////////////////
 

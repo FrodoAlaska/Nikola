@@ -1,9 +1,7 @@
 #include "app.hpp"
 #include "shaders.hpp"
 
-#include <nikola/nikola_core.hpp>
-#include <nikola/nikola_engine.hpp>
-#include <nikola/nikola_ui.hpp>
+#include <nikola/nikola.h>
 
 /// ----------------------------------------------------------------------
 /// @TEMP
@@ -137,7 +135,8 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::resources_push_dir(app->res_group_id, "textures");
   nikola::resources_push_dir(app->res_group_id, "shaders");
   nikola::resources_push_dir(app->res_group_id, "cubemaps");
-  nikola::resources_push_dir(app->res_group_id, "models");
+  // nikola::resources_push_dir(app->res_group_id, "models");
+  nikola::resources_push_model(app->res_group_id, "models/behelit.nbrmodel");
 
   // Skybox init
   app->skyboxes.push_back(nikola::resources_push_skybox(app->res_group_id, nikola::resources_get_id(app->res_group_id, "gloomy")));
@@ -158,8 +157,8 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   
   // Porps init
   app->props.push_back(Prop("behelit", default_pos, nikola::Vec3(0.1f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "behelit")));
-  app->props.push_back(Prop("bridge", default_pos, nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "bridge")));
-  app->props.push_back(Prop("tempel", default_pos, nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "tempel")));
+  // app->props.push_back(Prop("bridge", default_pos, nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "bridge")));
+  // app->props.push_back(Prop("tempel", default_pos, nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "tempel")));
   app->props.push_back(Prop("moon", default_pos, nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MESH, mesh_id));
 
   app->current_prop = &app->props[0];
@@ -182,9 +181,6 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     nikola::event_dispatch(nikola::Event{.type = nikola::EVENT_APP_QUIT});
     return;
   }
-
-  rotation_angle += (nikola::f64)nikola::niclock_get_delta_time();
-  nikola::transform_rotate(app->props[3].transform, nikola::Vec3(0.0f, 1.0f, 0.0f), rotation_angle);
 
   // Active/deactive the editor
   if(nikola::input_key_pressed(nikola::KEY_F1)) {

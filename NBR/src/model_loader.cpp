@@ -1,7 +1,6 @@
-#include "nbr.hpp"
+#include "nbr.h"
 
-#include <nikola/nikola_core.hpp>
-#include <nikola/nikola_engine.hpp>
+#include <nikola/nikola.h>
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>

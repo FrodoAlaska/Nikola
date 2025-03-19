@@ -7,18 +7,15 @@ set(TESTBED_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(TESTBED_INCLUDE_DIR ${TESTBED_SRC_DIR})
 set(TESTBED_LIBS_DIR libs)
 
-set(TESTBED_LIBRARIES ${NIKOLA_LIBRARY_DIR} glfw)
+set(TESTBED_LIBRARIES 
+  ${NIKOLA_LIBRARY_DIR}
+  ${NIKOLA_LIBRARIES}
+)
 
 set(TESTBED_INCLUDES 
   ${NIKOLA_INCLUDES}
   ${TESTBED_INCLUDE_DIR}
 )
-
-if(WIN32)
-  set(TESBED_EXE_TYPE "WIN32")
-else()
-  set(TESBED_EXE_TYPE "")
-endif()
 ############################################################
 
 ### Project Sources ###

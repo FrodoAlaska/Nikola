@@ -1,5 +1,6 @@
-#include "nikola/nikola_core.hpp"
-#include "nikola/nikola_engine.hpp"
+#include "nikola/nikola_render.h"
+#include "nikola/nikola_base.h"
+#include "nikola/nikola_gfx.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -7,7 +8,7 @@ namespace nikola { // Start of nikola
 
 /// ----------------------------------------------------------------------
 /// Camera consts
-const f32 CAMERA_SPEED = 10.0f;
+const f32 CAMERA_SPEED = 20.0f;
 /// Camera consts
 /// ----------------------------------------------------------------------
 

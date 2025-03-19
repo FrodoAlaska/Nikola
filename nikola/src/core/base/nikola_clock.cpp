@@ -1,4 +1,4 @@
-#include "nikola/nikola_core.hpp"
+#include "nikola/nikola_base.h"
 
 #include <GLFW/glfw3.h>
 

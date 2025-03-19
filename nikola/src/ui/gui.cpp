@@ -1,6 +1,7 @@
-#include "nikola/nikola_core.hpp"
-#include "nikola/nikola_engine.hpp"
-#include "nikola/nikola_ui.hpp"
+#include "nikola/nikola_ui.h"
+#include "nikola/nikola_base.h"
+#include "nikola/nikola_resources.h"
+#include "nikola/nikola_render.h"
 
 #include <GLFW/glfw3.h>
 

@@ -29,7 +29,7 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 Some missing features are not currently in the works (Long-term) while others are planned for the future (Short-term). Some other features may _never_ be implemented since it does not fit the current philosophy of the engine (Never).
 
 - 3D animations (*Long-term*)
-- Audio (*Short-term)
+- Audio (*Short-term*)
 - Physcis (*Short-term*)
 - Lightweight Editor (*Short-term*)
 - Scripting (*Never*)
@@ -63,13 +63,13 @@ cmake --build .
 Now the second way to build *Nikola* is to use the build scripts found in the `scripts` directory. There are a few build scripts but there are only two important ones: `build-nikola.sh` for Linux and `build-nikola.ps1` for Windows. Each script takes in a few flags to make both the development and build process easier. 
 
 ```
-   --clean          = Have a new fresh build"              
-   --debug          = Build for the debug configuration"   
-   --rel            = Build for the release configuration" 
-   --jobs [threads] = Threads to use when building"        
-   --run-testbed    = Run the testbed examples"            
-   --reload-res     = Reload the resources cache"          
-   --help           = Display this help message"           
+   --clean          = Have a new fresh build              
+   --debug          = Build for the debug configuration   
+   --rel            = Build for the release configuration 
+   --jobs [threads] = Threads to use when building        
+   --run-testbed    = Run the testbed examples            
+   --reload-res     = Reload the resources cache          
+   --help           = Display this help message           
 ```
 
 The `--run-testbed` and `--reload-res` flags call other scripts in the same directory. Hence, the multiple shell scripts. But, generally, the `build-nikola.*` script is _the_ main and most important build script.

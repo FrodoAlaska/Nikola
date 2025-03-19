@@ -1,7 +1,8 @@
 #pragma once
 
-#include "nikola/nikola_core.hpp"
-#include "nikola/nikola_engine.hpp"
+#include "nikola_base.h"
+#include "nikola_resources.h"
+#include "nikola_render.h"
 
 //////////////////////////////////////////////////////////////////////////
 

@@ -1,5 +1,4 @@
-#include <nikola/nikola_core.hpp>
-#include <nikola/nikola_engine.hpp>
+#include <nikola/nikola_app.h>
 
 #include "app.hpp"
 

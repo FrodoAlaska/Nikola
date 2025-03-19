@@ -23,6 +23,10 @@
     - [x] If the `--resource-type` flag is omitted, let the tool "guess" which resource is being converted. Perhaps get rid of the glag all together? 
     - [x] Implement a job system or, rather, multi-threading for the tool to make conversions faster, especially for resources like 3D models.
     - [x] Improve the README
+[] 7. Build System Improvement v0.2 
+    - [x] Improve the CMake situation
+    - [x] Better header names
+    - [] Test and improve the build scripts for Linux
 [] 6. Fonts v0.1 
     - [] Choose a font-loading library 
     - [] Make and implement the `NBRFont` specification 
@@ -42,6 +46,7 @@
 [] 9. GUI v0.2 
     - [] A canvas system for 2D game UI.
     - [] A better system to handle debug UI.
+    - [] Documentation.
 [] 10. Audio System v0.1 
     - [] Lay out what you actually want the audio system to be and what it does. 
     - [] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
@@ -49,19 +54,15 @@
     - [] A way to create an audio buffer that could be played with the context 
     - [] 2D and 3D sound and music. 
     - [] A fully-fledged audio pipeline that can play, position, pitch, control the volume, and apply effects to sound and music
+[] 11. 3D Animations v0.1
 
 ## (Engine) TODO: 
 * General 
-    - Switch from `git submodule` to `FetchContent` for fetching dependencies and perhaps rework the whole CMake section a bit.
     - Probably create my own `DynamicArray` instead of the STL one
 * Renderer 
     - Render 2D and 3D fonts
 * Resources 
     - A memory pool/arena for resources?
-* All about the UI 
-    - Make a UICanvas/game canvas system and test it throughly.
-    - Write some documentation for the whole editor section.
-    - Keep adding types as they arise.
 
 ## (Core) TODO: 
 * General
@@ -88,8 +89,7 @@
 - (GL) Shader attribute semantics (e.g, does Mat4 work there)
 
 ## FUTURE PLANS: 
-- Multi-threading
-- Some kind of level serlializer?
+- Levels, entities, and scenes.
 - Phyiscs. Yes. Just physics.
 - GPU particles
 - NUSL: Nikola Uniform Shading Language. 

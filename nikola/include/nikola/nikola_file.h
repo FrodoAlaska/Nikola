@@ -1,0 +1,299 @@
+#pragma once
+
+#include "nikola_base.h"
+#include "nikola_containers.h"
+
+#include <fstream>
+
+//////////////////////////////////////////////////////////////////////////
+
+namespace nikola { // Start of nikola
+
+/// ----------------------------------------------------------------------
+/// *** File system ***
+
+///---------------------------------------------------------------------------------------------------------------------
+/// FileOpenMode
+enum FileOpenMode {
+  /// Open a file in read-only mode.
+  FILE_OPEN_READ       = 14 << 0,
+ 
+  /// Open a file in write-only mode.
+  FILE_OPEN_WRITE      = 14 << 1,
+ 
+  /// Open a binary file.
+  FILE_OPEN_BINARY     = 14 << 2,
+ 
+  /// Open a file and append any extra data at the end of the file.
+  FILE_OPEN_APPEND     = 14 << 3,
+ 
+  /// Open a file and remove any existing data within.
+  FILE_OPEN_TRUNCATE   = 14 << 4,
+ 
+  /// Open a file and start at the end.
+  FILE_OPEN_AT_END     = 14 << 5,
+
+  /// Open a file in read and write mode.
+  FILE_OPEN_READ_WRITE = 14 << 6
+};
+/// FileOpenMode
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// FileStatus
+enum FileStatus {
+  /// Used when a file gets created.
+  FILE_STATUS_CREATED  = 15 << 0, 
+  
+  /// Used when a file gets modified.
+  FILE_STATUS_MODIFIED = 15 << 2, 
+  
+  /// Used when a file gets deleted.
+  FILE_STATUS_DELETED  = 15 << 2, 
+};
+/// FileStatus
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// FilePath
+using FilePath = String;
+/// FilePath
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// File
+using File = std::fstream;
+/// File
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// FileIterateFunc callback
+using FileIterateFunc = void(*)(const FilePath& base_dir, FilePath current_path, void* user_data);
+/// FileIterateFunc callback
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// FileWatchFunc
+using FileWatchFunc = void(*)(const FileStatus status, const FilePath& path, void* user_data);
+/// FileWatchFunc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Filesystem functions
+
+/// Iterate through the given `dir`, calling `iter_func` for each entry and passing `user_data`.
+NIKOLA_API void filesystem_directory_iterate(const FilePath& dir, const FileIterateFunc& iter_func, const void* user_data = nullptr);
+
+/// Recursively iterate through the given `dir`, calling `iter_func` for each entry and passing `user_data`.
+NIKOLA_API void filesystem_directory_recurse_iterate(const FilePath& dir, const FileIterateFunc& iter_func, const void* user_data = nullptr);
+
+/// Get the current full path of the running process.
+NIKOLA_API FilePath filesystem_current_path();
+
+/// Check if the file at `path` exists.
+NIKOLA_API bool filesystem_exists(const FilePath& path);
+
+/// Filesystem functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Filewatcher functions 
+
+/// Add the given file at `path` to the file watcher, with `callback` to be invoked later, passing in `user_data`.
+NIKOLA_API void filewatcher_add_file(const FilePath& path, const FileWatchFunc& callback, const void* user_data);
+
+/// Add all the files at `dir` to the file watcher, with `callback` to be invoked later, passing in `user_data`. 
+/// Depending on the state of the `recurse` flag, the function can iterate through `dir` either recursively or normally.
+NIKOLA_API void filewatcher_add_dir(const FilePath& dir, const FileWatchFunc& callback, const void* user_data, const bool recurse);
+
+/// Update the state of the files in the file watcher, checking their status and invoking any callbacks if needed. 
+NIKOLA_API void filewatcher_update();
+
+/// Shutdown the file watcher system.
+NIKOLA_API void filewatcher_shutdown();
+
+/// Filewatcher functions 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// FilePath functions
+
+/// Append the given `other` to `base` and return the result.
+///
+/// @NOTE: This function will adhere to the specific operating systems's seperator.
+NIKOLA_API FilePath filepath_append(FilePath& base, const FilePath& other);
+
+/// Retrieve the root name (for example, `C:` on Windows) of `path`.
+/// 
+/// @EXAMPLE: The root namt would be `C:` on Windows.
+NIKOLA_API FilePath filepath_root_name(const FilePath& path);
+
+/// Retrieve the root directory of `path`.
+/// 
+/// @EXAMPLE: The root directory would be `\` on Windows.
+NIKOLA_API FilePath filepath_root_dir(const FilePath& path);
+
+/// Retrieve the full root path of `path`.
+/// 
+/// @EXAMPLE: The root path would be `C:\` on Windows.
+NIKOLA_API FilePath filepath_root_path(const FilePath& path);
+
+/// Retrieve the full relative path of `path`. 
+///
+/// @EXAMPLE: The relative path of `C:\res\shaders\shader.nbr` would be `res\shaders\shader.nbr`.
+NIKOLA_API FilePath filepath_relative_path(const FilePath& path);
+
+/// Retrieve the full parent path of `path`. 
+///
+/// @EXAMPLE: The parent path of `res/shaders/shader.nbr` would be `res/shaders/`.
+NIKOLA_API FilePath filepath_parent_path(const FilePath& path);
+
+/// Retrieve the filename of `path`.
+///
+/// @EXAMPLE: The filename of `res/shaders/shader.nbr` would be `shader.nbr`.
+NIKOLA_API FilePath filepath_filename(const FilePath& path);
+
+/// Retrieve the stem of `path`.
+///
+/// @EXAMPLE: The stem of `res/shaders/shader.nbr` would be `shader`.
+NIKOLA_API FilePath filepath_stem(const FilePath& path);
+
+/// Retrieve the extension of `path`.
+///
+/// @EXAMPLE: The extension of `res/shaders/shader.nbr` would be `.nbr`.
+NIKOLA_API FilePath filepath_extension(const FilePath& path);
+
+/// Set the filename of `path` to the given `name`.
+NIKOLA_API void filepath_set_filename(FilePath& path, const FilePath& name);
+
+/// Set the extension of `path` to the given `ext`.
+NIKOLA_API void filepath_set_extension(FilePath& path, const FilePath& ext);
+
+/// Remove the filename of `path`. 
+///
+/// @EXAMPLE: The path `res/shaders/shader.nbr` will become `res/shaders/`
+NIKOLA_API void filepath_remove_filename(FilePath& path);
+
+/// Check if `path` has a root name.
+NIKOLA_API bool filepath_has_root_name(const FilePath& path);
+
+/// Check if `path` has a root directory.
+NIKOLA_API bool filepath_has_root_dir(const FilePath& path);
+
+/// Check if `path` has a root path.
+NIKOLA_API bool filepath_has_root_path(const FilePath& path);
+
+/// Check if `path` has a ralative path.
+NIKOLA_API bool filepath_has_relative_path(const FilePath& path);
+
+/// Check if `path` has a parent path.
+NIKOLA_API bool filepath_has_parent_path(const FilePath& path);
+
+/// Check if `path` has a filename.
+NIKOLA_API bool filepath_has_filename(const FilePath& path);
+
+/// Check if `path` has a stem.
+NIKOLA_API bool filepath_has_stem(const FilePath& path);
+
+/// Check if `path` has an extension.
+NIKOLA_API bool filepath_has_extension(const FilePath& path);
+
+/// Check if `path` is an empty string.
+NIKOLA_API bool filepath_is_empty(const FilePath& path);
+
+/// Check if `path` is a relative path.
+NIKOLA_API bool filepath_is_relative(const FilePath& path);
+
+/// Check if `path` is an absolute path.
+NIKOLA_API bool filepath_is_absolute(const FilePath& path);
+
+/// Check if `path` is a directory.
+NIKOLA_API bool filepath_is_dir(const FilePath& path);
+
+/// FilePath functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// File functions
+
+/// Open `file` with OR'd flags `mode` at C-string `path`, and return `true` if 
+/// the operation was successfull and `false` otherwise.
+///
+/// `mode`:
+///   - `FILE_OPEN_READ`       = Open `file` in read-only mode.
+///   - `FILE_OPEN_WRITE`      = Open `file` in write-only mode.
+///   - `FILE_OPEN_BINARY`     = Open `file` in binary mode.
+///   - `FILE_OPEN_APPEND`     = Open `file` and append any new data at the end.
+///   - `FILE_OPEN_TRUNCATE`   = Open `file` and delete any existing data.
+///   - `FILE_OPEN_AT_END`     = Open `file` and start at the very end.
+///   - `FILE_OPEN_READ_WRITE` = Open `file` in read and write mode.
+NIKOLA_API bool file_open(File* file, const char* path, const i32 mode);
+
+/// Open `file` with OR'd flags `mode` at `FilePath` `path`, and return `true` if 
+/// the operation was successfull and `false` otherwise.
+///
+/// `mode`:
+///   - `FILE_OPEN_READ`       = Open `file` in read-only mode.
+///   - `FILE_OPEN_WRITE`      = Open `file` in write-only mode.
+///   - `FILE_OPEN_BINARY`     = Open `file` in binary mode.
+///   - `FILE_OPEN_APPEND`     = Open `file` and append any new data at the end.
+///   - `FILE_OPEN_TRUNCATE`   = Open `file` and delete any existing data.
+///   - `FILE_OPEN_AT_END`     = Open `file` and start at the very end.
+///   - `FILE_OPEN_READ_WRITE` = Open `file` in read and write mode.
+NIKOLA_API bool file_open(File* file, const FilePath& path, const i32 mode);
+
+/// Close `file` if it is open.
+NIKOLA_API void file_close(File& file);
+
+/// Return `ture` if `file` is currently open and `false` otherwise.
+NIKOLA_API bool file_is_open(File& file);
+
+/// Seek the write pointer in `file` to `pos`.
+NIKOLA_API void file_seek_write(File& file, const sizei pos);
+
+/// Seek the read pointer in `file` to `pos`.
+NIKOLA_API void file_seek_read(File& file, const sizei pos);
+
+/// Return the current position of the write pointer in `file`.
+NIKOLA_API const sizei file_tell_write(File& file);
+
+/// Return the current position of the read pointer in `file`.
+NIKOLA_API const sizei file_tell_read(File& file);
+
+/// Return the current size in bytes of `file`.
+NIKOLA_API const sizei file_get_size(File& file);
+
+/// Return `true` if `file` is currently empty and `false` otherwise.
+NIKOLA_API bool file_is_empty(File& file);
+
+/// Write the `buff` of `buff_size` size in bytes with an `offset` in `file` and return 
+/// the amount of bytes written (i.e `buff_size` + `offset`).
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API const sizei file_write_bytes(File& file, const void* buff, const sizei buff_size, const sizei offset = 0);
+
+/// Read data into `out_buff` with `size` size in bytes with an `offset` in `file` 
+/// and return the amount of bytes read (i.e `size` + `offset`).
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API const sizei file_read_bytes(File& file, void* out_buff, const sizei size, const sizei offset = 0);
+
+/// Write the given `string` into `file`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_write_string(File& file, const String& string);
+
+/// Return the read string in `file`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API String file_read_string(File& file);
+
+/// File functions
+///---------------------------------------------------------------------------------------------------------------------
+
+/// *** File system ***
+/// ----------------------------------------------------------------------
+
+} // End of nikola
+
+//////////////////////////////////////////////////////////////////////////

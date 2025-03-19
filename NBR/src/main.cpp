@@ -1,6 +1,7 @@
-#include "nbr.hpp"
+#include "nbr.h"
 
-#include <nikola/nikola_core.hpp>
+#include <nikola/nikola.h>
+
 #include <chrono>
 
 /// ----------------------------------------------------------------------
