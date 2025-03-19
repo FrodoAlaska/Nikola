@@ -111,6 +111,6 @@ if [[ $can_run_testbed -eq 1 ]]; then
 fi
 
 if [[ $can_reload_res -eq 1 ]]; then
-  ./reload-resources.sh "$build_dir/NBR/" "../res" "$build_dir/testbed/res"
+  ./reload-resources.sh "$build_dir/NBR/" "../res" "$build_dir/testbed/res" "list_example"
 fi
 #########################################################

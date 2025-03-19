@@ -23,10 +23,10 @@
     - [x] If the `--resource-type` flag is omitted, let the tool "guess" which resource is being converted. Perhaps get rid of the glag all together? 
     - [x] Implement a job system or, rather, multi-threading for the tool to make conversions faster, especially for resources like 3D models.
     - [x] Improve the README
-[] 7. Build System Improvement v0.2 
+[x] 7. Build System Improvement v0.2 
     - [x] Improve the CMake situation
     - [x] Better header names
-    - [] Test and improve the build scripts for Linux
+    - [x] Test and improve the build scripts for Linux
 [] 6. Fonts v0.1 
     - [] Choose a font-loading library 
     - [] Make and implement the `NBRFont` specification 
