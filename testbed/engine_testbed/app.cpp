@@ -192,8 +192,6 @@ void app_shutdown(nikola::App* app) {
   delete app;
 }
 
-static float rotation_angle = 0.0f;
-
 void app_update(nikola::App* app, const nikola::f64 delta_time) {
   // Close the window when `ESCAPE` is pressed
   if(nikola::input_key_down(nikola::KEY_ESCAPE)) {
@@ -232,7 +230,7 @@ void app_render(nikola::App* app) {
   nikola::render_queue_flush(app->render_queue);
 
   // Render the framebuffer
-  nikola::material_set_uniform(app->post_proc_material_id, "u_effect_index", 1);
+  nikola::material_set_uniform(app->post_proc_material_id, "u_effect_index", 0);
   nikola::render_pass_end(app->geo_pass);
   
   // Render UI
