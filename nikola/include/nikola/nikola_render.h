@@ -4,6 +4,7 @@
 #include "nikola_gfx.h"
 #include "nikola_resources.h"
 #include "nikola_math.h"
+#include "nikola_containers.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -103,14 +104,6 @@ struct RendererDefaults {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// RenderData
-struct RenderData {
-  Camera camera;
-};
-/// RenderData
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
 /// RenderCommand
 struct RenderCommand {
   RenderableType render_type;
@@ -121,6 +114,24 @@ struct RenderCommand {
   Transform transform;
 };
 /// RenderCommand
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// RenderQueue
+using RenderQueue = DynamicArray<RenderCommand>;
+/// RenderQueue
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// RenderPass
+struct RenderPass {
+  Vec2 frame_size     = Vec2(0.0f);
+  ResourceID material = {};
+
+  GfxFramebufferDesc frame_desc = {};
+  GfxFramebuffer* frame         = nullptr;
+};
+/// RenderPass
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -136,6 +147,30 @@ NIKOLA_API void camera_create(Camera* cam, const f32 aspect_ratio, const Vec3& p
 NIKOLA_API void camera_update(Camera& cam);
 
 /// Camera functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// RenderQueue functions
+
+NIKOLA_API void render_queue_flush(RenderQueue& queue);
+
+NIKOLA_API void render_queue_push(RenderQueue& queue, const RenderCommand& cmd);
+
+/// RenderQueue functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// RenderPass functions
+
+NIKOLA_API void render_pass_create(RenderPass* pass, const Vec2& size, const ResourceID& material_id);
+
+NIKOLA_API void render_pass_destroy(RenderPass& pass);
+
+NIKOLA_API void render_pass_begin(RenderPass& pass);
+
+NIKOLA_API void render_pass_end(RenderPass& pass);
+
+/// RenderPass functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -157,17 +192,9 @@ NIKOLA_API void renderer_set_clear_color(const Vec4& clear_color);
 /// Retrieve the internal default values of the renderer
 NIKOLA_API const RendererDefaults& renderer_get_defaults();
 
-NIKOLA_API void renderer_begin_pass(RenderData& data);
+NIKOLA_API void renderer_begin(Camera& camera);
 
-NIKOLA_API void renderer_end_pass();
-
-NIKOLA_API void renderer_present();
-
-NIKOLA_API void renderer_apply_effect(const RenderEffectType effect);
-
-NIKOLA_API RenderEffectType renderer_current_effect();
-
-NIKOLA_API void renderer_queue_command(RenderCommand& command);
+NIKOLA_API void renderer_end();
 
 /// Renderer functions
 ///---------------------------------------------------------------------------------------------------------------------

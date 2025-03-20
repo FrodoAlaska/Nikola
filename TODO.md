@@ -23,31 +23,33 @@
     - [x] If the `--resource-type` flag is omitted, let the tool "guess" which resource is being converted. Perhaps get rid of the glag all together? 
     - [x] Implement a job system or, rather, multi-threading for the tool to make conversions faster, especially for resources like 3D models.
     - [x] Improve the README
-[x] 7. Build System Improvement v0.2 
+[x] 6. Build System Improvement v0.2 
     - [x] Improve the CMake situation
     - [x] Better header names
     - [x] Test and improve the build scripts for Linux
-[] 6. Fonts v0.1 
+[] 7. Renderer v0.2. 
+    - [x] Multiple render passes
+    - [] The result of the current render pass should feed into the next render pass 
+    - [x] A more pipelined post-processing system.
+    - [] Better uniform and material system
+    - [] Deferred shading
+    - [] Apply the Blin-Phong shading model as an example.
+    - [] `material_set_shader_context`?
+[] 8. Fonts v0.1 
     - [] Choose a font-loading library 
     - [] Make and implement the `NBRFont` specification 
     - [] Add support for fonts in the NBR tool 
     - [] Add font loading support in the resource manager 
     - [] Have a minimal version of font rendering (both 2D and 3D)
-[] 7. Renderer v0.2. 
-    - [] `material_set_shader_context`?
-    - [] Multiple render passes
-    - [] Better uniform and material system
-    - [] A more pipelined post-processing system.
-    - [] Apply the Blin-Phong shading model.
-[] 8. Multi-threading v0.2 
+[] 9. Multi-threading v0.2 
     - [] Which systems can benefit most from multi-threading? 
     - [] Should we implement a job system? If yes, how can this be done within the confines of the engine? 
     - [] Try to improve the load times for the resource manager as a test of the new multi-threading system.
-[] 9. GUI v0.2 
+[] 10. GUI v0.2 
     - [] A canvas system for 2D game UI.
     - [] A better system to handle debug UI.
     - [] Documentation.
-[] 10. Audio System v0.1 
+[] 11. Audio System v0.1 
     - [] Lay out what you actually want the audio system to be and what it does. 
     - [] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
     - [] Create an audio backend with a context 
@@ -59,8 +61,6 @@
 ## (Engine) TODO: 
 * General 
     - Probably create my own `DynamicArray` instead of the STL one
-* Renderer 
-    - Render 2D and 3D fonts
 * Resources 
     - A memory pool/arena for resources?
 
@@ -72,7 +72,6 @@
     - Batch logging? 
     - Log into a file
 * GFX 
-    - Since DirectX is out of the picture, remove the little bits and pieces of its effect.
     - Seperate the `gl_backend.cpp` file into several files for better visualization
     - A function to sub image or slice a texture 
     - Put some thought into instancing

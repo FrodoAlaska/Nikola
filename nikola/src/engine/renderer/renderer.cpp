@@ -12,18 +12,10 @@ struct Renderer {
   GfxContext* context = nullptr;
 
   Vec4 clear_color;
-  Camera camera;
-
-  DynamicArray<RenderCommand> render_queue;
-
-  GfxFramebufferDesc frame_desc = {};
-  GfxFramebuffer* framebuffer   = nullptr;
+  Camera* camera;
   
   GfxPipelineDesc pipe_desc  = {};
   GfxPipeline* pipeline      = nullptr; 
-
-  i32 effects_uniform_loc   = -1;
-  u32 effect_value          = 0;
 
   RendererDefaults defaults = {};
 };
@@ -43,167 +35,6 @@ static void init_context(Window* window) {
   
   s_renderer.context = gfx_context_init(gfx_desc);
   NIKOLA_ASSERT(s_renderer.context, "Failed to initialize the graphics context");
-}
-
-static GfxShaderDesc init_effects_shader() {
-  GfxShaderDesc desc = {};
-
-  desc.vertex_source = 
-    "#version 460 core\n"
-    "\n" 
-    "// Layouts\n"
-    "layout (location = 0) in vec2 aPos;\n"
-    "layout (location = 1) in vec2 aTextureCoords;\n"
-    "\n" 
-    "// Outputs\n"
-    "out VS_OUT {\n"
-    "  vec2 vertex_position;\n"
-    "  vec2 tex_coords;\n"
-    "} vs_out;\n"
-    "\n" 
-    "void main() {\n"
-    "  vs_out.vertex_position = aPos;\n"
-    "  vs_out.tex_coords = aTextureCoords;\n"
-    "\n"
-    "  gl_Position = vec4(aPos, 0.0, 1.0);\n"
-    "}"
-    "\n";
-
-  desc.pixel_source = 
-    "#version 460 core\n"
-    "\n" 
-    "// Outputs\n"
-    "layout (location = 0) out vec4 frag_color;\n"
-    "\n" 
-    "// Inputs\n"
-    "in VS_OUT {\n"
-    "  vec2 vertex_position;\n"
-    "  vec2 tex_coords;\n"
-    "} fs_in;\n"
-    "\n" 
-    "// Uniforms\n"
-    "uniform sampler2D u_texture;\n"
-    "uniform int u_effect_index;"
-    "\n" 
-    "// Functions\n"
-    "vec4 greyscale();\n"
-    "vec4 inversion();\n"
-    "vec3 kernel(float[9] kernel_values);\n"
-    "vec4 sharpen();\n"
-    "vec4 blur();\n"
-    "vec4 edge_detect();\n"
-    "vec4 emboss();\n"
-    "vec4 pixelize();\n"
-    "\n" 
-    "void main() {\n"
-    "  vec4 effects[] = {\n"
-    "    texture(u_texture, fs_in.tex_coords),"
-    "    greyscale(), \n"
-    "    inversion(), \n"
-    "    sharpen(), \n"
-    "    blur(), \n"
-    "    emboss(), \n"
-    "    edge_detect(),\n"
-    "    pixelize(),\n"
-    "  };\n"
-    ""
-    "  frag_color = effects[u_effect_index];\n"
-    "};\n"
-    "" 
-    "vec4 greyscale() {\n"
-    "  vec4 col = texture(u_texture, fs_in.tex_coords);\n"
-    "  float average = (0.2126f * col.r) + (0.7152f * col.g) + (0.0722f * col.b);\n"
-    "  return vec4(average, average, average, 1.0);\n"
-    "}\n"
-    "" 
-    "vec4 inversion() {\n" 
-    "  return vec4(vec3(1.0 - texture(u_texture, fs_in.tex_coords)), 1.0);\n" 
-    "}\n"
-    "" 
-    "vec3 kernel(float[9] kernel_values) {\n"
-    "  const float offset = 1 / 300.0f;\n"
-    "  vec2 offsets[9] = vec2[](\n"
-    "  vec2(-offset, offset), // Top-left\n"
-    "  vec2(0.0f, offset),    // Top-center\n"
-    "  vec2(offset, offset),  // Top-right\n"
-    "" 
-    "  vec2(-offset, 0.0f),   // Center-left\n"
-    "  vec2(0.0f, 0.0f),      // Center\n"
-    "  vec2(offset, 0.0f),    // Center-right\n"
-    "" 
-    "  vec2(-offset, -offset), // Bottom-left\n"
-    "  vec2(0.0f, -offset),    // Bottom-center\n"
-    "  vec2(offset, -offset)   // Bottom-right\n"
-    "  );\n"
-    "" 
-    "  vec3 sample_tex[9];\n"
-    "  for(int i = 0; i < 9; i++) {\n"
-    "    sample_tex[i] = vec3(texture(u_texture, fs_in.tex_coords.st + offsets[i]));\n"
-    "  }\n"
-    "" 
-    "  vec3 color = vec3(0.0f);\n"
-    "  for(int i = 0; i < 9; i++) {\n"
-    "    color += sample_tex[i] * kernel_values[i];\n"
-    "  }\n"
-    "  return color;\n"
-    "}\n"
-    "" 
-    "vec4 sharpen() {\n"
-    "  float k[9] = float[](\n"
-    "    -1.0f, -1.0f, -1.0f, \n"
-    "    -1.0f,  9.0f, -1.0f,\n"
-    "    -1.0f, -1.0f, -1.0f\n"
-    "  );\n"
-    "  return vec4(kernel(k), 1.0f);\n"
-    "}\n" 
-    ""
-    "vec4 blur() {\n"
-    "  const float mul = 16.0f;\n"
-    "  float k[9] = float[](\n"
-    "    1.0f / mul, 2.0f / mul, 1.0f / mul,\n"
-    "    2.0f / mul, 4.0f / mul, 2.0f / mul,\n"
-    "    1.0f / mul, 2.0f / mul, 1.0f / mul \n"
-    "  );\n"
-    "  return vec4(kernel(k), 1.0f);\n"
-    "}\n"
-    "" 
-    "vec4 edge_detect() {\n"
-    "  float k[9] = float[](\n"
-    "    1.0f,  1.0f, 1.0f, \n"
-    "    1.0f, -8.0f, 1.0f, \n"
-    "    1.0f,  1.0f, 1.0f  \n"
-    "  );\n"
-    "  return vec4(kernel(k), 1.0f);\n"
-    "}\n"
-    ""
-    "vec4 emboss() {\n"
-    "  float k[9] = float[](\n"
-    "   -2.0f, -1.0f, 0.0f, \n"
-    "   -1.0f,  1.0f, 1.0f, \n"
-    "    0.0f,  1.0f, 2.0f  \n"
-    "  );\n"
-    "  return vec4(kernel(k), 1.0f);\n"
-    "}\n"
-    ""
-    "vec4 pixelize() {\n"
-    "  vec2 screen  = vec2(1366, 720);\n"
-    "  float pixels = 10.0;\n"
-    ""
-    "  vec2 tex_coord = vec2(\n"
-    "    pixels * (1.0 / screen.x),\n"
-    "    pixels * (1.0 / screen.y)\n"
-    "  );\n"
-    ""
-    "  float coord_x = tex_coord.x * floor(fs_in.tex_coords.x / tex_coord.x);\n"
-    "  float coord_y = tex_coord.y * floor(fs_in.tex_coords.y / tex_coord.y);\n"
-    ""
-    "  vec3 color = texture(u_texture, vec2(coord_x, coord_y)).rgb;\n"
-    ""
-    "  return vec4(color, 1.0);\n"
-    "}\n"
-    "\n";
-
-  return desc;
 }
 
 static void init_defaults() {
@@ -230,55 +61,6 @@ static void init_defaults() {
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
   s_renderer.defaults.matrices_buffer = gfx_buffer_create(s_renderer.context, buff_desc);
-}
-
-static void init_framebuffer(Window* window) {
-  s_renderer.frame_desc = {}; 
-
-  // Clear color init
-  s_renderer.frame_desc.clear_color[0] = 0.1f;
-  s_renderer.frame_desc.clear_color[1] = 0.1f;
-  s_renderer.frame_desc.clear_color[2] = 0.1f;
-  s_renderer.frame_desc.clear_color[3] = 1.0f;
-
-  // Clear flags init
-  s_renderer.frame_desc.clear_flags = GFX_CLEAR_FLAGS_COLOR_BUFFER | GFX_CLEAR_FLAGS_DEPTH_BUFFER;
-
-  // Render target init
-  i32 width, height; 
-  window_get_size(window, &width, &height);
-  
-  GfxTextureDesc texture_desc = {
-    .width     = (u32)width, 
-    .height    = (u32)height, 
-    .depth     = 0, 
-    .mips      = 1, 
-    .type      = GFX_TEXTURE_RENDER_TARGET,
-    .format    = GFX_TEXTURE_FORMAT_RGBA8, 
-    .filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-    .wrap_mode = GFX_TEXTURE_WRAP_MIRROR, 
-    .data      = nullptr,
-  };
-  s_renderer.frame_desc.attachments[0] = gfx_texture_create(s_renderer.context, texture_desc);
-  s_renderer.frame_desc.attachments_count++;
-
-  // Depth-Stencil texture init
-  texture_desc = {
-    .width     = (u32)width, 
-    .height    = (u32)height, 
-    .depth     = 0, 
-    .mips      = 1, 
-    .type      = GFX_TEXTURE_DEPTH_STENCIL_TARGET,
-    .format    = GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8, 
-    .filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-    .wrap_mode = GFX_TEXTURE_WRAP_CLAMP, 
-    .data      = nullptr,
-  };
-  s_renderer.frame_desc.attachments[1] = gfx_texture_create(s_renderer.context, texture_desc);
-  s_renderer.frame_desc.attachments_count++;
-  
-  // Framebuffer init
-  s_renderer.framebuffer = gfx_framebuffer_create(s_renderer.context, s_renderer.frame_desc);
 }
 
 static void init_pipeline() {
@@ -314,12 +96,6 @@ static void init_pipeline() {
   s_renderer.pipe_desc.index_buffer  = gfx_buffer_create(s_renderer.context, index_desc);
   s_renderer.pipe_desc.indices_count = 6;
 
-  // Shader init
-  s_renderer.pipe_desc.shader  = gfx_shader_create(s_renderer.context, init_effects_shader()); 
-
-  // Uniform location init
-  s_renderer.effects_uniform_loc = gfx_shader_uniform_lookup(s_renderer.pipe_desc.shader, "u_effect_index");
-
   // Layout init
   s_renderer.pipe_desc.layout[0]     = GfxLayoutDesc{"POS", GFX_LAYOUT_FLOAT2, 0};
   s_renderer.pipe_desc.layout[1]     = GfxLayoutDesc{"TEX", GFX_LAYOUT_FLOAT2, 0};
@@ -327,10 +103,6 @@ static void init_pipeline() {
 
   // Draw mode init 
   s_renderer.pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
-
-  // Textures init
-  s_renderer.pipe_desc.textures[0] = s_renderer.frame_desc.attachments[0];
-  s_renderer.pipe_desc.textures_count++;
 
   // Pipeline init
   s_renderer.pipeline = gfx_pipeline_create(s_renderer.context, s_renderer.pipe_desc);
@@ -414,8 +186,14 @@ static void render_model(RenderCommand& command) {
   }
 }
 
-static void flush_queue() {
-  for(auto& command : s_renderer.render_queue) {
+/// Private functions
+/// ----------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// RenderQueue functions
+
+void render_queue_flush(RenderQueue& queue) {
+  for(auto& command : queue) {
     switch(command.render_type) {
       case RENDERABLE_TYPE_MESH:
         render_mesh(command);
@@ -429,36 +207,107 @@ static void flush_queue() {
     }
   }
 
-  s_renderer.render_queue.clear();
+  queue.clear();
 }
 
-static i32 get_effect_value(const RenderEffectType effect) {
-  switch (effect) {
-    case RENDER_EFFECT_NONE:
-      return 0;
-    case RENDER_EFFECT_GREYSCALE:
-      return 1; 
-    case RENDER_EFFECT_INVERSION:
-      return 2; 
-    case RENDER_EFFECT_SHARPEN:
-      return 3; 
-    case RENDER_EFFECT_BLUR:
-      return 4; 
-    case RENDER_EFFECT_EMBOSS:
-      return 5; 
-    case RENDER_EFFECT_EDGE_DETECT:
-      return 6; 
-    case RENDER_EFFECT_PIXELIZE:
-      return 7; 
-    default:
-      return -1;
+void render_queue_push(RenderQueue& queue, const RenderCommand& cmd) {
+  queue.push_back(cmd);
+}
+
+/// RenderQueue functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// RenderPass functions
+
+void render_pass_create(RenderPass* pass, const Vec2& size, const ResourceID& material_id) {
+  pass->material   = material_id;
+  pass->frame_size = (Vec2)size;
+  
+  pass->frame_desc = {}; 
+
+  // Clear color init
+  pass->frame_desc.clear_color[0] = s_renderer.clear_color.r;
+  pass->frame_desc.clear_color[1] = s_renderer.clear_color.g;
+  pass->frame_desc.clear_color[2] = s_renderer.clear_color.b;
+  pass->frame_desc.clear_color[3] = s_renderer.clear_color.a;
+
+  // Clear flags init
+  pass->frame_desc.clear_flags = GFX_CLEAR_FLAGS_COLOR_BUFFER | GFX_CLEAR_FLAGS_DEPTH_BUFFER;
+
+  // Render target init
+  GfxTextureDesc texture_desc = {
+    .width     = (u32)size.x, 
+    .height    = (u32)size.y, 
+    .depth     = 0, 
+    .mips      = 1, 
+    .type      = GFX_TEXTURE_RENDER_TARGET,
+    .format    = GFX_TEXTURE_FORMAT_RGBA8, 
+    .filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
+    .wrap_mode = GFX_TEXTURE_WRAP_MIRROR, 
+    .data      = nullptr,
+  };
+  pass->frame_desc.attachments[0] = gfx_texture_create(s_renderer.context, texture_desc);
+  pass->frame_desc.attachments_count++;
+
+  // Depth-Stencil texture init
+  texture_desc = {
+    .width     = (u32)size.x, 
+    .height    = (u32)size.y, 
+    .depth     = 0, 
+    .mips      = 1, 
+    .type      = GFX_TEXTURE_DEPTH_STENCIL_TARGET,
+    .format    = GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8, 
+    .filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
+    .wrap_mode = GFX_TEXTURE_WRAP_CLAMP, 
+    .data      = nullptr,
+  };
+  pass->frame_desc.attachments[1] = gfx_texture_create(s_renderer.context, texture_desc);
+  pass->frame_desc.attachments_count++;
+  
+  // Framebuffer init
+  pass->frame = gfx_framebuffer_create(s_renderer.context, pass->frame_desc);
+}
+
+void render_pass_destroy(RenderPass& pass) {
+  gfx_framebuffer_destroy(pass.frame);
+}
+
+void render_pass_begin(RenderPass& pass) {
+  // @NOTE: An annoying way to set the clear color 
+  Vec4 col = Vec4(pass.frame_desc.clear_color[0], 
+                  pass.frame_desc.clear_color[1], 
+                  pass.frame_desc.clear_color[2], 
+                  pass.frame_desc.clear_color[3]);
+  
+  // Clear the framebuffer
+  gfx_context_clear(s_renderer.context, pass.frame);
+  gfx_context_set_state(s_renderer.context, GFX_STATE_DEPTH, true); 
+}
+
+void render_pass_end(RenderPass& pass) {
+  // Render to the default framebuffer
+  gfx_context_clear(s_renderer.context, nullptr);
+  gfx_context_set_state(s_renderer.context, GFX_STATE_DEPTH, false); 
+
+  // Apply the shader from the pass
+  s_renderer.pipe_desc.shader = resources_get_shader(resources_get_material(pass.material)->shader);
+
+  // Apply the textures from the pass
+  for(sizei i = 0; i < pass.frame_desc.attachments_count; i++) {
+    s_renderer.pipe_desc.textures[i] = pass.frame_desc.attachments[i];
   }
+  s_renderer.pipe_desc.textures_count = pass.frame_desc.attachments_count;
+
+  // Render the final render target
+  gfx_context_apply_pipeline(s_renderer.context, s_renderer.pipeline, s_renderer.pipe_desc);
+  gfx_pipeline_draw_index(s_renderer.pipeline);
 }
 
-/// Private functions
-/// ----------------------------------------------------------------------
+/// RenderPass functions
+///---------------------------------------------------------------------------------------------------------------------
 
-/// ----------------------------------------------------------------------
+///---------------------------------------------------------------------------------------------------------------------
 /// Renderer functions
 
 void renderer_init(Window* window, const Vec4& clear_clear) {
@@ -469,9 +318,6 @@ void renderer_init(Window* window, const Vec4& clear_clear) {
   // Defaults init
   init_defaults();
 
-  // Framebuffer init
-  init_framebuffer(window);
-
   // Pipeline init
   init_pipeline();
 
@@ -480,7 +326,6 @@ void renderer_init(Window* window, const Vec4& clear_clear) {
 
 void renderer_shutdown() {
   gfx_pipeline_destroy(s_renderer.pipeline);
-  gfx_framebuffer_destroy(s_renderer.framebuffer);
   gfx_context_shutdown(s_renderer.context);
   
   NIKOLA_LOG_INFO("Successfully shutdown the renderer context");
@@ -498,63 +343,19 @@ const RendererDefaults& renderer_get_defaults() {
   return s_renderer.defaults;
 }
 
-void renderer_begin_pass(RenderData& data) {
+void renderer_begin(Camera& camera) {
   // Updating the internal matrices buffer for each shader
-  s_renderer.camera = data.camera;
-  gfx_buffer_update(s_renderer.defaults.matrices_buffer, 0, sizeof(Mat4), mat4_raw_data(data.camera.view));
-  gfx_buffer_update(s_renderer.defaults.matrices_buffer, sizeof(Mat4), sizeof(Mat4), mat4_raw_data(data.camera.projection));
-
-  // Clear the post-processing framebuffer
-  Vec4 col = s_renderer.clear_color;
-  gfx_context_clear(s_renderer.context, s_renderer.framebuffer);
-  gfx_context_set_state(s_renderer.context, GFX_STATE_DEPTH, true); 
+  s_renderer.camera = &camera;
+  gfx_buffer_update(s_renderer.defaults.matrices_buffer, 0, sizeof(Mat4), mat4_raw_data(camera.view));
+  gfx_buffer_update(s_renderer.defaults.matrices_buffer, sizeof(Mat4), sizeof(Mat4), mat4_raw_data(camera.projection));
 }
 
-void renderer_end_pass() {
-  // Render everything in the queue
-  flush_queue();
-
-  // Render to the default framebuffer
-  gfx_context_clear(s_renderer.context, nullptr);
-  gfx_context_set_state(s_renderer.context, GFX_STATE_DEPTH, false); 
- 
-  // Send the correct effects index to the post-processing shader
-  gfx_shader_upload_uniform(s_renderer.pipe_desc.shader, s_renderer.effects_uniform_loc, GFX_LAYOUT_INT1, &s_renderer.effect_value);
-
-  // Render the final render target
-  gfx_context_apply_pipeline(s_renderer.context, s_renderer.pipeline, s_renderer.pipe_desc);
-  gfx_pipeline_draw_index(s_renderer.pipeline);
-}
-
-void renderer_present() {
+void renderer_end() {
   gfx_context_present(s_renderer.context);
 }
 
-void renderer_apply_effect(const RenderEffectType effect) {
-  s_renderer.effect_value = get_effect_value(effect);
-}
-
-RenderEffectType renderer_current_effect() {
-  RenderEffectType effects[] = {
-    RENDER_EFFECT_NONE,
-    RENDER_EFFECT_GREYSCALE,
-    RENDER_EFFECT_INVERSION,
-    RENDER_EFFECT_SHARPEN,
-    RENDER_EFFECT_BLUR,
-    RENDER_EFFECT_EMBOSS,
-    RENDER_EFFECT_EDGE_DETECT,
-    RENDER_EFFECT_PIXELIZE,
-  };
-
-  return effects[s_renderer.effect_value];
-}
-
-void renderer_queue_command(RenderCommand& command) {
-  s_renderer.render_queue.push_back(command);
-}
-
 /// Renderer functions
-/// ----------------------------------------------------------------------
+///---------------------------------------------------------------------------------------------------------------------
 
 } // End of nikola
 
