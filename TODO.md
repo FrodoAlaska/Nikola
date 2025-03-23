@@ -27,14 +27,23 @@
     - [x] Improve the CMake situation
     - [x] Better header names
     - [x] Test and improve the build scripts for Linux
-[] 7. Renderer v0.2. 
+[] 7. GFX v1.0? 
+    - [x] Let every reasource have a `_use` function
+    - [x] Refactor the `GfxPipeline` 
+    - [x] Improve framebuffers (`gfx_framebuffer_copy(src, dest, pos, size)`, incorporate `glDrawBuffers`)
+    - [x] Test
+    - [] Instancing 
+    - [] Documentation
+[] 8. Renderer v0.2. 
     - [x] Multiple render passes
-    - [] The result of the current render pass should feed into the next render pass 
+    - [] Some meshes draw the specular texture even though they don't need it? Perhaps find a better way to use textures?
+    - [] Render passes working in tandem (perhaps implement `render_pass_inherit`?)
     - [x] A more pipelined post-processing system.
-    - [] Better uniform and material system
     - [] Deferred shading
+    - [] Better uniform and material system
     - [] Apply the Blin-Phong shading model as an example.
     - [] `material_set_shader_context`?
+    - [] Documentation
 [] 8. Fonts v0.1 
     - [] Choose a font-loading library 
     - [] Make and implement the `NBRFont` specification 
@@ -42,6 +51,7 @@
     - [] Add font loading support in the resource manager 
     - [] Have a minimal version of font rendering (both 2D and 3D)
 [] 9. Multi-threading v0.2 
+    - [] Implement both performance timers and normal timers
     - [] Which systems can benefit most from multi-threading? 
     - [] Should we implement a job system? If yes, how can this be done within the confines of the engine? 
     - [] Try to improve the load times for the resource manager as a test of the new multi-threading system.
@@ -62,6 +72,7 @@
 * General 
     - Probably create my own `DynamicArray` instead of the STL one
 * Resources 
+    - Try to replace the `_loader` functions. For many of the resources, they are useless.
     - A memory pool/arena for resources?
 
 ## (Core) TODO: 

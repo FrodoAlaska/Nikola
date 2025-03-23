@@ -1,4 +1,4 @@
-#include "mesh_loader.hpp"
+#include "mesh_loader.h"
 
 #include "nikola/nikola_base.h"
 #include "nikola/nikola_resources.h"
@@ -10,48 +10,48 @@ namespace nikola { // Start of nikola
 /// ----------------------------------------------------------------------
 /// Private functions  
 
-static void create_cube_mesh(const u16 group_id, Mesh* mesh) {
-  DynamicArray<Vertex3D_PNUV> vertices = {
-    // Position                 Normal                   UV coords
+static void create_cube_mesh(const u16 group_id, NBRMesh* mesh) {
+  f32 vertices[] = {
+     // Position          Normal              UV coords
     
-    // Back face
-    {Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.0f, 0.0f, -1.0f), Vec2(0.0f, 0.0f)},
-    {Vec3( 0.5f, -0.5f, -0.5f), Vec3(0.0f, 0.0f, -1.0f), Vec2(1.0f, 0.0f)},
-    {Vec3( 0.5f,  0.5f, -0.5f), Vec3(0.0f, 0.0f, -1.0f), Vec2(1.0f, 1.0f)},
-    {Vec3(-0.5f,  0.5f, -0.5f), Vec3(0.0f, 0.0f, -1.0f), Vec2(0.0f, 1.0f)},
-
-    // Front face
-    {Vec3(-0.5f, -0.5f, 0.5f),  Vec3(0.0f, 0.0f, 1.0f),  Vec2(0.0f, 0.0f)},
-    {Vec3( 0.5f, -0.5f, 0.5f),  Vec3(0.0f, 0.0f, 1.0f),  Vec2(1.0f, 0.0f)},
-    {Vec3( 0.5f,  0.5f, 0.5f),  Vec3(0.0f, 0.0f, 1.0f),  Vec2(1.0f, 1.0f)},
-    {Vec3(-0.5f,  0.5f, 0.5f),  Vec3(0.0f, 0.0f, 1.0f),  Vec2(0.0f, 1.0f)},
-
-    // Left face
-    {Vec3(-0.5f,  0.5f,  0.5f), Vec3(-1.0f, 0.0f, 0.0f), Vec2(1.0f, 0.0f)},
-    {Vec3(-0.5f,  0.5f, -0.5f), Vec3(-1.0f, 0.0f, 0.0f), Vec2(1.0f, 1.0f)},
-    {Vec3(-0.5f, -0.5f, -0.5f), Vec3(-1.0f, 0.0f, 0.0f), Vec2(0.0f, 1.0f)},
-    {Vec3(-0.5f, -0.5f,  0.5f), Vec3(-1.0f, 0.0f, 0.0f), Vec2(0.0f, 0.0f)},
-
-    // Right face
-    {Vec3(0.5f,  0.5f,  0.5f),  Vec3(1.0f, 0.0f, 0.0f),  Vec2(1.0f, 0.0f)},
-    {Vec3(0.5f,  0.5f, -0.5f),  Vec3(1.0f, 0.0f, 0.0f),  Vec2(1.0f, 1.0f)},
-    {Vec3(0.5f, -0.5f, -0.5f),  Vec3(1.0f, 0.0f, 0.0f),  Vec2(0.0f, 1.0f)},
-    {Vec3(0.5f, -0.5f,  0.5f),  Vec3(1.0f, 0.0f, 0.0f),  Vec2(0.0f, 0.0f)},
-  
-    // Top face
-    {Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.0f, -1.0f, 0.0f), Vec2(0.0f, 1.0f)},
-    {Vec3( 0.5f, -0.5f, -0.5f), Vec3(0.0f, -1.0f, 0.0f), Vec2(1.0f, 1.0f)},
-    {Vec3( 0.5f, -0.5f,  0.5f), Vec3(0.0f, -1.0f, 0.0f), Vec2(1.0f, 0.0f)},
-    {Vec3(-0.5f, -0.5f,  0.5f), Vec3(0.0f, -1.0f, 0.0f), Vec2(0.0f, 0.0f)},
-
-    // Bottom face
-    {Vec3(-0.5f, 0.5f, -0.5f),  Vec3(0.0f, 1.0f, 0.0f),  Vec2(0.0f, 1.0f)},
-    {Vec3( 0.5f, 0.5f, -0.5f),  Vec3(0.0f, 1.0f, 0.0f),  Vec2(1.0f, 1.0f)},
-    {Vec3( 0.5f, 0.5f,  0.5f),  Vec3(0.0f, 1.0f, 0.0f),  Vec2(1.0f, 0.0f)},
-    {Vec3(-0.5f, 0.5f,  0.5f),  Vec3(0.0f, 1.0f, 0.0f),  Vec2(0.0f, 0.0f)},
+     // Back face
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f,  0.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f,  1.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f,  0.0f, 1.0f,
+     
+     // Front face
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  0.0f, 1.0f,
+     
+     // Left face
+    -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,  1.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+    
+     // Right face
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+     
+     // Top face
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
+    
+     // Bottom face
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
   }; 
 
-  DynamicArray<u32> indices = {
+  u32 indices[] = {
     // Back face 
     0, 1, 2, 
     2, 3, 0, 
@@ -77,17 +77,15 @@ static void create_cube_mesh(const u16 group_id, Mesh* mesh) {
     22, 23, 20, 
   };
 
-  NBRMesh nbr_mesh = {
-    .vertex_type = VERTEX_TYPE_PNUV, 
-    
-    .vertices_count = (u32)vertices.size(),
-    .vertices       = (f32*)vertices.data(),
-    
-    .indices_count = (u32)indices.size(),
-    .indices       = (u32*)indices.data(),
-  };
-
-  nbr_import_mesh(&nbr_mesh, group_id, mesh);
+  mesh->vertex_type = VERTEX_TYPE_PNUV; 
+  
+  mesh->vertices_count = sizeof(vertices) / sizeof(f32);
+  mesh->vertices       = (f32*)memory_allocate(sizeof(vertices));
+  memory_copy(mesh->vertices, vertices, sizeof(vertices));
+  
+  mesh->indices_count = sizeof(indices) / sizeof(u32);
+  mesh->indices       = (u32*)memory_allocate(sizeof(indices));
+  memory_copy(mesh->indices, indices, sizeof(indices));
 }
 
 /// Private functions  
@@ -96,7 +94,7 @@ static void create_cube_mesh(const u16 group_id, Mesh* mesh) {
 /// ----------------------------------------------------------------------
 /// Mesh loader functions
 
-void mesh_loader_load(const u16 group_id, Mesh* mesh, const MeshType type) {
+void mesh_loader_load(const u16 group_id, NBRMesh* mesh, const MeshType type) {
   switch(type) {
     case MESH_TYPE_CUBE:
       create_cube_mesh(group_id, mesh);

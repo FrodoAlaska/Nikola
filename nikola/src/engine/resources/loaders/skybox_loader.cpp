@@ -75,7 +75,7 @@ static void construct_cube_skybox(const u16 group_id, Skybox* sky) {
 
 void skybox_loader_load(const u16 group_id, Skybox* sky, const ResourceID& cubemap_id) {
   NIKOLA_ASSERT(sky, "Invalid Skybox passed into skybox loader function");
-  NIKOLA_ASSERT((cubemap_id.group != RESOURCE_GROUP_INVALID), "Cannot load a skybox with an invalid cubemap ID");
+  NIKOLA_ASSERT(RESOURCE_IS_VALID(cubemap_id), "Cannot load a skybox with an invalid cubemap ID");
   
   // Default initialize the loader
   memory_zero(sky, sizeof(Skybox));
@@ -92,9 +92,7 @@ void skybox_loader_load(const u16 group_id, Skybox* sky, const ResourceID& cubem
   sky->pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
 
   // Cubemap init
-  sky->cubemap                   = cubemap_id; 
-  sky->pipe_desc.cubemaps[0]     = resources_get_cubemap(sky->cubemap); 
-  sky->pipe_desc.cubemaps_count  = 1; 
+  sky->cubemap = cubemap_id;
 }
 
 /// Skybox loader functions

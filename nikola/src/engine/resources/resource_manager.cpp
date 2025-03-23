@@ -4,7 +4,7 @@
 #include "nikola/nikola_file.h"
 #include "nikola/nikola_render.h"
 
-#include "loaders/mesh_loader.hpp"
+#include "loaders/mesh_loader.h"
 #include "loaders/material_loader.hpp"
 #include "loaders/skybox_loader.hpp"
 
@@ -123,7 +123,7 @@ template<typename T>
 static T get_resource(const ResourceID& id, DynamicArray<T>& res, const ResourceType type) {
   NIKOLA_ASSERT((id._type == type), "Invalid type when trying to retrieve a resource");
   NIKOLA_ASSERT((id._id >= 0 && id._id <= (u16)res.size()), "Invalid ID when trying to retrieve a resource");
-  NIKOLA_ASSERT((id.group != RESOURCE_GROUP_INVALID), "Cannot retrieve a resource from an invalid group");
+  NIKOLA_ASSERT(RESOURCE_IS_VALID(id), "Cannot retrieve a resource from an invalid group");
 
   return res[id._id];
 }
@@ -590,24 +590,19 @@ ResourceID resources_push_mesh(const u16 group_id, const MeshType type) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
-  // Allocate the mesh
-  Mesh* mesh = new Mesh{};
-
   // Use the loader to set up the mesh
-  mesh_loader_load(group_id, mesh, type);
+  NBRMesh nbr_mesh = {};
+  mesh_loader_load(group_id, &nbr_mesh, type);
 
-  // Create the pipeline
-  mesh->pipe = gfx_pipeline_create(s_manager.gfx_context, mesh->pipe_desc);
+  // Create the mesh
+  ResourceID id = resources_push_mesh(group_id, nbr_mesh); 
 
-  // Create mesh
-  ResourceID id; 
-  PUSH_RESOURCE(group, meshes, mesh, RESOURCE_TYPE_MESH, id);
- 
+  // Unwanted data!
+  memory_free(nbr_mesh.vertices);
+  memory_free(nbr_mesh.indices);
+
   // New mesh added!
-  NIKOLA_LOG_DEBUG("Group \'%s\' pushed mesh:", group->name.c_str());
-  NIKOLA_LOG_DEBUG("     Mesh type  = %s", mesh_type_str(type));
-  NIKOLA_LOG_DEBUG("     Vertices   = %zu", mesh->pipe_desc.vertices_count);
-  NIKOLA_LOG_DEBUG("     Indices    = %zu", mesh->pipe_desc.indices_count);
+  NIKOLA_LOG_DEBUG("     Mesh type    = %s", mesh_type_str(type));
   return id;
 }
 

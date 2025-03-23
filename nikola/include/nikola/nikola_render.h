@@ -125,8 +125,7 @@ using RenderQueue = DynamicArray<RenderCommand>;
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderPass
 struct RenderPass {
-  Vec2 frame_size     = Vec2(0.0f);
-  ResourceID material = {};
+  Vec2 frame_size = Vec2(0.0f);
 
   GfxFramebufferDesc frame_desc = {};
   GfxFramebuffer* frame         = nullptr;
@@ -162,13 +161,15 @@ NIKOLA_API void render_queue_push(RenderQueue& queue, const RenderCommand& cmd);
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderPass functions
 
-NIKOLA_API void render_pass_create(RenderPass* pass, const Vec2& size, const ResourceID& material_id);
+NIKOLA_API void render_pass_create(RenderPass* pass, const Vec2& size, u32 clear_flags);
 
 NIKOLA_API void render_pass_destroy(RenderPass& pass);
 
 NIKOLA_API void render_pass_begin(RenderPass& pass);
 
-NIKOLA_API void render_pass_end(RenderPass& pass);
+NIKOLA_API void render_pass_end(RenderPass& pass, const ResourceID& material_id);
+
+NIKOLA_API void render_pass_push_target(RenderPass& pass, const GfxTextureType type, const GfxTextureFormat format);
 
 /// RenderPass functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -195,6 +196,8 @@ NIKOLA_API const RendererDefaults& renderer_get_defaults();
 NIKOLA_API void renderer_begin(Camera& camera);
 
 NIKOLA_API void renderer_end();
+
+NIKOLA_API void renderer_apply_pass(RenderPass& pass);
 
 /// Renderer functions
 ///---------------------------------------------------------------------------------------------------------------------

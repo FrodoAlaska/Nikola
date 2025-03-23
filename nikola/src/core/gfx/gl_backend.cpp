@@ -56,6 +56,8 @@ struct GfxFramebuffer {
   
   u32 clear_flags;
   u32 id;
+
+  u32 targets[RENDER_TARGETS_MAX];
   u32 color_buffers_count = 0;
 };
 /// GfxFramebuffer
@@ -123,14 +125,6 @@ struct GfxPipeline {
   sizei index_count        = 0;
 
   GfxDrawMode draw_mode;
-
-  GfxShader* shader;
-
-  u32 cubemaps[CUBEMAPS_MAX] = {};
-  sizei cubemaps_count       = 0;
-
-  u32 textures[TEXTURES_MAX] = {};
-  sizei textures_count       = 0;
 };
 /// GfxPipeline
 ///---------------------------------------------------------------------------------------------------------------------
@@ -428,6 +422,7 @@ static void framebuffer_attach(GfxFramebuffer* framebuffer, GfxTexture* attachme
                                 GL_COLOR_ATTACHMENT0 + framebuffer->color_buffers_count, 
                                 attachment->id, 
                                 0);
+      framebuffer->targets[framebuffer->color_buffers_count] = GL_COLOR_ATTACHMENT0 + framebuffer->color_buffers_count;
       framebuffer->color_buffers_count++;
       break;
     case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
@@ -1011,44 +1006,14 @@ void gfx_context_clear(GfxContext* gfx, GfxFramebuffer* framebuffer) {
     green = framebuffer->desc.clear_color[1];
     blue  = framebuffer->desc.clear_color[2];
     alpha = framebuffer->desc.clear_color[3];
+
+    // Set the number render targets to draw to
+    glNamedFramebufferDrawBuffers(framebuffer_id, framebuffer->color_buffers_count, framebuffer->targets);
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_id);
   glClear(clear_flags);
   glClearColor(red, green, blue, alpha);
-}
-
-void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc& pipe_desc) {
-  NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
-  NIKOLA_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
-
-  // Updating the pipeline 
-  pipeline->desc = pipe_desc;
-  
-  // Updating the shader
-  pipeline->shader = pipe_desc.shader;
-
-  // Updating the textures
-  pipeline->textures_count = pipe_desc.textures_count; 
-  for(sizei i = 0; i < pipeline->textures_count; i++) {
-    pipeline->textures[i] = pipe_desc.textures[i]->id;
-  }
-
-  // Updating the cubemaps 
-  pipeline->cubemaps_count = pipe_desc.cubemaps_count; 
-  for(sizei i = 0; i < pipeline->cubemaps_count; i++) {
-    pipeline->cubemaps[i] = pipe_desc.cubemaps[i]->id;
-  }  
-
-  // Setting the depth mask state of the pipeline 
-  glDepthMask(pipe_desc.depth_mask);
-
-  // Setting the stencil mask of the pipeline state
-  glStencilMask(pipe_desc.stencil_ref);
-
-  // Setting the blend color of the pipeline state
-  const f32* blend_color = pipe_desc.blend_factor;
-  glBlendColor(blend_color[0], blend_color[1], blend_color[2], blend_color[3]);
 }
 
 void gfx_context_present(GfxContext* gfx) {
@@ -1090,10 +1055,44 @@ void gfx_framebuffer_destroy(GfxFramebuffer* framebuffer) {
   memory_free(framebuffer);
 }
 
+void gfx_framebuffer_copy(const GfxFramebuffer* src_frame, 
+                          GfxFramebuffer* dest_frame, 
+                          i32 src_x, i32 src_y, 
+                          i32 src_width, i32 src_height, 
+                          i32 dest_x, i32 dest_y, 
+                          i32 dest_width, i32 dest_height, 
+                          i32 buffer_mask) {
+  NIKOLA_ASSERT((src_frame || dest_frame), "Cannot have both framebuffers as NULL in copy operation");
+
+  u32 src_id   = src_frame ? src_frame->id : 0;
+  u32 dest_id  = dest_frame ? dest_frame->id : 0;
+  u32 gl_masks = get_gl_clear_flags(buffer_mask);
+
+  glBlitNamedFramebuffer(src_id, dest_id, 
+                         src_x, src_y, 
+                         src_width, src_height, 
+                         dest_x, dest_y, 
+                         dest_width, dest_height, 
+                         gl_masks, 
+                         GL_NEAREST);
+}
+
 GfxFramebufferDesc& gfx_framebuffer_get_desc(GfxFramebuffer* framebuffer) {
   NIKOLA_ASSERT(framebuffer, "Invalid GfxFramebuffer struct passed");
 
   return framebuffer->desc;
+}
+
+void gfx_framebuffer_update(GfxFramebuffer* framebuffer, const GfxFramebufferDesc& desc) {
+  NIKOLA_ASSERT(framebuffer, "Invalid GfxFramebuffer struct passed");
+  
+  framebuffer->desc        = desc; 
+  framebuffer->clear_flags = get_gl_clear_flags(desc.clear_flags);
+
+  // Attach all of the given attachments
+  for(sizei i = 0; i < desc.attachments_count; i++) {
+    framebuffer_attach(framebuffer, desc.attachments[i]);
+  }
 }
 
 /// Framebuffer functions
@@ -1202,6 +1201,13 @@ void gfx_shader_destroy(GfxShader* shader) {
 
 GfxShaderDesc& gfx_shader_get_source(GfxShader* shader) {
   return shader->desc;
+}
+
+void gfx_shader_use(GfxShader* shader) {
+  NIKOLA_ASSERT(shader->gfx, "Invalid GfxContext struct passed");
+  NIKOLA_ASSERT(shader, "Invalid GfxShader struct passed");
+
+  glUseProgram(shader->id);
 }
 
 void gfx_shader_update(GfxShader* shader, const GfxShaderDesc& desc) {
@@ -1366,6 +1372,18 @@ void gfx_texture_destroy(GfxTexture* texture) {
   memory_free(texture);
 }
 
+void gfx_texture_use(GfxTexture** textures, const sizei count) {
+  NIKOLA_ASSERT(textures, "Invalid GfxTexture array passed to gfx_texture_use");
+  NIKOLA_ASSERT(((count >= 0) && (count <= TEXTURES_MAX)), "The count parametar in gfx_texture_use is invalid");
+  
+  u32 gl_textures[TEXTURES_MAX];
+  for(sizei i = 0; i < count; i++) {
+    gl_textures[i] = textures[i]->id;
+  }
+
+  glBindTextures(0, count, gl_textures);
+}
+
 GfxTextureDesc& gfx_texture_get_desc(GfxTexture* texture) {
   NIKOLA_ASSERT(texture, "Invalid GfxTexture struct passed");
 
@@ -1462,6 +1480,18 @@ void gfx_cubemap_destroy(GfxCubemap* cubemap) {
   memory_free(cubemap);
 }
 
+void gfx_cubemap_use(GfxCubemap** cubemaps, const sizei count) {
+  NIKOLA_ASSERT(cubemaps, "Invalid GfxCubemap array passed to gfx_cubemap_use");
+  NIKOLA_ASSERT(((count >= 0) && (count <= CUBEMAPS_MAX)), "The count parametar in gfx_cubemap_use is invalid");
+
+  u32 gl_cubemaps[CUBEMAPS_MAX];
+  for(sizei i = 0; i < count; i++) {
+    gl_cubemaps[i] = cubemaps[i]->id;
+  }
+
+  glBindTextures(0, count, gl_cubemaps);
+}
+
 GfxCubemapDesc& gfx_cubemap_get_desc(GfxCubemap* cubemap) {
   NIKOLA_ASSERT(cubemap, "Invalid GfxCubemap struct passed");
 
@@ -1543,24 +1573,9 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc) {
     glVertexArrayElementBuffer(pipe->vertex_array, pipe->index_buffer->id);
   }
   
-  // Shader init 
-  pipe->shader = desc.shader; 
-  
   // Set the draw mode for the whole pipeline
   pipe->draw_mode = desc.draw_mode;
-
-  // Textures init
-  pipe->textures_count = desc.textures_count; 
-  for(sizei i = 0; i < desc.textures_count; i++) {
-    pipe->textures[i] = desc.textures[i]->id;
-  }
-
-  // Cubemaps init 
-  pipe->cubemaps_count = desc.cubemaps_count; 
-  for(sizei i = 0; i < desc.cubemaps_count; i++) {
-    pipe->cubemaps[i] = desc.cubemaps[i]->id;
-  }  
-    
+   
   return pipe;
 }
 
@@ -1580,26 +1595,29 @@ GfxPipelineDesc& gfx_pipeline_get_desc(GfxPipeline* pipeline) {
   return pipeline->desc;
 }
 
+void gfx_pipeline_update(GfxPipeline* pipeline, const GfxPipelineDesc& desc) {
+  NIKOLA_ASSERT(pipeline, "Invalid GfxPipeline struct passed to gfx_pipeline_update");
+
+  pipeline->desc = desc;
+}
+
 void gfx_pipeline_draw_vertex(GfxPipeline* pipeline) {
   NIKOLA_ASSERT(pipeline->gfx, "Invalid GfxContext struct passed");
   NIKOLA_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
   NIKOLA_ASSERT(pipeline->vertex_buffer, "Must have a valid vertex buffer to draw");
 
+  // Setting the depth mask state of the pipeline 
+  glDepthMask(pipeline->desc.depth_mask);
+
+  // Setting the stencil mask of the pipeline state
+  glStencilMask(pipeline->desc.stencil_ref);
+
+  // Setting the blend color of the pipeline state
+  const f32* blend_color = pipeline->desc.blend_factor;
+  glBlendColor(blend_color[0], blend_color[1], blend_color[2], blend_color[3]);
+
   // Bind the vertex array
   glBindVertexArray(pipeline->vertex_array);
-
-  // Bind the shader
-  glUseProgram(pipeline->desc.shader->id);
-  
-  // Draw the cubemaps
-  if(pipeline->cubemaps_count > 0) {
-    glBindTextures(0, pipeline->cubemaps_count, pipeline->cubemaps);
-  } 
-
-  // Draw the textures
-  if(pipeline->textures_count > 0) {
-    glBindTextures(0, pipeline->textures_count, pipeline->textures);
-  }
 
   // Draw the vertices
   GLenum draw_mode = get_draw_mode(pipeline->desc.draw_mode); 
@@ -1615,21 +1633,18 @@ void gfx_pipeline_draw_index(GfxPipeline* pipeline) {
   NIKOLA_ASSERT(pipeline->vertex_buffer, "Must have a valid vertex buffer to draw");
   NIKOLA_ASSERT(pipeline->index_buffer, "Must have a valid index buffer to draw");
 
+  // Setting the depth mask state of the pipeline 
+  glDepthMask(pipeline->desc.depth_mask);
+
+  // Setting the stencil mask of the pipeline state
+  glStencilMask(pipeline->desc.stencil_ref);
+
+  // Setting the blend color of the pipeline state
+  const f32* blend_color = pipeline->desc.blend_factor;
+  glBlendColor(blend_color[0], blend_color[1], blend_color[2], blend_color[3]);
+
   // Bind the vertex array
   glBindVertexArray(pipeline->vertex_array);
-
-  // Bind the shader
-  glUseProgram(pipeline->desc.shader->id);
-
-  // Draw the cubemaps
-  if(pipeline->cubemaps_count > 0) {
-    glBindTextures(0, pipeline->cubemaps_count, pipeline->cubemaps);
-  } 
-
-  // Draw the textures
-  if(pipeline->textures_count > 0) {
-    glBindTextures(0, pipeline->textures_count, pipeline->textures);
-  }
 
   // Draw the indices
   GLenum draw_mode = get_draw_mode(pipeline->desc.draw_mode); 

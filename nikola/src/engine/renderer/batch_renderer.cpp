@@ -32,9 +32,13 @@ struct BatchRenderer {
   GfxContext* context     = nullptr;
   GfxContextDesc ctx_desc = {}; 
 
+  GfxShader* batch_shader = nullptr;
+
   GfxPipelineDesc pipe_desc = {};
   GfxPipeline* pipeline     = nullptr; 
   GfxTexture* white_texture = nullptr;
+
+  RendererDefaults defaults = {};
 
   DynamicArray<BatchCall> batches;
   HashMap<GfxTexture*, i32> textures_cache;
@@ -50,7 +54,7 @@ static BatchRenderer s_batch;
 ///---------------------------------------------------------------------------------------------------------------------
 /// Private functions
 
-static GfxShaderDesc init_batch_shader() {
+static void init_batch_shader() {
   GfxShaderDesc desc;
 
   // Vertex shader init
@@ -96,7 +100,7 @@ static GfxShaderDesc init_batch_shader() {
     "  frag_color = texture(u_texture, fs_in.tex_coords) * fs_in.out_color;\n"
     "}\n";
 
-  return desc;
+  s_batch.batch_shader = gfx_shader_create(s_batch.context, desc);
 }
 
 static void init_default_texture() {
@@ -114,8 +118,8 @@ static void init_default_texture() {
   };
 
   // Create the texture and add it to the cache
-  s_batch.white_texture = gfx_texture_create(s_batch.context, desc);
-  s_batch.textures_cache[s_batch.white_texture] = 0;
+  s_batch.defaults = renderer_get_defaults();
+  s_batch.textures_cache[s_batch.defaults.texture] = 0;
 }
 
 static void init_pipeline() {
@@ -152,10 +156,6 @@ static void init_pipeline() {
   s_batch.pipe_desc.index_buffer  = gfx_buffer_create(s_batch.context, index_desc);
   s_batch.pipe_desc.indices_count = 0;
 
-  // Shader init
-  GfxShaderDesc shader_desc = init_batch_shader();
-  s_batch.pipe_desc.shader  = gfx_shader_create(s_batch.context, shader_desc); 
-
   // Layout init
   s_batch.pipe_desc.layout[0]     = GfxLayoutDesc{"POS", GFX_LAYOUT_FLOAT3, 0};
   s_batch.pipe_desc.layout[1]     = GfxLayoutDesc{"COLOR", GFX_LAYOUT_FLOAT4, 0};
@@ -164,9 +164,6 @@ static void init_pipeline() {
 
   // Draw mode init 
   s_batch.pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
-
-  // Texture init 
-  init_default_texture();
 
   // Pipeline init
   s_batch.pipeline = gfx_pipeline_create(s_batch.context, s_batch.pipe_desc);
@@ -180,8 +177,8 @@ static void flush_batch(BatchCall& batch) {
 
   // Apply the batch
   s_batch.pipe_desc.indices_count  = batch.indices_count;
-  s_batch.pipe_desc.textures[0]    = batch.texture;
-  s_batch.pipe_desc.textures_count = 1;
+  gfx_shader_use(s_batch.batch_shader);
+  gfx_texture_use(&batch.texture, 1);
 
   // Update the vertex buffer
   gfx_buffer_update(s_batch.pipe_desc.vertex_buffer, 
@@ -190,7 +187,7 @@ static void flush_batch(BatchCall& batch) {
                     batch.vertices.data());
 
   // Render the batch
-  gfx_context_apply_pipeline(s_batch.context, s_batch.pipeline, s_batch.pipe_desc);
+  gfx_pipeline_update(s_batch.pipeline, s_batch.pipe_desc); 
   gfx_pipeline_draw_index(s_batch.pipeline); 
 
   // Reset back to normal
@@ -213,11 +210,17 @@ void batch_renderer_init() {
   // Pipeline init
   init_pipeline(); 
 
+  // Texture init 
+  init_default_texture();
+
+  // Shader init
+  init_batch_shader();
+
   // Default batch init
   s_batch.batches.reserve(32);
   BatchCall default_batch = {
     .indices_count = 0, 
-    .texture       = s_batch.white_texture, 
+    .texture       = s_batch.defaults.texture, 
   };
   s_batch.batches.push_back(default_batch);
 
@@ -232,8 +235,7 @@ void batch_renderer_init() {
 
 void batch_renderer_shutdown() {
   gfx_pipeline_destroy(s_batch.pipeline);
-  gfx_shader_destroy(s_batch.pipe_desc.shader);
-  gfx_texture_destroy(s_batch.white_texture);
+  gfx_shader_destroy(s_batch.batch_shader);
 
   s_batch.batches.clear();
   

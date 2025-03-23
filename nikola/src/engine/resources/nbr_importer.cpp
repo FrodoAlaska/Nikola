@@ -88,6 +88,9 @@ void nbr_import_mesh(NBRMesh* nbr, const u16 group_id, Mesh* mesh) {
 void nbr_import_material(NBRMaterial* nbr, const u16 group_id, Material* material) {
   NIKOLA_ASSERT(nbr, "Invalid NBRMaterial while importing");
   NIKOLA_ASSERT(material, "Invalid Material while importing");
+
+  // Default values for the textures
+  material->specular_map = ResourceID{};
   
   material->ambient_color  = Vec3(nbr->ambient[0], nbr->ambient[1], nbr->ambient[2]); 
   material->diffuse_color  = Vec3(nbr->diffuse[0], nbr->diffuse[1], nbr->diffuse[2]); 
@@ -121,6 +124,10 @@ void nbr_import_model(NBRModel* nbr, const u16 group_id, Model* model) {
     // Create a new material 
     ResourceID mat_id = resources_push_material(group_id, ResourceID{});
     Material* mat     = resources_get_material(mat_id);
+
+    // Default values for the textures
+    mat->diffuse_map  = ResourceID{};
+    mat->specular_map = ResourceID{};
 
     // Insert a valid diffuse texture 
     mat->diffuse_map = texture_ids[nbr->materials[i].diffuse_index];

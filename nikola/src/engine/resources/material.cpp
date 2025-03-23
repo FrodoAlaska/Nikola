@@ -87,7 +87,7 @@ void material_set_uniform_buffer(ResourceID& mat_id, const sizei index, const Re
   GfxBuffer* buffer = resources_get_buffer(buffer_id);
 
   NIKOLA_ASSERT(shader, "Invalid Material's shader");
-  NIKOLA_ASSERT(buffer, "Invalid Material's shader");
+  NIKOLA_ASSERT(buffer, "Invalid buffer given to material_set_uniform_buffer");
   NIKOLA_ASSERT(((index >= MATERIAL_MATRICES_BUFFER_INDEX) && (index <= MATERIAL_LIGHTING_BUFFER_INDEX)), "Invalid index passed as uniform buffer index of a material");
 
   mat->uniform_buffers[index] = buffer_id;
@@ -95,8 +95,8 @@ void material_set_uniform_buffer(ResourceID& mat_id, const sizei index, const Re
 }
 
 void material_set_texture(ResourceID& mat_id, const MaterialTextureType type, const ResourceID& texture_id) {
-  NIKOLA_ASSERT((mat_id.group != RESOURCE_GROUP_INVALID), "Invalid Material passed");
-  NIKOLA_ASSERT((texture_id.group != RESOURCE_GROUP_INVALID), "Invalid texture ID passed to material");
+  NIKOLA_ASSERT(RESOURCE_IS_VALID(mat_id), "Invalid Material passed");
+  NIKOLA_ASSERT(RESOURCE_IS_VALID(texture_id), "Invalid texture ID passed to material");
   
   Material* mat = resources_get_material(mat_id); 
 
@@ -110,8 +110,19 @@ void material_set_texture(ResourceID& mat_id, const MaterialTextureType type, co
   }
 }
 
-void material_use(ResourceID& mat_id) {
+void material_set_shader(ResourceID& mat_id, const ResourceID& shader_id) {
+  NIKOLA_ASSERT((mat_id.group != RESOURCE_GROUP_INVALID), "Invalid Material passed");
+  NIKOLA_ASSERT((shader_id.group != RESOURCE_GROUP_INVALID), "Invalid shader ID passed to material");
+  
   Material* mat = resources_get_material(mat_id); 
+  mat->shader   = shader_id;
+}
+
+void material_use(ResourceID& mat_id) {
+  Material* mat = resources_get_material(mat_id);
+
+  // Use the shader 
+  gfx_shader_use(resources_get_shader(mat->shader));
 
   // Send all of the available uniforms
   send_preset_uniform(mat, MATERIAL_UNIFORM_AMBIENT_COLOR, GFX_LAYOUT_FLOAT3, &mat->ambient_color[0]);
@@ -120,6 +131,19 @@ void material_use(ResourceID& mat_id) {
   send_preset_uniform(mat, MATERIAL_UNIFORM_SHININESS, GFX_LAYOUT_FLOAT1, &mat->shininess);
   send_preset_uniform(mat, MATERIAL_UNIFORM_SCREEN_SIZE, GFX_LAYOUT_FLOAT2, &mat->screen_size[0]);
   send_preset_uniform(mat, MATERIAL_UNIFORM_MODEL_MATRIX, GFX_LAYOUT_MAT4, mat4_raw_data(mat->model_matrix));
+
+  // Use the diffuse texture (if they are valid)
+  if(RESOURCE_IS_VALID(mat->diffuse_map)) {
+    GfxTexture* diffuse = resources_get_texture(mat->diffuse_map);
+    gfx_texture_use(&diffuse, 1);
+  }
+ 
+  // @FIX (Material)
+  // Use the specular texture (if they are valid)
+  // if(RESOURCE_IS_VALID(mat->specular_map)) {
+  //   GfxTexture* specular = resources_get_texture(mat->specular_map);
+  //   gfx_texture_use(&specular, 1);
+  // }
 }
 
 /// Material functions

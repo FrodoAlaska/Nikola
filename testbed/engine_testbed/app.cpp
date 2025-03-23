@@ -56,9 +56,9 @@ struct nikola::App {
   nikola::u16 res_group_id;
 
   nikola::RenderQueue render_queue;
-  nikola::RenderPass geo_pass;
+  nikola::RenderPass geo_pass, light_pass, post_proc_pass;
 
-  nikola::ResourceID skybox_material_id, material_id, post_proc_material_id;
+  nikola::ResourceID skybox_material_id, material_id, pass_material_id;
   nikola::ResourceID skybox_id;
   nikola::DynamicArray<nikola::ResourceID> skyboxes;
 
@@ -88,7 +88,7 @@ static void init_resources(nikola::App* app) {
   nikola::resources_push_dir(app->res_group_id, "shaders");
   nikola::resources_push_dir(app->res_group_id, "cubemaps");
   // nikola::resources_push_dir(app->res_group_id, "models");
-  nikola::resources_push_model(app->res_group_id, "models/behelit.nbrmodel");
+  nikola::resources_push_model(app->res_group_id, "models/bridge.nbrmodel");
 
   // Skybox init
   app->skyboxes.push_back(nikola::resources_push_skybox(app->res_group_id, nikola::resources_get_id(app->res_group_id, "gloomy")));
@@ -97,22 +97,24 @@ static void init_resources(nikola::App* app) {
   app->skybox_id = app->skyboxes[0];
 
   // Materials init
-  app->material_id           = nikola::resources_push_material(app->res_group_id, nikola::resources_get_id(app->res_group_id, "default3d"));
-  app->skybox_material_id    = nikola::resources_push_material(app->res_group_id, nikola::resources_get_id(app->res_group_id, "cubemap"));
-  app->post_proc_material_id = nikola::resources_push_material(app->res_group_id, nikola::resources_get_id(app->res_group_id, "post_process"));
+  app->material_id        = nikola::resources_push_material(app->res_group_id, nikola::resources_get_id(app->res_group_id, "default3d"));
+  app->skybox_material_id = nikola::resources_push_material(app->res_group_id, nikola::resources_get_id(app->res_group_id, "cubemap"));
+  app->pass_material_id   = nikola::resources_push_material(app->res_group_id, nikola::resources_get_id(app->res_group_id, "post_process"));
+}
 
+static void init_props(nikola::App* app) {
   // Mesh init
   nikola::ResourceID mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::MESH_TYPE_CUBE);
-
+ 
   nikola::Vec3 default_pos(10.0f, 0.0f, 10.0f);
   
   // Porps init
-  app->props.push_back(Prop("behelit", default_pos, nikola::Vec3(0.1f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "behelit")));
+  app->props.push_back(Prop("behelit", default_pos, nikola::Vec3(0.1f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "bridge")));
   // app->props.push_back(Prop("bridge", default_pos, nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "bridge")));
   // app->props.push_back(Prop("tempel", default_pos, nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "tempel")));
   app->props.push_back(Prop("moon", default_pos, nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MESH, mesh_id));
 
-  app->current_prop = &app->props[0];
+  app->current_prop = &app->props[1];
 }
 
 static void init_passes(nikola::App* app) {
@@ -120,7 +122,47 @@ static void init_passes(nikola::App* app) {
   nikola::window_get_size(app->window, &width, &height);
 
   // Geometry pass
-  nikola::render_pass_create(&app->geo_pass, nikola::Vec2(width, height), app->post_proc_material_id);
+  nikola::render_pass_create(&app->geo_pass, nikola::Vec2(width, height), (nikola::GFX_CLEAR_FLAGS_COLOR_BUFFER | nikola::GFX_CLEAR_FLAGS_DEPTH_BUFFER));
+  nikola::render_pass_push_target(app->geo_pass, nikola::GFX_TEXTURE_RENDER_TARGET, nikola::GFX_TEXTURE_FORMAT_RGBA8);
+  nikola::render_pass_push_target(app->geo_pass, nikola::GFX_TEXTURE_DEPTH_STENCIL_TARGET, nikola::GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8);
+
+  // Light pass
+  
+  // Post-process pass
+  nikola::render_pass_create(&app->post_proc_pass, nikola::Vec2(width, height), nikola::GFX_CLEAR_FLAGS_COLOR_BUFFER);
+  nikola::render_pass_push_target(app->post_proc_pass, nikola::GFX_TEXTURE_RENDER_TARGET, nikola::GFX_TEXTURE_FORMAT_RGBA8);
+}
+
+static void geometry_pass(nikola::App* app) {
+  nikola::render_pass_begin(app->geo_pass);
+
+  // Render the objects to the framebuffer
+  nikola::render_queue_flush(app->render_queue);
+  
+  // Set the shader
+  nikola::material_set_shader(app->pass_material_id, nikola::resources_get_id(app->res_group_id, "geo_pass"));
+  
+  nikola::render_pass_end(app->geo_pass, app->pass_material_id);
+}
+
+static void light_pass(nikola::App* app) {
+  // nikola::render_pass_begin(app->geo_pass);
+  //
+  // // Send the light positions
+  //
+  // nikola::render_pass_end(app->geo_pass, app->pass_material_id);
+}
+
+static void post_process_pass(nikola::App* app) {
+  nikola::render_pass_begin(app->post_proc_pass);
+
+  // Set the shader
+  nikola::material_set_shader(app->pass_material_id, nikola::resources_get_id(app->res_group_id, "post_process"));
+  nikola::material_set_uniform(app->pass_material_id, "u_effect_index", 0);
+
+  app->post_proc_pass.frame_desc.attachments[0] = app->geo_pass.frame_desc.attachments[0];
+  app->post_proc_pass.frame_desc.attachments_count = 1;
+  nikola::render_pass_end(app->post_proc_pass, app->pass_material_id);
 }
 
 static void render_app_ui(nikola::App* app) {
@@ -177,6 +219,9 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Resoruces init
   init_resources(app);
 
+  // Props init
+  init_props(app);
+
   // Render passes init
   init_passes(app);
 
@@ -213,9 +258,8 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 void app_render(nikola::App* app) {
   nikola::renderer_begin(app->camera);
 
-  nikola::render_pass_begin(app->geo_pass);
-
   // Render the prop
+  nikola::material_set_texture(app->material_id, nikola::MATERIAL_TEXTURE_DIFFUSE, nikola::resources_get_id(app->res_group_id, "moon"));
   app->current_prop->render(app->render_queue, app->material_id);
 
   // Render the skybox 
@@ -226,13 +270,14 @@ void app_render(nikola::App* app) {
   rnd_cmd.transform     = app->current_prop->transform; 
   nikola::render_queue_push(app->render_queue, rnd_cmd);
 
-  // Render the objects to the framebuffer
-  nikola::render_queue_flush(app->render_queue);
-
-  // Render the framebuffer
-  nikola::material_set_uniform(app->post_proc_material_id, "u_effect_index", 0);
-  nikola::render_pass_end(app->geo_pass);
+  // Go through all the passes
+  geometry_pass(app);
+  // light_pass(app);
+  post_process_pass(app);
   
+  // Render the final pass
+  nikola::renderer_apply_pass(app->post_proc_pass);
+
   // Render UI
   render_app_ui(app); 
 

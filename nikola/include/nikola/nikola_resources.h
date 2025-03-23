@@ -263,6 +263,15 @@ const u32 MATERIAL_UNIFORMS_MAX            = 6;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// Macros 
+
+/// Check if the given `res_id` is valid
+#define RESOURCE_IS_VALID(id) (id.group != RESOURCE_GROUP_INVALID)
+
+/// Macros 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// ResourceType
 enum ResourceType {
   /// A flag to denote a `GfxBuffer` resource
@@ -452,6 +461,11 @@ NIKOLA_API void material_set_uniform_buffer(ResourceID& mat_id, const sizei inde
 /// 
 /// @NOTE: If either `texture_id` or `mat_id` are invalid, this function will assert. 
 NIKOLA_API void material_set_texture(ResourceID& mat_id, const MaterialTextureType type, const ResourceID& texture_id);
+
+/// Set the shader with `shader_id` in `mat_id`. 
+/// 
+/// @NOTE: If either `shader_id` or `mat_id` are invalid, this function will assert. 
+NIKOLA_API void material_set_shader(ResourceID& mat_id, const ResourceID& shader_id);
 
 /// Go over all of the available uniforms in `uniform_locations` in `mat_id` and send the appropriate data.
 ///

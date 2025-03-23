@@ -108,34 +108,18 @@ static void init_pipeline() {
   s_renderer.pipeline = gfx_pipeline_create(s_renderer.context, s_renderer.pipe_desc);
 }
 
-static void render_primitive(Mesh* mesh, Material* material, Transform& transform) {
-  // Setting uniforms
-  material->model_matrix = transform.transform; 
-
-  // Setting up the pipeline
-  mesh->pipe_desc.shader      = resources_get_shader(material->shader);
-  mesh->pipe_desc.textures[0] = resources_get_texture(material->diffuse_map); 
-  mesh->pipe_desc.textures[1] = resources_get_texture(material->specular_map); 
-
-  // @NOTE: Even though the `material` might not have a specular or diffuse map, 
-  // the resource manager will append a default texture in place of these 
-  // to ensure the pipeline keeps moving without checking for `nullptr`s all the time.
-  // Hence, there are _always_ textures available with each model.
-  mesh->pipe_desc.textures_count = 2; 
-
-  // Render the mesh
-  gfx_context_apply_pipeline(s_renderer.context, mesh->pipe, mesh->pipe_desc);
-  gfx_pipeline_draw_index(mesh->pipe);
-}
-
 static void render_mesh(RenderCommand& command) {
   Mesh* mesh         = resources_get_mesh(command.renderable_id);
   Material* material = resources_get_material(command.material_id);
 
+  // Setting preset uniforms
+  material->model_matrix = command.transform.transform;
+
   // Uploading the uniforms
   material_use(command.material_id);  
-  
-  render_primitive(mesh, material, command.transform);
+
+  // Draw the mesh
+  gfx_pipeline_draw_index(mesh->pipe);
 }
 
 static void render_skybox(RenderCommand& command) {
@@ -145,12 +129,11 @@ static void render_skybox(RenderCommand& command) {
   // Uploading the uniforms
   material_use(command.material_id);  
 
-  // Setting up the pipeline
-  skybox->pipe_desc.shader      = resources_get_shader(material->shader);
-  skybox->pipe_desc.cubemaps[0] = resources_get_cubemap(skybox->cubemap);
+  // Use the cubemap
+  GfxCubemap* cube = resources_get_cubemap(skybox->cubemap);
+  gfx_cubemap_use(&cube, 1);
 
-  // Render the skybox
-  gfx_context_apply_pipeline(s_renderer.context, skybox->pipe, skybox->pipe_desc);
+  // Draw the skybox
   gfx_pipeline_draw_vertex(skybox->pipe);
 }
 
@@ -158,31 +141,24 @@ static void render_model(RenderCommand& command) {
   Model* model  = resources_get_model(command.renderable_id);
   Material* mat = resources_get_material(command.material_id);
 
-  mat->model_matrix = command.transform.transform;
-
   for(sizei i = 0; i < model->meshes.size(); i++) {
+    // For better visuals (and performance?)
     Mesh* mesh              = resources_get_mesh(model->meshes[i]);
-    Material* mesh_material = resources_get_material(model->materials[model->material_indices[i]]); 
+    ResourceID mat_id       = model->materials[model->material_indices[i]];
+    Material* mesh_material = resources_get_material(mat_id); 
 
-    // Setting textures
-    mat->diffuse_map  = mesh_material->diffuse_map;
-    mat->specular_map = mesh_material->specular_map;
+    // Setting preset uniforms
+    mesh_material->model_matrix = command.transform.transform;
 
-    // Setting uniforms
-    //
-    // @NOTE: Each material has its own valid colors and model. However, we also 
-    // want OUR own materials to influence the model. So, we _apply_ our model matrix 
-    // and colors to the material.
-    // mesh_material->shader            = mat->shader; 
-    // mesh_material->ambient_color     = mat->ambient_color; 
-    // mesh_material->diffuse_color     = mat->diffuse_color; 
-    // mesh_material->specular_color    = mat->specular_color; 
+    // Setting the shader
+    material_set_shader(mat_id, mat->shader);
+    material_set_uniform(mat_id, "u_model", command.transform.transform); // @TODO(Renderer): Perhaps there is a better way to set the transform of a model?
 
     // Uploading the uniforms
-    material_use(command.material_id);  
+    material_use(mat_id);  
 
-    // Render the model's primitive
-    render_primitive(mesh, mat, command.transform);
+    // Draw the material's mesh
+    gfx_pipeline_draw_index(mesh->pipe);
   }
 }
 
@@ -220,8 +196,7 @@ void render_queue_push(RenderQueue& queue, const RenderCommand& cmd) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderPass functions
 
-void render_pass_create(RenderPass* pass, const Vec2& size, const ResourceID& material_id) {
-  pass->material   = material_id;
+void render_pass_create(RenderPass* pass, const Vec2& size, u32 clear_flags) {
   pass->frame_size = (Vec2)size;
   
   pass->frame_desc = {}; 
@@ -233,37 +208,7 @@ void render_pass_create(RenderPass* pass, const Vec2& size, const ResourceID& ma
   pass->frame_desc.clear_color[3] = s_renderer.clear_color.a;
 
   // Clear flags init
-  pass->frame_desc.clear_flags = GFX_CLEAR_FLAGS_COLOR_BUFFER | GFX_CLEAR_FLAGS_DEPTH_BUFFER;
-
-  // Render target init
-  GfxTextureDesc texture_desc = {
-    .width     = (u32)size.x, 
-    .height    = (u32)size.y, 
-    .depth     = 0, 
-    .mips      = 1, 
-    .type      = GFX_TEXTURE_RENDER_TARGET,
-    .format    = GFX_TEXTURE_FORMAT_RGBA8, 
-    .filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-    .wrap_mode = GFX_TEXTURE_WRAP_MIRROR, 
-    .data      = nullptr,
-  };
-  pass->frame_desc.attachments[0] = gfx_texture_create(s_renderer.context, texture_desc);
-  pass->frame_desc.attachments_count++;
-
-  // Depth-Stencil texture init
-  texture_desc = {
-    .width     = (u32)size.x, 
-    .height    = (u32)size.y, 
-    .depth     = 0, 
-    .mips      = 1, 
-    .type      = GFX_TEXTURE_DEPTH_STENCIL_TARGET,
-    .format    = GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8, 
-    .filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-    .wrap_mode = GFX_TEXTURE_WRAP_CLAMP, 
-    .data      = nullptr,
-  };
-  pass->frame_desc.attachments[1] = gfx_texture_create(s_renderer.context, texture_desc);
-  pass->frame_desc.attachments_count++;
+  pass->frame_desc.clear_flags = clear_flags;
   
   // Framebuffer init
   pass->frame = gfx_framebuffer_create(s_renderer.context, pass->frame_desc);
@@ -285,23 +230,33 @@ void render_pass_begin(RenderPass& pass) {
   gfx_context_set_state(s_renderer.context, GFX_STATE_DEPTH, true); 
 }
 
-void render_pass_end(RenderPass& pass) {
-  // Render to the default framebuffer
-  gfx_context_clear(s_renderer.context, nullptr);
-  gfx_context_set_state(s_renderer.context, GFX_STATE_DEPTH, false); 
-
-  // Apply the shader from the pass
-  s_renderer.pipe_desc.shader = resources_get_shader(resources_get_material(pass.material)->shader);
+void render_pass_end(RenderPass& pass, const ResourceID& material_id) {
+  NIKOLA_ASSERT((material_id.group != RESOURCE_GROUP_INVALID), "Invalid Material passed to render_pass_end function");
 
   // Apply the textures from the pass
-  for(sizei i = 0; i < pass.frame_desc.attachments_count; i++) {
-    s_renderer.pipe_desc.textures[i] = pass.frame_desc.attachments[i];
-  }
-  s_renderer.pipe_desc.textures_count = pass.frame_desc.attachments_count;
+  gfx_texture_use(pass.frame_desc.attachments, pass.frame_desc.attachments_count); 
 
-  // Render the final render target
-  gfx_context_apply_pipeline(s_renderer.context, s_renderer.pipeline, s_renderer.pipe_desc);
-  gfx_pipeline_draw_index(s_renderer.pipeline);
+  // Apply the shader from the pass
+  gfx_shader_use(resources_get_shader(resources_get_material(material_id)->shader));
+}
+
+void render_pass_push_target(RenderPass& pass, const GfxTextureType type, const GfxTextureFormat format) {
+  GfxTextureDesc texture_desc = {
+    .width     = (u32)pass.frame_size.x, 
+    .height    = (u32)pass.frame_size.y, 
+    .depth     = 0, 
+    .mips      = 1, 
+    .type      = type,
+    .format    = format, 
+    .filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
+    .wrap_mode = GFX_TEXTURE_WRAP_MIRROR, 
+    .data      = nullptr,
+  };
+
+  pass.frame_desc.attachments[pass.frame_desc.attachments_count] = gfx_texture_create(s_renderer.context, texture_desc);
+  pass.frame_desc.attachments_count++;
+
+  gfx_framebuffer_update(pass.frame, pass.frame_desc);
 }
 
 /// RenderPass functions
@@ -352,6 +307,16 @@ void renderer_begin(Camera& camera) {
 
 void renderer_end() {
   gfx_context_present(s_renderer.context);
+}
+
+void renderer_apply_pass(RenderPass& pass) {
+  // Render to the default framebuffer
+  gfx_context_clear(s_renderer.context, nullptr);
+  gfx_context_set_state(s_renderer.context, GFX_STATE_DEPTH, false); 
+
+  // Render the final render target
+  gfx_pipeline_update(s_renderer.pipeline, s_renderer.pipe_desc);
+  gfx_pipeline_draw_index(s_renderer.pipeline);
 }
 
 /// Renderer functions

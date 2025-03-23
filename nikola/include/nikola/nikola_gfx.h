@@ -646,7 +646,7 @@ struct GfxFramebufferDesc {
 
   /// A bitwise ORed value `GfxClearFlags` that determine 
   /// which buffers to clear every frame. 
-  u32 clear_flags       = 0;
+  u32 clear_flags = 0;
 
   /// An array of attachments up to `FRAMEBUFFER_ATTACHMENTS_MAX`. 
   ///
@@ -812,9 +812,6 @@ struct GfxPipelineDesc {
 
   /// The amount of indices in the `index_buffer` to be drawn.
   sizei indices_count                = 0;
-
-  /// The shader to be used in the draw command.
-  GfxShader* shader                  = nullptr;
   
   /// Layout array up to `LAYOUT_ELEMENTS_MAX` describing each layout attribute.
   GfxLayoutDesc layout[LAYOUT_ELEMENTS_MAX];
@@ -826,18 +823,6 @@ struct GfxPipelineDesc {
   ///
   /// @NOTE: This can be changed at anytime before the draw command.
   GfxDrawMode draw_mode;
- 
-  /// Array of cubmaps up to `CUBEMAPS_MAX` to be used in a draw command.
-  GfxCubemap* cubemaps[CUBEMAPS_MAX] = {nullptr};
-
-  /// The amout of cubemaps to be used in `cubemaps`.
-  sizei cubemaps_count               = 0;
-
-  /// Array of textures up to `TEXTURES_MAX` to be used in a draw command. 
-  GfxTexture* textures[TEXTURES_MAX] = {nullptr};
-
-  /// The amount of textures to be used in `textures`.
-  sizei textures_count               = 0;
  
   /// A flag to indicate if the pipeline can 
   /// or cannot write to the depth buffer. 
@@ -900,11 +885,6 @@ NIKOLA_API void gfx_context_set_state(GfxContext* gfx, const GfxStates state, co
 /// framebuffer instead.
 NIKOLA_API void gfx_context_clear(GfxContext* gfx, GfxFramebuffer* framebuffer);
 
-/// Apply the `pipeline` using the updated `pipe_desc` in the current `gfx`. 
-/// This function will update the references of the shader, buffers, and textures in `pipeline` using `pipe_desc` 
-/// as well as set up all the currently active states.
-NIKOLA_API void gfx_context_apply_pipeline(GfxContext* gfx, GfxPipeline* pipeline, const GfxPipelineDesc& pipe_desc);
-
 /// Switch to the back buffer or, rather, present the back buffer to the screen. 
 /// 
 /// @NOTE: This function will be affected by vsync. 
@@ -922,8 +902,28 @@ NIKOLA_API GfxFramebuffer* gfx_framebuffer_create(GfxContext* gfx, const GfxFram
 /// Free/reclaim any memory taken by `framebuffer`.
 NIKOLA_API void gfx_framebuffer_destroy(GfxFramebuffer* framebuffer);
 
+/// Copy the contents of the buffer associated with `buffer_mask` (which is an ORable flag from the `GfxClearFlags` enum) 
+/// of the `src_frame` (confined by `src_x`, `src_y`, `src_width`, and `src_height`) framebuffer into the `dest_frame` 
+/// (confined by `dest_x`, `dest_y`, `dest_width`, and `dest_height`) framebuffer. 
+///
+/// @NOTE: If either `src_frame` or `dest_frame` is a `nullptr`, the contents are going to be copied 
+/// from or to the default framebuffer. 
+///
+/// @NOTE: If BOTH `src_frame` and `dest_frame` are set to `nullptr`
+NIKOLA_API void gfx_framebuffer_copy(const GfxFramebuffer* src_frame, 
+                                     GfxFramebuffer* dest_frame, 
+                                     i32 src_x, i32 src_y, 
+                                     i32 src_width, i32 src_height, 
+                                     i32 dest_x, i32 dest_y, 
+                                     i32 dest_width, i32 dest_height, 
+                                     i32 buffer_mask);
+
 /// Retrieve the internal `GfxFramebufferDesc` of `framebuffer`
 NIKOLA_API GfxFramebufferDesc& gfx_framebuffer_get_desc(GfxFramebuffer* framebuffer);
+
+/// Update the information of `framebuffer` by resetting the clear flags as well as reattaching the 
+/// render targets in `desc`.
+NIKOLA_API void gfx_framebuffer_update(GfxFramebuffer* framebuffer, const GfxFramebufferDesc& desc);
 
 /// Framebuffer functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -954,6 +954,11 @@ NIKOLA_API GfxShader* gfx_shader_create(GfxContext* gfx, const GfxShaderDesc& de
 
 /// Free/reclaim any memory consumed by `shader`.
 NIKOLA_API void gfx_shader_destroy(GfxShader* shader);
+
+/// Use/activate the given `shader` in any subsequent draw call.
+///
+/// @NOTE: If `shader` is a `nullptr`, the function will assert.
+NIKOLA_API void gfx_shader_use(GfxShader* shader);
 
 /// Retrieve the internal `GfxShaderDesc` of `shader`.
 NIKOLA_API GfxShaderDesc& gfx_shader_get_source(GfxShader* shader);
@@ -992,6 +997,13 @@ NIKOLA_API GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc&
 /// Reclaim/free any memory allocated by `texture`.
 NIKOLA_API void gfx_texture_destroy(GfxTexture* texture);
 
+/// Use/activate the given `textures` array of `count` in any subsequent draw call. 
+///
+/// @NOTE: If any texture inside the `textures` array is a `nullptr`, the function will assert.
+///
+/// @NOTE: The given `count` CANNOT exceed `TEXTURES_MAX`.
+NIKOLA_API void gfx_texture_use(GfxTexture** textures, const sizei count);
+
 /// Retrieve the internal `GfxTextureDesc` of `texture`
 NIKOLA_API GfxTextureDesc& gfx_texture_get_desc(GfxTexture* texture);
 
@@ -1011,6 +1023,13 @@ NIKOLA_API GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc&
 
 /// Reclaim/free any memory allocated by `texture`.
 NIKOLA_API void gfx_cubemap_destroy(GfxCubemap* cubemap);
+
+/// Use/activate the given `cubemaps` array of `count` in any subsequent draw call. 
+///
+/// @NOTE: If any cubemap inside the `cubemaps` array is a `nullptr`, the function will assert.
+///
+/// @NOTE: The given `count` CANNOT exceed `CUBEMAPS_MAX`.
+NIKOLA_API void gfx_cubemap_use(GfxCubemap** cubemaps, const sizei count);
 
 /// Retrieve the internal `GfxCubemapDesc` of `cubemap`
 NIKOLA_API GfxCubemapDesc& gfx_cubemap_get_desc(GfxCubemap* cubemap);
@@ -1034,6 +1053,9 @@ NIKOLA_API void gfx_pipeline_destroy(GfxPipeline* pipeline);
 
 /// Retrieve the internal `GfxPipelineDesc` of `pipeline`
 NIKOLA_API GfxPipelineDesc& gfx_pipeline_get_desc(GfxPipeline* pipeline);
+
+/// Update the `pipeline`'s information from the given `desc`.
+NIKOLA_API void gfx_pipeline_update(GfxPipeline* pipeline, const GfxPipelineDesc& desc);
 
 /// Draw the contents of the `vertex_buffer` in `pipeline`.
 NIKOLA_API void gfx_pipeline_draw_vertex(GfxPipeline* pipeline);

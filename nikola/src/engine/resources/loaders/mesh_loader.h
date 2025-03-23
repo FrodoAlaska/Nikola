@@ -7,7 +7,7 @@
 
 namespace nikola { // Start of nikola
 
-void mesh_loader_load(const u16 group_id, Mesh* mesh, const MeshType type);
+void mesh_loader_load(const u16 group_id, NBRMesh* mesh, const MeshType type);
 
 } // End of nikola
 
