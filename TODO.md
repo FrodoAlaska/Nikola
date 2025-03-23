@@ -36,7 +36,7 @@
     - [] Documentation
 [] 8. Renderer v0.2. 
     - [x] Multiple render passes
-    - [] Some meshes draw the specular texture even though they don't need it? Perhaps find a better way to use textures?
+    - [x] Some meshes draw the specular texture even though they don't need it? Perhaps find a better way to use textures?
     - [] Render passes working in tandem (perhaps implement `render_pass_inherit`?)
     - [x] A more pipelined post-processing system.
     - [] Deferred shading

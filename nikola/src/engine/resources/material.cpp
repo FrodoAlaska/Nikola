@@ -132,17 +132,23 @@ void material_use(ResourceID& mat_id) {
   send_preset_uniform(mat, MATERIAL_UNIFORM_SCREEN_SIZE, GFX_LAYOUT_FLOAT2, &mat->screen_size[0]);
   send_preset_uniform(mat, MATERIAL_UNIFORM_MODEL_MATRIX, GFX_LAYOUT_MAT4, mat4_raw_data(mat->model_matrix));
 
+  GfxTexture* textures[2];
+  u32 textures_count = 0;
+
   // Use the diffuse texture (if they are valid)
   if(RESOURCE_IS_VALID(mat->diffuse_map)) {
-    GfxTexture* diffuse = resources_get_texture(mat->diffuse_map);
-    gfx_texture_use(&diffuse, 1);
+    textures[0] = resources_get_texture(mat->diffuse_map); 
+    textures_count++;
   }
  
-  // @FIX (Material)
   // Use the specular texture (if they are valid)
   if(RESOURCE_IS_VALID(mat->specular_map)) {
-    GfxTexture* specular = resources_get_texture(mat->specular_map);
-    gfx_texture_use(&specular, 1);
+    textures[1] = resources_get_texture(mat->specular_map); 
+    textures_count++;
+  }
+ 
+  if(textures_count > 0) {
+    gfx_texture_use(textures, textures_count);
   }
 }
 
