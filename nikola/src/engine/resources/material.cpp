@@ -140,10 +140,10 @@ void material_use(ResourceID& mat_id) {
  
   // @FIX (Material)
   // Use the specular texture (if they are valid)
-  // if(RESOURCE_IS_VALID(mat->specular_map)) {
-  //   GfxTexture* specular = resources_get_texture(mat->specular_map);
-  //   gfx_texture_use(&specular, 1);
-  // }
+  if(RESOURCE_IS_VALID(mat->specular_map)) {
+    GfxTexture* specular = resources_get_texture(mat->specular_map);
+    gfx_texture_use(&specular, 1);
+  }
 }
 
 /// Material functions
