@@ -96,6 +96,47 @@ void gui_end_panel() {
   ImGui::End();
 }
 
+void gui_edit_transform(const char* name, Transform* transform) {
+  f32 scale = transform->scale.x;
+  static Vec4 rotation = Vec4(1.0f);
+  
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+ 
+  // SRT translation
+  // -------------------------------------------------------------------
+  ImGui::DragFloat3("Position", &transform->position[0], 0.01f);
+  ImGui::DragFloat("Scale", &scale, 0.01f);
+  ImGui::DragFloat3("Rotation Axis", &rotation[0], 0.01f, 0.0f, 1.0f);
+  ImGui::DragFloat("Rotation Angle", &rotation[3], 0.01f);
+  // -------------------------------------------------------------------
+  
+  ImGui::PopID(); 
+
+  // Applying the new values
+  nikola::transform_translate(*transform, transform->position);
+  nikola::transform_scale(*transform, Vec3(scale));
+  nikola::transform_rotate(*transform, rotation);
+}
+
+void gui_edit_material(const char* name, Material* material) {
+  ImGui::SeparatorText(name); 
+
+  // Colors 
+  // -------------------------------------------------------------------
+  ImGui::PushID(name); 
+  ImGui::SliderFloat3("Ambient", &material->ambient_color[0], 0.0f, 1.0f);
+  ImGui::SliderFloat3("Diffuse", &material->diffuse_color[0], 0.0f, 1.0f);
+  ImGui::SliderFloat3("Specular", &material->specular_color[0], 0.0f, 1.0f);
+  ImGui::PopID(); 
+  // -------------------------------------------------------------------
+ 
+  // Lighting values
+  // -------------------------------------------------------------------
+  ImGui::SliderFloat("Shininess", &material->shininess, 0.0f, 100.0f);
+  // -------------------------------------------------------------------
+}
+
 void gui_settings_debug() {
   // FPS 
   // -------------------------------
@@ -174,48 +215,6 @@ void gui_settings_renderer() {
   ImGui::ColorPicker4("Clear color", &s_gui.render_clear_color[0], ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
   renderer_set_clear_color(s_gui.render_clear_color);
   // -------------------------------------------------------------------
-}
-
-void gui_settings_material(const char* name, Material* material) {
-  ImGui::SeparatorText(name); 
-
-  // Colors 
-  // -------------------------------------------------------------------
-  ImGui::PushID(name); 
-  ImGui::SliderFloat3("Ambient", &material->ambient_color[0], 0.0f, 1.0f);
-  ImGui::SliderFloat3("Diffuse", &material->diffuse_color[0], 0.0f, 1.0f);
-  ImGui::SliderFloat3("Specular", &material->specular_color[0], 0.0f, 1.0f);
-  ImGui::PopID(); 
-  // -------------------------------------------------------------------
- 
-  // Lighting values
-  // -------------------------------------------------------------------
-  ImGui::SliderFloat("Shininess", &material->shininess, 0.0f, 100.0f);
-  // -------------------------------------------------------------------
-}
-
-
-void gui_settings_transform(const char* name, Transform* transform) {
-  f32 scale = transform->scale.x;
-  static Vec4 rotation = Vec4(1.0f);
-  
-  ImGui::SeparatorText(name); 
-  ImGui::PushID(name); 
- 
-  // SRT translation
-  // -------------------------------------------------------------------
-  ImGui::DragFloat3("Position", &transform->position[0], 0.01f);
-  ImGui::DragFloat("Scale", &scale, 0.01f);
-  ImGui::DragFloat3("Rotation Axis", &rotation[0], 0.01f, 0.0f, 1.0f);
-  ImGui::DragFloat("Rotation Angle", &rotation[3], 0.01f);
-  // -------------------------------------------------------------------
-  
-  ImGui::PopID(); 
-
-  // Applying the new values
-  nikola::transform_translate(*transform, transform->position);
-  nikola::transform_scale(*transform, Vec3(scale));
-  nikola::transform_rotate(*transform, rotation);
 }
 
 void gui_settings_texture(const char* name, GfxTexture* texture) {

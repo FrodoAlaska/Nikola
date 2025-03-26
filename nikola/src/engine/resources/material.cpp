@@ -147,7 +147,7 @@ void material_use(ResourceID& mat_id) {
     textures_count++;
   }
  
-  if(textures_count > 0) {
+  if(textures_count > 0) { 
     gfx_texture_use(textures, textures_count);
   }
 }

@@ -154,7 +154,7 @@ static void render_model(RenderCommand& command) {
     material_set_shader(mat_id, mat->shader);
     material_set_uniform(mat_id, "u_model", command.transform.transform); // @TODO(Renderer): Perhaps there is a better way to set the transform of a model?
 
-    // Uploading the uniforms
+    // Using the material
     material_use(mat_id);  
 
     // Draw the material's mesh
@@ -196,7 +196,7 @@ void render_queue_push(RenderQueue& queue, const RenderCommand& cmd) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderPass functions
 
-void render_pass_create(RenderPass* pass, const Vec2& size, u32 clear_flags) {
+void render_pass_create(RenderPass* pass, const Vec2& size, u32 clear_flags, const DynamicArray<GfxTextureDesc>& targets) {
   pass->frame_size = (Vec2)size;
   
   pass->frame_desc = {}; 
@@ -209,7 +209,25 @@ void render_pass_create(RenderPass* pass, const Vec2& size, u32 clear_flags) {
 
   // Clear flags init
   pass->frame_desc.clear_flags = clear_flags;
-  
+ 
+  // Attachments init
+  for(sizei i = 0; i < targets.size(); i++) {
+    GfxTextureDesc texture_desc = {
+      .width     = (u32)pass->frame_size.x, 
+      .height    = (u32)pass->frame_size.y, 
+      .depth     = 0, 
+      .mips      = 1, 
+      .type      = targets[i].type,
+      .format    = targets[i].format, 
+      .filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
+      .wrap_mode = GFX_TEXTURE_WRAP_MIRROR, 
+      .data      = nullptr,
+    };
+
+    pass->frame_desc.attachments[i] = gfx_texture_create(s_renderer.context, texture_desc);
+    pass->frame_desc.attachments_count++;
+  }
+
   // Framebuffer init
   pass->frame = gfx_framebuffer_create(s_renderer.context, pass->frame_desc);
 }
@@ -231,32 +249,13 @@ void render_pass_begin(RenderPass& pass) {
 }
 
 void render_pass_end(RenderPass& pass, const ResourceID& material_id) {
-  NIKOLA_ASSERT((material_id.group != RESOURCE_GROUP_INVALID), "Invalid Material passed to render_pass_end function");
-
+  NIKOLA_ASSERT(RESOURCE_IS_VALID(material_id), "Invalid Material passed to render_pass_end function");
+  
   // Apply the textures from the pass
   gfx_texture_use(pass.frame_desc.attachments, pass.frame_desc.attachments_count); 
 
   // Apply the shader from the pass
   gfx_shader_use(resources_get_shader(resources_get_material(material_id)->shader));
-}
-
-void render_pass_push_target(RenderPass& pass, const GfxTextureType type, const GfxTextureFormat format) {
-  GfxTextureDesc texture_desc = {
-    .width     = (u32)pass.frame_size.x, 
-    .height    = (u32)pass.frame_size.y, 
-    .depth     = 0, 
-    .mips      = 1, 
-    .type      = type,
-    .format    = format, 
-    .filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-    .wrap_mode = GFX_TEXTURE_WRAP_MIRROR, 
-    .data      = nullptr,
-  };
-
-  pass.frame_desc.attachments[pass.frame_desc.attachments_count] = gfx_texture_create(s_renderer.context, texture_desc);
-  pass.frame_desc.attachments_count++;
-
-  gfx_framebuffer_update(pass.frame, pass.frame_desc);
 }
 
 /// RenderPass functions
