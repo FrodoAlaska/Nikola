@@ -98,7 +98,7 @@ void gui_end_panel() {
 
 void gui_edit_transform(const char* name, Transform* transform) {
   f32 scale = transform->scale.x;
-  static Vec4 rotation = Vec4(1.0f);
+  static Vec4 rotation = Vec4(0.0f);
   
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 

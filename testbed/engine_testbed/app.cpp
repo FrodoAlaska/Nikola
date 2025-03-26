@@ -3,6 +3,8 @@
 
 #include <nikola/nikola.h>
 
+#include <imgui/imgui.h>
+
 /// ----------------------------------------------------------------------
 /// @TEMP
 struct Prop {
@@ -64,7 +66,9 @@ struct nikola::App {
 
   nikola::DynamicArray<Prop> props;
   Prop* current_prop = nullptr;
-  
+
+  nikola::i32 effect_index = 0;
+
   bool has_editor;
 };
 /// App
@@ -110,7 +114,8 @@ static void init_props(nikola::App* app) {
   nikola::Vec3 default_pos(10.0f, 0.0f, 10.0f);
   
   // Porps init
-  app->props.push_back(Prop("behelit", default_pos, nikola::Vec3(0.1f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "behelit")));
+  // app->props.push_back(Prop("behelit", default_pos, nikola::Vec3(0.1f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "behelit")));
+  app->props.push_back(Prop("dice", default_pos, nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "dice")));
   // app->props.push_back(Prop("bridge", default_pos, nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "bridge")));
   // app->props.push_back(Prop("tempel", default_pos, nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "tempel")));
   app->props.push_back(Prop("moon", default_pos, nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MESH, mesh_id));
@@ -122,7 +127,7 @@ static void init_passes(nikola::App* app) {
   nikola::i32 width, height; 
   nikola::window_get_size(app->window, &width, &height);
 
-  app->render_passes.resize(1);
+  app->render_passes.resize(2);
 
   // Geometry pass
   nikola::DynamicArray<nikola::GfxTextureDesc> geo_targets = {
@@ -132,10 +137,10 @@ static void init_passes(nikola::App* app) {
   nikola::render_pass_create(&app->render_passes[0], nikola::Vec2(width, height), (nikola::GFX_CLEAR_FLAGS_COLOR_BUFFER | nikola::GFX_CLEAR_FLAGS_DEPTH_BUFFER), geo_targets);
 
   // Post-process pass
-  // nikola::DynamicArray<nikola::GfxTextureDesc> pp_targets = {
-  //   {.type = nikola::GFX_TEXTURE_RENDER_TARGET, .format = nikola::GFX_TEXTURE_FORMAT_RGBA8},
-  // };
-  // nikola::render_pass_create(&app->render_passes[1], nikola::Vec2(width, height), nikola::GFX_CLEAR_FLAGS_COLOR_BUFFER, pp_targets);
+  nikola::DynamicArray<nikola::GfxTextureDesc> pp_targets = {
+    {.type = nikola::GFX_TEXTURE_RENDER_TARGET, .format = nikola::GFX_TEXTURE_FORMAT_RGBA8},
+  };
+  nikola::render_pass_create(&app->render_passes[1], nikola::Vec2(width, height), nikola::GFX_CLEAR_FLAGS_COLOR_BUFFER, pp_targets);
 }
 
 static void geometry_pass(nikola::App* app) {
@@ -155,7 +160,7 @@ static void post_process_pass(nikola::App* app) {
 
   // Set the shader
   nikola::material_set_shader(app->pass_material_id, nikola::resources_get_id(app->res_group_id, "post_process"));
-  nikola::material_set_uniform(app->pass_material_id, "u_effect_index", 0);
+  nikola::material_set_uniform(app->pass_material_id, "u_effect_index", app->effect_index);
 
   app->render_passes[1].frame_desc.attachments[0]    = app->render_passes[0].frame_desc.attachments[0];
   app->render_passes[1].frame_desc.attachments_count = 1;
@@ -179,6 +184,7 @@ static void render_app_ui(nikola::App* app) {
   
   nikola::gui_begin_panel("Renderer");
   nikola::gui_settings_renderer();
+  ImGui::SliderInt("Render Effect", &app->effect_index, 0, 7);
   nikola::gui_end_panel();
   
   // nikola::gui_begin_panel("Resources");
@@ -271,7 +277,7 @@ void app_render(nikola::App* app) {
 
   // Go through all the passes
   geometry_pass(app);
-  // post_process_pass(app);
+  post_process_pass(app);
   
   // Render the final pass
   nikola::renderer_apply_pass(app->render_passes[app->render_passes.size() - 1]);

@@ -27,45 +27,46 @@
     - [x] Improve the CMake situation
     - [x] Better header names
     - [x] Test and improve the build scripts for Linux
-[] 7. GFX v1.0? 
+[x] 7. Renderer v0.2. 
+    - [x] Multiple render passes
+    - [x] Some meshes draw the specular texture even though they don't need it? Perhaps find a better way to use textures?
+    - [x] A more pipelined post-processing system.
+[] 8. GFX v1.0? 
     - [x] Let every reasource have a `_use` function
     - [x] Refactor the `GfxPipeline` 
     - [x] Improve framebuffers (`gfx_framebuffer_copy(src, dest, pos, size)`, incorporate `glDrawBuffers`)
     - [x] Test
     - [] Instancing 
     - [] Documentation
-[] 8. Renderer v0.2. 
-    - [x] Multiple render passes
-    - [x] Some meshes draw the specular texture even though they don't need it? Perhaps find a better way to use textures?
-    - [x] A more pipelined post-processing system.
-    - [] Better material system 
-    - [] More intuitive and faster method to render primitives using materials
 [] 9. GUI v0.2 
     - [] A canvas system for 2D game UI.
     - [] A better system to handle debug UI.
     - [] Documentation.
 [] 10. Scenes v0.1
-[] 11. Camera v0.2
-[] 12. Fonts v0.1 
+[] 11. Renderer v0.3 
+    - [] Better material system 
+    - [] More intuitive and faster method to render primitives using materials
+[] 12. Camera v0.2
+[] 13. Fonts v0.1 
     - [] Choose a font-loading library 
     - [] Make and implement the `NBRFont` specification 
     - [] Add support for fonts in the NBR tool 
     - [] Add font loading support in the resource manager 
     - [] Have a minimal version of font rendering (both 2D and 3D)
-[] 13. Multi-threading v0.2 
+[] 14. Multi-threading v0.2 
     - [] Implement both performance timers and normal timers
     - [] Which systems can benefit most from multi-threading? 
     - [] Should we implement a job system? If yes, how can this be done within the confines of the engine? 
     - [] Try to improve the load times for the resource manager as a test of the new multi-threading system.
-[] 14. Audio System v0.1 
+[] 15. Audio System v0.1 
     - [] Lay out what you actually want the audio system to be and what it does. 
     - [] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
     - [] Create an audio backend with a context 
     - [] A way to create an audio buffer that could be played with the context 
     - [] 2D and 3D sound and music. 
     - [] A fully-fledged audio pipeline that can play, position, pitch, control the volume, and apply effects to sound and music
-[] 15. Physics v0.1
-[] 16. 3D Animations v0.1
+[] 16. Physics v0.1
+[] 17. 3D Animations v0.1
 
 ## (Engine) TODO: 
 * General 
