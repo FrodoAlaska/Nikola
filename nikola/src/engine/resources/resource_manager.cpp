@@ -5,7 +5,6 @@
 #include "nikola/nikola_render.h"
 
 #include "loaders/mesh_loader.h"
-#include "loaders/material_loader.hpp"
 #include "loaders/skybox_loader.hpp"
 
 //////////////////////////////////////////////////////////////////////////
@@ -26,6 +25,7 @@ struct ResourceGroup {
   
   DynamicArray<Mesh*> meshes;
   DynamicArray<Material*> materials;
+  DynamicArray<ShaderContext*> shader_contexts;
   DynamicArray<Skybox*> skyboxes;
   DynamicArray<Model*> models;
   DynamicArray<Font*> fonts;
@@ -265,6 +265,7 @@ static void resource_entry_update(const FileStatus status, const FilePath& path,
       // @TODO (Resource)
       break;
     case RESOURCE_TYPE_FONT:
+      // @TODO (Resource)
       break;
     default:
       NIKOLA_LOG_ERROR("Unknown resource type");
@@ -348,6 +349,7 @@ void resources_clear_group(const u16 group_id) {
 
   group->meshes.clear();
   group->materials.clear();
+  group->shader_contexts.clear();
   group->skyboxes.clear();
   group->models.clear();
   group->fonts.clear();
@@ -372,6 +374,7 @@ void resources_destroy_group(const u16 group_id) {
   // Destroy compound resources
   DESTROY_COMP_RESOURCE_MAP(group, meshes);
   DESTROY_COMP_RESOURCE_MAP(group, materials);
+  DESTROY_COMP_RESOURCE_MAP(group, shader_contexts);
   DESTROY_COMP_RESOURCE_MAP(group, skyboxes);
   DESTROY_COMP_RESOURCE_MAP(group, models);
   DESTROY_COMP_RESOURCE_MAP(group, fonts);
@@ -561,6 +564,26 @@ ResourceID resources_push_shader(const u16 group_id, const FilePath& nbr_path) {
   return id;
 }
 
+ResourceID resources_push_shader_context(const u16 group_id, const ResourceID& shader_id) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
+  
+  // Allocate the context
+  ShaderContext* ctx = new ShaderContext{};
+  ctx->shader = shader_id;
+  
+  // Create the context
+  ResourceID id; 
+  PUSH_RESOURCE(group, shader_contexts, ctx, RESOURCE_TYPE_SHADER_CONTEXT, id);
+ 
+  // Set a default matrices buffer 
+  shader_context_set_uniform_buffer(id, SHADER_MATRICES_BUFFER_INDEX, resources_get_id(RESOURCE_CACHE_ID, "matrix_buffer"));
+
+  // New context added!
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed shader context:", group->name.c_str());
+  return id;
+}
+
 ResourceID resources_push_mesh(const u16 group_id, NBRMesh& nbr_mesh) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
@@ -606,15 +629,23 @@ ResourceID resources_push_mesh(const u16 group_id, const MeshType type) {
   return id;
 }
 
-ResourceID resources_push_material(const u16 group_id, const ResourceID& shader_id) {
+ResourceID resources_push_material(const u16 group_id) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
   
   // Allocate the material
   Material* material = new Material{};
 
-  // Use the loader to set up the material
-  material_loader_load(group_id, material, shader_id);
+  // Set default values for the material
+  material->ambient_color  = Vec3(1.0f); 
+  material->diffuse_color  = Vec3(1.0f); 
+  material->specular_color = Vec3(1.0f); 
+  material->shininess      = 1.0f;
+
+  // Default textures init
+  ResourceID default_id  = resources_get_id(RESOURCE_CACHE_ID, "default_texture");
+  material->diffuse_map  = default_id;
+  material->specular_map = default_id;
 
   // Create material
   ResourceID id;
@@ -622,7 +653,6 @@ ResourceID resources_push_material(const u16 group_id, const ResourceID& shader_
 
   // New material added
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed material:", group->name.c_str());
-  NIKOLA_LOG_DEBUG("     Uniforms count = \'%zu\'", material->uniform_locations.size());
   NIKOLA_LOG_DEBUG("     Ambient color  = \'%s\'", vec3_to_string(material->ambient_color).c_str());
   NIKOLA_LOG_DEBUG("     Diffuse color  = \'%s\'", vec3_to_string(material->diffuse_color).c_str());
   NIKOLA_LOG_DEBUG("     Specular color = \'%s\'", vec3_to_string(material->specular_color).c_str());
@@ -736,6 +766,11 @@ GfxCubemap* resources_get_cubemap(const ResourceID& id) {
 GfxShader* resources_get_shader(const ResourceID& id) {
   ResourceGroup* group = &s_manager.groups[id.group];
   return get_resource(id, group->shaders, RESOURCE_TYPE_SHADER);
+}
+
+ShaderContext* resources_get_shader_context(const ResourceID& id) {
+  ResourceGroup* group = &s_manager.groups[id.group];
+  return get_resource(id, group->shader_contexts, RESOURCE_TYPE_SHADER_CONTEXT);
 }
 
 Mesh* resources_get_mesh(const ResourceID& id) {

@@ -28,6 +28,7 @@ set(NIKOLA_SOURCES
   # Engine/Resources
   ${NIKOLA_SRC_DIR}/engine/resources/resource_manager.cpp
   ${NIKOLA_SRC_DIR}/engine/resources/material.cpp
+  ${NIKOLA_SRC_DIR}/engine/resources/shader_context.cpp
   ${NIKOLA_SRC_DIR}/engine/resources/nbr_file.cpp
   ${NIKOLA_SRC_DIR}/engine/resources/nbr_importer.cpp
 
@@ -39,7 +40,6 @@ set(NIKOLA_SOURCES
 
   # Engine/Resources/Loaders 
   ${NIKOLA_SRC_DIR}/engine/resources/loaders/mesh_loader.cpp
-  ${NIKOLA_SRC_DIR}/engine/resources/loaders/material_loader.cpp
   ${NIKOLA_SRC_DIR}/engine/resources/loaders/skybox_loader.cpp
   
   # Engine/Renderer 

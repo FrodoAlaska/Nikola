@@ -27,23 +27,33 @@
     - [x] Improve the CMake situation
     - [x] Better header names
     - [x] Test and improve the build scripts for Linux
-[x] 7. Renderer v0.2. 
+[x] 7. Render Passes v0.2. 
     - [x] Multiple render passes
     - [x] Some meshes draw the specular texture even though they don't need it? Perhaps find a better way to use textures?
     - [x] A more pipelined post-processing system.
-[] 8. GFX v1.0? 
+[] 8 Resource Rendering v0.1
+    - [x] Create a `ShaderContext` structure to encapsulate shader functionality.
+    - [x] Seperate the shader and the materials from each other. The materials should only be a description of the physical properties of any renderable type. 
+    - [x] Add the `ShaderContext` as a new resource type.
+    - [x] Incorporate `ShaderContext` into rendering
+    - [] Improve the rendering of 3D models (perhaps each mesh is a specific render command?) 
+    - [] Make render passes be associated with a specific `ShaderContext` instead of a `Material`.
+    - [] Perhaps have an object that encapsulates the idea of a `RenderPipeline`.
+[] 8. Scenes v0.1
+    - [] Decide on a scene system to implement
+[] 9. GUI v0.2 
+    - [] A canvas system for 2D game UI.
+    - [] A better system to handle debug UI.
+    - [] Documentation.
+[] 10. GFX v1.0? 
     - [x] Let every reasource have a `_use` function
     - [x] Refactor the `GfxPipeline` 
     - [x] Improve framebuffers (`gfx_framebuffer_copy(src, dest, pos, size)`, incorporate `glDrawBuffers`)
     - [x] Test
     - [] Instancing 
     - [] Documentation
-[] 9. GUI v0.2 
-    - [] A canvas system for 2D game UI.
-    - [] A better system to handle debug UI.
-    - [] Documentation.
-[] 10. Scenes v0.1
 [] 11. Renderer v0.3 
+    - [] Improve render pass system
     - [] Better material system 
     - [] More intuitive and faster method to render primitives using materials
 [] 12. Camera v0.2
@@ -75,8 +85,9 @@
     - Try to replace the `_loader` functions. For many of the resources, they are useless.
     - A memory pool/arena for resources?
 * Renderer 
+    - The goal of this renderer is to be like a lego set. It will provide the user with as much building blocks as possible while not commiting to any one technique. It's up to the user to pick and choose the renderer.
     - Improve the material and shader uniform system 
-    - `material_set_shader_context`?
+    - Have the `ShaderContext` read and retrieve all uniforms and their locations instead of caching them from first use
     - A better technique of rendering resources 
     - Improve the render pass system
 

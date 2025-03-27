@@ -109,7 +109,7 @@ struct RenderCommand {
   RenderableType render_type;
 
   ResourceID renderable_id;
-  ResourceID material_id;
+  ResourceID material_id, shader_context_id;
   
   Transform transform;
 };
@@ -129,6 +129,8 @@ struct RenderPass {
 
   GfxFramebufferDesc frame_desc = {};
   GfxFramebuffer* frame         = nullptr;
+
+  ResourceID shader_context_id = {};
 };
 /// RenderPass
 ///---------------------------------------------------------------------------------------------------------------------
@@ -167,7 +169,7 @@ NIKOLA_API void render_pass_destroy(RenderPass& pass);
 
 NIKOLA_API void render_pass_begin(RenderPass& pass);
 
-NIKOLA_API void render_pass_end(RenderPass& pass, const ResourceID& material_id);
+NIKOLA_API void render_pass_end(RenderPass& pass);
 
 /// RenderPass functions
 ///---------------------------------------------------------------------------------------------------------------------
