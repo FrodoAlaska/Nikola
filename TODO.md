@@ -36,9 +36,9 @@
     - [x] Seperate the shader and the materials from each other. The materials should only be a description of the physical properties of any renderable type. 
     - [x] Add the `ShaderContext` as a new resource type.
     - [x] Incorporate `ShaderContext` into rendering
-    - [] Improve the rendering of 3D models (perhaps each mesh is a specific render command?) 
+    - [x] Improve the rendering of 3D models (perhaps each mesh is a specific render command?) 
     - [] Make render passes be associated with a specific `ShaderContext` instead of a `Material`.
-    - [] Perhaps have an object that encapsulates the idea of a `RenderPipeline`.
+    - [] Perhaps have an object that encapsulates the idea of a "RenderPipeline".
 [] 8. Scenes v0.1
     - [] Decide on a scene system to implement
 [] 9. GUI v0.2 

@@ -96,8 +96,16 @@ void shader_context_set_uniform(ResourceID& ctx_id, const i8* uniform_name, cons
 
 void shader_context_set_uniform(ResourceID& ctx_id, const i8* material_name, const ResourceID& mat_id) {
   NIKOLA_ASSERT(RESOURCE_IS_VALID(ctx_id), "Invalid ShaderContext passed to shader_context_set_uniform");
+  NIKOLA_ASSERT(RESOURCE_IS_VALID(mat_id), "Invalid Material passed to shader_context_set_uniform");
 
-  // @TODO (ShaderContext)
+  ShaderContext* ctx = resources_get_shader_context(ctx_id);
+  Material* material = resources_get_material(mat_id);
+
+  // Send all of the known material uniforms
+  check_and_send_uniform(ctx, MATERIAL_UNIFORM_AMBIENT_COLOR, GFX_LAYOUT_FLOAT3, &material->ambient_color);
+  check_and_send_uniform(ctx, MATERIAL_UNIFORM_DIFFUSE_COLOR, GFX_LAYOUT_FLOAT3, &material->diffuse_color);
+  check_and_send_uniform(ctx, MATERIAL_UNIFORM_SPECULAR_COLOR, GFX_LAYOUT_FLOAT3, &material->diffuse_color);
+  check_and_send_uniform(ctx, MATERIAL_UNIFORM_SHININESS, GFX_LAYOUT_FLOAT1, &material->shininess);
 }
 
 void shader_context_set_uniform_buffer(ResourceID& ctx_id, const sizei index, const ResourceID& buffer_id) {

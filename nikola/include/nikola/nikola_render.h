@@ -106,12 +106,13 @@ struct RendererDefaults {
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderCommand
 struct RenderCommand {
+  Transform transform;
+  
   RenderableType render_type;
+  sizei instance_count = 0;
 
   ResourceID renderable_id;
   ResourceID material_id, shader_context_id;
-  
-  Transform transform;
 };
 /// RenderCommand
 ///---------------------------------------------------------------------------------------------------------------------
@@ -167,7 +168,7 @@ NIKOLA_API void render_pass_create(RenderPass* pass, const Vec2& size, u32 clear
 
 NIKOLA_API void render_pass_destroy(RenderPass& pass);
 
-NIKOLA_API void render_pass_begin(RenderPass& pass);
+NIKOLA_API void render_pass_begin(RenderPass& pass, const ResourceID& shader_context_id);
 
 NIKOLA_API void render_pass_end(RenderPass& pass);
 

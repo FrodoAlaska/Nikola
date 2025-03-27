@@ -32,13 +32,13 @@ struct Prop {
   void render(nikola::RenderQueue& queue, nikola::ResourceID& shader_context_id, nikola::ResourceID& material_id, const nikola::sizei count = 1) {
     for(nikola::sizei i = 0; i < count; i++) {
       nikola::RenderCommand rnd_cmd {
+        .transform       = transform,
+        
         .render_type     = renderable_type,
         
         .renderable_id     = renderable_id, 
         .material_id       = material_id, 
         .shader_context_id = shader_context_id,
-        
-        .transform       = transform,
       };
 
       nikola::render_queue_push(queue, rnd_cmd);
@@ -119,11 +119,12 @@ static void init_props(nikola::App* app) {
   nikola::Vec3 default_pos(10.0f, 0.0f, 10.0f);
   
   // Porps init
-  // app->props.push_back(Prop("behelit", default_pos, nikola::Vec3(0.1f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "behelit")));
-  app->props.push_back(Prop("dice", default_pos, nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "dice")));
+  app->props.push_back(Prop("behelit", default_pos, nikola::Vec3(0.1f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "behelit")));
+  app->props.push_back(Prop("dice", default_pos + nikola::Vec3(20.0f, 0.0f, 20.0f), nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "dice")));
   // app->props.push_back(Prop("bridge", default_pos, nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "bridge")));
   // app->props.push_back(Prop("tempel", default_pos, nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "tempel")));
-  app->props.push_back(Prop("moon", default_pos, nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MESH, mesh_id));
+  app->props.push_back(Prop("moon", default_pos + nikola::Vec3(-20.0f, 0.0f, 20.0f), nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MESH, mesh_id));
+  nikola::material_set_texture(app->material_id, nikola::MATERIAL_TEXTURE_DIFFUSE, nikola::resources_get_id(app->res_group_id, "moon"));
 
   app->current_prop = &app->props[0];
 }
@@ -149,22 +150,18 @@ static void init_passes(nikola::App* app) {
 }
 
 static void geometry_pass(nikola::App* app) {
-  nikola::render_pass_begin(app->render_passes[0]);
+  nikola::render_pass_begin(app->render_passes[0], app->shader_contexts[2]);
 
   // Render the objects to the framebuffer
   nikola::render_queue_flush(app->render_queue);
-  
-  // Set the shader
-  app->render_passes[0].shader_context_id = app->shader_contexts[2]; 
 
   nikola::render_pass_end(app->render_passes[0]);
 }
 
 static void post_process_pass(nikola::App* app) {
-  nikola::render_pass_begin(app->render_passes[1]);
+  nikola::render_pass_begin(app->render_passes[1], app->shader_contexts[3]);
 
   // Set the shader
-  app->render_passes[1].shader_context_id = app->shader_contexts[3]; 
   nikola::shader_context_set_uniform(app->shader_contexts[3], "u_effect_index", app->effect_index);
 
   app->render_passes[1].frame_desc.attachments[0]    = app->render_passes[0].frame_desc.attachments[0];
@@ -197,7 +194,9 @@ static void render_app_ui(nikola::App* app) {
   // nikola::gui_end_panel();
 
   nikola::gui_begin_panel("Props");
-  app->props[0].gui_render();
+  for(auto& prop : app->props) {
+    prop.gui_render();
+  }
   nikola::gui_end_panel();
 
   nikola::gui_end();
@@ -268,9 +267,10 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 void app_render(nikola::App* app) {
   nikola::renderer_begin(app->camera);
   
-  // Render the prop
-  nikola::material_set_texture(app->material_id, nikola::MATERIAL_TEXTURE_DIFFUSE, nikola::resources_get_id(app->res_group_id, "moon"));
-  app->current_prop->render(app->render_queue, app->shader_contexts[0], app->material_id);
+  // Render the props 
+  for(auto& prop : app->props) {
+    prop.render(app->render_queue, app->shader_contexts[0], app->material_id);
+  }
   
   // Render the skybox
   nikola::RenderCommand rnd_cmd;

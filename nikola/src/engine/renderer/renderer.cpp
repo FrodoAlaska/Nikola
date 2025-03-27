@@ -151,11 +151,11 @@ static void render_model(RenderCommand& command) {
     
     // Build the sub-command for the mesh
     RenderCommand sub_cmd = {
+     .transform         = command.transform,  
      .render_type       = nikola::RENDERABLE_TYPE_MESH, 
      .renderable_id     = mesh_id, 
      .material_id       = mat_id, 
      .shader_context_id = command.shader_context_id, 
-     .transform         = command.transform,  
     };
 
     // Render the sub-command
@@ -237,7 +237,9 @@ void render_pass_destroy(RenderPass& pass) {
   gfx_framebuffer_destroy(pass.frame);
 }
 
-void render_pass_begin(RenderPass& pass) {
+void render_pass_begin(RenderPass& pass, const ResourceID& shader_context_id) {
+  NIKOLA_ASSERT(RESOURCE_IS_VALID(shader_context_id), "Invalid ShaderContext passed to render_pass_begin function");
+  
   // @NOTE: An annoying way to set the clear color 
   Vec4 col = Vec4(pass.frame_desc.clear_color[0], 
                   pass.frame_desc.clear_color[1], 
@@ -247,6 +249,9 @@ void render_pass_begin(RenderPass& pass) {
   // Clear the framebuffer
   gfx_context_clear(s_renderer.context, pass.frame);
   gfx_context_set_state(s_renderer.context, GFX_STATE_DEPTH, true); 
+
+  // Assign a shader context
+  pass.shader_context_id = shader_context_id;
 }
 
 void render_pass_end(RenderPass& pass) {
