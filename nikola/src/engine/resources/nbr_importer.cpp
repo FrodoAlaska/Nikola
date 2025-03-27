@@ -122,7 +122,7 @@ void nbr_import_model(NBRModel* nbr, const u16 group_id, Model* model) {
   // Convert the material 
   for(sizei i = 0; i < nbr->materials_count; i++) {
     // Create a new material 
-    ResourceID mat_id = resources_push_material(group_id, ResourceID{});
+    ResourceID mat_id = resources_push_material(group_id);
     Material* mat     = resources_get_material(mat_id);
 
     // Default values for the textures

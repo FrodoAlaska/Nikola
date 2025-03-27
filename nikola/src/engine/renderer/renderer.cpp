@@ -109,13 +109,15 @@ static void init_pipeline() {
 }
 
 static void render_mesh(RenderCommand& command) {
-  Mesh* mesh         = resources_get_mesh(command.renderable_id);
-  Material* material = resources_get_material(command.material_id);
+  Mesh* mesh = resources_get_mesh(command.renderable_id);
 
-  // Setting preset uniforms
-  material->model_matrix = command.transform.transform;
+  // Setting uniforms 
+  shader_context_set_uniform(command.shader_context_id, MATERIAL_UNIFORM_MODEL_MATRIX, command.transform.transform);
 
-  // Uploading the uniforms
+  // Using the shader 
+  shader_context_use(command.shader_context_id);
+
+  // Using the textures
   material_use(command.material_id);  
 
   // Draw the mesh
@@ -123,8 +125,10 @@ static void render_mesh(RenderCommand& command) {
 }
 
 static void render_skybox(RenderCommand& command) {
-  Skybox* skybox     = resources_get_skybox(command.renderable_id); 
-  Material* material = resources_get_material(command.material_id);
+  Skybox* skybox = resources_get_skybox(command.renderable_id); 
+
+  // Using the shader 
+  shader_context_use(command.shader_context_id);
 
   // Uploading the uniforms
   material_use(command.material_id);  
@@ -138,27 +142,24 @@ static void render_skybox(RenderCommand& command) {
 }
 
 static void render_model(RenderCommand& command) {
-  Model* model  = resources_get_model(command.renderable_id);
-  Material* mat = resources_get_material(command.material_id);
+  Model* model = resources_get_model(command.renderable_id);
 
   for(sizei i = 0; i < model->meshes.size(); i++) {
     // For better visuals (and performance?)
-    Mesh* mesh              = resources_get_mesh(model->meshes[i]);
-    ResourceID mat_id       = model->materials[model->material_indices[i]];
-    Material* mesh_material = resources_get_material(mat_id); 
+    ResourceID mesh_id = model->meshes[i];
+    ResourceID mat_id  = model->materials[model->material_indices[i]];
+    
+    // Build the sub-command for the mesh
+    RenderCommand sub_cmd = {
+     .transform         = command.transform,  
+     .render_type       = nikola::RENDERABLE_TYPE_MESH, 
+     .renderable_id     = mesh_id, 
+     .material_id       = mat_id, 
+     .shader_context_id = command.shader_context_id, 
+    };
 
-    // Setting preset uniforms
-    mesh_material->model_matrix = command.transform.transform;
-
-    // Setting the shader
-    material_set_shader(mat_id, mat->shader);
-    material_set_uniform(mat_id, "u_model", command.transform.transform); // @TODO(Renderer): Perhaps there is a better way to set the transform of a model?
-
-    // Using the material
-    material_use(mat_id);  
-
-    // Draw the material's mesh
-    gfx_pipeline_draw_index(mesh->pipe);
+    // Render the sub-command
+    render_mesh(sub_cmd);
   }
 }
 
@@ -236,7 +237,9 @@ void render_pass_destroy(RenderPass& pass) {
   gfx_framebuffer_destroy(pass.frame);
 }
 
-void render_pass_begin(RenderPass& pass) {
+void render_pass_begin(RenderPass& pass, const ResourceID& shader_context_id) {
+  NIKOLA_ASSERT(RESOURCE_IS_VALID(shader_context_id), "Invalid ShaderContext passed to render_pass_begin function");
+  
   // @NOTE: An annoying way to set the clear color 
   Vec4 col = Vec4(pass.frame_desc.clear_color[0], 
                   pass.frame_desc.clear_color[1], 
@@ -246,16 +249,19 @@ void render_pass_begin(RenderPass& pass) {
   // Clear the framebuffer
   gfx_context_clear(s_renderer.context, pass.frame);
   gfx_context_set_state(s_renderer.context, GFX_STATE_DEPTH, true); 
+
+  // Assign a shader context
+  pass.shader_context_id = shader_context_id;
 }
 
-void render_pass_end(RenderPass& pass, const ResourceID& material_id) {
-  NIKOLA_ASSERT(RESOURCE_IS_VALID(material_id), "Invalid Material passed to render_pass_end function");
+void render_pass_end(RenderPass& pass) {
+  NIKOLA_ASSERT(RESOURCE_IS_VALID(pass.shader_context_id), "Invalid ShaderContext passed to render_pass_end function");
+
+  // Apply the shader from the pass
+  shader_context_use(pass.shader_context_id);
   
   // Apply the textures from the pass
   gfx_texture_use(pass.frame_desc.attachments, pass.frame_desc.attachments_count); 
-
-  // Apply the shader from the pass
-  gfx_shader_use(resources_get_shader(resources_get_material(material_id)->shader));
 }
 
 /// RenderPass functions
