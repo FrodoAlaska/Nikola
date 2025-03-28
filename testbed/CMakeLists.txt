@@ -18,8 +18,8 @@ set(TESTBED_INCLUDES
 )
 
 set(TESTBED_TYPE 
-  # "engine_testbed"
-  "model_viewer"
+  "engine_testbed"
+  # "model_viewer"
 )
 ############################################################
 

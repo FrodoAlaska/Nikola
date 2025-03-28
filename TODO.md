@@ -37,8 +37,8 @@
     - [x] Add the `ShaderContext` as a new resource type.
     - [x] Incorporate `ShaderContext` into rendering
     - [x] Improve the rendering of 3D models (perhaps each mesh is a specific render command?) 
-    - [] Make render passes be associated with a specific `ShaderContext` instead of a `Material`.
-    - [] Perhaps have an object that encapsulates the idea of a "RenderPipeline".
+    - [x] Make render passes be associated with a specific `ShaderContext` instead of a `Material`.
+    - [] The model loader cannot load models that posses no textures
 [] 8. Scenes v0.1
     - [] Decide on a scene system to implement
 [] 9. GUI v0.2 

@@ -12,8 +12,9 @@ struct nikola::App {
   nikola::u16 res_group_id;
 
   nikola::RenderQueue render_queue;
+  nikola::RenderPass geo_pass;
 
-  nikola::ResourceID material_id, shader_context_id;
+  nikola::ResourceID material_id, geo_shader_context_id, shader_context_id;
   nikola::ResourceID skybox_id, model_id;
 
   nikola::Transform model_transform;
@@ -25,9 +26,6 @@ struct nikola::App {
 
 /// ----------------------------------------------------------------------
 /// Private functions 
-
-static void init_resources(nikola::App* app) {
-}
 
 static void render_app_ui(nikola::App* app) {
   if(!app->has_editor) {
@@ -80,12 +78,23 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   app->material_id = nikola::resources_push_material(app->res_group_id);
 
   // Shader contexts init
-  app->shader_context_id = nikola::resources_push_shader_context(app->res_group_id, nikola::resources_get_id(app->res_group_id, "default3d"));
+  app->shader_context_id     = nikola::resources_push_shader_context(app->res_group_id, nikola::resources_get_id(app->res_group_id, "default3d"));
+  app->geo_shader_context_id = nikola::resources_push_shader_context(app->res_group_id, nikola::resources_get_id(app->res_group_id, "geo_pass"));
 
   // Default transform init
   nikola::transform_translate(app->model_transform, nikola::Vec3(10.0f, 0.0f, 10.0f));
   nikola::transform_scale(app->model_transform, nikola::Vec3(1.0f));
+ 
+  int width, height; 
+  nikola::window_get_size(app->window, &width, &height);
 
+  // Render pass
+  nikola::DynamicArray<nikola::GfxTextureDesc> geo_targets = {
+    {.type = nikola::GFX_TEXTURE_RENDER_TARGET, .format = nikola::GFX_TEXTURE_FORMAT_RGBA8},
+    {.type = nikola::GFX_TEXTURE_DEPTH_STENCIL_TARGET, .format = nikola::GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8},
+  };
+  nikola::render_pass_create(&app->geo_pass, nikola::Vec2(width, height), (nikola::GFX_CLEAR_FLAGS_COLOR_BUFFER | nikola::GFX_CLEAR_FLAGS_DEPTH_BUFFER), geo_targets);
+  
   return app;
 }
 
@@ -124,11 +133,15 @@ void app_render(nikola::App* app) {
   rnd_cmd.shader_context_id = app->shader_context_id; 
   rnd_cmd.transform         = app->model_transform; 
   nikola::render_queue_push(app->render_queue, rnd_cmd);
+  
+  nikola::render_pass_begin(app->geo_pass, app->geo_shader_context_id);
   nikola::render_queue_flush(app->render_queue);
+  nikola::render_pass_end(app->geo_pass);
+
+  nikola::renderer_apply_pass(app->geo_pass);
 
   // Render UI
   render_app_ui(app); 
-
   nikola::renderer_end();
 }
 

@@ -7,6 +7,14 @@
 namespace nikola { // Start of nikola
 
 /// ----------------------------------------------------------------------
+struct RenderPassEntry {
+  RenderPass pass; 
+  RenderPassFn func; 
+  void* user_data  = nullptr;
+};
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// Renderer
 struct Renderer {
   GfxContext* context = nullptr;
@@ -18,9 +26,10 @@ struct Renderer {
   GfxPipeline* pipeline      = nullptr; 
 
   RendererDefaults defaults = {};
+  DynamicArray<RenderPassEntry> render_passes;
 };
 
-static Renderer s_renderer;
+static Renderer s_renderer{};
 /// Renderer
 /// ----------------------------------------------------------------------
 
@@ -158,13 +167,93 @@ static void render_model(RenderCommand& command) {
      .shader_context_id = command.shader_context_id, 
     };
 
-    // Send the material to the shader
-    shader_context_set_uniform(command.shader_context_id, "u_material", mat_id);
-
     // Render the sub-command
     render_mesh(sub_cmd);
   }
 }
+
+void create_render_pass(RenderPass* pass, const RenderPassDesc& desc) {
+  pass->frame_size        = desc.frame_size;
+  pass->frame_desc        = {}; 
+  pass->shader_context_id = desc.shader_context_id;
+
+  // Clear color init
+  pass->frame_desc.clear_color[0] = desc.clear_color.r;
+  pass->frame_desc.clear_color[1] = desc.clear_color.g;
+  pass->frame_desc.clear_color[2] = desc.clear_color.b;
+  pass->frame_desc.clear_color[3] = desc.clear_color.a;
+
+  // Clear flags init
+  pass->frame_desc.clear_flags = desc.clear_flags;
+ 
+  // Attachments init
+  for(sizei i = 0; i < desc.targets.size(); i++) {
+    GfxTextureDesc texture_desc = {
+      .width     = (u32)pass->frame_size.x, 
+      .height    = (u32)pass->frame_size.y, 
+      .depth     = 0, 
+      .mips      = 1, 
+      .type      = GFX_TEXTURE_RENDER_TARGET,
+      .format    = desc.targets[i],
+      .filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
+      .wrap_mode = GFX_TEXTURE_WRAP_MIRROR, 
+      .data      = nullptr,
+    };
+    pass->frame_desc.attachments[i] = gfx_texture_create(s_renderer.context, texture_desc);
+    pass->frame_desc.attachments_count++;
+  }
+
+  // Every framebuffer will have a depth and stencil buffer by default no matter what 
+  GfxTextureDesc texture_desc = {
+    .width     = (u32)pass->frame_size.x, 
+    .height    = (u32)pass->frame_size.y, 
+    .depth     = 0, 
+    .mips      = 1, 
+    .type      = GFX_TEXTURE_DEPTH_STENCIL_TARGET,
+    .format    = GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8,
+    .filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
+    .wrap_mode = GFX_TEXTURE_WRAP_MIRROR, 
+    .data      = nullptr,
+  };
+  pass->frame_desc.attachments[desc.targets.size()] = gfx_texture_create(s_renderer.context, texture_desc);
+  pass->frame_desc.attachments_count++;
+
+  // Framebuffer init
+  pass->frame = gfx_framebuffer_create(s_renderer.context, pass->frame_desc);
+}
+
+void begin_pass(RenderPass& pass) {
+  NIKOLA_ASSERT(RESOURCE_IS_VALID(pass.shader_context_id), "Invalid ShaderContext passed to the begin pass function");
+  
+  // @NOTE: An annoying way to set the clear color 
+  Vec4 col = Vec4(pass.frame_desc.clear_color[0], 
+                  pass.frame_desc.clear_color[1], 
+                  pass.frame_desc.clear_color[2], 
+                  pass.frame_desc.clear_color[3]);
+  
+  // Clear the framebuffer
+  gfx_context_clear(s_renderer.context, pass.frame);
+  gfx_context_set_state(s_renderer.context, GFX_STATE_DEPTH, true); 
+}
+
+void end_pass(RenderPass& pass) {
+  NIKOLA_ASSERT(RESOURCE_IS_VALID(pass.shader_context_id), "Invalid ShaderContext passed to the end pass function");
+
+  // Apply the shader from the pass
+  shader_context_use(pass.shader_context_id);
+  
+  // Apply the textures from the pass
+  gfx_texture_use(pass.frame_desc.attachments, pass.frame_desc.attachments_count); 
+  
+  // Render to the default framebuffer
+  gfx_context_clear(s_renderer.context, nullptr);
+  gfx_context_set_state(s_renderer.context, GFX_STATE_DEPTH, false); 
+
+  // Render the final render target
+  gfx_pipeline_update(s_renderer.pipeline, s_renderer.pipe_desc);
+  gfx_pipeline_draw_index(s_renderer.pipeline);
+}
+
 
 /// Private functions
 /// ----------------------------------------------------------------------
@@ -198,79 +287,6 @@ void render_queue_push(RenderQueue& queue, const RenderCommand& cmd) {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// RenderPass functions
-
-void render_pass_create(RenderPass* pass, const Vec2& size, u32 clear_flags, const DynamicArray<GfxTextureDesc>& targets) {
-  pass->frame_size = (Vec2)size;
-  
-  pass->frame_desc = {}; 
-
-  // Clear color init
-  pass->frame_desc.clear_color[0] = s_renderer.clear_color.r;
-  pass->frame_desc.clear_color[1] = s_renderer.clear_color.g;
-  pass->frame_desc.clear_color[2] = s_renderer.clear_color.b;
-  pass->frame_desc.clear_color[3] = s_renderer.clear_color.a;
-
-  // Clear flags init
-  pass->frame_desc.clear_flags = clear_flags;
- 
-  // Attachments init
-  for(sizei i = 0; i < targets.size(); i++) {
-    GfxTextureDesc texture_desc = {
-      .width     = (u32)pass->frame_size.x, 
-      .height    = (u32)pass->frame_size.y, 
-      .depth     = 0, 
-      .mips      = 1, 
-      .type      = targets[i].type,
-      .format    = targets[i].format, 
-      .filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-      .wrap_mode = GFX_TEXTURE_WRAP_MIRROR, 
-      .data      = nullptr,
-    };
-
-    pass->frame_desc.attachments[i] = gfx_texture_create(s_renderer.context, texture_desc);
-    pass->frame_desc.attachments_count++;
-  }
-
-  // Framebuffer init
-  pass->frame = gfx_framebuffer_create(s_renderer.context, pass->frame_desc);
-}
-
-void render_pass_destroy(RenderPass& pass) {
-  gfx_framebuffer_destroy(pass.frame);
-}
-
-void render_pass_begin(RenderPass& pass, const ResourceID& shader_context_id) {
-  NIKOLA_ASSERT(RESOURCE_IS_VALID(shader_context_id), "Invalid ShaderContext passed to render_pass_begin function");
-  
-  // @NOTE: An annoying way to set the clear color 
-  Vec4 col = Vec4(pass.frame_desc.clear_color[0], 
-                  pass.frame_desc.clear_color[1], 
-                  pass.frame_desc.clear_color[2], 
-                  pass.frame_desc.clear_color[3]);
-  
-  // Clear the framebuffer
-  gfx_context_clear(s_renderer.context, pass.frame);
-  gfx_context_set_state(s_renderer.context, GFX_STATE_DEPTH, true); 
-
-  // Assign a shader context
-  pass.shader_context_id = shader_context_id;
-}
-
-void render_pass_end(RenderPass& pass) {
-  NIKOLA_ASSERT(RESOURCE_IS_VALID(pass.shader_context_id), "Invalid ShaderContext passed to render_pass_end function");
-
-  // Apply the shader from the pass
-  shader_context_use(pass.shader_context_id);
-  
-  // Apply the textures from the pass
-  gfx_texture_use(pass.frame_desc.attachments, pass.frame_desc.attachments_count); 
-}
-
-/// RenderPass functions
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
 /// Renderer functions
 
 void renderer_init(Window* window, const Vec4& clear_clear) {
@@ -288,6 +304,10 @@ void renderer_init(Window* window, const Vec4& clear_clear) {
 }
 
 void renderer_shutdown() {
+  for(auto& entry : s_renderer.render_passes) {
+    gfx_framebuffer_destroy(entry.pass.frame);
+  }
+
   gfx_pipeline_destroy(s_renderer.pipeline);
   gfx_context_shutdown(s_renderer.context);
   
@@ -306,6 +326,15 @@ const RendererDefaults& renderer_get_defaults() {
   return s_renderer.defaults;
 }
 
+void renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& func, const void* user_data) {
+  RenderPassEntry entry;
+  entry.func      = func; 
+  entry.user_data = (void*)user_data;
+  create_render_pass(&entry.pass, desc);
+
+  s_renderer.render_passes.push_back(entry);
+}
+
 void renderer_begin(Camera& camera) {
   // Updating the internal matrices buffer for each shader
   s_renderer.camera = &camera;
@@ -313,18 +342,32 @@ void renderer_begin(Camera& camera) {
   gfx_buffer_update(s_renderer.defaults.matrices_buffer, sizeof(Mat4), sizeof(Mat4), mat4_raw_data(camera.projection));
 }
 
-void renderer_end() {
-  gfx_context_present(s_renderer.context);
+void renderer_apply_passes() {
+  /* @NOTE (28/3/2025, Mohamed):
+  *
+  * Since the first entry of the render passes does not have a "previous" 
+  * entry, we use it here before entering the loop. We also want to avoid 
+  * the inevitable `if` statements inside the loop.
+  * 
+  */
+  RenderPassEntry* first_entry = &s_renderer.render_passes[0];
+  
+  begin_pass(first_entry->pass);
+  first_entry->func(nullptr, &first_entry->pass, first_entry->user_data);
+  end_pass(first_entry->pass);
+
+  // Initiate all of the render passes 
+  for(sizei i = 1; i < s_renderer.render_passes.size(); i++) {
+    RenderPassEntry* entry = &s_renderer.render_passes[i];
+  
+    begin_pass(entry->pass);
+    entry->func(&s_renderer.render_passes[i - 1].pass, &entry->pass, entry->user_data);
+    begin_pass(entry->pass);
+  } 
 }
 
-void renderer_apply_pass(RenderPass& pass) {
-  // Render to the default framebuffer
-  gfx_context_clear(s_renderer.context, nullptr);
-  gfx_context_set_state(s_renderer.context, GFX_STATE_DEPTH, false); 
-
-  // Render the final render target
-  gfx_pipeline_update(s_renderer.pipeline, s_renderer.pipe_desc);
-  gfx_pipeline_draw_index(s_renderer.pipeline);
+void renderer_end() {
+  gfx_context_present(s_renderer.context);
 }
 
 /// Renderer functions

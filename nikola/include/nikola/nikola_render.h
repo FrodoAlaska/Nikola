@@ -124,16 +124,33 @@ using RenderQueue = DynamicArray<RenderCommand>;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// RenderPassDesc
+struct RenderPassDesc {
+  Vec2 frame_size  = Vec2(0.0f);
+  Vec4 clear_color = Vec4(1.0f);
+  u32 clear_flags  = 0;
+  
+  ResourceID shader_context_id = {};
+  DynamicArray<GfxTextureFormat> targets;
+};
+/// RenderPassDesc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// RenderPass
 struct RenderPass {
-  Vec2 frame_size = Vec2(0.0f);
-
+  Vec2 frame_size               = Vec2(0.0f);
   GfxFramebufferDesc frame_desc = {};
   GfxFramebuffer* frame         = nullptr;
-
-  ResourceID shader_context_id = {};
+  ResourceID shader_context_id  = {};
 };
 /// RenderPass
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// RenderPassFn 
+using RenderPassFn = void(*)(const RenderPass* previous, RenderPass* pass, void* user_data);
+/// RenderPassFn 
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -164,10 +181,6 @@ NIKOLA_API void render_queue_push(RenderQueue& queue, const RenderCommand& cmd);
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderPass functions
 
-NIKOLA_API void render_pass_create(RenderPass* pass, const Vec2& size, u32 clear_flags, const DynamicArray<GfxTextureDesc>& targets);
-
-NIKOLA_API void render_pass_destroy(RenderPass& pass);
-
 NIKOLA_API void render_pass_begin(RenderPass& pass, const ResourceID& shader_context_id);
 
 NIKOLA_API void render_pass_end(RenderPass& pass);
@@ -194,11 +207,13 @@ NIKOLA_API void renderer_set_clear_color(const Vec4& clear_color);
 /// Retrieve the internal default values of the renderer
 NIKOLA_API const RendererDefaults& renderer_get_defaults();
 
+NIKOLA_API void renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& func, const void* user_data);
+
+NIKOLA_API void renderer_apply_passes();
+
 NIKOLA_API void renderer_begin(Camera& camera);
 
 NIKOLA_API void renderer_end();
-
-NIKOLA_API void renderer_apply_pass(RenderPass& pass);
 
 /// Renderer functions
 ///---------------------------------------------------------------------------------------------------------------------
