@@ -158,6 +158,9 @@ static void render_model(RenderCommand& command) {
      .shader_context_id = command.shader_context_id, 
     };
 
+    // Send the material to the shader
+    shader_context_set_uniform(command.shader_context_id, "u_material", mat_id);
+
     // Render the sub-command
     render_mesh(sub_cmd);
   }

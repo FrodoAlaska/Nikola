@@ -24,6 +24,7 @@ set(NBR_BUILD_DEFS  ${NIKOLA_BUILD_DEFS})
 ############################################################
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
+set(CMAKE_CXX_STANDARD 20)
 ############################################################
 
 ### Project Sources ###

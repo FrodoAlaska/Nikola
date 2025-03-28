@@ -101,16 +101,15 @@ cmake .. -DCMAKE_BUILD_TYPE=$build_config
 cmake --build . $build_flags
 
 cd $working_dir
-echo $working_dir
 #########################################################
 
 ### Run ### 
 #########################################################
-if [[ $can_run_testbed -eq 1 ]]; then
-  ./run-testbed.sh "--${build_config,,}"
+if [[ $can_reload_res -eq 1 ]]; then
+  ./reload-resources.sh "$build_path/NBR" "../res" "$build_path/testbed/res" "../res/list_example"
 fi
 
-if [[ $can_reload_res -eq 1 ]]; then
-  ./reload-resources.sh "$build_dir/NBR/" "../res" "$build_dir/testbed/res" "list_example"
+if [[ $can_run_testbed -eq 1 ]]; then
+  ./run-testbed.sh "--${build_config,,}"
 fi
 #########################################################

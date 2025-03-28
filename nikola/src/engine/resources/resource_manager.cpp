@@ -7,6 +7,8 @@
 #include "loaders/mesh_loader.h"
 #include "loaders/skybox_loader.hpp"
 
+#include <cstring>
+
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola

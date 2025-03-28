@@ -16,13 +16,18 @@ set(TESTBED_INCLUDES
   ${NIKOLA_INCLUDES}
   ${TESTBED_INCLUDE_DIR}
 )
+
+set(TESTBED_TYPE 
+  # "engine_testbed"
+  "model_viewer"
+)
 ############################################################
 
 ### Project Sources ###
 ############################################################
 set(TESTBED_SOURCES 
-  ${TESTBED_SRC_DIR}/engine_testbed/main.cpp
-  ${TESTBED_SRC_DIR}/engine_testbed/app.cpp
+  ${TESTBED_SRC_DIR}/${TESTBED_TYPE}/main.cpp
+  ${TESTBED_SRC_DIR}/${TESTBED_TYPE}/app.cpp
 )
 ############################################################
 

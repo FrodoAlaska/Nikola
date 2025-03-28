@@ -11,7 +11,7 @@ namespace nikola {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Private functions
 static std::ios::openmode get_mode(const i32 mode) {
-  std::ios::openmode cpp_mode = 0;
+  std::ios::openmode cpp_mode = (std::ios::openmode)0;
 
   if(IS_BIT_SET(mode, FILE_OPEN_READ)) {
     cpp_mode = (std::ios::openmode)(cpp_mode | std::ios::in);
