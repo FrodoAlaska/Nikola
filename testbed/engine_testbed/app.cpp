@@ -94,6 +94,7 @@ static void init_resources(nikola::App* app) {
   // nikola::resources_push_dir(app->res_group_id, "models");
   nikola::resources_push_model(app->res_group_id, "models/behelit.nbrmodel");
   nikola::resources_push_model(app->res_group_id, "models/dice.nbrmodel");
+  nikola::resources_push_model(app->res_group_id, "models/cottage_obj.nbrmodel");
 
   // Materials init
   app->material_id = nikola::resources_push_material(app->res_group_id);
@@ -118,7 +119,7 @@ static void init_props(nikola::App* app) {
   nikola::Vec3 default_pos(10.0f, 0.0f, 10.0f);
   
   // Porps init
-  app->props.push_back(Prop("behelit", default_pos, nikola::Vec3(0.1f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "behelit")));
+  app->props.push_back(Prop("behelit", default_pos, nikola::Vec3(0.1f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "cottage_obj")));
   app->props.push_back(Prop("dice", default_pos + nikola::Vec3(20.0f, 0.0f, 20.0f), nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "dice")));
   // app->props.push_back(Prop("bridge", default_pos, nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "bridge")));
   // app->props.push_back(Prop("tempel", default_pos, nikola::Vec3(1.0f), nikola::RENDERABLE_TYPE_MODEL, nikola::resources_get_id(app->res_group_id, "tempel")));

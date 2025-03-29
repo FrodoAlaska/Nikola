@@ -18,6 +18,8 @@ struct ObjData {
   nikola::DynamicArray<nikola::NBRTexture> textures;
 
   nikola::FilePath parent_dir;
+
+  nikola::NBRTexture default_texture;
 };
 /// ----------------------------------------------------------------------
 
@@ -149,10 +151,10 @@ static void load_material_texture(aiMaterial* material, aiTextureType type, ObjD
     nikola::NBRTexture texture;
     image_loader_load_texture(&texture, nikola::filepath_append(data->parent_dir, str.C_Str()));
     data->textures.push_back(texture);
-
-    // Set the appropriate index of the newly loaded texture
-    *index = (nikola::i8)data->textures.size() - 1;
   }
+  
+  // Set the appropriate index of the newly loaded texture
+  *index = (nikola::i8)data->textures.size() - 1;
 }
 
 static void load_scene_materials(const aiScene* scene, ObjData* data) {
@@ -218,7 +220,21 @@ bool model_loader_load(nikola::NBRModel* model, const nikola::FilePath& path) {
   // Loading everything into `ObjData`
   ObjData data; 
   data.parent_dir = nikola::filepath_parent_path(path); // Usually, `path` will refer to the 3D model file directly so we need its immediate parent
-  
+
+  /*
+   * @NOTE (29/3/2025): 
+   * Just in case the material has no textures, we will 
+   * give it a default white texture to use instead.
+  */
+  data.default_texture = {
+    .width    = 1, 
+    .height   = 1, 
+    .channels = 4, 
+    .pixels   = nikola::memory_allocate(4), // 4 = width * height * channels
+  };
+  nikola::memory_set(data.default_texture.pixels, 1, 4);
+  data.textures.push_back(data.default_texture); 
+
   // Meshes init 
   load_scene_meshes(scene, &data, scene->mRootNode);
   model->meshes_count  = data.meshes.size();
@@ -250,8 +266,12 @@ void model_loader_unload(nikola::NBRModel& model) {
   // Unload materials 
   nikola::memory_free(model.materials);
 
+  // The first texture is usually a white texture that wasn't 
+  // loaded by STB.
+  nikola::memory_free(model.textures[0].pixels);
+
   // Unload textures 
-  for(nikola::sizei i = 0; i < model.textures_count; i++) {
+  for(nikola::sizei i = 1; i < model.textures_count; i++) {
     image_loader_unload_texture(model.textures[i]);
   }
   nikola::memory_free(model.textures);
