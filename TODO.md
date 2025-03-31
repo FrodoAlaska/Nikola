@@ -40,44 +40,47 @@
     - [x] Make render passes be associated with a specific `ShaderContext` instead of a `Material`.
     - [x] The model loader cannot load models that posses no textures
 [] 9. Scenes v0.1
-    - [] Decide on a scene system to implement
-    - [] How will entities work? 
+    - [x] Scene system ground work
+    - [x] Entity system ground work
+    - [] Test 
+    - [] Documentation
 [] 10. GUI v0.2 
     - [] A canvas system for 2D game UI.
     - [] A better system to handle debug UI.
     - [] Documentation.
-[] 11. GFX v1.0? 
+[] 11. Serlializer v0.1
+[] 12. GFX v1.0? 
     - [x] Let every reasource have a `_use` function
     - [x] Refactor the `GfxPipeline` 
     - [x] Improve framebuffers (`gfx_framebuffer_copy(src, dest, pos, size)`, incorporate `glDrawBuffers`)
     - [x] Test
     - [] Instancing 
     - [] Documentation
-[] 12. Renderer v0.3 
+[] 13. Renderer v0.3 
     - [] Improve render pass system
     - [] Better material system 
     - [] More intuitive and faster method to render primitives using materials
-[] 13. Camera v0.2
-[] 14. Fonts v0.1 
+[] 14. Camera v0.2
+[] 15. Fonts v0.1 
     - [] Choose a font-loading library 
     - [] Make and implement the `NBRFont` specification 
     - [] Add support for fonts in the NBR tool 
     - [] Add font loading support in the resource manager 
     - [] Have a minimal version of font rendering (both 2D and 3D)
-[] 15. Multi-threading v0.2 
+[] 16. Multi-threading v0.2 
     - [] Implement both performance timers and normal timers
     - [] Which systems can benefit most from multi-threading? 
     - [] Should we implement a job system? If yes, how can this be done within the confines of the engine? 
     - [] Try to improve the load times for the resource manager as a test of the new multi-threading system.
-[] 16. Audio System v0.1 
+[] 17. Audio System v0.1 
     - [] Lay out what you actually want the audio system to be and what it does. 
     - [] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
     - [] Create an audio backend with a context 
     - [] A way to create an audio buffer that could be played with the context 
     - [] 2D and 3D sound and music. 
     - [] A fully-fledged audio pipeline that can play, position, pitch, control the volume, and apply effects to sound and music
-[] 17. Physics v0.1
-[] 18. 3D Animations v0.1
+[] 18. Physics v0.1
+[] 19. 3D Animations v0.1
 
 ## (Engine) TODO: 
 * General 

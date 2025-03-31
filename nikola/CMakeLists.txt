@@ -1,51 +1,51 @@
 ### Project Sources ###
 ############################################################
 set(NIKOLA_SOURCES 
-  # Core/Base
-  ${NIKOLA_SRC_DIR}/core/base/nikola.cpp
-  ${NIKOLA_SRC_DIR}/core/base/logger.cpp
-  ${NIKOLA_SRC_DIR}/core/base/event.cpp
-  ${NIKOLA_SRC_DIR}/core/base/window.cpp
-  ${NIKOLA_SRC_DIR}/core/base/nikola_memory.cpp
-  ${NIKOLA_SRC_DIR}/core/base/input.cpp
-  ${NIKOLA_SRC_DIR}/core/base/nikola_clock.cpp
+  # Base
+  ${NIKOLA_SRC_DIR}/base/nikola.cpp
+  ${NIKOLA_SRC_DIR}/base/logger.cpp
+  ${NIKOLA_SRC_DIR}/base/event.cpp
+  ${NIKOLA_SRC_DIR}/base/window.cpp
+  ${NIKOLA_SRC_DIR}/base/nikola_memory.cpp
+  ${NIKOLA_SRC_DIR}/base/input.cpp
+  ${NIKOLA_SRC_DIR}/base/nikola_clock.cpp
   
-  # Core/Gfx
-  ${NIKOLA_SRC_DIR}/core/gfx/gl_backend.cpp
+  # Gfx
+  ${NIKOLA_SRC_DIR}/gfx/gl_backend.cpp
   
   # Engine
-  ${NIKOLA_SRC_DIR}/engine/engine.cpp
+  ${NIKOLA_SRC_DIR}/engine.cpp
 
-  # Engine/Math 
-  ${NIKOLA_SRC_DIR}/engine/math/math_common.cpp
-  ${NIKOLA_SRC_DIR}/engine/math/random.cpp
-  ${NIKOLA_SRC_DIR}/engine/math/vector_types.cpp
-  ${NIKOLA_SRC_DIR}/engine/math/matrix_types.cpp
-  ${NIKOLA_SRC_DIR}/engine/math/quaternion.cpp
-  ${NIKOLA_SRC_DIR}/engine/math/transform.cpp
-  ${NIKOLA_SRC_DIR}/engine/math/vertex.cpp
+  # Math 
+  ${NIKOLA_SRC_DIR}/math/math_common.cpp
+  ${NIKOLA_SRC_DIR}/math/random.cpp
+  ${NIKOLA_SRC_DIR}/math/vector_types.cpp
+  ${NIKOLA_SRC_DIR}/math/matrix_types.cpp
+  ${NIKOLA_SRC_DIR}/math/quaternion.cpp
+  ${NIKOLA_SRC_DIR}/math/transform.cpp
+  ${NIKOLA_SRC_DIR}/math/vertex.cpp
   
-  # Engine/Resources
-  ${NIKOLA_SRC_DIR}/engine/resources/resource_manager.cpp
-  ${NIKOLA_SRC_DIR}/engine/resources/material.cpp
-  ${NIKOLA_SRC_DIR}/engine/resources/shader_context.cpp
-  ${NIKOLA_SRC_DIR}/engine/resources/nbr_file.cpp
-  ${NIKOLA_SRC_DIR}/engine/resources/nbr_importer.cpp
+  # Resources
+  ${NIKOLA_SRC_DIR}/resources/resource_manager.cpp
+  ${NIKOLA_SRC_DIR}/resources/material.cpp
+  ${NIKOLA_SRC_DIR}/resources/shader_context.cpp
+  ${NIKOLA_SRC_DIR}/resources/nbr_file.cpp
+  ${NIKOLA_SRC_DIR}/resources/nbr_importer.cpp
 
-  # Engine/filesystem
-  ${NIKOLA_SRC_DIR}/engine/filesystem/file.cpp
-  ${NIKOLA_SRC_DIR}/engine/filesystem/filesystem.cpp
-  ${NIKOLA_SRC_DIR}/engine/filesystem/filepath.cpp
-  ${NIKOLA_SRC_DIR}/engine/filesystem/filewatcher.cpp
+  # filesystem
+  ${NIKOLA_SRC_DIR}/filesystem/file.cpp
+  ${NIKOLA_SRC_DIR}/filesystem/filesystem.cpp
+  ${NIKOLA_SRC_DIR}/filesystem/filepath.cpp
+  ${NIKOLA_SRC_DIR}/filesystem/filewatcher.cpp
 
-  # Engine/Resources/Loaders 
-  ${NIKOLA_SRC_DIR}/engine/resources/loaders/mesh_loader.cpp
-  ${NIKOLA_SRC_DIR}/engine/resources/loaders/skybox_loader.cpp
+  # Resources/Loaders 
+  ${NIKOLA_SRC_DIR}/resources/loaders/mesh_loader.cpp
+  ${NIKOLA_SRC_DIR}/resources/loaders/skybox_loader.cpp
   
-  # Engine/Renderer 
-  ${NIKOLA_SRC_DIR}/engine/renderer/camera.cpp
-  ${NIKOLA_SRC_DIR}/engine/renderer/renderer.cpp
-  ${NIKOLA_SRC_DIR}/engine/renderer/batch_renderer.cpp
+  # Renderer 
+  ${NIKOLA_SRC_DIR}/renderer/camera.cpp
+  ${NIKOLA_SRC_DIR}/renderer/renderer.cpp
+  ${NIKOLA_SRC_DIR}/renderer/batch_renderer.cpp
   
   # UI 
   ${NIKOLA_SRC_DIR}/ui/gui.cpp
