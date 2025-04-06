@@ -10,7 +10,7 @@
 struct nikola::App {
   nikola::Window* window;
   nikola::ResourceID geo_shader_context_id, post_shader_context_id;
-  nikola::i32 effect_index = 0;
+  nikola::i32 effect_index = 3;
 
   GameScene game_scene;
 };
@@ -118,8 +118,7 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 } 
 
 void app_render(nikola::App* app) {
-  nikola::Camera current_cam = app->game_scene.camera;
-  nikola::renderer_begin(current_cam);
+  nikola::renderer_begin(app->game_scene.camera);
 
   // Apply and render the render passes
   nikola::renderer_apply_passes();

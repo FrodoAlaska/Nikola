@@ -48,9 +48,6 @@ void game_scene_init(GameScene* scene, nikola::Window* window) {
   nikola::ResourceID default_shader_context = nikola::resources_push_shader_context(res_group, nikola::resources_get_id(res_group, "default3d"));
   nikola::ResourceID skybox_shader_context  = nikola::resources_push_shader_context(res_group, nikola::resources_get_id(res_group, "cubemap"));
 
-  // Caching shader uniforms 
-  nikola::shader_context_cache_uniform(default_shader_context, MATERIAL_UNIFORM_MODEL_MATRIX);
-
   // Materials init
   nikola::ResourceID default_material = nikola::resources_push_material(res_group);
 
@@ -79,6 +76,7 @@ void game_scene_init(GameScene* scene, nikola::Window* window) {
 void game_scene_update(GameScene& scene) {
   if(nikola::input_key_pressed(nikola::KEY_E)) {
     scene.has_editor = !scene.has_editor;
+    nikola::input_cursor_show(scene.has_editor);
   }
 
   if(scene.has_editor) {
@@ -96,13 +94,17 @@ void game_scene_gui_render(GameScene& scene) {
   if(!scene.has_editor) {
     return;
   }
-
-  nikola::gui_begin();
-  nikola::gui_begin_panel("Transforms");
   
-  nikola::gui_edit_transform("Dice", &scene.transforms[0]);
-
+  nikola::gui_begin();
+  
+  nikola::gui_begin_panel("Debug");
+  nikola::gui_settings_debug();
   nikola::gui_end_panel();
+
+  nikola::gui_begin_panel("Transforms");
+  nikola::gui_edit_transform("Dice", &scene.transforms[0]);
+  nikola::gui_end_panel();
+  
   nikola::gui_end();
 }
 

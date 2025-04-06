@@ -169,7 +169,7 @@ static void render_model(RenderCommand& command) {
   }
 }
 
-void create_render_pass(RenderPass* pass, const RenderPassDesc& desc) {
+static void create_render_pass(RenderPass* pass, const RenderPassDesc& desc) {
   pass->frame_size        = desc.frame_size;
   pass->frame_desc        = {}; 
   pass->shader_context_id = desc.shader_context_id;
@@ -219,7 +219,7 @@ void create_render_pass(RenderPass* pass, const RenderPassDesc& desc) {
   pass->frame = gfx_framebuffer_create(s_renderer.context, pass->frame_desc);
 }
 
-void begin_pass(RenderPass& pass) {
+static void begin_pass(RenderPass& pass) {
   NIKOLA_ASSERT(RESOURCE_IS_VALID(pass.shader_context_id), "Invalid ShaderContext passed to the begin pass function");
   
   // @NOTE: An annoying way to set the clear color 
@@ -233,7 +233,7 @@ void begin_pass(RenderPass& pass) {
   gfx_context_set_state(s_renderer.context, GFX_STATE_DEPTH, true); 
 }
 
-void end_pass(RenderPass& pass) {
+static void end_pass(RenderPass& pass) {
   NIKOLA_ASSERT(RESOURCE_IS_VALID(pass.shader_context_id), "Invalid ShaderContext passed to the end pass function");
 
   // Apply the shader from the pass
@@ -357,7 +357,7 @@ void renderer_apply_passes() {
   
     begin_pass(entry->pass);
     entry->func(&s_renderer.render_passes[i - 1].pass, &entry->pass, entry->user_data);
-    begin_pass(entry->pass);
+    end_pass(entry->pass);
   } 
 }
 
