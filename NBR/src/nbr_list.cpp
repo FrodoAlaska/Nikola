@@ -116,7 +116,7 @@ static void convert_by_type(ListSection* section, nikola::FilePath& path) {
   }
 }
 
-static void iterate_resources(const nikola::FilePath& base_dir, nikola::FilePath current_path, void* user_data) {
+static void iterate_resources(const nikola::FilePath& base_dir, nikola::FilePath& current_path, void* user_data) {
   ListSection* section = (ListSection*)user_data;
   convert_by_type(section, current_path);
 }

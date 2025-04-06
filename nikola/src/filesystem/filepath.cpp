@@ -10,7 +10,7 @@ namespace nikola {
 ///---------------------------------------------------------------------------------------------------------------------
 /// FilePath functions
 
-FilePath filepath_append(FilePath& base, const FilePath& other) {
+FilePath filepath_append(const FilePath& base, const FilePath& other) {
   return (std::filesystem::path(base) / other).string(); 
 }
 

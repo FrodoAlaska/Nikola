@@ -68,7 +68,7 @@ using File = std::fstream;
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// FileIterateFunc callback
-using FileIterateFunc = void(*)(const FilePath& base_dir, FilePath current_path, void* user_data);
+using FileIterateFunc = void(*)(const FilePath& base_dir, FilePath& current_path, void* user_data);
 /// FileIterateFunc callback
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -121,7 +121,7 @@ NIKOLA_API void filewatcher_shutdown();
 /// Append the given `other` to `base` and return the result.
 ///
 /// @NOTE: This function will adhere to the specific operating systems's seperator.
-NIKOLA_API FilePath filepath_append(FilePath& base, const FilePath& other);
+NIKOLA_API FilePath filepath_append(const FilePath& base, const FilePath& other);
 
 /// Retrieve the root name (for example, `C:` on Windows) of `path`.
 /// 

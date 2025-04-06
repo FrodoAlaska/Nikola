@@ -11,6 +11,7 @@ int main(int argc, char** argv) {
   int win_flags = nikola::WINDOW_FLAGS_FOCUS_ON_CREATE | 
                   nikola::WINDOW_FLAGS_GFX_HARDWARE    | 
                   nikola::WINDOW_FLAGS_CENTER_MOUSE    |
+                  nikola::WINDOW_FLAGS_FULLSCREEN      | 
                   nikola::WINDOW_FLAGS_HIDE_CURSOR;
 
   nikola::AppDesc app_desc {

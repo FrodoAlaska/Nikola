@@ -121,7 +121,7 @@ static void render_mesh(RenderCommand& command) {
   Mesh* mesh = resources_get_mesh(command.renderable_id);
 
   // Setting uniforms 
-  shader_context_set_uniform(command.shader_context_id, MATERIAL_UNIFORM_MODEL_MATRIX, command.transform.transform);
+  shader_context_set_uniform(command.shader_context_id, MATERIAL_UNIFORM_MODEL_MATRIX, command.transform->transform);
 
   // Using the shader 
   shader_context_use(command.shader_context_id);
@@ -138,9 +138,6 @@ static void render_skybox(RenderCommand& command) {
 
   // Using the shader 
   shader_context_use(command.shader_context_id);
-
-  // Uploading the uniforms
-  material_use(command.material_id);  
 
   // Use the cubemap
   GfxCubemap* cube = resources_get_cubemap(skybox->cubemap);
@@ -275,8 +272,6 @@ void render_queue_flush(RenderQueue& queue) {
         break;
     }
   }
-
-  queue.clear();
 }
 
 void render_queue_push(RenderQueue& queue, const RenderCommand& cmd) {

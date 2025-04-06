@@ -11,7 +11,6 @@
 #include <nikola/nikola_math.h>
 #include <nikola/nikola_render.h>
 #include <nikola/nikola_resources.h>
-#include <nikola/nikola_scene.h>
 
 /// UI
 #include <nikola/nikola_ui.h>

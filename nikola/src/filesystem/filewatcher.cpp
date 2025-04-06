@@ -31,7 +31,7 @@ static DynamicArray<FileWatchEntry> s_entries;
 ///---------------------------------------------------------------------------------------------------------------------
 /// Callbacks
 
-static void add_files_iterate(const FilePath& base, FilePath current_path, void* user_data) {
+static void add_files_iterate(const FilePath& base, FilePath& current_path, void* user_data) {
   FileWatchEntry* entry = (FileWatchEntry*)user_data;
  
   entry->path            = base;

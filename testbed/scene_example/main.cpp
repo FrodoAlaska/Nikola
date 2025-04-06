@@ -19,9 +19,9 @@ int main(int argc, char** argv) {
     .update_fn   = app_update, 
     .render_fn   = app_render, 
 
-    .window_title  = "Model Viewer", 
-    .window_width  = 1366, 
-    .window_height = 738, 
+    .window_title  = "Scenes Test", 
+    .window_width  = 1280, 
+    .window_height = 720, 
     .window_flags  = win_flags,
 
     .args_values = argv, 

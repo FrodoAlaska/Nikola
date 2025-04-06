@@ -12,13 +12,15 @@ namespace nikola {
 
 void filesystem_directory_iterate(const FilePath& dir, const FileIterateFunc& iter_func, const void* user_data) {
   for(auto& p : std::filesystem::directory_iterator(dir)) {
-    iter_func(dir, nikola::FilePath(p.path().string()), (void*)user_data);
+    FilePath path = p.path().string();
+    iter_func(dir, path, (void*)user_data);
   }
 }
 
 void filesystem_directory_recurse_iterate(const FilePath& dir, const FileIterateFunc& iter_func, const void* user_data) {
   for(auto& p : std::filesystem::recursive_directory_iterator(dir)) {
-    iter_func(dir, nikola::FilePath(p.path().string()), (void*)user_data);
+    FilePath path = p.path().string();
+    iter_func(dir, path, (void*)user_data);
   }
 }
 

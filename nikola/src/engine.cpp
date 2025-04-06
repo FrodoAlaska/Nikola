@@ -101,7 +101,7 @@ void engine_run() {
 
 void engine_shutdown() {
   CHECK_VALID_CALLBACK(s_engine.app_desc.shutdown_fn, s_engine.app);
-
+  
   resource_manager_shutdown();
   filewatcher_shutdown(); 
   renderer_shutdown();

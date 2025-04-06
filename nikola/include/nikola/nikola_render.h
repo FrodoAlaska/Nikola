@@ -41,30 +41,6 @@ enum RenderableType {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// RenderEffectType
-enum RenderEffectType {
-  RENDER_EFFECT_NONE        = 20 << 0, 
- 
-  RENDER_EFFECT_GREYSCALE   = 20 << 1, 
- 
-  RENDER_EFFECT_INVERSION   = 20 << 2, 
- 
-  RENDER_EFFECT_SHARPEN     = 20 << 3, 
- 
-  RENDER_EFFECT_BLUR        = 20 << 4, 
-  
-  RENDER_EFFECT_EMBOSS      = 20 << 5,
-
-  RENDER_EFFECT_EDGE_DETECT = 20 << 6, 
-  
-  RENDER_EFFECT_PIXELIZE    = 20 << 7, 
-
-  RENDER_EFFECTS_MAX        = 8,
-};
-/// RenderEffectType
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
 /// Camera function pointers
 
 // Have to do this to fix underfined variable errors in the callback.
@@ -106,7 +82,7 @@ struct RendererDefaults {
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderCommand
 struct RenderCommand {
-  Transform transform;
+  Transform* transform = nullptr;
   
   RenderableType render_type;
   sizei instance_count = 0;

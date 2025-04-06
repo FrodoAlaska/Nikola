@@ -211,7 +211,7 @@ static void reload_core_resource(const ResourceGroup* group, const ResourceID& i
 /// ----------------------------------------------------------------------
 /// Callbacks
 
-static void resource_entry_iterate(const FilePath& base, FilePath path, void* user_data) {
+static void resource_entry_iterate(const FilePath& base, FilePath& path, void* user_data) {
   ResourceGroup* group = (ResourceGroup*)user_data;
 
   if(!filesystem_exists(path)) {
@@ -231,7 +231,9 @@ static void resource_entry_iterate(const FilePath& base, FilePath path, void* us
       group->named_ids[filename] = resources_push_cubemap(group->id, path);
       break;
     case RESOURCE_TYPE_SHADER:
+      NIKOLA_LOG_TRACE("HERE %s", path.c_str());
       group->named_ids[filename] = resources_push_shader(group->id, path);
+      NIKOLA_LOG_TRACE("HERE %s", path.c_str());
       break;
     case RESOURCE_TYPE_MODEL:
       group->named_ids[filename] = resources_push_model(group->id, path);
@@ -723,18 +725,9 @@ ResourceID resources_push_model(const u16 group_id, const FilePath& nbr_path) {
 void resources_push_dir(const u16 group_id, const FilePath& dir) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
-
-  // Create the full path 
-  FilePath full_path = filepath_append(group->parent_dir, dir);
-
-  // Cannot proceed if the directory is invalid
-  if(!filesystem_exists(full_path)) {
-    NIKOLA_LOG_ERROR("Resource directory \'%s\' does not exist", dir.c_str());
-    return;
-  }
  
   // Retrieve all of the paths
-  filesystem_directory_iterate(full_path, resource_entry_iterate, group);
+  filesystem_directory_iterate(dir, resource_entry_iterate, group);
 }
 
 ResourceID& resources_get_id(const u16 group_id, const nikola::String& filename) {
