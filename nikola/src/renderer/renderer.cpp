@@ -175,10 +175,7 @@ static void create_render_pass(RenderPass* pass, const RenderPassDesc& desc) {
   pass->shader_context_id = desc.shader_context_id;
 
   // Clear color init
-  pass->frame_desc.clear_color[0] = desc.clear_color.r;
-  pass->frame_desc.clear_color[1] = desc.clear_color.g;
-  pass->frame_desc.clear_color[2] = desc.clear_color.b;
-  pass->frame_desc.clear_color[3] = desc.clear_color.a;
+  pass->clear_color = desc.clear_color;
 
   // Clear flags init
   pass->frame_desc.clear_flags = desc.clear_flags;
@@ -222,14 +219,12 @@ static void create_render_pass(RenderPass* pass, const RenderPassDesc& desc) {
 static void begin_pass(RenderPass& pass) {
   NIKOLA_ASSERT(RESOURCE_IS_VALID(pass.shader_context_id), "Invalid ShaderContext passed to the begin pass function");
   
-  // @NOTE: An annoying way to set the clear color 
-  Vec4 col = Vec4(pass.frame_desc.clear_color[0], 
-                  pass.frame_desc.clear_color[1], 
-                  pass.frame_desc.clear_color[2], 
-                  pass.frame_desc.clear_color[3]);
+  // Set the pass's target
+  gfx_context_set_target(s_renderer.context, pass.frame);
   
   // Clear the framebuffer
-  gfx_context_clear(s_renderer.context, pass.frame);
+  Vec4 col = pass.clear_color;
+  gfx_context_clear(s_renderer.context, col.r, col.g, col.b, col.a);
   gfx_context_set_state(s_renderer.context, GFX_STATE_DEPTH, true); 
 }
 
@@ -243,7 +238,11 @@ static void end_pass(RenderPass& pass) {
   gfx_texture_use(pass.frame_desc.attachments, pass.frame_desc.attachments_count); 
   
   // Render to the default framebuffer
-  gfx_context_clear(s_renderer.context, nullptr);
+  gfx_context_set_target(s_renderer.context, nullptr);
+  
+  // Clear the default target
+  Vec4 col = s_renderer.clear_color;
+  gfx_context_clear(s_renderer.context, col.r, col.g, col.b, col.a);
   gfx_context_set_state(s_renderer.context, GFX_STATE_DEPTH, false); 
 
   // Render the final render target
@@ -284,10 +283,10 @@ void render_queue_push(RenderQueue& queue, const RenderCommand& cmd) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Renderer functions
 
-void renderer_init(Window* window, const Vec4& clear_clear) {
+void renderer_init(Window* window, const Vec4& clear_color) {
   // Context init 
   init_context(window);
-  s_renderer.clear_color = clear_clear;
+  s_renderer.clear_color = clear_color;
 
   // Defaults init
   init_defaults();

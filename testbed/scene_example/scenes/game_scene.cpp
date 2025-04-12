@@ -1,6 +1,7 @@
 #include "game_scene.h"
 
 #include <nikola/nikola.h>
+#include <cstdio>
 
 /// ----------------------------------------------------------------------
 /// Private functions
@@ -8,7 +9,7 @@
 static void player_init(GameScene* scene, nikola::RenderCommand* cmd) {
   nikola::transform_translate(scene->transforms[0], nikola::Vec3(10.0f, 0.0f, 10.0f));
   nikola::transform_scale(scene->transforms[0], nikola::Vec3(1.0f));
-
+  
   cmd->transform     = &scene->transforms[0]; 
   cmd->render_type   = nikola::RENDERABLE_TYPE_MODEL, 
   cmd->renderable_id = nikola::resources_get_id(scene->resource_group, "dice");
@@ -69,7 +70,7 @@ void game_scene_init(GameScene* scene, nikola::Window* window) {
   };
 
   // Transforms init
-  scene->transforms.resize(5);
+  scene->transforms.resize(6);
   player_init(scene, &def_render_cmd);
 }
 

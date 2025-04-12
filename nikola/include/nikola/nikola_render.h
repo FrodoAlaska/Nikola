@@ -115,7 +115,9 @@ struct RenderPassDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderPass
 struct RenderPass {
-  Vec2 frame_size               = Vec2(0.0f);
+  Vec2 frame_size  = Vec2(0.0f);
+  Vec4 clear_color = Vec4(1.0f);
+  
   GfxFramebufferDesc frame_desc = {};
   GfxFramebuffer* frame         = nullptr;
   ResourceID shader_context_id  = {};

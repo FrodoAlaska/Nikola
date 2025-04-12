@@ -400,22 +400,22 @@ NIKOLA_API const String mat4_to_string(const Mat4& mat);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Math Quat functions
 
-/// Returns the dot product between `q1` and `q2`
+/// Returns the dot product between `q1` and `q2`.
 NIKOLA_API const f32 quat_dot(const Quat& q1, const Quat& q2);
 
-/// Returns the normalized quaternion of `q`
+/// Returns the normalized quaternion of `q`.
 NIKOLA_API const Quat quat_normalize(const Quat& q);
 
-/// Returns the linearly interpolated quaternion from `start` to `end` by `amount`
+/// Returns the linearly interpolated quaternion from `start` to `end` by `amount`.
 NIKOLA_API const Quat quat_lerp(const Quat& start, const Quat& end, const f32 amount);
 
-/// Sets and returns the rotation of a quaternion using the given 3x3 `mat`
+/// Sets and returns the rotation of a quaternion using the given 3x3 `mat`.
 NIKOLA_API const Quat quat_set_mat3(const Mat3& mat);
 
-/// Sets and returns the rotation of a quaternion using the given 4x4 `mat`
+/// Sets and returns the rotation of a quaternion using the given 4x4 `mat`.
 NIKOLA_API const Quat quat_set_mat4(const Mat4& mat);
 
-/// Rotates and returns a quaternion using the given `axis` by `angle` in radians
+/// Rotates and returns a quaternion using the given `axis` by `angle` in radians.
 NIKOLA_API const Quat quat_angle_axis(const Vec3& axis, const f32 angle);
 
 /// Convert the given `q` to a 3x3 rotation matrix

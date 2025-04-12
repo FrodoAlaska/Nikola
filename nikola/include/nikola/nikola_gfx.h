@@ -639,11 +639,6 @@ struct GfxContextDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxFramebufferDesc
 struct GfxFramebufferDesc {
-  /// The RGBA values of the clear color.
-  ///
-  /// @NOTE: By default, the clear color is set to `{0, 0, 0, 0}`.
-  f32 clear_color[4] = {0, 0, 0, 0};
-
   /// A bitwise ORed value `GfxClearFlags` that determine 
   /// which buffers to clear every frame. 
   u32 clear_flags = 0;
@@ -879,11 +874,17 @@ NIKOLA_API GfxContextDesc& gfx_context_get_desc(GfxContext* gfx);
 /// i.e, this function can turn on or off the `state` in the given `gfx` context.
 NIKOLA_API void gfx_context_set_state(GfxContext* gfx, const GfxStates state, const bool value);
 
-/// Clear the context given the information in `framebuffer`. The clear flags 
-/// as well as the clear color will be sampled from `framebuffer`. However, 
-/// if `framebuffer` is set to `nullptr`, the context will clear the default 
-/// framebuffer instead.
-NIKOLA_API void gfx_context_clear(GfxContext* gfx, GfxFramebuffer* framebuffer);
+/// Set the context's current render target to `framebuffer`. The clear flags 
+/// as well as any attachments will be sampled from `framebuffer`. However, 
+/// if `framebuffer` is set to `nullptr`, the render target will be the default framebuffer instead.
+NIKOLA_API void gfx_context_set_target(GfxContext* gfx, GfxFramebuffer* framebuffer);
+
+/// Clear buffers of `gfx` as well as the color to `r`, `g`, `b`, `a`.
+///
+/// @NOTE: The clear flags for the default render target will depend on the current 
+/// active states of `gfx`. Otherwise, `gfx` will inherit the clear flags of the currently 
+/// active render target (i.e framebuffer).
+NIKOLA_API void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a);
 
 /// Switch to the back buffer or, rather, present the back buffer to the screen. 
 /// 

@@ -39,50 +39,43 @@
     - [x] Improve the rendering of 3D models (perhaps each mesh is a specific render command?) 
     - [x] Make render passes be associated with a specific `ShaderContext` instead of a `Material`.
     - [x] The model loader cannot load models that posses no textures
-[] 9. GUI v0.2 
-    - [] Fonts 
-        - [] Convert font formats into the internal `nbrfont` format. 
-        - [] Add fonts to the resource manager 
-    - [] Font rendering
-    - [] A canvas system for 2D game UI.
-    - [] A menu system
-    - [] A better system to handle debug UI.
-    - [] Documentation.
-[] 10. GFX v1.0? 
+[] 9. GFX v1.0? 
     - [x] Let every reasource have a `_use` function
     - [x] Refactor the `GfxPipeline` 
     - [x] Improve framebuffers (`gfx_framebuffer_copy(src, dest, pos, size)`, incorporate `glDrawBuffers`)
     - [x] Test
+    - [x] A better way to set the framebuffer or the "render target".
     - [] Improve resource updating functions
     - [] Instancing 
     - [] Documentation
-[] 11. Renderer v0.3 
+[] 10. Fonts v0.1 
+    - [] Convert font formats into the internal `nbrfont` format. 
+    - [] Add fonts to the resource manager 
+    - [] Font rendering
+    - [] Documentation.
+[] 11. UI v0.1
+    - [] A canvas system for 2D game UI.
+    - [] A menu system
+    - [] A better system to handle debug UI.
+[] 12. Renderer v0.3 
     - [] Improve render pass system
     - [] Better material system 
     - [] More intuitive and faster method to render primitives using materials
     - [] Time to document the whole renderer section
-[] 12. Camera v0.2
-[] 13. Fonts v0.1 
-    - [] Choose a font-loading library 
-    - [] Make and implement the `NBRFont` specification 
-    - [] Add support for fonts in the NBR tool 
-    - [] Add font loading support in the resource manager 
-    - [] Have a minimal version of font rendering (both 2D and 3D)
-[] 14. UI v0.1
-[] 15. Multi-threading v0.2 
+[] 13. Multi-threading v0.2 
     - [] Implement both performance timers and normal timers
     - [] Which systems can benefit most from multi-threading? 
     - [] Should we implement a job system? If yes, how can this be done within the confines of the engine? 
     - [] Try to improve the load times for the resource manager as a test of the new multi-threading system.
-[] 16. Audio System v0.1 
+[] 14. Audio System v0.1 
     - [] Lay out what you actually want the audio system to be and what it does. 
     - [] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
     - [] Create an audio backend with a context 
     - [] A way to create an audio buffer that could be played with the context 
     - [] 2D and 3D sound and music. 
     - [] A fully-fledged audio pipeline that can play, position, pitch, control the volume, and apply effects to sound and music
-[] 17. Physics v0.1
-[] 18. 3D Animations v0.1
+[] 15. Physics v0.1
+[] 16. 3D Animations v0.1
 
 ## (Engine) TODO: 
 * General 

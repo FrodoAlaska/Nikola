@@ -62,9 +62,9 @@ static void init_passes(nikola::App* app) {
   nikola::renderer_push_pass(render_pass, geometry_pass, app);
 
   // Post-process pass
-  render_pass.clear_flags       = nikola::GFX_CLEAR_FLAGS_COLOR_BUFFER; 
-  render_pass.shader_context_id = app->post_shader_context_id;
-  nikola::renderer_push_pass(render_pass, post_process_pass, app);
+  // render_pass.clear_flags       = nikola::GFX_CLEAR_FLAGS_COLOR_BUFFER; 
+  // render_pass.shader_context_id = app->post_shader_context_id;
+  // nikola::renderer_push_pass(render_pass, post_process_pass, app);
 }
 
 /// Private functions 

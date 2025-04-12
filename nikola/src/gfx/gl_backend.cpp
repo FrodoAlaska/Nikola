@@ -44,6 +44,11 @@ struct GfxContext {
   GfxContextDesc desc = {};
   GfxStates states;
 
+  u32 current_target = 0; 
+
+  u32 default_clear_flags = 0;
+  u32 current_clear_flags = 0;
+
   bool has_vsync      = false;
 };
 /// GfxContext
@@ -375,10 +380,12 @@ static void set_gfx_states(GfxContext* gfx) {
 
   if(IS_BIT_SET(gfx->states, GFX_STATE_DEPTH)) {
     set_state(gfx, GFX_STATE_DEPTH, true);   
+    gfx->default_clear_flags |= GL_DEPTH_BUFFER_BIT;
   }
   
   if(IS_BIT_SET(gfx->states, GFX_STATE_STENCIL)) {
     set_state(gfx, GFX_STATE_STENCIL, true);   
+    gfx->default_clear_flags |= GL_STENCIL_BUFFER_BIT;
   }
   
   if(IS_BIT_SET(gfx->states, GFX_STATE_BLEND)) {
@@ -916,7 +923,8 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
   GfxContext* gfx = (GfxContext*)memory_allocate(sizeof(GfxContext));
   memory_zero(gfx, sizeof(GfxContext)); 
   
-  gfx->desc = desc;
+  gfx->desc                = desc;
+  gfx->default_clear_flags = GL_COLOR_BUFFER_BIT;
 
   // Glad init
   if(!gladLoadGL()) {
@@ -986,34 +994,28 @@ void gfx_context_set_state(GfxContext* gfx, const GfxStates state, const bool va
   set_state(gfx, state, value);
 }
 
-void gfx_context_clear(GfxContext* gfx, GfxFramebuffer* framebuffer) {
+void gfx_context_set_target(GfxContext* gfx, GfxFramebuffer* framebuffer) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
 
-  u32 framebuffer_id = 0; 
-  u32 clear_flags   = GL_COLOR_BUFFER_BIT;
-  f32 red           = 1.0f;
-  f32 green         = 1.0f;
-  f32 blue          = 1.0f;
-  f32 alpha         = 1.0f;
+  // Set the default values for when binding to the default framebuffer
+  gfx->current_clear_flags = gfx->default_clear_flags;
+  gfx->current_target      = 0;
 
-  // There is a framebuffer present, therefore, we 
-  // should use it instead of the default one.
   if(framebuffer) {
-    framebuffer_id = framebuffer->id; 
-    clear_flags    = framebuffer->clear_flags;
-
-    red   = framebuffer->desc.clear_color[0];
-    green = framebuffer->desc.clear_color[1];
-    blue  = framebuffer->desc.clear_color[2];
-    alpha = framebuffer->desc.clear_color[3];
+    gfx->current_clear_flags = framebuffer->clear_flags;
+    gfx->current_target      = framebuffer->id; 
 
     // Set the number render targets to draw to
-    glNamedFramebufferDrawBuffers(framebuffer_id, framebuffer->color_buffers_count, framebuffer->targets);
+    glNamedFramebufferDrawBuffers(framebuffer->id, framebuffer->color_buffers_count, framebuffer->targets);
   }
+}
 
-  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_id);
-  glClear(clear_flags);
-  glClearColor(red, green, blue, alpha);
+void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a) {
+  NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
+  
+  glBindFramebuffer(GL_FRAMEBUFFER, gfx->current_target);
+  glClear(gfx->current_clear_flags);
+  glClearColor(r, g, b, a);
 }
 
 void gfx_context_present(GfxContext* gfx) {

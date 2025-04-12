@@ -2,6 +2,7 @@
 #include "nikola/nikola_base.h"
 #include "nikola/nikola_resources.h"
 #include "nikola/nikola_render.h"
+#include "nikola/nikola_math.h"
 
 #include <GLFW/glfw3.h>
 
@@ -97,7 +98,6 @@ void gui_end_panel() {
 }
 
 void gui_edit_transform(const char* name, Transform* transform) {
-  f32 scale = transform->scale.x;
   static Vec4 rotation = Vec4(0.0f);
   
   ImGui::SeparatorText(name); 
@@ -106,17 +106,17 @@ void gui_edit_transform(const char* name, Transform* transform) {
   // SRT translation
   // -------------------------------------------------------------------
   ImGui::DragFloat3("Position", &transform->position[0], 0.01f);
-  ImGui::DragFloat("Scale", &scale, 0.01f);
+  ImGui::DragFloat("Scale", &transform->scale[0], 0.01f);
   ImGui::DragFloat3("Rotation Axis", &rotation[0], 0.01f, 0.0f, 1.0f);
-  ImGui::DragFloat("Rotation Angle", &rotation[3], 0.01f);
+  ImGui::DragFloat("Rotation Angle", &rotation[3], 1.0f);
   // -------------------------------------------------------------------
   
   ImGui::PopID(); 
 
   // Applying the new values
   nikola::transform_translate(*transform, transform->position);
-  nikola::transform_scale(*transform, Vec3(scale));
-  nikola::transform_rotate(*transform, rotation);
+  nikola::transform_scale(*transform, Vec3(transform->scale.x));
+  nikola::transform_rotate(*transform, Vec3(rotation.x, rotation.y, rotation.z), rotation.w * DEG2RAD);
 }
 
 void gui_edit_material(const char* name, Material* material) {
@@ -198,7 +198,7 @@ void gui_settings_camera(Camera* camera) {
 }
 
 void gui_settings_resource(const u16 resource_group) {
-  // @TODO: ?
+  // @TODO (GUI): ?
 }
 
 void gui_settings_renderer() {
