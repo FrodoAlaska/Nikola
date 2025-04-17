@@ -87,57 +87,43 @@ void gui_end() {
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void gui_begin_panel(const char* name) {
-  if(!ImGui::Begin(name)) {
-    ImGui::End();
-  } 
+bool gui_begin_panel(const char* name) {
+  return ImGui::Begin(name);
 }
 
 void gui_end_panel() {
   ImGui::End();
 }
 
-void gui_edit_transform(const char* name, Transform* transform) {
-  static Vec4 rotation = Vec4(0.0f);
-  
-  ImGui::SeparatorText(name); 
-  ImGui::PushID(name); 
- 
-  // SRT translation
-  // -------------------------------------------------------------------
-  ImGui::DragFloat3("Position", &transform->position[0], 0.01f);
-  ImGui::DragFloat3("Scale", &transform->scale[0], 0.01f);
-  ImGui::DragFloat3("Rotation Axis", &rotation[0], 0.01f, 0.0f, 1.0f);
-  ImGui::DragFloat("Rotation Angle", &rotation[3], 1.0f);
-  // -------------------------------------------------------------------
-  
-  ImGui::PopID(); 
+void gui_renderer_info() {
+  if(!ImGui::Begin("Renderer Info")) {
+    ImGui::End();
+    return;
+  }
 
-  // Applying the new values
-  nikola::transform_translate(*transform, transform->position);
-  nikola::transform_scale(*transform, Vec3(transform->scale.x));
-  nikola::transform_rotate(*transform, Vec3(rotation.x, rotation.y, rotation.z), rotation.w * DEG2RAD);
-}
-
-void gui_edit_material(const char* name, Material* material) {
-  ImGui::SeparatorText(name); 
-
-  // Colors 
+  // Stats
   // -------------------------------------------------------------------
-  ImGui::PushID(name); 
-  ImGui::SliderFloat3("Ambient", &material->ambient_color[0], 0.0f, 1.0f);
-  ImGui::SliderFloat3("Diffuse", &material->diffuse_color[0], 0.0f, 1.0f);
-  ImGui::SliderFloat3("Specular", &material->specular_color[0], 0.0f, 1.0f);
-  ImGui::PopID(); 
+  ImGui::SeparatorText("Stats");
   // -------------------------------------------------------------------
  
-  // Lighting values
+  // Editables
   // -------------------------------------------------------------------
-  ImGui::SliderFloat("Shininess", &material->shininess, 0.0f, 100.0f);
+  ImGui::SeparatorText("##xx");
+ 
+  // Clear color
+  ImGui::ColorPicker4("Clear color", &s_gui.render_clear_color[0], ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
+  // @TODO: renderer_set_clear_color(s_gui.render_clear_color);
   // -------------------------------------------------------------------
+
+  ImGui::End();
 }
 
-void gui_settings_debug() {
+void gui_debug_info() {
+  if(!ImGui::Begin("Debug Info")) {
+    ImGui::End();
+    return;
+  }
+
   // FPS 
   // -------------------------------
   if(ImGui::CollapsingHeader("Frames")) {
@@ -176,9 +162,33 @@ void gui_settings_debug() {
     ImGui::Text("Bytes allocated: %zu", s_gui.allocation_bytes);
   } 
   // -------------------------------
+
+  ImGui::End();
 }
 
-void gui_settings_camera(Camera* camera) {
+void gui_edit_transform(const char* name, Transform* transform) {
+  static Vec4 rotation = Vec4(0.0f);
+  
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+ 
+  // SRT translation
+  // -------------------------------------------------------------------
+  ImGui::DragFloat3("Position", &transform->position[0], 0.01f);
+  ImGui::DragFloat3("Scale", &transform->scale[0], 0.01f);
+  ImGui::DragFloat3("Rotation Axis", &rotation[0], 0.01f, 0.0f, 1.0f);
+  ImGui::DragFloat("Rotation Angle", &rotation[3], 1.0f);
+  // -------------------------------------------------------------------
+  
+  ImGui::PopID(); 
+
+  // Applying the new values
+  nikola::transform_translate(*transform, transform->position);
+  nikola::transform_scale(*transform, Vec3(transform->scale.x));
+  nikola::transform_rotate(*transform, Vec3(rotation.x, rotation.y, rotation.z), rotation.w * DEG2RAD);
+}
+
+void gui_edit_camera(Camera* camera) {
   // Information
   // -------------------------------------------------------------------
   ImGui::SeparatorText("##xx");
@@ -197,27 +207,52 @@ void gui_settings_camera(Camera* camera) {
   // -------------------------------------------------------------------
 }
 
-void gui_settings_resource(const u16 resource_group) {
-  // @TODO (GUI): ?
+void gui_edit_directional_light(const char* name, DirectionalLight* dir_light) {
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+  
+  ImGui::DragFloat3("Direction", &dir_light->direction[0], 0.01f, -1.0f, 1.0f);
+  ImGui::DragFloat3("Ambient", &dir_light->ambient[0], 0.01f, 0.0f, 1.0f);
+  ImGui::DragFloat3("Diffuse", &dir_light->diffuse[0], 0.01f, 0.0f, 1.0f);
+  ImGui::DragFloat3("Specular", &dir_light->specular[0], 0.01f, 0.0f, 1.0f);
+  
+  ImGui::PopID(); 
 }
 
-void gui_settings_renderer() {
-  // Stats
+void gui_edit_point_light(const char* name, PointLight* point_light) {
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+
+  ImGui::DragFloat3("Position", &point_light->position[0], 1.0f);
+  ImGui::DragFloat3("Ambient", &point_light->ambient[0], 0.01f, 0.0f, 1.0f);
+  ImGui::DragFloat3("Diffuse", &point_light->diffuse[0], 0.01f, 0.0f, 1.0f);
+  ImGui::DragFloat3("Specular", &point_light->specular[0], 0.01f, 0.0f, 1.0f);
+
+  ImGui::DragFloat("Linear", &point_light->linear, 0.01f);
+  ImGui::DragFloat("Quadratic", &point_light->quadratic, 0.01f);
+
+  ImGui::PopID(); 
+}
+
+void gui_edit_material(const char* name, Material* material) {
+  ImGui::SeparatorText(name); 
+
+  // Colors 
   // -------------------------------------------------------------------
-  ImGui::SeparatorText("Stats");
+  ImGui::PushID(name); 
+  ImGui::SliderFloat3("Ambient", &material->ambient_color[0], 0.0f, 1.0f);
+  ImGui::SliderFloat3("Diffuse", &material->diffuse_color[0], 0.0f, 1.0f);
+  ImGui::SliderFloat3("Specular", &material->specular_color[0], 0.0f, 1.0f);
+  ImGui::PopID(); 
   // -------------------------------------------------------------------
  
-  // Editables
+  // Lighting values
   // -------------------------------------------------------------------
-  ImGui::SeparatorText("##xx");
- 
-  // Clear color
-  ImGui::ColorPicker4("Clear color", &s_gui.render_clear_color[0], ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
-  // @TODO: renderer_set_clear_color(s_gui.render_clear_color);
+  ImGui::SliderFloat("Shininess", &material->shininess, 0.0f, 100.0f);
   // -------------------------------------------------------------------
 }
 
-void gui_settings_texture(const char* name, GfxTexture* texture) {
+void gui_edit_texture(const char* name, GfxTexture* texture) {
   GfxTextureDesc tex_desc = gfx_texture_get_desc(texture); 
 
   ImGui::SeparatorText(name); 
@@ -268,6 +303,43 @@ void gui_settings_texture(const char* name, GfxTexture* texture) {
 
   // Applying the chnages
   gfx_texture_update(texture, tex_desc);
+}
+
+void gui_edit_cubemap(const char* name, GfxCubemap* cubemap) {
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+
+  // @TODO (Editor)
+
+  ImGui::PopID();
+}
+ 
+void gui_edit_resource(const char* name, ResourceID& res_id) {
+  switch(res_id._type) {
+    case RESOURCE_TYPE_BUFFER:
+      break; 
+    case RESOURCE_TYPE_TEXTURE:
+      gui_edit_texture(name, resources_get_texture(res_id));
+      break; 
+    case RESOURCE_TYPE_CUBEMAP:
+      gui_edit_cubemap(name, resources_get_cubemap(res_id));
+      break; 
+    case RESOURCE_TYPE_SHADER:
+      break; 
+    case RESOURCE_TYPE_MESH:
+      break; 
+    case RESOURCE_TYPE_MATERIAL:
+      gui_edit_material(name, resources_get_material(res_id));
+      break; 
+    case RESOURCE_TYPE_SKYBOX:
+      break; 
+    case RESOURCE_TYPE_MODEL:
+      break; 
+    case RESOURCE_TYPE_FONT:
+      break; 
+    case RESOURCE_TYPE_SHADER_CONTEXT:
+      break; 
+  } 
 }
 
 /// Editor functions

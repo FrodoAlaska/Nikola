@@ -4,100 +4,6 @@
 #include <imgui/imgui.h>
 
 /// ----------------------------------------------------------------------
-/// DirectionalLight 
-struct DirectionalLight {
-  nikola::Vec3 direction; 
-
-  nikola::Vec3 ambient;
-  nikola::Vec3 diffuse;
-  nikola::Vec3 specular;
-
-  DirectionalLight(const nikola::Vec3& dir) {
-    direction = dir; 
-
-    ambient  = nikola::Vec3(1.0f);
-    diffuse  = nikola::Vec3(1.0f);
-    specular = nikola::Vec3(1.0f);
-  }
-
-  void use(nikola::RenderCommand& cmd) {
-    // nikola::shader_context_set_uniform(cmd.shader_context_id, "u_dir_light.direction", direction); 
-    // nikola::shader_context_set_uniform(cmd.shader_context_id, "u_dir_light.ambient", ambient); 
-    // nikola::shader_context_set_uniform(cmd.shader_context_id, "u_dir_light.diffuse", diffuse); 
-    // nikola::shader_context_set_uniform(cmd.shader_context_id, "u_light.specular", specular); 
-  }
-
-  void render_gui(const char* name) {
-    ImGui::SeparatorText(name); 
-    ImGui::PushID(name); 
-
-    ImGui::DragFloat3("Direction", &direction[0], 0.01f, -1.0f, 1.0f);
-    ImGui::DragFloat3("Ambient", &ambient[0], 0.01f, 0.0f, 1.0f);
-    ImGui::DragFloat3("Diffuse", &diffuse[0], 0.01f, 0.0f, 1.0f);
-    ImGui::DragFloat3("Specular", &specular[0], 0.01f, 0.0f, 1.0f);
-
-    ImGui::PopID(); 
-  }
-};
-
-static nikola::DynamicArray<DirectionalLight> s_dir_lights;
-/// DirectionalLight 
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
-/// PointLight 
-struct PointLight {
-  nikola::Vec3 position; 
-
-  nikola::Vec3 ambient;
-  nikola::Vec3 diffuse;
-  nikola::Vec3 specular;
-
-  nikola::f32 linear, quadratic;
-
-  PointLight(const nikola::Vec3& pos) {
-    position = pos; 
-
-    ambient  = nikola::Vec3(1.0f);
-    diffuse  = nikola::Vec3(1.0f);
-    specular = nikola::Vec3(1.0f);
-
-    linear    = 0.09f;
-    quadratic = 0.032f;
-  }
-
-  void use(nikola::RenderCommand& cmd) {
-    // nikola::shader_context_set_uniform(cmd.shader_context_id, "u_point_light.position", position); 
-
-    // nikola::shader_context_set_uniform(cmd.shader_context_id, "u_point_light.ambient", ambient); 
-    // nikola::shader_context_set_uniform(cmd.shader_context_id, "u_point_light.diffuse", diffuse); 
-    // nikola::shader_context_set_uniform(cmd.shader_context_id, "u_light.specular", specular); 
-   
-    // nikola::shader_context_set_uniform(cmd.shader_context_id, "u_point_light.linear", linear); 
-    // nikola::shader_context_set_uniform(cmd.shader_context_id, "u_point_light.quadratic", quadratic); 
-  }
-
-  void render_gui(const char* name) {
-    ImGui::SeparatorText(name); 
-    ImGui::PushID(name); 
-
-    ImGui::DragFloat3("Position", &position[0], 1.0f);
-    ImGui::DragFloat3("Ambient", &ambient[0], 0.01f, 0.0f, 1.0f);
-    ImGui::DragFloat3("Diffuse", &diffuse[0], 0.01f, 0.0f, 1.0f);
-    ImGui::DragFloat3("Specular", &specular[0], 0.01f, 0.0f, 1.0f);
-    
-    ImGui::DragFloat("Linear", &linear, 0.01f);
-    ImGui::DragFloat("Quadratic", &quadratic, 0.01f);
-
-    ImGui::PopID(); 
-  }
-};
-
-static nikola::DynamicArray<PointLight> s_point_lights;
-/// PointLight 
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
 /// Entity
 struct Entity {
   nikola::Transform transform;
@@ -147,10 +53,10 @@ static void init_entities(GameScene* scene) {
 
 static void init_lights(GameScene* scene) {
   // Directional light
-  s_dir_lights.emplace_back(nikola::Vec3(0.0f, 0.0f, -1.0f));
+  scene->frame_data.dir_light.direction = nikola::Vec3(0.0f, 0.0f, 0.0f);
  
   // Point lights
-  s_point_lights.emplace_back(nikola::Vec3(-1.0f, 0.0f, 10.0f));
+  scene->frame_data.point_lights.push_back(nikola::PointLight{nikola::Vec3(-1.0f, 0.0f, 10.0f)});
 }
 
 /// Private functions
@@ -166,6 +72,7 @@ void game_scene_init(GameScene* scene, nikola::Window* window) {
   // Camera init
   float aspect_ratio = nikola::window_get_aspect_ratio(scene->window);
   nikola::camera_create(&scene->camera, aspect_ratio, nikola::Vec3(10.0f, 0.0f, 10.0f), nikola::Vec3(-3.0f, 0.0f, 0.0f));
+  scene->frame_data.camera = scene->camera;
 
   // Resource group init 
   nikola::FilePath res_path = nikola::filepath_append(nikola::filesystem_current_path(), "res");
@@ -182,7 +89,8 @@ void game_scene_init(GameScene* scene, nikola::Window* window) {
   scene->material_id = nikola::resources_push_material(res_group);
 
   // Skyboxes init
-  scene->skybox_id = nikola::resources_push_skybox(res_group, cubemap_id);
+  scene->skybox_id            = nikola::resources_push_skybox(res_group, cubemap_id);
+  scene->frame_data.skybox_id = scene->skybox_id;
 
   // Entitites init
   init_entities(scene);
@@ -208,6 +116,7 @@ void game_scene_update(GameScene& scene) {
   }
 
   nikola::camera_update(scene.camera);
+  scene.frame_data.camera = scene.camera;
 }
 
 void game_scene_render(GameScene& scene) {
@@ -226,15 +135,12 @@ void game_scene_gui_render(GameScene& scene) {
     return;
   }
   
-  // nikola::gui_begin_panel("Lights");
-  // for(auto& light : s_dir_lights) {
-  //   light.render_gui("Directional Light");
-  // }
-  // 
-  // for(auto& light : s_point_lights) {
-  //   light.render_gui("Point Light");
-  // }
-  // nikola::gui_end_panel();
+  nikola::gui_begin_panel("Lights");
+  nikola::gui_edit_directional_light("Directional", &scene.frame_data.dir_light);
+  for(auto& light : scene.frame_data.point_lights) {
+    nikola::gui_edit_point_light("Point", &light);
+  }
+  nikola::gui_end_panel();
 
   // nikola::gui_begin_panel("Entities");
   // for(auto& entt : s_entities) {
@@ -243,7 +149,6 @@ void game_scene_gui_render(GameScene& scene) {
   // nikola::gui_end_panel();
   
   nikola::gui_begin_panel("Debug");
-  nikola::gui_settings_debug();
   ImGui::Combo("Render Effect", 
                &scene.render_effect, 
                "None\0Greyscale\0Inversion\0Sharpen\0Blur\0Emboss\0Edge Detection\0Pixelize\0");  

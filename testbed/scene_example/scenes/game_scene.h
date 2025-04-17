@@ -8,6 +8,8 @@ struct GameScene {
 
   nikola::u16 resource_group;
   nikola::ResourceID skybox_id, material_id;
+  
+  nikola::FrameData frame_data;
   nikola::RenderQueue render_queue;
   
   bool has_editor;

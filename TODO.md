@@ -39,12 +39,16 @@
     - [x] Improve the rendering of 3D models (perhaps each mesh is a specific render command?) 
     - [x] Make render passes be associated with a specific `ShaderContext` instead of a `Material`.
     - [x] The model loader cannot load models that posses no textures
-[] 9. Lighting v0.1 
+[] 9. Renderer v0.3 
+    - [x] Refine the render command system
+    - [x] Improve render pass system
+    - [] Time to document the whole renderer section
+[] 10. Lighting v0.1 
     - [] Implement lighting data structures that can be represented in a scene 
     - [x] Decide on whether the lighting calculation/pipeline should be part of the engine or the application 
     - [] Look into clustered forward rendering instead of deferred rendering.
     - [x] Perhaps add a `FrameData` structure that will have all the available lights as well as the scene camera per frame (obviously).
-[] 10. GFX v1.0? 
+[] 11. GFX v1.0? 
     - [x] Let every reasource have a `_use` function
     - [x] Refactor the `GfxPipeline` 
     - [x] Improve framebuffers (`gfx_framebuffer_copy(src, dest, pos, size)`, incorporate `glDrawBuffers`)
@@ -53,21 +57,18 @@
     - [] Improve resource updating functions
     - [] Instancing 
     - [] Documentation
-[] 11. Fonts v0.1 
+[] 12. GUI v0.2
+    - [] Refine the GUI system.
+    - [] Include more engine-specific types that can be edited, including resources.
+[] 12. Fonts v0.1 
     - [] Convert font formats into the internal `nbrfont` format. 
     - [] Add fonts to the resource manager 
     - [] Font rendering
     - [] Documentation.
-[] 12. UI v0.1
+[] 13. UI v0.1
     - [] A canvas system for 2D game UI.
     - [] A menu system
     - [] A better system to handle debug UI.
-[] 13. Renderer v0.3 
-    - [] Refine the render command system
-    - [] Improve render pass system
-    - [] Better material system 
-    - [] More intuitive and faster method to render primitives using materials
-    - [] Time to document the whole renderer section
 [] 14. Multi-threading v0.2 
     - [] Implement both performance timers and normal timers
     - [] Which systems can benefit most from multi-threading? 

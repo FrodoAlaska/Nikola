@@ -10,7 +10,6 @@
 struct nikola::App {
   nikola::Window* window;
   nikola::ResourceID post_shader_context_id;
-  nikola::FrameData frame_data;
 
   GameScene game_scene;
 };
@@ -107,12 +106,8 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 void app_render(nikola::App* app) {
   nikola::renderer_clear(nikola::Vec4(0.14f, 0.16f, 0.28f, 1.0f));
   
-  // Update the frame data
-  app->frame_data.camera    = app->game_scene.camera;
-  app->frame_data.skybox_id = app->game_scene.skybox_id;
-  
   // Render the scene
-  nikola::renderer_begin(app->frame_data);
+  nikola::renderer_begin(app->game_scene.frame_data);
   game_scene_render(app->game_scene);
   nikola::renderer_end();
   
