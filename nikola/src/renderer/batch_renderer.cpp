@@ -119,7 +119,7 @@ static void init_default_texture() {
 
   // Create the texture and add it to the cache
   s_batch.defaults = renderer_get_defaults();
-  s_batch.textures_cache[s_batch.defaults.texture] = 0;
+  s_batch.textures_cache[resources_get_texture(s_batch.defaults.texture)] = 0;
 }
 
 static void init_pipeline() {
@@ -220,7 +220,7 @@ void batch_renderer_init() {
   s_batch.batches.reserve(32);
   BatchCall default_batch = {
     .indices_count = 0, 
-    .texture       = s_batch.defaults.texture, 
+    .texture       = resources_get_texture(s_batch.defaults.texture), 
   };
   s_batch.batches.push_back(default_batch);
 

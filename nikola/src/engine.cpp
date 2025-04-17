@@ -60,14 +60,14 @@ void engine_init(const AppDesc& desc) {
   s_engine.window = window_open(desc.window_title.c_str(), desc.window_width, desc.window_height, desc.window_flags);
   NIKOLA_ASSERT(s_engine.window, "Failed to open a window");
 
+  // Resource manager init 
+  resource_manager_init();
+
   // Renderer init 
-  renderer_init(s_engine.window, Vec4(0.1f, 0.1f, 0.1f, 0.1f));
+  renderer_init(s_engine.window);
 
   // Batch renderer init
   batch_renderer_init();
-
-  // Resource manager init 
-  resource_manager_init();
   
   // Listening to any interesting events
   event_listen(EVENT_APP_QUIT, quit_app_callback);

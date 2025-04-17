@@ -1,0 +1,123 @@
+#pragma once
+
+#include "nikola/nikola_gfx.h"
+
+inline nikola::GfxShaderDesc generate_default_shader() {
+  return nikola::GfxShaderDesc {
+    "#version 460 core"
+    "\n"
+    "layout (location = 0) in vec3 aPos;"
+    "layout (location = 1) in vec3 aNormal;"
+    "layout (location = 2) in vec2 aTextureCoords;"
+    "\n"
+    "out VS_OUT {"
+    "  vec2 tex_coords;"
+    "} vs_out;"
+    "\n"
+    "layout (std140, binding = 0) uniform Matrices {"
+    "  mat4 u_view;"
+    "  mat4 u_projection;"
+    "};"
+    "\n"
+    "uniform mat4 u_model;"
+    "\n"
+    "void main() {"
+    "  vs_out.tex_coords = aTextureCoords;"
+    "\n"
+    "  vec4 world_pos = u_model * vec4(aPos, 1.0);"
+    "  gl_Position    = u_projection * u_view * world_pos;"
+    "}\n", 
+
+    "#version 460 core"
+    "\n"
+    "layout (location = 0) out vec4 frag_color;"
+    "\n"
+    "in VS_OUT {"
+    "  vec2 tex_coords;"
+    "} fs_in;"
+    "\n"
+    "struct Material {"
+    "  sampler2D diffuse_map;" 
+    "  sampler2D specular_map;" 
+    "\n"
+    "  vec3 ambient, diffuse, specular;"
+    "  float shininess;"
+    "};"
+    "\n"
+    "uniform Material u_material;"
+    "\n"
+    "void main() {"
+    "  frag_color = texture(u_material.diffuse_map, fs_in.tex_coords);"
+    "}"
+  };
+}
+
+inline nikola::GfxShaderDesc generate_skybox_shader() {
+  return nikola::GfxShaderDesc {
+    "#version 460 core"
+    "\n"
+    "layout (location = 0) in vec3 aTextureCoords;"
+    "\n"
+    "out VS_OUT {"
+    "  vec3 tex_coords;"
+    "} vs_out;"
+    "\n"
+    "layout (std140, binding = 0) uniform Matrices {"
+    "  mat4 u_view;"
+    "  mat4 u_projection;"
+    "};"
+    "\n"
+    "void main() {"
+    "  vs_out.tex_coords = aTextureCoords;"
+    "\n"
+    "  mat4 model  = u_projection * mat4(mat3(u_view));"  
+    "  gl_Position = vec4(model * vec4(aTextureCoords, 1.0)).xyww;"
+    "}",
+
+    "#version 460 core"
+    "\n"
+    "layout (location = 0) out vec4 frag_color;"
+    "\n"
+    "in VS_OUT {"
+    "  vec3 tex_coords;"
+    "} fs_in;"
+    "\n"
+    "uniform samplerCube u_cubemap;"
+    "\n"
+    "void main() {"
+    "  frag_color = texture(u_cubemap, fs_in.tex_coords);"
+    "}"
+  };
+}
+
+inline nikola::GfxShaderDesc generate_framebuffer_shader() {
+  return nikola::GfxShaderDesc {
+    "#version 460 core"
+    "\n"
+    "layout (location = 0) in vec2 aPos;"
+    "layout (location = 1) in vec2 aTextureCoords;"
+    "\n"
+    "out VS_OUT {"
+    "  vec2 tex_coords;"
+    "} vs_out;"
+    "\n"
+    "void main() {"
+    "  vs_out.tex_coords = aTextureCoords;"
+    "  gl_Position       = vec4(aPos, 0.0, 1.0);"
+    "}",
+
+    "#version 460 core"
+    "\n"
+    "layout (location = 0) out vec4 frag_color;"
+    "\n"
+    "in VS_OUT {"
+    "  vec2 tex_coords;"
+    "} fs_in;"
+    "\n"
+    "uniform sampler2D u_texture;"
+    "\n"
+    "void main() {"
+    "  frag_color = texture(u_texture, fs_in.tex_coords);"
+    "}"
+  };
+}

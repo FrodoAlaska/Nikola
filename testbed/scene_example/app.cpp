@@ -9,8 +9,8 @@
 /// App
 struct nikola::App {
   nikola::Window* window;
-  nikola::ResourceID geo_shader_context_id, post_shader_context_id;
-  nikola::i32 effect_index = 3;
+  nikola::ResourceID post_shader_context_id;
+  nikola::FrameData frame_data;
 
   GameScene game_scene;
 };
@@ -20,17 +20,11 @@ struct nikola::App {
 /// ----------------------------------------------------------------------
 /// Callbacks
 
-static void geometry_pass(const nikola::RenderPass* prev, nikola::RenderPass* pass, void* user_data) {
-  nikola::App* app = (nikola::App*)user_data;
-
-  game_scene_render(app->game_scene);  
-}
-
 static void post_process_pass(const nikola::RenderPass* prev, nikola::RenderPass* pass, void* user_data) {
   nikola::App* app = (nikola::App*)user_data;
 
   // Set the shader
-  nikola::shader_context_set_uniform(pass->shader_context_id, "u_effect_index", app->effect_index);
+  nikola::shader_context_set_uniform(pass->shader_context_id, "u_effect_index", app->game_scene.render_effect);
 
   pass->frame_desc.attachments[0]    = prev->frame_desc.attachments[0];
   pass->frame_desc.attachments_count = 1;
@@ -51,20 +45,15 @@ static void init_passes(nikola::App* app) {
   nikola::i32 width, height; 
   nikola::window_get_size(app->window, &width, &height);
 
-  // Geometry pass
+  // Post-process pass
   nikola::RenderPassDesc render_pass = {
     .frame_size        = nikola::Vec2(width, height), 
-    .clear_color       = nikola::Vec4(0.1f, 0.1f, 0.1f, 1.0f),
-    .clear_flags       = (nikola::GFX_CLEAR_FLAGS_COLOR_BUFFER | nikola::GFX_CLEAR_FLAGS_DEPTH_BUFFER),
-    .shader_context_id = app->geo_shader_context_id,
+    .clear_color       = nikola::Vec4(1.0f),
+    .clear_flags       = (nikola::GFX_CLEAR_FLAGS_COLOR_BUFFER),
+    .shader_context_id = app->post_shader_context_id,
   };
-  render_pass.targets.push_back(nikola::GFX_TEXTURE_FORMAT_RGBA8);
-  nikola::renderer_push_pass(render_pass, geometry_pass, app);
-
-  // Post-process pass
-  // render_pass.clear_flags       = nikola::GFX_CLEAR_FLAGS_COLOR_BUFFER; 
-  // render_pass.shader_context_id = app->post_shader_context_id;
-  // nikola::renderer_push_pass(render_pass, post_process_pass, app);
+  render_pass.targets.push_back(nikola::RenderTarget{});
+  nikola::renderer_push_pass(render_pass, post_process_pass, app);
 }
 
 /// Private functions 
@@ -84,11 +73,9 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::gui_init(window);
 
   // Shaders init
-  nikola::resources_push_shader(nikola::RESOURCE_CACHE_ID, "shaders/geo_pass.nbrshader");
   nikola::resources_push_shader(nikola::RESOURCE_CACHE_ID, "shaders/post_process.nbrshader");
 
   // Shader contexts init
-  app->geo_shader_context_id  = nikola::resources_push_shader_context(nikola::RESOURCE_CACHE_ID, nikola::resources_get_id(nikola::RESOURCE_CACHE_ID, "geo_pass"));
   app->post_shader_context_id = nikola::resources_push_shader_context(nikola::RESOURCE_CACHE_ID, nikola::resources_get_id(nikola::RESOURCE_CACHE_ID, "post_process"));
 
   // Render passes init
@@ -118,14 +105,23 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 } 
 
 void app_render(nikola::App* app) {
-  nikola::renderer_begin(app->game_scene.camera);
-
-  // Apply and render the render passes
-  nikola::renderer_apply_passes();
-
-  // Render UI
-  game_scene_gui_render(app->game_scene);
+  nikola::renderer_clear(nikola::Vec4(0.14f, 0.16f, 0.28f, 1.0f));
+  
+  // Update the frame data
+  app->frame_data.camera    = app->game_scene.camera;
+  app->frame_data.skybox_id = app->game_scene.skybox_id;
+  
+  // Render the scene
+  nikola::renderer_begin(app->frame_data);
+  game_scene_render(app->game_scene);
   nikola::renderer_end();
+  
+  // Render GUI
+  nikola::gui_begin(); 
+  game_scene_gui_render(app->game_scene);
+  nikola::gui_end(); 
+  
+  nikola::renderer_present();
 }
 
 /// App functions 

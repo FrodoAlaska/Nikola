@@ -106,7 +106,7 @@ void gui_edit_transform(const char* name, Transform* transform) {
   // SRT translation
   // -------------------------------------------------------------------
   ImGui::DragFloat3("Position", &transform->position[0], 0.01f);
-  ImGui::DragFloat("Scale", &transform->scale[0], 0.01f);
+  ImGui::DragFloat3("Scale", &transform->scale[0], 0.01f);
   ImGui::DragFloat3("Rotation Axis", &rotation[0], 0.01f, 0.0f, 1.0f);
   ImGui::DragFloat("Rotation Angle", &rotation[3], 1.0f);
   // -------------------------------------------------------------------
@@ -213,7 +213,7 @@ void gui_settings_renderer() {
  
   // Clear color
   ImGui::ColorPicker4("Clear color", &s_gui.render_clear_color[0], ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
-  renderer_set_clear_color(s_gui.render_clear_color);
+  // @TODO: renderer_set_clear_color(s_gui.render_clear_color);
   // -------------------------------------------------------------------
 }
 

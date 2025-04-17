@@ -39,7 +39,12 @@
     - [x] Improve the rendering of 3D models (perhaps each mesh is a specific render command?) 
     - [x] Make render passes be associated with a specific `ShaderContext` instead of a `Material`.
     - [x] The model loader cannot load models that posses no textures
-[] 9. GFX v1.0? 
+[] 9. Lighting v0.1 
+    - [] Implement lighting data structures that can be represented in a scene 
+    - [x] Decide on whether the lighting calculation/pipeline should be part of the engine or the application 
+    - [] Look into clustered forward rendering instead of deferred rendering.
+    - [x] Perhaps add a `FrameData` structure that will have all the available lights as well as the scene camera per frame (obviously).
+[] 10. GFX v1.0? 
     - [x] Let every reasource have a `_use` function
     - [x] Refactor the `GfxPipeline` 
     - [x] Improve framebuffers (`gfx_framebuffer_copy(src, dest, pos, size)`, incorporate `glDrawBuffers`)
@@ -48,64 +53,40 @@
     - [] Improve resource updating functions
     - [] Instancing 
     - [] Documentation
-[] 10. Fonts v0.1 
+[] 11. Fonts v0.1 
     - [] Convert font formats into the internal `nbrfont` format. 
     - [] Add fonts to the resource manager 
     - [] Font rendering
     - [] Documentation.
-[] 11. UI v0.1
+[] 12. UI v0.1
     - [] A canvas system for 2D game UI.
     - [] A menu system
     - [] A better system to handle debug UI.
-[] 12. Renderer v0.3 
+[] 13. Renderer v0.3 
+    - [] Refine the render command system
     - [] Improve render pass system
     - [] Better material system 
     - [] More intuitive and faster method to render primitives using materials
     - [] Time to document the whole renderer section
-[] 13. Multi-threading v0.2 
+[] 14. Multi-threading v0.2 
     - [] Implement both performance timers and normal timers
     - [] Which systems can benefit most from multi-threading? 
     - [] Should we implement a job system? If yes, how can this be done within the confines of the engine? 
     - [] Try to improve the load times for the resource manager as a test of the new multi-threading system.
-[] 14. Audio System v0.1 
+[] 15. Audio System v0.1 
     - [] Lay out what you actually want the audio system to be and what it does. 
     - [] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
     - [] Create an audio backend with a context 
     - [] A way to create an audio buffer that could be played with the context 
     - [] 2D and 3D sound and music. 
     - [] A fully-fledged audio pipeline that can play, position, pitch, control the volume, and apply effects to sound and music
-[] 15. Physics v0.1
-[] 16. 3D Animations v0.1
-
-## (Engine) TODO: 
-* General 
-    - Probably create my own `DynamicArray` instead of the STL one
-* Resources 
-    - Try to replace the `_loader` functions. For many of the resources, they are useless.
-    - A memory pool/arena for resources?
-* Renderer 
-    - The goal of this renderer is to be like a lego set. It will provide the user with as much building blocks as possible while not commiting to any one technique. It's up to the user to pick and choose the renderer.
-    - Improve the material and shader uniform system 
-    - Have the `ShaderContext` read and retrieve all uniforms and their locations instead of caching them from first use
-    - A better technique of rendering resources 
-    - Improve the render pass system
-
-## (Core) TODO: 
-* General
-    - Potentially fix the memory allocater functions. So instead of normal wrappers around C allocation functions, perhaps have something more sophisticated
-    - Get rid of GLFW and do it the old-fashioned way? Misery.
-* Logger 
-    - Batch logging? 
-    - Log into a file
-* GFX 
-    - Seperate the `gl_backend.cpp` file into several files for better visualization
-    - A function to sub image or slice a texture 
-    - Put some thought into instancing
-* Audio 
-    - Audio context and audio buffers
+[] 16. Physics v0.1
+[] 17. 3D Animations v0.1
 
 ## (Engine) BUGS: 
-- EMPTY FOR NOW...
+- (Filesystem): There is a bug with the filesystem where the string gets allocated and de-allocated wrong I think? It crashes the program when we pass a normal C-string (i.e "string"), but it runs okay 
+if we give it a string variable instead (i.e `func(path_string)`). Perhaps there is something wrong with the lifetime of strings? I'm not sure.
+- (Resources): It's probably better not to have an internal cache specified by the engine itself. It's probably better to let the user (me) create that cache if need be. That way, we don't have to have specific hard-coded path values and whatnot. 
 
 ## (Core) BUGS: 
 - EMPTY FOR NOW...
@@ -117,4 +98,4 @@
 - Levels, entities, and scenes.
 - Phyiscs. Yes. Just physics.
 - GPU particles
-- NUSL: Nikola Uniform Shading Language. 
+- NUSL: Nikola Uniform Shading Language or shader-generating materials

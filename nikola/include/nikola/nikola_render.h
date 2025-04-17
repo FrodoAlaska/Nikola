@@ -73,8 +73,8 @@ struct Camera {
 ///---------------------------------------------------------------------------------------------------------------------
 /// RendererDefaults 
 struct RendererDefaults {
-  GfxTexture* texture        = nullptr;
-  GfxBuffer* matrices_buffer = nullptr;
+  ResourceID texture         = {};
+  ResourceID matrices_buffer = {};
 };
 /// RendererDefaults 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -82,13 +82,13 @@ struct RendererDefaults {
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderCommand
 struct RenderCommand {
-  Transform* transform = nullptr;
+  Transform transform;
   
   RenderableType render_type;
   sizei instance_count = 0;
 
   ResourceID renderable_id;
-  ResourceID material_id, shader_context_id;
+  ResourceID material_id;
 };
 /// RenderCommand
 ///---------------------------------------------------------------------------------------------------------------------
@@ -100,6 +100,17 @@ using RenderQueue = DynamicArray<RenderCommand>;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// RenderTarget 
+struct RenderTarget {
+  GfxTextureType type      = GFX_TEXTURE_RENDER_TARGET;
+  GfxTextureFormat format  = GFX_TEXTURE_FORMAT_RGBA8;
+  GfxTextureFilter filter  = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST;
+  GfxTextureWrap wrap_mode = GFX_TEXTURE_WRAP_MIRROR;
+};
+/// RenderTarget 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// RenderPassDesc
 struct RenderPassDesc {
   Vec2 frame_size  = Vec2(0.0f);
@@ -107,7 +118,7 @@ struct RenderPassDesc {
   u32 clear_flags  = 0;
   
   ResourceID shader_context_id = {};
-  DynamicArray<GfxTextureFormat> targets;
+  DynamicArray<RenderTarget> targets;
 };
 /// RenderPassDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -126,8 +137,17 @@ struct RenderPass {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// FrameData
+struct FrameData {
+  Camera camera; 
+  ResourceID skybox_id;
+};
+/// FrameData
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// RenderPassFn 
-using RenderPassFn = void(*)(const RenderPass* previous, RenderPass* pass, void* user_data);
+using RenderPassFn = void(*)(const RenderPass* previous, RenderPass* current, void* user_data);
 /// RenderPassFn 
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -147,51 +167,31 @@ NIKOLA_API void camera_update(Camera& cam);
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// RenderQueue functions
-
-NIKOLA_API void render_queue_flush(RenderQueue& queue);
-
-NIKOLA_API void render_queue_push(RenderQueue& queue, const RenderCommand& cmd);
-
-/// RenderQueue functions
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// RenderPass functions
-
-NIKOLA_API void render_pass_begin(RenderPass& pass, const ResourceID& shader_context_id);
-
-NIKOLA_API void render_pass_end(RenderPass& pass);
-
-/// RenderPass functions
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
 /// Renderer functions
 
-/// Initialize the global renderer using the given `window` for dimensions 
-/// and `clear_color` as the default background color.
-NIKOLA_API void renderer_init(Window* window, const Vec4& clear_color);
+/// Initialize the global renderer using the given `window` for dimensions.
+NIKOLA_API void renderer_init(Window* window);
 
 /// Free/reclaim any memory consumed by the global renderer
 NIKOLA_API void renderer_shutdown();
 
 /// Retrieve the internal `GfxContext` of the global renderer.
-NIKOLA_API const GfxContext* renderer_get_context();
-
-/// Set the background color of the global renderer to `clear_color`
-NIKOLA_API void renderer_set_clear_color(const Vec4& clear_color);
+NIKOLA_API GfxContext* renderer_get_context();
 
 /// Retrieve the internal default values of the renderer
 NIKOLA_API const RendererDefaults& renderer_get_defaults();
 
 NIKOLA_API void renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& func, const void* user_data);
 
-NIKOLA_API void renderer_apply_passes();
+NIKOLA_API void renderer_sumbit_queue(RenderQueue& queue);
 
-NIKOLA_API void renderer_begin(Camera& camera);
+NIKOLA_API void renderer_clear(const Vec4& clear_color);
+
+NIKOLA_API void renderer_begin(FrameData& data);
 
 NIKOLA_API void renderer_end();
+
+NIKOLA_API void renderer_present();
 
 /// Renderer functions
 ///---------------------------------------------------------------------------------------------------------------------

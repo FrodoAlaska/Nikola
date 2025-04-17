@@ -284,34 +284,11 @@ static void resource_entry_update(const FileStatus status, const FilePath& path,
 /// Resource manager functions
 
 void resource_manager_init() {
-  const GfxContext* gfx = renderer_get_context();
-  NIKOLA_ASSERT(gfx, "Invalid graphics context passed to the resource manager");
-
-  s_manager.gfx_context               = (GfxContext*)gfx;
   s_manager.groups[RESOURCE_CACHE_ID] = ResourceGroup {
     .name       = "cache", 
     .parent_dir = "resource_cache",
     .id         = RESOURCE_CACHE_ID,
   };
-
-  const RendererDefaults render_defaults = renderer_get_defaults();
-
-  //
-  // @FIX (Resource/Renderer): Perhaps there is a better way than this to add 
-  // the default resources to the resource cache.
-  // 
-
-  ResourceGroup* group = &s_manager.groups[RESOURCE_CACHE_ID];
-
-  // Add the default matrices buffer
-  ResourceID matrix_id;
-  PUSH_RESOURCE(group, buffers, render_defaults.matrices_buffer, RESOURCE_TYPE_BUFFER, matrix_id);
-  group->named_ids["matrix_buffer"] = matrix_id;
-
-  // Add the default texture 
-  ResourceID texture_id;
-  PUSH_RESOURCE(group, textures, render_defaults.texture, RESOURCE_TYPE_TEXTURE, texture_id);
-  group->named_ids["default_texture"] = texture_id;
 
   NIKOLA_LOG_INFO("Successfully initialized the resource manager");
 }
@@ -393,7 +370,7 @@ ResourceID resources_push_buffer(const u16 group_id, const GfxBufferDesc& buff_d
 
   // Create the buffer
   ResourceID id; 
-  GfxBuffer* buffer = gfx_buffer_create(s_manager.gfx_context, buff_desc);
+  GfxBuffer* buffer = gfx_buffer_create(renderer_get_context(), buff_desc);
   PUSH_RESOURCE(group, buffers, buffer, RESOURCE_TYPE_BUFFER, id);
 
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed buffer:", group->name.c_str());
@@ -408,7 +385,7 @@ ResourceID resources_push_texture(const u16 group_id, const GfxTextureDesc& desc
 
   // Create the texture
   ResourceID id; 
-  GfxTexture* texture = gfx_texture_create(s_manager.gfx_context, desc);
+  GfxTexture* texture = gfx_texture_create(renderer_get_context(), desc);
   PUSH_RESOURCE(group, textures, texture, RESOURCE_TYPE_TEXTURE, id);
 
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed texture:", group->name.c_str());
@@ -443,7 +420,7 @@ ResourceID resources_push_texture(const u16 group_id,
 
   // Create the texture 
   ResourceID id; 
-  GfxTexture* texture = gfx_texture_create(s_manager.gfx_context, tex_desc);
+  GfxTexture* texture = gfx_texture_create(renderer_get_context(), tex_desc);
   PUSH_RESOURCE(group, textures, texture, RESOURCE_TYPE_TEXTURE, id);
 
   // Remember to close the NBR
@@ -468,7 +445,7 @@ ResourceID resources_push_cubemap(const u16 group_id, const GfxCubemapDesc& cube
 
   // Create the cubemap
   ResourceID id; 
-  GfxCubemap* cubemap = gfx_cubemap_create(s_manager.gfx_context, cubemap_desc);
+  GfxCubemap* cubemap = gfx_cubemap_create(renderer_get_context(), cubemap_desc);
   PUSH_RESOURCE(group, cubemaps, cubemap, RESOURCE_TYPE_CUBEMAP, id);
   
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed cubemap:", group->name.c_str());
@@ -502,7 +479,7 @@ ResourceID resources_push_cubemap(const u16 group_id,
 
   // Create the cubemap
   ResourceID id; 
-  GfxCubemap* cubemap = gfx_cubemap_create(s_manager.gfx_context, cube_desc);
+  GfxCubemap* cubemap = gfx_cubemap_create(renderer_get_context(), cube_desc);
   PUSH_RESOURCE(group, cubemaps, cubemap, RESOURCE_TYPE_CUBEMAP, id);
 
   // Remember to close the NBR
@@ -527,7 +504,7 @@ ResourceID resources_push_shader(const u16 group_id, const GfxShaderDesc& shader
 
   // Create the shader
   ResourceID id; 
-  GfxShader* shader = gfx_shader_create(s_manager.gfx_context, shader_desc);
+  GfxShader* shader = gfx_shader_create(renderer_get_context(), shader_desc);
   PUSH_RESOURCE(group, shaders, shader, RESOURCE_TYPE_SHADER, id);
 
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed shader:", group->name.c_str());
@@ -581,7 +558,8 @@ ResourceID resources_push_shader_context(const u16 group_id, const ResourceID& s
   PUSH_RESOURCE(group, shader_contexts, ctx, RESOURCE_TYPE_SHADER_CONTEXT, id);
  
   // Set a default matrices buffer 
-  shader_context_set_uniform_buffer(id, SHADER_MATRICES_BUFFER_INDEX, resources_get_id(RESOURCE_CACHE_ID, "matrix_buffer"));
+  ResourceID matrix_buffer_id = renderer_get_defaults().matrices_buffer;
+  shader_context_set_uniform_buffer(id, SHADER_MATRICES_BUFFER_INDEX, matrix_buffer_id);
 
   // New context added!
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed shader context:", group->name.c_str());
@@ -599,7 +577,7 @@ ResourceID resources_push_mesh(const u16 group_id, NBRMesh& nbr_mesh) {
   nbr_import_mesh(&nbr_mesh, group_id, mesh);
 
   // Create the pipeline
-  mesh->pipe = gfx_pipeline_create(s_manager.gfx_context, mesh->pipe_desc);
+  mesh->pipe = gfx_pipeline_create(renderer_get_context(), mesh->pipe_desc);
 
   // Create the mesh
   ResourceID id; 
@@ -647,7 +625,7 @@ ResourceID resources_push_material(const u16 group_id) {
   material->shininess      = 1.0f;
 
   // Default textures init
-  ResourceID default_id  = resources_get_id(RESOURCE_CACHE_ID, "default_texture");
+  ResourceID default_id  = renderer_get_defaults().texture;
   material->diffuse_map  = default_id;
   material->specular_map = default_id;
 
@@ -674,7 +652,7 @@ ResourceID resources_push_skybox(const u16 group_id, const ResourceID& cubemap_i
   skybox_loader_load(group_id, skybox, cubemap_id);
 
   // Create the pipeline 
-  skybox->pipe = gfx_pipeline_create(s_manager.gfx_context, skybox->pipe_desc);
+  skybox->pipe = gfx_pipeline_create(renderer_get_context(), skybox->pipe_desc);
 
   // Create skybox
   ResourceID id;

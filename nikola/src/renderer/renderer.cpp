@@ -2,16 +2,33 @@
 #include "nikola/nikola_base.h"
 #include "nikola/nikola_gfx.h"
 
+#include "render_shaders.h"
+#include "light_shaders.h"
+
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola
 
 /// ----------------------------------------------------------------------
+/// ShaderContextID
+enum ShaderContextID {
+  SHADER_CONTEXT_DEFAULT     = 0, 
+  SHADER_CONTEXT_SKYBOX      = 1, 
+  SHADER_CONTEXT_FRAEMBUFFER = 2, 
+  SHADER_CONTEXT_BLINN       = 3, 
+
+  SHADER_CONTEXTS_MAX        = SHADER_CONTEXT_BLINN + 1,
+};
+/// ShaderContextID
+/// ----------------------------------------------------------------------
+
+/// RenderPassEntry
 struct RenderPassEntry {
   RenderPass pass; 
   RenderPassFn func; 
   void* user_data  = nullptr;
 };
+/// RenderPassEntry
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -20,12 +37,16 @@ struct Renderer {
   GfxContext* context = nullptr;
 
   Vec4 clear_color;
-  Camera* camera;
-  
+
   GfxPipelineDesc pipe_desc  = {};
   GfxPipeline* pipeline      = nullptr; 
 
   RendererDefaults defaults = {};
+  ResourceID shader_contexts[SHADER_CONTEXTS_MAX];
+  
+  RenderQueue* current_queue;  
+  FrameData* frame_data;
+  ResourceID current_skybox;
   DynamicArray<RenderPassEntry> render_passes;
 };
 
@@ -60,7 +81,7 @@ static void init_defaults() {
     .wrap_mode = GFX_TEXTURE_WRAP_MIRROR, 
     .data      = &pixels,
   };
-  s_renderer.defaults.texture = gfx_texture_create(s_renderer.context, texture_desc);
+  s_renderer.defaults.texture = resources_push_texture(RESOURCE_CACHE_ID, texture_desc);
 
   // Matrices buffer init
   GfxBufferDesc buff_desc = {
@@ -69,7 +90,19 @@ static void init_defaults() {
     .type  = GFX_BUFFER_UNIFORM,
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
-  s_renderer.defaults.matrices_buffer = gfx_buffer_create(s_renderer.context, buff_desc);
+  s_renderer.defaults.matrices_buffer = resources_push_buffer(RESOURCE_CACHE_ID, buff_desc);
+
+  // Shaders init
+  ResourceID default_shader     = resources_push_shader(RESOURCE_CACHE_ID, generate_default_shader());
+  ResourceID skybox_shader      = resources_push_shader(RESOURCE_CACHE_ID, generate_skybox_shader());
+  ResourceID framebuffer_shader = resources_push_shader(RESOURCE_CACHE_ID, generate_framebuffer_shader());
+  ResourceID blinn_phong_shader = resources_push_shader(RESOURCE_CACHE_ID, generate_blinn_phong_shader());
+
+  // Shader contexts init
+  s_renderer.shader_contexts[SHADER_CONTEXT_DEFAULT]     = resources_push_shader_context(RESOURCE_CACHE_ID, default_shader);
+  s_renderer.shader_contexts[SHADER_CONTEXT_SKYBOX]      = resources_push_shader_context(RESOURCE_CACHE_ID, skybox_shader);
+  s_renderer.shader_contexts[SHADER_CONTEXT_FRAEMBUFFER] = resources_push_shader_context(RESOURCE_CACHE_ID, framebuffer_shader);
+  s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]       = resources_push_shader_context(RESOURCE_CACHE_ID, blinn_phong_shader);
 }
 
 static void init_pipeline() {
@@ -117,14 +150,14 @@ static void init_pipeline() {
   s_renderer.pipeline = gfx_pipeline_create(s_renderer.context, s_renderer.pipe_desc);
 }
 
-static void render_mesh(RenderCommand& command) {
+static void render_mesh(RenderCommand& command, ResourceID& shader_context) {
   Mesh* mesh = resources_get_mesh(command.renderable_id);
 
   // Setting uniforms 
-  shader_context_set_uniform(command.shader_context_id, MATERIAL_UNIFORM_MODEL_MATRIX, command.transform->transform);
+  shader_context_set_uniform(shader_context, MATERIAL_UNIFORM_MODEL_MATRIX, command.transform.transform);
 
   // Using the shader 
-  shader_context_use(command.shader_context_id);
+  shader_context_use(shader_context);
 
   // Using the textures
   material_use(command.material_id);  
@@ -137,7 +170,7 @@ static void render_skybox(RenderCommand& command) {
   Skybox* skybox = resources_get_skybox(command.renderable_id); 
 
   // Using the shader 
-  shader_context_use(command.shader_context_id);
+  shader_context_use(s_renderer.shader_contexts[SHADER_CONTEXT_SKYBOX]);
 
   // Use the cubemap
   GfxCubemap* cube = resources_get_cubemap(skybox->cubemap);
@@ -147,7 +180,7 @@ static void render_skybox(RenderCommand& command) {
   gfx_pipeline_draw_vertex(skybox->pipe);
 }
 
-static void render_model(RenderCommand& command) {
+static void render_model(RenderCommand& command, ResourceID& shader_context) {
   Model* model = resources_get_model(command.renderable_id);
 
   for(sizei i = 0; i < model->meshes.size(); i++) {
@@ -161,11 +194,10 @@ static void render_model(RenderCommand& command) {
      .render_type       = nikola::RENDERABLE_TYPE_MESH, 
      .renderable_id     = mesh_id, 
      .material_id       = mat_id, 
-     .shader_context_id = command.shader_context_id, 
     };
 
     // Render the sub-command
-    render_mesh(sub_cmd);
+    render_mesh(sub_cmd, shader_context);
   }
 }
 
@@ -187,30 +219,15 @@ static void create_render_pass(RenderPass* pass, const RenderPassDesc& desc) {
       .height    = (u32)pass->frame_size.y, 
       .depth     = 0, 
       .mips      = 1, 
-      .type      = GFX_TEXTURE_RENDER_TARGET,
-      .format    = desc.targets[i],
-      .filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-      .wrap_mode = GFX_TEXTURE_WRAP_MIRROR, 
+      .type      = desc.targets[i].type,
+      .format    = desc.targets[i].format,
+      .filter    = desc.targets[i].filter, 
+      .wrap_mode = desc.targets[i].wrap_mode, 
       .data      = nullptr,
     };
     pass->frame_desc.attachments[i] = gfx_texture_create(s_renderer.context, texture_desc);
     pass->frame_desc.attachments_count++;
   }
-
-  // Every framebuffer will have a depth and stencil buffer by default no matter what 
-  GfxTextureDesc texture_desc = {
-    .width     = (u32)pass->frame_size.x, 
-    .height    = (u32)pass->frame_size.y, 
-    .depth     = 0, 
-    .mips      = 1, 
-    .type      = GFX_TEXTURE_DEPTH_STENCIL_TARGET,
-    .format    = GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8,
-    .filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-    .wrap_mode = GFX_TEXTURE_WRAP_MIRROR, 
-    .data      = nullptr,
-  };
-  pass->frame_desc.attachments[desc.targets.size()] = gfx_texture_create(s_renderer.context, texture_desc);
-  pass->frame_desc.attachments_count++;
 
   // Framebuffer init
   pass->frame = gfx_framebuffer_create(s_renderer.context, pass->frame_desc);
@@ -250,21 +267,14 @@ static void end_pass(RenderPass& pass) {
   gfx_pipeline_draw_index(s_renderer.pipeline);
 }
 
-
-/// Private functions
-/// ----------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// RenderQueue functions
-
-void render_queue_flush(RenderQueue& queue) {
-  for(auto& command : queue) {
+static void flush_queue(ResourceID& shader_context) {
+  for(auto& command : *s_renderer.current_queue) {
     switch(command.render_type) {
       case RENDERABLE_TYPE_MESH:
-        render_mesh(command);
+        render_mesh(command, shader_context);
         break;
       case RENDERABLE_TYPE_MODEL:
-        render_model(command);
+        render_model(command, shader_context);
         break;
       case RENDERABLE_TYPE_SKYBOX:
         render_skybox(command);
@@ -273,20 +283,36 @@ void render_queue_flush(RenderQueue& queue) {
   }
 }
 
-void render_queue_push(RenderQueue& queue, const RenderCommand& cmd) {
-  queue.push_back(cmd);
+/// Private functions
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// Callbacks 
+
+static void light_pass_fn(const RenderPass* previous, RenderPass* current, void* user_data) {
+  // Render the current set skybox first
+  RenderCommand skybox_cmd = {
+    .render_type   = RENDERABLE_TYPE_SKYBOX, 
+    .renderable_id = s_renderer.current_skybox,
+  };
+  render_skybox(skybox_cmd);
+
+  // Render the frame with the light data 
+  flush_queue(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]);
 }
 
-/// RenderQueue functions
-///---------------------------------------------------------------------------------------------------------------------
+/// Callbacks 
+/// ----------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// Renderer functions
 
-void renderer_init(Window* window, const Vec4& clear_color) {
+void renderer_init(Window* window) {
   // Context init 
   init_context(window);
-  s_renderer.clear_color = clear_color;
+  
+  i32 width, height;
+  window_get_size(window, &width, &height); 
 
   // Defaults init
   init_defaults();
@@ -294,6 +320,20 @@ void renderer_init(Window* window, const Vec4& clear_color) {
   // Pipeline init
   init_pipeline();
 
+  // Light pass init
+  nikola::RenderPassDesc light_pass = {
+    .frame_size        = Vec2(width, height), 
+    .clear_color       = Vec4(1.0f),
+    .clear_flags       = (GFX_CLEAR_FLAGS_COLOR_BUFFER | GFX_CLEAR_FLAGS_DEPTH_BUFFER),
+    .shader_context_id = s_renderer.shader_contexts[SHADER_CONTEXT_FRAEMBUFFER],
+  };
+  light_pass.targets.push_back(RenderTarget{});
+  light_pass.targets.push_back(RenderTarget{
+      .type = GFX_TEXTURE_DEPTH_STENCIL_TARGET, 
+      .format = GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8
+  });
+  renderer_push_pass(light_pass, light_pass_fn, nullptr);
+  
   NIKOLA_LOG_INFO("Successfully initialized the renderer context");
 }
 
@@ -308,12 +348,8 @@ void renderer_shutdown() {
   NIKOLA_LOG_INFO("Successfully shutdown the renderer context");
 }
 
-const GfxContext* renderer_get_context() {
+GfxContext* renderer_get_context() {
   return s_renderer.context;
-}
-
-void renderer_set_clear_color(const Vec4& clear_color) {
-  s_renderer.clear_color = clear_color;
 }
 
 const RendererDefaults& renderer_get_defaults() {
@@ -329,28 +365,44 @@ void renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& func, co
   s_renderer.render_passes.push_back(entry);
 }
 
-void renderer_begin(Camera& camera) {
-  // Updating the internal matrices buffer for each shader
-  s_renderer.camera = &camera;
-  gfx_buffer_update(s_renderer.defaults.matrices_buffer, 0, sizeof(Mat4), mat4_raw_data(camera.view));
-  gfx_buffer_update(s_renderer.defaults.matrices_buffer, sizeof(Mat4), sizeof(Mat4), mat4_raw_data(camera.projection));
+void renderer_sumbit_queue(RenderQueue& queue) {
+  s_renderer.current_queue = &queue;
 }
 
-void renderer_apply_passes() {
-  /* @NOTE (28/3/2025, Mohamed):
+void renderer_clear(const Vec4& clear_color) {
+  s_renderer.clear_color                       = clear_color;
+  s_renderer.render_passes[0].pass.clear_color = clear_color;
+}
+
+void renderer_begin(FrameData& data) {
+  s_renderer.frame_data    = &data;
+  GfxBuffer* matrix_buffer = resources_get_buffer(s_renderer.defaults.matrices_buffer);
+
+  // Updating the internal matrices buffer for each shader
+  gfx_buffer_update(matrix_buffer, 0, sizeof(Mat4), mat4_raw_data(data.camera.view));
+  gfx_buffer_update(matrix_buffer, sizeof(Mat4), sizeof(Mat4), mat4_raw_data(data.camera.projection));
+
+  // Render the skybox (if avaliable)
+  s_renderer.current_skybox = data.skybox_id;
+
+  // @TODO: Update the light uniforms
+}
+
+void renderer_end() {
+  /* @NOTE (16/4/2025, Mohamed):
   *
-  * Since the first entry of the render passes does not have a "previous" 
-  * entry, we use it here before entering the loop. We also want to avoid 
-  * the inevitable `if` statements inside the loop.
+  * Since the first entry of the render passes will almost always 
+  * be the preset light pass, we might as well initiate it 
+  * seperately.
   * 
   */
-  RenderPassEntry* first_entry = &s_renderer.render_passes[0];
+  RenderPassEntry* light_entry = &s_renderer.render_passes[0];
   
-  begin_pass(first_entry->pass);
-  first_entry->func(nullptr, &first_entry->pass, first_entry->user_data);
-  end_pass(first_entry->pass);
+  begin_pass(light_entry->pass);
+  light_entry->func(nullptr, &light_entry->pass, light_entry->user_data);
+  end_pass(light_entry->pass);
 
-  // Initiate all of the render passes 
+  // Initiate all of the custrom render passes 
   for(sizei i = 1; i < s_renderer.render_passes.size(); i++) {
     RenderPassEntry* entry = &s_renderer.render_passes[i];
   
@@ -358,9 +410,12 @@ void renderer_apply_passes() {
     entry->func(&s_renderer.render_passes[i - 1].pass, &entry->pass, entry->user_data);
     end_pass(entry->pass);
   } 
+  
+  // Clear the current render queue
+  s_renderer.current_queue->clear();
 }
 
-void renderer_end() {
+void renderer_present() {
   gfx_context_present(s_renderer.context);
 }
 

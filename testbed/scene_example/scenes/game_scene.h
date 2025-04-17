@@ -7,10 +7,11 @@ struct GameScene {
   nikola::Camera camera;
 
   nikola::u16 resource_group;
+  nikola::ResourceID skybox_id, material_id;
   nikola::RenderQueue render_queue;
-
-  nikola::DynamicArray<nikola::Transform> transforms;
+  
   bool has_editor;
+  nikola::i32 render_effect = 0;
 };
 /// GameScene
 /// ----------------------------------------------------------------------
