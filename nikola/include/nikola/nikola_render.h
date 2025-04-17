@@ -144,6 +144,8 @@ struct DirectionalLight {
   Vec3 ambient  = Vec3(1.0f);
   Vec3 diffuse  = Vec3(1.0f);
   Vec3 specular = Vec3(1.0f);
+
+  bool is_active = true;
 };
 /// DirectionalLight 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -159,6 +161,8 @@ struct PointLight {
 
   f32 linear    = 0.09f; 
   f32 quadratic = 0.032f;
+
+  bool is_active = true;
 };
 /// PointLight
 ///---------------------------------------------------------------------------------------------------------------------

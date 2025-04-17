@@ -284,21 +284,26 @@ static void flush_queue(ResourceID& shader_context) {
 }
 
 static void use_directional_light(DirectionalLight& light) {
-  shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_dir_light.direction", light.direction); 
+  if(light.is_active) {
+    return;
+  }
 
+  shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_dir_light.direction", light.direction); 
   shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_dir_light.ambient", light.ambient); 
   shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_dir_light.diffuse", light.diffuse); 
-  // shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_light.specular", light.specular); 
+  // @TODO (Renderer): shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_light.specular", light.specular); 
 }
 
 static void use_point_lights(DynamicArray<PointLight>& lights) {
   for(auto& point : lights) {
-    shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_point_light.position", point.position); 
+    if(!point.is_active) {
+      continue;
+    }
 
+    shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_point_light.position", point.position); 
     shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_point_light.ambient", point.ambient); 
     shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_point_light.diffuse", point.diffuse); 
-    // shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_light.specular", point.specular); 
-
+    // @TODO (Renderer): shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_light.specular", point.specular); 
     shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_point_light.linear", point.linear); 
     shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_point_light.quadratic", point.quadratic); 
   }
