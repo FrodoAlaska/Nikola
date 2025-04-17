@@ -23,6 +23,7 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 - Support for multiple image formats** including **JPEG, PNG, BMP, TGA, and more**.  
 - 3D model loading with support for **OBJ, FBX, and GLTF** formats.  
 - Integrated ImGui support, featuring an abstracted `editor` layer for editing engine-specific types through a GUI.  
+- A versitile lighting system using the Blinn-Phong shading model.
 
 ## Missing Features
 
@@ -31,7 +32,6 @@ Some missing features are not currently in the works (Long-term) while others ar
 - 3D animations (*Long-term*)
 - Audio (*Short-term*)
 - Physcis (*Short-term*)
-- Lightweight Editor (*Short-term*)
 - Scripting (*Never*)
 
 ## Build Instructions
@@ -83,7 +83,7 @@ The `--reload-res` flag will call the `reload-resources.*` script to convert any
 Here's a simple example of the _core_ library working in action. The example below will open a basic window and initialze a graphics context.
 
 ```c++
-#include <nikola/nikola_core.hpp>
+#include <nikola/nikola.h>
 
 int main() {
   // Initialze the library
@@ -116,7 +116,7 @@ int main() {
     }
     
     // Clear the screen to black
-    nikola::gfx_context_clear(gfx, 0.0f, 0.0f, 0.0f, 1.0f, nikola::GFX_CONTEXT_FLAGS_ENABLE_VSYNC);
+    nikola::gfx_context_clear(gfx, 0.0f, 0.0f, 0.0f, 1.0f);
     
     // Swap the internal window buffer
     nikola::gfx_context_present(gfx);
