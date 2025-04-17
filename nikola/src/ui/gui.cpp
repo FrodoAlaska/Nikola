@@ -216,8 +216,6 @@ void gui_edit_directional_light(const char* name, DirectionalLight* dir_light) {
   ImGui::DragFloat3("Ambient", &dir_light->ambient[0], 0.01f, 0.0f, 1.0f);
   ImGui::DragFloat3("Diffuse", &dir_light->diffuse[0], 0.01f, 0.0f, 1.0f);
   ImGui::DragFloat3("Specular", &dir_light->specular[0], 0.01f, 0.0f, 1.0f);
-  
-  ImGui::Checkbox("Active", &dir_light->is_active); 
 
   ImGui::PopID(); 
 }
@@ -234,8 +232,6 @@ void gui_edit_point_light(const char* name, PointLight* point_light) {
 
   ImGui::DragFloat("Linear", &point_light->linear, 0.01f);
   ImGui::DragFloat("Quadratic", &point_light->quadratic, 0.01f);
-  
-  ImGui::Checkbox("Active", &point_light->is_active); 
 
   ImGui::PopID(); 
 }

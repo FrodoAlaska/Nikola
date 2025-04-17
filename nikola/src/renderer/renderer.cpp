@@ -284,10 +284,6 @@ static void flush_queue(ResourceID& shader_context) {
 }
 
 static void use_directional_light(DirectionalLight& light) {
-  if(light.is_active) {
-    return;
-  }
-
   shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_dir_light.direction", light.direction); 
   shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_dir_light.ambient", light.ambient); 
   shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_dir_light.diffuse", light.diffuse); 
@@ -296,10 +292,6 @@ static void use_directional_light(DirectionalLight& light) {
 
 static void use_point_lights(DynamicArray<PointLight>& lights) {
   for(auto& point : lights) {
-    if(!point.is_active) {
-      continue;
-    }
-
     shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_point_light.position", point.position); 
     shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_point_light.ambient", point.ambient); 
     shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_point_light.diffuse", point.diffuse); 

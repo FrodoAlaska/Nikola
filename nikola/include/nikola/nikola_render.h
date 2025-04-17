@@ -144,8 +144,6 @@ struct DirectionalLight {
   Vec3 ambient  = Vec3(1.0f);
   Vec3 diffuse  = Vec3(1.0f);
   Vec3 specular = Vec3(1.0f);
-
-  bool is_active = true;
 };
 /// DirectionalLight 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -161,8 +159,6 @@ struct PointLight {
 
   f32 linear    = 0.09f; 
   f32 quadratic = 0.032f;
-
-  bool is_active = true;
 };
 /// PointLight
 ///---------------------------------------------------------------------------------------------------------------------
@@ -212,19 +208,29 @@ NIKOLA_API void renderer_shutdown();
 /// Retrieve the internal `GfxContext` of the global renderer.
 NIKOLA_API GfxContext* renderer_get_context();
 
-/// Retrieve the internal default values of the renderer
+/// Retrieve the internal default values of the renderer.
 NIKOLA_API const RendererDefaults& renderer_get_defaults();
 
+/// Add an additional render pass using the information from `desc`. 
+/// Internally, the renderer will call `func`, passing in `user_data`.
 NIKOLA_API void renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& func, const void* user_data);
 
+/// Sumbit the given `queue` to the renderer to be rendered once `renderer_end` is called.
 NIKOLA_API void renderer_sumbit_queue(RenderQueue& queue);
 
+/// Clear the screen to the given `clear_color`.
 NIKOLA_API void renderer_clear(const Vec4& clear_color);
 
+/// Setup the renderer for any upcoming render operations by 
+/// the data given in `data`.
 NIKOLA_API void renderer_begin(FrameData& data);
 
+/// Start the render passes chain, flushing the given `RenderQueue` in the process. 
 NIKOLA_API void renderer_end();
 
+/// Present the final result to the screen. 
+///
+/// @NOTE: In OpenGL, this is equivalent to `glSwapBuffers`.
 NIKOLA_API void renderer_present();
 
 /// Renderer functions
@@ -233,16 +239,24 @@ NIKOLA_API void renderer_present();
 ///---------------------------------------------------------------------------------------------------------------------
 /// Batch renderer functions
 
+/// Initialize the internal data of the batch renderer.
 NIKOLA_API void batch_renderer_init();
 
+/// Shutdown and destroy any resources created by the batch renderer.
 NIKOLA_API void batch_renderer_shutdown();
 
+/// Setup the batch renderer for any proceeding render operation.
 NIKOLA_API void batch_renderer_begin();
 
+/// Sumbit the results of the batch renderer to the screen.
 NIKOLA_API void batch_renderer_end();
 
+/// Render a quad at `position` with a size of `size` and tinted with `color`.
 NIKOLA_API void batch_render_quad(const Vec2& position, const Vec2& size, const Vec4& color);
 
+/// Render the given `texture` at `position` with size of `size` and tinted with `tint`.
+///
+/// @NOTE: By default, `tint` is set to `Vec4(1.0f)`.
 NIKOLA_API void batch_render_texture(GfxTexture* texture, const Vec2& position, const Vec2& size, const Vec4& tint = Vec4(1.0f));
 
 /// Batch renderer functions

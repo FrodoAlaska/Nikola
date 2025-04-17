@@ -39,14 +39,13 @@
     - [x] Improve the rendering of 3D models (perhaps each mesh is a specific render command?) 
     - [x] Make render passes be associated with a specific `ShaderContext` instead of a `Material`.
     - [x] The model loader cannot load models that posses no textures
-[] 9. Renderer v0.3 
+[x] 9. Renderer v0.3 
     - [x] Refine the render command system
     - [x] Improve render pass system
-    - [] Time to document the whole renderer section
-[] 10. Lighting v0.1 
+    - [x] Documentation
+[x] 10. Lighting v0.1 
     - [x] Implement lighting data structures that can be represented in a scene 
     - [x] Decide on whether the lighting calculation/pipeline should be part of the engine or the application 
-    - [] Look into clustered forward rendering instead of deferred rendering.
     - [x] Perhaps add a `FrameData` structure that will have all the available lights as well as the scene camera per frame (obviously).
 [] 11. GFX v1.0? 
     - [x] Let every reasource have a `_use` function
