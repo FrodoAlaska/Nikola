@@ -41,22 +41,28 @@ static nikola::DynamicArray<Entity> s_entities;
 /// Private functions
 
 static void init_entities(GameScene* scene) {
-  // Tempel
-  nikola::ResourceID tempel_model = nikola::resources_get_id(scene->resource_group, "cottage_obj");
-  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), tempel_model, nikola::RENDERABLE_TYPE_MODEL, "Tempel"); 
-  // nikola::transform_rotate(transform, nikola::Vec3(1.0f, 0.0f, 0.0f), -90.0f * nikola::DEG2RAD);
+  // Player
+  // nikola::ResourceID player_model = nikola::resources_get_id(scene->resource_group, "behelit");
+  // s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), player_model, nikola::RENDERABLE_TYPE_MODEL, "Player"); 
+  // nikola::transform_scale(s_entities[0].transform, nikola::Vec3(0.2f));
   
   // Ground
-  // nikola::ResourceID ground_mesh = nikola::resources_push_mesh(scene->resource_group, nikola::MESH_TYPE_CUBE);
-  // s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), ground_mesh, nikola::RENDERABLE_TYPE_MESH, "Ground"); 
+  nikola::ResourceID ground_mesh = nikola::resources_push_mesh(scene->resource_group, nikola::MESH_TYPE_CUBE);
+  s_entities.emplace_back(nikola::Vec3(50.0f, 0.0f, 50.0f), ground_mesh, nikola::RENDERABLE_TYPE_MESH, "Ground"); 
+  nikola::transform_scale(s_entities[0].transform, nikola::Vec3(10.0f));
 }
 
 static void init_lights(GameScene* scene) {
   // Directional light
   scene->frame_data.dir_light.direction = nikola::Vec3(0.0f, 0.0f, 0.0f);
+  scene->frame_data.dir_light.ambient   = nikola::Vec3(0.0f, 0.0f, 0.0f);
  
   // Point lights
-  scene->frame_data.point_lights.push_back(nikola::PointLight{nikola::Vec3(-1.0f, 0.0f, 10.0f)});
+  scene->frame_data.point_lights.push_back(nikola::PointLight{nikola::Vec3(50.0f, 0.0f, 60.0f)});
+}
+
+static nikola::f32 ease_in_sine(nikola::f32 x) {
+  return 1.0f - nikola::cos((x * nikola::PI) / 2.0f);
 }
 
 /// Private functions
@@ -80,13 +86,17 @@ void game_scene_init(GameScene* scene, nikola::Window* window) {
   nikola::u16 res_group     = scene->resource_group;
 
   // Cubemaps init
-  nikola::ResourceID cubemap_id = nikola::resources_push_cubemap(res_group, "cubemaps/NightSky.nbrcubemap");
+  nikola::ResourceID cubemap_id = nikola::resources_push_cubemap(res_group, "cubemaps/gloomy.nbrcubemap");
 
   // Models init
-  nikola::resources_push_model(res_group, "models/cottage_obj.nbrmodel");
+  nikola::resources_push_model(res_group, "models/behelit.nbrmodel");
+
+  // Textures init
+  nikola::ResourceID mesh_texture = nikola::resources_push_texture(res_group, "textures/opengl.nbrtexture");
 
   // Materials init
   scene->material_id = nikola::resources_push_material(res_group);
+  nikola::material_set_texture(scene->material_id, nikola::MATERIAL_TEXTURE_DIFFUSE, mesh_texture);
 
   // Skyboxes init
   scene->skybox_id            = nikola::resources_push_skybox(res_group, cubemap_id);
@@ -99,16 +109,22 @@ void game_scene_init(GameScene* scene, nikola::Window* window) {
   init_lights(scene);
 }
 
-void game_scene_update(GameScene& scene) {
+static nikola::f32 rotation = 0.0f;
+
+void game_scene_update(GameScene& scene, nikola::f64 dt) {
+  // Enable fullscreen
+  if(nikola::input_key_pressed(nikola::KEY_F)) {
+    nikola::window_set_fullscreen(scene.window, !nikola::window_is_fullscreen(scene.window));
+  }
+
+  nikola::f32 value = ease_in_sine(dt);
+  rotation += value * 50.0f;
+  nikola::transform_rotate(s_entities[0].transform, nikola::Vec3(0.0f, 1.0f, 0.0f), rotation);
+  
   // Enable editor
   if(nikola::input_key_pressed(nikola::KEY_E)) {
     scene.has_editor = !scene.has_editor;
     nikola::input_cursor_show(scene.has_editor);
-  }
-
-  // Enable fullscreen
-  if(nikola::input_key_pressed(nikola::KEY_F)) {
-    nikola::window_set_fullscreen(scene.window, !nikola::window_is_fullscreen(scene.window));
   }
 
   if(scene.has_editor) {
@@ -140,6 +156,11 @@ void game_scene_gui_render(GameScene& scene) {
   for(auto& light : scene.frame_data.point_lights) {
     nikola::gui_edit_point_light("Point", &light);
   }
+  nikola::gui_end_panel();
+  
+  nikola::gui_begin_panel("Resources");
+  nikola::ResourceID texture = nikola::resources_get_id(scene.resource_group, "logo");
+  nikola::gui_edit_resource("Texture", texture);
   nikola::gui_end_panel();
 
   // nikola::gui_begin_panel("Entities");

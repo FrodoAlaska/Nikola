@@ -100,7 +100,7 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     return;
   }
 
-  game_scene_update(app->game_scene);
+  game_scene_update(app->game_scene, delta_time);
 } 
 
 void app_render(nikola::App* app) {

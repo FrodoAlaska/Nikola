@@ -23,7 +23,7 @@ struct GameScene {
 
 void game_scene_init(GameScene* scene, nikola::Window* window);
 
-void game_scene_update(GameScene& scene);
+void game_scene_update(GameScene& scene, nikola::f64 dt);
 
 void game_scene_render(GameScene& scene);
 

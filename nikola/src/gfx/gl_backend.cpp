@@ -861,10 +861,9 @@ static GLenum create_gl_texture(const GfxTextureType type) {
   return id;
 }
 
-static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format, GLenum gl_format, GLenum gl_pixel_type) {
+static void update_gl_texture_pixels(GfxTexture* texture, GLenum gl_format, GLenum gl_pixel_type) {
   switch(texture->desc.type) {
     case GFX_TEXTURE_1D: 
-      glTextureStorage1D(texture->id, texture->desc.mips, in_format, texture->desc.width);
       glTextureSubImage1D(texture->id, 
                           texture->desc.mips, 
                           0, 
@@ -874,7 +873,6 @@ static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format, GLe
                           texture->desc.data);
       break;
     case GFX_TEXTURE_2D:
-      glTextureStorage2D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height);
       glTextureSubImage2D(texture->id, 
                           0, 
                           0, 0,
@@ -884,9 +882,8 @@ static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format, GLe
                           texture->desc.data);
       break;
     case GFX_TEXTURE_3D:
-      glTextureStorage3D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height, texture->desc.height);
       glTextureSubImage3D(texture->id, 
-                          texture->desc.mips, 
+                          0, 
                           0, 0, 0,
                           texture->desc.width, texture->desc.height, texture->desc.depth,
                           gl_format, 
@@ -894,14 +891,36 @@ static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format, GLe
                           texture->desc.data);
       break;
     case GFX_TEXTURE_RENDER_TARGET:
-      glTextureStorage2D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height);
       glTextureSubImage2D(texture->id, 
                           0, 
                           0, 0,
                           texture->desc.width, texture->desc.height,
                           gl_format, 
                           gl_pixel_type, 
-                          NULL);
+                          nullptr);
+      break;
+    case GFX_TEXTURE_DEPTH_TARGET:
+    case GFX_TEXTURE_STENCIL_TARGET:
+    case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
+      break;
+    default:
+      break;
+  }
+}
+
+static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format) {
+  switch(texture->desc.type) {
+    case GFX_TEXTURE_1D: 
+      glTextureStorage1D(texture->id, texture->desc.mips, in_format, texture->desc.width);
+      break;
+    case GFX_TEXTURE_2D:
+      glTextureStorage2D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height);
+      break;
+    case GFX_TEXTURE_3D:
+      glTextureStorage3D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height, texture->desc.height);
+      break;
+    case GFX_TEXTURE_RENDER_TARGET:
+      glTextureStorage2D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height);
       break;
     case GFX_TEXTURE_DEPTH_TARGET:
     case GFX_TEXTURE_STENCIL_TARGET:
@@ -1357,7 +1376,8 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   glTextureParameteri(texture->id, GL_TEXTURE_MAG_FILTER, mag_filter);
 
   // Filling the texture with the data based on its type
-  update_gl_texture_storage(texture, in_format, gl_format, gl_pixel_type);
+  update_gl_texture_storage(texture, in_format);
+  update_gl_texture_pixels(texture, gl_format, gl_pixel_type);
 
   // Generating some mipmaps
   glGenerateTextureMipmap(texture->id);
@@ -1414,9 +1434,28 @@ void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc) {
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
   glTextureParameteri(texture->id, GL_TEXTURE_MIN_FILTER, min_filter);
   glTextureParameteri(texture->id, GL_TEXTURE_MAG_FILTER, mag_filter);
+}
+
+void gfx_texture_upload_data(GfxTexture* texture, 
+                             const i32 width, const i32 height, const i32 depth, 
+                             const void* data) {
+  NIKOLA_ASSERT(texture->gfx, "Invalid GfxContext struct passed to gfx_texture_upload_data");
+  NIKOLA_ASSERT(texture, "Invalid GfxTexture struct passed to gfx_texture_upload_data");
+  NIKOLA_ASSERT(data, "Invalid texture data passed to gfx_texture_upload_data");
+ 
+  // Updating the formats
+  GLenum in_format, gl_format, gl_pixel_type;
+  get_texture_gl_format(texture->desc.format, &in_format, &gl_format, &gl_pixel_type);
   
-  // updating the whole texture
-  update_gl_texture_storage(texture, in_format, gl_format, gl_pixel_type);
+  // Update the data
+  texture->desc.width  = width; 
+  texture->desc.height = height; 
+  texture->desc.depth  = depth; 
+  texture->desc.data   = (void*)data; 
+
+  // Updating the internal texture pixels
+  update_gl_texture_storage(texture, in_format);
+  update_gl_texture_pixels(texture, gl_format, gl_pixel_type);
 
   // Re-generate some mipmaps
   glGenerateTextureMipmap(texture->id);
@@ -1523,19 +1562,36 @@ void gfx_cubemap_update(GfxCubemap* cubemap, const GfxCubemapDesc& desc) {
   glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
   glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
   glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_R, gl_wrap_format);
+}
 
-  // Updating the storage
-  glTextureStorage2D(cubemap->id, desc.mips, in_format, desc.width, desc.height);
+void gfx_cubemap_upload_data(GfxCubemap* cubemap, 
+                             const i32 width, const i32 height,
+                             const void** faces, const sizei count) {
+  NIKOLA_ASSERT(cubemap->gfx, "Invalid GfxContext struct passed in gfx_cubemap_upload_data");
+  NIKOLA_ASSERT(cubemap, "Invalid GfxCubemap struct passed in gfx_cubemap_upload_data");
+  NIKOLA_ASSERT(((count >= 0) && (count <= CUBEMAPS_MAX)), "The count parametar in gfx_cubemap_upload_data is invalid");
+  NIKOLA_ASSERT(faces, "Invalid cubemap faces passed to gfx_cubemap_upload_data");
+  
+  // Updating the format
+  GLenum in_format, gl_format, gl_pixel_type;
+  get_texture_gl_format(cubemap->desc.format, &in_format, &gl_format, &gl_pixel_type);
 
-  // Updating the texture image
-  for(sizei i = 0; i < desc.faces_count; i++) {
-    glTextureSubImage3D(cubemap->id,                 // Texture
-                        0,                           // Levels 
-                        0, 0, i,                     // Offset (x, y, z)
-                        desc.width, desc.height, 1,  // Size (width, height, depth)
-                        gl_format,                   // Format
-                        gl_pixel_type,               // Type
-                        desc.data[i]);               // Pixels
+  // Updating the information
+  cubemap->desc.faces_count = count;
+  cubemap->desc.width       = width;
+  cubemap->desc.height      = height;
+
+  // Updating the faces
+  glTextureStorage2D(cubemap->id, cubemap->desc.mips, in_format, width, height);
+  for(sizei i = 0; i < count; i++) {
+    cubemap->desc.data[i] = (void*)faces[i];
+    glTextureSubImage3D(cubemap->id,                                   // Texture
+                        0,                                             // Levels 
+                        0, 0, i,                                       // Offset (x, y, z)
+                        cubemap->desc.width, cubemap->desc.height, 1,  // Size (width, height, depth)
+                        gl_format,                                     // Format
+                        gl_pixel_type,                                 // Type
+                        faces[i]);                                     // Pixels
   }
 }
 

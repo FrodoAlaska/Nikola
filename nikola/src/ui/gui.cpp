@@ -254,66 +254,99 @@ void gui_edit_material(const char* name, Material* material) {
   // -------------------------------------------------------------------
 }
 
+
 void gui_edit_texture(const char* name, GfxTexture* texture) {
-  GfxTextureDesc tex_desc = gfx_texture_get_desc(texture); 
+  static GfxTextureDesc* tex_desc = nullptr; 
+  if(!tex_desc) {
+    tex_desc = &gfx_texture_get_desc(texture);
+  }
+
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+ 
+  // Format
+  // -------------------------------------------------------------------
+  i32 format = (i32)tex_desc->format;
+  ImGui::Combo("Format", &format, "R8\0R16\0RG8\0RG16\0RGBA8\0RGBA16\0Depth24 Stencil8");  
+  // -------------------------------------------------------------------
+  
+  // Filter
+  // -------------------------------------------------------------------
+  i32 filter = (i32)tex_desc->filter;
+  ImGui::Combo("Filter", &filter, "MinMagLinear\0MinMagNearest\0MinLinearMagNearest\0MinNearestMagLinear\0MinTrilinearMagLinear\0MinTrilinearMagNearest");  
+  // -------------------------------------------------------------------
+  
+  // Wrap
+  // -------------------------------------------------------------------
+  i32 wrap = (i32)tex_desc->wrap_mode;
+  ImGui::Combo("Addressing Mode", &wrap, "Repeat\0Mirror\0Clamp\0Border Color");  
+  // -------------------------------------------------------------------
+
+  ImGui::PopID(); 
+
+  // Applying the chnages
+  if(ImGui::Button("Apply")) {
+    tex_desc->filter    = (GfxTextureFilter)filter;
+    tex_desc->wrap_mode = (GfxTextureWrap)wrap;
+    tex_desc->format    = (GfxTextureFormat)format;
+    
+    gfx_texture_update(texture, *tex_desc);
+  } 
+}
+
+void gui_edit_cubemap(const char* name, GfxCubemap* cubemap) {
+  GfxCubemapDesc cube_desc = gfx_cubemap_get_desc(cubemap); 
 
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
 
   // Size
   // -------------------------------------------------------------------
-  Vec2 size = Vec2(tex_desc.width, tex_desc.height);
-  ImGui::SliderFloat2("Size", &size[0], 0.1f, 5120.0f, "%.3f"); 
+  IVec2 size = IVec2(cube_desc.width, cube_desc.height);
+  ImGui::SliderInt2("Size", &size[0], 1, 4096); 
 
-  tex_desc.width  = size.x;
-  tex_desc.height = size.y;
+  cube_desc.width  = size.x;
+  cube_desc.height = size.y;
   // -------------------------------------------------------------------
  
   // Mipmap levels
   // -------------------------------------------------------------------
-  i32 mips = tex_desc.mips; 
+  i32 mips = cube_desc.mips; 
   ImGui::SliderInt("Mipmaps", &mips, 0, 5);
 
-  tex_desc.mips = mips;
+  cube_desc.mips = mips;
   // -------------------------------------------------------------------
  
   // Format
   // -------------------------------------------------------------------
-  i32 format = (i32)tex_desc.format;
+  i32 format = (i32)cube_desc.format;
   ImGui::Combo("Format", &format, "R8\0R16\0RG8\0RG16\0RGBA8\0RGBA16\0Depth24 Stencil8\0");  
 
-  tex_desc.format = (GfxTextureFormat)format;
+  cube_desc.format = (GfxTextureFormat)format;
   // -------------------------------------------------------------------
   
   // Filter
   // -------------------------------------------------------------------
-  i32 filter = (i32)tex_desc.filter;
+  i32 filter = (i32)cube_desc.filter;
   ImGui::Combo("Filter", &filter, "MinMagLinear\0MinMagNearest\0MinLinearMagNearest\0MinNearestMagLinear\0MinTrilinearMagLinear\0MinTrilinearMagNearest\0");  
 
-  tex_desc.filter = (GfxTextureFilter)filter;
+  cube_desc.filter = (GfxTextureFilter)filter;
   // -------------------------------------------------------------------
   
   // Wrap
   // -------------------------------------------------------------------
-  i32 wrap = (i32)tex_desc.wrap_mode;
+  i32 wrap = (i32)cube_desc.wrap_mode;
   ImGui::Combo("Addressing Mode", &wrap, "Repeat\0Mirror\0Clamp\0Border Color\0");  
 
-  tex_desc.wrap_mode = (GfxTextureWrap)wrap;
+  cube_desc.wrap_mode = (GfxTextureWrap)wrap;
   // -------------------------------------------------------------------
 
   ImGui::PopID(); 
 
   // Applying the chnages
-  gfx_texture_update(texture, tex_desc);
-}
-
-void gui_edit_cubemap(const char* name, GfxCubemap* cubemap) {
-  ImGui::SeparatorText(name); 
-  ImGui::PushID(name); 
-
-  // @TODO (Editor)
-
-  ImGui::PopID();
+  if(ImGui::Button("Apply")) {
+    gfx_cubemap_update(cubemap, cube_desc);
+  } 
 }
  
 void gui_edit_resource(const char* name, ResourceID& res_id) {

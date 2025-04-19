@@ -1010,8 +1010,17 @@ NIKOLA_API GfxTextureDesc& gfx_texture_get_desc(GfxTexture* texture);
 
 /// Update the `texture`'s information from the given `desc`.
 ///
-/// @NOTE: This will resend the pixels of `texture` to the GPU with the new information provided by `desc`.
+/// @NOTE: This functions will NOT resend the pixels in `desc`.
 NIKOLA_API void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc);
+
+/// Reupload the data of `texture`, using the given `width`, `height`, `depth`, and `data`.
+/// The `depth` parametar can be left as `0` for any non-3D textures.
+///
+/// @NOTE: The internal `GfxTextureDesc` of `texture` will be used to supply information 
+/// about the `data`.
+NIKOLA_API void gfx_texture_upload_data(GfxTexture* texture, 
+                                        const i32 width, const i32 height, const i32 depth, 
+                                        const void* data);
 
 /// Texture functions 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1037,8 +1046,18 @@ NIKOLA_API GfxCubemapDesc& gfx_cubemap_get_desc(GfxCubemap* cubemap);
 
 /// Update the `cubemap`'s information from the given `desc`.
 ///
-/// @NOTE: This will resend the pixels of `cubemap` to the GPU with the new information provided by `desc`.
+/// @NOTE: This functions will NOT resend the pixels in `desc`.
 NIKOLA_API void gfx_cubemap_update(GfxCubemap* cubemap, const GfxCubemapDesc& desc);
+
+/// Reupload `count` amount of of `cubemap`, using the given `width`, `height`, and `faces`.
+///
+/// @NOTE: The internal `GfxCubemapDesc` of `cubemap` will be used to supply information 
+/// about the `data`.
+///
+/// @NOTE: The given `count` CANNOT exceed `CUBEMAPS_MAX`.
+NIKOLA_API void gfx_cubemap_upload_data(GfxCubemap* cubemap, 
+                                        const i32 width, const i32 height,
+                                        const void** faces, const sizei count);
 
 /// Cubemap functions 
 ///---------------------------------------------------------------------------------------------------------------------

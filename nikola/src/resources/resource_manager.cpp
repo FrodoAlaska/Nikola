@@ -157,6 +157,7 @@ static void reload_texture(NBRFile& file, const ResourceID& id) {
   
   // Update the texture
   gfx_texture_update(texture, texture_desc);
+  gfx_texture_upload_data(texture, texture_desc.width, texture_desc.height, texture_desc.depth, texture_desc.data);
 }
 
 static void reload_cubemap(NBRFile& file, const ResourceID& id) {
@@ -166,9 +167,19 @@ static void reload_cubemap(NBRFile& file, const ResourceID& id) {
   NBRCubemap* nbr_cubemap     = (NBRCubemap*)file.body_data;
   GfxCubemapDesc cubemap_desc = gfx_cubemap_get_desc(cubemap);
   nbr_import_cubemap(nbr_cubemap, &cubemap_desc);
-  
+ 
+  /* @NOTE (19/4/2025, Mohamed):
+   *
+   * Now, listen, is this ugly? Yes. Is it dangerous? Possibly, yes. 
+   * But does it work, though? Yes! And that's the most important thing. 
+   * It's not my fault that Bjarne decided that `void*[6]` does not 
+   * equal `const void**`. Take it up with him. Don't blame me.
+   *  
+   */
+
   // Update the cubemap
   gfx_cubemap_update(cubemap, cubemap_desc);
+  gfx_cubemap_upload_data(cubemap, cubemap_desc.width, cubemap_desc.height, (const void**)cubemap_desc.data, cubemap_desc.faces_count);
 }
 
 static void reload_shader(NBRFile& file, const ResourceID& id) {
