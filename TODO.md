@@ -56,9 +56,9 @@
     - [x] Improve resource updating functions
     - [x] Documentation
 [] 12. Renderer v0.4 
-    - [] HDR pipeline 
+    - [x] HDR pipeline 
     - [] Bloom integration 
-    - [] Emissive materials
+    - [] Make HDR toggleable through the GUI.
 [] 13. GUI v0.2
     - [] Refine the GUI system.
     - [] Include more engine-specific types that can be edited, including resources.
@@ -71,20 +71,20 @@
     - [] A canvas system for 2D game UI.
     - [] A menu system
     - [] A better system to handle debug UI.
-[] 16. Multi-threading v0.2 
+[] 16. 3D Animations v0.1
+[] 17. Multi-threading v0.2 
     - [] Implement both performance timers and normal timers
     - [] Which systems can benefit most from multi-threading? 
     - [] Should we implement a job system? If yes, how can this be done within the confines of the engine? 
     - [] Try to improve the load times for the resource manager as a test of the new multi-threading system.
-[] 17. Audio System v0.1 
+[] 18. Audio System v0.1 
     - [] Lay out what you actually want the audio system to be and what it does. 
     - [] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
     - [] Create an audio backend with a context 
     - [] A way to create an audio buffer that could be played with the context 
     - [] 2D and 3D sound and music. 
     - [] A fully-fledged audio pipeline that can play, position, pitch, control the volume, and apply effects to sound and music
-[] 18. Physics v0.1
-[] 19. 3D Animations v0.1
+[] 19. Physics v0.1
 
 ## (Engine) BUGS: 
 - (Filesystem): There is a bug with the filesystem where the string gets allocated and de-allocated wrong I think? It crashes the program when we pass a normal C-string (i.e "string"), but it runs okay 

@@ -15,7 +15,8 @@ enum ShaderContextID {
   SHADER_CONTEXT_DEFAULT     = 0, 
   SHADER_CONTEXT_SKYBOX      = 1, 
   SHADER_CONTEXT_FRAEMBUFFER = 2, 
-  SHADER_CONTEXT_BLINN       = 3, 
+  SHADER_CONTEXT_HDR         = 3, 
+  SHADER_CONTEXT_BLINN       = 4, 
 
   SHADER_CONTEXTS_MAX        = SHADER_CONTEXT_BLINN + 1,
 };
@@ -96,12 +97,14 @@ static void init_defaults() {
   ResourceID default_shader     = resources_push_shader(RESOURCE_CACHE_ID, generate_default_shader());
   ResourceID skybox_shader      = resources_push_shader(RESOURCE_CACHE_ID, generate_skybox_shader());
   ResourceID framebuffer_shader = resources_push_shader(RESOURCE_CACHE_ID, generate_framebuffer_shader());
+  ResourceID hdr_shader         = resources_push_shader(RESOURCE_CACHE_ID, generate_hdr_shader());
   ResourceID blinn_phong_shader = resources_push_shader(RESOURCE_CACHE_ID, generate_blinn_phong_shader());
 
   // Shader contexts init
   s_renderer.shader_contexts[SHADER_CONTEXT_DEFAULT]     = resources_push_shader_context(RESOURCE_CACHE_ID, default_shader);
   s_renderer.shader_contexts[SHADER_CONTEXT_SKYBOX]      = resources_push_shader_context(RESOURCE_CACHE_ID, skybox_shader);
   s_renderer.shader_contexts[SHADER_CONTEXT_FRAEMBUFFER] = resources_push_shader_context(RESOURCE_CACHE_ID, framebuffer_shader);
+  s_renderer.shader_contexts[SHADER_CONTEXT_HDR]         = resources_push_shader_context(RESOURCE_CACHE_ID, hdr_shader);
   s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]       = resources_push_shader_context(RESOURCE_CACHE_ID, blinn_phong_shader);
 }
 
@@ -343,9 +346,12 @@ void renderer_init(Window* window) {
     .frame_size        = Vec2(width, height), 
     .clear_color       = Vec4(1.0f),
     .clear_flags       = (GFX_CLEAR_FLAGS_COLOR_BUFFER | GFX_CLEAR_FLAGS_DEPTH_BUFFER),
-    .shader_context_id = s_renderer.shader_contexts[SHADER_CONTEXT_FRAEMBUFFER],
+    .shader_context_id = s_renderer.shader_contexts[SHADER_CONTEXT_HDR],
   };
-  light_pass.targets.push_back(RenderTarget{});
+  light_pass.targets.push_back(RenderTarget{
+      .type = GFX_TEXTURE_RENDER_TARGET, 
+      .format = GFX_TEXTURE_FORMAT_RGBA16F,
+  });
   light_pass.targets.push_back(RenderTarget{
       .type = GFX_TEXTURE_DEPTH_STENCIL_TARGET, 
       .format = GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8
@@ -406,6 +412,9 @@ void renderer_begin(FrameData& data) {
   // Update the lights' uniforms
   use_directional_light(data.dir_light);
   use_point_lights(data.point_lights);
+
+  // Updating some HDR uniforms
+  shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_HDR], "u_exposure", data.camera.exposure);
 }
 
 void renderer_end() {

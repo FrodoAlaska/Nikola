@@ -61,6 +61,7 @@ struct Camera {
   f32 near        = 0.1f; 
   f32 far         = 100.0f;
   f32 sensitivity = 0.1f;
+  f32 exposure    = 1.0f; 
 
   Vec3 position, up, direction, front;
   Mat4 view, projection, view_projection;

@@ -159,7 +159,7 @@ void game_scene_gui_render(GameScene& scene) {
   nikola::gui_end_panel();
   
   nikola::gui_begin_panel("Resources");
-  nikola::ResourceID texture = nikola::resources_get_id(scene.resource_group, "logo");
+  nikola::ResourceID texture = nikola::resources_get_id(scene.resource_group, "opengl");
   nikola::gui_edit_resource("Texture", texture);
   nikola::gui_end_panel();
 
@@ -173,7 +173,10 @@ void game_scene_gui_render(GameScene& scene) {
   ImGui::Combo("Render Effect", 
                &scene.render_effect, 
                "None\0Greyscale\0Inversion\0Sharpen\0Blur\0Emboss\0Edge Detection\0Pixelize\0");  
-  // -------------------------------------------------------------------
+  nikola::gui_end_panel();
+  
+  nikola::gui_begin_panel("Camera");
+  nikola::gui_edit_camera(&scene.camera); 
   nikola::gui_end_panel();
 }
 

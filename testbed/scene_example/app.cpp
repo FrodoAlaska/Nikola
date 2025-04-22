@@ -43,7 +43,7 @@ static void init_scenes(nikola::App* app) {
 static void init_passes(nikola::App* app) {
   nikola::i32 width, height; 
   nikola::window_get_size(app->window, &width, &height);
-
+  
   // Post-process pass
   nikola::RenderPassDesc render_pass = {
     .frame_size        = nikola::Vec2(width, height), 
