@@ -27,6 +27,8 @@ void camera_default_move_func(Camera& camera) {
   camera.pitch = clamp_float(camera.pitch, -CAMERA_MAX_DEGREES, CAMERA_MAX_DEGREES);
   camera.zoom  = clamp_float(camera.zoom, 1.0f, CAMERA_MAX_ZOOM);
 
+  camera.exposure = 1.0f;
+
   // Move forward
   if(input_key_down(KEY_UP)) {
     camera.position += camera.front * speed;

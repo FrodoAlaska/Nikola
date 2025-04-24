@@ -44,11 +44,12 @@ static void init_entities(GameScene* scene) {
   // Player
   // nikola::ResourceID player_model = nikola::resources_get_id(scene->resource_group, "behelit");
   // s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), player_model, nikola::RENDERABLE_TYPE_MODEL, "Player"); 
-  // nikola::transform_scale(s_entities[0].transform, nikola::Vec3(0.2f));
+  // nikola::transform_scale(s_entities[0].transform, nikola::Vec3(1.0f));
+  // nikola::transform_rotate(s_entities[0].transform, nikola::Vec4(1.0f, 0.0f, 0.0f, -90.0f));
   
   // Ground
   nikola::ResourceID ground_mesh = nikola::resources_push_mesh(scene->resource_group, nikola::MESH_TYPE_CUBE);
-  s_entities.emplace_back(nikola::Vec3(50.0f, 0.0f, 50.0f), ground_mesh, nikola::RENDERABLE_TYPE_MESH, "Ground"); 
+  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), ground_mesh, nikola::RENDERABLE_TYPE_MESH, "Ground"); 
   nikola::transform_scale(s_entities[0].transform, nikola::Vec3(10.0f));
 }
 
@@ -58,7 +59,7 @@ static void init_lights(GameScene* scene) {
   scene->frame_data.dir_light.ambient   = nikola::Vec3(0.0f, 0.0f, 0.0f);
  
   // Point lights
-  scene->frame_data.point_lights.push_back(nikola::PointLight{nikola::Vec3(50.0f, 0.0f, 60.0f)});
+  scene->frame_data.point_lights.push_back(nikola::PointLight{nikola::Vec3(10.0f, 0.0f, 10.0f)});
 }
 
 static nikola::f32 ease_in_sine(nikola::f32 x) {
@@ -158,25 +159,23 @@ void game_scene_gui_render(GameScene& scene) {
   }
   nikola::gui_end_panel();
   
-  nikola::gui_begin_panel("Resources");
-  nikola::ResourceID texture = nikola::resources_get_id(scene.resource_group, "opengl");
-  nikola::gui_edit_resource("Texture", texture);
-  nikola::gui_end_panel();
-
-  // nikola::gui_begin_panel("Entities");
-  // for(auto& entt : s_entities) {
-  //   entt.render_gui();
-  // }
+  // nikola::gui_begin_panel("Resources");
+  // nikola::ResourceID texture = nikola::resources_get_id(scene.resource_group, "opengl");
+  // nikola::gui_edit_resource("Texture", texture);
   // nikola::gui_end_panel();
+
+  nikola::gui_begin_panel("Entities");
+  for(auto& entt : s_entities) {
+    entt.render_gui();
+  }
+  
+  nikola::gui_edit_camera("Editor Camera", &scene.camera); 
+  nikola::gui_end_panel();
   
   nikola::gui_begin_panel("Debug");
   ImGui::Combo("Render Effect", 
                &scene.render_effect, 
                "None\0Greyscale\0Inversion\0Sharpen\0Blur\0Emboss\0Edge Detection\0Pixelize\0");  
-  nikola::gui_end_panel();
-  
-  nikola::gui_begin_panel("Camera");
-  nikola::gui_edit_camera(&scene.camera); 
   nikola::gui_end_panel();
 }
 

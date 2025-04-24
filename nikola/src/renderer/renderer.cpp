@@ -320,6 +320,9 @@ static void light_pass_fn(const RenderPass* previous, RenderPass* current, void*
 
   // Render the frame with the light data 
   flush_queue(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]);
+
+  // Updating some HDR uniforms
+  shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_HDR], "u_exposure", s_renderer.frame_data->camera.exposure);
 }
 
 /// Callbacks 
@@ -350,7 +353,7 @@ void renderer_init(Window* window) {
   };
   light_pass.targets.push_back(RenderTarget{
       .type = GFX_TEXTURE_RENDER_TARGET, 
-      .format = GFX_TEXTURE_FORMAT_RGBA16F,
+      .format = GFX_TEXTURE_FORMAT_RGBA32F,
   });
   light_pass.targets.push_back(RenderTarget{
       .type = GFX_TEXTURE_DEPTH_STENCIL_TARGET, 
@@ -412,9 +415,6 @@ void renderer_begin(FrameData& data) {
   // Update the lights' uniforms
   use_directional_light(data.dir_light);
   use_point_lights(data.point_lights);
-
-  // Updating some HDR uniforms
-  shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_HDR], "u_exposure", data.camera.exposure);
 }
 
 void renderer_end() {

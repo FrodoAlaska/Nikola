@@ -20,8 +20,6 @@ namespace nikola { // Start of nikola
 struct GUIState {
   Window* window = nullptr; 
   ImGuiIO io_config;
-
-  Vec4 render_clear_color = Vec4(0.1f, 0.1f, 0.1f, 1.0f);
   
   f64 fps              = 0.0;
   IVec2 window_size    = IVec2(0); 
@@ -111,7 +109,7 @@ void gui_renderer_info() {
   ImGui::SeparatorText("##xx");
  
   // Clear color
-  ImGui::ColorPicker4("Clear color", &s_gui.render_clear_color[0], ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
+  // ImGui::ColorPicker4("Clear color", &s_gui.render_clear_color[0], ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
   // @TODO: renderer_set_clear_color(s_gui.render_clear_color);
   // -------------------------------------------------------------------
 
@@ -166,6 +164,15 @@ void gui_debug_info() {
   ImGui::End();
 }
 
+void gui_edit_color(const char* name, Vec4& color) {
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+
+  ImGui::ColorPicker4(name, &color[0], ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
+
+  ImGui::PopID();
+}
+
 void gui_edit_transform(const char* name, Transform* transform) {
   static Vec4 rotation = Vec4(0.0f);
   
@@ -184,14 +191,16 @@ void gui_edit_transform(const char* name, Transform* transform) {
 
   // Applying the new values
   nikola::transform_translate(*transform, transform->position);
-  nikola::transform_scale(*transform, Vec3(transform->scale.x));
+  nikola::transform_scale(*transform, Vec3(transform->scale));
   nikola::transform_rotate(*transform, Vec3(rotation.x, rotation.y, rotation.z), rotation.w * DEG2RAD);
 }
 
-void gui_edit_camera(Camera* camera) {
+void gui_edit_camera(const char* name, Camera* camera) {
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+  
   // Information
   // -------------------------------------------------------------------
-  ImGui::SeparatorText("##xx");
   ImGui::Text("Postiion: %s", vec3_to_string(camera->position).c_str());  
   ImGui::Text("Yaw: %f", camera->yaw);
   ImGui::Text("Pitch: %f", camera->pitch);
@@ -199,13 +208,14 @@ void gui_edit_camera(Camera* camera) {
 
   // Editables
   // -------------------------------------------------------------------
-  ImGui::SeparatorText("##xx");
   ImGui::SliderFloat("Zoom", &camera->zoom, CAMERA_MAX_ZOOM, 0.0f, "Zoom: %.3f");
   ImGui::SliderFloat("Near", &camera->near, 0.1f, 1000.0f, "Near: %.3f");
   ImGui::SliderFloat("Far", &camera->far, 0.1f, 1000.0f, "Far: %.3f");
   ImGui::SliderFloat("Sensitivity", &camera->sensitivity, 0.0f, 1.0f, "Sensitivity: %.3f");
   ImGui::SliderFloat("Exposure", &camera->exposure, 0.0f, 10.0f, "Exposure: %.3f");
   // -------------------------------------------------------------------
+  
+  ImGui::PopID(); 
 }
 
 void gui_edit_directional_light(const char* name, DirectionalLight* dir_light) {

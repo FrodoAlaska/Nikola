@@ -27,9 +27,11 @@ NIKOLA_API void gui_debug_info();
 
 NIKOLA_API void gui_renderer_info();
 
+NIKOLA_API void gui_edit_color(const char* name, Vec4& color);
+
 NIKOLA_API void gui_edit_transform(const char* name, Transform* transform);
 
-NIKOLA_API void gui_edit_camera(Camera* camera);
+NIKOLA_API void gui_edit_camera(const char* name, Camera* camera);
 
 NIKOLA_API void gui_edit_directional_light(const char* name, DirectionalLight* dir_light);
 
