@@ -20,7 +20,9 @@ namespace nikola { // Start of nikola
 struct GUIState {
   Window* window = nullptr; 
   ImGuiIO io_config;
-  
+ 
+  Vec4 render_clear_color = Vec4(1.0f);
+
   f64 fps              = 0.0;
   IVec2 window_size    = IVec2(0); 
   Vec2 mouse_position  = Vec2(0.0f); 
@@ -109,8 +111,8 @@ void gui_renderer_info() {
   ImGui::SeparatorText("##xx");
  
   // Clear color
-  // ImGui::ColorPicker4("Clear color", &s_gui.render_clear_color[0], ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
-  // @TODO: renderer_set_clear_color(s_gui.render_clear_color);
+  ImGui::ColorPicker4("Clear color", &s_gui.render_clear_color[0], ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
+  renderer_set_clear_color(s_gui.render_clear_color);
   // -------------------------------------------------------------------
 
   ImGui::End();

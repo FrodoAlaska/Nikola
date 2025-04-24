@@ -212,6 +212,9 @@ NIKOLA_API GfxContext* renderer_get_context();
 /// Retrieve the internal default values of the renderer.
 NIKOLA_API const RendererDefaults& renderer_get_defaults();
 
+/// Set renderer's clear color to the given `clear_color`.
+NIKOLA_API void renderer_set_clear_color(const Vec4& clear_color);
+
 /// Add an additional render pass using the information from `desc`. 
 /// Internally, the renderer will call `func`, passing in `user_data`.
 NIKOLA_API void renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& func, const void* user_data);
@@ -219,20 +222,12 @@ NIKOLA_API void renderer_push_pass(const RenderPassDesc& desc, const RenderPassF
 /// Sumbit the given `queue` to the renderer to be rendered once `renderer_end` is called.
 NIKOLA_API void renderer_sumbit_queue(RenderQueue& queue);
 
-/// Clear the screen to the given `clear_color`.
-NIKOLA_API void renderer_clear(const Vec4& clear_color);
-
 /// Setup the renderer for any upcoming render operations by 
 /// the data given in `data`.
 NIKOLA_API void renderer_begin(FrameData& data);
 
 /// Start the render passes chain, flushing the given `RenderQueue` in the process. 
 NIKOLA_API void renderer_end();
-
-/// Present the final result to the screen. 
-///
-/// @NOTE: In OpenGL, this is equivalent to `glSwapBuffers`.
-NIKOLA_API void renderer_present();
 
 /// Renderer functions
 ///---------------------------------------------------------------------------------------------------------------------

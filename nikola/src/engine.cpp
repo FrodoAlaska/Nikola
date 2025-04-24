@@ -14,6 +14,7 @@ struct Engine {
   AppDesc app_desc;
   App* app;
   Window* window;
+  GfxContext* gfx_context;
 
   bool is_running;
 };
@@ -65,6 +66,7 @@ void engine_init(const AppDesc& desc) {
 
   // Renderer init 
   renderer_init(s_engine.window);
+  s_engine.gfx_context = renderer_get_context();
 
   // Batch renderer init
   batch_renderer_init();
@@ -93,6 +95,12 @@ void engine_run() {
 
     // Render
     CHECK_VALID_CALLBACK(s_engine.app_desc.render_fn, s_engine.app);
+
+    // Render the app's GUI
+    CHECK_VALID_CALLBACK(s_engine.app_desc.render_gui_fn, s_engine.app);
+
+    // Present to the backbuffer
+    gfx_context_present(s_engine.gfx_context); 
 
     // Poll for window events
     window_poll_events(s_engine.window);

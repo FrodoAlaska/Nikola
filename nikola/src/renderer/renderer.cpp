@@ -383,6 +383,10 @@ const RendererDefaults& renderer_get_defaults() {
   return s_renderer.defaults;
 }
 
+void renderer_set_clear_color(const Vec4& clear_color) {
+  s_renderer.clear_color = clear_color;
+}
+
 void renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& func, const void* user_data) {
   RenderPassEntry entry;
   entry.func      = func; 
@@ -394,11 +398,6 @@ void renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& func, co
 
 void renderer_sumbit_queue(RenderQueue& queue) {
   s_renderer.current_queue = &queue;
-}
-
-void renderer_clear(const Vec4& clear_color) {
-  s_renderer.clear_color                       = clear_color;
-  s_renderer.render_passes[0].pass.clear_color = clear_color;
 }
 
 void renderer_begin(FrameData& data) {
@@ -425,8 +424,9 @@ void renderer_end() {
   * seperately.
   * 
   */
-  RenderPassEntry* light_entry = &s_renderer.render_passes[0];
-  
+  RenderPassEntry* light_entry  = &s_renderer.render_passes[0];
+  light_entry->pass.clear_color = s_renderer.clear_color; // Update the default clear color
+
   begin_pass(light_entry->pass);
   light_entry->func(nullptr, &light_entry->pass, light_entry->user_data);
   end_pass(light_entry->pass);
@@ -442,10 +442,6 @@ void renderer_end() {
   
   // Clear the current render queue
   s_renderer.current_queue->clear();
-}
-
-void renderer_present() {
-  gfx_context_present(s_renderer.context);
 }
 
 /// Renderer functions

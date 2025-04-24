@@ -75,7 +75,9 @@ struct AppDesc {
   AppInitFn init_fn         = nullptr;
   AppShutdownFn shutdown_fn = nullptr;
   AppUpdateFn update_fn     = nullptr;
-  AppRenderPassFn render_fn = nullptr;
+  
+  AppRenderPassFn render_fn     = nullptr;
+  AppRenderPassFn render_gui_fn = nullptr;
  
   String window_title;
   i32 window_width, window_height;

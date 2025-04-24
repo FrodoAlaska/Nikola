@@ -68,9 +68,8 @@
     - [] A menu system
     - [] A better system to handle debug UI.
 [] 15. GUI v0.2
-    - [] Refine the GUI system.
     - [] Include more engine-specific types that can be edited, including resources.
-    - [] Add a "render gui" callback to the applications.
+    - [x] Add a "render gui" callback to the applications.
 [] 16. Renderer v0.5 
     - [] Improve lighting using clustered rendering
     - [] Compute shaders 

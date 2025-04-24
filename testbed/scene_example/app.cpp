@@ -64,6 +64,7 @@ static void init_passes(nikola::App* app) {
 nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // App init
   nikola::App* app = new nikola::App{};
+  nikola::renderer_set_clear_color(nikola::Vec4(0.1f, 0.1f, 0.1f, 1.0f));
 
   // Window init
   app->window = window;
@@ -104,19 +105,20 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 } 
 
 void app_render(nikola::App* app) {
-  nikola::renderer_clear(nikola::Vec4(0.14f, 0.16f, 0.28f, 1.0f));
+  nikola::renderer_begin(app->game_scene.frame_data);
   
   // Render the scene
-  nikola::renderer_begin(app->game_scene.frame_data);
   game_scene_render(app->game_scene);
+  
   nikola::renderer_end();
-  
-  // Render GUI
+}
+
+void app_render_gui(nikola::App* app) {
   nikola::gui_begin(); 
-  game_scene_gui_render(app->game_scene);
-  nikola::gui_end(); 
   
-  nikola::renderer_present();
+  game_scene_gui_render(app->game_scene);
+  
+  nikola::gui_end(); 
 }
 
 /// App functions 
