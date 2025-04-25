@@ -41,7 +41,7 @@ void transform_rotate(Transform& trans, const Vec4& axis_angle) {
 }
 
 void transform_rotate(Transform& trans, const Vec3& axis, const f32 angle) {
-  trans.rotation = quat_angle_axis(axis, angle); 
+  trans.rotation = quat_normalize(quat_angle_axis(axis, angle)); 
   update_transform(trans);
 }
 

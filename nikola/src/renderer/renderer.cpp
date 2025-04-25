@@ -401,12 +401,12 @@ void renderer_sumbit_queue(RenderQueue& queue) {
 }
 
 void renderer_begin(FrameData& data) {
-  s_renderer.frame_data    = &data;
   GfxBuffer* matrix_buffer = resources_get_buffer(s_renderer.defaults.matrices_buffer);
 
   // Updating the internal matrices buffer for each shader
   gfx_buffer_update(matrix_buffer, 0, sizeof(Mat4), mat4_raw_data(data.camera.view));
   gfx_buffer_update(matrix_buffer, sizeof(Mat4), sizeof(Mat4), mat4_raw_data(data.camera.projection));
+  s_renderer.frame_data = &data;
 
   // Render the skybox (if avaliable)
   s_renderer.current_skybox = data.skybox_id;

@@ -47,7 +47,7 @@ static bool list_sanity_check(const nikola::FilePath& list_path) {
 
   // Load the contents from the file
   s_lexer.path   = list_path; 
-  s_lexer.source = nikola::file_read_string(file);
+  nikola::file_read_string(file, &s_lexer.source);
 
   nikola::file_close(file);
   return true;

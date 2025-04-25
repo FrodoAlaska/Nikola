@@ -18,7 +18,8 @@ bool shader_loader_load(nikola::NBRShader* shader, const nikola::FilePath& path)
   }
 
   // Read the string from the file
-  nikola::String shader_src = nikola::file_read_string(file);
+  nikola::String shader_src; 
+  nikola::file_read_string(file, &shader_src);
   nikola::file_close(file);
 
   // Trying to seperate the shader into two

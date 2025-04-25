@@ -58,6 +58,15 @@
 [] 12. Renderer v0.4 
     - [x] HDR pipeline 
     - [] Bloom integration 
+[] 15. GUI/Editor v0.2
+    - [x] Add more serializable engine-specific types
+    - [x] Semi-scene serializer
+    - [] Include more engine-specific types that can be edited, including resources.
+    - [x] Add a "render gui" callback to the applications.
+    - [] Documentation (for `nikola_ui.h` and `nikola_file.h`)
+[] 16. Math And Camera v0.2 
+    - [] Fix the quaternion rotations in the transform and, really, in the _whole_ engine.
+    - [] Add rotations to the camera, or, in other words, let the camera have a `Transform` instead of just a `position` vector3. 
 [] 13. Fonts v0.1 
     - [] Convert font formats into the internal `nbrfont` format. 
     - [] Add fonts to the resource manager 
@@ -67,9 +76,6 @@
     - [] A canvas system for 2D game UI.
     - [] A menu system
     - [] A better system to handle debug UI.
-[] 15. GUI v0.2
-    - [] Include more engine-specific types that can be edited, including resources.
-    - [x] Add a "render gui" callback to the applications.
 [] 16. Renderer v0.5 
     - [] Improve lighting using clustered rendering
     - [] Compute shaders 

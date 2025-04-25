@@ -5,6 +5,9 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/euler_angles.hpp>
+
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola
@@ -45,6 +48,10 @@ const Mat3 quat_to_mat3(const Quat& q) {
 
 const Mat4 quat_to_mat4(const Quat& q) {
   return glm::mat4_cast(q);
+}
+
+const Vec3 quat_to_euler(const Quat& q) {
+  return glm::eulerAngles(q);
 }
 
 /// Quat functions

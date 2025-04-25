@@ -424,6 +424,10 @@ NIKOLA_API const Mat3 quat_to_mat3(const Quat& q);
 /// Convert the given `q` to a 4x4 rotation matrix
 NIKOLA_API const Mat4 quat_to_mat4(const Quat& q);
 
+/// Convert the given `q` to a `Vec3` representing an euler angle. 
+/// The resulting angles will be expressed in radians.
+NIKOLA_API const Vec3 quat_to_euler(const Quat& q);
+
 /// Math Quat functions
 ///---------------------------------------------------------------------------------------------------------------------
 

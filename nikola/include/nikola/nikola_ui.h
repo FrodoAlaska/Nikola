@@ -39,12 +39,6 @@ NIKOLA_API void gui_edit_point_light(const char* name, PointLight* point_light);
 
 NIKOLA_API void gui_edit_material(const char* name, Material* material);
 
-NIKOLA_API void gui_edit_texture(const char* name, GfxTexture* texture);
-
-NIKOLA_API void gui_edit_cubemap(const char* name, GfxCubemap* cubemap);
-
-NIKOLA_API void gui_edit_resource(const char* name, ResourceID& res_id);
-
 /// GUI functions
 ///---------------------------------------------------------------------------------------------------------------------
 

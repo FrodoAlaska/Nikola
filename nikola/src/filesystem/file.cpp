@@ -1,5 +1,7 @@
 #include "nikola/nikola_base.h"
 #include "nikola/nikola_file.h"
+#include "nikola/nikola_math.h"
+#include "nikola/nikola_render.h"
 
 #include <sstream>
 #include <filesystem>
@@ -111,34 +113,176 @@ bool file_is_empty(File& file) {
   return file_get_size(file) <= 0;
 }
 
-const sizei file_write_bytes(File& file, const void* buff, const sizei buff_size, const sizei offset) {
+const sizei file_write_bytes(File& file, const void* buff, const sizei buff_size) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
   
-  file.write((char*)buff, buff_size + offset);
-  return (buff_size + offset);
+  file.write((char*)buff, buff_size);
+  return buff_size;
 }
 
-const sizei file_read_bytes(File& file, void* out_buff, const sizei size, const sizei offset) {
-  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
-  
-  file.read((char*)out_buff, size + offset);
-  return (size + offset);
+void file_write_bytes(File& file, const String& str) {
+  file_write_bytes(file, str.c_str(), str.size());
+}
+
+void file_write_bytes(File& file, const Transform& transform) {
+  f32 raw_data[] = {
+    transform.position.x,  
+    transform.position.y,  
+    transform.position.z,  
+    
+    transform.scale.x,  
+    transform.scale.y,  
+    transform.scale.z,  
+    
+    transform.rotation.x,  
+    transform.rotation.y,  
+    transform.rotation.z,  
+    transform.rotation.w,  
+  };
+
+  file_write_bytes(file, raw_data, sizeof(raw_data));  
+}
+
+void file_write_bytes(File& file, const Camera& camera) {
+  f32 data[] = {
+    camera.yaw, 
+    camera.pitch, 
+    camera.zoom, 
+
+    camera.near, 
+    camera.far, 
+    camera.sensitivity, 
+    camera.exposure, 
+  };
+
+  file_write_bytes(file, data, sizeof(data));
+  file_write_bytes(file, camera.transform);
+}
+
+void file_write_bytes(File& file, const DirectionalLight& light) {
+  f32 data[] = {
+    light.direction.x,  
+    light.direction.y,  
+    light.direction.z,  
+    
+    light.ambient.r,  
+    light.ambient.g,  
+    light.ambient.b,  
+    
+    light.diffuse.r,  
+    light.diffuse.g,  
+    light.diffuse.b,  
+    
+    light.specular.r,  
+    light.specular.g,  
+    light.specular.b,  
+  };
+
+  file_write_bytes(file, data, sizeof(data));
+}
+
+void file_write_bytes(File& file, const PointLight& light) {
+  f32 data[] = {
+    light.position.x,  
+    light.position.y,  
+    light.position.z,  
+    
+    light.ambient.r,  
+    light.ambient.g,  
+    light.ambient.b,  
+    
+    light.diffuse.r,  
+    light.diffuse.g,  
+    light.diffuse.b,  
+    
+    light.specular.r,  
+    light.specular.g,  
+    light.specular.b,  
+
+    light.linear, 
+    light.quadratic,
+  };
+
+  file_write_bytes(file, data, sizeof(data));
 }
 
 void file_write_string(File& file, const String& string) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
-  
+
   file << string;
 }
 
-String file_read_string(File& file) {
+const sizei file_read_bytes(File& file, void* out_buff, const sizei size) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  
+  file.read((char*)out_buff, size);
+  return size;
+}
+
+void file_read_bytes(File& file, String* str) {
+  // @TODO (File): We should NOT assign arbitrary sizes to the read string
+  char c_str[1024];
+
+  file_read_bytes(file, c_str, sizeof(c_str));
+  *str = String(c_str);
+}
+
+void file_read_bytes(File& file, Transform* transform) {
+  f32 raw_data[10];
+  file_read_bytes(file, raw_data, sizeof(raw_data));
+
+  transform_translate(*transform, Vec3(raw_data[0], raw_data[1], raw_data[2]));
+  transform_scale(*transform, Vec3(raw_data[3], raw_data[4], raw_data[5]));
+  transform_rotate(*transform, Quat(raw_data[9], raw_data[6], raw_data[7], raw_data[8]));
+}
+
+void file_read_bytes(File& file, Camera* camera) {
+  f32 raw_data[7]; 
+  file_read_bytes(file, raw_data, sizeof(raw_data));
+
+  camera->yaw         = raw_data[0]; 
+  camera->pitch       = raw_data[1]; 
+  camera->zoom        = raw_data[2]; 
+  camera->near        = raw_data[3]; 
+  camera->far         = raw_data[4]; 
+  camera->sensitivity = raw_data[5]; 
+  camera->exposure    = raw_data[6];
+
+  file_read_bytes(file, &camera->transform);
+}
+
+void file_read_bytes(File& file, DirectionalLight* light) {
+  f32 raw_data[12];
+  file_read_bytes(file, raw_data, sizeof(raw_data));
+
+  light->direction = Vec3(raw_data[0], raw_data[1], raw_data[2]);
+  light->ambient   = Vec3(raw_data[3], raw_data[4], raw_data[5]);
+  light->diffuse   = Vec3(raw_data[6], raw_data[7], raw_data[8]);
+  light->specular  = Vec3(raw_data[9], raw_data[10], raw_data[11]);
+}
+
+void file_read_bytes(File& file, PointLight* light) {
+  f32 raw_data[14];
+  file_read_bytes(file, raw_data, sizeof(raw_data));
+
+  light->position = Vec3(raw_data[0], raw_data[1], raw_data[2]);
+  light->ambient  = Vec3(raw_data[3], raw_data[4], raw_data[5]);
+  light->diffuse  = Vec3(raw_data[6], raw_data[7], raw_data[8]);
+  light->specular = Vec3(raw_data[9], raw_data[10], raw_data[11]);
+  
+  light->linear    = raw_data[12];
+  light->quadratic = raw_data[13];
+}
+
+void file_read_string(File& file, String* str) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
 
   std::stringstream ss;
   ss << file.rdbuf();
 
-  return ss.str();
+  *str = ss.str();
 }
+
 
 /// File functions
 ///---------------------------------------------------------------------------------------------------------------------

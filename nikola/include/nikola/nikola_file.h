@@ -2,6 +2,7 @@
 
 #include "nikola_base.h"
 #include "nikola_containers.h"
+#include "nikola_math.h"
 
 #include <fstream>
 
@@ -76,6 +77,15 @@ using FileIterateFunc = void(*)(const FilePath& base_dir, FilePath& current_path
 /// FileWatchFunc
 using FileWatchFunc = void(*)(const FileStatus status, const FilePath& path, void* user_data);
 /// FileWatchFunc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Predefines to prevent circular dependencies
+
+struct Camera; 
+struct DirectionalLight;
+struct PointLight;
+
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -266,27 +276,77 @@ NIKOLA_API const sizei file_get_size(File& file);
 /// Return `true` if `file` is currently empty and `false` otherwise.
 NIKOLA_API bool file_is_empty(File& file);
 
-/// Write the `buff` of `buff_size` size in bytes with an `offset` in `file` and return 
-/// the amount of bytes written (i.e `buff_size` + `offset`).
+/// Write `buff` with `size` in bytes into `file` 
+/// and return the amount of bytes written.
 ///
 /// @NOTE: This function will raise an error if `file` is not opened.
-NIKOLA_API const sizei file_write_bytes(File& file, const void* buff, const sizei buff_size, const sizei offset = 0);
+NIKOLA_API const sizei file_write_bytes(File& file, const void* buff, const sizei buff_size);
 
-/// Read data into `out_buff` with `size` size in bytes with an `offset` in `file` 
-/// and return the amount of bytes read (i.e `size` + `offset`).
+/// Write the given `str` into `file` as a stream of bytes.
 ///
 /// @NOTE: This function will raise an error if `file` is not opened.
-NIKOLA_API const sizei file_read_bytes(File& file, void* out_buff, const sizei size, const sizei offset = 0);
+NIKOLA_API void file_write_bytes(File& file, const String& str);
 
-/// Write the given `string` into `file`.
+/// Write the contents of the given `transform` into `file`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_write_bytes(File& file, const Transform& transform);
+
+/// Write the contents of the given `camera` into `file`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_write_bytes(File& file, const Camera& camera);
+
+/// Write the contents of the given `light` into `file`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_write_bytes(File& file, const DirectionalLight& light);
+
+/// Write the contents of the given `light` into `file`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_write_bytes(File& file, const PointLight& light);
+
+/// Write the given `string` into `file` as a string representation.
 ///
 /// @NOTE: This function will raise an error if `file` is not opened.
 NIKOLA_API void file_write_string(File& file, const String& string);
 
-/// Return the read string in `file`.
+/// Read data into `out_buff` with `size` in bytes from `file` 
+/// and return the amount of bytes read.
 ///
 /// @NOTE: This function will raise an error if `file` is not opened.
-NIKOLA_API String file_read_string(File& file);
+NIKOLA_API const sizei file_read_bytes(File& file, void* out_buff, const sizei size);
+
+/// Return a `String` from `file` and it into `str`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_read_bytes(File& file, String* str);
+
+/// Read a `Transform` from `file` and save it into `transform`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_read_bytes(File& file, Transform* transform);
+
+/// Read a `Camera` from `file` and save it into `camera`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_read_bytes(File& file, Camera* camera);
+
+/// Read a `DirectionalLight` from `file` and save it into `light`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_read_bytes(File& file, DirectionalLight* light);
+
+/// Read a `PointLight` from `file` and save it into `light`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_read_bytes(File& file, PointLight* light);
+
+/// Read the WHOLE `file` as a `String` and save it into `str`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_read_string(File& file, String* str);
 
 /// File functions
 ///---------------------------------------------------------------------------------------------------------------------

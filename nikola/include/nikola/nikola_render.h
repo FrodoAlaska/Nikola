@@ -63,10 +63,13 @@ struct Camera {
   f32 sensitivity = 0.1f;
   f32 exposure    = 1.0f; 
 
-  Vec3 position, up, direction, front;
+  Transform transform = {};
+  
+  Vec3 up, direction, front;
   Mat4 view, projection, view_projection;
 
   CameraMoveFn move_fn;
+  bool is_active;
 };
 /// Camera 
 ///---------------------------------------------------------------------------------------------------------------------

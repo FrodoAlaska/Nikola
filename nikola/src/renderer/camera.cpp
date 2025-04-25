@@ -31,20 +31,20 @@ void camera_default_move_func(Camera& camera) {
 
   // Move forward
   if(input_key_down(KEY_UP)) {
-    camera.position += camera.front * speed;
+    camera.transform.position += camera.front * speed;
   }
   // Move backwards
   else if(input_key_down(KEY_DOWN)) {
-    camera.position -= camera.front * speed;
+    camera.transform.position -= camera.front * speed;
   }
  
   // Move right
   if(input_key_down(KEY_RIGHT)) {
-    camera.position += vec3_normalize(vec3_cross(camera.front, camera.up)) * speed;
+    camera.transform.position += vec3_normalize(vec3_cross(camera.front, camera.up)) * speed;
   }
   // Move left
   else if(input_key_down(KEY_LEFT)) {
-    camera.position -= vec3_normalize(vec3_cross(camera.front, camera.up)) * speed;
+    camera.transform.position -= vec3_normalize(vec3_cross(camera.front, camera.up)) * speed;
   }
 }
 
@@ -66,9 +66,10 @@ void camera_create(Camera* cam, const f32 aspect_ratio, const Vec3& pos, const V
   Vec3 up_axis(0.0f, 1.0f, 0.0f);
   Vec3 right_axis(vec3_cross(up_axis, look_dir));
 
-  cam->position = pos;
-  cam->up       = vec3_normalize(vec3_cross(look_dir, right_axis));
-
+  cam->transform.position = pos;
+  
+  cam->up = vec3_normalize(vec3_cross(look_dir, right_axis));
+  
   cam->direction.x = nikola::cos(cam->yaw    * nikola::DEG2RAD)  * nikola::cos(cam->pitch * nikola::DEG2RAD);
   cam->direction.y = nikola::sin((cam->pitch * nikola::DEG2RAD));
   cam->direction.z = nikola::sin((cam->yaw   * nikola::DEG2RAD)) * nikola::cos(cam->pitch * nikola::DEG2RAD);
@@ -78,15 +79,16 @@ void camera_create(Camera* cam, const f32 aspect_ratio, const Vec3& pos, const V
   cam->projection      = Mat4(1.0f);
   cam->view_projection = Mat4(1.0f);
 
-  cam->move_fn = move_fn;
+  cam->move_fn   = move_fn;
+  cam->is_active = true;
 }
 
 void camera_update(Camera& cam) {
-  cam.view            = mat4_look_at(cam.position, cam.position + cam.front, cam.up);
+  cam.view            = mat4_look_at(cam.transform.position, cam.transform.position + cam.front, cam.up);
   cam.projection      = mat4_perspective((cam.zoom * nikola::DEG2RAD), cam.aspect_ratio, cam.near, cam.far);
   cam.view_projection = (cam.projection * cam.view);
 
-  if(cam.move_fn) {
+  if(cam.move_fn && cam.is_active) {
     cam.move_fn(cam);
   }
 
