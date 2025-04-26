@@ -58,44 +58,44 @@
 [] 12. Renderer v0.4 
     - [x] HDR pipeline 
     - [] Bloom integration 
-[] 15. GUI/Editor v0.2
+[x] 13. GUI/Editor v0.2
     - [x] Add more serializable engine-specific types
     - [x] Semi-scene serializer
-    - [] Include more engine-specific types that can be edited, including resources.
+    - [x] Include more engine-specific types that can be edited, including resources.
     - [x] Add a "render gui" callback to the applications.
-    - [] Documentation (for `nikola_ui.h` and `nikola_file.h`)
-[] 16. Math And Camera v0.2 
+    - [x] Documentation (for `nikola_ui.h` and `nikola_file.h`)
+[] 14. Math And Camera v0.2 
     - [] Fix the quaternion rotations in the transform and, really, in the _whole_ engine.
     - [] Add rotations to the camera, or, in other words, let the camera have a `Transform` instead of just a `position` vector3. 
-[] 13. Fonts v0.1 
+[] 15. Fonts v0.1 
     - [] Convert font formats into the internal `nbrfont` format. 
     - [] Add fonts to the resource manager 
     - [] Font rendering
     - [] Documentation.
-[] 14. UI v0.1
+[] 16. UI v0.1
     - [] A canvas system for 2D game UI.
     - [] A menu system
     - [] A better system to handle debug UI.
-[] 16. Renderer v0.5 
+[] 17. Renderer v0.5 
     - [] Improve lighting using clustered rendering
     - [] Compute shaders 
     - [] Better bloom for testing the new compute shaders
     - [] Improve upon the render pass system by allowing the reuse of certain render passes 
     - [] Make the HDR pass toggleable through the GUI.
-[] 17. 3D Animations v0.1
-[] 18. Multi-threading v0.2 
+[] 18. 3D Animations v0.1
+[] 19. Multi-threading v0.2 
     - [] Implement both performance timers and normal timers
     - [] Which systems can benefit most from multi-threading? 
     - [] Should we implement a job system? If yes, how can this be done within the confines of the engine? 
     - [] Try to improve the load times for the resource manager as a test of the new multi-threading system.
-[] 19. Audio System v0.1 
+[] 20. Audio System v0.1 
     - [] Lay out what you actually want the audio system to be and what it does. 
     - [] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
     - [] Create an audio backend with a context 
     - [] A way to create an audio buffer that could be played with the context 
     - [] 2D and 3D sound and music. 
     - [] A fully-fledged audio pipeline that can play, position, pitch, control the volume, and apply effects to sound and music
-[] 20. Physics v0.1
+[] 21. Physics v0.1
 
 ## (Engine) BUGS: 
 - (Filesystem): There is a bug with the filesystem where the string gets allocated and de-allocated wrong I think? It crashes the program when we pass a normal C-string (i.e "string"), but it runs okay 

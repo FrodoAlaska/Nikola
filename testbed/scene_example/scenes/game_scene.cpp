@@ -7,20 +7,23 @@
 /// Entity
 struct Entity {
   nikola::Transform transform;
-  nikola::ResourceID renderable;
+  nikola::ResourceID renderable, material_id;
   nikola::RenderableType type;
   nikola::String name;
 
-  Entity(const nikola::Vec3& pos, const nikola::ResourceID& res_id, const nikola::RenderableType& render_type, const char* debug_name) {
+  Entity(const nikola::Vec3& pos, const nikola::ResourceID& res_id, const nikola::ResourceID& mat_id, const nikola::RenderableType& render_type, const char* debug_name) {
     nikola::transform_translate(transform, pos);
     nikola::transform_scale(transform, nikola::Vec3(1.0f));
 
-    renderable = res_id;
-    type       = render_type;
-    name       = debug_name;
+    renderable  = res_id;
+    material_id = mat_id;
+
+    type = render_type;
+    name = debug_name;
   }
 
   void render(nikola::RenderQueue* queue, nikola::RenderCommand* cmd) {
+    cmd->material_id   = material_id;
     cmd->transform     = transform; 
     cmd->render_type   = type; 
     cmd->renderable_id = renderable;
@@ -47,16 +50,6 @@ static nikola::DynamicArray<Entity> s_entities;
 
 /// ----------------------------------------------------------------------
 /// Private functions
-
-static void init_entities(GameScene* scene) {
-  // Player
-  nikola::ResourceID model = nikola::resources_get_id(scene->resource_group, "tempel");
-  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), model, nikola::RENDERABLE_TYPE_MODEL, "Tempel"); 
-  
-  // Cube
-  nikola::ResourceID cube_mesh = nikola::resources_push_mesh(scene->resource_group, nikola::MESH_TYPE_CUBE);
-  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), cube_mesh, nikola::RENDERABLE_TYPE_MESH, "Cube"); 
-}
 
 static void init_lights(GameScene* scene) {
   // Directional light
@@ -116,11 +109,16 @@ static void game_scene_deserialize(GameScene& scene) {
   }
 
   // Load the entities 
-  for(auto& entt : s_entities) {
-    entt.deserialize(file);
+  for(nikola::sizei i = 0; i < 3; i++) {
+    Entity* entt = &s_entities[i];
+    entt->deserialize(file);
   }
 
   nikola::file_close(file);
+}
+
+static nikola::f32 ease_in_sine(nikola::f32 x) {
+  return 1.0f - nikola::cos((x * nikola::PI) / 2.0f);
 }
 
 /// Private functions
@@ -143,24 +141,37 @@ void game_scene_init(GameScene* scene, nikola::Window* window) {
   nikola::u16 res_group     = scene->resource_group;
 
   // Cubemaps init
-  nikola::ResourceID cubemap_id = nikola::resources_push_cubemap(res_group, "cubemaps/gloomy.nbrcubemap");
+  nikola::ResourceID cubemap_id = nikola::resources_push_cubemap(res_group, "cubemaps/NightSky.nbrcubemap");
 
   // Models init
-  nikola::resources_push_model(res_group, "models/tempel.nbrmodel");
+  nikola::ResourceID model = nikola::resources_push_model(res_group, "models/tempel.nbrmodel");
 
   // Textures init
   nikola::ResourceID mesh_texture = nikola::resources_push_texture(res_group, "textures/opengl.nbrtexture");
+  nikola::ResourceID pav_texture  = nikola::resources_push_texture(res_group, "textures/paviment.nbrtexture");
 
   // Materials init
-  scene->material_id = nikola::resources_push_material(res_group);
-  nikola::material_set_texture(scene->material_id, nikola::MATERIAL_TEXTURE_DIFFUSE, mesh_texture);
+  nikola::ResourceID material_id = nikola::resources_push_material(res_group);
+  nikola::material_set_texture(material_id, nikola::MATERIAL_TEXTURE_DIFFUSE, mesh_texture);
+  
+  nikola::ResourceID pav_material_id = nikola::resources_push_material(res_group);
+  nikola::material_set_texture(pav_material_id, nikola::MATERIAL_TEXTURE_DIFFUSE, pav_texture);
+  
+  // Meshes init
+  nikola::ResourceID cube_mesh = nikola::resources_push_mesh(scene->resource_group, nikola::MESH_TYPE_CUBE);
 
   // Skyboxes init
   scene->skybox_id            = nikola::resources_push_skybox(res_group, cubemap_id);
   scene->frame_data.skybox_id = scene->skybox_id;
 
-  // Entitites init
-  init_entities(scene);
+  // Tempel init
+  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), model, material_id, nikola::RENDERABLE_TYPE_MODEL, "Tempel"); 
+  
+  // Cube init
+  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), cube_mesh, material_id, nikola::RENDERABLE_TYPE_MESH, "Cube"); 
+
+  // Ground init
+  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), cube_mesh, pav_material_id, nikola::RENDERABLE_TYPE_MESH, "Ground"); 
 
   // Lights init
   init_lights(scene);
@@ -184,13 +195,17 @@ void game_scene_update(GameScene& scene, nikola::f64 dt) {
 
     nikola::input_cursor_show(scene.has_editor);
   }
+ 
+  nikola::f32 value = ease_in_sine(dt);
+  rotation += value * 50.0f;
+  nikola::transform_rotate(s_entities[1].transform, nikola::Vec3(0.0f, 1.0f, 0.0f), rotation);
 
+  scene.frame_data.camera.zoom += 0.01f;
   nikola::camera_update(scene.frame_data.camera);
 }
 
 void game_scene_render(GameScene& scene) {
   nikola::RenderCommand render_cmd{};
-  render_cmd.material_id = scene.material_id;
 
   // Render entities 
   for(auto& entt : s_entities) {
@@ -204,34 +219,39 @@ void game_scene_gui_render(GameScene& scene) {
     return;
   }
   
-  nikola::gui_begin_panel("Lights");
-  nikola::gui_edit_directional_light("Directional", &scene.frame_data.dir_light);
-  for(auto& light : scene.frame_data.point_lights) {
-    nikola::gui_edit_point_light("Point", &light);
+  nikola::gui_begin_panel("Game Scene");
+  
+  // Entities
+  if(ImGui::CollapsingHeader("Entities")) {
+    for(auto& entt : s_entities) {
+      entt.render_gui();
+    }
+  } 
+   
+  // Lights
+  if(ImGui::CollapsingHeader("Lights")) {
+    nikola::gui_edit_directional_light("Directional", &scene.frame_data.dir_light);
+    for(auto& light : scene.frame_data.point_lights) {
+      nikola::gui_edit_point_light("Point", &light);
+    }
   }
-  
-  ImGui::Combo("Render Effect", 
-               &scene.render_effect, 
-               "None\0Greyscale\0Inversion\0Sharpen\0Blur\0Emboss\0Edge Detection\0Pixelize\0");  
-  nikola::gui_end_panel();
-  
-  nikola::gui_begin_panel("Resources");
-  nikola::Material* material = nikola::resources_get_material(scene.material_id);
-  nikola::gui_edit_material("Default Material", material);
-  nikola::gui_end_panel();
 
-  nikola::gui_begin_panel("Entities");
-  for(auto& entt : s_entities) {
-    entt.render_gui();
-  }
-  
-  nikola::gui_edit_camera("Editor Camera", &scene.frame_data.camera); 
+  // Camera
+  if(ImGui::CollapsingHeader("Camera")) {
+    nikola::gui_edit_camera("Editor Camera", &scene.frame_data.camera); 
+    ImGui::Combo("Render Effect", 
+                  &scene.render_effect, 
+                  "None\0Greyscale\0Inversion\0Sharpen\0Blur\0Emboss\0Edge Detection\0Pixelize\0");  
+  } 
 
+  // Save button
+  ImGui::NewLine(); 
   if(ImGui::Button("Save Scene")) {
     game_scene_serialize(scene);
   }
   nikola::gui_end_panel();
-  
+ 
+  // Debug
   nikola::gui_debug_info();
 }
 

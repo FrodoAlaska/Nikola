@@ -178,15 +178,6 @@ void gui_edit_color(const char* name, Vec4& color) {
 }
 
 void gui_edit_transform(const char* name, Transform* transform) {
-  Vec3* rotation;
-  if(s_gui.rotations.find(name) == s_gui.rotations.end()) {
-    s_gui.rotations[name] = Vec3(1.0f);
-    rotation              = &s_gui.rotations[name];
-  }
-  else {
-    rotation = &s_gui.rotations[name];
-  }
-  
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
  
@@ -199,17 +190,10 @@ void gui_edit_transform(const char* name, Transform* transform) {
   if(ImGui::DragFloat3("Scale", &transform->scale[0], 0.01f)) {
     transform_scale(*transform, Vec3(transform->scale));
   }
- 
-  if(ImGui::DragFloat("Rotation X", &rotation->x, 1.0f, 0.0f, 360.0f)) {
-    transform_rotate(*transform, Vec3(1.0f, 0.0f, 0.0f), rotation->x * DEG2RAD);
-  }
-  
-  if(ImGui::DragFloat("Rotation Y", &rotation->y, 1.0f, 0.0f, 360.0f)) {
-    transform_rotate(*transform, Vec3(0.0f, 1.0f, 0.0f), rotation->y * DEG2RAD);
-  }
-  
-  if(ImGui::DragFloat("Rotation Z", &rotation->z, 1.0f, 0.0f, 360.0f)) {
-    transform_rotate(*transform, Vec3(0.0f, 0.0f, 1.0f), rotation->z * DEG2RAD);
+
+  // @TODO (GUI): Make it better...
+  if(ImGui::DragFloat3("Rotation", &transform->rotation[0], 0.01f, -1.0f, 1.0f)) {
+    transform_rotate(*transform, quat_normalize(transform->rotation));
   }
   // -------------------------------------------------------------------
   
