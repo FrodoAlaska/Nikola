@@ -1,33 +1,27 @@
+#pragma once 
+
+#include "scene_manager.h"
+
 #include <nikola/nikola.h>
-
-/// ----------------------------------------------------------------------
-/// GameScene
-struct GameScene {
-  nikola::Window* window; 
-  nikola::FrameData frame_data;
-
-  nikola::u16 resource_group;
-  nikola::ResourceID skybox_id;
-  nikola::RenderQueue render_queue;
-  
-  bool has_editor;
-  nikola::i32 render_effect = 0;
-};
-/// GameScene
-/// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
 /// GameScene functions 
 
-void game_scene_init(GameScene* scene, nikola::Window* window);
+void game_scene_init();
 
-void game_scene_update(GameScene& scene, nikola::f64 dt);
+bool game_scene_create(Scene* scene);
 
-void game_scene_render(GameScene& scene);
+void game_scene_destroy(Scene* scene);
 
-void game_scene_gui_render(GameScene& scene);
+void game_scene_update(Scene* scene, const nikola::f64 dt);
 
-void game_scene_shutdown(GameScene& scene);
+void game_scene_render(Scene* scene);
+
+void game_scene_render_gui(Scene* scene);
+
+void game_scene_save(Scene* scene, const nikola::FilePath& path);
+
+void game_scene_load(Scene* scene, const nikola::FilePath& path);
 
 /// GameScene functions 
 /// ----------------------------------------------------------------------

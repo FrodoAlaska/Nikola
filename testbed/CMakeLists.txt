@@ -30,6 +30,7 @@ set(TESTBED_SOURCES
   ${TESTBED_SRC_DIR}/${TESTBED_TYPE}/app.cpp
   
   ${TESTBED_SRC_DIR}/scene_example/scenes/game_scene.cpp
+  ${TESTBED_SRC_DIR}/scene_example/scenes/scene_manager.cpp
 )
 ############################################################
 

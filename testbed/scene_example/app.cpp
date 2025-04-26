@@ -1,8 +1,8 @@
 #include "app.hpp"
+#include "scenes/scene_manager.h"
 #include "scenes/game_scene.h"
 
 #include <nikola/nikola.h>
-
 #include <imgui/imgui.h>
 
 /// ----------------------------------------------------------------------
@@ -11,7 +11,7 @@ struct nikola::App {
   nikola::Window* window;
   nikola::ResourceID post_shader_context_id;
 
-  GameScene game_scene;
+  nikola::i32 render_effect = 0;
 };
 /// App
 /// ----------------------------------------------------------------------
@@ -23,7 +23,7 @@ static void post_process_pass(const nikola::RenderPass* prev, nikola::RenderPass
   nikola::App* app = (nikola::App*)user_data;
 
   // Set the shader
-  nikola::shader_context_set_uniform(pass->shader_context_id, "u_effect_index", app->game_scene.render_effect);
+  nikola::shader_context_set_uniform(pass->shader_context_id, "u_effect_index", app->render_effect);
 
   pass->frame_desc.attachments[0]    = prev->frame_desc.attachments[0];
   pass->frame_desc.attachments_count = 1;
@@ -37,7 +37,7 @@ static void post_process_pass(const nikola::RenderPass* prev, nikola::RenderPass
 
 static void init_scenes(nikola::App* app) {
   // Game scene init
-  game_scene_init(&app->game_scene, app->window);
+  game_scene_init();
 }
 
 static void init_passes(nikola::App* app) {
@@ -81,6 +81,9 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Render passes init
   init_passes(app); 
 
+  // Scene manager init
+  scenes_init(window);
+
   // Scenes init
   init_scenes(app);
 
@@ -88,7 +91,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 }
 
 void app_shutdown(nikola::App* app) {
-  game_scene_shutdown(app->game_scene);
+  scenes_shutdown();
   nikola::gui_shutdown();
 
   delete app;
@@ -101,22 +104,37 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     return;
   }
 
-  game_scene_update(app->game_scene, delta_time);
+  scenes_update(delta_time);
 } 
 
 void app_render(nikola::App* app) {
-  nikola::renderer_begin(app->game_scene.frame_data);
+  nikola::renderer_begin(scenes_get_current()->frame_data);
   
-  // Render the scene
-  game_scene_render(app->game_scene);
+  scenes_render();
   
   nikola::renderer_end();
 }
 
 void app_render_gui(nikola::App* app) {
   nikola::gui_begin(); 
-  
-  game_scene_gui_render(app->game_scene);
+ 
+  // Scene GUI
+  scenes_render_gui();
+
+  if(!scenes_get_current()->has_editor) {
+    nikola::gui_end(); 
+    return;
+  }
+
+  // Renderer
+  nikola::gui_begin_panel("Renderer");
+  ImGui::Combo("Render Effect", 
+               &app->render_effect, 
+               "None\0Greyscale\0Inversion\0Sharpen\0Blur\0Emboss\0Edge Detection\0Pixelize\0");  
+  nikola::gui_end_panel();
+
+  // Debug
+  nikola::gui_debug_info();
   
   nikola::gui_end(); 
 }
