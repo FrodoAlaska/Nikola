@@ -388,7 +388,7 @@ struct ShaderContext {
   ResourceID shader = {}; 
   ResourceID uniform_buffers[SHADER_UNIFORM_BUFFERS_MAX];
 
-  HashMap<const char*, i32> uniforms_cache;
+  HashMap<String, i32> uniforms_cache;
 };
 /// ShaderContext
 ///---------------------------------------------------------------------------------------------------------------------
@@ -447,28 +447,28 @@ struct Font {
 NIKOLA_API void shader_context_cache_uniform(ResourceID& ctx_id, const i8* uniform_name);
 
 /// Set a uniform of type `i32` with the name `uniform_name` in `ctx_id` to the given `value`. 
-NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const i8* uniform_name, const i32 value);
+NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const String& uniform_name, const i32 value);
 
 /// Set a uniform of type `f32` with the name `uniform_name` in `ctx_id` to the given `value`. 
-NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const i8* uniform_name, const f32 value);
+NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const String& uniform_name, const f32 value);
 
 /// Set a uniform of type `Vec2` with the name `uniform_name` in `ctx_id` to the given `value`. 
-NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const i8* uniform_name, const Vec2& value);
+NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const String& uniform_name, const Vec2& value);
 
 /// Set a uniform of type `Vec3` with the name `uniform_name` in `ctx_id` to the given `value`. 
-NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const i8* uniform_name, const Vec3& value);
+NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const String& uniform_name, const Vec3& value);
 
 /// Set a uniform of type `Vec4` with the name `uniform_name` in `ctx_id` to the given `value`. 
-NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const i8* uniform_name, const Vec4& value);
+NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const String& uniform_name, const Vec4& value);
 
 /// Set a uniform of type `Mat4` with the name `uniform_name` in `ctx_id` to the given `value`. 
-NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const i8* uniform_name, const Mat4& value);
+NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const String& uniform_name, const Mat4& value);
 
 /// Set a uniform of type `Material` with the name `material_name` in `ctx_id` to the given `mat_id`. 
 ///
 /// @NOTE: In order for this operation to succeed, the shader needs to include a `struct` with the same 
 /// members as the engine's `Material`'s `struct`. 
-NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const i8* material_name, const ResourceID& mat_id);
+NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const String& material_name, const ResourceID& mat_id);
 
 /// Set the data of the uniform buffer at `index` of the associated shader in `ctx_id` to `buffer_id`
 NIKOLA_API void shader_context_set_uniform_buffer(ResourceID& ctx_id, const sizei index, const ResourceID& buffer_id);

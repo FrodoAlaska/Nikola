@@ -52,7 +52,7 @@ struct Entity {
 
 static nikola::DynamicArray<Entity> s_entities;
 static nikola::f32 rotation   = 0.0f;
-static const char* SCENE_PATH = "game_scene.nscn"; 
+static const char* SCENE_PATH = "scenes/game_scene.nscn"; 
 
 /// Globals
 /// ----------------------------------------------------------------------
@@ -63,9 +63,10 @@ static const char* SCENE_PATH = "game_scene.nscn";
 static void init_lights(Scene* scene) {
   // Directional light
   scene->frame_data.dir_light.direction = nikola::Vec3(0.0f, 0.0f, 0.0f);
-  scene->frame_data.dir_light.ambient   = nikola::Vec3(0.0f, 0.0f, 0.0f);
+  scene->frame_data.dir_light.color     = nikola::Vec3(0.0f, 0.0f, 0.0f);
  
   // Point lights
+  scene->frame_data.point_lights.push_back(nikola::PointLight{nikola::Vec3(10.0f, 0.0f, 10.0f)});
   scene->frame_data.point_lights.push_back(nikola::PointLight{nikola::Vec3(10.0f, 0.0f, 10.0f)});
 }
 
@@ -136,6 +137,11 @@ bool game_scene_create(Scene* scene) {
   // Ground init
   s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), cube_mesh, pav_material_id, nikola::RENDERABLE_TYPE_MESH, "Ground"); 
 
+  // Torches 
+  nikola::ResourceID torch_model = nikola::resources_push_model(res_group, "models/column_torch.nbrmodel");
+  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), torch_model, material_id, nikola::RENDERABLE_TYPE_MODEL, "Torch 0"); 
+  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), torch_model, material_id, nikola::RENDERABLE_TYPE_MODEL, "Torch 1"); 
+
   // Lights init
   init_lights(scene);
 
@@ -165,9 +171,8 @@ void game_scene_update(Scene* scene, const nikola::f64 dt) {
  
   nikola::f32 value = ease_in_sine(dt);
   rotation += value * 50.0f;
-  nikola::transform_rotate(s_entities[1].transform, nikola::Vec3(0.0f, 1.0f, 0.0f), rotation);
+  nikola::transform_rotate(s_entities[1].transform, nikola::Vec3(1.0f), rotation);
 
-  scene->frame_data.camera.zoom += 0.01f;
   nikola::camera_update(scene->frame_data.camera);
 }
 
@@ -198,8 +203,16 @@ void game_scene_render_gui(Scene* scene) {
   // Lights
   if(ImGui::CollapsingHeader("Lights")) {
     nikola::gui_edit_directional_light("Directional", &scene->frame_data.dir_light);
-    for(auto& light : scene->frame_data.point_lights) {
-      nikola::gui_edit_point_light("Point", &light);
+
+    for(int i = 0; i < scene->frame_data.point_lights.size(); i++) {
+      nikola::PointLight* light = &scene->frame_data.point_lights[i];
+      nikola::String light_name = ("Point " + std::to_string(i));
+
+      nikola::gui_edit_point_light(light_name.c_str(), light);
+    }
+  
+    if(ImGui::Button("Add PointLight")) {
+      scene->frame_data.point_lights.push_back(nikola::PointLight{nikola::Vec3(10.0f, 0.0f, 10.0f)});
     }
   }
 
@@ -262,7 +275,7 @@ void game_scene_load(Scene* scene, const nikola::FilePath& path) {
   }
 
   // Load the entities 
-  for(nikola::sizei i = 0; i < 3; i++) {
+  for(nikola::sizei i = 0; i < 5; i++) {
     Entity* entt = &s_entities[i];
     entt->deserialize(file);
   }

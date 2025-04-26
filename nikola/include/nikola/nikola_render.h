@@ -144,10 +144,7 @@ struct RenderPass {
 /// DirectionalLight 
 struct DirectionalLight {
   Vec3 direction = Vec3(1.0f); 
-
-  Vec3 ambient  = Vec3(1.0f);
-  Vec3 diffuse  = Vec3(1.0f);
-  Vec3 specular = Vec3(1.0f);
+  Vec3 color     = Vec3(1.0f);
 };
 /// DirectionalLight 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -156,10 +153,7 @@ struct DirectionalLight {
 /// PointLight
 struct PointLight {
   Vec3 position = Vec3(0.0f); 
-
-  Vec3 ambient  = Vec3(1.0f);
-  Vec3 diffuse  = Vec3(1.0f);
-  Vec3 specular = Vec3(1.0f);
+  Vec3 color    = Vec3(1.0f);
 
   f32 linear    = 0.09f; 
   f32 quadratic = 0.032f;
@@ -172,6 +166,8 @@ struct PointLight {
 struct FrameData {
   Camera camera; 
   ResourceID skybox_id;
+  
+  Vec3 ambient = Vec3(0.125f);
 
   DirectionalLight dir_light; 
   DynamicArray<PointLight> point_lights;

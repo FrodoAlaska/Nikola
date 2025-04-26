@@ -9,23 +9,23 @@ namespace nikola {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Private functions
 
-static void cache_uniform(ShaderContext* ctx, const i8* name) {
+static void cache_uniform(ShaderContext* ctx, const String& name) {
   GfxShader* shader = resources_get_shader(ctx->shader); 
   
   // Get the new uniform location, first
-  i32 location = gfx_shader_uniform_lookup(shader, name);
+  i32 location = gfx_shader_uniform_lookup(shader, name.c_str());
   
   // The uniform just does not exist in the shader at all 
   if(location == -1) {
-    NIKOLA_LOG_WARN("Could not find uniform \'%s\' in ShaderContext", name);
+    NIKOLA_LOG_WARN("Could not find uniform \'%s\' in ShaderContext", name.c_str());
     return;
   }
   
   ctx->uniforms_cache[name] = location; 
-  NIKOLA_LOG_DEBUG("Cache uniform \'%s\' with location \'%i\' in ShaderContext...", name, location);
+  NIKOLA_LOG_DEBUG("Cache uniform \'%s\' with location \'%i\' in ShaderContext...", name.c_str(), location);
 }
 
-static void check_and_send_uniform(ShaderContext* ctx, const i8* name, GfxLayoutType type, const void* data) {
+static void check_and_send_uniform(ShaderContext* ctx, const String& name, GfxLayoutType type, const void* data) {
   GfxShader* shader = resources_get_shader(ctx->shader); 
 
   // Send the uniform (only if it is valid)
@@ -45,56 +45,56 @@ static void check_and_send_uniform(ShaderContext* ctx, const i8* name, GfxLayout
 ///---------------------------------------------------------------------------------------------------------------------
 /// ShaderContext functions
 
-void shader_context_cache_uniform(ResourceID& ctx_id, const i8* uniform_name) {
+void shader_context_cache_uniform(ResourceID& ctx_id, const String& uniform_name) {
   NIKOLA_ASSERT(RESOURCE_IS_VALID(ctx_id), "Invalid ShaderContext passed to shader_context_cache_uniform");
   
   ShaderContext* ctx = resources_get_shader_context(ctx_id);
   cache_uniform(ctx, uniform_name);
 }
 
-void shader_context_set_uniform(ResourceID& ctx_id, const i8* uniform_name, const i32 value) {
+void shader_context_set_uniform(ResourceID& ctx_id, const String& uniform_name, const i32 value) {
   NIKOLA_ASSERT(RESOURCE_IS_VALID(ctx_id), "Invalid ShaderContext passed to shader_context_set_uniform");
 
   ShaderContext* ctx = resources_get_shader_context(ctx_id);
   check_and_send_uniform(ctx, uniform_name, GFX_LAYOUT_INT1, &value);
 }
 
-void shader_context_set_uniform(ResourceID& ctx_id, const i8* uniform_name, const f32 value) {
+void shader_context_set_uniform(ResourceID& ctx_id, const String& uniform_name, const f32 value) {
   NIKOLA_ASSERT(RESOURCE_IS_VALID(ctx_id), "Invalid ShaderContext passed to shader_context_set_uniform");
 
   ShaderContext* ctx = resources_get_shader_context(ctx_id);
   check_and_send_uniform(ctx, uniform_name, GFX_LAYOUT_FLOAT1, &value);
 }
 
-void shader_context_set_uniform(ResourceID& ctx_id, const i8* uniform_name, const Vec2& value) {
+void shader_context_set_uniform(ResourceID& ctx_id, const String& uniform_name, const Vec2& value) {
   NIKOLA_ASSERT(RESOURCE_IS_VALID(ctx_id), "Invalid ShaderContext passed to shader_context_set_uniform");
 
   ShaderContext* ctx = resources_get_shader_context(ctx_id);
   check_and_send_uniform(ctx, uniform_name, GFX_LAYOUT_FLOAT2, &value);
 }
 
-void shader_context_set_uniform(ResourceID& ctx_id, const i8* uniform_name, const Vec3& value) {
+void shader_context_set_uniform(ResourceID& ctx_id, const String& uniform_name, const Vec3& value) {
   NIKOLA_ASSERT(RESOURCE_IS_VALID(ctx_id), "Invalid ShaderContext passed to shader_context_set_uniform");
 
   ShaderContext* ctx = resources_get_shader_context(ctx_id);
   check_and_send_uniform(ctx, uniform_name, GFX_LAYOUT_FLOAT3, &value);
 }
 
-void shader_context_set_uniform(ResourceID& ctx_id, const i8* uniform_name, const Vec4& value) {
+void shader_context_set_uniform(ResourceID& ctx_id, const String& uniform_name, const Vec4& value) {
   NIKOLA_ASSERT(RESOURCE_IS_VALID(ctx_id), "Invalid ShaderContext passed to shader_context_set_uniform");
 
   ShaderContext* ctx = resources_get_shader_context(ctx_id);
   check_and_send_uniform(ctx, uniform_name, GFX_LAYOUT_FLOAT4, &value);
 }
 
-void shader_context_set_uniform(ResourceID& ctx_id, const i8* uniform_name, const Mat4& value) {
+void shader_context_set_uniform(ResourceID& ctx_id, const String& uniform_name, const Mat4& value) {
   NIKOLA_ASSERT(RESOURCE_IS_VALID(ctx_id), "Invalid ShaderContext passed to shader_context_set_uniform");
 
   ShaderContext* ctx = resources_get_shader_context(ctx_id);
   check_and_send_uniform(ctx, uniform_name, GFX_LAYOUT_MAT4, &value);
 }
 
-void shader_context_set_uniform(ResourceID& ctx_id, const i8* material_name, const ResourceID& mat_id) {
+void shader_context_set_uniform(ResourceID& ctx_id, const String& material_name, const ResourceID& mat_id) {
   NIKOLA_ASSERT(RESOURCE_IS_VALID(ctx_id), "Invalid ShaderContext passed to shader_context_set_uniform");
   NIKOLA_ASSERT(RESOURCE_IS_VALID(mat_id), "Invalid Material passed to shader_context_set_uniform");
 

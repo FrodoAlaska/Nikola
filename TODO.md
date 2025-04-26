@@ -58,6 +58,7 @@
 [] 12. Renderer v0.4 
     - [x] HDR pipeline 
     - [] Bloom integration 
+    - [x] Improve lighting structures
 [x] 13. GUI/Editor v0.2
     - [x] Add more serializable engine-specific types
     - [x] Semi-scene serializer

@@ -288,20 +288,32 @@ static void flush_queue(ResourceID& shader_context) {
 
 static void use_directional_light(DirectionalLight& light) {
   shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_dir_light.direction", light.direction); 
-  shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_dir_light.ambient", light.ambient); 
-  shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_dir_light.diffuse", light.diffuse); 
-  // @TODO (Renderer): shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_light.specular", light.specular); 
+  shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_dir_light.color", light.color); 
 }
 
 static void use_point_lights(DynamicArray<PointLight>& lights) {
+  i32 index = 0;
+
   for(auto& point : lights) {
-    shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_point_light.position", point.position); 
-    shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_point_light.ambient", point.ambient); 
-    shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_point_light.diffuse", point.diffuse); 
-    // @TODO (Renderer): shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_light.specular", point.specular); 
-    shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_point_light.linear", point.linear); 
-    shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_point_light.quadratic", point.quadratic); 
+    String point_index = "u_point_lights[" + std::to_string(index) + "].";
+
+    shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], (point_index + "position"), point.position); 
+    shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], (point_index + "color"), point.color); 
+    
+    shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], ( point_index + "linear"), point.linear); 
+    shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], ( point_index + "quadratic"), point.quadratic); 
+  
+    index++;
   }
+}
+
+static void setup_light_enviornment(FrameData& data) {
+  shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_ambient", data.ambient); 
+  shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_point_lights_count", (i32)data.point_lights.size()); 
+  // shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_view_pos", data.camera.direction); 
+
+  use_directional_light(data.dir_light);
+  use_point_lights(data.point_lights);
 }
 
 /// Private functions
@@ -411,9 +423,8 @@ void renderer_begin(FrameData& data) {
   // Render the skybox (if avaliable)
   s_renderer.current_skybox = data.skybox_id;
 
-  // Update the lights' uniforms
-  use_directional_light(data.dir_light);
-  use_point_lights(data.point_lights);
+  // Setup some lighting
+  setup_light_enviornment(data);
 }
 
 void renderer_end() {

@@ -165,17 +165,9 @@ void file_write_bytes(File& file, const DirectionalLight& light) {
     light.direction.y,  
     light.direction.z,  
     
-    light.ambient.r,  
-    light.ambient.g,  
-    light.ambient.b,  
-    
-    light.diffuse.r,  
-    light.diffuse.g,  
-    light.diffuse.b,  
-    
-    light.specular.r,  
-    light.specular.g,  
-    light.specular.b,  
+    light.color.r,  
+    light.color.g,  
+    light.color.b,  
   };
 
   file_write_bytes(file, data, sizeof(data));
@@ -187,17 +179,9 @@ void file_write_bytes(File& file, const PointLight& light) {
     light.position.y,  
     light.position.z,  
     
-    light.ambient.r,  
-    light.ambient.g,  
-    light.ambient.b,  
-    
-    light.diffuse.r,  
-    light.diffuse.g,  
-    light.diffuse.b,  
-    
-    light.specular.r,  
-    light.specular.g,  
-    light.specular.b,  
+    light.color.r,  
+    light.color.g,  
+    light.color.b,  
 
     light.linear, 
     light.quadratic,
@@ -252,26 +236,22 @@ void file_read_bytes(File& file, Camera* camera) {
 }
 
 void file_read_bytes(File& file, DirectionalLight* light) {
-  f32 raw_data[12];
+  f32 raw_data[6];
   file_read_bytes(file, raw_data, sizeof(raw_data));
 
   light->direction = Vec3(raw_data[0], raw_data[1], raw_data[2]);
-  light->ambient   = Vec3(raw_data[3], raw_data[4], raw_data[5]);
-  light->diffuse   = Vec3(raw_data[6], raw_data[7], raw_data[8]);
-  light->specular  = Vec3(raw_data[9], raw_data[10], raw_data[11]);
+  light->color     = Vec3(raw_data[3], raw_data[4], raw_data[5]);
 }
 
 void file_read_bytes(File& file, PointLight* light) {
-  f32 raw_data[14];
+  f32 raw_data[8];
   file_read_bytes(file, raw_data, sizeof(raw_data));
 
   light->position = Vec3(raw_data[0], raw_data[1], raw_data[2]);
-  light->ambient  = Vec3(raw_data[3], raw_data[4], raw_data[5]);
-  light->diffuse  = Vec3(raw_data[6], raw_data[7], raw_data[8]);
-  light->specular = Vec3(raw_data[9], raw_data[10], raw_data[11]);
+  light->color    = Vec3(raw_data[3], raw_data[4], raw_data[5]);
   
-  light->linear    = raw_data[12];
-  light->quadratic = raw_data[13];
+  light->linear    = raw_data[6];
+  light->quadratic = raw_data[7];
 }
 
 void file_read_string(File& file, String* str) {

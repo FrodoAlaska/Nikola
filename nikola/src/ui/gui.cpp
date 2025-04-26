@@ -228,23 +228,17 @@ void gui_edit_directional_light(const char* name, DirectionalLight* dir_light) {
   ImGui::PushID(name); 
   
   ImGui::DragFloat3("Direction", &dir_light->direction[0], 0.01f, -1.0f, 1.0f);
-  
-  ImGui::DragFloat3("Ambient", &dir_light->ambient[0], 0.01f, 0.0f, 10.0f);
-  ImGui::DragFloat3("Diffuse", &dir_light->diffuse[0], 0.01f, 0.0f, 10.0f);
-  ImGui::DragFloat3("Specular", &dir_light->specular[0], 0.01f, 0.0f, 10.0f);
+  ImGui::DragFloat3("Color", &dir_light->color[0], 0.01f, 0.0f, 1.0f);
 
   ImGui::PopID(); 
 }
 
 void gui_edit_point_light(const char* name, PointLight* point_light) {
-  ImGui::SeparatorText(name); 
+  ImGui::SeparatorText(name);
   ImGui::PushID(name); 
 
   ImGui::DragFloat3("Position", &point_light->position[0], 1.0f);
-  
-  ImGui::DragFloat3("Ambient", &point_light->ambient[0], 0.01f, 0.0f, 10.0f);
-  ImGui::DragFloat3("Diffuse", &point_light->diffuse[0], 0.01f, 0.0f, 10.0f);
-  ImGui::DragFloat3("Specular", &point_light->specular[0], 0.01f, 0.0f, 10.0f);
+  ImGui::DragFloat3("Color", &point_light->color[0], 0.01f, 0.0f, 1.0f);
 
   ImGui::DragFloat("Linear", &point_light->linear, 0.01f);
   ImGui::DragFloat("Quadratic", &point_light->quadratic, 0.01f);
