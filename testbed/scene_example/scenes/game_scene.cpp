@@ -68,6 +68,9 @@ static void init_lights(Scene* scene) {
   // Point lights
   scene->frame_data.point_lights.push_back(nikola::PointLight{nikola::Vec3(10.0f, 0.0f, 10.0f)});
   scene->frame_data.point_lights.push_back(nikola::PointLight{nikola::Vec3(10.0f, 0.0f, 10.0f)});
+
+  // Set the ambiance
+  scene->frame_data.ambient = nikola::Vec3(0.0f);
 }
 
 static nikola::f32 ease_in_sine(nikola::f32 x) {
@@ -106,10 +109,13 @@ bool game_scene_create(Scene* scene) {
   nikola::camera_create(&scene->frame_data.camera, aspect_ratio, nikola::Vec3(10.0f, 0.0f, 10.0f), nikola::Vec3(-3.0f, 0.0f, 0.0f));
    
   // Cubemaps init
-  nikola::ResourceID cubemap_id = nikola::resources_push_cubemap(res_group, "cubemaps/NightSky.nbrcubemap");
+  // nikola::ResourceID cubemap_id = nikola::resources_push_cubemap(res_group, "cubemaps/NightSky.nbrcubemap");
+  // nikola::ResourceID cubemap_id = nikola::resources_push_cubemap(res_group, "cubemaps/corona.nbrcubemap");
 
   // Models init
-  nikola::ResourceID model = nikola::resources_push_model(res_group, "models/tempel.nbrmodel");
+  // nikola::ResourceID model = nikola::resources_push_model(res_group, "models/tempel.nbrmodel");
+  // nikola::ResourceID model = nikola::resources_push_model(res_group, "models/bridge.nbrmodel");
+  nikola::ResourceID model = nikola::resources_push_model(res_group, "models/ps1.nbrmodel");
 
   // Textures init
   nikola::ResourceID mesh_texture = nikola::resources_push_texture(res_group, "textures/opengl.nbrtexture");
@@ -126,10 +132,11 @@ bool game_scene_create(Scene* scene) {
   nikola::ResourceID cube_mesh = nikola::resources_push_mesh(scene->resource_group, nikola::MESH_TYPE_CUBE);
 
   // Skyboxes init
-  scene->frame_data.skybox_id = nikola::resources_push_skybox(res_group, cubemap_id);
+  // scene->frame_data.skybox_id = nikola::resources_push_skybox(res_group, cubemap_id);
+  scene->frame_data.skybox_id = {};
 
-  // Tempel init
-  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), model, material_id, nikola::RENDERABLE_TYPE_MODEL, "Tempel"); 
+  // Model init
+  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), model, material_id, nikola::RENDERABLE_TYPE_MODEL, "3D Model"); 
   
   // Cube init
   s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), cube_mesh, material_id, nikola::RENDERABLE_TYPE_MESH, "Cube"); 
@@ -138,15 +145,15 @@ bool game_scene_create(Scene* scene) {
   s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), cube_mesh, pav_material_id, nikola::RENDERABLE_TYPE_MESH, "Ground"); 
 
   // Torches 
-  nikola::ResourceID torch_model = nikola::resources_push_model(res_group, "models/column_torch.nbrmodel");
-  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), torch_model, material_id, nikola::RENDERABLE_TYPE_MODEL, "Torch 0"); 
-  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), torch_model, material_id, nikola::RENDERABLE_TYPE_MODEL, "Torch 1"); 
+  // nikola::ResourceID torch_model = nikola::resources_push_model(res_group, "models/column_torch.nbrmodel");
+  // s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), torch_model, material_id, nikola::RENDERABLE_TYPE_MODEL, "Torch 0"); 
+  // s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), torch_model, material_id, nikola::RENDERABLE_TYPE_MODEL, "Torch 1"); 
 
   // Lights init
   init_lights(scene);
 
   // Loading the binary scene
-  game_scene_load(scene, SCENE_PATH);
+  game_scene_load(scene, "scenes/game_scene_ps1.nscn");
 
   return true;
 }
@@ -168,7 +175,7 @@ void game_scene_update(Scene* scene, const nikola::f64 dt) {
 
     nikola::input_cursor_show(scene->has_editor);
   }
- 
+  
   nikola::f32 value = ease_in_sine(dt);
   rotation += value * 50.0f;
   nikola::transform_rotate(s_entities[1].transform, nikola::Vec3(1.0f), rotation);
@@ -219,6 +226,7 @@ void game_scene_render_gui(Scene* scene) {
   // Camera
   if(ImGui::CollapsingHeader("Camera")) {
     nikola::gui_edit_camera("Editor Camera", &scene->frame_data.camera); 
+    ImGui::DragFloat3("Ambient", &scene->frame_data.ambient[0], 0.1f, 0.0f, 1.0f);
   } 
 
   // Save button
@@ -248,6 +256,10 @@ void game_scene_save(Scene* scene, const nikola::FilePath& path) {
     nikola::file_write_bytes(file, light);
   }
 
+  // Save the entities count
+  nikola::i32 count = (nikola::i32)s_entities.size(); 
+  nikola::file_write_bytes(file, &count, sizeof(nikola::i32));
+
   // Save the entities 
   for(auto& entt : s_entities) {
     entt.serialize(file);
@@ -273,9 +285,13 @@ void game_scene_load(Scene* scene, const nikola::FilePath& path) {
   for(auto& light : scene->frame_data.point_lights) {
     nikola::file_read_bytes(file, &light);
   }
+  
+  // Load the entities count
+  nikola::i32 count = 0; 
+  nikola::file_read_bytes(file, &count, sizeof(nikola::i32));
 
   // Load the entities 
-  for(nikola::sizei i = 0; i < 5; i++) {
+  for(nikola::sizei i = 0; i < count; i++) {
     Entity* entt = &s_entities[i];
     entt->deserialize(file);
   }

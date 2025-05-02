@@ -45,7 +45,7 @@ struct Renderer {
   RendererDefaults defaults = {};
   ResourceID shader_contexts[SHADER_CONTEXTS_MAX];
   
-  RenderQueue* current_queue;  
+  RenderQueue current_queue;  
   FrameData* frame_data;
   ResourceID current_skybox;
   DynamicArray<RenderPassEntry> render_passes;
@@ -271,7 +271,7 @@ static void end_pass(RenderPass& pass) {
 }
 
 static void flush_queue(ResourceID& shader_context) {
-  for(auto& command : *s_renderer.current_queue) {
+  for(auto& command : s_renderer.current_queue) {
     switch(command.render_type) {
       case RENDERABLE_TYPE_MESH:
         render_mesh(command, shader_context);
@@ -310,7 +310,7 @@ static void use_point_lights(DynamicArray<PointLight>& lights) {
 static void setup_light_enviornment(FrameData& data) {
   shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_ambient", data.ambient); 
   shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_point_lights_count", (i32)data.point_lights.size()); 
-  // shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_view_pos", data.camera.direction); 
+  // @TODO (Renderer): shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_view_pos", data.camera.direction); 
 
   use_directional_light(data.dir_light);
   use_point_lights(data.point_lights);
@@ -323,12 +323,14 @@ static void setup_light_enviornment(FrameData& data) {
 /// Callbacks 
 
 static void light_pass_fn(const RenderPass* previous, RenderPass* current, void* user_data) {
-  // Render the current set skybox first
-  RenderCommand skybox_cmd = {
-    .render_type   = RENDERABLE_TYPE_SKYBOX, 
-    .renderable_id = s_renderer.current_skybox,
-  };
-  render_skybox(skybox_cmd);
+  // Render the current set skybox first (if it exists)
+  if(RESOURCE_IS_VALID(s_renderer.current_skybox)) {
+    RenderCommand skybox_cmd = {
+      .render_type   = RENDERABLE_TYPE_SKYBOX, 
+      .renderable_id = s_renderer.current_skybox,
+    };
+    render_skybox(skybox_cmd);
+  }
 
   // Render the frame with the light data 
   flush_queue(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]);
@@ -409,7 +411,7 @@ void renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& func, co
 }
 
 void renderer_sumbit_queue(RenderQueue& queue) {
-  s_renderer.current_queue = &queue;
+  s_renderer.current_queue = queue;
 }
 
 void renderer_begin(FrameData& data) {
@@ -451,8 +453,10 @@ void renderer_end() {
     end_pass(entry->pass);
   } 
   
-  // Clear the current render queue
-  s_renderer.current_queue->clear();
+  // Clear the current render queue (if there's any there)
+  if(!s_renderer.current_queue.empty()) {
+    s_renderer.current_queue.clear();
+  }
 }
 
 /// Renderer functions

@@ -944,6 +944,7 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
   
   gfx->desc                = desc;
   gfx->default_clear_flags = GL_COLOR_BUFFER_BIT;
+  gfx->current_clear_flags = gfx->default_clear_flags;
 
   // Glad init
   if(!gladLoadGL()) {
@@ -1031,7 +1032,7 @@ void gfx_context_set_target(GfxContext* gfx, GfxFramebuffer* framebuffer) {
 
 void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
-  
+
   glBindFramebuffer(GL_FRAMEBUFFER, gfx->current_target);
   glClear(gfx->current_clear_flags);
   glClearColor(r, g, b, a);
