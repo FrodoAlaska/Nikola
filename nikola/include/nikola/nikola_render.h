@@ -246,13 +246,17 @@ NIKOLA_API void batch_renderer_begin();
 /// Sumbit the results of the batch renderer to the screen.
 NIKOLA_API void batch_renderer_end();
 
-/// Render a quad at `position` with a size of `size` and tinted with `color`.
-NIKOLA_API void batch_render_quad(const Vec2& position, const Vec2& size, const Vec4& color);
-
 /// Render the given `texture` at `position` with size of `size` and tinted with `tint`.
 ///
 /// @NOTE: By default, `tint` is set to `Vec4(1.0f)`.
 NIKOLA_API void batch_render_texture(GfxTexture* texture, const Vec2& position, const Vec2& size, const Vec4& tint = Vec4(1.0f));
+
+/// Render a quad at `position` with a size of `size` and tinted with `color`.
+NIKOLA_API void batch_render_quad(const Vec2& position, const Vec2& size, const Vec4& color);
+
+NIKOLA_API void batch_render_circle(const Vec2& center, const f32 radius, const Vec4& color);
+
+NIKOLA_API void batch_render_polygon(const Vec2& center, const f32 radius, const u32 sides, const Vec4& color);
 
 /// Batch renderer functions
 ///---------------------------------------------------------------------------------------------------------------------

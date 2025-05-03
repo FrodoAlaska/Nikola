@@ -70,7 +70,7 @@ static void init_context(Window* window) {
 
 static void init_defaults() {
   // Default texture init
-  u32 pixels = 0xffffffff; 
+  u32 pixels = 0x00000000; 
   GfxTextureDesc texture_desc = {
     .width     = 1, 
     .height    = 1, 

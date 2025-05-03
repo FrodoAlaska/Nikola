@@ -130,6 +130,9 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
   nikola::camera_update(app->frame_data.camera);
 } 
 
+static float radius = 128.0f;
+static int sides    = 3;
+
 void app_render(nikola::App* app) {
   // 3D renderer
   nikola::renderer_begin(app->frame_data);
@@ -139,7 +142,11 @@ void app_render(nikola::App* app) {
   nikola::batch_renderer_begin();
 
   nikola::batch_render_quad(nikola::Vec2(100.0f), nikola::Vec2(64.0f), nikola::Vec4(1.0f, 0.0f, 0.0f, 1.0f));
-  nikola::batch_render_texture(nikola::resources_get_texture(app->texture), nikola::Vec2(200.0f), nikola::Vec2(128.0f, 64.0f));
+  nikola::batch_render_texture(nikola::resources_get_texture(app->texture), nikola::Vec2(200.0f), nikola::Vec2(128.0f, 96.0f));
+  
+  nikola::batch_render_circle(nikola::Vec2(450.0f), radius, nikola::Vec4(0.0f, 1.0f, 1.0f, 1.0f));
+  
+  nikola::batch_render_polygon(nikola::Vec2(450.0f, 550.0f), radius, sides, nikola::Vec4(1.0f, 0.0f, 0.0f, 1.0f));
 
   nikola::batch_renderer_end();
 }
@@ -158,6 +165,8 @@ void app_render_gui(nikola::App* app) {
                &app->render_effect, 
                "None\0Greyscale\0Inversion\0Sharpen\0Blur\0Emboss\0Edge Detection\0Pixelize\0");  
   ImGui::DragInt("Pixel Rate", &app->pixel_rate, 1.0f, 0, 64);
+  ImGui::DragFloat("Radius", &radius, 1.0f, 0.0f, nikola::FLOAT_MAX);
+  ImGui::DragInt("Sides", &sides, 1.0f, 0, 128);
   nikola::gui_end_panel();
 
   // Debug
