@@ -118,8 +118,9 @@ static void init_default_texture() {
   };
 
   // Create the texture and add it to the cache
-  s_batch.defaults = renderer_get_defaults();
-  s_batch.textures_cache[resources_get_texture(s_batch.defaults.texture)] = 0;
+  s_batch.defaults      = renderer_get_defaults();
+  s_batch.white_texture = resources_get_texture(s_batch.defaults.texture); 
+  s_batch.textures_cache[s_batch.white_texture] = 0;
 }
 
 static void init_pipeline() {
@@ -176,7 +177,7 @@ static void flush_batch(BatchCall& batch) {
   }
 
   // Apply the batch
-  s_batch.pipe_desc.indices_count  = batch.indices_count;
+  s_batch.pipe_desc.indices_count = batch.indices_count;
   gfx_shader_use(s_batch.batch_shader);
   gfx_texture_use(&batch.texture, 1);
 

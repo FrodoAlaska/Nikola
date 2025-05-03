@@ -32,8 +32,6 @@ set(TESTBED_SOURCES
   
   # Engine example
   # ${TESTBED_SRC_DIR}/engine_example/app.cpp
-  # ${TESTBED_SRC_DIR}/engine_example/scenes/game_scene.cpp
-  # ${TESTBED_SRC_DIR}/engine_example/scenes/scene_manager.cpp
 
   # Scene example
   # ${TESTBED_SRC_DIR}/scene_example/app.cpp

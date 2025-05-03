@@ -65,7 +65,7 @@ static void init_scenes(nikola::App* app) {
 static void init_passes(nikola::App* app) {
   // Post-process pass
   nikola::RenderPassDesc render_pass = {
-    .frame_size        = nikola::Vec2(320.0f, 240.0f), 
+    .frame_size        = app->screen_size, 
     .clear_color       = nikola::Vec4(1.0f),
     .clear_flags       = (nikola::GFX_CLEAR_FLAGS_COLOR_BUFFER),
     .shader_context_id = app->post_shader_context_id,
@@ -87,6 +87,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // Window init
   app->window = window;
+  nikola::window_set_position(window, 100, 100);
   
   nikola::i32 width, height; 
   nikola::window_get_size(app->window, &width, &height);

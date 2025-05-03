@@ -110,7 +110,7 @@ bool game_scene_create(Scene* scene) {
    
   // Cubemaps init
   // nikola::ResourceID cubemap_id = nikola::resources_push_cubemap(res_group, "cubemaps/NightSky.nbrcubemap");
-  // nikola::ResourceID cubemap_id = nikola::resources_push_cubemap(res_group, "cubemaps/corona.nbrcubemap");
+  nikola::ResourceID cubemap_id = nikola::resources_push_cubemap(res_group, "cubemaps/corona.nbrcubemap");
 
   // Models init
   // nikola::ResourceID model = nikola::resources_push_model(res_group, "models/tempel.nbrmodel");
@@ -178,7 +178,7 @@ void game_scene_update(Scene* scene, const nikola::f64 dt) {
   
   nikola::f32 value = ease_in_sine(dt);
   rotation += value * 50.0f;
-  nikola::transform_rotate(s_entities[1].transform, nikola::Vec3(1.0f), rotation);
+  nikola::transform_rotate(s_entities[0].transform, nikola::Vec3(1.0f), rotation);
 
   nikola::camera_update(scene->frame_data.camera);
 }

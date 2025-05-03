@@ -7,9 +7,11 @@
 /// App
 struct nikola::App {
   nikola::Window* window;
-  nikola::ResourceID post_shader_context_id;
-  
   nikola::FrameData frame_data;
+ 
+  nikola::u16 res_group;
+  nikola::ResourceID post_shader_context_id;
+  nikola::ResourceID texture;
 
   nikola::Vec2 screen_size  = nikola::Vec2(0.0f);
   nikola::i32 render_effect = 0;
@@ -52,6 +54,15 @@ static void init_passes(nikola::App* app) {
   nikola::renderer_push_pass(render_pass, post_process_pass, app);
 }
 
+static void init_resources(nikola::App* app) {
+  // Resource group init
+  nikola::FilePath res_path = nikola::filepath_append(nikola::filesystem_current_path(), "res");
+  app->res_group            = nikola::resources_create_group("FontApp_res", res_path);
+
+  // Textures init
+  app->texture = nikola::resources_push_texture(app->res_group, "textures/frodo.nbrtexture");
+}
+
 /// Private functions 
 /// ----------------------------------------------------------------------
 
@@ -90,6 +101,9 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Render passes init
   init_passes(app); 
 
+  // Resources init
+  init_resources(app);
+
   return app;
 }
 
@@ -117,9 +131,17 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 } 
 
 void app_render(nikola::App* app) {
+  // 3D renderer
   nikola::renderer_begin(app->frame_data);
- 
   nikola::renderer_end();
+ 
+  // 2D renderer
+  nikola::batch_renderer_begin();
+
+  nikola::batch_render_quad(nikola::Vec2(100.0f), nikola::Vec2(64.0f), nikola::Vec4(1.0f, 0.0f, 0.0f, 1.0f));
+  nikola::batch_render_texture(nikola::resources_get_texture(app->texture), nikola::Vec2(200.0f), nikola::Vec2(128.0f, 64.0f));
+
+  nikola::batch_renderer_end();
 }
 
 void app_render_gui(nikola::App* app) {
