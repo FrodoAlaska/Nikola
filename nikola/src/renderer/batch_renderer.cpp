@@ -31,12 +31,23 @@ enum ShapeType {
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// Vertex2D 
+struct Vertex2D {
+  Vec2 position; 
+  Vec4 color; 
+  Vec2 texture_coords; 
+  Vec2 shape_side;
+};
+/// Vertex2D 
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// BatchCall
 struct BatchCall {
   sizei vertices_count = 0;
   GfxTexture* texture = nullptr;
 
-  DynamicArray<Vertex3D_PCUV> vertices; 
+  DynamicArray<Vertex2D> vertices; 
 };
 /// BatchCall
 /// ----------------------------------------------------------------------
@@ -47,13 +58,13 @@ struct BatchRenderer {
   GfxContext* context     = nullptr;
   GfxContextDesc ctx_desc = {}; 
 
-  GfxShader* shaders[SHAPE_TYPES_MAX];
+  GfxShader* shader;
 
   GfxPipelineDesc pipe_desc = {};
   GfxPipeline* pipeline     = nullptr; 
   GfxTexture* white_texture = nullptr;
 
-  DynamicArray<BatchCall> batches[SHAPE_TYPES_MAX];
+  DynamicArray<BatchCall> batches;
   HashMap<GfxTexture*, i32> textures_cache;
   
   Mat4 ortho = Mat4(1.0f);
@@ -66,13 +77,7 @@ static BatchRenderer s_batch;
 ///---------------------------------------------------------------------------------------------------------------------
 /// Private functions
 
-static void init_default_shaders() {
-  s_batch.shaders[SHAPE_TYPE_QUAD]    = gfx_shader_create(s_batch.context, generate_batch_quad_shader());
-  s_batch.shaders[SHAPE_TYPE_CIRCLE]  = gfx_shader_create(s_batch.context, generate_batch_circle_shader());
-  s_batch.shaders[SHAPE_TYPE_POLYGON] = gfx_shader_create(s_batch.context, generate_batch_polygon_shader());
-}
-
-static void init_default_texture() {
+static void init_defaults() {
   u32 pixels = 0xffffffff;
   GfxTextureDesc desc = {
     .width     = 1, 
@@ -89,6 +94,9 @@ static void init_default_texture() {
   // Create the texture and add it to the cache
   s_batch.white_texture                         = gfx_texture_create(s_batch.context, desc); 
   s_batch.textures_cache[s_batch.white_texture] = 0;
+  
+  // Default shader init
+  s_batch.shader = gfx_shader_create(s_batch.context, generate_batch_quad_shader());
 }
 
 static void init_pipeline() {
@@ -103,10 +111,11 @@ static void init_pipeline() {
   s_batch.pipe_desc.vertices_count = 0;
 
   // Layout init
-  s_batch.pipe_desc.layout[0]     = GfxLayoutDesc{"POS", GFX_LAYOUT_FLOAT3, 0};
+  s_batch.pipe_desc.layout[0]     = GfxLayoutDesc{"POS", GFX_LAYOUT_FLOAT2, 0};
   s_batch.pipe_desc.layout[1]     = GfxLayoutDesc{"COLOR", GFX_LAYOUT_FLOAT4, 0};
   s_batch.pipe_desc.layout[2]     = GfxLayoutDesc{"TEX", GFX_LAYOUT_FLOAT2, 0};
-  s_batch.pipe_desc.layout_count  = 3;
+  s_batch.pipe_desc.layout[3]     = GfxLayoutDesc{"SHAPE", GFX_LAYOUT_FLOAT2, 0};
+  s_batch.pipe_desc.layout_count  = 4;
 
   // Draw mode init 
   s_batch.pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
@@ -115,42 +124,46 @@ static void init_pipeline() {
   s_batch.pipeline = gfx_pipeline_create(s_batch.context, s_batch.pipe_desc);
 }
 
-static void generate_quad_batch(BatchCall* batch, const Vec2& position, const Vec2& size, const Vec4& color, const f32 sides) {
+static void generate_quad_batch(BatchCall* batch, const Vec2& position, const Vec2& size, const Vec4& color, const Vec2& shape_side) {
   // Matrices 
   Mat4 model     = mat4_translate(Vec3(position.x, position.y, 0.0f)) * 
                    mat4_scale(Vec3(size.x, size.y, 0.0f));
   Mat4 world_mat = s_batch.ortho * model;
 
   // Top-left
-  Vertex3D_PCUV v1 = {
-    .position       = world_mat * Vec4(-0.5f, -0.5f, sides, 1.0f),
+  Vertex2D v1 = {
+    .position       = world_mat * Vec4(-0.5f, -0.5f, 0.0f, 1.0f),
     .color          = color,
     .texture_coords = Vec2(0.0f),
+    .shape_side     = shape_side,
   };
   batch->vertices.push_back(v1);
 
   // Top-right
-  Vertex3D_PCUV v2 = {
-    .position       = world_mat * Vec4( 0.5f, -0.5f, sides, 1.0f),
+  Vertex2D v2 = {
+    .position       = world_mat * Vec4( 0.5f, -0.5f, 0.0f, 1.0f),
     .color          = color,
     .texture_coords = Vec2(1.0f, 0.0f),
+    .shape_side     = shape_side,
   };
   batch->vertices.push_back(v2);
 
   // Bottom-right
-  Vertex3D_PCUV v3 = {
-    .position       = world_mat * Vec4( 0.5f,  0.5f, sides, 1.0f),
+  Vertex2D v3 = {
+    .position       = world_mat * Vec4( 0.5f,  0.5f, 0.0f, 1.0f),
     .color          = color,
     .texture_coords = Vec2(1.0f),
+    .shape_side     = shape_side,
   };
   batch->vertices.push_back(v3);
   batch->vertices.push_back(v3);
 
   // Bottom-left
-  Vertex3D_PCUV v4 = {
-    .position       = world_mat * Vec4(-0.5f,  0.5f, sides, 1.0f),
+  Vertex2D v4 = {
+    .position       = world_mat * Vec4(-0.5f,  0.5f, 0.0f, 1.0f),
     .color          = color,
     .texture_coords = Vec2(0.0f, 1.0),
+    .shape_side     = shape_side,
   };
   batch->vertices.push_back(v4);
   batch->vertices.push_back(v1);
@@ -173,7 +186,7 @@ static void flush_batch(BatchCall& batch, GfxShader* shader) {
   // Update the vertex buffer
   gfx_buffer_update(s_batch.pipe_desc.vertex_buffer, 
                     0, 
-                    sizeof(Vertex3D_PCUV) * batch.vertices.size(), 
+                    sizeof(Vertex2D) * batch.vertices.size(), 
                     batch.vertices.data());
 
   // Render the batch
@@ -200,33 +213,25 @@ void batch_renderer_init() {
   // Pipeline init
   init_pipeline(); 
 
-  // Texture init 
-  init_default_texture();
-
-  // Shaders init
-  init_default_shaders();
+  // Defaults init
+  init_defaults();
 
   // Default batch init
-  s_batch.batches[SHAPE_TYPE_QUAD].reserve(32);
+  s_batch.batches.reserve(32);
   BatchCall default_batch = {
     .vertices_count = 0, 
     .texture        = s_batch.white_texture, 
   };
- 
-  s_batch.batches[SHAPE_TYPE_QUAD].push_back(default_batch);
-  s_batch.batches[SHAPE_TYPE_CIRCLE].push_back(default_batch);
-  s_batch.batches[SHAPE_TYPE_POLYGON].push_back(default_batch);
+  s_batch.batches.push_back(default_batch);
 
   NIKOLA_LOG_INFO("Successfully initialized the batch renderer");
 }
 
 void batch_renderer_shutdown() {
   gfx_pipeline_destroy(s_batch.pipeline);
-
-  for(sizei i = 0; i < SHAPE_TYPES_MAX; i++) {
-    gfx_shader_destroy(s_batch.shaders[i]);
-    s_batch.batches[i].clear();
-  }
+  gfx_shader_destroy(s_batch.shader);
+  
+  s_batch.batches.clear();
   
   NIKOLA_LOG_INFO("Batch renderer was successfully shutdown");
 }
@@ -241,19 +246,9 @@ void batch_renderer_begin() {
 }
 
 void batch_renderer_end() {
-  // Render all of the quads 
-  for(auto& batch : s_batch.batches[SHAPE_TYPE_QUAD]) {
-    flush_batch(batch, s_batch.shaders[SHAPE_TYPE_QUAD]);
-  }
-  
-  // Render all of the circles 
-  for(auto& batch : s_batch.batches[SHAPE_TYPE_CIRCLE]) {
-    flush_batch(batch, s_batch.shaders[SHAPE_TYPE_CIRCLE]);
-  }
-  
-  // Render all of the polygons 
-  for(auto& batch : s_batch.batches[SHAPE_TYPE_POLYGON]) {
-    flush_batch(batch, s_batch.shaders[SHAPE_TYPE_POLYGON]);
+  // Render all of the batches 
+  for(auto& batch : s_batch.batches) {
+    flush_batch(batch, s_batch.shader);
   }
 }
 
@@ -266,61 +261,60 @@ void batch_render_texture(GfxTexture* texture, const Vec2& position, const Vec2&
       .vertices_count = 0, 
       .texture        = texture,
     };
-    s_batch.batches[SHAPE_TYPE_QUAD].push_back(new_batch);
+    s_batch.batches.push_back(new_batch);
   }
 
   // Retrieve the texture index from the cache
   i32 index        = s_batch.textures_cache[texture];
-  BatchCall* batch = &s_batch.batches[SHAPE_TYPE_QUAD][index]; 
+  BatchCall* batch = &s_batch.batches[index]; 
 
   // We cannot render more than the maximum number of vertices
   if(batch->vertices_count >= MAX_VERTICES) {
-    flush_batch(*batch, s_batch.shaders[SHAPE_TYPE_QUAD]);
+    flush_batch(*batch, s_batch.shader);
   }
   
   // Generate vertices of a quad 
-  generate_quad_batch(batch, position, size, tint, 4.0f);
+  generate_quad_batch(batch, position, size, tint, Vec2(SHAPE_TYPE_QUAD, 4.0f));
 }
 
 
 void batch_render_quad(const Vec2& position, const Vec2& size, const Vec4& color) {
   // Retrieve the texture index from the cache
-  BatchCall* batch = &s_batch.batches[SHAPE_TYPE_QUAD][0]; 
+  BatchCall* batch = &s_batch.batches[0]; 
 
   // We cannot render more than the maximum number of vertices
   if(batch->vertices_count >= MAX_VERTICES) {
-    flush_batch(*batch, s_batch.shaders[SHAPE_TYPE_QUAD]);
+    flush_batch(*batch, s_batch.shader);
   }
   
   // Generate vertices of a quad 
-  generate_quad_batch(batch, position, size, color, 4.0f);
+  generate_quad_batch(batch, position, size, color, Vec2(SHAPE_TYPE_QUAD, 4.0f));
 }
 
 void batch_render_circle(const Vec2& center, const f32 radius, const Vec4& color) {
   // Retrieve the texture index from the cache
-  BatchCall* batch = &s_batch.batches[SHAPE_TYPE_CIRCLE][0]; 
+  BatchCall* batch = &s_batch.batches[0]; 
 
   // We cannot render more than the maximum number of vertices
   if(batch->vertices_count >= MAX_VERTICES) {
-    flush_batch(*batch, s_batch.shaders[SHAPE_TYPE_CIRCLE]);
+    flush_batch(*batch, s_batch.shader);
   }
   
   // Generate vertices of a quad 
-  generate_quad_batch(batch, center, Vec2(radius), color, 0.0f);
+  generate_quad_batch(batch, center, Vec2(radius), color, Vec2(SHAPE_TYPE_CIRCLE, 0.0f));
 }
 
 void batch_render_polygon(const Vec2& center, const f32 radius, const u32 sides, const Vec4& color) {
   // Retrieve the texture index from the cache
-  BatchCall* batch = &s_batch.batches[SHAPE_TYPE_POLYGON][0]; 
+  BatchCall* batch = &s_batch.batches[0]; 
 
   // We cannot render more than the maximum number of vertices
   if(batch->vertices_count >= MAX_VERTICES) {
-    flush_batch(*batch, s_batch.shaders[SHAPE_TYPE_POLYGON]);
+    flush_batch(*batch, s_batch.shader);
   }
   
   // Generate vertices of a quad 
-  NIKOLA_LOG_TRACE("SIDES = %f", (f32)sides);
-  generate_quad_batch(batch, center, Vec2(radius), color, (f32)sides);
+  generate_quad_batch(batch, center, Vec2(radius), color, Vec2(SHAPE_TYPE_POLYGON, (f32)sides));
 }
 
 /// Batch renderer functions

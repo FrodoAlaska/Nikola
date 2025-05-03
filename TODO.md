@@ -64,9 +64,9 @@
     - [x] Include more engine-specific types that can be edited, including resources.
     - [x] Add a "render gui" callback to the applications.
     - [x] Documentation (for `nikola_ui.h` and `nikola_file.h`)
-[] 14. 2D Renderer v0.2
+[x] 14. 2D Renderer v0.2
     - [x] Decide whether to keep the 2D renderer seperate or part of the 3D renderer 
-    - [] Basic 2D shapes like, lines, triangles, quads, circles, and textured quads.
+    - [x] Basic 2D shapes like, lines, triangles, quads, circles, and textured quads.
 [] 15. Fonts v0.1 
     - [] Convert font formats into the internal `nbrfont` format. 
     - [] Add fonts to the resource manager 

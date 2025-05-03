@@ -61,7 +61,7 @@ static Renderer s_renderer{};
 static void init_context(Window* window) { 
   GfxContextDesc gfx_desc = {
     .window       = window,
-    .states       = GFX_STATE_DEPTH | GFX_STATE_STENCIL,
+    .states       = GFX_STATE_DEPTH | GFX_STATE_STENCIL | GFX_STATE_BLEND,
   };
   
   s_renderer.context = gfx_context_init(gfx_desc);

@@ -166,7 +166,7 @@ void app_render_gui(nikola::App* app) {
                "None\0Greyscale\0Inversion\0Sharpen\0Blur\0Emboss\0Edge Detection\0Pixelize\0");  
   ImGui::DragInt("Pixel Rate", &app->pixel_rate, 1.0f, 0, 64);
   ImGui::DragFloat("Radius", &radius, 1.0f, 0.0f, nikola::FLOAT_MAX);
-  ImGui::DragInt("Sides", &sides, 1.0f, 0, 128);
+  ImGui::SliderInt("Sides", &sides, 0, 128);
   nikola::gui_end_panel();
 
   // Debug
