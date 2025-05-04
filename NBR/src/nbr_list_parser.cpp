@@ -70,6 +70,9 @@ static nikola::ResourceType get_type_from_section(const nikola::String& section)
   else if(section == "MODEL" || section == "model") {
     return nikola::RESOURCE_TYPE_MODEL;
   }
+  else if(section == "FONT" || section == "font") {
+    return nikola::RESOURCE_TYPE_FONT;
+  }
 
   NIKOLA_LOG_ERROR("Invalid resource type \'%s\'", section.c_str());
   return (nikola::ResourceType)-1;

@@ -145,6 +145,9 @@ static ResourceType get_resource_extension_type(const FilePath& path) {
   else if(ext == ".nbrmodel") {
     return RESOURCE_TYPE_MODEL;
   }
+  else if(ext == ".nbrfont") {
+    return RESOURCE_TYPE_FONT;
+  }
 }
 
 static void reload_texture(NBRFile& file, const ResourceID& id) {
@@ -242,14 +245,13 @@ static void resource_entry_iterate(const FilePath& base, FilePath& path, void* u
       group->named_ids[filename] = resources_push_cubemap(group->id, path);
       break;
     case RESOURCE_TYPE_SHADER:
-      NIKOLA_LOG_TRACE("HERE %s", path.c_str());
       group->named_ids[filename] = resources_push_shader(group->id, path);
-      NIKOLA_LOG_TRACE("HERE %s", path.c_str());
       break;
     case RESOURCE_TYPE_MODEL:
       group->named_ids[filename] = resources_push_model(group->id, path);
       break;
     case RESOURCE_TYPE_FONT:
+      group->named_ids[filename] = resources_push_font(group->id, path);
       break;
     default:
       NIKOLA_LOG_ERROR("Invalid resource type \'%s\'", path.c_str());
@@ -711,6 +713,42 @@ ResourceID resources_push_model(const u16 group_id, const FilePath& nbr_path) {
   return id;
 }
 
+ResourceID resources_push_font(const u16 group_id, const FilePath& nbr_path) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
+  
+  // Load the NBR file
+  NBRFile nbr;
+  nbr_file_load(&nbr, filepath_append(group->parent_dir, nbr_path));
+
+  // Allocate the model
+  Font* font = new Font{};
+  
+  // Convert the NBR format to a valid model
+  NBRFont* nbr_font = (NBRFont*)nbr.body_data; 
+  nbr_import_font(nbr_font, group_id, font);
+
+  // New font added!
+  ResourceID id;
+  PUSH_RESOURCE(group, fonts, font, RESOURCE_TYPE_FONT, id);
+
+  // Remember to close the NBR
+  nbr_file_unload(nbr);
+
+  // Add the resource to the named resources
+  FilePath filename_without_ext = filepath_filename(nbr_path);
+  filepath_set_extension(filename_without_ext, "");
+  group->named_ids[filename_without_ext] = id;
+
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed font:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Glyphs   = %zu", font->glyphs.size());
+  NIKOLA_LOG_DEBUG("     Ascent   = %0.3f", font->ascent);
+  NIKOLA_LOG_DEBUG("     Descent  = %0.3f", font->descent);
+  NIKOLA_LOG_DEBUG("     Line gap = %0.3f", font->line_gap);
+  NIKOLA_LOG_DEBUG("     Path     = %s", nbr_path.c_str());
+  return id;
+}
+
 void resources_push_dir(const u16 group_id, const FilePath& dir) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
@@ -780,9 +818,6 @@ Model* resources_get_model(const ResourceID& id) {
 Font* resources_get_font(const ResourceID& id) {
   ResourceGroup* group = &s_manager.groups[id.group];
   return get_resource(id, group->fonts, RESOURCE_TYPE_FONT);
-}
-
-void resources_erase_by_id(const ResourceID& id) {
 }
 
 /// Resource manager functions

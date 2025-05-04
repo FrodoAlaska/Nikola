@@ -68,10 +68,11 @@
     - [x] Decide whether to keep the 2D renderer seperate or part of the 3D renderer 
     - [x] Basic 2D shapes like, lines, triangles, quads, circles, and textured quads.
 [] 15. Fonts v0.1 
-    - [] Convert font formats into the internal `nbrfont` format. 
-    - [] Add fonts to the resource manager 
+    - [x] Convert font formats into the internal `nbrfont` format. 
+    - [x] Add fonts to the resource manager 
     - [] Font rendering
-    - [] Documentation.
+    - [] Don't forget to add `glPixelStori` somewhere 
+    - [] Documentation (`batch_renderer`, `nbr_font`, `font resources`).
 [] 16. UI v0.1
     - [] A canvas system for 2D game UI.
     - [] A menu system

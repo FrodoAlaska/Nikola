@@ -143,6 +143,43 @@ static void write_model(NBRFile& nbr, const NBRModel& model) {
   }
 }
 
+static void write_font(NBRFile& nbr, const NBRFont& font) {
+  // Save the glyphs 
+  file_write_bytes(nbr.file_handle, &font.glyphs_count, sizeof(font.glyphs_count));
+  for(u32 i = 0; i < font.glyphs_count; i++) {
+    // Save the unicode
+    file_write_bytes(nbr.file_handle, &font.glyphs[i].unicode, sizeof(i8));
+  
+    // Save the size
+    file_write_bytes(nbr.file_handle, &font.glyphs[i].width, sizeof(u16));
+    file_write_bytes(nbr.file_handle, &font.glyphs[i].height, sizeof(u16));
+
+    // Save the bounds
+    file_write_bytes(nbr.file_handle, &font.glyphs[i].left, sizeof(u16));
+    file_write_bytes(nbr.file_handle, &font.glyphs[i].right, sizeof(u16));
+    file_write_bytes(nbr.file_handle, &font.glyphs[i].top, sizeof(u16));
+    file_write_bytes(nbr.file_handle, &font.glyphs[i].bottom, sizeof(u16));
+
+    // Save the offsets
+    file_write_bytes(nbr.file_handle, &font.glyphs[i].offset_x, sizeof(i16));
+    file_write_bytes(nbr.file_handle, &font.glyphs[i].offset_y, sizeof(i16));
+    
+    // Save glyph information
+    file_write_bytes(nbr.file_handle, &font.glyphs[i].advance_x, sizeof(i16));
+    file_write_bytes(nbr.file_handle, &font.glyphs[i].kern, sizeof(i16));
+    file_write_bytes(nbr.file_handle, &font.glyphs[i].left_bearing, sizeof(i16));
+  
+    // Save the pixels
+    sizei pixels_size = font.glyphs[i].width * font.glyphs[i].height;
+    file_write_bytes(nbr.file_handle, font.glyphs[i].pixels, pixels_size);
+  }
+
+  // Save font information
+  file_write_bytes(nbr.file_handle, &font.ascent, sizeof(font.ascent));
+  file_write_bytes(nbr.file_handle, &font.descent, sizeof(font.descent));
+  file_write_bytes(nbr.file_handle, &font.line_gap, sizeof(font.line_gap));
+}
+
 static void read_texture(NBRFile& nbr, NBRTexture* texture) {
   // Load the width and height 
   file_read_bytes(nbr.file_handle, &texture->width, sizeof(texture->width));  
@@ -153,7 +190,7 @@ static void read_texture(NBRFile& nbr, NBRTexture* texture) {
 
   // Load the pixels
   sizei data_size = (texture->width * texture->height) * texture->channels;
-  texture->pixels  = memory_allocate(data_size);
+  texture->pixels = memory_allocate(data_size);
   file_read_bytes(nbr.file_handle, texture->pixels, data_size);
 }
 
@@ -252,6 +289,47 @@ static void read_model(NBRFile& nbr, NBRModel* model) {
   }
 }
 
+static void read_font(NBRFile& nbr, NBRFont* font) {
+  // Load the glyphs 
+  file_read_bytes(nbr.file_handle, &font->glyphs_count, sizeof(font->glyphs_count));
+  font->glyphs = (NBRGlyph*)memory_allocate(sizeof(NBRGlyph) * font->glyphs_count);
+
+  for(u32 i = 0; i < font->glyphs_count; i++) {
+    // Load the unicode
+    file_read_bytes(nbr.file_handle, &font->glyphs[i].unicode, sizeof(i8));
+  
+    // Load the size
+    file_read_bytes(nbr.file_handle, &font->glyphs[i].width, sizeof(u16));
+    file_read_bytes(nbr.file_handle, &font->glyphs[i].height, sizeof(u16));
+
+    // Load the bounds
+    file_read_bytes(nbr.file_handle, &font->glyphs[i].left, sizeof(u16));
+    file_read_bytes(nbr.file_handle, &font->glyphs[i].right, sizeof(u16));
+    file_read_bytes(nbr.file_handle, &font->glyphs[i].top, sizeof(u16));
+    file_read_bytes(nbr.file_handle, &font->glyphs[i].bottom, sizeof(u16));
+
+    // Load the offsets
+    file_read_bytes(nbr.file_handle, &font->glyphs[i].offset_x, sizeof(i16));
+    file_read_bytes(nbr.file_handle, &font->glyphs[i].offset_y, sizeof(i16));
+    
+    // Load glyph information
+    file_read_bytes(nbr.file_handle, &font->glyphs[i].advance_x, sizeof(i16));
+    file_read_bytes(nbr.file_handle, &font->glyphs[i].kern, sizeof(i16));
+    file_read_bytes(nbr.file_handle, &font->glyphs[i].left_bearing, sizeof(i16));
+  
+    // Load the pixels
+    sizei pixels_size      = font->glyphs[i].width * font->glyphs[i].height;
+    font->glyphs[i].pixels = (u8*)memory_allocate(pixels_size); 
+
+    file_read_bytes(nbr.file_handle, font->glyphs[i].pixels, pixels_size);
+  }
+
+  // Load font information
+  file_read_bytes(nbr.file_handle, &font->ascent, sizeof(font->ascent));
+  file_read_bytes(nbr.file_handle, &font->descent, sizeof(font->descent));
+  file_read_bytes(nbr.file_handle, &font->line_gap, sizeof(font->line_gap));
+}
+
 static void load_texture(NBRFile& nbr) {
   // Read the resource from the file 
   NBRTexture texture; 
@@ -292,6 +370,16 @@ static void load_model(NBRFile& nbr) {
   memory_copy(nbr.body_data, &model, sizeof(model)); 
 }
 
+static void load_font(NBRFile& nbr) {
+  // Read the resource from the file 
+  NBRFont font; 
+  read_font(nbr, &font);
+
+  // Allocate some space for the resource and assign it
+  nbr.body_data = memory_allocate(sizeof(font));
+  memory_copy(nbr.body_data, &font, sizeof(font)); 
+}
+
 static void unload_texture(NBRFile& nbr) {
   NBRTexture* tex = (NBRTexture*)nbr.body_data;
   memory_free(tex->pixels);
@@ -329,6 +417,16 @@ static void unload_model(NBRFile& nbr) {
   memory_free(model->textures);
 }
 
+static void unload_font(NBRFile& nbr) {
+  NBRFont* font = (NBRFont*)nbr.body_data;
+
+  for(u32 i = 0; i < font->glyphs_count; i++) {
+    memory_free(font->glyphs[i].pixels);
+  }
+
+  memory_free(font->glyphs);
+}
+
 static void load_by_type(NBRFile& nbr, const FilePath& path) {
   switch(nbr.resource_type) {
     case RESOURCE_TYPE_TEXTURE:
@@ -344,6 +442,7 @@ static void load_by_type(NBRFile& nbr, const FilePath& path) {
       load_model(nbr);
       break;
     case RESOURCE_TYPE_FONT:
+      load_font(nbr);
       break;
     default:
       NIKOLA_LOG_ERROR("Cannot load specified resource type at NBR file \'%s\'", path.c_str());
@@ -366,6 +465,7 @@ static void unload_by_type(NBRFile& nbr) {
       unload_model(nbr);
       break;
     case RESOURCE_TYPE_FONT:
+      unload_font(nbr);
       break;
     default:
       break;
@@ -538,6 +638,27 @@ void nbr_file_save(NBRFile& nbr, const NBRModel& model, const FilePath& path) {
 
   // Write the model 
   write_model(nbr, model);
+
+  // Always remember to close the file
+  file_close(nbr.file_handle);
+}
+
+void nbr_file_save(NBRFile& nbr, const NBRFont& font, const FilePath& path) {
+  // Make sure to set the correct extension
+  FilePath nbr_path = path;
+  filepath_set_extension(nbr_path, "nbrfont");
+
+  // Must open the file
+  if(!open_for_save(nbr, nbr_path)) {
+    return;
+  }
+
+  // Save the header first
+  nbr.resource_type = (i16)RESOURCE_TYPE_FONT; 
+  save_header(nbr);
+
+  // Write the font 
+  write_font(nbr, font);
 
   // Always remember to close the file
   file_close(nbr.file_handle);

@@ -103,6 +103,12 @@ NIKOLA_API FilePath filesystem_current_path();
 /// Check if the file at `path` exists.
 NIKOLA_API bool filesystem_exists(const FilePath& path);
 
+/// Return the size in bytes of the file found at `path`. 
+NIKOLA_API sizei filesystem_get_size(const FilePath& path);
+
+/// Returns `true` if the file at `path` is completely empty. Otherwise, the functions returns `false`.
+NIKOLA_API bool filesystem_is_empty(const FilePath& path);
+
 /// Filesystem functions
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -269,12 +275,6 @@ NIKOLA_API const sizei file_tell_write(File& file);
 
 /// Return the current position of the read pointer in `file`.
 NIKOLA_API const sizei file_tell_read(File& file);
-
-/// Return the current size in bytes of `file`.
-NIKOLA_API const sizei file_get_size(File& file);
-
-/// Return `true` if `file` is currently empty and `false` otherwise.
-NIKOLA_API bool file_is_empty(File& file);
 
 /// Write `buff` with `size` in bytes into `file` 
 /// and return the amount of bytes written.

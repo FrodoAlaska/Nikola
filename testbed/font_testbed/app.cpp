@@ -61,6 +61,9 @@ static void init_resources(nikola::App* app) {
 
   // Textures init
   app->texture = nikola::resources_push_texture(app->res_group, "textures/frodo.nbrtexture");
+
+  // Fonts init
+  nikola::resources_push_font(app->res_group, "fonts/bit5x3.nbrfont");
 }
 
 /// Private functions 

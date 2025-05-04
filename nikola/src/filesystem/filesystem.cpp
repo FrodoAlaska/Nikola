@@ -32,6 +32,14 @@ bool filesystem_exists(const FilePath& path) {
   return std::filesystem::exists(path);
 }
 
+sizei filesystem_get_size(const FilePath& path) {
+  return std::filesystem::file_size(path);
+}
+
+bool filesystem_is_empty(const FilePath& path) {
+  return filesystem_get_size(path) <= 0;
+}
+
 /// Filesystem functions
 ///---------------------------------------------------------------------------------------------------------------------
 

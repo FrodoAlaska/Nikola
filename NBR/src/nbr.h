@@ -43,6 +43,16 @@ void model_loader_unload(nikola::NBRModel& model);
 /// Model loader functions
 /// ----------------------------------------------------------------------
 
+/// ----------------------------------------------------------------------
+/// Font loader functions
+
+bool font_loader_load(nikola::NBRFont* font, const nikola::FilePath& path);
+
+void font_loader_unload(nikola::NBRFont& font);
+
+/// Font loader functions
+/// ----------------------------------------------------------------------
+
 /// *** Loaders ***
 /// ---------------------------------------------------------------------------------------------------------
 

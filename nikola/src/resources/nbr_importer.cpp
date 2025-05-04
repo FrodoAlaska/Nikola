@@ -155,6 +155,37 @@ void nbr_import_model(NBRModel* nbr, const u16 group_id, Model* model) {
   }
 }
 
+void nbr_import_font(NBRFont* nbr, const u16 group_id, Font* font) {
+  NIKOLA_ASSERT(nbr, "Invalid NBRFont while importing");
+  NIKOLA_ASSERT(font, "Invalid Font while importing");
+
+  // Import the font information
+  font->glyphs.resize(nbr->glyphs_count); 
+  font->ascent   = (f32)nbr->ascent;
+  font->descent  = (f32)nbr->descent;
+  font->line_gap = (f32)nbr->line_gap;
+
+  // Import the glyphs 
+  for(sizei i = 0; i < font->glyphs.size(); i++) {
+    font->glyphs[i].unicode = nbr->glyphs[i].unicode;
+
+    font->glyphs[i].size.x = nbr->glyphs[i].width;
+    font->glyphs[i].size.y = nbr->glyphs[i].height;
+    
+    font->glyphs[i].offset.x = nbr->glyphs[i].offset_x;
+    font->glyphs[i].offset.y = nbr->glyphs[i].offset_y;
+    
+    font->glyphs[i].left   = nbr->glyphs[i].left;
+    font->glyphs[i].top    = nbr->glyphs[i].top;
+    font->glyphs[i].right  = nbr->glyphs[i].right;
+    font->glyphs[i].bottom = nbr->glyphs[i].bottom;
+    
+    font->glyphs[i].advance_x    = nbr->glyphs[i].advance_x;
+    font->glyphs[i].kern         = nbr->glyphs[i].kern;
+    font->glyphs[i].left_bearing = nbr->glyphs[i].left_bearing;
+  }
+}
+
 /// NBR importer functions
 ///---------------------------------------------------------------------------------------------------------------------
 

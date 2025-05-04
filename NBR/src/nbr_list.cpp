@@ -99,6 +99,24 @@ static bool convert_model(nikola::FilePath& in_path, nikola::FilePath& save_path
   return true;
 }
 
+static bool convert_font(nikola::FilePath& in_path, nikola::FilePath& save_path) {
+  nikola::NBRFont font; 
+  nikola::NBRFile nbr; 
+
+  if(!font_loader_load(&font, in_path)) {
+    return false;
+  }
+
+  // Save the font
+  nikola::nbr_file_save(nbr, font, nikola::filepath_append(save_path, nikola::filepath_filename(in_path)));
+
+  // Unload the font
+  font_loader_unload(font);
+  
+  NIKOLA_LOG_INFO("[NBR]: Converted font \'%s\' to \'%s\'...", in_path.c_str(), nbr.path.c_str());
+  return true;
+}
+
 static void convert_by_type(ListSection* section, nikola::FilePath& path) {
   switch(section->type) {
     case nikola::RESOURCE_TYPE_TEXTURE:
@@ -112,6 +130,9 @@ static void convert_by_type(ListSection* section, nikola::FilePath& path) {
       break;
     case nikola::RESOURCE_TYPE_MODEL:
       convert_model(path, section->out_dir);
+      break;
+    case nikola::RESOURCE_TYPE_FONT:
+      convert_font(path, section->out_dir);
       break;
   }
 }

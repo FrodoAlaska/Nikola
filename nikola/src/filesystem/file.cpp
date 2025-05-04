@@ -97,22 +97,6 @@ const sizei file_tell_read(File& file) {
   return file.tellg();
 }
 
-const sizei file_get_size(File& file) {
-  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
-  
-  file_seek_read(file, std::ios::end);
-  sizei size = file_tell_read(file);
-  file_seek_read(file, std::ios::beg);
-
-  return size;
-}
-
-bool file_is_empty(File& file) {
-  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
-  
-  return file_get_size(file) <= 0;
-}
-
 const sizei file_write_bytes(File& file, const void* buff, const sizei buff_size) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
   

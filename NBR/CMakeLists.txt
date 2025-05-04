@@ -38,6 +38,7 @@ set(NBR_SOURCES
   ${NBR_SRC_DIR}/image_loader.cpp
   ${NBR_SRC_DIR}/shader_loader.cpp
   ${NBR_SRC_DIR}/model_loader.cpp
+  ${NBR_SRC_DIR}/font_loader.cpp
 )
 ############################################################
 
@@ -45,6 +46,7 @@ set(NBR_SOURCES
 ############################################################
 set(LIBS_SOURCES 
   ${NBR_LIBS_DIR}/stb/stb_image.cpp
+  ${NBR_LIBS_DIR}/stb/stb_truetype.cpp
 )
 ############################################################
 

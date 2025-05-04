@@ -154,10 +154,37 @@ struct NBRModel {
   /// The total number of textures in `textures`.
   u8 textures_count;
 
-  /// An array of `NBRTexture`.
+  /// An array of all the possible textures.
   NBRTexture* textures;
 };
 /// NBRModel 
+///---------------------------------------------------------------------------------------------------------------------
+  
+///---------------------------------------------------------------------------------------------------------------------
+/// NBRGlyph
+struct NBRGlyph {
+  i8 unicode; 
+
+  u16 width, height; 
+  u16 left, right, top, bottom;
+
+  i16 offset_x, offset_y; 
+  i16 advance_x, kern, left_bearing;
+
+  u8* pixels; 
+};
+/// NBRGlyph
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// NBRFont
+struct NBRFont {
+  u32 glyphs_count;
+  NBRGlyph* glyphs;
+
+  i16 ascent, descent, line_gap;
+};
+/// NBRFont
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -210,6 +237,9 @@ NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FileP
 
 /// Save the given `model` at `path` using `nbr`'s information.
 NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRModel& model, const FilePath& path);
+
+/// Save the given `font` at `path` using `nbr`'s information.
+NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRFont& font, const FilePath& path);
 
 /// NBR file functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -422,17 +452,14 @@ struct Font {
     i8 unicode; 
     ResourceID texture = {};
 
-    u32 width, height;
+    Vec2 size;
+    Vec2 offset;
+    
     u32 left, right, top, bottom;
-
-    i32 offset_x, offset_y;
     i32 advance_x, kern, left_bearing;
   };
 
-  f32 base_size;
   f32 ascent, descent, line_gap;
-  f32 glyph_padding;
-
   DynamicArray<Glyph> glyphs;
 };
 /// Font 
@@ -519,6 +546,9 @@ NIKOLA_API void nbr_import_material(NBRMaterial* nbr, const u16 group_id, Materi
 
 /// Convert the `nbr` model into a `Model`, using the `group_id`.
 NIKOLA_API void nbr_import_model(NBRModel* nbr, const u16 group_id, Model* model);
+
+/// Convert the `nbr` font into a `Font`, using the `group_id`.
+NIKOLA_API void nbr_import_font(NBRFont* nbr, const u16 group_id, Font* font);
 
 /// NBR importer functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -617,6 +647,10 @@ NIKOLA_API ResourceID resources_push_skybox(const u16 group_id, const ResourceID
 /// Allocate a new `Model` using the `NBRModel` retrieved from the `nbr_path`, 
 /// store it in `group_id`, and return a `ResourceID` to identify it.
 NIKOLA_API ResourceID resources_push_model(const u16 group_id, const FilePath& nbr_path);
+
+/// Allocate a new `Font` using the `NBRFont` retrieved from the `nbr_path`, 
+/// store it in `group_id`, and return a `ResourceID` to identify it.
+NIKOLA_API ResourceID resources_push_font(const u16 group_id, const FilePath& nbr_path);
 
 /// Retrieve all of the valid resources from `dir` and store the resulting entries in an
 /// internal list (where the key is the file name of the resource and the value is its ID) 
