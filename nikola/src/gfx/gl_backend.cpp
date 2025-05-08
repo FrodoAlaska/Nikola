@@ -359,7 +359,7 @@ static void set_blend_state(GfxContext* gfx) {
   GLenum dst_alpha = get_gl_blend_mode(gfx->desc.blend_desc.dest_alpha_blend);
 
   f32* factor = gfx->desc.blend_desc.blend_factor;
-
+  
   glBlendFuncSeparate(src_color, dst_color, src_alpha, dst_alpha);
   glBlendColor(factor[0], factor[1], factor[2], factor[3]);
 }
@@ -375,8 +375,8 @@ static void set_cull_state(GfxContext* gfx) {
 static void set_gfx_states(GfxContext* gfx) {
   set_depth_state(gfx);
   set_stencil_state(gfx);
-  set_blend_state(gfx);
   set_cull_state(gfx);
+  set_blend_state(gfx);
 
   if(IS_BIT_SET(gfx->states, GFX_STATE_DEPTH)) {
     set_state(gfx, GFX_STATE_DEPTH, true);   
@@ -859,6 +859,36 @@ static GLenum create_gl_texture(const GfxTextureType type) {
   } 
 
   return id;
+}
+
+static void set_texture_pixel_align(const GfxTextureFormat format) {
+  switch(format) {
+    case GFX_TEXTURE_FORMAT_R8:
+    case GFX_TEXTURE_FORMAT_R16:
+    case GFX_TEXTURE_FORMAT_R16F:
+    case GFX_TEXTURE_FORMAT_R32F:
+      glPixelStorei(GL_PACK_ALIGNMENT, 1);
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+      break;
+    case GFX_TEXTURE_FORMAT_RG8:
+    case GFX_TEXTURE_FORMAT_RG16:
+    case GFX_TEXTURE_FORMAT_RG16F:
+    case GFX_TEXTURE_FORMAT_RG32F:
+      glPixelStorei(GL_PACK_ALIGNMENT, 2);
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 2);
+      break;
+    case GFX_TEXTURE_FORMAT_RGBA8:
+    case GFX_TEXTURE_FORMAT_RGBA16:
+    case GFX_TEXTURE_FORMAT_RGBA16F:
+    case GFX_TEXTURE_FORMAT_RGBA32F:
+      glPixelStorei(GL_PACK_ALIGNMENT, 4);
+      glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+      break;
+    case GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8:
+      break;
+    default:
+      break;
+  }
 }
 
 static void update_gl_texture_pixels(GfxTexture* texture, GLenum gl_format, GLenum gl_pixel_type) {
@@ -1375,6 +1405,9 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
   glTextureParameteri(texture->id, GL_TEXTURE_MIN_FILTER, min_filter);
   glTextureParameteri(texture->id, GL_TEXTURE_MAG_FILTER, mag_filter);
+
+  // Setting the pixel store alignment
+  set_texture_pixel_align(desc.format);
 
   // Filling the texture with the data based on its type
   update_gl_texture_storage(texture, in_format);

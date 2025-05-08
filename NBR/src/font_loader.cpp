@@ -43,13 +43,14 @@ static nikola::f32 load_font_information(nikola::NBRFont* font, stbtt_fontinfo* 
   stbtt_GetFontVMetrics(info, &ascent, &descent, &line_gap);
   
   // "Scaling" the values given in order to use them correctly later
-  font->ascent  = ascent * scale_factor;
-  font->descent = descent * scale_factor;
+  font->ascent   = ascent * scale_factor;
+  font->descent  = descent * scale_factor;
+  font->line_gap = line_gap * scale_factor; 
 
   return scale_factor;
 }
 
-static void load_glyphs_data(nikola::NBRFont* font, const nikola::f32 scale_factor, stbtt_fontinfo* info) {
+static void load_glyphs_data(nikola::HashMap<char, nikola::NBRGlyph>* font_glyphs, const nikola::f32 scale_factor, stbtt_fontinfo* info) {
   for(nikola::u32 i = 0; i < info->numGlyphs; i++) { 
     nikola::NBRGlyph glyph;
     glyph.unicode = i + 32;
@@ -71,6 +72,11 @@ static void load_glyphs_data(nikola::NBRFont* font, const nikola::f32 scale_fact
                                         &height, 
                                         &offset_x, 
                                         &offset_y);
+    
+    glyph.width    = width;
+    glyph.height   = height;
+    glyph.offset_x = offset_x;
+    glyph.offset_y = offset_y;
 
     // Get the bounding box of the glyph
     nikola::i32 left, top, right, bottom; 
@@ -83,11 +89,6 @@ static void load_glyphs_data(nikola::NBRFont* font, const nikola::f32 scale_fact
                             &right, 
                             &bottom);
    
-    glyph.width    = width;
-    glyph.height   = height;
-    glyph.offset_x = offset_x;
-    glyph.offset_y = offset_y;
-    
     glyph.left   = left;
     glyph.top    = top;
     glyph.right  = right;
@@ -98,9 +99,9 @@ static void load_glyphs_data(nikola::NBRFont* font, const nikola::f32 scale_fact
     nikola::i32 advance, left_side_bearing;
     stbtt_GetGlyphHMetrics(info, glyph_index, &advance, &left_side_bearing);
   
-    glyph.left_bearing = left_side_bearing;
+    glyph.left_bearing = left_side_bearing * scale_factor;
     glyph.advance_x    = advance * scale_factor;
-
+    
     // Getting the kern of the glyph. The kern is used to make some specific glyphs look better 
     // when next to each other.
     // @TODO (Font loader): Probably shouldn't have the `glyph_index + 1` here???
@@ -108,8 +109,7 @@ static void load_glyphs_data(nikola::NBRFont* font, const nikola::f32 scale_fact
     glyph.kern *= scale_factor;
 
     // A valid glyph that was loaded 
-    font->glyphs_count++; 
-    font->glyphs[i] = glyph;
+    font_glyphs->emplace(glyph.unicode, glyph);
   }
 }
 
@@ -137,9 +137,18 @@ bool font_loader_load(nikola::NBRFont* font, const nikola::FilePath& path) {
   nikola::f32 scale_factor = load_font_information(font, &info);
 
   // Load all the data of the glyphs
-  font->glyphs_count = 0;
-  font->glyphs       = (nikola::NBRGlyph*)nikola::memory_allocate(sizeof(nikola::NBRGlyph) * info.numGlyphs);
-  load_glyphs_data(font, scale_factor, &info);
+  nikola::HashMap<char, nikola::NBRGlyph> glyphs;
+  load_glyphs_data(&glyphs, scale_factor, &info);
+ 
+  // Apply the glyphs map onto the map
+  font->glyphs_count = (nikola::u32)glyphs.size();
+  font->glyphs       = (nikola::NBRGlyph*)nikola::memory_allocate(sizeof(nikola::NBRGlyph) * font->glyphs_count);
+  
+  nikola::u32 index = 0;
+  for(auto& [key, value] : glyphs) {
+    font->glyphs[index] = value;
+    index++;
+  }
 
   nikola::memory_free(font_data);
   return true;

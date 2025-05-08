@@ -13,11 +13,20 @@ struct nikola::App {
   nikola::ResourceID post_shader_context_id;
   nikola::ResourceID texture;
 
+  // @NOTE: This is dangerous. DON'T do it! I'm doing it just because I'm lazy
+  nikola::Font* font;
+
   nikola::Vec2 screen_size  = nikola::Vec2(0.0f);
   nikola::i32 render_effect = 0;
   nikola::i32 pixel_rate    = 16;
   bool has_editor           = false;
 };
+
+static float font_size       = 48.0f;
+static nikola::Vec4 color    = nikola::Vec4(1.0f);
+static nikola::String label  = "H.";
+static nikola::Vec2 position = nikola::Vec2(20.0f, 50.0f);
+
 /// App
 /// ----------------------------------------------------------------------
 
@@ -34,6 +43,24 @@ static void post_process_pass(const nikola::RenderPass* prev, nikola::RenderPass
   
   pass->frame_desc.attachments[0]    = prev->frame_desc.attachments[0];
   pass->frame_desc.attachments_count = 1;
+}
+
+static bool key_pressed_callback(const nikola::Event& event, const void* dispatcher, const void* listener) {
+  if(event.type != nikola::EVENT_KEY_PRESSED) {
+    return false;
+  }
+
+  if(event.key_pressed >= nikola::KEY_SPACE && event.key_pressed <= nikola::KEY_GRAVE_ACCENT) {
+    label += (nikola::i8)event.key_pressed;
+  }
+  else if(event.key_pressed == nikola::KEY_ENTER) {
+    label += '\n';
+  }
+  else if(event.key_pressed == nikola::KEY_BACKSPACE) {
+    label.erase(label.size() - 1);
+  }
+
+  return true;
 }
 
 /// Callbacks
@@ -63,7 +90,8 @@ static void init_resources(nikola::App* app) {
   app->texture = nikola::resources_push_texture(app->res_group, "textures/frodo.nbrtexture");
 
   // Fonts init
-  nikola::resources_push_font(app->res_group, "fonts/bit5x3.nbrfont");
+  nikola::ResourceID font_id = nikola::resources_push_font(app->res_group, "fonts/IosevkaNerdFont-Bold.nbrfont");
+  app->font                  = nikola::resources_get_font(font_id);
 }
 
 /// Private functions 
@@ -107,6 +135,9 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Resources init
   init_resources(app);
 
+  // Listen to key pressed events 
+  // nikola::event_listen(nikola::EVENT_KEY_PRESSED, key_pressed_callback, app);
+
   return app;
 }
 
@@ -123,7 +154,7 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     return;
   }
   
-  if(nikola::input_key_pressed(nikola::KEY_E)) {
+  if(nikola::input_key_pressed(nikola::KEY_F1)) {
     app->has_editor                  = !app->has_editor;
     app->frame_data.camera.is_active = !app->has_editor;
 
@@ -133,9 +164,6 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
   nikola::camera_update(app->frame_data.camera);
 } 
 
-static float radius = 128.0f;
-static int sides    = 3;
-
 void app_render(nikola::App* app) {
   // 3D renderer
   nikola::renderer_begin(app->frame_data);
@@ -144,12 +172,10 @@ void app_render(nikola::App* app) {
   // 2D renderer
   nikola::batch_renderer_begin();
 
-  nikola::batch_render_quad(nikola::Vec2(100.0f), nikola::Vec2(64.0f), nikola::Vec4(1.0f, 0.0f, 0.0f, 1.0f));
-  nikola::batch_render_texture(nikola::resources_get_texture(app->texture), nikola::Vec2(200.0f), nikola::Vec2(128.0f, 96.0f));
-  
-  nikola::batch_render_circle(nikola::Vec2(450.0f), radius, nikola::Vec4(0.0f, 1.0f, 1.0f, 1.0f));
-  
-  nikola::batch_render_polygon(nikola::Vec2(450.0f, 550.0f), radius, sides, nikola::Vec4(1.0f, 0.0f, 0.0f, 1.0f));
+  // nikola::batch_render_quad(nikola::Vec2(100.0f), nikola::Vec2(64.0f), nikola::Vec4(1.0f, 0.0f, 0.0f, 1.0f));
+  // nikola::batch_render_texture(nikola::resources_get_texture(app->texture), nikola::Vec2(200.0f), nikola::Vec2(128.0f, 96.0f));
+
+  nikola::batch_render_text(app->font, label, position, font_size, color);
 
   nikola::batch_renderer_end();
 }
@@ -168,8 +194,16 @@ void app_render_gui(nikola::App* app) {
                &app->render_effect, 
                "None\0Greyscale\0Inversion\0Sharpen\0Blur\0Emboss\0Edge Detection\0Pixelize\0");  
   ImGui::DragInt("Pixel Rate", &app->pixel_rate, 1.0f, 0, 64);
-  ImGui::DragFloat("Radius", &radius, 1.0f, 0.0f, nikola::FLOAT_MAX);
-  ImGui::SliderInt("Sides", &sides, 0, 128);
+  
+  nikola::gui_end_panel();
+  
+  nikola::gui_begin_panel("Text");
+ 
+  ImGui::DragFloat("Size", &font_size, 1.0f, 0.0f, nikola::FLOAT_MAX);
+  ImGui::DragFloat2("Position", &position[0], 1.0f, 0.0f, nikola::FLOAT_MAX);
+  nikola::gui_edit_color("Color", color);
+
+  nikola::gui_edit_font("Font", app->font, &label);
   nikola::gui_end_panel();
 
   // Debug

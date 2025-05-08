@@ -540,20 +540,20 @@ struct GfxStencilDesc {
 /// GfxBlendDesc
 struct GfxBlendDesc {
   /// The blend mode of the RGB of the source's color. 
-  /// The default value is `GFX_BLEND_ONE`.
-  GfxBlendMode src_color_blend  = GFX_BLEND_ONE; 
+  /// The default value is `GFX_BLEND_SRC_ALPHA`.
+  GfxBlendMode src_color_blend  = GFX_BLEND_SRC_ALPHA; 
 
   /// The blend mode of the RGB of the destination's color. 
-  /// The default value is `GFX_BLEND_ZERO`.
-  GfxBlendMode dest_color_blend = GFX_BLEND_ZERO; 
+  /// The default value is `GFX_BLEND_INV_SRC_ALPHA`.
+  GfxBlendMode dest_color_blend = GFX_BLEND_INV_SRC_ALPHA; 
 
   /// The blend mode of the Alpha value of the source's color. 
-  /// The default value is `GFX_BLEND_SRC_ALPHA`.
-  GfxBlendMode src_alpha_blend  = GFX_BLEND_SRC_ALPHA; 
+  /// The default value is `GFX_BLEND_INV_SRC_ALPHA`.
+  GfxBlendMode src_alpha_blend  = GFX_BLEND_ONE; 
 
   /// The blend mode of the Alpha value of the destination's color. 
   /// The default value is `GFX_BLEND_INV_SRC_ALPHA`.
-  GfxBlendMode dest_alpha_blend = GFX_BLEND_INV_SRC_ALPHA; 
+  GfxBlendMode dest_alpha_blend = GFX_BLEND_ONE; 
 
   /// The default blend factor. 
   /// The default values are `R = 0, G = 0, B = 0, A = 0`.

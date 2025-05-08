@@ -155,10 +155,10 @@ static void write_font(NBRFile& nbr, const NBRFont& font) {
     file_write_bytes(nbr.file_handle, &font.glyphs[i].height, sizeof(u16));
 
     // Save the bounds
-    file_write_bytes(nbr.file_handle, &font.glyphs[i].left, sizeof(u16));
-    file_write_bytes(nbr.file_handle, &font.glyphs[i].right, sizeof(u16));
-    file_write_bytes(nbr.file_handle, &font.glyphs[i].top, sizeof(u16));
-    file_write_bytes(nbr.file_handle, &font.glyphs[i].bottom, sizeof(u16));
+    file_write_bytes(nbr.file_handle, &font.glyphs[i].left, sizeof(i16));
+    file_write_bytes(nbr.file_handle, &font.glyphs[i].right, sizeof(i16));
+    file_write_bytes(nbr.file_handle, &font.glyphs[i].top, sizeof(i16));
+    file_write_bytes(nbr.file_handle, &font.glyphs[i].bottom, sizeof(i16));
 
     // Save the offsets
     file_write_bytes(nbr.file_handle, &font.glyphs[i].offset_x, sizeof(i16));

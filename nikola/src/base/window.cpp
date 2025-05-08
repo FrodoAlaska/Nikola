@@ -184,7 +184,7 @@ void joystick_callback(int jid, int event) {
   });
 }
 
-static bool nikol_cursor_show_callback(const Event& event, const void* dispatcher, const void* listener) {
+static bool nikola_cursor_show_callback(const Event& event, const void* dispatcher, const void* listener) {
   if(event.type != EVENT_MOUSE_CURSOR_SHOWN) {
     return false;
   }
@@ -196,6 +196,18 @@ static bool nikol_cursor_show_callback(const Event& event, const void* dispatche
 
   return true;
 }
+
+static bool nikola_quit_app_callback(const Event& event, const void* dispatcher, const void* listener) {
+  if(event.type != EVENT_APP_QUIT) {
+    return false;
+  }
+  
+  Window* window = (Window*)listener;
+  glfwSetWindowShouldClose(window->handle, GLFW_TRUE);
+
+  return true;
+}
+
 /// Callbacks
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -300,8 +312,9 @@ static void set_window_callbacks(Window* window) {
   // Joystick callbacks 
   glfwSetJoystickCallback(joystick_callback); 
 
-  // Nikol cursor show callback
-  event_listen(EVENT_MOUSE_CURSOR_SHOWN, nikol_cursor_show_callback, window);
+  // Nikola cursor show callback
+  event_listen(EVENT_MOUSE_CURSOR_SHOWN, nikola_cursor_show_callback, window);
+  event_listen(EVENT_APP_QUIT, nikola_quit_app_callback, window);
 }
 /// Private functions
 ///---------------------------------------------------------------------------------------------------------------------

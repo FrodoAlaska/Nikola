@@ -45,8 +45,8 @@ static void append_event(const EventType type, const EventEntry& entry) {
 
   pool->size++;
   if(pool->size >= pool->capacity) {
-    pool->capacity = pool->size + (pool->size / 2);
-    pool->entries  = (EventEntry*)memory_allocate(sizeof(EventEntry) * pool->capacity);
+    pool->capacity += (pool->capacity / 2);
+    pool->entries   = (EventEntry*)memory_allocate(sizeof(EventEntry) * pool->capacity);
   }
 
   pool->entries[pool->size - 1] = entry;
@@ -60,7 +60,7 @@ static void append_event(const EventType type, const EventEntry& entry) {
 
 void event_init() {
   for(sizei i = 0; i < EVENTS_MAX; i++) {
-    create_pool((EventType)i, 64);
+    create_pool((EventType)i, 16);
   }
 
   NIKOLA_LOG_INFO("Event system was successfully initialized");
@@ -81,13 +81,13 @@ void event_listen(const EventType type, const EventFireFn& func, const void* lis
 const bool event_dispatch(const Event& event, const void* dispatcher) {
   for(sizei i = 0; i < s_state.event_pool[event.type].size; i++) {
     // Calling all of the callbacks with the same `event.type` 
-    EventEntry entry = s_state.event_pool[event.type].entries[i];
-    if(entry.func(event, dispatcher, entry.listener)) {
-      return true;
+    EventEntry* entry = &s_state.event_pool[event.type].entries[i];
+    if(!entry->func(event, dispatcher, entry->listener)) {
+      return false;
     }
   }
 
-  return false;
+  return true;
 }
 
 /// Event functions

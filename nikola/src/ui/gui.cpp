@@ -7,6 +7,7 @@
 #include <GLFW/glfw3.h>
 
 #include <imgui/imgui.h>
+#include <imgui/imgui_stdlib.h>
 #include <imgui/backends/imgui_impl_glfw.h>
 #include <imgui/backends/imgui_impl_opengl3.h>
 #include <imgui/backends/imgui_impl_opengl3_loader.h>
@@ -172,7 +173,7 @@ void gui_edit_color(const char* name, Vec4& color) {
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
 
-  ImGui::ColorPicker4(name, &color[0], ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
+  ImGui::ColorEdit4(name, &color[0]);
 
   ImGui::PopID();
 }
@@ -260,6 +261,55 @@ void gui_edit_material(const char* name, Material* material) {
   // Lighting values
   // -------------------------------------------------------------------
   ImGui::SliderFloat("Shininess", &material->shininess, 0.0f, 100.0f);
+  // -------------------------------------------------------------------
+  
+  ImGui::PopID(); 
+}
+
+void gui_edit_font(const char* name, Font* font, String* label) {
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+
+  // Font info 
+  // -------------------------------------------------------------------
+  if(ImGui::CollapsingHeader("Font Information")) {
+    ImGui::SliderFloat("Ascent", &font->ascent, -1000, 1000);
+    ImGui::SliderFloat("Descent", &font->descent, -1000, 1000);
+    ImGui::SliderFloat("Line Gap", &font->line_gap, -1000, 1000);
+  } 
+  // -------------------------------------------------------------------
+ 
+  // Label info
+  // -------------------------------------------------------------------
+  if(ImGui::CollapsingHeader("Input Label")) {
+    ImGui::InputTextMultiline("Label", label);
+  } 
+  // -------------------------------------------------------------------
+
+  // Glyphs Info
+  // -------------------------------------------------------------------
+  if(ImGui::CollapsingHeader("Glyphs")) {
+    for(auto& ch : *label) {
+      Glyph* glyph = &font->glyphs[ch]; 
+      
+      String str_id = ("Char: " + ch);
+      ImGui::PushID(str_id.c_str());
+      
+      ImGui::Text("Unicode: %c", glyph->unicode);
+      
+      ImGui::SliderFloat2("Size", &glyph->size[0], -1000, 1000);
+      ImGui::SliderFloat2("Offset", &glyph->offset[0], -1000, 1000);
+      
+      ImGui::Text("Bounds  = {T: %i, L: %i, B: %i, R: %i}", glyph->top, glyph->left, glyph->bottom, glyph->right);
+      
+      ImGui::SliderInt("Advance", &glyph->advance_x, -1000, FLOAT_MAX);
+      ImGui::SliderInt("Kern", &glyph->kern, -1000, FLOAT_MAX);
+      ImGui::SliderInt("Left Side Bearing", &glyph->left_bearing, -1000, FLOAT_MAX);
+
+      ImGui::Separator();
+      ImGui::PopID();
+    }
+  }
   // -------------------------------------------------------------------
   
   ImGui::PopID(); 

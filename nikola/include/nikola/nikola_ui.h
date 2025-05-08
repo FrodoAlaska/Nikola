@@ -3,6 +3,7 @@
 #include "nikola_base.h"
 #include "nikola_resources.h"
 #include "nikola_render.h"
+#include "nikola_containers.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -56,6 +57,9 @@ NIKOLA_API void gui_edit_point_light(const char* name, PointLight* point_light);
 
 /// Add a material section identified by `name` to edit the given `material`.
 NIKOLA_API void gui_edit_material(const char* name, Material* material);
+
+/// Add a font section identified by `name` to edit the given `font` applied onto the given `label` text.
+NIKOLA_API void gui_edit_font(const char* name, Font* font, String* label);
 
 /// GUI functions
 ///---------------------------------------------------------------------------------------------------------------------

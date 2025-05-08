@@ -1,6 +1,7 @@
 #include "nikola/nikola_render.h"
 #include "nikola/nikola_base.h"
 #include "nikola/nikola_gfx.h"
+#include "nikola/nikola_resources.h"
 
 #include "render_shaders.h"
 
@@ -23,8 +24,9 @@ enum ShapeType {
   SHAPE_TYPE_QUAD    = 0, 
   SHAPE_TYPE_CIRCLE  = 1,
   SHAPE_TYPE_POLYGON = 2,
+  SHAPE_TYPE_TEXT    = 3,
 
-  SHAPE_TYPES_MAX = SHAPE_TYPE_POLYGON + 1,
+  SHAPE_TYPES_MAX = SHAPE_TYPE_TEXT + 1,
 };
 
 /// ShapeType 
@@ -124,35 +126,30 @@ static void init_pipeline() {
   s_batch.pipeline = gfx_pipeline_create(s_batch.context, s_batch.pipe_desc);
 }
 
-static void generate_quad_batch(BatchCall* batch, const Vec2& position, const Vec2& size, const Vec4& color, const Vec2& shape_side) {
-  // Matrices 
-  Mat4 model     = mat4_translate(Vec3(position.x, position.y, 0.0f)) * 
-                   mat4_scale(Vec3(size.x, size.y, 0.0f));
-  Mat4 world_mat = s_batch.ortho * model;
-
+static void generate_quad_batch(BatchCall* batch, const Rect& src, const Rect& dest, const Vec4& color, const Vec2& shape_side) {
   // Top-left
   Vertex2D v1 = {
-    .position       = world_mat * Vec4(-0.5f, -0.5f, 0.0f, 1.0f),
+    .position       = s_batch.ortho * Vec4(dest.position.x, dest.position.y, 0.0f, 1.0f),
     .color          = color,
-    .texture_coords = Vec2(0.0f),
+    .texture_coords = src.position / src.size,
     .shape_side     = shape_side,
   };
   batch->vertices.push_back(v1);
 
   // Top-right
   Vertex2D v2 = {
-    .position       = world_mat * Vec4( 0.5f, -0.5f, 0.0f, 1.0f),
+    .position       = s_batch.ortho * Vec4(dest.position.x + dest.size.x, dest.position.y, 0.0f, 1.0f),
     .color          = color,
-    .texture_coords = Vec2(1.0f, 0.0f),
+    .texture_coords = Vec2((src.position.x + src.size.x) / src.size.x, src.position.y / src.size.y),
     .shape_side     = shape_side,
   };
   batch->vertices.push_back(v2);
 
   // Bottom-right
   Vertex2D v3 = {
-    .position       = world_mat * Vec4( 0.5f,  0.5f, 0.0f, 1.0f),
+    .position       = s_batch.ortho * Vec4(dest.position.x + dest.size.x, dest.position.y + dest.size.y, 0.0f, 1.0f),
     .color          = color,
-    .texture_coords = Vec2(1.0f),
+    .texture_coords = (src.position + src.size) / src.size,
     .shape_side     = shape_side,
   };
   batch->vertices.push_back(v3);
@@ -160,9 +157,9 @@ static void generate_quad_batch(BatchCall* batch, const Vec2& position, const Ve
 
   // Bottom-left
   Vertex2D v4 = {
-    .position       = world_mat * Vec4(-0.5f,  0.5f, 0.0f, 1.0f),
+    .position       = s_batch.ortho * Vec4(dest.position.x, dest.position.y + dest.size.y, 0.0f, 1.0f),
     .color          = color,
-    .texture_coords = Vec2(0.0f, 1.0),
+    .texture_coords = Vec2(src.position.x / src.size.x, (src.position.y + src.size.y) / src.size.y),
     .shape_side     = shape_side,
   };
   batch->vertices.push_back(v4);
@@ -170,6 +167,20 @@ static void generate_quad_batch(BatchCall* batch, const Vec2& position, const Ve
 
   // New texture added!
   batch->vertices_count += 6;
+}
+
+static void generate_quad_batch(BatchCall* batch, const Vec2& pos, const Vec2& size, const Vec4& color, const Vec2& shape_side) {
+  Rect src = {
+    .size     = size, 
+    .position = Vec2(0.0f),
+  };
+  
+  Rect dest = {
+    .size     = size, 
+    .position = pos,
+  };
+
+  generate_quad_batch(batch, src, dest, color, shape_side);
 }
 
 static void flush_batch(BatchCall& batch, GfxShader* shader) {
@@ -196,6 +207,35 @@ static void flush_batch(BatchCall& batch, GfxShader* shader) {
   // Reset back to normal
   batch.vertices_count = 0;
   batch.vertices.clear();
+}
+
+static void texture_lookup(GfxTexture* texture) {
+  if(s_batch.textures_cache.find(texture) == s_batch.textures_cache.end()) {
+    s_batch.textures_cache[texture] = s_batch.textures_cache.size();
+
+    BatchCall new_batch = {
+      .vertices_count = 0, 
+      .texture        = texture,
+    };
+    s_batch.batches.push_back(new_batch);
+  }
+}
+
+static BatchCall* prepare_texture_batch(GfxTexture* texture) {
+  // Looks up the texture in the cache and pushes a 
+  // new batch if the given `texture` is new
+  texture_lookup(texture); 
+
+  // Retrieve the texture index from the cache
+  i32 index        = s_batch.textures_cache[texture];
+  BatchCall* batch = &s_batch.batches[index]; 
+
+  // We cannot render more than the maximum number of vertices
+  if(batch->vertices_count >= MAX_VERTICES) {
+    flush_batch(*batch, s_batch.shader);
+  }
+
+  return batch;
 }
 
 /// Private functions
@@ -243,6 +283,8 @@ void batch_renderer_begin() {
 
   // Calculate the orthographic camera view
   s_batch.ortho = mat4_ortho(0.0f, (f32)width, (f32)height, 0.0f);
+
+  gfx_context_set_target(s_batch.context, nullptr); 
 }
 
 void batch_renderer_end() {
@@ -252,29 +294,28 @@ void batch_renderer_end() {
   }
 }
 
-void batch_render_texture(GfxTexture* texture, const Vec2& position, const Vec2& size, const Vec4& tint) {
-  // The texture is new and therefore should be added to the cache
-  if(s_batch.textures_cache.find(texture) == s_batch.textures_cache.end()) {
-    s_batch.textures_cache[texture] = s_batch.textures_cache.size();
+void batch_render_texture(GfxTexture* texture, const Rect& src, const Rect& dest, const Vec4& tint) {
+  NIKOLA_ASSERT(texture, "Trying to render a NULL texture in \'batch_render_texture\'");
+ 
+  // Prepare the texture batch
+  BatchCall* batch = prepare_texture_batch(texture);
 
-    BatchCall new_batch = {
-      .vertices_count = 0, 
-      .texture        = texture,
-    };
-    s_batch.batches.push_back(new_batch);
-  }
-
-  // Retrieve the texture index from the cache
-  i32 index        = s_batch.textures_cache[texture];
-  BatchCall* batch = &s_batch.batches[index]; 
-
-  // We cannot render more than the maximum number of vertices
-  if(batch->vertices_count >= MAX_VERTICES) {
-    flush_batch(*batch, s_batch.shader);
-  }
-  
   // Generate vertices of a quad 
-  generate_quad_batch(batch, position, size, tint, Vec2(SHAPE_TYPE_QUAD, 4.0f));
+  generate_quad_batch(batch, src, dest, tint, Vec2(SHAPE_TYPE_QUAD, 4.0f));
+}
+
+void batch_render_texture(GfxTexture* texture, const Vec2& position, const Vec2& size, const Vec4& tint) {
+  Rect src = {
+    .size     = size, 
+    .position = Vec2(0.0f),
+  };
+
+  Rect dest = {
+    .size     = size, 
+    .position = position, 
+  };
+
+  batch_render_texture(texture, src, dest, tint);
 }
 
 
@@ -315,6 +356,55 @@ void batch_render_polygon(const Vec2& center, const f32 radius, const u32 sides,
   
   // Generate vertices of a quad 
   generate_quad_batch(batch, center, Vec2(radius), color, Vec2(SHAPE_TYPE_POLYGON, (f32)sides));
+}
+
+void batch_render_text(Font* font, const String& text, const Vec2& position, const f32 size, const Vec4& color) {
+  NIKOLA_ASSERT(font, "Trying to render text using a NULL font in \'batch_render_text\'");
+  
+  Vec2 off         = Vec2(0.0f);
+  f32 scale        = size / 256.0f;
+  f32 prev_advance = 0.0f;
+
+  // Render each character of the text
+  for(sizei i = 0; i < text.size(); i++) {
+    // Retrieve the "correct" glyph from the font
+    i8 ch       = text[i]; 
+    Glyph glyph = font->glyphs[ch];
+
+    // Using the information in the glyph, add a new line for the next glyph
+    if(ch == '\n') {
+      off.x = 0.0f;
+      off.y += size + 2.0f;
+      continue;
+    }
+    // Since a space is not really a "glyph", we just add an imaginary space 
+    // between this glyph and the next one.
+    else if(ch == ' ' || ch == '\t') {
+      off.x += prev_advance * scale;
+      continue;
+    }
+
+    // Set up the soruce and destination rectangles
+    Rect src = {
+      .size     = glyph.size * scale,
+      .position = Vec2(0.0f), 
+    };
+    Rect dest = {
+      .size     = src.size,
+      .position = position + off + (glyph.offset * scale), 
+    };
+  
+    // Advance a little for the next glyph
+    off.x += glyph.advance_x * scale;
+
+    // Prepare and render the glyph batch
+    BatchCall* batch = prepare_texture_batch(resources_get_texture(glyph.texture));
+    generate_quad_batch(batch, src, dest, color, Vec2(SHAPE_TYPE_TEXT, 4.0f));
+
+    // This is all for the next character. 
+    // Specially useful for spaces (' ').
+    prev_advance = glyph.advance_x;
+  }
 }
 
 /// Batch renderer functions

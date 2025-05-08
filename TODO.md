@@ -67,39 +67,42 @@
 [x] 14. 2D Renderer v0.2
     - [x] Decide whether to keep the 2D renderer seperate or part of the 3D renderer 
     - [x] Basic 2D shapes like, lines, triangles, quads, circles, and textured quads.
-[] 15. Fonts v0.1 
+[x] 15. Fonts v0.1 
     - [x] Convert font formats into the internal `nbrfont` format. 
     - [x] Add fonts to the resource manager 
-    - [] Font rendering
-    - [] Don't forget to add `glPixelStori` somewhere 
-    - [] Documentation (`batch_renderer`, `nbr_font`, `font resources`).
-[] 16. UI v0.1
+    - [x] Don't forget to add `glPixelStori` somewhere 
+    - [x] Font rendering
+    - [x] Documentation (`batch_renderer`, `nbr_font`, `font resources`).
+[] 16. Audio v0.1 
+    - [] Lay out what you actually want the audio system to be and what it does. 
+    - [] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
+    - [] Create an audio backend with a context 
+    - [] A way to create an audio buffer that could be played with the context 
+    - [] Add it to the resource manager
+[] 17. UI v0.1
     - [] A canvas system for 2D game UI.
     - [] A menu system
-[] 17. Math And Camera v0.2 
+[] 18. Performance Craze 0.1 
+    - [] Implement both performance timers and normal timers
+    - [] Which systems can benefit most from multi-threading? 
+    - [] Should we implement a job system? If yes, how can this be done within the confines of the engine? 
+    - [] Try to improve the load times for the resource manager as a test of the new multi-threading system.
+    - [] Compare with previous results and scenes and current results and scenes
+[] 19. Math And Camera v0.2 
     - [] Fix the quaternion rotations in the transform and, really, in the _whole_ engine.
     - [] Add rotations to the camera, or, in other words, let the camera have a `Transform` instead of just a `position` vector3. 
-[] 18. Renderer v0.5 
+[] 20. Audio System v0.1 
+    - [] 2D and 3D sound and music. 
+    - [] A fully-fledged audio pipeline that can play, position, pitch, control the volume, and apply effects to sound and music
+[] 21. Renderer v0.5 
     - [] Bloom integration 
     - [] Improve lighting using clustered rendering
     - [] Compute shaders 
     - [] Better bloom for testing the new compute shaders
     - [] Improve upon the render pass system by allowing the reuse of certain render passes 
     - [] Make the HDR pass toggleable through the GUI.
-[] 19. 3D Animations v0.1
-[] 20. Multi-threading v0.2 
-    - [] Implement both performance timers and normal timers
-    - [] Which systems can benefit most from multi-threading? 
-    - [] Should we implement a job system? If yes, how can this be done within the confines of the engine? 
-    - [] Try to improve the load times for the resource manager as a test of the new multi-threading system.
-[] 21. Audio System v0.1 
-    - [] Lay out what you actually want the audio system to be and what it does. 
-    - [] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
-    - [] Create an audio backend with a context 
-    - [] A way to create an audio buffer that could be played with the context 
-    - [] 2D and 3D sound and music. 
-    - [] A fully-fledged audio pipeline that can play, position, pitch, control the volume, and apply effects to sound and music
-[] 22. Physics v0.1
+[] 22. 3D Animations v0.1
+[] 23. Physics v0.1
 
 ## (Engine) BUGS: 
 - (Filesystem): There is a bug with the filesystem where the string gets allocated and de-allocated wrong I think? It crashes the program when we pass a normal C-string (i.e "string"), but it runs okay 

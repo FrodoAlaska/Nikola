@@ -160,29 +160,59 @@ void nbr_import_font(NBRFont* nbr, const u16 group_id, Font* font) {
   NIKOLA_ASSERT(font, "Invalid Font while importing");
 
   // Import the font information
-  font->glyphs.resize(nbr->glyphs_count); 
   font->ascent   = (f32)nbr->ascent;
   font->descent  = (f32)nbr->descent;
   font->line_gap = (f32)nbr->line_gap;
 
   // Import the glyphs 
-  for(sizei i = 0; i < font->glyphs.size(); i++) {
-    font->glyphs[i].unicode = nbr->glyphs[i].unicode;
+  for(sizei i = 0; i < nbr->glyphs_count; i++) {
+    Glyph glyph;
 
-    font->glyphs[i].size.x = nbr->glyphs[i].width;
-    font->glyphs[i].size.y = nbr->glyphs[i].height;
+    // Importing the glyph's unicode
+    glyph.unicode = nbr->glyphs[i].unicode;
+
+    // Importing the glyph's size
+    glyph.size.x = nbr->glyphs[i].width;
+    glyph.size.y = nbr->glyphs[i].height;
     
-    font->glyphs[i].offset.x = nbr->glyphs[i].offset_x;
-    font->glyphs[i].offset.y = nbr->glyphs[i].offset_y;
+    // Importing the glyph's offset
+    glyph.offset.x = nbr->glyphs[i].offset_x;
+    glyph.offset.y = nbr->glyphs[i].offset_y;
     
-    font->glyphs[i].left   = nbr->glyphs[i].left;
-    font->glyphs[i].top    = nbr->glyphs[i].top;
-    font->glyphs[i].right  = nbr->glyphs[i].right;
-    font->glyphs[i].bottom = nbr->glyphs[i].bottom;
+    // Importing the glyph's bounds
+    glyph.left   = nbr->glyphs[i].left;
+    glyph.top    = nbr->glyphs[i].top;
+    glyph.right  = nbr->glyphs[i].right;
+    glyph.bottom = nbr->glyphs[i].bottom;
     
-    font->glyphs[i].advance_x    = nbr->glyphs[i].advance_x;
-    font->glyphs[i].kern         = nbr->glyphs[i].kern;
-    font->glyphs[i].left_bearing = nbr->glyphs[i].left_bearing;
+    // Importing glyph information
+    glyph.advance_x    = nbr->glyphs[i].advance_x;
+    glyph.kern         = nbr->glyphs[i].kern;
+    glyph.left_bearing = nbr->glyphs[i].left_bearing;
+
+    // We don't care about glyphs that have a "non-size"
+    if(glyph.size.x <= 0) {
+      continue;
+    }
+  
+    // Importing the texture
+    GfxTextureDesc face_desc {
+      .width  = (u32)nbr->glyphs[i].width,
+      .height = (u32)nbr->glyphs[i].height,
+      .depth  = 0, 
+      .mips   = 1,
+
+      .type      = GFX_TEXTURE_2D, 
+      .format    = GFX_TEXTURE_FORMAT_R8, 
+      .filter    = GFX_TEXTURE_FILTER_MIN_MAG_LINEAR, 
+      .wrap_mode = GFX_TEXTURE_WRAP_CLAMP,
+      
+      .data = (void*)nbr->glyphs[i].pixels,
+    };
+    glyph.texture = resources_push_texture(group_id, face_desc);
+
+    // Adding the new glyph
+    font->glyphs[glyph.unicode] = glyph;
   }
 }
 

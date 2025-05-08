@@ -205,10 +205,10 @@ struct NBRFont {
   NBRGlyph* glyphs;
 
   /// This value is the top-most pixel of the first row. 
-  i16 ascent;
+  i16 ascent, descent, line_gap;
   
   /// This value is the bottom-most pixel of the last row. 
-  i16 descent;
+  i16 descent, line_gap;
   
   /// This value is used to determine the advance on the vertical axis.
   i16 line_gap;

@@ -32,21 +32,6 @@ static Engine s_engine;
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// Callbacks
-
-static bool quit_app_callback(const Event& event, const void* dispatcher, const void* listener) {
-  if(event.type != EVENT_APP_QUIT) {
-    return false;
-  }
-
-  s_engine.is_running = false;
-  return true;
-}
-
-/// Callbacks
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
 /// Engine functions
 
 void engine_init(const AppDesc& desc) {
@@ -70,9 +55,6 @@ void engine_init(const AppDesc& desc) {
 
   // Batch renderer init
   batch_renderer_init();
-  
-  // Listening to any interesting events
-  event_listen(EVENT_APP_QUIT, quit_app_callback);
 
   // Check for any command line arguments
   Args cli_args; 
@@ -88,7 +70,7 @@ void engine_init(const AppDesc& desc) {
 }
 
 void engine_run() {
-  while(s_engine.is_running) {
+  while(window_is_open(s_engine.window)) {
     // Update
     filewatcher_update(); 
     CHECK_VALID_CALLBACK(s_engine.app_desc.update_fn, s_engine.app, niclock_get_delta_time());
