@@ -383,28 +383,40 @@ void batch_render_text(Font* font, const String& text, const Vec2& position, con
       off.x += prev_advance * scale;
       continue;
     }
+    
+    // Render the codepoint/glyph
+    batch_render_codepoint(font, ch, position + off, size, color); 
 
-    // Set up the soruce and destination rectangles
-    Rect src = {
-      .size     = glyph.size * scale,
-      .position = Vec2(0.0f), 
-    };
-    Rect dest = {
-      .size     = src.size,
-      .position = position + off + (glyph.offset * scale), 
-    };
-  
     // Advance a little for the next glyph
     off.x += glyph.advance_x * scale;
-
-    // Prepare and render the glyph batch
-    BatchCall* batch = prepare_texture_batch(resources_get_texture(glyph.texture));
-    generate_quad_batch(batch, src, dest, color, Vec2(SHAPE_TYPE_TEXT, 4.0f));
 
     // This is all for the next character. 
     // Specially useful for spaces (' ').
     prev_advance = glyph.advance_x;
   }
+}
+
+void batch_render_codepoint(Font* font, const char codepoint, const Vec2& position, const f32 font_size, const Vec4& color) {
+  NIKOLA_ASSERT(font, "Trying to render text using a NULL font in \'batch_render_codepoint\'");
+  
+  f32 scale = font_size / 256.0f;
+
+  // Retrieve the "correct" glyph from the font
+  Glyph glyph = font->glyphs[codepoint];
+
+  // Set up the soruce and destination rectangles
+  Rect src = {
+    .size     = glyph.size * scale,
+    .position = Vec2(0.0f), 
+  };
+  Rect dest = {
+    .size     = src.size,
+    .position = position + (glyph.offset * scale), 
+  };
+
+  // Prepare and render the glyph batch
+  BatchCall* batch = prepare_texture_batch(resources_get_texture(glyph.texture));
+  generate_quad_batch(batch, src, dest, color, Vec2(SHAPE_TYPE_TEXT, 4.0f));
 }
 
 /// Batch renderer functions

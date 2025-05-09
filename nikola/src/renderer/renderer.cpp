@@ -45,7 +45,7 @@ struct Renderer {
   RendererDefaults defaults = {};
   ResourceID shader_contexts[SHADER_CONTEXTS_MAX];
   
-  RenderQueue current_queue;  
+  RenderQueue* current_queue;  
   FrameData* frame_data;
   ResourceID current_skybox;
   DynamicArray<RenderPassEntry> render_passes;
@@ -271,16 +271,18 @@ static void end_pass(RenderPass& pass) {
 }
 
 static void flush_queue(ResourceID& shader_context) {
-  for(auto& command : s_renderer.current_queue) {
-    switch(command.render_type) {
+  for(sizei i = 0; i < s_renderer.current_queue->size(); i++) {
+    RenderCommand* cmd = &s_renderer.current_queue->at(i);
+
+    switch(cmd->render_type) {
       case RENDERABLE_TYPE_MESH:
-        render_mesh(command, shader_context);
+        render_mesh(*cmd, shader_context);
         break;
       case RENDERABLE_TYPE_MODEL:
-        render_model(command, shader_context);
+        render_model(*cmd, shader_context);
         break;
       case RENDERABLE_TYPE_SKYBOX:
-        render_skybox(command);
+        render_skybox(*cmd);
         break;
     }
   }
@@ -411,16 +413,16 @@ void renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& func, co
 }
 
 void renderer_sumbit_queue(RenderQueue& queue) {
-  s_renderer.current_queue = queue;
+  s_renderer.current_queue = &queue;
 }
 
 void renderer_begin(FrameData& data) {
   GfxBuffer* matrix_buffer = resources_get_buffer(s_renderer.defaults.matrices_buffer);
 
   // Updating the internal matrices buffer for each shader
+  s_renderer.frame_data = &data;
   gfx_buffer_update(matrix_buffer, 0, sizeof(Mat4), mat4_raw_data(data.camera.view));
   gfx_buffer_update(matrix_buffer, sizeof(Mat4), sizeof(Mat4), mat4_raw_data(data.camera.projection));
-  s_renderer.frame_data = &data;
 
   // Render the skybox (if avaliable)
   s_renderer.current_skybox = data.skybox_id;
@@ -454,8 +456,8 @@ void renderer_end() {
   } 
   
   // Clear the current render queue (if there's any there)
-  if(!s_renderer.current_queue.empty()) {
-    s_renderer.current_queue.clear();
+  if(!s_renderer.current_queue->empty()) {
+    s_renderer.current_queue->clear();
   }
 }
 

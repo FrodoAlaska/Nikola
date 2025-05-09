@@ -277,6 +277,9 @@ NIKOLA_API void batch_render_polygon(const Vec2& center, const f32 radius, const
 /// Using the given `font`, render `text` on the screen at `position` with `size` font size and colored as `color`.
 NIKOLA_API void batch_render_text(Font* font, const String& text, const Vec2& position, const f32 size, const Vec4& color);
 
+/// Using the given `font`, render `codepoint` on the screen at `position` with `size` font size and colored as `color`.
+NIKOLA_API void batch_render_codepoint(Font* font, const char codepoint, const Vec2& position, const f32 size, const Vec4& color);
+
 /// Batch renderer functions
 ///---------------------------------------------------------------------------------------------------------------------
 

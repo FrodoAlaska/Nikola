@@ -108,6 +108,7 @@
 - (Filesystem): There is a bug with the filesystem where the string gets allocated and de-allocated wrong I think? It crashes the program when we pass a normal C-string (i.e "string"), but it runs okay 
 if we give it a string variable instead (i.e `func(path_string)`). Perhaps there is something wrong with the lifetime of strings? I'm not sure.
 - (Resources): It's probably better not to have an internal cache specified by the engine itself. It's probably better to let the user (me) create that cache if need be. That way, we don't have to have specific hard-coded path values and whatnot. 
+- (Renderer): The renderer will seg fault if no `RenderQueue` is given at all. Since, under the hood, the renderer holds a `RenderQueue` pointer, it expects it to be valid at all times, since it does use it a lot.
 
 ## (Core) BUGS: 
 - EMPTY FOR NOW...

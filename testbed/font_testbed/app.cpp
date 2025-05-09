@@ -3,82 +3,54 @@
 #include <nikola/nikola.h>
 #include <imgui/imgui.h>
 
+/* @NOTE (9/5/2025, Mohamed):
+ *
+ * Thanks to the amazing artist over at https://sketchfab.com/Metazeon for 
+ * providing the magnificent 3D model of the Langya Pavilion. It's huge, 
+ * it's detailed, and it's damn pretty.
+ *
+ */
+
 /// ----------------------------------------------------------------------
 /// App
 struct nikola::App {
   nikola::Window* window;
-  nikola::FrameData frame_data;
- 
-  nikola::u16 res_group;
-  nikola::ResourceID post_shader_context_id;
-  nikola::ResourceID texture;
 
-  // @NOTE: This is dangerous. DON'T do it! I'm doing it just because I'm lazy
+  nikola::FrameData frame_data;
+  nikola::RenderQueue render_queue;
+  nikola::RenderCommand render_cmd;
+  
+  // @NOTE (Font tested): This is awful. Don't ACTUALLy do this! It's just for testing.
   nikola::Font* font;
 
-  nikola::Vec2 screen_size  = nikola::Vec2(0.0f);
-  nikola::i32 render_effect = 0;
-  nikola::i32 pixel_rate    = 16;
-  bool has_editor           = false;
+  nikola::u16 res_group;
+  nikola::ResourceID model_id;
+
+  nikola::Transform transform;
+
+  bool has_editor = false;
 };
 
-static float font_size       = 48.0f;
-static nikola::Vec4 color    = nikola::Vec4(1.0f);
-static nikola::String label  = "H.";
-static nikola::Vec2 position = nikola::Vec2(20.0f, 50.0f);
+static float s_font_size       = 48.0f;
+static nikola::Vec4 s_color    = nikola::Vec4(1.0f);
+static nikola::String s_label  = "H.";
+static nikola::Vec2 s_position = nikola::Vec2(20.0f, 50.0f);
 
 /// App
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
-/// Callbacks
-
-static void post_process_pass(const nikola::RenderPass* prev, nikola::RenderPass* pass, void* user_data) {
-  nikola::App* app = (nikola::App*)user_data;
-
-  // Set the shader's uniform
-  nikola::shader_context_set_uniform(pass->shader_context_id, "u_effect_index", app->render_effect);
-  nikola::shader_context_set_uniform(pass->shader_context_id, "u_pixel_rate", app->pixel_rate);
-  nikola::shader_context_set_uniform(pass->shader_context_id, "u_screen_size", app->screen_size);
-  
-  pass->frame_desc.attachments[0]    = prev->frame_desc.attachments[0];
-  pass->frame_desc.attachments_count = 1;
-}
-
-static bool key_pressed_callback(const nikola::Event& event, const void* dispatcher, const void* listener) {
-  if(event.type != nikola::EVENT_KEY_PRESSED) {
-    return false;
-  }
-
-  if(event.key_pressed >= nikola::KEY_SPACE && event.key_pressed <= nikola::KEY_GRAVE_ACCENT) {
-    label += (nikola::i8)event.key_pressed;
-  }
-  else if(event.key_pressed == nikola::KEY_ENTER) {
-    label += '\n';
-  }
-  else if(event.key_pressed == nikola::KEY_BACKSPACE) {
-    label.erase(label.size() - 1);
-  }
-
-  return true;
-}
-
-/// Callbacks
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
 /// Private functions 
 
-static void init_passes(nikola::App* app) {
-  // Post-process pass
-  nikola::RenderPassDesc render_pass = {
-    .frame_size        = app->screen_size, 
-    .clear_color       = nikola::Vec4(1.0f),
-    .clear_flags       = (nikola::GFX_CLEAR_FLAGS_COLOR_BUFFER),
-    .shader_context_id = app->post_shader_context_id,
-  };
-  render_pass.targets.push_back(nikola::RenderTarget{});
-  nikola::renderer_push_pass(render_pass, post_process_pass, app);
+static void load_dialogue_text(const nikola::FilePath& path) {
+  nikola::File file; 
+  if(!nikola::file_open(&file, path, (nikola::i32)nikola::FILE_OPEN_READ)) {
+    NIKOLA_LOG_FATAL("Could not open dialogue file \'%s\'", path.c_str());
+    return;
+  }
+
+  nikola::file_read_string(file, &s_label);
+  nikola::file_close(file);
 }
 
 static void init_resources(nikola::App* app) {
@@ -86,12 +58,59 @@ static void init_resources(nikola::App* app) {
   nikola::FilePath res_path = nikola::filepath_append(nikola::filesystem_current_path(), "res");
   app->res_group            = nikola::resources_create_group("FontApp_res", res_path);
 
-  // Textures init
-  app->texture = nikola::resources_push_texture(app->res_group, "textures/frodo.nbrtexture");
+  // Cubemaps init
+  nikola::ResourceID cubemap_id = nikola::resources_push_cubemap(app->res_group, "cubemaps/accurate_night.nbrcubemap");
 
   // Fonts init
-  nikola::ResourceID font_id = nikola::resources_push_font(app->res_group, "fonts/IosevkaNerdFont-Bold.nbrfont");
-  app->font                  = nikola::resources_get_font(font_id);
+  app->font = nikola::resources_get_font(nikola::resources_push_font(app->res_group, "fonts/IosevkaNerdFont-Bold.nbrfont"));
+
+  // Models init
+  app->model_id = nikola::resources_push_model(app->res_group, "models/langya.nbrmodel");
+
+  // Skybox init
+  app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group, cubemap_id);
+
+  // Materials init
+  app->render_cmd.material_id = nikola::resources_push_material(app->res_group);
+}
+
+static void init_lights(nikola::App* app) {
+  // Directional light
+  app->frame_data.dir_light.direction = nikola::Vec3(0.0f, 0.0f, 0.0f);
+  app->frame_data.dir_light.color     = nikola::Vec3(0.0f, 0.0f, 0.0f);
+ 
+  // Point lights
+  app->frame_data.point_lights.push_back(nikola::PointLight{nikola::Vec3(-9.0f, -118.0f, 36.0f), nikola::Vec3(10.0f)});
+
+  // Set the ambiance
+  app->frame_data.ambient = nikola::Vec3(0.0f);
+}
+
+static void text_animation_typewriter(nikola::App* app, const nikola::String& text, const nikola::f32& duration) {
+  static nikola::f32 anim_timer   = 0.0f; 
+  static nikola::String anim_text = ""; 
+
+  if(anim_text.size() != text.size()) {
+    anim_timer += 0.1f;
+  }
+
+  if(anim_timer >= duration ) {
+    anim_timer = 0.0f; 
+    anim_text += text[anim_text.size()];
+  }
+  
+  nikola::batch_render_text(app->font, anim_text, nikola::Vec2(20.0f, 50.0f), s_font_size, nikola::Vec4(1.0f));
+}
+
+static void text_animation_blink(nikola::App* app, const nikola::String& text, const nikola::f32& time) {
+  static nikola::f32 direction = 1.0f;
+
+  if(s_color.a > 1 || s_color.a < 0) {
+    direction = -direction;
+  } 
+  
+  s_color.a += direction * time; 
+  nikola::batch_render_text(app->font, text, s_position, s_font_size, s_color);
 }
 
 /// Private functions 
@@ -109,34 +128,27 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   app->window = window;
   nikola::window_set_position(window, 100, 100);
 
-  nikola::i32 width, height; 
-  nikola::window_get_size(app->window, &width, &height);
-  app->screen_size = nikola::Vec2(width, height); 
-
   // Editor init
   nikola::gui_init(window);
   
   // Camera init
   float aspect_ratio = nikola::window_get_aspect_ratio(app->window);
   nikola::camera_create(&app->frame_data.camera, aspect_ratio, nikola::Vec3(10.0f, 0.0f, 10.0f), nikola::Vec3(-3.0f, 0.0f, 0.0f));
-
-  // Shaders init
-  nikola::resources_push_shader(nikola::RESOURCE_CACHE_ID, "shaders/post_process.nbrshader");
-
-  // Shader contexts init
-  app->post_shader_context_id = nikola::resources_push_shader_context(nikola::RESOURCE_CACHE_ID, nikola::resources_get_id(nikola::RESOURCE_CACHE_ID, "post_process"));
-
-  // Skybox init
-  app->frame_data.skybox_id = {};
-
-  // Render passes init
-  init_passes(app); 
+  app->frame_data.camera.exposure = 0.154f;
 
   // Resources init
   init_resources(app);
 
-  // Listen to key pressed events 
-  // nikola::event_listen(nikola::EVENT_KEY_PRESSED, key_pressed_callback, app);
+  // Transform init
+  nikola::transform_translate(app->transform, nikola::Vec3(10.0f, -200.0f, 10.0f));
+  nikola::transform_scale(app->transform, nikola::Vec3(1.0f));
+  nikola::transform_rotate(app->transform, nikola::Vec4(1.0f, 0.0f, 0.0f, -90.0f * nikola::DEG2RAD));
+
+  // Lights init
+  init_lights(app);
+
+  // Dialogue text init
+  load_dialogue_text("dialogue.txt");
 
   return app;
 }
@@ -147,11 +159,17 @@ void app_shutdown(nikola::App* app) {
   delete app;
 }
 
+static bool can_show = false;
+
 void app_update(nikola::App* app, const nikola::f64 delta_time) {
   // Close the window when `ESCAPE` is pressed
   if(nikola::input_key_down(nikola::KEY_ESCAPE)) {
     nikola::event_dispatch(nikola::Event{.type = nikola::EVENT_APP_QUIT});
     return;
+  }
+
+  if(nikola::input_key_pressed(nikola::KEY_A)) {
+    app->frame_data.camera.exposure -= 0.1f;
   }
   
   if(nikola::input_key_pressed(nikola::KEY_F1)) {
@@ -161,21 +179,34 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     nikola::input_cursor_show(app->has_editor);
   }
 
+  if(nikola::input_key_pressed(nikola::KEY_E)) {
+    can_show = !can_show;
+  }
+
   nikola::camera_update(app->frame_data.camera);
 } 
 
 void app_render(nikola::App* app) {
   // 3D renderer
   nikola::renderer_begin(app->frame_data);
+
+  app->render_cmd.transform     = app->transform;
+  app->render_cmd.render_type   = nikola::RENDERABLE_TYPE_MODEL;
+  app->render_cmd.renderable_id = app->model_id;
+  app->render_queue.push_back(app->render_cmd); 
+
+  nikola::renderer_sumbit_queue(app->render_queue);
   nikola::renderer_end();
  
   // 2D renderer
   nikola::batch_renderer_begin();
-
-  // nikola::batch_render_quad(nikola::Vec2(100.0f), nikola::Vec2(64.0f), nikola::Vec4(1.0f, 0.0f, 0.0f, 1.0f));
-  // nikola::batch_render_texture(nikola::resources_get_texture(app->texture), nikola::Vec2(200.0f), nikola::Vec2(128.0f, 96.0f));
-
-  nikola::batch_render_text(app->font, label, position, font_size, color);
+  
+  if(can_show) {
+    text_animation_typewriter(app, s_label, 0.65f);
+  }
+  else {
+    text_animation_blink(app, "Press [E] To Start", 0.01f);
+  }
 
   nikola::batch_renderer_end();
 }
@@ -188,22 +219,31 @@ void app_render_gui(nikola::App* app) {
     return;
   }
 
-  // Renderer
-  nikola::gui_begin_panel("Renderer");
-  ImGui::Combo("Render Effect", 
-               &app->render_effect, 
-               "None\0Greyscale\0Inversion\0Sharpen\0Blur\0Emboss\0Edge Detection\0Pixelize\0");  
-  ImGui::DragInt("Pixel Rate", &app->pixel_rate, 1.0f, 0, 64);
+  nikola::gui_begin_panel("Entities");
+  
+  // Models
+  nikola::gui_edit_transform("Building", &app->transform); 
+  
+  // Camera
+  nikola::gui_edit_camera("Editor Camera", &app->frame_data.camera); 
+  ImGui::DragFloat3("Ambient", &app->frame_data.ambient[0], 0.1f, 0.0f, 1.0f);
+  
+  // Directional light
+  nikola::gui_edit_directional_light("Directional", &app->frame_data.dir_light);
+  
+  // Point lights
+  nikola::gui_edit_point_light("Light 1", &app->frame_data.point_lights[0]);
   
   nikola::gui_end_panel();
-  
+
+  // Text
   nikola::gui_begin_panel("Text");
  
-  ImGui::DragFloat("Size", &font_size, 1.0f, 0.0f, nikola::FLOAT_MAX);
-  ImGui::DragFloat2("Position", &position[0], 1.0f, 0.0f, nikola::FLOAT_MAX);
-  nikola::gui_edit_color("Color", color);
+  ImGui::DragFloat("Size", &s_font_size, 1.0f, 0.0f, nikola::FLOAT_MAX);
+  ImGui::DragFloat2("Position", &s_position[0], 1.0f, 0.0f, nikola::FLOAT_MAX);
+  nikola::gui_edit_color("Color", s_color);
 
-  nikola::gui_edit_font("Font", app->font, &label);
+  nikola::gui_edit_font("Font", app->font, &s_label);
   nikola::gui_end_panel();
 
   // Debug
