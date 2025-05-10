@@ -32,11 +32,14 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/resources/nbr_file.cpp
   ${NIKOLA_SRC_DIR}/resources/nbr_importer.cpp
 
-  # filesystem
+  # Filesystem
   ${NIKOLA_SRC_DIR}/filesystem/file.cpp
   ${NIKOLA_SRC_DIR}/filesystem/filesystem.cpp
   ${NIKOLA_SRC_DIR}/filesystem/filepath.cpp
   ${NIKOLA_SRC_DIR}/filesystem/filewatcher.cpp
+  
+  # Timer 
+  ${NIKOLA_SRC_DIR}/time/timer_utils.cpp
 
   # Resources/Loaders 
   ${NIKOLA_SRC_DIR}/resources/loaders/mesh_loader.cpp

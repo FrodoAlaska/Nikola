@@ -7,7 +7,7 @@ if(WIN32)
     ${NIKOLA_COMMON_DEFS}
     "WIN32"
     "NIKOLA_PLATFORM_WINDOWS"
-    "$<$<CONFIG:Debug>:DEBUG; NIKOLA_BUILD_DEBUG>$<$<CONFIG:Release>:NDEBUG; NIKOLA_BUILD_RELEASE>"
+    "$<$<CONFIG:Debug>:DEBUG; _DEBUG>$<$<CONFIG:Release>:NDEBUG>"
   )
   ###############################
   
@@ -30,10 +30,13 @@ elseif(LINUX)
   if(CMAKE_BUILD_TYPE STREQUAL "Debug") 
     set(BUILD_FLAGS 
       "NIKOLA_BUILD_DEBUG"
+      "DEBUG"
+      "_DEBUG"
     )
   else()
     set(BUILD_FLAGS 
       "NIKOLA_BUILD_RELEASE"
+      "RELEASE"
     )
   endif()
 

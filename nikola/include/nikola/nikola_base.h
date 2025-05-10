@@ -94,8 +94,13 @@ typedef double f64;
 /// ----------------------------------------------------------------------
 /// *** Build Types ***
 
-#define NIKOLA_BUILD_DEBUG   1 
-#define NIKOLA_BUILD_RELEASE 0
+#if defined(DEBUG) || defined(_DEBUG)
+  #define NIKOLA_BUILD_DEBUG   1 
+  #define NIKOLA_BUILD_RELEASE 0
+#else
+  #define NIKOLA_BUILD_DEBUG   0 
+  #define NIKOLA_BUILD_RELEASE 1
+#endif
 
 /// *** Build Types ***
 /// ----------------------------------------------------------------------

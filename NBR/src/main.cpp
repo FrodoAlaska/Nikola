@@ -26,39 +26,6 @@ const int OPTIONS_MAX = 4;
 /// Macros
 /// ----------------------------------------------------------------------
 
-/// @NOTE: Just for showing off...
-/// ----------------------------------------------------------------------
-/// PerfTimer
-struct PerfTimer {
-  std::chrono::time_point<std::chrono::steady_clock> start, end;
-  nikola::String tag;
-
-  nikola::f32 time_in_seconds;
-};
-/// PerfTimer
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
-/// PerfTimer functions
-static void perf_timer_start(PerfTimer* timer, const char* tag) {
-  timer->start           = std::chrono::high_resolution_clock::now();
-  timer->time_in_seconds = 0.0f;
-  timer->tag             = tag;
-}
-
-static void perf_timer_stop(PerfTimer& timer) {
-  timer.end = std::chrono::high_resolution_clock::now();
-  
-  std::chrono::duration<nikola::f32> dur = timer.end - timer.start; 
-  timer.time_in_seconds                  = dur.count();
-}
-
-static void perf_timer_log(PerfTimer& timer) {
-  NIKOLA_LOG_DEBUG("\'%s\' took %0.3fs to run", timer.tag.c_str(), timer.time_in_seconds);
-}
-/// PerfTimer functions
-/// ----------------------------------------------------------------------
-
 /// ----------------------------------------------------------------------
 /// Private functions
 
@@ -124,22 +91,21 @@ static bool lex_args(int argc, char** argv, nbr::ListContext* list) {
     return false;
   }
 
-  PerfTimer timer{};
-  
   // Create the context
   nbr::list_context_create(path, list);
 
   // Convert the resources
   if(resource_type == -1) {
-    perf_timer_start(&timer, "list_context_convert_all");
+    NIKOLA_PERF_TIMER_BEGIN("nbr::list_context_convert_all");
     nbr::list_context_convert_all(list); 
-    perf_timer_stop(timer);
+    NIKOLA_PERF_TIMER_END("nbr::list_context_convert_all");
   } 
   else {
+    NIKOLA_PERF_TIMER_BEGIN("nbr::list_context_convert_by_type");
     nbr::list_context_convert_by_type(list, (nikola::ResourceType)resource_type); 
+    NIKOLA_PERF_TIMER_END("nbr::list_context_convert_by_type");
   }
   
-  perf_timer_log(timer);
   return true;
 }
 
