@@ -78,8 +78,6 @@ set(LIBS_SOURCES
   ${NIKOLA_LIBS_DIR}/glad/glad.c
   
   # ImGui
-  # ${NIKOLA_LIBS_DIR}/imgui/backends/imgui_impl_dx11.cpp
-  # ${NIKOLA_LIBS_DIR}/imgui/backends/imgui_impl_dx11.h
   ${NIKOLA_LIBS_DIR}/imgui/backends/imgui_impl_glfw.cpp
   ${NIKOLA_LIBS_DIR}/imgui/backends/imgui_impl_glfw.h
   ${NIKOLA_LIBS_DIR}/imgui/backends/imgui_impl_opengl3.cpp

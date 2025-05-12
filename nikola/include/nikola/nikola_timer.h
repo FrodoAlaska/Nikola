@@ -40,8 +40,8 @@ String perf_timer_to_string(PerfTimer& timer);
 /// Macros
 
 #if NIKOLA_BUILD_DEBUG == 1 
-  #define NIKOLA_PERF_TIMER_BEGIN(tag) nikola::PerfTimer _perf_timer; nikola::perf_timer_start(_perf_timer);
-  #define NIKOLA_PERF_TIMER_END(tag) nikola::perf_timer_stop(_perf_timer); NIKOLA_LOG_TRACE("\'%s\' took %s to run", tag, nikola::perf_timer_to_string(_perf_timer).c_str());
+  #define NIKOLA_PERF_TIMER_BEGIN(timer) nikola::perf_timer_start(timer);
+  #define NIKOLA_PERF_TIMER_END(timer, tag) nikola::perf_timer_stop(timer); NIKOLA_LOG_TRACE("\'%s\' took %s to run", tag, nikola::perf_timer_to_string(timer).c_str());
 #else
   #define NIKOLA_PERF_TIMER_BEGIN()
   #define NIKOLA_PERF_TIMER_END()

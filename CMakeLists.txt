@@ -14,6 +14,7 @@ set(NIKOLA_INCLUDES
   ${NIKOLA_LIBS_DIR} 
   ${NIKOLA_LIBS_DIR}/glfw/include
   ${NIKOLA_LIBS_DIR}/glm
+  ${NIKOLA_LIBS_DIR}/tracy/public
 )
 
 # This script includes a bunch of platform-specific variables and definitions that

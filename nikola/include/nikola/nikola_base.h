@@ -814,12 +814,6 @@ enum WindowFlags {
 
   /// Set the window to be fullscreen on creation. 
   WINDOW_FLAGS_FULLSCREEN          = 1 << 9,
-
-  /// Set the graphics context to be hardware accelerated (i.e either using OpenGL or DirectX).
-  WINDOW_FLAGS_GFX_HARDWARE        = 1 << 10,
-  
-  /// Set the graphics context to be software rendered
-  WINDOW_FLAGS_GFX_SOFTWARE        = 1 << 11,
 };
 /// WindowFlags
 ///---------------------------------------------------------------------------------------------------------------------
@@ -844,8 +838,6 @@ enum WindowFlags {
 ///   - `WINDOW_FLAGS_CENTER_MOUSE`        = Center the mouse position relative to the screen on startup.
 ///   - `WINDOW_FLAGS_HIDE_CURSOR`         = Hide the cursor at creation. The cursos will be shown by default.
 ///   - `WINDOW_FLAGS_FULLSCREEN`          = Set the window to be fullscreen on creation. 
-///   - `WINDOW_FLAGS_GFX_HARDWARE`        = Set the graphics context to be hardware accelerated (i.e either using OpenGL or DirectX).
-///   - `WINDOW_FLAGS_GFX_SOFTWARE`        = Set the graphics context to be software rendered
 /// 
 NIKOLA_API Window* window_open(const i8* title, const i32 width, const i32 height, i32 flags);
 
@@ -855,9 +847,14 @@ NIKOLA_API void window_close(Window* window);
 /// Poll events from the `window` context.
 NIKOLA_API void window_poll_events(Window* window);
 
-/// Swap the internal buffer of the `window` context. 
-/// This might have no effect on some platforms.
-NIKOLA_API void window_swap_buffers(Window* window);
+/// Swap the internal buffer of the `window` context every `interval` count. 
+/// 
+/// @NOTE: The `interval` parametar can be set as `0` if VSYNC is not needed.
+/// Otherwise, `interval` can be set as `1` (which waits exactly `1` screen update) 
+/// to disable VSYNC.
+///
+/// @NOTE: This might have no effect on some platforms.
+NIKOLA_API void window_swap_buffers(Window* window, const i32 interval);
 
 /// Returns `true` if the `window` context is still actively open. 
 NIKOLA_API const bool window_is_open(const Window* window);

@@ -27,7 +27,9 @@
 /// App
 struct nikola::App {
   nikola::Window* window;
+
   nikola::ResourceID post_shader_context_id;
+  nikola::Font* font;
 
   nikola::Vec2 screen_size  = nikola::Vec2(0.0f);
   nikola::i32 render_effect = 0;
@@ -99,6 +101,9 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Shaders init
   nikola::resources_push_shader(nikola::RESOURCE_CACHE_ID, "shaders/post_process.nbrshader");
 
+  // Fonts init
+  app->font = nikola::resources_get_font(nikola::resources_push_font(nikola::RESOURCE_CACHE_ID, "fonts/bit5x3.nbrfont"));
+
   // Shader contexts init
   app->post_shader_context_id = nikola::resources_push_shader_context(nikola::RESOURCE_CACHE_ID, nikola::resources_get_id(nikola::RESOURCE_CACHE_ID, "post_process"));
 
@@ -132,11 +137,15 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 } 
 
 void app_render(nikola::App* app) {
+  // 3D renderer
   nikola::renderer_begin(scenes_get_current()->frame_data);
-  
   scenes_render();
-  
   nikola::renderer_end();
+
+  // 2D renderer
+  nikola::batch_renderer_begin();
+  nikola::batch_render_fps(app->font, nikola::Vec2(10.0f, 40.0f), 32.0f, nikola::Vec4(1.0f));
+  nikola::batch_renderer_end();
 }
 
 void app_render_gui(nikola::App* app) {

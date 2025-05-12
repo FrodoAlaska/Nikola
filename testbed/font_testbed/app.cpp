@@ -212,12 +212,11 @@ void app_render(nikola::App* app) {
 }
 
 void app_render_gui(nikola::App* app) {
-  nikola::gui_begin(); 
- 
   if(!app->has_editor) {
-    nikola::gui_end(); 
     return;
   }
+ 
+  nikola::gui_begin(); 
 
   nikola::gui_begin_panel("Entities");
   

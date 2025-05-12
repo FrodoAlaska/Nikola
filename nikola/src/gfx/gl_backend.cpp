@@ -48,8 +48,6 @@ struct GfxContext {
 
   u32 default_clear_flags = 0;
   u32 current_clear_flags = 0;
-
-  bool has_vsync      = false;
 };
 /// GfxContext
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1070,7 +1068,7 @@ void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, c
 
 void gfx_context_present(GfxContext* gfx) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
-  window_swap_buffers(gfx->desc.window);
+  window_swap_buffers(gfx->desc.window, gfx->desc.has_vsync);
 }
 
 /// Context functions 

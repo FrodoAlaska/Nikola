@@ -7,7 +7,7 @@ int main() {
   }
 
   // Openinig the window
-  nikola::i32 win_flags = nikola::WINDOW_FLAGS_FOCUS_ON_CREATE | nikola::WINDOW_FLAGS_GFX_HARDWARE;
+  nikola::i32 win_flags = nikola::WINDOW_FLAGS_FOCUS_ON_CREATE | nikola::WINDOW_FLAGS_RESIZABLE;
   nikola::Window* window = nikola::window_open("Hello, Nikola", 1366, 768, win_flags);
   if(!window) {
     return -1;

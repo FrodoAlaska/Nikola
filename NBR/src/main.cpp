@@ -94,16 +94,18 @@ static bool lex_args(int argc, char** argv, nbr::ListContext* list) {
   // Create the context
   nbr::list_context_create(path, list);
 
+  nikola::PerfTimer timer;
+
   // Convert the resources
   if(resource_type == -1) {
-    NIKOLA_PERF_TIMER_BEGIN("nbr::list_context_convert_all");
+    NIKOLA_PERF_TIMER_BEGIN(timer);
     nbr::list_context_convert_all(list); 
-    NIKOLA_PERF_TIMER_END("nbr::list_context_convert_all");
+    NIKOLA_PERF_TIMER_END(timer, "nbr::list_context_convert_all");
   } 
   else {
-    NIKOLA_PERF_TIMER_BEGIN("nbr::list_context_convert_by_type");
+    NIKOLA_PERF_TIMER_BEGIN(timer);
     nbr::list_context_convert_by_type(list, (nikola::ResourceType)resource_type); 
-    NIKOLA_PERF_TIMER_END("nbr::list_context_convert_by_type");
+    NIKOLA_PERF_TIMER_END(timer, "nbr::list_context_convert_by_type");
   }
   
   return true;

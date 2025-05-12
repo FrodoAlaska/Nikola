@@ -215,9 +215,6 @@ static bool nikola_quit_app_callback(const Event& event, const void* dispatcher,
 /// Private functions
 static void set_gfx_context(Window* window) {
 #if defined(NIKOL_GFX_CONTEXT_OPENGL)
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #elif defined(NIKOL_GTX_CONTEXT_DX11) 
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 #endif
@@ -225,13 +222,18 @@ static void set_gfx_context(Window* window) {
 
 static void set_window_hints(Window* window) {
   // Setting the this for the MSAA down the line
-  // @TEMP: This should probably be configurable
+  // @TODO (Window): This should probably be configurable
   glfwWindowHint(GLFW_SAMPLES, 4); 
+ 
+  // Setting the OpenGL context configurations
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
   // Error callback
   glfwSetErrorCallback(error_callback); 
 
-  // Not resizable by default
+  // Setting some defaults
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
   // Setting the flags...
@@ -272,14 +274,6 @@ static void set_window_hints(Window* window) {
   
   if(IS_BIT_SET(window->flags, WINDOW_FLAGS_FULLSCREEN)) {
     window->is_fullscreen = true; 
-  }
-  
-  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_GFX_HARDWARE)) {
-    set_gfx_context(window);
-  }
-  
-  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_GFX_SOFTWARE)) {
-    // @TODO: Software renderer?
   }
 }
 
@@ -386,14 +380,15 @@ void window_close(Window* window) {
 }
 
 void window_poll_events(Window* window) {
-  // TODO: Maybe take these system updates somewhere else? 
+  // @TODO (): Maybe take these system updates somewhere else? 
   input_update();
   niclock_update();
 
   glfwPollEvents();
 }
 
-void window_swap_buffers(Window* window) {
+void window_swap_buffers(Window* window, const i32 interval) {
+  glfwSwapInterval(interval);
   glfwSwapBuffers(window->handle);
 }
 

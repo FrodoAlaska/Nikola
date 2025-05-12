@@ -7,3 +7,6 @@
 [submodule "NBR/libs/assimp"]
 	path = NBR/libs/assimp
 	url = https://github.com/assimp/assimp.git
+[submodule "libs/tracy"]
+	path = libs/tracy
+	url = https://github.com/wolfpld/tracy.git

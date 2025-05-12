@@ -19,9 +19,9 @@ set(TESTBED_INCLUDES
 
 set(TESTBED_TYPE 
   # "engine_testbed"
-  # "scene_example"
+  "scene_example"
   # "core_testbed"
-  "font_testbed"
+  # "font_testbed"
 )
 ############################################################
 
@@ -34,12 +34,12 @@ set(TESTBED_SOURCES
   # ${TESTBED_SRC_DIR}/engine_example/app.cpp
 
   # Scene example
-  # ${TESTBED_SRC_DIR}/scene_example/app.cpp
-  # ${TESTBED_SRC_DIR}/scene_example/scenes/game_scene.cpp
-  # ${TESTBED_SRC_DIR}/scene_example/scenes/scene_manager.cpp
+  ${TESTBED_SRC_DIR}/scene_example/app.cpp
+  ${TESTBED_SRC_DIR}/scene_example/scenes/game_scene.cpp
+  ${TESTBED_SRC_DIR}/scene_example/scenes/scene_manager.cpp
   
   # Font example
-  ${TESTBED_SRC_DIR}/font_testbed/app.cpp
+  # ${TESTBED_SRC_DIR}/font_testbed/app.cpp
 )
 ############################################################
 

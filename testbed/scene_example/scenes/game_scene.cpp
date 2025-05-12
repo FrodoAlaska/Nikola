@@ -52,7 +52,7 @@ struct Entity {
 
 static nikola::DynamicArray<Entity> s_entities;
 static nikola::f32 rotation   = 0.0f;
-static const char* SCENE_PATH = "scenes/game_scene.nscn"; 
+static const char* SCENE_PATH = "scenes/game_scene_tempel.nscn"; 
 
 /// Globals
 /// ----------------------------------------------------------------------
@@ -109,13 +109,13 @@ bool game_scene_create(Scene* scene) {
   nikola::camera_create(&scene->frame_data.camera, aspect_ratio, nikola::Vec3(10.0f, 0.0f, 10.0f), nikola::Vec3(-3.0f, 0.0f, 0.0f));
    
   // Cubemaps init
-  // nikola::ResourceID cubemap_id = nikola::resources_push_cubemap(res_group, "cubemaps/NightSky.nbrcubemap");
-  nikola::ResourceID cubemap_id = nikola::resources_push_cubemap(res_group, "cubemaps/corona.nbrcubemap");
+  nikola::ResourceID cubemap_id = nikola::resources_push_cubemap(res_group, "cubemaps/NightSky.nbrcubemap");
+  // nikola::ResourceID cubemap_id = nikola::resources_push_cubemap(res_group, "cubemaps/corona.nbrcubemap");
 
   // Models init
-  // nikola::ResourceID model = nikola::resources_push_model(res_group, "models/tempel.nbrmodel");
+  nikola::ResourceID model = nikola::resources_push_model(res_group, "models/tempel.nbrmodel");
   // nikola::ResourceID model = nikola::resources_push_model(res_group, "models/bridge.nbrmodel");
-  nikola::ResourceID model = nikola::resources_push_model(res_group, "models/ps1.nbrmodel");
+  // nikola::ResourceID model = nikola::resources_push_model(res_group, "models/ps1.nbrmodel");
 
   // Textures init
   nikola::ResourceID mesh_texture = nikola::resources_push_texture(res_group, "textures/opengl.nbrtexture");
@@ -132,8 +132,8 @@ bool game_scene_create(Scene* scene) {
   nikola::ResourceID cube_mesh = nikola::resources_push_mesh(scene->resource_group, nikola::MESH_TYPE_CUBE);
 
   // Skyboxes init
-  // scene->frame_data.skybox_id = nikola::resources_push_skybox(res_group, cubemap_id);
-  scene->frame_data.skybox_id = {};
+  scene->frame_data.skybox_id = nikola::resources_push_skybox(res_group, cubemap_id);
+  // scene->frame_data.skybox_id = {};
 
   // Model init
   s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), model, material_id, nikola::RENDERABLE_TYPE_MODEL, "3D Model"); 
@@ -145,15 +145,15 @@ bool game_scene_create(Scene* scene) {
   s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), cube_mesh, pav_material_id, nikola::RENDERABLE_TYPE_MESH, "Ground"); 
 
   // Torches 
-  // nikola::ResourceID torch_model = nikola::resources_push_model(res_group, "models/column_torch.nbrmodel");
-  // s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), torch_model, material_id, nikola::RENDERABLE_TYPE_MODEL, "Torch 0"); 
-  // s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), torch_model, material_id, nikola::RENDERABLE_TYPE_MODEL, "Torch 1"); 
+  nikola::ResourceID torch_model = nikola::resources_push_model(res_group, "models/column_torch.nbrmodel");
+  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), torch_model, material_id, nikola::RENDERABLE_TYPE_MODEL, "Torch 0"); 
+  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), torch_model, material_id, nikola::RENDERABLE_TYPE_MODEL, "Torch 1"); 
 
   // Lights init
   init_lights(scene);
 
   // Loading the binary scene
-  game_scene_load(scene, "scenes/game_scene_ps1.nscn");
+  game_scene_load(scene, SCENE_PATH);
 
   return true;
 }
@@ -178,7 +178,7 @@ void game_scene_update(Scene* scene, const nikola::f64 dt) {
   
   nikola::f32 value = ease_in_sine(dt);
   rotation += value * 50.0f;
-  nikola::transform_rotate(s_entities[0].transform, nikola::Vec3(1.0f), rotation);
+  nikola::transform_rotate(s_entities[1].transform, nikola::Vec3(1.0f), rotation);
 
   nikola::camera_update(scene->frame_data.camera);
 }

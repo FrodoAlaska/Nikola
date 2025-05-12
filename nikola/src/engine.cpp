@@ -70,6 +70,7 @@ void engine_init(const AppDesc& desc) {
 }
 
 void engine_run() {
+  
   while(window_is_open(s_engine.window)) {
     // Update
     filewatcher_update(); 

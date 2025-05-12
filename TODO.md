@@ -73,22 +73,26 @@
     - [x] Don't forget to add `glPixelStori` somewhere 
     - [x] Font rendering
     - [x] Documentation (`batch_renderer`, `nbr_font`, `font resources`).
-[] 16. Performance Craze 0.1 
+[] 16. Audio v0.1 
+    - [x] Lay out what you actually want the audio system to be and what it does. 
+    - [x] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
+    - [] A way to create an audio buffer that could be played with the context 
+    - [] Create an audio backend with a context 
+    - [] Create the NBR version of the audio resource. As well as saving it, loading it, converting it, and managing it with the NBR tool.
+    - [] Add it to the resource manager
+    - [] Documentation
+[] 17. UI v0.1
+    - [] A canvas system for 2D game UI.
+    - [] A menu system
+    - [] Documentation
+[] 18. Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers
     - [] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application.
     - [] Which systems can benefit most from multi-threading? 
     - [] Should we implement a job system? If yes, how can this be done within the confines of the engine? 
     - [] Try to improve the load times for the resource manager as a test of the new multi-threading system.
     - [] Compare with previous results and scenes and current results and scenes
-[] 17. Audio v0.1 
-    - [] Lay out what you actually want the audio system to be and what it does. 
-    - [] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
-    - [] Create an audio backend with a context 
-    - [] A way to create an audio buffer that could be played with the context 
-    - [] Add it to the resource manager
-[] 18. UI v0.1
-    - [] A canvas system for 2D game UI.
-    - [] A menu system
+    - [] Documentation
 [] 19. Math And Camera v0.2 
     - [] Fix the quaternion rotations in the transform and, really, in the _whole_ engine.
     - [] Add rotations to the camera, or, in other words, let the camera have a `Transform` instead of just a `position` vector3. 
@@ -104,10 +108,6 @@
     - [] Make the HDR pass toggleable through the GUI.
 [] 22. 3D Animations v0.1
 [] 23. Physics v0.1
-
-```bash
-
-```
 
 ## (Engine) BUGS: 
 - (Filesystem): There is a bug with the filesystem where the string gets allocated and de-allocated wrong I think? It crashes the program when we pass a normal C-string (i.e "string"), but it runs okay 

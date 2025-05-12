@@ -419,6 +419,11 @@ void batch_render_codepoint(Font* font, const char codepoint, const Vec2& positi
   generate_quad_batch(batch, src, dest, color, Vec2(SHAPE_TYPE_TEXT, 4.0f));
 }
 
+void batch_render_fps(Font* font, const Vec2& position, const f32 size, const Vec4& color) {
+  String fps_text = "FPS: " + std::to_string((i32)niclock_get_fps());
+  batch_render_text(font, fps_text, position, size, color);
+}
+
 /// Batch renderer functions
 ///---------------------------------------------------------------------------------------------------------------------
 
