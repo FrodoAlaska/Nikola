@@ -3,6 +3,7 @@
 #include "nikola/nikola_render.h"
 #include "nikola/nikola_resources.h"
 #include "nikola/nikola_file.h"
+#include "nikola/nikola_timer.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -62,9 +63,13 @@ void engine_init(const AppDesc& desc) {
     cli_args.push_back(desc.args_values[i]);
   }
 
+  PerfTimer timer;
+
   // App init 
+  NIKOLA_PERF_TIMER_BEGIN(timer);
   NIKOLA_ASSERT(s_engine.app_desc.init_fn, "Cannot start the engine with an invalid application initialization callback");
   s_engine.app = s_engine.app_desc.init_fn(cli_args, s_engine.window);
+  NIKOLA_PERF_TIMER_END(timer, "app_init");
 
   NIKOLA_LOG_INFO("Successfully initialized the application \'%s\'", desc.window_title.c_str());
 }
