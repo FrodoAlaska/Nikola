@@ -8,17 +8,16 @@ set(NIKOLA_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/nikola/include)
 set(NIKOLA_LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 set(NIKOLA_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/nikola)
 
-set(NIKOLA_LIBRARIES glfw)
 set(NIKOLA_INCLUDES 
-  ${NIKOLA_INCLUDE_DIR} 
-  ${NIKOLA_LIBS_DIR} 
-  ${NIKOLA_LIBS_DIR}/glfw/include
-  ${NIKOLA_LIBS_DIR}/glm
-  ${NIKOLA_LIBS_DIR}/tracy/public
+  ${NIKOLA_INCLUDE_DIR}
+  ${NIKOLA_LIBS_DIR}
+
+  ${glfw_SOURCE_DIR}/include
+  ${glm_SOURCE_DIR}/
 )
 
-# This script includes a bunch of platform-specific variables and definitions that
-# will be helpful later on.
+# This script includes a bunch of platform-specific variables 
+# and definitions that will be helpful later on. 
 include(cmake/utils.cmake)
 ############################################################
 
@@ -38,6 +37,25 @@ else()
 endif()
 ############################################################
 
+### FetchContent ###
+############################################################
+include(FetchContent)
+
+# GLFW
+FetchContent_Declare(
+  glfw 
+  URL https://github.com/glfw/glfw/releases/download/3.4/glfw-3.4.zip
+)
+
+# GLM
+FetchContent_Declare(
+  glm 
+  URL https://github.com/g-truc/glm/archive/refs/tags/1.0.1.zip
+)
+
+FetchContent_MakeAvailable(glfw glm)
+############################################################
+
 ### CMake Variables ###
 ############################################################
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -45,7 +63,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 ### Sub Directories ###
 ############################################################
-add_subdirectory(libs/glfw)
 add_subdirectory(nikola)
 
 if(NIKOLA_BUILD_TESTBED) 

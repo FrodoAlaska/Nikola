@@ -109,8 +109,12 @@ add_library(${PROJECT_NAME} ${NIKOLA_BUILD_TYPE} ${NIKOLA_SOURCES} ${NIKOLA_HEAD
 
 ### Linking ###
 ############################################################
-target_include_directories(${PROJECT_NAME} PUBLIC BEFORE ${NIKOLA_INCLUDES})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${NIKOLA_LIBRARIES})
+target_include_directories(${PROJECT_NAME} PUBLIC BEFORE 
+  ${NIKOLA_INCLUDES}
+)
+target_link_libraries(${PROJECT_NAME} PUBLIC 
+  glfw
+)
 ############################################################
 
 ### Compiling Options ###

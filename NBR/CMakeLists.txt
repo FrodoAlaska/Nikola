@@ -7,12 +7,18 @@ set(NBR_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(NBR_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(NBR_LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 
-set(NBR_LIBRARIES ${NIKOLA_LIBRARY_DIR} glfw assimp)
+set(NBR_LIBRARIES 
+  ${NIKOLA_LIBRARY_DIR} 
+  glfw
+  assimp
+)
+
 set(NBR_INCLUDES 
   ${NBR_INCLUDE_DIR} 
   ${NBR_LIBS_DIR} 
-  ${NBR_LIBS_DIR}/assimp/include
   ${NIKOLA_INCLUDES}
+
+  ${assimp_SOURCE_DIR}/include
 )
 
 set(NBR_OUTPUT_DIR  ${CMAKE_CURRENT_BINARY_DIR})
@@ -24,7 +30,6 @@ set(NBR_BUILD_DEFS  ${NIKOLA_BUILD_DEFS})
 ############################################################
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
-set(CMAKE_CXX_STANDARD 20)
 ############################################################
 
 ### Project Sources ###
@@ -65,7 +70,13 @@ set(ASSIMP_BUILD_OBJ_IMPORTER             ON)
 set(ASSIMP_BUILD_FBX_IMPORTER             ON)
 set(ASSIMP_BUILD_GLTF_IMPORTER            ON)
 
-add_subdirectory(libs/assimp)
+# ASSIMP
+FetchContent_Declare(
+  assimp 
+  URL https://github.com/assimp/assimp/archive/refs/tags/v5.4.3.zip
+)
+
+FetchContent_MakeAvailable(assimp)
 ############################################################
 
 ### Final Build ###
