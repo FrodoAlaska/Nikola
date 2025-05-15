@@ -1,6 +1,25 @@
 cmake_minimum_required(VERSION 3.27)
 project(nikola)
 
+### FetchContent ###
+############################################################
+include(FetchContent)
+
+# GLFW
+FetchContent_Declare(
+  glfw 
+  URL https://github.com/glfw/glfw/releases/download/3.4/glfw-3.4.zip
+)
+
+# GLM
+FetchContent_Declare(
+  glm 
+  URL https://github.com/g-truc/glm/archive/refs/tags/1.0.1.zip
+)
+
+FetchContent_MakeAvailable(glfw glm)
+############################################################
+
 ### Project Variables ###
 ############################################################
 set(NIKOLA_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/nikola/src)
@@ -35,25 +54,6 @@ else()
   set(NIKOLA_BUILD_TYPE STATIC)
   set(BUILD_SHARED_LIBS OFF)
 endif()
-############################################################
-
-### FetchContent ###
-############################################################
-include(FetchContent)
-
-# GLFW
-FetchContent_Declare(
-  glfw 
-  URL https://github.com/glfw/glfw/releases/download/3.4/glfw-3.4.zip
-)
-
-# GLM
-FetchContent_Declare(
-  glm 
-  URL https://github.com/g-truc/glm/archive/refs/tags/1.0.1.zip
-)
-
-FetchContent_MakeAvailable(glfw glm)
 ############################################################
 
 ### CMake Variables ###

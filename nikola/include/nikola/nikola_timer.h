@@ -15,7 +15,7 @@ namespace nikola { // Start of nikola
 ///---------------------------------------------------------------------------------------------------------------------
 /// PerfTimer 
 struct PerfTimer {
-  std::chrono::time_point<std::chrono::system_clock> start, end;
+  std::chrono::time_point<std::chrono::high_resolution_clock> start, end;
   
   f32 to_milliseconds = 0.0f;
   f32 to_seconds      = 0.0f;

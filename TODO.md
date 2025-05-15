@@ -87,7 +87,7 @@
     - [] Documentation
 [] 18. Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers
-    - [] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application.
+    - [x] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application.
     - [] Which systems can benefit most from multi-threading? 
     - [] Should we implement a job system? If yes, how can this be done within the confines of the engine? 
     - [] Try to improve the load times for the resource manager as a test of the new multi-threading system.
