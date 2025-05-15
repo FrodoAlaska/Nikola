@@ -403,6 +403,10 @@ void renderer_set_clear_color(const Vec4& clear_color) {
   s_renderer.clear_color = clear_color;
 }
 
+Vec4& renderer_get_clear_color() {
+  return s_renderer.clear_color;
+}
+
 void renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& func, const void* user_data) {
   RenderPassEntry entry;
   entry.func      = func; 

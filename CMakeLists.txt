@@ -17,7 +17,15 @@ FetchContent_Declare(
   URL https://github.com/g-truc/glm/archive/refs/tags/1.0.1.zip
 )
 
-FetchContent_MakeAvailable(glfw glm)
+# OpenAL-Soft
+set(ALSOFT_EXAMPLES OFF)
+
+FetchContent_Declare(
+  OpenAL 
+  URL https://github.com/kcat/openal-soft/archive/refs/tags/latest.zip
+)
+
+FetchContent_MakeAvailable(glfw glm OpenAL)
 ############################################################
 
 ### Project Variables ###
@@ -32,7 +40,13 @@ set(NIKOLA_INCLUDES
   ${NIKOLA_LIBS_DIR}
 
   ${glfw_SOURCE_DIR}/include
-  ${glm_SOURCE_DIR}/
+  ${glm_SOURCE_DIR}
+  ${OpenAL_SOURCE_DIR}/include
+)
+
+set(NIKOLA_LIBRARIES 
+  glfw 
+  OpenAL
 )
 
 # This script includes a bunch of platform-specific variables 

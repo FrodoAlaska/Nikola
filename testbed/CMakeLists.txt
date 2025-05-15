@@ -8,9 +8,8 @@ set(TESTBED_INCLUDE_DIR ${TESTBED_SRC_DIR})
 set(TESTBED_LIBS_DIR libs)
 
 set(TESTBED_LIBRARIES 
-  ${NIKOLA_LIBRARY_DIR}
   ${NIKOLA_LIBRARIES}
-  glfw
+  ${NIKOLA_LIBRARY_DIR}
 )
 
 set(TESTBED_INCLUDES 
@@ -21,8 +20,9 @@ set(TESTBED_INCLUDES
 set(TESTBED_TYPE 
   # "engine_testbed"
   # "scene_example"
-  "core_testbed"
+  # "core_testbed"
   # "font_testbed"
+  "audio_testbed"
 )
 ############################################################
 
@@ -30,17 +30,11 @@ set(TESTBED_TYPE
 ############################################################
 set(TESTBED_SOURCES 
   ${TESTBED_SRC_DIR}/${TESTBED_TYPE}/main.cpp
-  
-  # Engine example
-  # ${TESTBED_SRC_DIR}/engine_example/app.cpp
+  ${TESTBED_SRC_DIR}/${TESTBED_TYPE}/app.cpp
 
   # Scene example
-  # ${TESTBED_SRC_DIR}/scene_example/app.cpp
   # ${TESTBED_SRC_DIR}/scene_example/scenes/game_scene.cpp
   # ${TESTBED_SRC_DIR}/scene_example/scenes/scene_manager.cpp
-  
-  # Font example
-  # ${TESTBED_SRC_DIR}/font_testbed/app.cpp
 )
 ############################################################
 
@@ -51,6 +45,7 @@ add_executable(${PROJECT_NAME} ${TESTBED_SOURCES})
 
 ### Linking ###
 ############################################################
+# Make sure that Nikola is built before attempting to compile the testbeds
 add_dependencies(${PROJECT_NAME} nikola)
 
 target_include_directories(${PROJECT_NAME} PUBLIC BEFORE ${TESTBED_INCLUDES})

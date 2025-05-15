@@ -1,6 +1,30 @@
 cmake_minimum_required(VERSION 3.27)
 project(nbr)
 
+### Dependencies ###
+############################################################
+# Setting some options for ASSIMP
+set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF)
+set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF)
+set(ASSIMP_BUILD_SAMPLES                  OFF)
+set(ASSIMP_BUILD_TESTS                    OFF)
+set(ASSIMP_BUILD_ASSIMP_VIEW              OFF)
+set(ASSIMP_BUILD_ASSIMP_TOOLS             OFF)
+set(ASSIMP_NO_EXPORT                      OFF)
+
+set(ASSIMP_BUILD_OBJ_IMPORTER             ON)
+set(ASSIMP_BUILD_FBX_IMPORTER             ON)
+set(ASSIMP_BUILD_GLTF_IMPORTER            ON)
+
+# ASSIMP
+FetchContent_Declare(
+  assimp 
+  URL https://github.com/assimp/assimp/archive/refs/tags/v5.4.3.zip
+)
+
+FetchContent_MakeAvailable(assimp)
+############################################################
+
 ### Project Variables ###
 ############################################################
 set(NBR_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -8,8 +32,8 @@ set(NBR_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(NBR_LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 
 set(NBR_LIBRARIES 
+  ${NIKOLA_LIBRARIES}
   ${NIKOLA_LIBRARY_DIR} 
-  glfw
   assimp
 )
 
@@ -55,30 +79,6 @@ set(LIBS_SOURCES
 )
 ############################################################
 
-### Dependencies ###
-############################################################
-# Setting some options for ASSIMP
-set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF)
-set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF)
-set(ASSIMP_BUILD_SAMPLES                  OFF)
-set(ASSIMP_BUILD_TESTS                    OFF)
-set(ASSIMP_BUILD_ASSIMP_VIEW              OFF)
-set(ASSIMP_BUILD_ASSIMP_TOOLS             OFF)
-set(ASSIMP_NO_EXPORT                      OFF)
-
-set(ASSIMP_BUILD_OBJ_IMPORTER             ON)
-set(ASSIMP_BUILD_FBX_IMPORTER             ON)
-set(ASSIMP_BUILD_GLTF_IMPORTER            ON)
-
-# ASSIMP
-FetchContent_Declare(
-  assimp 
-  URL https://github.com/assimp/assimp/archive/refs/tags/v5.4.3.zip
-)
-
-FetchContent_MakeAvailable(assimp)
-############################################################
-
 ### Final Build ###
 ############################################################
 add_executable(${PROJECT_NAME} ${NBR_SOURCES} ${LIBS_SOURCES})
@@ -86,6 +86,9 @@ add_executable(${PROJECT_NAME} ${NBR_SOURCES} ${LIBS_SOURCES})
 
 ### Linking ###
 ############################################################
+# Make sure that Nikola is built before attempting to compile NBR
+add_dependencies(${PROJECT_NAME} nikola)
+
 target_include_directories(${PROJECT_NAME} PUBLIC BEFORE ${NBR_INCLUDES})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${NBR_LIBRARIES})
 ############################################################

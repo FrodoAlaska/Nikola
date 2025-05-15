@@ -76,8 +76,8 @@
 [] 16. Audio v0.1 
     - [x] Lay out what you actually want the audio system to be and what it does. 
     - [x] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
-    - [] A way to create an audio buffer that could be played with the context 
-    - [] Create an audio backend with a context 
+    - [x] A way to create an audio buffer that could be played with the context 
+    - [x] Create an audio backend with a context 
     - [] Create the NBR version of the audio resource. As well as saving it, loading it, converting it, and managing it with the NBR tool.
     - [] Add it to the resource manager
     - [] Documentation
@@ -96,17 +96,17 @@
 [] 19. Math And Camera v0.2 
     - [] Fix the quaternion rotations in the transform and, really, in the _whole_ engine.
     - [] Add rotations to the camera, or, in other words, let the camera have a `Transform` instead of just a `position` vector3. 
-[] 20. Audio System v0.1 
-    - [] 2D and 3D sound and music. 
-    - [] A fully-fledged audio pipeline that can play, position, pitch, control the volume, and apply effects to sound and music
-[] 21. Renderer v0.5 
+[] 20. Renderer v0.5 
     - [] Bloom integration 
     - [] Improve lighting using clustered rendering
     - [] Compute shaders 
     - [] Better bloom for testing the new compute shaders
     - [] Improve upon the render pass system by allowing the reuse of certain render passes 
     - [] Make the HDR pass toggleable through the GUI.
-[] 22. 3D Animations v0.1
+[] 21. 3D Animations v0.1
+[] 22. Audio System v0.1 
+    - [] 2D and 3D sound and music. 
+    - [] A fully-fledged audio pipeline that can play, position, pitch, control the volume, and apply effects to sound and music
 [] 23. Physics v0.1
 
 ## (Engine) BUGS: 
@@ -114,6 +114,7 @@
 if we give it a string variable instead (i.e `func(path_string)`). Perhaps there is something wrong with the lifetime of strings? I'm not sure.
 - (Resources): It's probably better not to have an internal cache specified by the engine itself. It's probably better to let the user (me) create that cache if need be. That way, we don't have to have specific hard-coded path values and whatnot. 
 - (Renderer): The renderer will seg fault if no `RenderQueue` is given at all. Since, under the hood, the renderer holds a `RenderQueue` pointer, it expects it to be valid at all times, since it does use it a lot.
+- (Renderer): When an application tries to use both the 2D and 3D renderers together, lots of problems arise. Need to fix that.
 
 ## (Core) BUGS: 
 - EMPTY FOR NOW...

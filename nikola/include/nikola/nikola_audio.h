@@ -12,7 +12,7 @@ namespace nikola { // Start of nikola
 ///---------------------------------------------------------------------------------------------------------------------
 /// Consts
 
-const sizei AUDIO_MAX_CHANNELS = 254;
+const sizei AUDIO_QUEUE_BUFFERS_MAX = 32;
 
 /// Consts
 ///---------------------------------------------------------------------------------------------------------------------
@@ -32,11 +32,14 @@ enum AudioBufferType {
 enum AudioBufferFormat {
   AUDIO_BUFFER_FORMAT_U8  = 21 << 0,  
   AUDIO_BUFFER_FORMAT_I16 = 21 << 1,  
-  AUDIO_BUFFER_FORMAT_I24 = 21 << 2,  
-  AUDIO_BUFFER_FORMAT_I32 = 21 << 3,  
-  AUDIO_BUFFER_FORMAT_F32 = 21 << 4,  
 };
 /// AudioBufferFormat
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// AudioContext
+struct AudioContext;
+/// AudioContext
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -46,61 +49,83 @@ struct AudioBuffer;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// AudioBufferCallback
-
-using AudioBufferCallback = void(*)(AudioBuffer* buffer, void* output, const void* input);
-
-/// AudioBufferCallback
+/// AudioSource
+struct AudioSource;
+/// AudioBuffer
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// AudioBufferDesc
 struct AudioBufferDesc {
-  AudioBufferType type; 
   AudioBufferFormat format; 
 
-  u32 channels    = 2; 
-  u32 sample_rate = 48000;
+  u32 channels; 
+  u32 sample_rate;
 
-  AudioBufferCallback data_callback = nullptr;
-  void* user_data                   = nullptr;
+  sizei size = 0;
+  void* data = nullptr;
 };
 /// AudioBufferDesc
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// AudioSource2D 
-struct AudioSource2D {
-  AudioBuffer* buffer;
+/// AudioContext functions
 
-  f32 volume;
-  f32 pitch; 
+NIKOLA_API AudioContext* audio_context_init(const char* device_name);
 
-  bool can_loop
-};
-/// AudioSource2D 
+NIKOLA_API void audio_context_destroy(AudioContext* ctx);
+
+/// AudioContext functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// AudioBuffer functions
 
-AudioBuffer* audio_buffer_create(const AudioBufferDesc& desc);
+NIKOLA_API AudioBuffer* audio_buffer_create(AudioContext* ctx, const AudioBufferDesc& desc);
 
-void audio_buffer_destroy(AudioBuffer* buffer);
+NIKOLA_API void audio_buffer_destroy(AudioBuffer* buffer);
 
-AudioBufferDesc& audio_buffer_get_desc(AudioBuffer* buffer);
+NIKOLA_API AudioBufferDesc& audio_buffer_get_desc(AudioBuffer* buffer);
 
-void audio_buffer_update(AudioBuffer* buffer, const AudioBufferDesc& desc);
-
-void audio_buffer_start(AudioBuffer* buffer);
-
-void audio_buffer_stop(AudioBuffer* buffer);
-
-void audio_buffer_seek(AudioBuffer* buffer, const sizei pcm_frames);
-
-const sizei audio_buffer_read(AudioBuffer* buffer, const sizei pcm_frames);
+NIKOLA_API void audio_buffer_update(AudioBuffer* buffer, const AudioBufferDesc& desc);
 
 /// AudioBuffer functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// AudioSource functions
+
+NIKOLA_API AudioSource* audio_source_create(AudioContext* ctx, const AudioBuffer* buffer);
+
+NIKOLA_API void audio_source_destroy(AudioSource* source);
+
+NIKOLA_API void audio_source_start(AudioSource* source);
+
+NIKOLA_API void audio_source_stop(AudioSource* source);
+
+NIKOLA_API void audio_source_restart(AudioSource* source);
+
+NIKOLA_API void audio_source_pause(AudioSource* source);
+
+NIKOLA_API void audio_source_queue_buffers(AudioSource* source, const AudioBuffer** buffers, const sizei count);
+
+NIKOLA_API bool audio_source_is_playing(AudioSource* source);
+
+NIKOLA_API void audio_source_set_buffer(AudioSource* source, AudioBuffer* buffer);
+
+NIKOLA_API void audio_source_set_volume(AudioSource* source, const f32 volume);
+
+NIKOLA_API void audio_source_set_pitch(AudioSource* source, const f32 pitch);
+
+NIKOLA_API void audio_source_set_looping(AudioSource* source, const bool looping);
+
+NIKOLA_API void audio_source_set_position(AudioSource* source, const f32 x, const f32 y, const f32 z);
+
+NIKOLA_API void audio_source_set_velocity(AudioSource* source, const f32 x, const f32 y, const f32 z);
+
+NIKOLA_API void audio_source_set_direction(AudioSource* source, const f32 x, const f32 y, const f32 z);
+
+/// AudioSource functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 /// *** Audio ***

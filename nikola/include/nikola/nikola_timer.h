@@ -27,11 +27,11 @@ struct PerfTimer {
 ///---------------------------------------------------------------------------------------------------------------------
 /// PerfTimer functions
 
-void perf_timer_start(PerfTimer& timer);
+NIKOLA_API void perf_timer_start(PerfTimer& timer);
 
-void perf_timer_stop(PerfTimer& timer);
+NIKOLA_API void perf_timer_stop(PerfTimer& timer);
 
-String perf_timer_to_string(PerfTimer& timer);
+NIKOLA_API String perf_timer_to_string(PerfTimer& timer);
 
 /// PerfTimer functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -67,11 +67,11 @@ struct Timer {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Timer functions
 
-void timer_create(Timer* timer, const f32 limit, const bool one_shot, const bool initial_active = true);
+NIKOLA_API void timer_create(Timer* timer, const f32 limit, const bool one_shot, const bool initial_active = true);
 
-void timer_update(Timer& timer);
+NIKOLA_API void timer_update(Timer& timer);
 
-void timer_reset(Timer& timer);
+NIKOLA_API void timer_reset(Timer& timer);
 
 /// Timer functions
 ///---------------------------------------------------------------------------------------------------------------------

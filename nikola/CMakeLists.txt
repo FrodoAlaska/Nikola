@@ -50,6 +50,9 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/renderer/renderer.cpp
   ${NIKOLA_SRC_DIR}/renderer/batch_renderer.cpp
   
+  # Audio 
+  ${NIKOLA_SRC_DIR}/audio/audio_openal.cpp
+  
   # UI 
   ${NIKOLA_SRC_DIR}/ui/gui.cpp
 )
@@ -96,9 +99,6 @@ set(LIBS_SOURCES
   ${NIKOLA_LIBS_DIR}/imgui/imstb_rectpack.h
   ${NIKOLA_LIBS_DIR}/imgui/imstb_textedit.h
   ${NIKOLA_LIBS_DIR}/imgui/imstb_truetype.h
-
-  # Miniaudio 
-  ${NIKOLA_LIBS_DIR}/miniaudio/miniaudio.c
 )
 ############################################################
 
@@ -113,7 +113,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC BEFORE
   ${NIKOLA_INCLUDES}
 )
 target_link_libraries(${PROJECT_NAME} PUBLIC 
-  glfw
+  ${NIKOLA_LIBRARIES}
 )
 ############################################################
 

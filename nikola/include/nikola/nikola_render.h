@@ -223,6 +223,9 @@ NIKOLA_API const RendererDefaults& renderer_get_defaults();
 /// Set renderer's clear color to the given `clear_color`.
 NIKOLA_API void renderer_set_clear_color(const Vec4& clear_color);
 
+/// Return the renderer's current clear color.
+NIKOLA_API Vec4& renderer_get_clear_color();
+
 /// Add an additional render pass using the information from `desc`. 
 /// Internally, the renderer will call `func`, passing in `user_data`.
 NIKOLA_API void renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& func, const void* user_data);
