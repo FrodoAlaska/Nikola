@@ -3,6 +3,7 @@
 #include "nikola/nikola_gfx.h"
 #include "nikola/nikola_file.h"
 #include "nikola/nikola_math.h"
+#include "nikola/nikola_audio.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -214,6 +215,17 @@ void nbr_import_font(NBRFont* nbr, const u16 group_id, Font* font) {
     // Adding the new glyph
     font->glyphs[glyph.unicode] = glyph;
   }
+}
+
+void nbr_import_audio(NBRAudio* nbr, const u16 group_id, AudioBufferDesc* desc) {
+  NIKOLA_ASSERT(nbr, "Invalid NBRAudio given while importing");
+  NIKOLA_ASSERT(desc, "Invalid AudioBufferDesc given while importing");
+
+  desc->format      = (AudioBufferFormat)nbr->format; 
+  desc->channels    = nbr->channels; 
+  desc->sample_rate = nbr->sample_rate;
+  desc->size        = nbr->size;
+  desc->data        = (void*)nbr->samples;
 }
 
 /// NBR importer functions

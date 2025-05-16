@@ -11,8 +11,13 @@ struct nikola::App {
   nikola::FrameData frame_data;
   nikola::u16 res_group;
 
+  nikola::AudioSourceID source;
+
   bool has_editor = false;
 };
+
+static float volume = 1.0f; 
+static float pitch  = 1.0f;
 
 /// App
 /// ----------------------------------------------------------------------
@@ -27,6 +32,12 @@ static void init_resources(nikola::App* app) {
 
   // Skybox init
   app->frame_data.skybox_id = {};
+
+  // Audio init
+  nikola::ResourceID audio_id = nikola::resources_push_audio_buffer(app->res_group, "audio/noch.nbraudio");
+  
+  // Audio sources init
+  app->source = nikola::audio_source_create(nikola::resources_get_audio_buffer(audio_id));
 }
 
 /// Private functions 
@@ -54,7 +65,9 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 }
 
 void app_shutdown(nikola::App* app) {
+  nikola::audio_source_destroy(app->source);
   nikola::gui_shutdown();
+  nikola::resources_destroy_group(app->res_group);
 
   delete app;
 }
@@ -67,6 +80,14 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     nikola::event_dispatch(nikola::Event{.type = nikola::EVENT_APP_QUIT});
     return;
   }
+
+  if(nikola::input_key_pressed(nikola::KEY_F1)) {
+    app->has_editor = !app->has_editor;
+    nikola::input_cursor_show(app->has_editor);
+  }
+
+  nikola::audio_source_set_volume(app->source, volume);
+  nikola::audio_source_set_pitch(app->source, pitch);
 } 
 
 void app_render(nikola::App* app) {
@@ -82,6 +103,18 @@ void app_render_gui(nikola::App* app) {
   }
  
   nikola::gui_begin(); 
+
+  // AudioSource
+  nikola::gui_begin_panel("Audio Sources");
+  
+  ImGui::SliderFloat("Volume", &volume, 0.0f, 10.0f);
+  ImGui::SliderFloat("Pitch", &pitch, 0.0f, 1.0f);
+
+  if(ImGui::Button("Play")) {
+    nikola::audio_source_start(app->source);
+  }
+
+  nikola::gui_end_panel();
 
   // Debug
   nikola::gui_debug_info();

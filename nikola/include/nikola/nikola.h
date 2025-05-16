@@ -2,6 +2,7 @@
 
 #include <nikola/nikola_base.h>
 #include <nikola/nikola_gfx.h>
+#include <nikola/nikola_audio.h>
 #include <nikola/nikola_app.h>
 #include <nikola/nikola_containers.h>
 #include <nikola/nikola_file.h>

@@ -53,6 +53,16 @@ void font_loader_unload(nikola::NBRFont& font);
 /// Font loader functions
 /// ----------------------------------------------------------------------
 
+/// ----------------------------------------------------------------------
+/// Audio loader functions
+
+bool audio_loader_load(nikola::NBRAudio* audio, const nikola::FilePath& path);
+
+void audio_loader_unload(nikola::NBRAudio& audio);
+
+/// Audio loader functions
+/// ----------------------------------------------------------------------
+
 /// *** Loaders ***
 /// ---------------------------------------------------------------------------------------------------------
 

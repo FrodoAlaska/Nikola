@@ -47,6 +47,9 @@ void engine_init(const AppDesc& desc) {
   s_engine.window = window_open(desc.window_title.c_str(), desc.window_width, desc.window_height, desc.window_flags);
   NIKOLA_ASSERT(s_engine.window, "Failed to open a window");
 
+  // Audio init
+  audio_device_init(nullptr);
+
   // Resource manager init 
   resource_manager_init();
 
@@ -98,10 +101,11 @@ void engine_run() {
 void engine_shutdown() {
   CHECK_VALID_CALLBACK(s_engine.app_desc.shutdown_fn, s_engine.app);
   
+  batch_renderer_shutdown();
+  renderer_shutdown();
   resource_manager_shutdown();
   filewatcher_shutdown(); 
-  renderer_shutdown();
-  batch_renderer_shutdown();
+  audio_device_shutdown();
 
   window_close(s_engine.window);
   shutdown();

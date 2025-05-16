@@ -78,8 +78,11 @@
     - [x] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
     - [x] A way to create an audio buffer that could be played with the context 
     - [x] Create an audio backend with a context 
-    - [] Create the NBR version of the audio resource. As well as saving it, loading it, converting it, and managing it with the NBR tool.
-    - [] Add it to the resource manager
+    - [x] Create the NBR version of the audio resource. 
+    - [x] Add it to the resource manager
+    - [x] Try to load, convert, and manage the new audio buffer with the NBR tool.
+    - [x] Test
+    - [] Improved source and listener management. Perhaps have an audio system?
     - [] Documentation
 [] 17. UI v0.1
     - [] A canvas system for 2D game UI.
@@ -104,10 +107,7 @@
     - [] Improve upon the render pass system by allowing the reuse of certain render passes 
     - [] Make the HDR pass toggleable through the GUI.
 [] 21. 3D Animations v0.1
-[] 22. Audio System v0.1 
-    - [] 2D and 3D sound and music. 
-    - [] A fully-fledged audio pipeline that can play, position, pitch, control the volume, and apply effects to sound and music
-[] 23. Physics v0.1
+[] 22. Physics v0.1
 
 ## (Engine) BUGS: 
 - (Filesystem): There is a bug with the filesystem where the string gets allocated and de-allocated wrong I think? It crashes the program when we pass a normal C-string (i.e "string"), but it runs okay 

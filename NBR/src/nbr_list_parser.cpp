@@ -73,6 +73,9 @@ static nikola::ResourceType get_type_from_section(const nikola::String& section)
   else if(section == "FONT" || section == "font") {
     return nikola::RESOURCE_TYPE_FONT;
   }
+  else if(section == "AUDIO" || section == "audio") {
+    return nikola::RESOURCE_TYPE_AUDIO_BUFFER;
+  }
 
   NIKOLA_LOG_ERROR("Invalid resource type \'%s\'", section.c_str());
   return (nikola::ResourceType)-1;

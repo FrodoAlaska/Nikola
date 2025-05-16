@@ -3,6 +3,7 @@
 
 #include <AL/al.h>
 #include <AL/alc.h>
+#include <AL/alext.h>
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -12,29 +13,20 @@ namespace nikola { // Start of nikola
 /// *** Audio ***
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// AudioContext
-struct AudioContext {
+/// AudioDevice
+struct AudioDevice {
   ALCdevice* al_device   = nullptr;
   ALCcontext* al_context = nullptr;
 };
-/// AudioContext
+
+static AudioDevice s_audio = {};
+/// AudioDevice
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// AudioBuffer
 struct AudioBuffer {
-  AudioContext* context = nullptr;
   AudioBufferDesc desc  = {}; 
-
-  u32 id;
-};
-/// AudioBuffer
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// AudioSource
-struct AudioSource {
-  AudioContext* context = nullptr;
   u32 id;
 };
 /// AudioBuffer
@@ -72,23 +64,33 @@ static void check_al_error(const char* func_name) {
   NIKOLA_LOG_ERROR("OpenAL function \'%s\' raised a \'%s\' error", func_name, get_al_error_string(error));
 }
 
-static ALenum get_al_format(const AudioBufferFormat format, const u32 channels) {
+static ALenum get_al_format(const AudioBufferFormat format, const u32 channels, sizei* bytes) {
   // Mono channels
   if(channels == 1) {
     switch(format) {
       case AUDIO_BUFFER_FORMAT_U8:
+        *bytes = sizeof(u8);
         return AL_FORMAT_MONO8;
       case AUDIO_BUFFER_FORMAT_I16:
+        *bytes = sizeof(i16);
         return AL_FORMAT_MONO16;
+      case AUDIO_BUFFER_FORMAT_F32:
+        *bytes = sizeof(f32);
+        return AL_FORMAT_MONO_FLOAT32;
     }
   }
   // Stereo channels
   else if(channels == 2) {
     switch(format) {
       case AUDIO_BUFFER_FORMAT_U8:
+        *bytes = sizeof(u8);
         return AL_FORMAT_STEREO8;
       case AUDIO_BUFFER_FORMAT_I16:
+        *bytes = sizeof(i16);
         return AL_FORMAT_STEREO16;
+      case AUDIO_BUFFER_FORMAT_F32:
+        *bytes = sizeof(f32);
+        return AL_FORMAT_STEREO_FLOAT32;
     }
   }
   else {
@@ -103,44 +105,37 @@ static ALenum get_al_format(const AudioBufferFormat format, const u32 channels) 
 ///---------------------------------------------------------------------------------------------------------------------
 /// AudioContext functions
 
-AudioContext* audio_context_init(const char* device_name) {
-  AudioContext* ctx = (AudioContext*)memory_allocate(sizeof(AudioContext));
-  memory_zero(ctx, sizeof(AudioContext));
+bool audio_device_init(const char* device_name) {
+  // Init OpenAL device
+  s_audio.al_device = alcOpenDevice(device_name);
+  NIKOLA_ASSERT(s_audio.al_device, "Could not open an OpenAL audio device!");
+
+  // Create a context and set it as the current context
+  s_audio.al_context = alcCreateContext(s_audio.al_device, nullptr);
+  alcMakeContextCurrent(s_audio.al_context);
 
   // Reset the error stack of OpenAL 
   alGetError();
 
-  // Init OpenAL device
-  ctx->al_device = alcOpenDevice(device_name);
-  NIKOLA_ASSERT(ctx->al_device, "Could not open an OpenAL audio device!");
-  check_al_error("alcOpenDevice");
-
-  // Create a context and set it as the current context
-  ctx->al_context = alcCreateContext(ctx->al_device, nullptr);
-  alcMakeContextCurrent(ctx->al_context);
-  check_al_error("alcCreateContext");
-
   // Print out some useful information
-  NIKOLA_LOG_INFO("An OpenAL audio context was successfully created:\n" 
+  NIKOLA_LOG_INFO("An OpenAL audio device was successfully initialized:\n" 
                  "              VENDOR: %s\n" 
                  "              RENDERER: %s\n" 
-                 "              VERSION: %s\n" 
-                 "              EXTENSIONS: %s\n", 
-                 alGetString(AL_VENDOR), alGetString(AL_RENDERER), alGetString(AL_VERSION), alGetString(AL_EXTENSIONS));
+                 "              VERSION: %s",
+                 alGetString(AL_VENDOR), alGetString(AL_RENDERER), alGetString(AL_VERSION));
 
-  return ctx;
+  return true;
 }
 
-void audio_context_destroy(AudioContext* ctx) {
-  if(!ctx) {
-    return;
-  }
-  
-  alcCloseDevice(ctx->al_device);
-  alcDestroyContext(ctx->al_context);
-  memory_free(ctx);
+void audio_device_shutdown() {
+  // This should be called otherwise we'll have a problem
+  alcMakeContextCurrent(nullptr); 
 
-  NIKOLA_LOG_INFO("The audio context was successfully destroyed");
+  // Destroy all the resources 
+  alcDestroyContext(s_audio.al_context);
+  alcCloseDevice(s_audio.al_device);
+
+  NIKOLA_LOG_INFO("The audio device was successfully destroyed");
 }
 
 /// AudioContext functions
@@ -149,8 +144,8 @@ void audio_context_destroy(AudioContext* ctx) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// AudioBuffer functions
 
-AudioBuffer* audio_buffer_create(AudioContext* ctx, const AudioBufferDesc& desc) {
-  NIKOLA_ASSERT(ctx, "Invalid AudioContext given to audio_buffer_create");
+AudioBuffer* audio_buffer_create(const AudioBufferDesc& desc) {
+  NIKOLA_ASSERT(s_audio.al_device, "The audio device was not initialized for this operation to continue");
 
   AudioBuffer* buffer = (AudioBuffer*)memory_allocate(sizeof(AudioBuffer));
   memory_zero(buffer, sizeof(AudioBuffer));
@@ -160,7 +155,8 @@ AudioBuffer* audio_buffer_create(AudioContext* ctx, const AudioBufferDesc& desc)
   check_al_error("alGenBuffers");
 
   // Get the correct OpenAL format based on the given Nikola format type and the channels
-  ALenum format = get_al_format(desc.format, desc.channels); 
+  sizei bytes; 
+  ALenum format = get_al_format(desc.format, desc.channels, &bytes); 
 
   // Set the data
   alBufferData(buffer->id, format, desc.data, desc.size, desc.sample_rate); 
@@ -197,129 +193,128 @@ void audio_buffer_update(AudioBuffer* buffer, const AudioBufferDesc& desc) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// AudioSource functions
 
-AudioSource* audio_source_create(AudioContext* ctx, const AudioBuffer* buffer) {
-  NIKOLA_ASSERT(ctx, "Invalid AudioContext given to audio_source_create");
+AudioSourceID audio_source_create(const AudioBuffer* buffer) {
+  NIKOLA_ASSERT(s_audio.al_device, "The audio device was not initialized for this operation to continue");
 
-  AudioSource* source = (AudioSource*)memory_allocate(sizeof(AudioSource));
-  memory_zero(source, sizeof(AudioSource));
+  AudioSourceID id; 
 
   // Generate the source's ID
-  alGenSources(1, &source->id);
+  alGenSources(1, &id);
   check_al_error("alGenSources");
+
+  // Setting some defaults
+  alSourcef(id, AL_GAIN, 1.0f);
+  alSourcef(id, AL_PITCH, 1.0f);
+  alSource3f(id, AL_POSITION, 0.0f, 0.0f, 0.0f);
 
   // Attach the buffer (if valid)
   if(buffer) {
-    alSourcei(source->id, AL_BUFFER, buffer->id);
+    alSourcei(id, AL_BUFFER, buffer->id);
     check_al_error("alSourcei(AL_BUFFER)");
   }
 
-  return source;
+  return id;
 }
 
-void audio_source_destroy(AudioSource* source) {
-  if(!source) {
-    return;
-  }
-
-  alDeleteSources(1, &source->id);
-  memory_free(source);
+void audio_source_destroy(AudioSourceID source) {
+  alDeleteSources(1, &source);
 }
 
-void audio_source_start(AudioSource* source) {
-  NIKOLA_ASSERT(source, "Invalid AudioSource given to audio_source_start");
+void audio_source_start(AudioSourceID source) {
+  NIKOLA_ASSERT(s_audio.al_device, "The audio device was not initialized for this operation to continue");
 
-  alSourcePlay(source->id);
+  alSourcePlay(source);
   check_al_error("alPlaySource");
 }
 
-void audio_source_stop(AudioSource* source) {
-  NIKOLA_ASSERT(source, "Invalid AudioSource given to audio_source_stop");
+void audio_source_stop(AudioSourceID source) {
+  NIKOLA_ASSERT(s_audio.al_device, "The audio device was not initialized for this operation to continue");
 
-  alSourceStop(source->id);
+  alSourceStop(source);
   check_al_error("alStopSource");
 }
 
-void audio_source_restart(AudioSource* source) {
-  NIKOLA_ASSERT(source, "Invalid AudioSource given to audio_source_restart");
+void audio_source_restart(AudioSourceID source) {
+  NIKOLA_ASSERT(s_audio.al_device, "The audio device was not initialized for this operation to continue");
 
-  alSourceRewind(source->id);
+  alSourceRewind(source);
   check_al_error("alRewindSource");
 }
 
-void audio_source_pause(AudioSource* source) {
-  NIKOLA_ASSERT(source, "Invalid AudioSource given to audio_source_pause");
+void audio_source_pause(AudioSourceID source) {
+  NIKOLA_ASSERT(s_audio.al_device, "The audio device was not initialized for this operation to continue");
 
-  alSourcePause(source->id);
+  alSourcePause(source);
   check_al_error("alPauseSource");
 }
 
-void audio_source_queue_buffers(AudioSource* source, const AudioBuffer** buffers, const sizei count) {
-  NIKOLA_ASSERT(source, "Invalid AudioSource given to audio_source_queue_buffers");
+void audio_source_queue_buffers(AudioSourceID source, const AudioBuffer** buffers, const sizei count) {
+  NIKOLA_ASSERT(s_audio.al_device, "The audio device was not initialized for this operation to continue");
   NIKOLA_ASSERT(buffers, "Invalid AudioBuffer array given to audio_source_queue_buffers");
   
   // @TODO (Audio): This is awful. Please no
   for(sizei i = 0; i < count; i++) {
-    alSourceQueueBuffers(source->id, 1, &buffers[i]->id);
+    alSourceQueueBuffers(source, 1, &buffers[i]->id);
     check_al_error("alSourceQueueBuffers");
   }
 }
 
-bool audio_source_is_playing(AudioSource* source) {
-  NIKOLA_ASSERT(source, "Invalid AudioSource given to audio_source_is_playing");
+bool audio_source_is_playing(AudioSourceID source) {
+  NIKOLA_ASSERT(s_audio.al_device, "The audio device was not initialized for this operation to continue");
 
   i32 state;
-  alGetSourcei(source->id, AL_SOURCE_STATE, &state);
+  alGetSourcei(source, AL_SOURCE_STATE, &state);
 
   return state == AL_PLAYING;
 }
 
-void audio_source_set_buffer(AudioSource* source, AudioBuffer* buffer) {
+void audio_source_set_buffer(AudioSourceID source, AudioBuffer* buffer) {
   NIKOLA_ASSERT(source, "Invalid AudioSource given to audio_source_set_buffer");
   NIKOLA_ASSERT(buffer, "Invalid AudioBuffer given to audio_source_set_buffer");
 
-  alSourcei(source->id, AL_BUFFER, buffer->id);
+  alSourcei(source, AL_BUFFER, buffer->id);
   check_al_error("alSourcei(AL_BUFFER)");
 }
 
-void audio_source_set_volume(AudioSource* source, const f32 volume) {
-  NIKOLA_ASSERT(source, "Invalid AudioSource given to audio_source_set_volume");
+void audio_source_set_volume(AudioSourceID source, const f32 volume) {
+  NIKOLA_ASSERT(s_audio.al_device, "The audio device was not initialized for this operation to continue");
 
-  alSourcef(source->id, AL_GAIN, volume);
+  alSourcef(source, AL_GAIN, volume);
   check_al_error("alSourcef(AL_GAIN)");
 }
 
-void audio_source_set_pitch(AudioSource* source, const f32 pitch) {
-  NIKOLA_ASSERT(source, "Invalid AudioSource given to audio_source_set_pitch");
+void audio_source_set_pitch(AudioSourceID source, const f32 pitch) {
+  NIKOLA_ASSERT(s_audio.al_device, "The audio device was not initialized for this operation to continue");
 
-  alSourcef(source->id, AL_PITCH, pitch);
+  alSourcef(source, AL_PITCH, pitch);
   check_al_error("alSourcef(AL_PITCH)");
 }
 
-void audio_source_set_looping(AudioSource* source, const bool looping) {
-  NIKOLA_ASSERT(source, "Invalid AudioSource given to audio_source_set_looping");
+void audio_source_set_looping(AudioSourceID source, const bool looping) {
+  NIKOLA_ASSERT(s_audio.al_device, "The audio device was not initialized for this operation to continue");
 
-  alSourcei(source->id, AL_LOOPING, looping);
+  alSourcei(source, AL_LOOPING, looping);
   check_al_error("alSourcei(AL_LOOPING)");
 }
 
-void audio_source_set_position(AudioSource* source, const f32 x, const f32 y, const f32 z) {
-  NIKOLA_ASSERT(source, "Invalid AudioSource given to audio_source_set_position");
+void audio_source_set_position(AudioSourceID source, const f32 x, const f32 y, const f32 z) {
+  NIKOLA_ASSERT(s_audio.al_device, "The audio device was not initialized for this operation to continue");
 
-  alSource3f(source->id, AL_POSITION, x, y, z);
+  alSource3f(source, AL_POSITION, x, y, z);
   check_al_error("alSource3f(AL_POSITION)");
 }
 
-void audio_source_set_velocity(AudioSource* source, const f32 x, const f32 y, const f32 z) {
-  NIKOLA_ASSERT(source, "Invalid AudioSource given to audio_source_set_velocity");
+void audio_source_set_velocity(AudioSourceID source, const f32 x, const f32 y, const f32 z) {
+  NIKOLA_ASSERT(s_audio.al_device, "The audio device was not initialized for this operation to continue");
 
-  alSource3f(source->id, AL_VELOCITY, x, y, z);
+  alSource3f(source, AL_VELOCITY, x, y, z);
   check_al_error("alSource3f(AL_VELOCITY)");
 }
 
-void audio_source_set_direction(AudioSource* source, const f32 x, const f32 y, const f32 z) {
-  NIKOLA_ASSERT(source, "Invalid AudioSource given to audio_source_set_direction");
+void audio_source_set_direction(AudioSourceID source, const f32 x, const f32 y, const f32 z) {
+  NIKOLA_ASSERT(s_audio.al_device, "The audio device was not initialized for this operation to continue");
 
-  alSource3f(source->id, AL_DIRECTION, x, y, z);
+  alSource3f(source, AL_DIRECTION, x, y, z);
   check_al_error("alSource3f(AL_DIRECTION)");
 }
 

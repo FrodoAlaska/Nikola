@@ -19,6 +19,7 @@ FetchContent_Declare(
 
 # OpenAL-Soft
 set(ALSOFT_EXAMPLES OFF)
+set(LIBTYPE STATIC)
 
 FetchContent_Declare(
   OpenAL 

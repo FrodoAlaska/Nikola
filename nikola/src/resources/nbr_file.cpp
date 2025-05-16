@@ -180,6 +180,23 @@ static void write_font(NBRFile& nbr, const NBRFont& font) {
   file_write_bytes(nbr.file_handle, &font.line_gap, sizeof(font.line_gap));
 }
 
+static void write_audio(NBRFile& nbr, const NBRAudio& audio) {
+  // Save the format
+  file_write_bytes(nbr.file_handle, &audio.format, sizeof(audio.format));
+  
+  // Save the sample rate
+  file_write_bytes(nbr.file_handle, &audio.sample_rate, sizeof(audio.sample_rate));
+  
+  // Save the channels
+  file_write_bytes(nbr.file_handle, &audio.channels, sizeof(audio.channels));
+  
+  // Save the size of the samples
+  file_write_bytes(nbr.file_handle, &audio.size, sizeof(audio.size));
+  
+  // Save the samples
+  file_write_bytes(nbr.file_handle, audio.samples, audio.size);
+}
+
 static void read_texture(NBRFile& nbr, NBRTexture* texture) {
   // Load the width and height 
   file_read_bytes(nbr.file_handle, &texture->width, sizeof(texture->width));  
@@ -330,6 +347,24 @@ static void read_font(NBRFile& nbr, NBRFont* font) {
   file_read_bytes(nbr.file_handle, &font->line_gap, sizeof(font->line_gap));
 }
 
+static void read_audio(NBRFile& nbr, NBRAudio* audio) {
+  // Load the format
+  file_read_bytes(nbr.file_handle, &audio->format, sizeof(audio->format));
+  
+  // Load the sample rate
+  file_read_bytes(nbr.file_handle, &audio->sample_rate, sizeof(audio->sample_rate));
+  
+  // Load the channels
+  file_read_bytes(nbr.file_handle, &audio->channels, sizeof(audio->channels));
+  
+  // Load the size of the samples
+  file_read_bytes(nbr.file_handle, &audio->size, sizeof(audio->size));
+  
+  // Load the samples
+  audio->samples = (i16*)memory_allocate(audio->size); 
+  file_read_bytes(nbr.file_handle, audio->samples, audio->size);
+}
+
 static void load_texture(NBRFile& nbr) {
   // Read the resource from the file 
   NBRTexture texture; 
@@ -380,6 +415,16 @@ static void load_font(NBRFile& nbr) {
   memory_copy(nbr.body_data, &font, sizeof(font)); 
 }
 
+static void load_audio(NBRFile& nbr) {
+  // Read the resource from the file 
+  NBRAudio audio; 
+  read_audio(nbr, &audio);
+
+  // Allocate some space for the resource and assign it
+  nbr.body_data = memory_allocate(sizeof(audio));
+  memory_copy(nbr.body_data, &audio, sizeof(audio)); 
+}
+
 static void unload_texture(NBRFile& nbr) {
   NBRTexture* tex = (NBRTexture*)nbr.body_data;
   memory_free(tex->pixels);
@@ -427,6 +472,11 @@ static void unload_font(NBRFile& nbr) {
   memory_free(font->glyphs);
 }
 
+static void unload_audio(NBRFile& nbr) {
+  NBRAudio* audio = (NBRAudio*)nbr.body_data;
+  memory_free(audio->samples);
+}
+
 static void load_by_type(NBRFile& nbr, const FilePath& path) {
   switch(nbr.resource_type) {
     case RESOURCE_TYPE_TEXTURE:
@@ -443,6 +493,9 @@ static void load_by_type(NBRFile& nbr, const FilePath& path) {
       break;
     case RESOURCE_TYPE_FONT:
       load_font(nbr);
+      break;
+    case RESOURCE_TYPE_AUDIO_BUFFER:
+      load_audio(nbr);
       break;
     default:
       NIKOLA_LOG_ERROR("Cannot load specified resource type at NBR file \'%s\'", path.c_str());
@@ -466,6 +519,9 @@ static void unload_by_type(NBRFile& nbr) {
       break;
     case RESOURCE_TYPE_FONT:
       unload_font(nbr);
+      break;
+    case RESOURCE_TYPE_AUDIO_BUFFER:
+      unload_audio(nbr);
       break;
     default:
       break;
@@ -570,7 +626,7 @@ void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const FilePath& path
   }
 
   // Save the header first
-  nbr.resource_type = (i16)RESOURCE_TYPE_TEXTURE; 
+  nbr.resource_type = (u16)RESOURCE_TYPE_TEXTURE; 
   save_header(nbr);
 
   // Write the texture 
@@ -591,7 +647,7 @@ void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path
   }
 
   // Save the header first
-  nbr.resource_type = (i16)RESOURCE_TYPE_CUBEMAP; 
+  nbr.resource_type = (u16)RESOURCE_TYPE_CUBEMAP; 
   save_header(nbr);
 
   // Write the cubemap
@@ -612,7 +668,7 @@ void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FilePath& path) 
   }
 
   // Save the header first
-  nbr.resource_type = (i16)RESOURCE_TYPE_SHADER; 
+  nbr.resource_type = (u16)RESOURCE_TYPE_SHADER; 
   save_header(nbr);
 
   // Write the shader 
@@ -633,7 +689,7 @@ void nbr_file_save(NBRFile& nbr, const NBRModel& model, const FilePath& path) {
   }
 
   // Save the header first
-  nbr.resource_type = (i16)RESOURCE_TYPE_MODEL; 
+  nbr.resource_type = (u16)RESOURCE_TYPE_MODEL; 
   save_header(nbr);
 
   // Write the model 
@@ -654,11 +710,32 @@ void nbr_file_save(NBRFile& nbr, const NBRFont& font, const FilePath& path) {
   }
 
   // Save the header first
-  nbr.resource_type = (i16)RESOURCE_TYPE_FONT; 
+  nbr.resource_type = (u16)RESOURCE_TYPE_FONT; 
   save_header(nbr);
 
   // Write the font 
   write_font(nbr, font);
+
+  // Always remember to close the file
+  file_close(nbr.file_handle);
+}
+
+void nbr_file_save(NBRFile& nbr, const NBRAudio& audio, const FilePath& path) {
+  // Make sure to set the correct extension
+  FilePath nbr_path = path;
+  filepath_set_extension(nbr_path, "nbraudio");
+
+  // Must open the file
+  if(!open_for_save(nbr, nbr_path)) {
+    return;
+  }
+
+  // Save the header first
+  nbr.resource_type = (u16)RESOURCE_TYPE_AUDIO_BUFFER; 
+  save_header(nbr);
+
+  // Write the audio 
+  write_audio(nbr, audio);
 
   // Always remember to close the file
   file_close(nbr.file_handle);

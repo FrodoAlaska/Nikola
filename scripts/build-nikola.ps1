@@ -57,6 +57,10 @@ function Check-Build-Dir {
   # Create the directory otherwise
   mkdir $dir
   $build_dir = $dir
+  
+  cmake -S . -B $dir
+  Check-Exit-Code -msg "Failed to generate CMake files..."
+
 }
 
 function Check-Exit-Code {
@@ -106,9 +110,6 @@ for ($i = 0; $i -lt $Args.Count; $i++) {
 
 Log-Msg -msg "Building for the '$build_config' configuration..." -log_level "INFO"
 cd $build_dir
-
-cmake ..
-Check-Exit-Code -msg "Failed to generate CMake files..."
 
 cmake --build . --config $build_config $build_flags 
 Check-Exit-Code -msg "Failed to build.."

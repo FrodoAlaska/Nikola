@@ -3,6 +3,7 @@
 #include "nikola/nikola_gfx.h"
 #include "nikola/nikola_file.h"
 #include "nikola/nikola_render.h"
+#include "nikola/nikola_audio.h"
 
 #include "loaders/mesh_loader.h"
 #include "loaders/skybox_loader.hpp"
@@ -24,6 +25,7 @@ struct ResourceGroup {
   DynamicArray<GfxTexture*> textures;
   DynamicArray<GfxCubemap*> cubemaps;
   DynamicArray<GfxShader*> shaders;
+  DynamicArray<AudioBuffer*> audio_buffers;
   
   DynamicArray<Mesh*> meshes;
   DynamicArray<Material*> materials;
@@ -121,6 +123,19 @@ static const char* mesh_type_str(const MeshType type) {
   }
 }
 
+static const char* audio_format_str(const AudioBufferFormat format) {
+  switch(format) {
+    case AUDIO_BUFFER_FORMAT_U8:
+      return "AUDIO_BUFFER_FORMAT_U8";
+    case AUDIO_BUFFER_FORMAT_I16:
+      return "AUDIO_BUFFER_FORMAT_I16";
+    case AUDIO_BUFFER_FORMAT_F32:
+      return "AUDIO_BUFFER_FORMAT_F32";
+    default:
+      return "INVALID AUDIO BUFFER FORMAT";
+  }
+}
+
 template<typename T> 
 static T get_resource(const ResourceID& id, DynamicArray<T>& res, const ResourceType type) {
   NIKOLA_ASSERT((id._type == type), "Invalid type when trying to retrieve a resource");
@@ -147,6 +162,9 @@ static ResourceType get_resource_extension_type(const FilePath& path) {
   }
   else if(ext == ".nbrfont") {
     return RESOURCE_TYPE_FONT;
+  }
+  else if(ext == ".nbraudio") {
+    return RESOURCE_TYPE_AUDIO_BUFFER;
   }
 }
 
@@ -253,6 +271,9 @@ static void resource_entry_iterate(const FilePath& base, FilePath& path, void* u
     case RESOURCE_TYPE_FONT:
       group->named_ids[filename] = resources_push_font(group->id, path);
       break;
+    case RESOURCE_TYPE_AUDIO_BUFFER:
+      group->named_ids[filename] = resources_push_audio_buffer(group->id, path);
+      break;
     default:
       NIKOLA_LOG_ERROR("Invalid resource type \'%s\'", path.c_str());
       break;
@@ -282,6 +303,9 @@ static void resource_entry_update(const FileStatus status, const FilePath& path,
       // @TODO (Resource)
       break;
     case RESOURCE_TYPE_FONT:
+      // @TODO (Resource)
+      break;
+    case RESOURCE_TYPE_AUDIO_BUFFER:
       // @TODO (Resource)
       break;
     default:
@@ -340,6 +364,7 @@ void resources_clear_group(const u16 group_id) {
   group->textures.clear();
   group->cubemaps.clear();
   group->shaders.clear();
+  group->audio_buffers.clear();
 
   group->meshes.clear();
   group->materials.clear();
@@ -364,6 +389,7 @@ void resources_destroy_group(const u16 group_id) {
   DESTROY_CORE_RESOURCE_MAP(group, textures, gfx_texture_destroy);
   DESTROY_CORE_RESOURCE_MAP(group, cubemaps, gfx_cubemap_destroy);
   DESTROY_CORE_RESOURCE_MAP(group, shaders, gfx_shader_destroy);
+  DESTROY_CORE_RESOURCE_MAP(group, audio_buffers, audio_buffer_destroy);
 
   // Destroy compound resources
   DESTROY_COMP_RESOURCE_MAP(group, meshes);
@@ -749,6 +775,53 @@ ResourceID resources_push_font(const u16 group_id, const FilePath& nbr_path) {
   return id;
 }
 
+ResourceID resources_push_audio_buffer(const u16 group_id, const AudioBufferDesc& desc) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
+
+  // Allocate a new audio buffer
+  AudioBuffer* buffer = audio_buffer_create(desc);
+
+  // New audio buffer added!
+  ResourceID id;
+  PUSH_RESOURCE(group, audio_buffers, buffer, RESOURCE_TYPE_AUDIO_BUFFER, id);
+
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed an audio buffer:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Format      = %s", audio_format_str(desc.format));
+  NIKOLA_LOG_DEBUG("     Channels    = %i", desc.channels);
+  NIKOLA_LOG_DEBUG("     Size        = %zu", desc.size);
+  NIKOLA_LOG_DEBUG("     Sample Rate = %zu", desc.sample_rate);
+  return id;
+}
+
+ResourceID resources_push_audio_buffer(const u16 group_id, const FilePath& nbr_path) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
+
+  // Load the NBR file
+  NBRFile nbr;
+  nbr_file_load(&nbr, filepath_append(group->parent_dir, nbr_path));
+  
+  // Convert the NBR format to a valid audio buffer desc
+  AudioBufferDesc desc = {};
+  NBRAudio* nbr_audio  = (NBRAudio*)nbr.body_data; 
+  nbr_import_audio(nbr_audio, group_id, &desc);
+
+  // New audio buffer added!
+  ResourceID id = resources_push_audio_buffer(group_id, desc);
+ 
+  // Remember to close the NBR
+  nbr_file_unload(nbr);
+  
+  // Add the resource to the named resources
+  FilePath filename_without_ext = filepath_filename(nbr_path);
+  filepath_set_extension(filename_without_ext, "");
+  group->named_ids[filename_without_ext] = id;
+  
+  NIKOLA_LOG_DEBUG("     Name        = %s", filename_without_ext.c_str());
+  return id;
+}
+
 void resources_push_dir(const u16 group_id, const FilePath& dir) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
@@ -818,6 +891,11 @@ Model* resources_get_model(const ResourceID& id) {
 Font* resources_get_font(const ResourceID& id) {
   ResourceGroup* group = &s_manager.groups[id.group];
   return get_resource(id, group->fonts, RESOURCE_TYPE_FONT);
+}
+
+AudioBuffer* resources_get_audio_buffer(const ResourceID& id) {
+  ResourceGroup* group = &s_manager.groups[id.group];
+  return get_resource(id, group->audio_buffers, RESOURCE_TYPE_AUDIO_BUFFER);
 }
 
 /// Resource manager functions

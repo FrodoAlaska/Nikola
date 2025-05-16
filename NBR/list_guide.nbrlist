@@ -5,6 +5,22 @@
 # indicated by the `--bin-dir, -bd` flag from the command line.
 #
 
+#
+# All the sections below are actually preset variables inside the engine. For each section, 
+# an equivalent resource type is present. There can be more than one section associated 
+# with one resource type. But there can _never_ be an invalid section name. 
+#
+# Below you will find all the valid section names: 
+#   - TEXTURE 
+#   - CUBEMAP 
+#   - SHADER 
+#   - MODEL 
+#   - AUDIO 
+#   - FONT
+#
+# And yes, you can also use the lower case version of all of these.
+#
+
 :: TEXTURE # This indicates a new section
 # The parser is smart enough to know that the path below 
 # is actually a directory. This directory will also 

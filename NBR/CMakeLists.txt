@@ -68,14 +68,21 @@ set(NBR_SOURCES
   ${NBR_SRC_DIR}/shader_loader.cpp
   ${NBR_SRC_DIR}/model_loader.cpp
   ${NBR_SRC_DIR}/font_loader.cpp
+  ${NBR_SRC_DIR}/audio_loader.cpp
 )
 ############################################################
 
 ### Library Sources ###
 ############################################################
 set(LIBS_SOURCES 
+  # stb
   ${NBR_LIBS_DIR}/stb/stb_image.cpp
   ${NBR_LIBS_DIR}/stb/stb_truetype.cpp
+  ${NBR_LIBS_DIR}/stb/stb_vorbis.cpp
+
+  # dr_libs
+  ${NBR_LIBS_DIR}/dr_libs/dr_mp3.cpp
+  ${NBR_LIBS_DIR}/dr_libs/dr_wav.cpp
 )
 ############################################################
 

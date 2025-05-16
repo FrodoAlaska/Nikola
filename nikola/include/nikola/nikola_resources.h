@@ -4,6 +4,7 @@
 #include "nikola_gfx.h"
 #include "nikola_file.h"
 #include "nikola_math.h"
+#include "nikola_audio.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -217,6 +218,29 @@ struct NBRFont {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// NBRAudio
+struct NBRAudio {
+  /// The format, or rather, the bits per sample 
+  /// of the audio samples. Can be any value from the 
+  /// `AudioBufferFormat` enum.
+  u8 format;
+
+  /// The sample rate of the audio buffer. 
+  u32 sample_rate; 
+
+  /// The number of channels of the audio buffer. 
+  u8 channels;
+
+  /// The size in bytes of the `samples` array.
+  u32 size; 
+
+  /// The raw PCM data/samples of the audio buffer.
+  i16* samples;
+};
+/// NBRAudio
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// NBRFile 
 struct NBRFile {
   /// A reference to the initial given file path.
@@ -235,7 +259,7 @@ struct NBRFile {
   i16 minor_version; 
 
   /// A 2-bytes value for the resource type to be parsed.
-  i16 resource_type;                
+  u16 resource_type;                
 
   /// The actual data of the file.
   void* body_data; 
@@ -269,6 +293,9 @@ NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRModel& model, const FilePat
 
 /// Save the given `font` at `path` using `nbr`'s information.
 NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRFont& font, const FilePath& path);
+
+/// Save the given `audio` at `path` using `nbr`'s information.
+NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRAudio& audio, const FilePath& path);
 
 /// NBR file functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -359,6 +386,9 @@ enum ResourceType {
   
   /// A flag to denote a `ShaderContext` resource
   RESOURCE_TYPE_SHADER_CONTEXT = 16 << 10,
+  
+  /// A flag to denote a `AudioBuffer` resource
+  RESOURCE_TYPE_AUDIO_BUFFER   = 16 << 11,
 };
 /// ResourceType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -583,6 +613,9 @@ NIKOLA_API void nbr_import_model(NBRModel* nbr, const u16 group_id, Model* model
 /// Convert the `nbr` font into a `Font`, using the `group_id`.
 NIKOLA_API void nbr_import_font(NBRFont* nbr, const u16 group_id, Font* font);
 
+/// Convert the `nbr` audio into an `AudioBuffer`, using the `group_id`.
+NIKOLA_API void nbr_import_audio(NBRAudio* nbr, const u16 group_id, AudioBufferDesc* desc);
+
 /// NBR importer functions
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -685,6 +718,14 @@ NIKOLA_API ResourceID resources_push_model(const u16 group_id, const FilePath& n
 /// store it in `group_id`, and return a `ResourceID` to identify it.
 NIKOLA_API ResourceID resources_push_font(const u16 group_id, const FilePath& nbr_path);
 
+/// Allocate a new `AudioBuffer` using the given `AudioBufferDesc` , 
+/// store it in `group_id`, and return a `ResourceID` to identify it.
+NIKOLA_API ResourceID resources_push_audio_buffer(const u16 group_id, const AudioBufferDesc& desc);
+
+/// Allocate a new `AudioBuffer` using the `NBRAudio` retrieved from the `nbr_path`, 
+/// store it in `group_id`, and return a `ResourceID` to identify it.
+NIKOLA_API ResourceID resources_push_audio_buffer(const u16 group_id, const FilePath& nbr_path);
+
 /// Retrieve all of the valid resources from `dir` and store the resulting entries in an
 /// internal list (where the key is the file name of the resource and the value is its ID) 
 /// while ensuring that each entry is pushed into `group_id` with an ID. The IDs can be retrieved 
@@ -695,7 +736,7 @@ NIKOLA_API void resources_push_dir(const u16 group_id, const FilePath& dir);
 
 /// Search and retrieve the ID of the resource `filename` in `group_id`. 
 /// If `filename` was not found in `group_id`, a default `ResourceID` will be returned. 
-NIKOLA_API ResourceID& resources_get_id(const u16 group_id, const nikola::String& filename);
+NIKOLA_API ResourceID& resources_get_id(const u16 group_id, const String& filename);
 
 /// Retrieve `GfxBuffer` identified by `id` in `group`. 
 ///
@@ -746,6 +787,11 @@ NIKOLA_API Model* resources_get_model(const ResourceID& id);
 ///
 /// @NOTE: This function will assert if `id` is not found in `id.group`.
 NIKOLA_API Font* resources_get_font(const ResourceID& id);
+
+/// Retrieve `AudioBuffer` identified by `id` in `id.group`. 
+///
+/// @NOTE: This function will assert if `id` is not found in `id.group`.
+NIKOLA_API AudioBuffer* resources_get_audio_buffer(const ResourceID& id);
 
 /// Resource manager functions
 ///---------------------------------------------------------------------------------------------------------------------
