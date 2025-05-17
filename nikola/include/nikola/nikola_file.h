@@ -3,6 +3,7 @@
 #include "nikola_base.h"
 #include "nikola_containers.h"
 #include "nikola_math.h"
+#include "nikola_audio.h"
 
 #include <fstream>
 
@@ -85,8 +86,6 @@ using FileWatchFunc = void(*)(const FileStatus status, const FilePath& path, voi
 struct Camera; 
 struct DirectionalLight;
 struct PointLight;
-struct AudioSourceID;
-struct AudioListenerDesc;
 
 ///---------------------------------------------------------------------------------------------------------------------
 
