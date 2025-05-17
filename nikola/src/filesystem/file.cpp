@@ -2,7 +2,7 @@
 #include "nikola/nikola_file.h"
 #include "nikola/nikola_math.h"
 #include "nikola/nikola_render.h"
-#include "nikola/nikola_audioh.h"
+#include "nikola/nikola_audio.h"
 
 #include <sstream>
 #include <filesystem>
@@ -292,18 +292,18 @@ void file_read_bytes(File& file, AudioSourceID& source) {
     .velocity  = Vec3(raw_data[5], raw_data[6], raw_data[7]),
     .direction = Vec3(raw_data[8], raw_data[9], raw_data[10]),
     
-    .is_looping = (i32)raw_data[11],
+    .is_looping = (bool)raw_data[11],
   };
 
   // Apply the new data;
-  audio_source_set_volume(desc.volume);
-  audio_source_set_pitch(desc.pitch);
+  audio_source_set_volume(source, desc.volume);
+  audio_source_set_pitch(source, desc.pitch);
 
-  audio_source_set_position(desc.position);
-  audio_source_set_veloctiy(desc.velocity);
-  audio_source_set_direction(desc.direction);
+  audio_source_set_position(source,desc.position);
+  audio_source_set_velocity(source, desc.velocity);
+  audio_source_set_direction(source, desc.direction);
   
-  audio_source_set_looping(desc.is_looping);
+  audio_source_set_looping(source, desc.is_looping);
 }
 
 void file_read_bytes(File& file, AudioListenerDesc* listener) {
@@ -316,7 +316,7 @@ void file_read_bytes(File& file, AudioListenerDesc* listener) {
   
   audio_listener_set_volume(listener->volume);
   audio_listener_set_position(listener->position);
-  audio_listener_set_veloctiy(listener->velocity);
+  audio_listener_set_velocity(listener->velocity);
 }
 
 void file_read_string(File& file, String* str) {
