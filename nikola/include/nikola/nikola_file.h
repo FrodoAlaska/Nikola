@@ -85,6 +85,8 @@ using FileWatchFunc = void(*)(const FileStatus status, const FilePath& path, voi
 struct Camera; 
 struct DirectionalLight;
 struct PointLight;
+struct AudioSourceID;
+struct AudioListenerDesc;
 
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -307,6 +309,16 @@ NIKOLA_API void file_write_bytes(File& file, const DirectionalLight& light);
 /// @NOTE: This function will raise an error if `file` is not opened.
 NIKOLA_API void file_write_bytes(File& file, const PointLight& light);
 
+/// Write the contents of the given `source` into `file`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_write_bytes(File& file, const AudioSourceID& source);
+
+/// Write the contents of the given `listener_desc` into `file`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_write_bytes(File& file, const AudioListenerDesc& listener_desc);
+
 /// Write the given `string` into `file` as a string representation.
 ///
 /// @NOTE: This function will raise an error if `file` is not opened.
@@ -342,6 +354,16 @@ NIKOLA_API void file_read_bytes(File& file, DirectionalLight* light);
 ///
 /// @NOTE: This function will raise an error if `file` is not opened.
 NIKOLA_API void file_read_bytes(File& file, PointLight* light);
+
+/// Read an `AudioSourceID` from `file` and save it into `source`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_read_bytes(File& file, AudioSourceID& source);
+
+/// Read an `AudioListenerDesc` from `file` and save it into `listener`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_read_bytes(File& file, AudioListenerDesc* listener);
 
 /// Read the WHOLE `file` as a `String` and save it into `str`.
 ///

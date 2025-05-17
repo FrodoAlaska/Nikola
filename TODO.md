@@ -73,7 +73,7 @@
     - [x] Don't forget to add `glPixelStori` somewhere 
     - [x] Font rendering
     - [x] Documentation (`batch_renderer`, `nbr_font`, `font resources`).
-[] 16. Audio v0.1 
+[x] 16. Audio v0.1 
     - [x] Lay out what you actually want the audio system to be and what it does. 
     - [x] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
     - [x] A way to create an audio buffer that could be played with the context 
