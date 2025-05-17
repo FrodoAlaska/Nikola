@@ -11,13 +11,11 @@ struct nikola::App {
   nikola::FrameData frame_data;
   nikola::u16 res_group;
 
-  nikola::AudioSourceID source;
+  nikola::AudioBufferID audio_buffer;
+  nikola::AudioSourceID audio_source;
 
   bool has_editor = false;
 };
-
-static float volume = 1.0f; 
-static float pitch  = 1.0f;
 
 /// App
 /// ----------------------------------------------------------------------
@@ -34,10 +32,17 @@ static void init_resources(nikola::App* app) {
   app->frame_data.skybox_id = {};
 
   // Audio init
-  nikola::ResourceID audio_id = nikola::resources_push_audio_buffer(app->res_group, "audio/noch.nbraudio");
-  
+  nikola::ResourceID audio_id = nikola::resources_push_audio_buffer(app->res_group, "audio/maybe_inkspots.nbraudio");
+  app->audio_buffer           = nikola::resources_get_audio_buffer(audio_id);
+
   // Audio sources init
-  app->source = nikola::audio_source_create(nikola::resources_get_audio_buffer(audio_id));
+  nikola::AudioSourceDesc source_desc;
+  source_desc.buffers[0]    = app->audio_buffer; 
+  source_desc.buffers_count = 1; 
+  app->audio_source         = nikola::audio_source_create(source_desc);
+
+  // Audio listener init
+  nikola::audio_listener_init(nikola::AudioListenerDesc{});
 }
 
 /// Private functions 
@@ -65,7 +70,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 }
 
 void app_shutdown(nikola::App* app) {
-  nikola::audio_source_destroy(app->source);
+  nikola::audio_source_destroy(app->audio_source);
   nikola::gui_shutdown();
   nikola::resources_destroy_group(app->res_group);
 
@@ -85,9 +90,6 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     app->has_editor = !app->has_editor;
     nikola::input_cursor_show(app->has_editor);
   }
-
-  nikola::audio_source_set_volume(app->source, volume);
-  nikola::audio_source_set_pitch(app->source, pitch);
 } 
 
 void app_render(nikola::App* app) {
@@ -105,14 +107,10 @@ void app_render_gui(nikola::App* app) {
   nikola::gui_begin(); 
 
   // AudioSource
-  nikola::gui_begin_panel("Audio Sources");
-  
-  ImGui::SliderFloat("Volume", &volume, 0.0f, 10.0f);
-  ImGui::SliderFloat("Pitch", &pitch, 0.0f, 1.0f);
+  nikola::gui_begin_panel("Audio");
 
-  if(ImGui::Button("Play")) {
-    nikola::audio_source_start(app->source);
-  }
+  nikola::gui_edit_audio_source("Source", app->audio_source);
+  nikola::gui_edit_audio_listener("Listener");
 
   nikola::gui_end_panel();
 

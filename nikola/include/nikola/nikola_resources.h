@@ -718,11 +718,11 @@ NIKOLA_API ResourceID resources_push_model(const u16 group_id, const FilePath& n
 /// store it in `group_id`, and return a `ResourceID` to identify it.
 NIKOLA_API ResourceID resources_push_font(const u16 group_id, const FilePath& nbr_path);
 
-/// Allocate a new `AudioBuffer` using the given `AudioBufferDesc` , 
+/// Allocate a new `AudioBufferID` using the given `AudioBufferDesc` , 
 /// store it in `group_id`, and return a `ResourceID` to identify it.
 NIKOLA_API ResourceID resources_push_audio_buffer(const u16 group_id, const AudioBufferDesc& desc);
 
-/// Allocate a new `AudioBuffer` using the `NBRAudio` retrieved from the `nbr_path`, 
+/// Allocate a new `AudioBufferID` using the `NBRAudio` retrieved from the `nbr_path`, 
 /// store it in `group_id`, and return a `ResourceID` to identify it.
 NIKOLA_API ResourceID resources_push_audio_buffer(const u16 group_id, const FilePath& nbr_path);
 
@@ -788,10 +788,10 @@ NIKOLA_API Model* resources_get_model(const ResourceID& id);
 /// @NOTE: This function will assert if `id` is not found in `id.group`.
 NIKOLA_API Font* resources_get_font(const ResourceID& id);
 
-/// Retrieve `AudioBuffer` identified by `id` in `id.group`. 
+/// Retrieve `AudioBufferID` identified by `id` in `id.group`. 
 ///
 /// @NOTE: This function will assert if `id` is not found in `id.group`.
-NIKOLA_API AudioBuffer* resources_get_audio_buffer(const ResourceID& id);
+NIKOLA_API AudioBufferID resources_get_audio_buffer(const ResourceID& id);
 
 /// Resource manager functions
 ///---------------------------------------------------------------------------------------------------------------------

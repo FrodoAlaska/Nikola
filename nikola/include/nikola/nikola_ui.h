@@ -4,6 +4,7 @@
 #include "nikola_resources.h"
 #include "nikola_render.h"
 #include "nikola_containers.h"
+#include "nikola_audio.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -60,6 +61,12 @@ NIKOLA_API void gui_edit_material(const char* name, Material* material);
 
 /// Add a font section identified by `name` to edit the given `font` applied onto the given `label` text.
 NIKOLA_API void gui_edit_font(const char* name, Font* font, String* label);
+
+/// Add an audio source section identified by `name` to edit the given `source`.
+NIKOLA_API void gui_edit_audio_source(const char* name, AudioSourceID& source);
+
+/// Add an audio listener section identified by `name` to edit the global audio listener.
+NIKOLA_API void gui_edit_audio_listener(const char* name);
 
 /// GUI functions
 ///---------------------------------------------------------------------------------------------------------------------

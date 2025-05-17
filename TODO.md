@@ -82,7 +82,9 @@
     - [x] Add it to the resource manager
     - [x] Try to load, convert, and manage the new audio buffer with the NBR tool.
     - [x] Test
-    - [] Improved source and listener management. Perhaps have an audio system?
+    - [x] Add one listener and manage it by the user
+    - [x] Improved source and listener management. Perhaps have an audio system?
+    - [x] Add the new types to the GUI
     - [] Documentation
 [] 17. UI v0.1
     - [] A canvas system for 2D game UI.

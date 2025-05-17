@@ -25,7 +25,7 @@ struct ResourceGroup {
   DynamicArray<GfxTexture*> textures;
   DynamicArray<GfxCubemap*> cubemaps;
   DynamicArray<GfxShader*> shaders;
-  DynamicArray<AudioBuffer*> audio_buffers;
+  DynamicArray<AudioBufferID> audio_buffers;
   
   DynamicArray<Mesh*> meshes;
   DynamicArray<Material*> materials;
@@ -779,8 +779,8 @@ ResourceID resources_push_audio_buffer(const u16 group_id, const AudioBufferDesc
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
-  // Allocate a new audio buffer
-  AudioBuffer* buffer = audio_buffer_create(desc);
+  // Create a new audio buffer
+  AudioBufferID buffer = audio_buffer_create(desc);
 
   // New audio buffer added!
   ResourceID id;
@@ -893,7 +893,7 @@ Font* resources_get_font(const ResourceID& id) {
   return get_resource(id, group->fonts, RESOURCE_TYPE_FONT);
 }
 
-AudioBuffer* resources_get_audio_buffer(const ResourceID& id) {
+AudioBufferID resources_get_audio_buffer(const ResourceID& id) {
   ResourceGroup* group = &s_manager.groups[id.group];
   return get_resource(id, group->audio_buffers, RESOURCE_TYPE_AUDIO_BUFFER);
 }

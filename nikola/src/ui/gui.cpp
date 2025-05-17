@@ -3,6 +3,7 @@
 #include "nikola/nikola_resources.h"
 #include "nikola/nikola_render.h"
 #include "nikola/nikola_math.h"
+#include "nikola/nikola_audio.h"
 
 #include <GLFW/glfw3.h>
 
@@ -312,6 +313,108 @@ void gui_edit_font(const char* name, Font* font, String* label) {
   }
   // -------------------------------------------------------------------
   
+  ImGui::PopID(); 
+}
+
+void gui_edit_audio_source(const char* name, AudioSourceID& source) {
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+
+  AudioSourceDesc source_desc = audio_source_get_desc(source);
+
+  // Source Info
+  // -------------------------------------------------------------------
+  // Volume
+  if(ImGui::SliderFloat("Volume", &source_desc.volume, 0.0f, 1.0f)) {
+    audio_source_set_volume(source, source_desc.volume);
+  }
+
+  // Pitch
+  if(ImGui::SliderFloat("Pitch", &source_desc.pitch, 0.0f, 1.0f)) {
+    audio_source_set_pitch(source, source_desc.pitch);
+  }
+
+  // Position
+  if(ImGui::DragFloat3("Position", &source_desc.position[0], 0.01f, -100.0f, 100.0f)) {
+    audio_source_set_position(source, source_desc.position);
+  }
+
+  // Velocity
+  if(ImGui::DragFloat3("Velocity", &source_desc.velocity[0], 0.01f, -1.0f, 1.0f)) {
+    audio_source_set_velocity(source, source_desc.velocity);
+  }
+  
+  // Direction
+  if(ImGui::DragFloat3("Direction", &source_desc.direction[0], 0.01f, -1.0f, 1.0f)) {
+    audio_source_set_direction(source, source_desc.direction);
+  }
+  
+  // Looping
+  if(ImGui::Checkbox("Looping", &source_desc.is_looping)) {
+    audio_source_set_looping(source, source_desc.is_looping);
+  }
+
+  // Queued buffers 
+  ImGui::Text("Current queued buffers %zu", source_desc.buffers_count);
+  // -------------------------------------------------------------------
+
+  // Command buttons
+  // -------------------------------------------------------------------
+  // Play button
+  if(ImGui::Button("Play")) {
+    audio_source_start(source);
+  } 
+
+  ImGui::SameLine();
+  
+  // Pause button
+  if(ImGui::Button("Pause")) {
+    audio_source_pause(source);
+  } 
+  
+  ImGui::SameLine();
+  
+  // Stop button
+  if(ImGui::Button("Stop")) {
+    audio_source_stop(source);
+  } 
+  
+  ImGui::SameLine();
+
+  // Restart button
+  if(ImGui::Button("Restart")) {
+    audio_source_restart(source);
+    audio_source_start(source);
+  } 
+  
+  ImGui::SameLine();
+  // -------------------------------------------------------------------
+
+  ImGui::NewLine();
+  ImGui::PopID(); 
+}
+
+void gui_edit_audio_listener(const char* name) {
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+
+  AudioListenerDesc listener = audio_listener_get_desc();
+
+  // Volume
+  if(ImGui::SliderFloat("Volume", &listener.volume, 0.0f, 1.0f)) {
+    audio_listener_set_volume(listener.volume);
+  }
+
+  // Position
+  if(ImGui::DragFloat3("Position", &listener.position[0], 0.01f, -1.0f, 1.0f)) {
+    audio_listener_set_position(listener.position);
+  }
+
+  // Velocity
+  if(ImGui::DragFloat3("Velocity", &listener.velocity[0], 0.01f, -1.0f, 1.0f)) {
+    audio_listener_set_velocity(listener.velocity);
+  }
+
   ImGui::PopID(); 
 }
 
