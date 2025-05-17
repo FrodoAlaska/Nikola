@@ -5,14 +5,16 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 ## Dependencies
 
 ### Engine Dependencies:
-- [GLFW3](https://github.com/glfw/glfw)
+- [GLFW](https://github.com/glfw/glfw)
 - [GLAD](https://github.com/Dav1dde/glad)
 - [GLM](https://github.com/g-truc/glm)
 - [ImGui](https://github.com/ocornut/imgui)
+- [OpenAL-Soft](https://github.com/kcat/openal-soft)
 
 ### NBR Tool Dependencies:
-- [STB](https://github.com/nothings/stb)
-- [ASSIMP](https://github.com/assimp/assimp)
+- [stb](https://github.com/nothings/stb)
+- [Assimp](https://github.com/assimp/assimp)
+- [dr_libs](https://github.com/mackron/dr_libs)
 
 ## Features  
 - A fully documented, single-header implementation for each library module.  
@@ -20,17 +22,17 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 - Gamepad, keyboard, and mouse input support.  
 - A flexible, configurable rendering API.  
 - A simple resource manager with a custom resource format (**NBR**) that supports hot-reloading of resources.  
-- Support for multiple image formats** including **JPEG, PNG, BMP, TGA, and more**.  
+- Support for multiple image formats including **JPEG, PNG, BMP, TGA, and more**.  
 - 3D model loading with support for **OBJ, FBX, and GLTF** formats.  
 - Integrated ImGui support, featuring an abstracted `editor` layer for editing engine-specific types through a GUI.  
 - A versitile lighting system using the Blinn-Phong shading model.
+- A fully-fledged audio system with both 2D audio and 3D spatialized audio, supporting multiple formats such as **MP3, WAV, and OGG**.
 
 ## Missing Features
 
 Some missing features are not currently in the works (Long-term) while others are planned for the future (Short-term). Some other features may _never_ be implemented since it does not fit the current philosophy of the engine (Never).
 
 - 3D animations (*Long-term*)
-- Audio (*Short-term*)
 - Physcis (*Short-term*)
 - Scripting (*Never*)
 

@@ -81,16 +81,16 @@
     - [x] Create the NBR version of the audio resource. 
     - [x] Add it to the resource manager
     - [x] Try to load, convert, and manage the new audio buffer with the NBR tool.
-    - [x] Test
     - [x] Add one listener and manage it by the user
     - [x] Improved source and listener management. Perhaps have an audio system?
     - [x] Add the new types to the GUI
-    - [] Documentation
+    - [x] Documentation
 [] 17. UI v0.1
     - [] A canvas system for 2D game UI.
     - [] A menu system
     - [] Documentation
-[] 18. Performance Craze 0.1 
+[] 18. 3D Animations v0.1
+[] 19. Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers
     - [x] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application.
     - [] Which systems can benefit most from multi-threading? 
@@ -98,17 +98,16 @@
     - [] Try to improve the load times for the resource manager as a test of the new multi-threading system.
     - [] Compare with previous results and scenes and current results and scenes
     - [] Documentation
-[] 19. Math And Camera v0.2 
+[] 20. Math And Camera v0.2 
     - [] Fix the quaternion rotations in the transform and, really, in the _whole_ engine.
     - [] Add rotations to the camera, or, in other words, let the camera have a `Transform` instead of just a `position` vector3. 
-[] 20. Renderer v0.5 
+[] 21. Renderer v0.5 
     - [] Bloom integration 
     - [] Improve lighting using clustered rendering
     - [] Compute shaders 
     - [] Better bloom for testing the new compute shaders
     - [] Improve upon the render pass system by allowing the reuse of certain render passes 
     - [] Make the HDR pass toggleable through the GUI.
-[] 21. 3D Animations v0.1
 [] 22. Physics v0.1
 
 ## (Engine) BUGS: 
