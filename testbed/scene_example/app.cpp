@@ -141,7 +141,7 @@ void app_render(nikola::App* app) {
   nikola::renderer_begin(scenes_get_current()->frame_data);
   scenes_render();
   nikola::renderer_end();
-
+  
   // 2D renderer
   nikola::batch_renderer_begin();
   nikola::batch_render_fps(app->font, nikola::Vec2(10.0f, 40.0f), 32.0f, nikola::Vec4(1.0f));

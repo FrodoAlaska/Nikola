@@ -17,7 +17,7 @@ if(WIN32)
   set(SHARED_LIB_EXTENSION "dll")
   
   # Thanks, CMake...
-  set(NIKOLA_LIBRARY_DIR ${NIKOLA_OUTPUT_DIR}/"$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>"/nikolad.${STATIC_LIB_EXTENSION})
+  set(NIKOLA_LIBRARY_DIR ${NIKOLA_OUTPUT_DIR}/"$<$<CONFIG:Debug>:Debug>$<$<CONFIG:Release>:Release>"/nikola.${STATIC_LIB_EXTENSION})
   ###############################
   
   ### Build Flags ### 

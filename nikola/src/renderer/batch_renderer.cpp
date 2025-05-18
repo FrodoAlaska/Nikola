@@ -283,11 +283,6 @@ void batch_renderer_begin() {
 
   // Calculate the orthographic camera view
   s_batch.ortho = mat4_ortho(0.0f, (f32)width, (f32)height, 0.0f);
-
-  gfx_context_set_target(s_batch.context, nullptr); 
-
-  Vec4 color = renderer_get_clear_color();
-  gfx_context_clear(s_batch.context, color.r, color.g, color.b, color.a);
 }
 
 void batch_renderer_end() {

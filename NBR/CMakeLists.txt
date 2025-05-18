@@ -32,8 +32,8 @@ set(NBR_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(NBR_LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 
 set(NBR_LIBRARIES 
+  nikola
   ${NIKOLA_LIBRARIES}
-  ${NIKOLA_LIBRARY_DIR} 
   assimp
 )
 
@@ -96,8 +96,8 @@ add_executable(${PROJECT_NAME} ${NBR_SOURCES} ${LIBS_SOURCES})
 # Make sure that Nikola is built before attempting to compile NBR
 add_dependencies(${PROJECT_NAME} nikola)
 
-target_include_directories(${PROJECT_NAME} PUBLIC BEFORE ${NBR_INCLUDES})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${NBR_LIBRARIES})
+target_include_directories(${PROJECT_NAME} PRIVATE BEFORE ${NBR_INCLUDES})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${NBR_LIBRARIES})
 ############################################################
 
 ### Compiling Options ###

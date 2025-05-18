@@ -109,10 +109,10 @@ add_library(${PROJECT_NAME} ${NIKOLA_BUILD_TYPE} ${NIKOLA_SOURCES} ${NIKOLA_HEAD
 
 ### Linking ###
 ############################################################
-target_include_directories(${PROJECT_NAME} PUBLIC BEFORE 
+target_include_directories(${PROJECT_NAME} PRIVATE BEFORE 
   ${NIKOLA_INCLUDES}
 )
-target_link_libraries(${PROJECT_NAME} PUBLIC 
+target_link_libraries(${PROJECT_NAME} PRIVATE 
   ${NIKOLA_LIBRARIES}
 )
 ############################################################
