@@ -59,6 +59,7 @@ void camera_create(Camera* cam, const f32 aspect_ratio, const Vec3& pos, const V
   cam->far  = 100.0f;
 
   cam->sensitivity = 0.1f;
+  cam->exposure    = 1.0f;
 
   Vec3 look_dir(pos - target);
   Vec3 up_axis(0.0f, 1.0f, 0.0f);

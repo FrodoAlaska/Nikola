@@ -11,16 +11,24 @@ namespace nikola {
 /// Filesystem functions
 
 void filesystem_directory_iterate(const FilePath& dir, const FileIterateFunc& iter_func, const void* user_data) {
+  if(!filesystem_exists(dir)) {
+    NIKOLA_LOG_ERROR("Cannot iterate through a directory (\'%s\') that does not exist", dir.c_str());
+    return;
+  }
+
   for(auto& p : std::filesystem::directory_iterator(dir)) {
-    FilePath path = p.path().string();
-    iter_func(dir, path, (void*)user_data);
+    iter_func(dir, p.path().string(), (void*)user_data);
   }
 }
 
 void filesystem_directory_recurse_iterate(const FilePath& dir, const FileIterateFunc& iter_func, const void* user_data) {
+  if(!filesystem_exists(dir)) {
+    NIKOLA_LOG_ERROR("Cannot iterate through a directory (\'%s\') that does not exist", dir.c_str());
+    return;
+  }
+
   for(auto& p : std::filesystem::recursive_directory_iterator(dir)) {
-    FilePath path = p.path().string();
-    iter_func(dir, path, (void*)user_data);
+    iter_func(dir, p.path().string(), (void*)user_data);
   }
 }
 

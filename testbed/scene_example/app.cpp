@@ -73,7 +73,7 @@ static void init_passes(nikola::App* app) {
     .shader_context_id = app->post_shader_context_id,
   };
   render_pass.targets.push_back(nikola::RenderTarget{.filter = nikola::GFX_TEXTURE_FILTER_MIN_MAG_LINEAR});
-  nikola::renderer_push_pass(render_pass, post_process_pass, app);
+  // nikola::renderer_push_pass(render_pass, post_process_pass, app);
 }
 
 /// Private functions 

@@ -243,7 +243,7 @@ static void reload_core_resource(const ResourceGroup* group, const ResourceID& i
 /// ----------------------------------------------------------------------
 /// Callbacks
 
-static void resource_entry_iterate(const FilePath& base, FilePath& path, void* user_data) {
+static void resource_entry_iterate(const FilePath& base, const FilePath& path, void* user_data) {
   ResourceGroup* group = (ResourceGroup*)user_data;
 
   if(!filesystem_exists(path)) {
@@ -350,7 +350,7 @@ u16 resources_create_group(const String& name, const FilePath& parent_dir) {
   group->named_ids["invalid"] = ResourceID{}; 
  
   // Add a file watcher to the parent directory
-  filewatcher_add_dir(parent_dir, resource_entry_update, group, true);
+  filewatcher_add_dir(parent_dir, resource_entry_update, group);
 
   NIKOLA_LOG_INFO("Successfully created a resource group \'%s\'", name.c_str());
   return group_id;
@@ -827,7 +827,7 @@ void resources_push_dir(const u16 group_id, const FilePath& dir) {
   ResourceGroup* group = &s_manager.groups[group_id];
  
   // Retrieve all of the paths
-  filesystem_directory_iterate(dir, resource_entry_iterate, group);
+  filesystem_directory_iterate(filepath_append(group->parent_dir, dir), resource_entry_iterate, group);
 }
 
 ResourceID& resources_get_id(const u16 group_id, const nikola::String& filename) {

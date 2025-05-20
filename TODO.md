@@ -85,12 +85,25 @@
     - [x] Improved source and listener management. Perhaps have an audio system?
     - [x] Add the new types to the GUI
     - [x] Documentation
-[] 17. UI v0.1
+[] 17. Annoying Bugs To Fix 
+    - [x] The wonderful and useful `resoruces_push_dir` function doesn't work and seg faults for some reason. Please fix.
+    - [x] Actually, the whole filewatcher system might be _extremely_ slow. At least that's what I saw in the data. Remove it? Find an alternative? Make it faster? I don't know.
+    - [] The NBR tool needs to create a certain directory if it doesn't exist, so I don't have to do it on my own.
+    - [] The renderer will seg fault if no `RenderQueue` is given at all. Since, under the hood, the renderer holds a `RenderQueue` pointer, it expects it to be valid at all times, since it does use it a lot.
+    - [] When an application tries to use both the 2D and 3D renderers together, lots of problems arise. Need to fix that.
+    - [] Fix the way the `Transform` type is edited through the GUI
+[] 18. UI v0.1
     - [] A canvas system for 2D game UI.
     - [] A menu system
     - [] Documentation
-[] 18. 3D Animations v0.1
-[] 19. Performance Craze 0.1 
+[] 19. Renderer v0.5 
+    - [] Bloom integration 
+    - [] Improve lighting using clustered rendering
+    - [] Compute shaders 
+    - [] Better bloom for testing the new compute shaders
+    - [] Improve upon the render pass system by allowing the reuse of certain render passes 
+    - [] Make the HDR pass toggleable through the GUI.
+[] 20. Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers
     - [x] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application.
     - [] Which systems can benefit most from multi-threading? 
@@ -98,24 +111,15 @@
     - [] Try to improve the load times for the resource manager as a test of the new multi-threading system.
     - [] Compare with previous results and scenes and current results and scenes
     - [] Documentation
-[] 20. Math And Camera v0.2 
+[] 21. 3D Animations v0.1
+[] 22. Math And Camera v0.2 
     - [] Fix the quaternion rotations in the transform and, really, in the _whole_ engine.
     - [] Add rotations to the camera, or, in other words, let the camera have a `Transform` instead of just a `position` vector3. 
-[] 21. Renderer v0.5 
-    - [] Bloom integration 
-    - [] Improve lighting using clustered rendering
-    - [] Compute shaders 
-    - [] Better bloom for testing the new compute shaders
-    - [] Improve upon the render pass system by allowing the reuse of certain render passes 
-    - [] Make the HDR pass toggleable through the GUI.
-[] 22. Physics v0.1
+[] 23. Physics v0.1
 
 ## (Engine) BUGS: 
-- (Filesystem): There is a bug with the filesystem where the string gets allocated and de-allocated wrong I think? It crashes the program when we pass a normal C-string (i.e "string"), but it runs okay 
-if we give it a string variable instead (i.e `func(path_string)`). Perhaps there is something wrong with the lifetime of strings? I'm not sure.
-- (Resources): It's probably better not to have an internal cache specified by the engine itself. It's probably better to let the user (me) create that cache if need be. That way, we don't have to have specific hard-coded path values and whatnot. 
-- (Renderer): The renderer will seg fault if no `RenderQueue` is given at all. Since, under the hood, the renderer holds a `RenderQueue` pointer, it expects it to be valid at all times, since it does use it a lot.
-- (Renderer): When an application tries to use both the 2D and 3D renderers together, lots of problems arise. Need to fix that.
+- (Renderer): 
+- (Renderer): 
 
 ## (Core) BUGS: 
 - EMPTY FOR NOW...

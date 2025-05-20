@@ -2,7 +2,6 @@
 #include "nikola/nikola_base.h"
 #include "nikola/nikola_render.h"
 #include "nikola/nikola_resources.h"
-#include "nikola/nikola_file.h"
 #include "nikola/nikola_timer.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -81,7 +80,6 @@ void engine_run() {
   
   while(window_is_open(s_engine.window)) {
     // Update
-    filewatcher_update(); 
     CHECK_VALID_CALLBACK(s_engine.app_desc.update_fn, s_engine.app, niclock_get_delta_time());
 
     // Render
@@ -104,7 +102,6 @@ void engine_shutdown() {
   batch_renderer_shutdown();
   renderer_shutdown();
   resource_manager_shutdown();
-  filewatcher_shutdown(); 
   audio_device_shutdown();
 
   window_close(s_engine.window);

@@ -24,7 +24,7 @@ static bool wav_convert(nikola::NBRAudio* audio, const nikola::FilePath& path) {
   }
 
   // Convert to NBRAudio
-  audio->format      = (nikola::u8)nikola::AUDIO_BUFFER_FORMAT_F32;
+  audio->format      = (nikola::u8)nikola::AUDIO_BUFFER_FORMAT_I16;
   audio->sample_rate = sample_rate;
   audio->channels    = channels;
   audio->size        = frames_count * (channels * sizeof(nikola::i16)); 

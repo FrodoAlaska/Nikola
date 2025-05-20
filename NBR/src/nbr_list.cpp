@@ -27,7 +27,7 @@ static bool check_section_dirs(const ListSection& section) {
   return true;
 }
 
-static bool convert_texture(nikola::FilePath& in_path, nikola::FilePath& save_path) {
+static bool convert_texture(const nikola::FilePath& in_path, const nikola::FilePath& save_path) {
   nikola::NBRTexture texture; 
   nikola::NBRFile nbr; 
 
@@ -45,7 +45,7 @@ static bool convert_texture(nikola::FilePath& in_path, nikola::FilePath& save_pa
   return true;
 }
 
-static bool convert_cubemap(nikola::FilePath& in_path, nikola::FilePath& save_path) {
+static bool convert_cubemap(const nikola::FilePath& in_path, const nikola::FilePath& save_path) {
   nikola::NBRCubemap cubemap; 
   nikola::NBRFile nbr; 
 
@@ -63,7 +63,7 @@ static bool convert_cubemap(nikola::FilePath& in_path, nikola::FilePath& save_pa
   return true;
 }
 
-static bool convert_shader(nikola::FilePath& in_path, nikola::FilePath& save_path) {
+static bool convert_shader(const nikola::FilePath& in_path, const nikola::FilePath& save_path) {
   nikola::NBRShader shader; 
   nikola::NBRFile nbr; 
 
@@ -81,7 +81,7 @@ static bool convert_shader(nikola::FilePath& in_path, nikola::FilePath& save_pat
   return true;
 }
 
-static bool convert_model(nikola::FilePath& in_path, nikola::FilePath& save_path) {
+static bool convert_model(const nikola::FilePath& in_path, const nikola::FilePath& save_path) {
   nikola::NBRModel model; 
   nikola::NBRFile nbr; 
 
@@ -99,7 +99,7 @@ static bool convert_model(nikola::FilePath& in_path, nikola::FilePath& save_path
   return true;
 }
 
-static bool convert_font(nikola::FilePath& in_path, nikola::FilePath& save_path) {
+static bool convert_font(const nikola::FilePath& in_path, const nikola::FilePath& save_path) {
   nikola::NBRFont font; 
   nikola::NBRFile nbr; 
 
@@ -117,7 +117,7 @@ static bool convert_font(nikola::FilePath& in_path, nikola::FilePath& save_path)
   return true;
 }
 
-static bool convert_audio(nikola::FilePath& in_path, nikola::FilePath& save_path) {
+static bool convert_audio(const nikola::FilePath& in_path, const nikola::FilePath& save_path) {
   nikola::NBRAudio audio; 
   nikola::NBRFile nbr; 
 
@@ -135,7 +135,7 @@ static bool convert_audio(nikola::FilePath& in_path, nikola::FilePath& save_path
   return true;
 }
 
-static void convert_by_type(ListSection* section, nikola::FilePath& path) {
+static void convert_by_type(ListSection* section, const nikola::FilePath& path) {
   switch(section->type) {
     case nikola::RESOURCE_TYPE_TEXTURE:
       convert_texture(path, section->out_dir);
@@ -158,7 +158,7 @@ static void convert_by_type(ListSection* section, nikola::FilePath& path) {
   }
 }
 
-static void iterate_resources(const nikola::FilePath& base_dir, nikola::FilePath& current_path, void* user_data) {
+static void iterate_resources(const nikola::FilePath& base_dir, const nikola::FilePath& current_path, void* user_data) {
   ListSection* section = (ListSection*)user_data;
   convert_by_type(section, current_path);
 }

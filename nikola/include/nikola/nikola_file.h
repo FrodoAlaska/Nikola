@@ -52,6 +52,9 @@ enum FileStatus {
   
   /// Used when a file gets deleted.
   FILE_STATUS_DELETED  = 15 << 2, 
+
+  /// Used when a file gets renamed 
+  FILE_STATUS_RENAMED  = 15 << 3, 
 };
 /// FileStatus
 ///---------------------------------------------------------------------------------------------------------------------
@@ -70,7 +73,7 @@ using File = std::fstream;
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// FileIterateFunc callback
-using FileIterateFunc = void(*)(const FilePath& base_dir, FilePath& current_path, void* user_data);
+using FileIterateFunc = void(*)(const FilePath& base_dir, const FilePath& current_path, void* user_data);
 /// FileIterateFunc callback
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -120,14 +123,7 @@ NIKOLA_API bool filesystem_is_empty(const FilePath& path);
 NIKOLA_API void filewatcher_add_file(const FilePath& path, const FileWatchFunc& callback, const void* user_data);
 
 /// Add all the files at `dir` to the file watcher, with `callback` to be invoked later, passing in `user_data`. 
-/// Depending on the state of the `recurse` flag, the function can iterate through `dir` either recursively or normally.
-NIKOLA_API void filewatcher_add_dir(const FilePath& dir, const FileWatchFunc& callback, const void* user_data, const bool recurse);
-
-/// Update the state of the files in the file watcher, checking their status and invoking any callbacks if needed. 
-NIKOLA_API void filewatcher_update();
-
-/// Shutdown the file watcher system.
-NIKOLA_API void filewatcher_shutdown();
+NIKOLA_API void filewatcher_add_dir(const FilePath& dir, const FileWatchFunc& callback, const void* user_data);
 
 /// Filewatcher functions 
 ///---------------------------------------------------------------------------------------------------------------------

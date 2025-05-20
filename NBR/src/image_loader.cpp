@@ -31,7 +31,7 @@ static bool check_valid_extension(const nikola::FilePath& ext) {
 /// ----------------------------------------------------------------------
 /// Callbacks 
 
-static void directory_iterate_func(const nikola::FilePath& base_dir, nikola::FilePath& current_path, void* user_data) {
+static void directory_iterate_func(const nikola::FilePath& base_dir, const nikola::FilePath& current_path, void* user_data) {
   nikola::NBRCubemap* cube = (nikola::NBRCubemap*)user_data;
   nikola::i32 width, height; 
 
