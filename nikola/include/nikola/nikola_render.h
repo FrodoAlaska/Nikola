@@ -77,8 +77,8 @@ struct Camera {
 ///---------------------------------------------------------------------------------------------------------------------
 /// RendererDefaults 
 struct RendererDefaults {
-  ResourceID texture         = {};
-  ResourceID matrices_buffer = {};
+  GfxTexture* texture        = nullptr;
+  GfxBuffer* matrices_buffer = nullptr;
 };
 /// RendererDefaults 
 ///---------------------------------------------------------------------------------------------------------------------

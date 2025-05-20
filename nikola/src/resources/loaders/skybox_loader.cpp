@@ -63,8 +63,7 @@ static void construct_cube_skybox(const u16 group_id, Skybox* sky) {
     .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
   };
 
-  sky->vertex_buffer            = resources_push_buffer(group_id, vert_desc);
-  sky->pipe_desc.vertex_buffer  = resources_get_buffer(sky->vertex_buffer);
+  sky->pipe_desc.vertex_buffer  = resources_get_buffer(resources_push_buffer(group_id, vert_desc));
   sky->pipe_desc.vertices_count = 36;
 }
 /// Private functions
@@ -73,9 +72,8 @@ static void construct_cube_skybox(const u16 group_id, Skybox* sky) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Skybox loader functions
 
-void skybox_loader_load(const u16 group_id, Skybox* sky, const ResourceID& cubemap_id) {
+void skybox_loader_load(const u16 group_id, Skybox* sky) {
   NIKOLA_ASSERT(sky, "Invalid Skybox passed into skybox loader function");
-  NIKOLA_ASSERT(RESOURCE_IS_VALID(cubemap_id), "Cannot load a skybox with an invalid cubemap ID");
   
   // Default initialize the loader
   memory_zero(sky, sizeof(Skybox));
@@ -90,9 +88,6 @@ void skybox_loader_load(const u16 group_id, Skybox* sky, const ResourceID& cubem
   
   // Draw mode init 
   sky->pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
-
-  // Cubemap init
-  sky->cubemap = cubemap_id;
 }
 
 /// Skybox loader functions

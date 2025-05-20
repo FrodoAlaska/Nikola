@@ -7,7 +7,7 @@
 
 namespace nikola { // Start of nikola
 
-void skybox_loader_load(const u16 group_id, Skybox* sky, const ResourceID& cubemap_id);
+void skybox_loader_load(const u16 group_id, Skybox* sky);
 
 } // End of nikola
 

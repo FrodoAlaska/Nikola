@@ -193,7 +193,6 @@ void gui_edit_transform(const char* name, Transform* transform) {
     transform_scale(*transform, Vec3(transform->scale));
   }
 
-  // @TODO (GUI): Make it better...
   if(ImGui::DragFloat3("Rotation", &transform->rotation[0], 0.01f, -1.0f, 1.0f)) {
     transform_rotate(*transform, quat_normalize(transform->rotation));
   }

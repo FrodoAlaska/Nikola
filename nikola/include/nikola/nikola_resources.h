@@ -447,8 +447,8 @@ struct ResourceID {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Mesh 
 struct Mesh {
-  ResourceID vertex_buffer = {}; 
-  ResourceID index_buffer  = {};
+  GfxBuffer* vertex_buffer = nullptr; 
+  GfxBuffer* index_buffer  = nullptr;
 
   GfxPipeline* pipe         = nullptr;
   GfxPipelineDesc pipe_desc = {};
@@ -459,8 +459,8 @@ struct Mesh {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Material 
 struct Material {
-  ResourceID diffuse_map  = {};
-  ResourceID specular_map = {};
+  GfxTexture* diffuse_map  = nullptr;
+  GfxTexture* specular_map = nullptr;
   
   Vec3 ambient_color;
   Vec3 diffuse_color; 
@@ -474,8 +474,8 @@ struct Material {
 ///---------------------------------------------------------------------------------------------------------------------
 /// ShaderContext
 struct ShaderContext {
-  ResourceID shader = {}; 
-  ResourceID uniform_buffers[SHADER_UNIFORM_BUFFERS_MAX];
+  GfxShader* shader = nullptr; 
+  GfxBuffer* uniform_buffers[SHADER_UNIFORM_BUFFERS_MAX];
 
   HashMap<String, i32> uniforms_cache;
 };
@@ -485,11 +485,10 @@ struct ShaderContext {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Skybox
 struct Skybox {
-  ResourceID vertex_buffer = {};
-  ResourceID cubemap       = {};
+  GfxCubemap* cubemap       = nullptr;
   
-  GfxPipeline* pipe         = nullptr;
   GfxPipelineDesc pipe_desc = {};
+  GfxPipeline* pipe         = nullptr;
 };
 /// Skybox
 ///---------------------------------------------------------------------------------------------------------------------
@@ -497,8 +496,8 @@ struct Skybox {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Model 
 struct Model {
-  DynamicArray<ResourceID> meshes;
-  DynamicArray<ResourceID> materials;
+  DynamicArray<Mesh*> meshes;
+  DynamicArray<Material*> materials;
   DynamicArray<u8> material_indices;
 };
 /// Model 
@@ -508,7 +507,7 @@ struct Model {
 /// Glyph
 struct Glyph {
   i8 unicode; 
-  ResourceID texture = {};
+  GfxTexture* texture = nullptr;
 
   Vec2 size;
   Vec2 offset;
@@ -531,46 +530,35 @@ struct Font {
 ///---------------------------------------------------------------------------------------------------------------------
 /// ShaderContext functions
 
-/// Cache the location of the uniform with the name `uniform_name` to the given `ctx_id`.
+/// Cache the location of the uniform with the name `uniform_name` to the given `ctx`.
 /// 
 /// @NOTE: If the uniform's name is not found within the context, the function will throw a warning. 
-NIKOLA_API void shader_context_cache_uniform(ResourceID& ctx_id, const i8* uniform_name);
+NIKOLA_API void shader_context_cache_uniform(ShaderContext* ctx, const i8* uniform_name);
 
-/// Set a uniform of type `i32` with the name `uniform_name` in `ctx_id` to the given `value`. 
-NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const String& uniform_name, const i32 value);
+/// Set a uniform of type `i32` with the name `uniform_name` in `ctx` to the given `value`. 
+NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const i32 value);
 
-/// Set a uniform of type `f32` with the name `uniform_name` in `ctx_id` to the given `value`. 
-NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const String& uniform_name, const f32 value);
+/// Set a uniform of type `f32` with the name `uniform_name` in `ctx` to the given `value`. 
+NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const f32 value);
 
-/// Set a uniform of type `Vec2` with the name `uniform_name` in `ctx_id` to the given `value`. 
-NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const String& uniform_name, const Vec2& value);
+/// Set a uniform of type `Vec2` with the name `uniform_name` in `ctx` to the given `value`. 
+NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const Vec2& value);
 
-/// Set a uniform of type `Vec3` with the name `uniform_name` in `ctx_id` to the given `value`. 
-NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const String& uniform_name, const Vec3& value);
+/// Set a uniform of type `Vec3` with the name `uniform_name` in `ctx` to the given `value`. 
+NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const Vec3& value);
 
-/// Set a uniform of type `Vec4` with the name `uniform_name` in `ctx_id` to the given `value`. 
-NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const String& uniform_name, const Vec4& value);
+/// Set a uniform of type `Vec4` with the name `uniform_name` in `ctx` to the given `value`. 
+NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const Vec4& value);
 
-/// Set a uniform of type `Mat4` with the name `uniform_name` in `ctx_id` to the given `value`. 
-NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const String& uniform_name, const Mat4& value);
+/// Set a uniform of type `Mat4` with the name `uniform_name` in `ctx` to the given `value`. 
+NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const Mat4& value);
 
-/// Set a uniform of type `Material` with the name `material_name` in `ctx_id` to the given `mat_id`. 
-///
-/// @NOTE: In order for this operation to succeed, the shader needs to include a `struct` with the same 
-/// members as the engine's `Material`'s `struct`. 
-NIKOLA_API void shader_context_set_uniform(ResourceID& ctx_id, const String& material_name, const ResourceID& mat_id);
+/// Set the data of the uniform buffer at `index` of the associated shader in `ctx` to `buffer`
+NIKOLA_API void shader_context_set_uniform_buffer(ShaderContext* ctx, const sizei index, const GfxBuffer* buffer);
 
-/// Set the data of the uniform buffer at `index` of the associated shader in `ctx_id` to `buffer_id`
-NIKOLA_API void shader_context_set_uniform_buffer(ResourceID& ctx_id, const sizei index, const ResourceID& buffer_id);
-
-/// Set the shader with `shader_id` in `ctx_id`. 
-/// 
-/// @NOTE: If either `shader_id` or `ctx_id` are invalid, this function will assert. 
-NIKOLA_API void shader_context_set_shader(ResourceID& ctx_id, const ResourceID& shader_id);
-
-/// Use the shader currently binded to `ctx_id`. If the shader in `ctx_id` is invalid, 
+/// Use the shader currently binded to `ctx`. If the shader in `ctx` is invalid, 
 /// the function will simply return and do nothing.
-NIKOLA_API void shader_context_use(ResourceID& ctx_id);
+NIKOLA_API void shader_context_use(ShaderContext* ctx_id);
 
 /// ShaderContext functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -578,13 +566,8 @@ NIKOLA_API void shader_context_use(ResourceID& ctx_id);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Material functions
 
-/// Set the texture of `type` in `mat_id`, using `texture_id`. 
-/// 
-/// @NOTE: If either `texture_id` or `mat_id` are invalid, this function will assert. 
-NIKOLA_API void material_set_texture(ResourceID& mat_id, const MaterialTextureType type, const ResourceID& texture_id);
-
-/// Use the textures that are currently valid in `mat_id`.
-NIKOLA_API void material_use(ResourceID& mat_id);
+/// Use the textures that are currently valid in `mat`.
+NIKOLA_API void material_use(Material* mat);
 
 /// Material functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -706,9 +689,17 @@ NIKOLA_API ResourceID resources_push_mesh(const u16 group_id, NBRMesh& nbr_mesh)
 /// store it in `group_id`, return a `ResourceID` to identified it. 
 NIKOLA_API ResourceID resources_push_mesh(const u16 group_id, const MeshType type);
 
-/// Allocate a new `Material` store it in `group_id`, and 
+/// Allocate a new `Material` store it in `group_id` with a diffuse map of `diffuse`, and 
 /// return a `ResourceID` to identify it.
-NIKOLA_API ResourceID resources_push_material(const u16 group_id);
+///
+/// @NOTE: The `diffuse_map` parametar is set to `INVALID` by default.
+NIKOLA_API ResourceID resources_push_material(const u16 group_id, const ResourceID& diffuse_map = {});
+
+/// Allocate a new `Material` store it in `group_id` with a diffuse map found at `diffuse_path`, and 
+/// return a `ResourceID` to identify it.
+///
+/// @NOTE: The `diffuse_map` parametar is set to `INVALID` by default.
+NIKOLA_API ResourceID resources_push_material(const u16 group_id, const FilePath& diffuse_path);
 
 /// Allocate a new `Skybox` using the previously-added `cubemap_id`, store it in `group_id`, 
 /// and return a `ResourceID` to identify it.

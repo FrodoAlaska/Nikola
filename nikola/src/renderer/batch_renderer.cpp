@@ -413,7 +413,7 @@ void batch_render_codepoint(Font* font, const char codepoint, const Vec2& positi
   };
 
   // Prepare and render the glyph batch
-  BatchCall* batch = prepare_texture_batch(resources_get_texture(glyph.texture));
+  BatchCall* batch = prepare_texture_batch(glyph.texture);
   generate_quad_batch(batch, src, dest, color, Vec2(SHAPE_TYPE_TEXT, 4.0f));
 }
 

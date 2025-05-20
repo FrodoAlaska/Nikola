@@ -108,10 +108,6 @@ bool game_scene_create(Scene* scene) {
   float aspect_ratio = nikola::window_get_aspect_ratio(scene->window);
   nikola::camera_create(&scene->frame_data.camera, aspect_ratio, nikola::Vec3(10.0f, 0.0f, 10.0f), nikola::Vec3(-3.0f, 0.0f, 0.0f));
    
-  // Cubemaps init
-  nikola::ResourceID cubemap_id = nikola::resources_push_cubemap(res_group, "cubemaps/NightSky.nbrcubemap");
-  // nikola::ResourceID cubemap_id = nikola::resources_push_cubemap(res_group, "cubemaps/corona.nbrcubemap");
-
   // Models init
   nikola::ResourceID model = nikola::resources_push_model(res_group, "models/tempel.nbrmodel");
   // nikola::ResourceID model = nikola::resources_push_model(res_group, "models/bridge.nbrmodel");
@@ -122,17 +118,15 @@ bool game_scene_create(Scene* scene) {
   nikola::ResourceID pav_texture  = nikola::resources_push_texture(res_group, "textures/paviment.nbrtexture");
 
   // Materials init
-  nikola::ResourceID material_id = nikola::resources_push_material(res_group);
-  nikola::material_set_texture(material_id, nikola::MATERIAL_TEXTURE_DIFFUSE, mesh_texture);
+  nikola::ResourceID material_id = nikola::resources_push_material(res_group, mesh_texture);
   
-  nikola::ResourceID pav_material_id = nikola::resources_push_material(res_group);
-  nikola::material_set_texture(pav_material_id, nikola::MATERIAL_TEXTURE_DIFFUSE, pav_texture);
+  nikola::ResourceID pav_material_id = nikola::resources_push_material(res_group, pav_texture);
   
   // Meshes init
   nikola::ResourceID cube_mesh = nikola::resources_push_mesh(scene->resource_group, nikola::MESH_TYPE_CUBE);
 
   // Skyboxes init
-  scene->frame_data.skybox_id = nikola::resources_push_skybox(res_group, cubemap_id);
+  scene->frame_data.skybox_id = nikola::resources_push_skybox(res_group, "cubemaps/NightSky.nbrcubemap");
   // scene->frame_data.skybox_id = {};
 
   // Model init

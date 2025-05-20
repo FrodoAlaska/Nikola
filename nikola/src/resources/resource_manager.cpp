@@ -384,13 +384,6 @@ void resources_destroy_group(const u16 group_id) {
 
   ResourceGroup* group = &s_manager.groups[group_id];
 
-  // Destroy core resources
-  DESTROY_CORE_RESOURCE_MAP(group, buffers, gfx_buffer_destroy);
-  DESTROY_CORE_RESOURCE_MAP(group, textures, gfx_texture_destroy);
-  DESTROY_CORE_RESOURCE_MAP(group, cubemaps, gfx_cubemap_destroy);
-  DESTROY_CORE_RESOURCE_MAP(group, shaders, gfx_shader_destroy);
-  DESTROY_CORE_RESOURCE_MAP(group, audio_buffers, audio_buffer_destroy);
-
   // Destroy compound resources
   DESTROY_COMP_RESOURCE_MAP(group, meshes);
   DESTROY_COMP_RESOURCE_MAP(group, materials);
@@ -398,6 +391,13 @@ void resources_destroy_group(const u16 group_id) {
   DESTROY_COMP_RESOURCE_MAP(group, skyboxes);
   DESTROY_COMP_RESOURCE_MAP(group, models);
   DESTROY_COMP_RESOURCE_MAP(group, fonts);
+
+  // Destroy core resources
+  DESTROY_CORE_RESOURCE_MAP(group, buffers, gfx_buffer_destroy);
+  DESTROY_CORE_RESOURCE_MAP(group, textures, gfx_texture_destroy);
+  DESTROY_CORE_RESOURCE_MAP(group, cubemaps, gfx_cubemap_destroy);
+  DESTROY_CORE_RESOURCE_MAP(group, shaders, gfx_shader_destroy);
+  DESTROY_CORE_RESOURCE_MAP(group, audio_buffers, audio_buffer_destroy);
 
   NIKOLA_LOG_INFO("Resource group \'%s\' was successfully destroyed", group->name.c_str());
   s_manager.groups.erase(group_id);
@@ -590,15 +590,15 @@ ResourceID resources_push_shader_context(const u16 group_id, const ResourceID& s
   
   // Allocate the context
   ShaderContext* ctx = new ShaderContext{};
-  ctx->shader = shader_id;
+  ctx->shader        = resources_get_shader(shader_id);
   
   // Create the context
   ResourceID id; 
   PUSH_RESOURCE(group, shader_contexts, ctx, RESOURCE_TYPE_SHADER_CONTEXT, id);
  
   // Set a default matrices buffer 
-  ResourceID matrix_buffer_id = renderer_get_defaults().matrices_buffer;
-  shader_context_set_uniform_buffer(id, SHADER_MATRICES_BUFFER_INDEX, matrix_buffer_id);
+  GfxBuffer* matrix_buffer = renderer_get_defaults().matrices_buffer;
+  shader_context_set_uniform_buffer(ctx, SHADER_MATRICES_BUFFER_INDEX, matrix_buffer);
 
   // New context added!
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed shader context:", group->name.c_str());
@@ -661,7 +661,7 @@ ResourceID resources_push_mesh(const u16 group_id, const MeshType type) {
   return id;
 }
 
-ResourceID resources_push_material(const u16 group_id) {
+ResourceID resources_push_material(const u16 group_id, const ResourceID& diffuse_map) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
   
@@ -675,9 +675,9 @@ ResourceID resources_push_material(const u16 group_id) {
   material->shininess      = 1.0f;
 
   // Default textures init
-  ResourceID default_id  = renderer_get_defaults().texture;
-  material->diffuse_map  = default_id;
-  material->specular_map = default_id;
+  GfxTexture* default_texture  = renderer_get_defaults().texture;
+  material->diffuse_map        = RESOURCE_IS_VALID(diffuse_map) ? resources_get_texture(diffuse_map) : default_texture;
+  material->specular_map       = default_texture;
 
   // Create material
   ResourceID id;
@@ -691,15 +691,29 @@ ResourceID resources_push_material(const u16 group_id) {
   return id;
 }
 
+ResourceID resources_push_material(const u16 group_id, const FilePath& diffuse_path) {
+  // Get the texture first
+  ResourceID diffuse_id = resources_push_texture(group_id, diffuse_path);
+  
+  // New material added!
+  return resources_push_material(group_id, diffuse_id);
+}
+
 ResourceID resources_push_skybox(const u16 group_id, const ResourceID& cubemap_id) {
+  NIKOLA_ASSERT(RESOURCE_IS_VALID(cubemap_id), "Cannot push a new skybox with an invalid cubemap");
   GROUP_CHECK(group_id);
+  
+  // Get the group
   ResourceGroup* group = &s_manager.groups[group_id];
 
   // Allocate the skybox
   Skybox* skybox = new Skybox{};
   
   // Use the loader to set up the skybox
-  skybox_loader_load(group_id, skybox, cubemap_id);
+  skybox_loader_load(group_id, skybox);
+
+  // Set the cubemap
+  skybox->cubemap = resources_get_cubemap(cubemap_id);
 
   // Create the pipeline 
   skybox->pipe = gfx_pipeline_create(renderer_get_context(), skybox->pipe_desc);

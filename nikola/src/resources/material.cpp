@@ -9,40 +9,26 @@ namespace nikola {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Material functions
 
-void material_set_texture(ResourceID& mat_id, const MaterialTextureType type, const ResourceID& texture_id) {
-  NIKOLA_ASSERT(RESOURCE_IS_VALID(mat_id), "Invalid Material passed");
-  NIKOLA_ASSERT(RESOURCE_IS_VALID(texture_id), "Invalid texture ID passed to material");
-  
-  Material* mat = resources_get_material(mat_id); 
+void material_use(Material* mat) {
+  NIKOLA_ASSERT(mat, "Invalid Material given to material_use");
 
-  switch(type) {
-    case MATERIAL_TEXTURE_DIFFUSE:
-      mat->diffuse_map = texture_id;
-      break;
-    case MATERIAL_TEXTURE_SPECULAR:
-      mat->specular_map = texture_id;
-      break;
-  }
-}
-
-void material_use(ResourceID& mat_id) {
-  Material* mat = resources_get_material(mat_id);
-
-  GfxTexture* textures[2];
+  GfxTexture* textures[2] = {
+    mat->diffuse_map, 
+    mat->specular_map, 
+  };
   u32 textures_count = 0;
 
   // Use the diffuse texture (if they are valid)
-  if(RESOURCE_IS_VALID(mat->diffuse_map)) {
-    textures[0] = resources_get_texture(mat->diffuse_map); 
+  if(mat->diffuse_map) {
     textures_count++;
   }
  
   // Use the specular texture (if they are valid)
-  if(RESOURCE_IS_VALID(mat->specular_map)) {
-    textures[1] = resources_get_texture(mat->specular_map); 
+  if(mat->specular_map) {
     textures_count++;
   }
- 
+
+  // Use all the valid textures
   if(textures_count > 0) { 
     gfx_texture_use(textures, textures_count);
   }

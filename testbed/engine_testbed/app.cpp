@@ -11,7 +11,9 @@ struct nikola::App {
   nikola::RenderQueue render_queue;
 
   nikola::u16 res_group_id;
-  nikola::ResourceID material_id;
+  nikola::ResourceID mesh_id, material_id;
+
+  nikola::Transform transform;
 
   bool has_editor = false;
 };
@@ -32,8 +34,11 @@ static void init_resources(nikola::App* app) {
   // Materials init
   app->material_id = nikola::resources_push_material(app->res_group_id);
 
-  // Sky box init
-  app->frame_data.skybox_id = {};
+  // Skybox init
+  app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group_id, "cubemaps/gloomy.nbrcubemap");
+
+  // Mesh init
+  app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::MESH_TYPE_CUBE);
 }
 
 /// Private functions 
@@ -59,6 +64,10 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // Resoruces init
   init_resources(app);
+
+  // Transform init
+  nikola::transform_translate(app->transform, nikola::Vec3(10.0f, 0.0f, 10.0f));
+  nikola::transform_scale(app->transform, nikola::Vec3(1.0f));
 
   return app;
 }
@@ -92,6 +101,17 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 void app_render(nikola::App* app) {
   // Render 3D 
   nikola::renderer_begin(app->frame_data);
+
+  nikola::RenderCommand rnd_cmd = {
+    .transform = app->transform, 
+
+    .render_type = nikola::RENDERABLE_TYPE_MESH,
+
+    .renderable_id = app->mesh_id, 
+    .material_id   = app->material_id,
+  };
+  app->render_queue.push_back(rnd_cmd);
+
   nikola::renderer_sumbit_queue(app->render_queue);
   nikola::renderer_end();
   
@@ -99,6 +119,7 @@ void app_render(nikola::App* app) {
   // nikola::batch_renderer_begin();
   // nikola::batch_render_texture(app->material->diffuse_map, nikola::Vec2(200.0f), nikola::Vec2(128.0f));
   // nikola::batch_renderer_end();
+
 }
 
 void app_render_gui(nikola::App* app) {
@@ -107,7 +128,11 @@ void app_render_gui(nikola::App* app) {
   }
 
   nikola::gui_begin();
+  nikola::gui_begin_panel("Entities");
 
+  nikola::gui_edit_transform("Mesh Transform", &app->transform);
+  
+  nikola::gui_end_panel();
   nikola::gui_end();
 }
 

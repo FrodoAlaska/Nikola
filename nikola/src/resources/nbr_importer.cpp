@@ -60,7 +60,7 @@ void nbr_import_mesh(NBRMesh* nbr, const u16 group_id, Mesh* mesh) {
     .type  = GFX_BUFFER_VERTEX, 
     .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
   };
-  mesh->vertex_buffer = resources_push_buffer(group_id, buff_desc);
+  mesh->vertex_buffer = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
     
   // Create a index buffer
   buff_desc = {
@@ -69,14 +69,14 @@ void nbr_import_mesh(NBRMesh* nbr, const u16 group_id, Mesh* mesh) {
     .type  = GFX_BUFFER_INDEX, 
     .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
   };
-  mesh->index_buffer = resources_push_buffer(group_id, buff_desc);
+  mesh->index_buffer = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
 
   // Vertex buffer init 
-  mesh->pipe_desc.vertex_buffer  = resources_get_buffer(mesh->vertex_buffer);
+  mesh->pipe_desc.vertex_buffer  = mesh->vertex_buffer;
   mesh->pipe_desc.vertices_count = nbr->vertices_count;  
   
   // Index buffer init
-  mesh->pipe_desc.index_buffer  = resources_get_buffer(mesh->index_buffer);
+  mesh->pipe_desc.index_buffer  = mesh->index_buffer;
   mesh->pipe_desc.indices_count = nbr->indices_count;  
 
   // Layout init
@@ -89,13 +89,6 @@ void nbr_import_mesh(NBRMesh* nbr, const u16 group_id, Mesh* mesh) {
 void nbr_import_material(NBRMaterial* nbr, const u16 group_id, Material* material) {
   NIKOLA_ASSERT(nbr, "Invalid NBRMaterial while importing");
   NIKOLA_ASSERT(material, "Invalid Material while importing");
-
-  // Default values for the textures
-  material->specular_map = ResourceID{};
-  
-  material->ambient_color  = Vec3(nbr->ambient[0], nbr->ambient[1], nbr->ambient[2]); 
-  material->diffuse_color  = Vec3(nbr->diffuse[0], nbr->diffuse[1], nbr->diffuse[2]); 
-  material->specular_color = Vec3(nbr->specular[0], nbr->specular[1], nbr->specular[2]); 
 }
 
 void nbr_import_model(NBRModel* nbr, const u16 group_id, Model* model) {
@@ -123,33 +116,27 @@ void nbr_import_model(NBRModel* nbr, const u16 group_id, Model* model) {
   // Convert the material 
   for(sizei i = 0; i < nbr->materials_count; i++) {
     // Create a new material 
-    ResourceID mat_id = resources_push_material(group_id);
+    ResourceID mat_id = resources_push_material(group_id, texture_ids[nbr->materials[i].diffuse_index]);
     Material* mat     = resources_get_material(mat_id);
-
-    // Default values for the textures
-    mat->diffuse_map  = ResourceID{};
-    mat->specular_map = ResourceID{};
-
-    // Insert a valid diffuse texture 
-    mat->diffuse_map = texture_ids[nbr->materials[i].diffuse_index];
     
-    // Insert a valid specular texture 
+    // Insert a valid specular texture (if one exists)
     i8 specular_index = nbr->materials[i].specular_index;
-    if(specular_index != -1) {
-      mat->specular_map = texture_ids[specular_index];
-    }
+    mat->specular_map = specular_index != -1 ? resources_get_texture(texture_ids[specular_index]) : mat->specular_map;
 
     // Convert the NBRMaterial into an engine Material
-    nbr_import_material(&nbr->materials[i], group_id, mat);
+    mat->ambient_color  = Vec3(nbr->materials[i].ambient[0], nbr->materials[i].ambient[1], nbr->materials[i].ambient[2]); 
+    mat->diffuse_color  = Vec3(nbr->materials[i].diffuse[0], nbr->materials[i].diffuse[1], nbr->materials[i].diffuse[2]); 
+    mat->specular_color = Vec3(nbr->materials[i].specular[0], nbr->materials[i].specular[1], nbr->materials[i].specular[2]); 
 
     // Add the material 
-    model->materials.push_back(mat_id); 
+    model->materials.push_back(mat); 
   }
   
   // Convert the vertices 
   for(sizei i = 0; i < nbr->meshes_count; i++) {
     // Create and add a new mesh
-    model->meshes.push_back(resources_push_mesh(group_id, nbr->meshes[i]));
+    ResourceID mesh_id = resources_push_mesh(group_id, nbr->meshes[i]);
+    model->meshes.push_back(resources_get_mesh(mesh_id));
 
     // Add a new index
     model->material_indices.push_back(nbr->meshes[i].material_index);
@@ -210,7 +197,7 @@ void nbr_import_font(NBRFont* nbr, const u16 group_id, Font* font) {
       
       .data = (void*)nbr->glyphs[i].pixels,
     };
-    glyph.texture = resources_push_texture(group_id, face_desc);
+    glyph.texture = resources_get_texture(resources_push_texture(group_id, face_desc));
 
     // Adding the new glyph
     font->glyphs[glyph.unicode] = glyph;

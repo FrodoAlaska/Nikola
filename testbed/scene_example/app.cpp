@@ -42,12 +42,13 @@ struct nikola::App {
 /// Callbacks
 
 static void post_process_pass(const nikola::RenderPass* prev, nikola::RenderPass* pass, void* user_data) {
-  nikola::App* app = (nikola::App*)user_data;
+  nikola::App* app           = (nikola::App*)user_data;
+  nikola::ShaderContext* ctx = nikola::resources_get_shader_context(pass->shader_context_id);
 
   // Set the shader's uniform
-  nikola::shader_context_set_uniform(pass->shader_context_id, "u_effect_index", app->render_effect);
-  nikola::shader_context_set_uniform(pass->shader_context_id, "u_pixel_rate", app->pixel_rate);
-  nikola::shader_context_set_uniform(pass->shader_context_id, "u_screen_size", app->screen_size);
+  nikola::shader_context_set_uniform(ctx, "u_effect_index", app->render_effect);
+  nikola::shader_context_set_uniform(ctx, "u_pixel_rate", app->pixel_rate);
+  nikola::shader_context_set_uniform(ctx, "u_screen_size", app->screen_size);
 
   pass->frame_desc.attachments[0]    = prev->frame_desc.attachments[0];
   pass->frame_desc.attachments_count = 1;
@@ -98,14 +99,11 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Editor init
   nikola::gui_init(window);
 
-  // Shaders init
-  nikola::resources_push_shader(nikola::RESOURCE_CACHE_ID, "shaders/post_process.nbrshader");
-
   // Fonts init
   app->font = nikola::resources_get_font(nikola::resources_push_font(nikola::RESOURCE_CACHE_ID, "fonts/bit5x3.nbrfont"));
 
   // Shader contexts init
-  app->post_shader_context_id = nikola::resources_push_shader_context(nikola::RESOURCE_CACHE_ID, nikola::resources_get_id(nikola::RESOURCE_CACHE_ID, "post_process"));
+  app->post_shader_context_id = nikola::resources_push_shader_context(nikola::RESOURCE_CACHE_ID, "shaders/post_process.nbrshader");
 
   // Render passes init
   init_passes(app); 

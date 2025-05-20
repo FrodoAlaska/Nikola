@@ -23,7 +23,6 @@ set(TESTBED_TYPE
   # "core_testbed"
   # "font_testbed"
   # "audio_testbed"
-  # "prison_demo"
 )
 ############################################################
 

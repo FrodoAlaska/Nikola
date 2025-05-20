@@ -70,7 +70,7 @@ static void init_context(Window* window) {
 
 static void init_defaults() {
   // Default texture init
-  u32 pixels = 0x00000000; 
+  u32 pixels = 0xffffffff; 
   GfxTextureDesc texture_desc = {
     .width     = 1, 
     .height    = 1, 
@@ -82,7 +82,7 @@ static void init_defaults() {
     .wrap_mode = GFX_TEXTURE_WRAP_MIRROR, 
     .data      = &pixels,
   };
-  s_renderer.defaults.texture = resources_push_texture(RESOURCE_CACHE_ID, texture_desc);
+  s_renderer.defaults.texture = resources_get_texture(resources_push_texture(RESOURCE_CACHE_ID, texture_desc));
 
   // Matrices buffer init
   GfxBufferDesc buff_desc = {
@@ -91,7 +91,7 @@ static void init_defaults() {
     .type  = GFX_BUFFER_UNIFORM,
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
-  s_renderer.defaults.matrices_buffer = resources_push_buffer(RESOURCE_CACHE_ID, buff_desc);
+  s_renderer.defaults.matrices_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
 
   // Shaders init
   ResourceID default_shader     = resources_push_shader(RESOURCE_CACHE_ID, generate_default_shader());
@@ -153,8 +153,9 @@ static void init_pipeline() {
   s_renderer.pipeline = gfx_pipeline_create(s_renderer.context, s_renderer.pipe_desc);
 }
 
-static void render_mesh(RenderCommand& command, ResourceID& shader_context) {
-  Mesh* mesh = resources_get_mesh(command.renderable_id);
+static void render_mesh(RenderCommand& command, ShaderContext* shader_context) {
+  Mesh* mesh     = resources_get_mesh(command.renderable_id);
+  Material* mat  = resources_get_material(command.material_id);
 
   // Setting uniforms 
   shader_context_set_uniform(shader_context, MATERIAL_UNIFORM_MODEL_MATRIX, command.transform.transform);
@@ -163,44 +164,45 @@ static void render_mesh(RenderCommand& command, ResourceID& shader_context) {
   shader_context_use(shader_context);
 
   // Using the textures
-  material_use(command.material_id);  
+  material_use(mat);  
 
   // Draw the mesh
   gfx_pipeline_draw_index(mesh->pipe);
 }
 
 static void render_skybox(RenderCommand& command) {
-  Skybox* skybox = resources_get_skybox(command.renderable_id); 
+  Skybox* skybox     = resources_get_skybox(command.renderable_id); 
+  ShaderContext* ctx = resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_SKYBOX]);
 
   // Using the shader 
-  shader_context_use(s_renderer.shader_contexts[SHADER_CONTEXT_SKYBOX]);
+  shader_context_use(ctx);
 
   // Use the cubemap
-  GfxCubemap* cube = resources_get_cubemap(skybox->cubemap);
-  gfx_cubemap_use(&cube, 1);
+  gfx_cubemap_use(&skybox->cubemap, 1);
 
   // Draw the skybox
   gfx_pipeline_draw_vertex(skybox->pipe);
 }
 
-static void render_model(RenderCommand& command, ResourceID& shader_context) {
+static void render_model(RenderCommand& command, ShaderContext* shader_context) {
   Model* model = resources_get_model(command.renderable_id);
 
   for(sizei i = 0; i < model->meshes.size(); i++) {
-    // For better visuals (and performance?)
-    ResourceID mesh_id = model->meshes[i];
-    ResourceID mat_id  = model->materials[model->material_indices[i]];
-    
-    // Build the sub-command for the mesh
-    RenderCommand sub_cmd = {
-     .transform         = command.transform,  
-     .render_type       = nikola::RENDERABLE_TYPE_MESH, 
-     .renderable_id     = mesh_id, 
-     .material_id       = mat_id, 
-    };
+    // For better visuals
+    Mesh* mesh     = model->meshes[i];
+    Material* mat  = model->materials[model->material_indices[i]];
 
-    // Render the sub-command
-    render_mesh(sub_cmd, shader_context);
+    // Setting uniforms 
+    shader_context_set_uniform(shader_context, MATERIAL_UNIFORM_MODEL_MATRIX, command.transform.transform);
+
+    // Using the shader 
+    shader_context_use(shader_context);
+
+    // Using the textures
+    material_use(mat);  
+
+    // Draw the mesh
+    gfx_pipeline_draw_index(mesh->pipe);
   }
 }
 
@@ -252,7 +254,7 @@ static void end_pass(RenderPass& pass) {
   NIKOLA_ASSERT(RESOURCE_IS_VALID(pass.shader_context_id), "Invalid ShaderContext passed to the end pass function");
 
   // Apply the shader from the pass
-  shader_context_use(pass.shader_context_id);
+  shader_context_use(resources_get_shader_context(pass.shader_context_id));
   
   // Apply the textures from the pass
   gfx_texture_use(pass.frame_desc.attachments, pass.frame_desc.attachments_count); 
@@ -270,7 +272,7 @@ static void end_pass(RenderPass& pass) {
   gfx_pipeline_draw_index(s_renderer.pipeline);
 }
 
-static void flush_queue(ResourceID& shader_context) {
+static void flush_queue(ShaderContext* shader_context) {
   for(sizei i = 0; i < s_renderer.current_queue->size(); i++) {
     RenderCommand* cmd = &s_renderer.current_queue->at(i);
 
@@ -289,30 +291,35 @@ static void flush_queue(ResourceID& shader_context) {
 }
 
 static void use_directional_light(DirectionalLight& light) {
-  shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_dir_light.direction", light.direction); 
-  shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_dir_light.color", light.color); 
+  ShaderContext* ctx = resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]);
+
+  shader_context_set_uniform(ctx, "u_dir_light.direction", light.direction); 
+  shader_context_set_uniform(ctx, "u_dir_light.color", light.color); 
 }
 
 static void use_point_lights(DynamicArray<PointLight>& lights) {
-  i32 index = 0;
+  ShaderContext* ctx = resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]);
+  i32 index          = 0;
 
   for(auto& point : lights) {
     String point_index = "u_point_lights[" + std::to_string(index) + "].";
 
-    shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], (point_index + "position"), point.position); 
-    shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], (point_index + "color"), point.color); 
-    
-    shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], ( point_index + "linear"), point.linear); 
-    shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], ( point_index + "quadratic"), point.quadratic); 
+    shader_context_set_uniform(ctx, (point_index + "position"), point.position); 
+    shader_context_set_uniform(ctx, (point_index + "color"), point.color); 
+
+    shader_context_set_uniform(ctx, (point_index + "linear"), point.linear); 
+    shader_context_set_uniform(ctx, (point_index + "quadratic"), point.quadratic); 
   
     index++;
   }
 }
 
 static void setup_light_enviornment(FrameData& data) {
-  shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_ambient", data.ambient); 
-  shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_point_lights_count", (i32)data.point_lights.size()); 
-  // @TODO (Renderer): shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN], "u_view_pos", data.camera.direction); 
+  ShaderContext* ctx = resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]);
+  
+  shader_context_set_uniform(ctx, "u_ambient", data.ambient); 
+  shader_context_set_uniform(ctx, "u_point_lights_count", (i32)data.point_lights.size()); 
+  // @TODO (Renderer): shader_context_set_uniform(ctx, "u_view_pos", data.camera.direction); 
 
   use_directional_light(data.dir_light);
   use_point_lights(data.point_lights);
@@ -335,10 +342,10 @@ static void light_pass_fn(const RenderPass* previous, RenderPass* current, void*
   }
 
   // Render the frame with the light data 
-  flush_queue(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]);
+  flush_queue(resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]));
 
   // Updating some HDR uniforms
-  shader_context_set_uniform(s_renderer.shader_contexts[SHADER_CONTEXT_HDR], "u_exposure", s_renderer.frame_data->camera.exposure);
+  shader_context_set_uniform(resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_HDR]), "u_exposure", s_renderer.frame_data->camera.exposure);
 }
 
 /// Callbacks 
@@ -421,7 +428,7 @@ void renderer_sumbit_queue(RenderQueue& queue) {
 }
 
 void renderer_begin(FrameData& data) {
-  GfxBuffer* matrix_buffer = resources_get_buffer(s_renderer.defaults.matrices_buffer);
+  GfxBuffer* matrix_buffer = s_renderer.defaults.matrices_buffer;
 
   // Updating the internal matrices buffer for each shader
   s_renderer.frame_data = &data;
