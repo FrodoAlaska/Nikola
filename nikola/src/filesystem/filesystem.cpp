@@ -48,6 +48,14 @@ bool filesystem_is_empty(const FilePath& path) {
   return filesystem_get_size(path) <= 0;
 }
 
+bool filesystem_create_directory(const FilePath& dir_name) {
+  return std::filesystem::create_directory(dir_name);
+}
+
+bool filesystem_create_directories(const FilePath& dir_path) {
+  return std::filesystem::create_directories(dir_path);
+}
+
 /// Filesystem functions
 ///---------------------------------------------------------------------------------------------------------------------
 

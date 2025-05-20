@@ -19,9 +19,17 @@ static bool check_section_dirs(const ListSection& section) {
     NIKOLA_LOG_ERROR("Invalid section local directory \'%s\'", section.local_dir.c_str());
     return false;
   }
-  else if(!nikola::filesystem_exists(section.out_dir)) {
-    NIKOLA_LOG_ERROR("Invalid section output directory \'%s\'", section.out_dir.c_str());
-    return false;
+  
+  // Create the output directory if it doesn't exist
+  //
+  // @NOTE (20/5/2025, Mohamed): The `filesystem_create_directories` function returns `true` 
+  // if the directories were successfully created. Otherwise, it returns 
+  // `false` if the directories already exist. 
+  //
+  // We check here if the function returns true (meaning, the directories did not exist and need to be created) 
+  // and give the user a warning just to inform them. Comlpex, I know. Sorry about that.
+  if(nikola::filesystem_create_directories(section.out_dir)) {
+    NIKOLA_LOG_WARN("Invalid section output directory \'%s\'. Creating new directories.", section.out_dir.c_str());
   }
 
   return true;

@@ -113,6 +113,14 @@ NIKOLA_API sizei filesystem_get_size(const FilePath& path);
 /// Returns `true` if the file at `path` is completely empty. Otherwise, the functions returns `false`.
 NIKOLA_API bool filesystem_is_empty(const FilePath& path);
 
+/// Create a directory with the name `dir_name`. 
+/// Returns `true` if the directory was created. Otherwise, the function returns `false`.
+NIKOLA_API bool filesystem_create_directory(const FilePath& dir_name);
+
+/// Create all of the directories (if they don't exist) in the given `dir_path`. 
+/// Returns `true` if the directories were created. Otherwise, the function returns `false`.
+NIKOLA_API bool filesystem_create_directories(const FilePath& dir_path);
+
 /// Filesystem functions
 ///---------------------------------------------------------------------------------------------------------------------
 
