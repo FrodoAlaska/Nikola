@@ -89,9 +89,10 @@
     - [x] The wonderful and useful `resoruces_push_dir` function doesn't work and seg faults for some reason. Please fix.
     - [x] Actually, the whole filewatcher system might be _extremely_ slow. At least that's what I saw in the data. Remove it? Find an alternative? Make it faster? I don't know.
     - [x] The NBR tool needs to create a certain directory if it doesn't exist, so I don't have to do it on my own.
+    - [x] Resources like `ShaderContext`, `Skybox`, and others that take in other resources as arguments, should be given a path as well.
+    - [] Fix the way the `Transform` type is edited through the GUI
     - [] The renderer will seg fault if no `RenderQueue` is given at all. Since, under the hood, the renderer holds a `RenderQueue` pointer, it expects it to be valid at all times, since it does use it a lot.
     - [] When an application tries to use both the 2D and 3D renderers together, lots of problems arise. Need to fix that.
-    - [] Fix the way the `Transform` type is edited through the GUI
 [] 18. UI v0.1
     - [] A canvas system for 2D game UI.
     - [] A menu system

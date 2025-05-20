@@ -605,6 +605,17 @@ ResourceID resources_push_shader_context(const u16 group_id, const ResourceID& s
   return id;
 }
 
+ResourceID resources_push_shader_context(const u16 group_id, const FilePath& shader_path) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
+ 
+  // Get the shader first
+  ResourceID shader_id = resources_push_shader(group_id, shader_path);
+
+  // New context added!
+  return resources_push_shader_context(group_id, shader_id);
+}
+
 ResourceID resources_push_mesh(const u16 group_id, NBRMesh& nbr_mesh) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
@@ -702,6 +713,14 @@ ResourceID resources_push_skybox(const u16 group_id, const ResourceID& cubemap_i
   NIKOLA_LOG_DEBUG("     Vertices = %zu", skybox->pipe_desc.vertices_count);
   NIKOLA_LOG_DEBUG("     Indices  = %zu", skybox->pipe_desc.indices_count);
   return id;
+}
+
+ResourceID resources_push_skybox(const u16 group_id, const FilePath& cubemap_path) {
+  // Get the cubemap first
+  ResourceID cubemap_id = resources_push_cubemap(group_id, cubemap_path);
+
+  // New context added!
+  return resources_push_skybox(group_id, cubemap_id);
 }
 
 ResourceID resources_push_model(const u16 group_id, const FilePath& nbr_path) {

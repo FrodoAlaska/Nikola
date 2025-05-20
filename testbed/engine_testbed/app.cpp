@@ -99,7 +99,6 @@ void app_render(nikola::App* app) {
   // nikola::batch_renderer_begin();
   // nikola::batch_render_texture(app->material->diffuse_map, nikola::Vec2(200.0f), nikola::Vec2(128.0f));
   // nikola::batch_renderer_end();
-
 }
 
 void app_render_gui(nikola::App* app) {

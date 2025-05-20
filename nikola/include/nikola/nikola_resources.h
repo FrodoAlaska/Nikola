@@ -691,6 +691,10 @@ NIKOLA_API ResourceID resources_push_shader(const u16 group_id, const FilePath& 
 /// store it in `group_id`, and return a `ResourceID` to identify it.
 NIKOLA_API ResourceID resources_push_shader_context(const u16 group_id, const ResourceID& shader_id);
 
+/// Allocate a new `ShaderContext` using the shader at `shader_path`, 
+/// store it in `group_id`, and return a `ResourceID` to identify it.
+NIKOLA_API ResourceID resources_push_shader_context(const u16 group_id, const FilePath& shader_path);
+
 /// Allocate a new `Mesh` using the given `nbr_mesh`,
 /// store it in `group_id`, return a `ResourceID` to identified it. 
 ///
@@ -709,6 +713,10 @@ NIKOLA_API ResourceID resources_push_material(const u16 group_id);
 /// Allocate a new `Skybox` using the previously-added `cubemap_id`, store it in `group_id`, 
 /// and return a `ResourceID` to identify it.
 NIKOLA_API ResourceID resources_push_skybox(const u16 group_id, const ResourceID& cubemap_id);
+
+/// Allocate a new `Skybox` using the cubemap at `cubemap_path`, store it in `group_id`, 
+/// and return a `ResourceID` to identify it.
+NIKOLA_API ResourceID resources_push_skybox(const u16 group_id, const FilePath& cubemap_path);
 
 /// Allocate a new `Model` using the `NBRModel` retrieved from the `nbr_path`, 
 /// store it in `group_id`, and return a `ResourceID` to identify it.
