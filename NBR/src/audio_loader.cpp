@@ -52,13 +52,23 @@ static bool mp3_convert(nikola::NBRAudio* audio, const nikola::FilePath& path) {
 }
 
 static bool ogg_convert(nikola::NBRAudio* audio, const nikola::FilePath& path) {
-  // Convert to NBRAudio
-  // audio->format      = (nikola::u8)nikola::AUDIO_BUFFER_FORMAT_I16;
-  // audio->sample_rate = config.sampleRate;
-  // audio->channels    = config.channels;
-  // audio->size        = frames_count; 
-  // nikola::memory_copy(audio->samples, (void*)samples, frames_count * sizeof(i16));
+  int channels, sample_rate;
 
+  // Open the OGG file and read the _whole_ file.
+  int frames = stb_vorbis_decode_filename(path.c_str(), &channels, &sample_rate, &audio->samples);
+  if(frames == -1) {
+    NIKOLA_LOG_ERROR("[NBR-ERROR]: Failed to read OGG file at \'%s\'", path.c_str());
+   
+    nikola::memory_free(audio->samples);
+    return false;
+  } 
+
+  // Convert to NBRAudio
+  audio->format      = (nikola::u8)nikola::AUDIO_BUFFER_FORMAT_I16;
+  audio->sample_rate = sample_rate;
+  audio->channels    = channels;
+  audio->size        = frames; 
+  
   return true;
 }
 

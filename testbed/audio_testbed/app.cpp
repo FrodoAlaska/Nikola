@@ -9,6 +9,7 @@ struct nikola::App {
   nikola::Window* window;
 
   nikola::FrameData frame_data;
+  nikola::RenderQueue render_queue;
   nikola::u16 res_group;
 
   nikola::AudioBufferID audio_buffer;
@@ -32,7 +33,7 @@ static void init_resources(nikola::App* app) {
   app->frame_data.skybox_id = {};
 
   // Audio init
-  nikola::ResourceID audio_id = nikola::resources_push_audio_buffer(app->res_group, "audio/maybe_inkspots.nbraudio");
+  nikola::ResourceID audio_id = nikola::resources_push_audio_buffer(app->res_group, "audio/alexandra.nbraudio");
   app->audio_buffer           = nikola::resources_get_audio_buffer(audio_id);
 
   // Audio sources init
@@ -93,6 +94,10 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 } 
 
 void app_render(nikola::App* app) {
+  nikola::renderer_begin(app->frame_data);
+  nikola::renderer_sumbit_queue(app->render_queue);
+  nikola::renderer_end();
+  
   // 2D renderer (even though it doesn't matter in this test, but still)
   nikola::batch_renderer_begin();
   nikola::batch_render_quad(nikola::Vec2(10.0f), nikola::Vec2(32.0f), nikola::Vec4(1.0f));  

@@ -438,6 +438,8 @@ NIKOLA_API const Vec3 quat_to_euler(const Quat& q);
 NIKOLA_API void transform_translate(Transform& trans, const Vec3& pos);
 
 /// Rotate the given `trans` by `rot`
+///
+/// @NOTE: Internally, the given `rot` quaternion is normalized for better precision.
 NIKOLA_API void transform_rotate(Transform& trans, const Quat& rot);
 
 /// Rotate the given `trans` by `axis_angle`, using `x, y, z` as the axis and 

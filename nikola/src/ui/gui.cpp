@@ -13,6 +13,8 @@
 #include <imgui/backends/imgui_impl_opengl3.h>
 #include <imgui/backends/imgui_impl_opengl3_loader.h>
 
+#include <glm/gtc/quaternion.hpp>
+
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola
@@ -180,6 +182,10 @@ void gui_edit_color(const char* name, Vec4& color) {
 }
 
 void gui_edit_transform(const char* name, Transform* transform) {
+  if(s_gui.rotations.find(name) == s_gui.rotations.end()) {
+    s_gui.rotations[name] = Vec3(0.0f);
+  }
+
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
  
@@ -193,8 +199,9 @@ void gui_edit_transform(const char* name, Transform* transform) {
     transform_scale(*transform, Vec3(transform->scale));
   }
 
-  if(ImGui::DragFloat3("Rotation", &transform->rotation[0], 0.01f, -1.0f, 1.0f)) {
-    transform_rotate(*transform, quat_normalize(transform->rotation));
+  if(ImGui::DragFloat3("Rotation", &s_gui.rotations[name][0], 0.1f)) {
+    Vec3 axis = vec3_normalize(s_gui.rotations[name]);
+    transform_rotate(*transform, axis, s_gui.rotations[name].x);
   }
   // -------------------------------------------------------------------
   

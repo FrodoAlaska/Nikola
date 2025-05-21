@@ -31,18 +31,16 @@ void transform_translate(Transform& trans, const Vec3& pos) {
 }
 
 void transform_rotate(Transform& trans, const Quat& rot) {
-  trans.rotation = rot; 
+  trans.rotation = quat_normalize(rot); 
   update_transform(trans);
 }
 
 void transform_rotate(Transform& trans, const Vec4& axis_angle) {
-  trans.rotation = quat_angle_axis(Vec3(axis_angle), axis_angle.w); 
-  update_transform(trans);
+  transform_rotate(trans, quat_angle_axis(Vec3(axis_angle), axis_angle.w));
 }
 
 void transform_rotate(Transform& trans, const Vec3& axis, const f32 angle) {
-  trans.rotation = quat_normalize(quat_angle_axis(axis, angle)); 
-  update_transform(trans);
+  transform_rotate(trans, quat_angle_axis(axis, angle));
 }
 
 void transform_scale(Transform& trans, const Vec3& scale) {

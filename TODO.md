@@ -85,27 +85,19 @@
     - [x] Improved source and listener management. Perhaps have an audio system?
     - [x] Add the new types to the GUI
     - [x] Documentation
-[] 17. Annoying Bugs To Fix 
+[x] 17. Annoying Bugs To Fix 
     - [x] The wonderful and useful `resoruces_push_dir` function doesn't work and seg faults for some reason. Please fix.
     - [x] Actually, the whole filewatcher system might be _extremely_ slow. At least that's what I saw in the data. Remove it? Find an alternative? Make it faster? I don't know.
     - [x] The NBR tool needs to create a certain directory if it doesn't exist, so I don't have to do it on my own.
     - [x] Resources like `ShaderContext`, `Skybox`, and others that take in other resources as arguments, should be given a path as well.
     - [x] Make resources be less dependent on `ResourceID`. The ID should be given when the resources are pushed, but not to be used _in place_ of resources.
-    - [] Fix the way the `Transform` type is edited through the GUI
-    - [] The renderer will seg fault if no `RenderQueue` is given at all. Since, under the hood, the renderer holds a `RenderQueue` pointer, it expects it to be valid at all times, since it does use it a lot.
-    - [] When an application tries to use both the 2D and 3D renderers together, lots of problems arise. Need to fix that.
+    - [x] Fix the way the `Transform` type is edited through the GUI
+    - [x] Add OGG support in the NBR tool
 [] 18. UI v0.1
     - [] A canvas system for 2D game UI.
     - [] A menu system
     - [] Documentation
-[] 19. Renderer v0.5 
-    - [] Bloom integration 
-    - [] Improve lighting using clustered rendering
-    - [] Compute shaders 
-    - [] Better bloom for testing the new compute shaders
-    - [] Improve upon the render pass system by allowing the reuse of certain render passes 
-    - [] Make the HDR pass toggleable through the GUI.
-[] 20. Performance Craze 0.1 
+[] 19. Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers
     - [x] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application.
     - [] Which systems can benefit most from multi-threading? 
@@ -113,15 +105,19 @@
     - [] Try to improve the load times for the resource manager as a test of the new multi-threading system.
     - [] Compare with previous results and scenes and current results and scenes
     - [] Documentation
-[] 21. 3D Animations v0.1
-[] 22. Math And Camera v0.2 
-    - [] Fix the quaternion rotations in the transform and, really, in the _whole_ engine.
-    - [] Add rotations to the camera, or, in other words, let the camera have a `Transform` instead of just a `position` vector3. 
-[] 23. Physics v0.1
+[] 20. Physics v0.1
+    - [] Should we use a physics engine? Which one? Just a simple physics system? 
+[] 21. Renderer v0.5 
+    - [] Bloom integration 
+    - [] Improve lighting using clustered rendering
+    - [] Compute shaders 
+    - [] Better bloom for testing the new compute shaders
+    - [] Improve upon the render pass system by allowing the reuse of certain render passes 
+    - [] Make the HDR pass toggleable through the GUI.
+[] 22. 3D Animations v0.1
 
 ## (Engine) BUGS: 
-- (Renderer): 
-- (Renderer): 
+- EMPTY FOR NOW...
 
 ## (Core) BUGS: 
 - EMPTY FOR NOW...
