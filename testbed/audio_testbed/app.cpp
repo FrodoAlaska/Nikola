@@ -9,7 +9,6 @@ struct nikola::App {
   nikola::Window* window;
 
   nikola::FrameData frame_data;
-  nikola::RenderQueue render_queue;
   nikola::u16 res_group;
 
   nikola::AudioBufferID audio_buffer;
@@ -95,7 +94,6 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 
 void app_render(nikola::App* app) {
   nikola::renderer_begin(app->frame_data);
-  nikola::renderer_sumbit_queue(app->render_queue);
   nikola::renderer_end();
   
   // 2D renderer (even though it doesn't matter in this test, but still)

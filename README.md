@@ -29,7 +29,7 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 - Support for multiple image formats including **JPEG, PNG, BMP, TGA, and more**.  
 - 3D model loading with support for **OBJ, FBX, and GLTF** formats.  
 - Integrated ImGui support, featuring an abstracted `editor` layer for editing engine-specific types through a GUI.  
-- A versitile lighting system using the Blinn-Phong shading model.
+- A versitile lighting system using the Blinn-Phong shading model with built-in HDR support.
 - A fully-fledged audio system with both 2D audio and 3D spatialized audio, supporting multiple formats such as **MP3, WAV, and OGG**.
 
 ## Missing Features

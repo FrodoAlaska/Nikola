@@ -1,6 +1,7 @@
 #include "nikola/nikola_render.h"
 #include "nikola/nikola_base.h"
 #include "nikola/nikola_gfx.h"
+#include "nikola/nikola_math.h"
 
 #include "render_shaders.h"
 #include "light_shaders.h"
@@ -33,6 +34,22 @@ struct RenderPassEntry {
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// MeshRenderCommand
+struct MeshRenderCommand {
+  Transform transform = {};
+
+  Mesh* mesh                    = nullptr; 
+  Material* material            = nullptr; 
+  ShaderContext* shader_context = nullptr;
+
+  MeshRenderCommand(Mesh* mesh, const Transform& trans, Material* mat, ShaderContext* ctx) 
+    :mesh(mesh), transform(trans), material(mat), shader_context(ctx)
+  {}
+};
+/// MeshRenderCommand
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// Renderer
 struct Renderer {
   GfxContext* context = nullptr;
@@ -45,10 +62,10 @@ struct Renderer {
   RendererDefaults defaults = {};
   ResourceID shader_contexts[SHADER_CONTEXTS_MAX];
   
-  RenderQueue* current_queue;  
   FrameData* frame_data;
-  ResourceID current_skybox;
   DynamicArray<RenderPassEntry> render_passes;
+
+  DynamicArray<MeshRenderCommand> render_queue;
 };
 
 static Renderer s_renderer{};
@@ -82,7 +99,9 @@ static void init_defaults() {
     .wrap_mode = GFX_TEXTURE_WRAP_MIRROR, 
     .data      = &pixels,
   };
-  s_renderer.defaults.texture = resources_get_texture(resources_push_texture(RESOURCE_CACHE_ID, texture_desc));
+
+  ResourceID default_texture_id = resources_push_texture(RESOURCE_CACHE_ID, texture_desc);
+  s_renderer.defaults.texture   = resources_get_texture(default_texture_id);
 
   // Matrices buffer init
   GfxBufferDesc buff_desc = {
@@ -92,6 +111,9 @@ static void init_defaults() {
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
   s_renderer.defaults.matrices_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
+
+  // Material init
+  s_renderer.defaults.material = resources_get_material(resources_push_material(RESOURCE_CACHE_ID, default_texture_id));
 
   // Shaders init
   ResourceID default_shader     = resources_push_shader(RESOURCE_CACHE_ID, generate_default_shader());
@@ -153,25 +175,22 @@ static void init_pipeline() {
   s_renderer.pipeline = gfx_pipeline_create(s_renderer.context, s_renderer.pipe_desc);
 }
 
-static void render_mesh(RenderCommand& command, ShaderContext* shader_context) {
-  Mesh* mesh     = resources_get_mesh(command.renderable_id);
-  Material* mat  = resources_get_material(command.material_id);
-
+static void render_mesh(MeshRenderCommand& command) {
   // Setting uniforms 
-  shader_context_set_uniform(shader_context, MATERIAL_UNIFORM_MODEL_MATRIX, command.transform.transform);
+  shader_context_set_uniform(command.shader_context, MATERIAL_UNIFORM_MODEL_MATRIX, command.transform.transform);
 
   // Using the shader 
-  shader_context_use(shader_context);
+  shader_context_use(command.shader_context);
 
   // Using the textures
-  material_use(mat);  
+  material_use(command.material);  
 
   // Draw the mesh
-  gfx_pipeline_draw_index(mesh->pipe);
+  gfx_pipeline_draw_index(command.mesh->pipe);
 }
 
-static void render_skybox(RenderCommand& command) {
-  Skybox* skybox     = resources_get_skybox(command.renderable_id); 
+static void render_skybox(const ResourceID& skybox_id) {
+  Skybox* skybox     = resources_get_skybox(skybox_id); 
   ShaderContext* ctx = resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_SKYBOX]);
 
   // Using the shader 
@@ -182,28 +201,6 @@ static void render_skybox(RenderCommand& command) {
 
   // Draw the skybox
   gfx_pipeline_draw_vertex(skybox->pipe);
-}
-
-static void render_model(RenderCommand& command, ShaderContext* shader_context) {
-  Model* model = resources_get_model(command.renderable_id);
-
-  for(sizei i = 0; i < model->meshes.size(); i++) {
-    // For better visuals
-    Mesh* mesh     = model->meshes[i];
-    Material* mat  = model->materials[model->material_indices[i]];
-
-    // Setting uniforms 
-    shader_context_set_uniform(shader_context, MATERIAL_UNIFORM_MODEL_MATRIX, command.transform.transform);
-
-    // Using the shader 
-    shader_context_use(shader_context);
-
-    // Using the textures
-    material_use(mat);  
-
-    // Draw the mesh
-    gfx_pipeline_draw_index(mesh->pipe);
-  }
 }
 
 static void create_render_pass(RenderPass* pass, const RenderPassDesc& desc) {
@@ -272,34 +269,19 @@ static void end_pass(RenderPass& pass) {
   gfx_pipeline_draw_index(s_renderer.pipeline);
 }
 
-static void flush_queue(ShaderContext* shader_context) {
-  for(sizei i = 0; i < s_renderer.current_queue->size(); i++) {
-    RenderCommand* cmd = &s_renderer.current_queue->at(i);
-
-    switch(cmd->render_type) {
-      case RENDERABLE_TYPE_MESH:
-        render_mesh(*cmd, shader_context);
-        break;
-      case RENDERABLE_TYPE_MODEL:
-        render_model(*cmd, shader_context);
-        break;
-      case RENDERABLE_TYPE_SKYBOX:
-        render_skybox(*cmd);
-        break;
-    }
+static void flush_queue() {
+  for(auto& command : s_renderer.render_queue) {
+    render_mesh(command);
   }
 }
 
-static void use_directional_light(DirectionalLight& light) {
-  ShaderContext* ctx = resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]);
-
+static void use_directional_light(DirectionalLight& light, ShaderContext* ctx) {
   shader_context_set_uniform(ctx, "u_dir_light.direction", light.direction); 
   shader_context_set_uniform(ctx, "u_dir_light.color", light.color); 
 }
 
-static void use_point_lights(DynamicArray<PointLight>& lights) {
-  ShaderContext* ctx = resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]);
-  i32 index          = 0;
+static void use_point_lights(DynamicArray<PointLight>& lights, ShaderContext* ctx) {
+  i32 index = 0;
 
   for(auto& point : lights) {
     String point_index = "u_point_lights[" + std::to_string(index) + "].";
@@ -321,8 +303,8 @@ static void setup_light_enviornment(FrameData& data) {
   shader_context_set_uniform(ctx, "u_point_lights_count", (i32)data.point_lights.size()); 
   // @TODO (Renderer): shader_context_set_uniform(ctx, "u_view_pos", data.camera.direction); 
 
-  use_directional_light(data.dir_light);
-  use_point_lights(data.point_lights);
+  use_directional_light(data.dir_light, ctx);
+  use_point_lights(data.point_lights, ctx);
 }
 
 /// Private functions
@@ -333,16 +315,12 @@ static void setup_light_enviornment(FrameData& data) {
 
 static void light_pass_fn(const RenderPass* previous, RenderPass* current, void* user_data) {
   // Render the current set skybox first (if it exists)
-  if(RESOURCE_IS_VALID(s_renderer.current_skybox)) {
-    RenderCommand skybox_cmd = {
-      .render_type   = RENDERABLE_TYPE_SKYBOX, 
-      .renderable_id = s_renderer.current_skybox,
-    };
-    render_skybox(skybox_cmd);
+  if(RESOURCE_IS_VALID(s_renderer.frame_data->skybox_id)) {
+    render_skybox(s_renderer.frame_data->skybox_id);
   }
 
   // Render the frame with the light data 
-  flush_queue(resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]));
+  flush_queue();
 
   // Updating some HDR uniforms
   shader_context_set_uniform(resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_HDR]), "u_exposure", s_renderer.frame_data->camera.exposure);
@@ -371,7 +349,7 @@ void renderer_init(Window* window) {
   nikola::RenderPassDesc light_pass = {
     .frame_size        = Vec2(width, height), 
     .clear_color       = Vec4(1.0f),
-    .clear_flags       = (GFX_CLEAR_FLAGS_COLOR_BUFFER | GFX_CLEAR_FLAGS_DEPTH_BUFFER),
+    .clear_flags       = (GFX_CLEAR_FLAGS_COLOR_BUFFER | GFX_CLEAR_FLAGS_DEPTH_BUFFER | GFX_CLEAR_FLAGS_STENCIL_BUFFER),
     .shader_context_id = s_renderer.shader_contexts[SHADER_CONTEXT_HDR],
   };
   light_pass.targets.push_back(RenderTarget{
@@ -423,8 +401,25 @@ void renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& func, co
   s_renderer.render_passes.push_back(entry);
 }
 
-void renderer_sumbit_queue(RenderQueue& queue) {
-  s_renderer.current_queue = &queue;
+void renderer_queue_mesh(const ResourceID& mesh_id, const Transform& transform, const ResourceID& mat_id, const ResourceID& shader_context_id) {
+  Mesh* mesh         = resources_get_mesh(mesh_id);
+  Material* mat      = RESOURCE_IS_VALID(mat_id) ? resources_get_material(mat_id) : s_renderer.defaults.material; 
+  ShaderContext* ctx = RESOURCE_IS_VALID(shader_context_id) ? resources_get_shader_context(shader_context_id) : resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]);
+
+  s_renderer.render_queue.emplace_back(mesh, transform, mat, ctx);
+}
+
+void renderer_queue_model(const ResourceID& model_id, const Transform& transform, const ResourceID& shader_context_id) {
+  Model* model       = resources_get_model(model_id);
+  ShaderContext* ctx = RESOURCE_IS_VALID(shader_context_id) ? resources_get_shader_context(shader_context_id) : resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]);
+
+  // Breaking up the model into multiple mesh render commands
+  for(sizei i = 0; i < model->meshes.size(); i++) {
+    Mesh* mesh    = model->meshes[i];
+    Material* mat = model->materials[model->material_indices[i]]; 
+
+    s_renderer.render_queue.emplace_back(mesh, transform, mat, ctx);
+  }
 }
 
 void renderer_begin(FrameData& data) {
@@ -434,9 +429,6 @@ void renderer_begin(FrameData& data) {
   s_renderer.frame_data = &data;
   gfx_buffer_update(matrix_buffer, 0, sizeof(Mat4), mat4_raw_data(data.camera.view));
   gfx_buffer_update(matrix_buffer, sizeof(Mat4), sizeof(Mat4), mat4_raw_data(data.camera.projection));
-
-  // Render the skybox (if avaliable)
-  s_renderer.current_skybox = data.skybox_id;
 
   // Setup some lighting
   setup_light_enviornment(data);
@@ -467,8 +459,8 @@ void renderer_end() {
   } 
   
   // Clear the current render queue (if there's any there)
-  if(!s_renderer.current_queue->empty()) {
-    s_renderer.current_queue->clear();
+  if(!s_renderer.render_queue.empty()) {
+    s_renderer.render_queue.clear();
   }
 }
 

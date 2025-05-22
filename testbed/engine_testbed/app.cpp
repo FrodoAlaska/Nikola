@@ -8,10 +8,9 @@
 struct nikola::App {
   nikola::Window* window;
   nikola::FrameData frame_data;
-  nikola::RenderQueue render_queue;
 
   nikola::u16 res_group_id;
-  nikola::ResourceID mesh_id, material_id;
+  nikola::ResourceID mesh_id;
 
   nikola::Transform transform;
 
@@ -30,9 +29,6 @@ static void init_resources(nikola::App* app) {
 
   // Resoruces init
   nikola::resources_push_dir(app->res_group_id, "textures");
-
-  // Materials init
-  app->material_id = nikola::resources_push_material(app->res_group_id);
 
   // Skybox init
   app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group_id, "cubemaps/gloomy.nbrcubemap");
@@ -101,18 +97,7 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 void app_render(nikola::App* app) {
   // Render 3D 
   nikola::renderer_begin(app->frame_data);
-
-  nikola::RenderCommand rnd_cmd = {
-    .transform = app->transform, 
-
-    .render_type = nikola::RENDERABLE_TYPE_MESH,
-
-    .renderable_id = app->mesh_id, 
-    .material_id   = app->material_id,
-  };
-  app->render_queue.push_back(rnd_cmd);
-
-  nikola::renderer_sumbit_queue(app->render_queue);
+  nikola::renderer_queue_mesh(app->mesh_id, app->transform);
   nikola::renderer_end();
   
   // Render 2D 

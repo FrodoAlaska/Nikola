@@ -8,28 +8,26 @@
 /// Entity
 struct Entity {
   nikola::Transform transform;
-  nikola::ResourceID renderable, material_id;
-  nikola::RenderableType type;
+  nikola::ResourceID renderable_id, material_id;
   nikola::String name;
 
-  Entity(const nikola::Vec3& pos, const nikola::ResourceID& res_id, const nikola::ResourceID& mat_id, const nikola::RenderableType& render_type, const char* debug_name) {
+  Entity(const nikola::Vec3& pos, const nikola::ResourceID& res_id, const nikola::ResourceID& mat_id, const char* debug_name) {
     nikola::transform_translate(transform, pos);
     nikola::transform_scale(transform, nikola::Vec3(1.0f));
 
-    renderable  = res_id;
-    material_id = mat_id;
+    renderable_id = res_id;
+    material_id   = mat_id;
 
-    type = render_type;
     name = debug_name;
   }
 
-  void render(nikola::RenderQueue* queue, nikola::RenderCommand* cmd) {
-    cmd->material_id   = material_id;
-    cmd->transform     = transform; 
-    cmd->render_type   = type; 
-    cmd->renderable_id = renderable;
-
-    queue->push_back(*cmd);
+  void render() {
+    if(renderable_id._type == nikola::RESOURCE_TYPE_MESH) {
+      nikola::renderer_queue_mesh(renderable_id, transform, material_id);
+    }
+    else if(renderable_id._type == nikola::RESOURCE_TYPE_MODEL) {
+      nikola::renderer_queue_model(renderable_id, transform);
+    }
   }
 
   void render_gui() {
@@ -130,18 +128,18 @@ bool game_scene_create(Scene* scene) {
   // scene->frame_data.skybox_id = {};
 
   // Model init
-  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), model, material_id, nikola::RENDERABLE_TYPE_MODEL, "3D Model"); 
+  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), model, material_id, "3D Model"); 
   
   // Cube init
-  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), cube_mesh, material_id, nikola::RENDERABLE_TYPE_MESH, "Cube"); 
+  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), cube_mesh, material_id, "Cube"); 
 
   // Ground init
-  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), cube_mesh, pav_material_id, nikola::RENDERABLE_TYPE_MESH, "Ground"); 
+  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), cube_mesh, pav_material_id, "Ground"); 
 
   // Torches 
   nikola::ResourceID torch_model = nikola::resources_push_model(res_group, "models/column_torch.nbrmodel");
-  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), torch_model, material_id, nikola::RENDERABLE_TYPE_MODEL, "Torch 0"); 
-  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), torch_model, material_id, nikola::RENDERABLE_TYPE_MODEL, "Torch 1"); 
+  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), torch_model, material_id, "Torch 0"); 
+  s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), torch_model, material_id, "Torch 1"); 
 
   // Lights init
   init_lights(scene);
@@ -178,13 +176,10 @@ void game_scene_update(Scene* scene, const nikola::f64 dt) {
 }
 
 void game_scene_render(Scene* scene) {
-  nikola::RenderCommand render_cmd{};
-
   // Render entities 
   for(auto& entt : s_entities) {
-    entt.render(&scene->render_queue, &render_cmd);
+    entt.render();
   }
-  nikola::renderer_sumbit_queue(scene->render_queue);
 }
 
 void game_scene_render_gui(Scene* scene) {

@@ -101,12 +101,10 @@ static void load_glyphs_data(nikola::HashMap<char, nikola::NBRGlyph>* font_glyph
   
     glyph.left_bearing = left_side_bearing * scale_factor;
     glyph.advance_x    = advance * scale_factor;
-    
-    // Getting the kern of the glyph. The kern is used to make some specific glyphs look better 
-    // when next to each other.
-    // @TODO (Font loader): Probably shouldn't have the `glyph_index + 1` here???
-    glyph.kern = stbtt_GetGlyphKernAdvance(info, glyph_index, glyph_index + 1); 
-    glyph.kern *= scale_factor;
+
+    // Kern is actually _never_ used throughout the engine. It might be useful later, though. 
+    // Thus, it stays here for now.
+    glyph.kern = 0;
 
     // A valid glyph that was loaded 
     font_glyphs->emplace(glyph.unicode, glyph);

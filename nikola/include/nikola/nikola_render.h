@@ -26,21 +26,6 @@ const f32 CAMERA_MAX_ZOOM    = 180.0f;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// RenderableType 
-enum RenderableType {
-  /// Will commence a mesh rendering operation
-  RENDERABLE_TYPE_MESH   = 19 << 0,
-  
-  /// Will commence a model rendering operation
-  RENDERABLE_TYPE_MODEL  = 19 << 1,
-  
-  /// Will commence a skybox rendering operation
-  RENDERABLE_TYPE_SKYBOX = 19 << 2,
-};
-/// RenderableType 
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
 /// Camera function pointers
 
 // Have to do this to fix underfined variable errors in the callback.
@@ -79,28 +64,9 @@ struct Camera {
 struct RendererDefaults {
   GfxTexture* texture        = nullptr;
   GfxBuffer* matrices_buffer = nullptr;
+  Material* material         = nullptr;
 };
 /// RendererDefaults 
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// RenderCommand
-struct RenderCommand {
-  Transform transform;
-  
-  RenderableType render_type;
-  sizei instance_count = 0;
-
-  ResourceID renderable_id;
-  ResourceID material_id;
-};
-/// RenderCommand
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// RenderQueue
-using RenderQueue = DynamicArray<RenderCommand>;
-/// RenderQueue
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -230,8 +196,17 @@ NIKOLA_API Vec4& renderer_get_clear_color();
 /// Internally, the renderer will call `func`, passing in `user_data`.
 NIKOLA_API void renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& func, const void* user_data);
 
-/// Sumbit the given `queue` to the renderer to be rendered once `renderer_end` is called.
-NIKOLA_API void renderer_sumbit_queue(RenderQueue& queue);
+/// Queue a mesh rendering command using the given `mesh_id`, `transform`, `mat_id`, and `shader_context_id`. 
+///
+/// @NOTE: Both `mat_id` and `shader_context_id` are set to `RESOURCE_INVALID` by default, which will prompt the 
+/// renderer to use the default material and the default shader context.
+NIKOLA_API void renderer_queue_mesh(const ResourceID& mesh_id, const Transform& transform, const ResourceID& mat_id = {}, const ResourceID& shader_context_id = {});
+
+/// Queue a mesh rendering command using the given `mesh_id`, `transform`, and `shader_context_id`. 
+///
+/// @NOTE: Both `mat_id` and `shader_context_id` are set to `RESOURCE_INVALID` by default, which will prompt the 
+/// renderer to use the default material and the default shader context.
+NIKOLA_API void renderer_queue_model(const ResourceID& model_id, const Transform& transform, const ResourceID& shader_context_id = {});
 
 /// Setup the renderer for any upcoming render operations by 
 /// the data given in `data`.

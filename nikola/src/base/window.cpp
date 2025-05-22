@@ -380,10 +380,11 @@ void window_close(Window* window) {
 }
 
 void window_poll_events(Window* window) {
-  // @TODO (): Maybe take these system updates somewhere else? 
+  // Update the internal systems
   input_update();
   niclock_update();
 
+  // Poll for events
   glfwPollEvents();
 }
 

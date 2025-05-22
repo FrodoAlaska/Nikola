@@ -49,7 +49,6 @@ struct Scene {
 
   nikola::u16 resource_group; 
   nikola::FrameData frame_data;
-  nikola::RenderQueue render_queue;
 
   bool has_editor = false;
 };

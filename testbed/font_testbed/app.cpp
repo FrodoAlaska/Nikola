@@ -15,12 +15,9 @@
 /// App
 struct nikola::App {
   nikola::Window* window;
-
   nikola::FrameData frame_data;
-  nikola::RenderQueue render_queue;
-  nikola::RenderCommand render_cmd;
   
-  // @NOTE (Font tested): This is awful. Don't ACTUALLy do this! It's just for testing.
+  // @NOTE (Font tested): This is awful. Don't ACTUALLY do this! It's just for testing.
   nikola::Font* font;
 
   nikola::u16 res_group;
@@ -69,9 +66,6 @@ static void init_resources(nikola::App* app) {
 
   // Skybox init
   app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group, cubemap_id);
-
-  // Materials init
-  app->render_cmd.material_id = nikola::resources_push_material(app->res_group);
 }
 
 static void init_lights(nikola::App* app) {
@@ -189,13 +183,7 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 void app_render(nikola::App* app) {
   // 3D renderer
   nikola::renderer_begin(app->frame_data);
-
-  app->render_cmd.transform     = app->transform;
-  app->render_cmd.render_type   = nikola::RENDERABLE_TYPE_MODEL;
-  app->render_cmd.renderable_id = app->model_id;
-  app->render_queue.push_back(app->render_cmd); 
-
-  nikola::renderer_sumbit_queue(app->render_queue);
+  nikola::renderer_queue_model(app->model_id, app->transform);
   nikola::renderer_end();
  
   // 2D renderer
