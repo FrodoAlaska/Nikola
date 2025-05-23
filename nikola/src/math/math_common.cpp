@@ -49,6 +49,14 @@ const f64 sqrt(const f64 x) {
   return glm::sqrt(x);
 }
 
+const f32 abs(const f32 x) {
+  return glm::abs(x);
+}
+
+const f32 pow(const f32 x, const f32 y) {
+  return glm::pow(x, y);
+}
+
 const f32 min_float(const f32 x, const f32 y) {
   return glm::min(x, y);
 }

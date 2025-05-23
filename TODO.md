@@ -93,37 +93,37 @@
     - [x] Make resources be less dependent on `ResourceID`. The ID should be given when the resources are pushed, but not to be used _in place_ of resources.
     - [x] Fix the way the `Transform` type is edited through the GUI
     - [x] Add OGG support in the NBR tool
-[] 18. Renderer v0.5
-    - [x] Better render command system
-    - [] Restructure the way render passes work. 
-    - [] Allow toggleablity of render passes
-    - [] Improve upon the render pass system by allowing the reuse of certain render passes 
+[] 18. Physics v0.1
+    - [x] Create a physics world, physics body, and what have you
+    - [] Test the physics logic by making some testbeds.
+    - [x] Integrate the physics layer into the engine proper.
+    - [] Add the newly-added physics types to be edited by the GUI 
     - [] Documentation
 [] 19. Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers
     - [x] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application.
-    - [] Which systems can benefit most from multi-threading? 
-    - [] Should we implement a job system? If yes, how can this be done within the confines of the engine? 
-    - [] Try to improve the load times for the resource manager as a test of the new multi-threading system.
-    - [] Compare with previous results and scenes and current results and scenes
+    - [] Create an abstraction layer over threads, mutexes, aotmics, and all things multi-threading. 
+    - [] Create a simple job system 
+    - [] Improve resource loading time by adding asynchronous resource loading.
     - [] Documentation
-[] 20. UI v0.1
-    - [] A canvas system for 2D game UI.
-    - [] A menu system
-    - [] Documentation
-[] 21. Physics v0.1
-    - [] Should we use a physics engine? Which one? Just a simple physics system? 
-[] 22. Renderer v0.6 
+[] 20. 3D Animations v0.1
+[] 21. Renderer v0.6 
     - [] YOU MUST ADD INSTANCING NOOOOOOWWW!!!!
+    - [] Allow toggleablity of render passes
     - [] Bloom integration 
     - [] Improve lighting using clustered rendering
     - [] Compute shaders 
     - [] Better bloom for testing the new compute shaders
     - [] Cascaded shadow maps
-[] 23. Particles v0.1 
+    - [] Documentation
+[] 22. Particles v0.1 
     - [] Add CPU-based particles that can render different shapes, sizes, and colors (maybe even certain textures?) 
     - [] Implement a GPU-based particle system, using something like instancing.
-[] 23. 3D Animations v0.1
+    - [] Documentation
+[] 23. UI v0.1
+    - [] A canvas system for 2D game UI.
+    - [] A menu system
+    - [] Documentation
 
 ## (Engine) BUGS: 
 - EMPTY FOR NOW...

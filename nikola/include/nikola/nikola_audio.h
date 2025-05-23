@@ -23,15 +23,15 @@ const sizei AUDIO_QUEUE_BUFFERS_MAX = 32;
 /// AudioBufferFormat
 enum AudioBufferFormat {
   /// Indicates an audio buffer with 8-bit unsigned integers per sample.
-  AUDIO_BUFFER_FORMAT_U8  = 20 << 0,  
+  AUDIO_BUFFER_FORMAT_U8  = 19 << 0,  
   
   /// Indicates an audio buffer with 16-bit signed integers per sample.
-  AUDIO_BUFFER_FORMAT_I16 = 20 << 1,  
+  AUDIO_BUFFER_FORMAT_I16 = 19 << 1,  
   
   /// Indicates an audio buffer with 32-bit floats per sample.
   ///
   /// @NOTE: This might not be supported on every platform.
-  AUDIO_BUFFER_FORMAT_F32 = 20 << 2,  
+  AUDIO_BUFFER_FORMAT_F32 = 19 << 2,  
 };
 /// AudioBufferFormat
 ///---------------------------------------------------------------------------------------------------------------------

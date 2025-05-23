@@ -185,6 +185,12 @@ NIKOLA_API const f64 floor(const f64 x);
 /// Returns the square root of `x`
 NIKOLA_API const f64 sqrt(const f64 x);
 
+/// Returns the absolute value `x`
+NIKOLA_API const f32 abs(const f32 x);
+
+/// Returns `x` raised to the power of y
+NIKOLA_API const f32 pow(const f32 x, const f32 y);
+
 /// Returns the lesser value between `x` and `y`
 NIKOLA_API const f32 min_float(const f32 x, const f32 y);
 

@@ -301,7 +301,7 @@ static void setup_light_enviornment(FrameData& data) {
   
   shader_context_set_uniform(ctx, "u_ambient", data.ambient); 
   shader_context_set_uniform(ctx, "u_point_lights_count", (i32)data.point_lights.size()); 
-  // @TODO (Renderer): shader_context_set_uniform(ctx, "u_view_pos", data.camera.direction); 
+  shader_context_set_uniform(ctx, "u_view_pos", data.camera.direction); 
 
   use_directional_light(data.dir_light, ctx);
   use_point_lights(data.point_lights, ctx);
