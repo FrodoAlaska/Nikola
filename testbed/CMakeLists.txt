@@ -19,10 +19,11 @@ set(TESTBED_INCLUDES
 
 set(TESTBED_TYPE 
   # "engine_testbed"
-  "scene_example"
+  # "scene_example"
   # "core_testbed"
   # "font_testbed"
   # "audio_testbed"
+  "physics_testbed"
 )
 ############################################################
 
