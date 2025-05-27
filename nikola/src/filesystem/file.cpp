@@ -138,10 +138,13 @@ void file_write_bytes(File& file, const Camera& camera) {
     camera.far, 
     camera.sensitivity, 
     camera.exposure, 
+
+    camera.position.x,
+    camera.position.y,
+    camera.position.z,
   };
 
   file_write_bytes(file, data, sizeof(data));
-  file_write_bytes(file, camera.transform);
 }
 
 void file_write_bytes(File& file, const DirectionalLight& light) {
@@ -247,7 +250,7 @@ void file_read_bytes(File& file, Transform* transform) {
 }
 
 void file_read_bytes(File& file, Camera* camera) {
-  f32 raw_data[7]; 
+  f32 raw_data[10]; 
   file_read_bytes(file, raw_data, sizeof(raw_data));
 
   camera->yaw         = raw_data[0]; 
@@ -257,8 +260,7 @@ void file_read_bytes(File& file, Camera* camera) {
   camera->far         = raw_data[4]; 
   camera->sensitivity = raw_data[5]; 
   camera->exposure    = raw_data[6];
-
-  file_read_bytes(file, &camera->transform);
+  camera->position    = Vec3(raw_data[7], raw_data[8], raw_data[9]);
 }
 
 void file_read_bytes(File& file, DirectionalLight* light) {

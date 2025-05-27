@@ -214,13 +214,13 @@ void gui_edit_camera(const char* name, Camera* camera) {
   
   // Information
   // -------------------------------------------------------------------
-  ImGui::Text("Postiion: %s", vec3_to_string(camera->transform.position).c_str());  
   ImGui::Text("Yaw: %f", camera->yaw);
   ImGui::Text("Pitch: %f", camera->pitch);
   // -------------------------------------------------------------------
 
   // Editables
   // -------------------------------------------------------------------
+  ImGui::DragFloat3("Postiion", &camera->position[0], 1.0f);  
   ImGui::SliderFloat("Zoom", &camera->zoom, CAMERA_MAX_ZOOM, 0.0f, "Zoom: %.3f");
   ImGui::SliderFloat("Near", &camera->near, 0.1f, 1000.0f, "Near: %.3f");
   ImGui::SliderFloat("Far", &camera->far, 0.1f, 1000.0f, "Far: %.3f");

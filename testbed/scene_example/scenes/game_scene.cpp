@@ -103,8 +103,14 @@ bool game_scene_create(Scene* scene) {
   nikola::u16 res_group = scene->resource_group;
 
   // Camera init
-  float aspect_ratio = nikola::window_get_aspect_ratio(scene->window);
-  nikola::camera_create(&scene->frame_data.camera, aspect_ratio, nikola::Vec3(10.0f, 0.0f, 10.0f), nikola::Vec3(-3.0f, 0.0f, 0.0f));
+  nikola::CameraDesc cam_desc = {
+    .position     = nikola::Vec3(10.0f, 0.0f, 10.0f),
+    .target       = nikola::Vec3(-3.0f, 0.0f, 0.0f),
+    .up_axis      = nikola::Vec3(0.0f, 1.0f, 0.0f),
+    .aspect_ratio = nikola::window_get_aspect_ratio(scene->window),
+    .move_func    = nikola::camera_default_move_func,
+  };
+  nikola::camera_create(&scene->frame_data.camera, cam_desc);
    
   // Models init
   nikola::ResourceID model = nikola::resources_push_model(res_group, "models/tempel.nbrmodel");

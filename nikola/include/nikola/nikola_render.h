@@ -38,6 +38,37 @@ using CameraMoveFn = void(*)(Camera& camera);
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// CameraDesc
+struct CameraDesc {
+  /// The initial position of the camera
+  Vec3 position    = Vec3(0.0f); 
+
+  /// The forward looking target of the camera. 
+  ///
+  /// @NOTE: This is set to `Vec3(-3.0f, 0.0f, 0.0f)` by default.
+  Vec3 target      = Vec3(-3.0f, 0.0f, 0.0f); 
+  
+  /// The up vector of the camera. 
+  ///
+  /// @NOTE: This is set to `Vec3(0.0f, 1.0f, 0.0f)` by default.
+  Vec3 up_axis     = Vec3(0.0f, 1.0f, 0.0f);
+
+  /// The aspect ratio of the created camera. 
+  /// This can be a completely different value from the 
+  /// default window aspect ratio if desired.
+  ///
+  /// @NOTE: This is set to `0.0f`.
+  f32 aspect_ratio = 0.0f;
+
+  /// The function callback to move the camera 
+  ///
+  /// @NOTE: See `CameraMoveFn` for more details.
+  CameraMoveFn move_func;
+};
+/// CameraDesc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// Camera 
 struct Camera {
   f32 yaw, pitch;
@@ -48,7 +79,7 @@ struct Camera {
   f32 sensitivity = 0.1f;
   f32 exposure    = 1.0f; 
 
-  Transform transform = {};
+  Vec3 position;
   
   Vec3 up, direction, front;
   Mat4 view, projection, view_projection;
@@ -162,8 +193,8 @@ using RenderPassFn = void(*)(const RenderPass* previous, RenderPass* current, vo
 /// The default function callback to use in order to move `camera`.
 NIKOLA_API void camera_default_move_func(Camera& camera);
 
-/// Fill the information in `cam` using the given values.
-NIKOLA_API void camera_create(Camera* cam, const f32 aspect_ratio, const Vec3& pos, const Vec3& target, const CameraMoveFn& move_fn = camera_default_move_func);
+/// Fill the information in `cam` using the given `CameraDesc`.
+NIKOLA_API void camera_create(Camera* cam, const CameraDesc& desc);
 
 /// Update the internal matrices of `cam` and call the associated `CameraMoveFn`. 
 NIKOLA_API void camera_update(Camera& cam);
