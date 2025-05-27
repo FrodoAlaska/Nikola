@@ -25,6 +25,10 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/math/transform.cpp
   ${NIKOLA_SRC_DIR}/math/vertex.cpp
   
+  # Physics 
+  ${NIKOLA_SRC_DIR}/physics/collider.cpp
+  ${NIKOLA_SRC_DIR}/physics/ray.cpp
+  
   # Resources
   ${NIKOLA_SRC_DIR}/resources/resource_manager.cpp
   ${NIKOLA_SRC_DIR}/resources/material.cpp
