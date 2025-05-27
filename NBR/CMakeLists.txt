@@ -32,8 +32,8 @@ set(NBR_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(NBR_LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 
 set(NBR_LIBRARIES 
-  nikola
   ${NIKOLA_LIBRARIES}
+  nikola
   assimp
 )
 

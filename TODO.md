@@ -93,20 +93,21 @@
     - [x] Make resources be less dependent on `ResourceID`. The ID should be given when the resources are pushed, but not to be used _in place_ of resources.
     - [x] Fix the way the `Transform` type is edited through the GUI
     - [x] Add OGG support in the NBR tool
-[] 18. Physics v0.1
-    - [x] Create a physics world, physics body, and what have you
-    - [] Test the physics logic by making some testbeds.
-    - [x] Integrate the physics layer into the engine proper.
-    - [] Add the newly-added physics types to be edited by the GUI 
-    - [] Documentation
-[] 19. Performance Craze 0.1 
+[] 18. Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers
     - [x] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application.
     - [] Create an abstraction layer over threads, mutexes, aotmics, and all things multi-threading. 
     - [] Create a simple job system 
     - [] Improve resource loading time by adding asynchronous resource loading.
     - [] Documentation
-[] 20. 3D Animations v0.1
+[] 19. UI v0.1
+    - [] A canvas system for 2D game UI.
+    - [] A menu system
+    - [] Documentation
+[] 20. Particles v0.1 
+    - [] Add CPU-based particles that can render different shapes, sizes, and colors (maybe even certain textures?) 
+    - [] Implement a GPU-based particle system, using something like instancing.
+    - [] Documentation
 [] 21. Renderer v0.6 
     - [] YOU MUST ADD INSTANCING NOOOOOOWWW!!!!
     - [] Allow toggleablity of render passes
@@ -116,13 +117,12 @@
     - [] Better bloom for testing the new compute shaders
     - [] Cascaded shadow maps
     - [] Documentation
-[] 22. Particles v0.1 
-    - [] Add CPU-based particles that can render different shapes, sizes, and colors (maybe even certain textures?) 
-    - [] Implement a GPU-based particle system, using something like instancing.
-    - [] Documentation
-[] 23. UI v0.1
-    - [] A canvas system for 2D game UI.
-    - [] A menu system
+[] 22. 3D Animations v0.1
+[] 23. Physics v0.1
+    - [] Create a physics world, physics body, and what have you
+    - [] Test the physics logic by making some testbeds.
+    - [] Integrate the physics layer into the engine proper.
+    - [] Add the newly-added physics types to be edited by the GUI 
     - [] Documentation
 
 ## (Engine) BUGS: 

@@ -8,8 +8,8 @@ set(TESTBED_INCLUDE_DIR ${TESTBED_SRC_DIR})
 set(TESTBED_LIBS_DIR libs)
 
 set(TESTBED_LIBRARIES 
-  nikola
   ${NIKOLA_LIBRARIES}
+  nikola
 )
 
 set(TESTBED_INCLUDES 
@@ -18,12 +18,11 @@ set(TESTBED_INCLUDES
 )
 
 set(TESTBED_TYPE 
-  # "engine_testbed"
+  "engine_testbed"
   # "scene_example"
   # "core_testbed"
   # "font_testbed"
   # "audio_testbed"
-  "physics_testbed"
 )
 ############################################################
 

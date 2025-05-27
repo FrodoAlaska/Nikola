@@ -58,7 +58,7 @@ function Check-Build-Dir {
   mkdir $dir
   $build_dir = $dir
   
-  cmake -S . -B $dir
+  cmake -S ..\ -B $dir
   Check-Exit-Code -msg "Failed to generate CMake files..."
 
 }

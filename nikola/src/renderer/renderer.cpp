@@ -79,6 +79,7 @@ static void init_context(Window* window) {
   GfxContextDesc gfx_desc = {
     .window       = window,
     .states       = GFX_STATE_DEPTH | GFX_STATE_STENCIL | GFX_STATE_BLEND,
+    .has_vsync    = true,
   };
   
   s_renderer.context = gfx_context_init(gfx_desc);
@@ -182,7 +183,7 @@ static void render_mesh(MeshRenderCommand& command) {
   // Using the shader 
   shader_context_use(command.shader_context);
 
-  // Using the textures
+  // Using the internal material data
   material_use(command.material);  
 
   // Draw the mesh
