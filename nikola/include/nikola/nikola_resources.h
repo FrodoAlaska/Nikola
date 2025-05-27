@@ -322,25 +322,19 @@ const sizei SHADER_UNIFORM_BUFFERS_MAX   = 1;
 const sizei SHADER_MATRICES_BUFFER_INDEX = 0;
 
 /// The maximum amount of preset uniforms. 
-const u32 MATERIAL_UNIFORMS_MAX          = 6;
+const u32 MATERIAL_UNIFORMS_MAX          = 4;
 
-/// The name of the ambient color uniform in materials. 
-#define MATERIAL_UNIFORM_AMBIENT_COLOR  "u_material.ambient" 
-
-/// The name of the diffuse color uniform in materials. 
-#define MATERIAL_UNIFORM_DIFFUSE_COLOR  "u_material.diffuse" 
-
-/// The name of the specular color uniform in materials. 
-#define MATERIAL_UNIFORM_SPECULAR_COLOR "u_material.specular"
+/// The name of the color uniform in materials. 
+#define MATERIAL_UNIFORM_COLOR        "u_material.color" 
 
 /// The name of the shininess uniform in materials. 
-#define MATERIAL_UNIFORM_SHININESS      "u_material.shininess" 
+#define MATERIAL_UNIFORM_SHININESS    "u_material.shininess" 
 
 /// The name of the screen size uniform in materials. 
-#define MATERIAL_UNIFORM_SCREEN_SIZE    "u_material.screen_size" 
+#define MATERIAL_UNIFORM_SCREEN_SIZE  "u_material.screen_size" 
 
 /// The name of the model transform uniform in materials. 
-#define MATERIAL_UNIFORM_MODEL_MATRIX   "u_model" 
+#define MATERIAL_UNIFORM_MODEL_MATRIX "u_model" 
 
 /// Resources consts
 ///---------------------------------------------------------------------------------------------------------------------
@@ -462,11 +456,8 @@ struct Material {
   GfxTexture* diffuse_map  = nullptr;
   GfxTexture* specular_map = nullptr;
   
-  Vec3 ambient_color;
-  Vec3 diffuse_color; 
-  Vec3 specular_color;
-  
-  f32 shininess;
+  Vec4 color    = Vec4(1.0f);
+  f32 shininess = 1.0f;
 };
 /// Material 
 ///---------------------------------------------------------------------------------------------------------------------

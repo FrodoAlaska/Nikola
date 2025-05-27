@@ -124,9 +124,7 @@ void nbr_import_model(NBRModel* nbr, const u16 group_id, Model* model) {
     mat->specular_map = specular_index != -1 ? resources_get_texture(texture_ids[specular_index]) : mat->specular_map;
 
     // Convert the NBRMaterial into an engine Material
-    mat->ambient_color  = Vec3(nbr->materials[i].ambient[0], nbr->materials[i].ambient[1], nbr->materials[i].ambient[2]); 
-    mat->diffuse_color  = Vec3(nbr->materials[i].diffuse[0], nbr->materials[i].diffuse[1], nbr->materials[i].diffuse[2]); 
-    mat->specular_color = Vec3(nbr->materials[i].specular[0], nbr->materials[i].specular[1], nbr->materials[i].specular[2]); 
+    mat->color = Vec4(nbr->materials[i].diffuse[0], nbr->materials[i].diffuse[1], nbr->materials[i].diffuse[2], 1.0f); 
 
     // Add the material 
     model->materials.push_back(mat); 

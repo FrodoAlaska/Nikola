@@ -5,6 +5,7 @@
 #include "nikola_resources.h"
 #include "nikola_math.h"
 #include "nikola_containers.h"
+#include "nikola_physics.h"
 
 //////////////////////////////////////////////////////////////////////////
 

@@ -669,10 +669,8 @@ ResourceID resources_push_material(const u16 group_id, const ResourceID& diffuse
   Material* material = new Material{};
 
   // Set default values for the material
-  material->ambient_color  = Vec3(1.0f); 
-  material->diffuse_color  = Vec3(1.0f); 
-  material->specular_color = Vec3(1.0f); 
-  material->shininess      = 1.0f;
+  material->color     = Vec4(1.0f); 
+  material->shininess = 1.0f;
 
   // Default textures init
   GfxTexture* default_texture  = renderer_get_defaults().texture;
@@ -685,9 +683,8 @@ ResourceID resources_push_material(const u16 group_id, const ResourceID& diffuse
 
   // New material added
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed material:", group->name.c_str());
-  NIKOLA_LOG_DEBUG("     Ambient color  = \'%s\'", vec3_to_string(material->ambient_color).c_str());
-  NIKOLA_LOG_DEBUG("     Diffuse color  = \'%s\'", vec3_to_string(material->diffuse_color).c_str());
-  NIKOLA_LOG_DEBUG("     Specular color = \'%s\'", vec3_to_string(material->specular_color).c_str());
+  NIKOLA_LOG_DEBUG("     Color     = \'%s\'", vec3_to_string(material->color).c_str());
+  NIKOLA_LOG_DEBUG("     Shininess = \'%f\'", material->shininess);
   return id;
 }
 

@@ -260,9 +260,7 @@ void gui_edit_material(const char* name, Material* material) {
 
   // Colors 
   // -------------------------------------------------------------------
-  ImGui::SliderFloat3("Ambient", &material->ambient_color[0], 0.0f, 1.0f);
-  ImGui::SliderFloat3("Diffuse", &material->diffuse_color[0], 0.0f, 1.0f);
-  ImGui::SliderFloat3("Specular", &material->specular_color[0], 0.0f, 1.0f);
+  ImGui::SliderFloat4("Color", &material->color[0], 0.0f, 1.0f);
   // -------------------------------------------------------------------
  
   // Lighting values

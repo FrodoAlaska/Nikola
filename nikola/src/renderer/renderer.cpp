@@ -79,7 +79,7 @@ static void init_context(Window* window) {
   GfxContextDesc gfx_desc = {
     .window       = window,
     .states       = GFX_STATE_DEPTH | GFX_STATE_STENCIL | GFX_STATE_BLEND,
-    .has_vsync    = true,
+    .has_vsync    = false,
   };
   
   s_renderer.context = gfx_context_init(gfx_desc);
@@ -179,6 +179,7 @@ static void init_pipeline() {
 static void render_mesh(MeshRenderCommand& command) {
   // Setting uniforms 
   shader_context_set_uniform(command.shader_context, MATERIAL_UNIFORM_MODEL_MATRIX, command.transform.transform);
+  shader_context_set_uniform(command.shader_context, MATERIAL_UNIFORM_COLOR, command.material->color);
 
   // Using the shader 
   shader_context_use(command.shader_context);
