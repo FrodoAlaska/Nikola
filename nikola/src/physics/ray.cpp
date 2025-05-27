@@ -68,6 +68,37 @@ RayIntersection ray_check_intersection(const Ray& ray, const Vec3& position, Box
   };
 }
 
+RayIntersection ray_check_intersection(const Ray& ray, const Vec3& position, SphereCollider& collider) {
+  // Get the direction between the ray and the sphere 
+  Vec3 dir = ray.position - position; 
+
+  // Project the direction on the ray's direction 
+  f32 sphere_proj = vec3_dot(dir, ray.direction);
+
+  // The ray is pointing in the other direction not at the sphere
+  if(sphere_proj < 0.0f) {
+    return RayIntersection{.has_intersected = false};
+  } 
+
+  // Get the closes point to the ray
+  Vec3 point = ray.position + (ray.direction * sphere_proj);
+
+
+  f32 sphere_dist = vec3_distance(position, point);
+  if(sphere_dist > collider.radius) { // No collisions with the sphere
+    return RayIntersection{.has_intersected = false};
+  }  
+
+  // Getting the exact point of intersection
+  f32 offset = nikola::sqrt((sphere_dist * sphere_dist) - (collider.radius * collider.radius));
+
+  return RayIntersection{
+    .point           = ray.position + (ray.direction * sphere_proj),
+    .distance        = sphere_proj - offset,
+    .has_intersected = true,
+  };
+}
+
 /// Ray functions
 ///---------------------------------------------------------------------------------------------------------------------
 

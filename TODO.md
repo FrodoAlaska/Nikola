@@ -97,6 +97,7 @@
     - [x] Add AABB VS. AABB collision detection 
     - [x] Add raycasting 
     - [x] Add AABB VS. Ray collision detection
+    - [x] Add Spheres and their associated collision detection functions
 [] Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers
     - [x] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application.

@@ -32,6 +32,20 @@ struct BoxCollider {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// SphereCollider
+struct SphereCollider {
+  f32 radius = 0.0f; 
+
+  /// Set the given `radius` as the radius 
+  /// of the sphere collider.
+  SphereCollider(const f32 radius) 
+    :radius(radius)
+    {}
+};
+/// SphereCollider
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// CollisionPoint
 struct CollisionPoint {
   Vec3 point_a; 
@@ -70,6 +84,10 @@ struct Ray {
 
 NIKOLA_API CollisionPoint collider_check_collision(const BoxCollider& coll_a, const Vec3& pos_a, const BoxCollider& coll_b, const Vec3& pos_b);
 
+NIKOLA_API CollisionPoint collider_check_collision(const SphereCollider& coll_a, const Vec3& pos_a, const SphereCollider& coll_b, const Vec3& pos_b);
+
+NIKOLA_API CollisionPoint collider_check_collision(const BoxCollider& box, const Vec3& box_pos, const SphereCollider& sphere, const Vec3& sphere_pos);
+
 NIKOLA_API bool collider_check_collision(const Vec3& pos_a, const Vec3& size_a, const Vec3& pos_b, const Vec3& size_b);
 
 /// Collider functions
@@ -79,6 +97,8 @@ NIKOLA_API bool collider_check_collision(const Vec3& pos_a, const Vec3& size_a, 
 /// Ray functions
 
 NIKOLA_API RayIntersection ray_check_intersection(const Ray& ray, const Vec3& position, BoxCollider& collider);
+
+NIKOLA_API RayIntersection ray_check_intersection(const Ray& ray, const Vec3& position, SphereCollider& collider);
 
 /// Ray functions
 ///---------------------------------------------------------------------------------------------------------------------
