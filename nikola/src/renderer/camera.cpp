@@ -15,7 +15,7 @@ const f32 CAMERA_SPEED = 20.0f;
 /// ----------------------------------------------------------------------
 /// Camera functions
 
-void camera_default_move_func(Camera& camera) {
+void camera_free_move_func(Camera& camera) {
   float speed = CAMERA_SPEED * niclock_get_delta_time();
 
   Vec2 mouse_offset; 
@@ -34,6 +34,37 @@ void camera_default_move_func(Camera& camera) {
   // Move backwards
   else if(input_key_down(KEY_DOWN)) {
     camera.position -= camera.front * speed;
+  }
+ 
+  // Move right
+  if(input_key_down(KEY_RIGHT)) {
+    camera.position += vec3_normalize(vec3_cross(camera.front, camera.up)) * speed;
+  }
+  // Move left
+  else if(input_key_down(KEY_LEFT)) {
+    camera.position -= vec3_normalize(vec3_cross(camera.front, camera.up)) * speed;
+  }
+}
+
+void camera_fps_move_func(Camera& camera) {
+  float speed = CAMERA_SPEED * niclock_get_delta_time();
+
+  Vec2 mouse_offset; 
+  input_mouse_offset(&mouse_offset.x, &mouse_offset.y);
+
+  camera.yaw   = mouse_offset.x * camera.sensitivity;
+  camera.pitch = mouse_offset.y * camera.sensitivity;
+
+  camera.pitch = clamp_float(camera.pitch, -CAMERA_MAX_DEGREES, CAMERA_MAX_DEGREES);
+  camera.zoom  = clamp_float(camera.zoom, 1.0f, CAMERA_MAX_ZOOM);
+
+  // Move forward
+  if(input_key_down(KEY_UP)) {
+    camera.position += Vec3(camera.front.x, 0.0f, camera.front.z) * speed;
+  }
+  // Move backwards
+  else if(input_key_down(KEY_DOWN)) {
+    camera.position -= Vec3(camera.front.x, 0.0f, camera.front.z) * speed;
   }
  
   // Move right

@@ -16,6 +16,11 @@ struct BoxCollider {
   Vec3 half_size;
   Vec3 min, max; 
 
+  /// Default constructor
+  BoxCollider() 
+    :half_size(0.5f)
+    {}
+
   /// Given the `size`, the collider will 
   /// half it for future calculations.
   BoxCollider(const Vec3& size) {
@@ -32,6 +37,11 @@ struct BoxCollider {
 /// SphereCollider
 struct SphereCollider {
   f32 radius = 0.0f; 
+  
+  /// Default constructor
+  SphereCollider() 
+    :radius(1.0f)
+    {}
 
   /// Set the given `radius` as the radius 
   /// of the sphere collider.

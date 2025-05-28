@@ -191,8 +191,11 @@ using RenderPassFn = void(*)(const RenderPass* previous, RenderPass* current, vo
 ///---------------------------------------------------------------------------------------------------------------------
 /// Camera functions
 
-/// The default function callback to use in order to move `camera`.
-NIKOLA_API void camera_default_move_func(Camera& camera);
+/// A function to mimick a free-form camera movement.
+NIKOLA_API void camera_free_move_func(Camera& camera);
+
+/// A function to mimick a first-person shooter camera movement.
+NIKOLA_API void camera_fps_move_func(Camera& camera);
 
 /// Fill the information in `cam` using the given `CameraDesc`.
 NIKOLA_API void camera_create(Camera* cam, const CameraDesc& desc);
