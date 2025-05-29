@@ -59,20 +59,20 @@ void camera_fps_move_func(Camera& camera) {
   camera.zoom  = clamp_float(camera.zoom, 1.0f, CAMERA_MAX_ZOOM);
 
   // Move forward
-  if(input_key_down(KEY_UP)) {
+  if(input_key_down(KEY_W)) {
     camera.position += Vec3(camera.front.x, 0.0f, camera.front.z) * speed;
   }
   // Move backwards
-  else if(input_key_down(KEY_DOWN)) {
+  else if(input_key_down(KEY_S)) {
     camera.position -= Vec3(camera.front.x, 0.0f, camera.front.z) * speed;
   }
  
   // Move right
-  if(input_key_down(KEY_RIGHT)) {
+  if(input_key_down(KEY_A)) {
     camera.position += vec3_normalize(vec3_cross(camera.front, camera.up)) * speed;
   }
   // Move left
-  else if(input_key_down(KEY_LEFT)) {
+  else if(input_key_down(KEY_D)) {
     camera.position -= vec3_normalize(vec3_cross(camera.front, camera.up)) * speed;
   }
 }

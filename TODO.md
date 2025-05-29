@@ -98,6 +98,12 @@
     - [x] Add raycasting 
     - [x] Add AABB VS. Ray collision detection
     - [x] Add Spheres and their associated collision detection functions
+[] Physics v0.1
+    - [] Create a physics world, physics body, and what have you
+    - [] Test the physics logic by making some testbeds.
+    - [] Integrate the physics layer into the engine proper.
+    - [] Add the newly-added physics types to be edited by the GUI 
+    - [] Documentation
 [] Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers
     - [x] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application.
@@ -109,10 +115,6 @@
     - [] A canvas system for 2D game UI.
     - [] A menu system
     - [] Documentation
-[] Particles v0.1 
-    - [] Add CPU-based particles that can render different shapes, sizes, and colors (maybe even certain textures?) 
-    - [] Implement a GPU-based particle system, using something like instancing.
-    - [] Documentation
 [] Renderer v0.6 
     - [] YOU MUST ADD INSTANCING NOOOOOOWWW!!!!
     - [] Allow toggleablity of render passes
@@ -122,13 +124,11 @@
     - [] Better bloom for testing the new compute shaders
     - [] Cascaded shadow maps
     - [] Documentation
-[] 3D Animations v0.1
-[] Physics v0.1
-    - [] Create a physics world, physics body, and what have you
-    - [] Test the physics logic by making some testbeds.
-    - [] Integrate the physics layer into the engine proper.
-    - [] Add the newly-added physics types to be edited by the GUI 
+[] Particles v0.1 
+    - [] Add CPU-based particles that can render different shapes, sizes, and colors (maybe even certain textures?) 
+    - [] Implement a GPU-based particle system, using something like instancing.
     - [] Documentation
+[] 3D Animations v0.1
 
 ## (Engine) BUGS: 
 - EMPTY FOR NOW...
