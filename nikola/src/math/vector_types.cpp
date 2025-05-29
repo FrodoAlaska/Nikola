@@ -21,6 +21,14 @@ const Vec2 vec2_clamp(const Vec2& value, const Vec2& min, const Vec2& max) {
   return glm::clamp(value, min, max);
 }
 
+const Vec2 vec2_lerp(const Vec2& start, const Vec2& end, const f32 amount) {
+  return glm::mix(start, end, amount);
+}
+
+const Vec2 vec2_smoothstep(const Vec2& edge0, const Vec2& edge1, const Vec2& x) {
+  return glm::smoothstep(edge0, edge1, x);
+}
+
 const Vec2 vec2_min(const Vec2& v1, const Vec2& v2) {
   return glm::min(v1, v2);
 }
@@ -60,6 +68,14 @@ const Vec3 vec3_clamp(const Vec3& value, const Vec3& min, const Vec3& max) {
   return glm::clamp(value, min, max);
 }
 
+const Vec3 vec3_lerp(const Vec3& start, const Vec3& end, const f32 amount) {
+  return glm::mix(start, end, amount);
+}
+
+const Vec3 vec3_smoothstep(const Vec3& edge0, const Vec3& edge1, const Vec3& x) {
+  return glm::smoothstep(edge0, edge1, x);
+}
+
 const Vec3 vec3_min(const Vec3& v1, const Vec3& v2) {
   return glm::min(v1, v2);
 }
@@ -96,6 +112,14 @@ const Vec4 vec4_normalize(const Vec4& v) {
 
 const Vec4 vec4_clamp(const Vec4& value, const Vec4& min, const Vec4& max) {
   return glm::clamp(value, min, max);
+}
+
+const Vec4 vec4_lerp(const Vec4& start, const Vec4& end, const f32 amount) {
+  return glm::mix(start, end, amount);
+}
+
+const Vec4 vec4_smoothstep(const Vec4& edge0, const Vec4& edge1, const Vec4& x) {
+  return glm::smoothstep(edge0, edge1, x);
 }
 
 const Vec4 vec4_min(const Vec4& v1, const Vec4& v2) {

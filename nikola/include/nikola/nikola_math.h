@@ -206,6 +206,9 @@ NIKOLA_API const i32 max_int(const i32 x, const i32 y);
 /// Returns the linear interpolation from `start` to `end` by `amount`
 NIKOLA_API const f32 lerp(const f32 start, const f32 end, const f32 amount);
 
+/// Perform a hermite interpolation between `edge0` and `edge1` by `x`.
+NIKOLA_API const f32 smoothstep(const f32 edge0, const f32 edge1, const f32 x);
+
 /// Returns the re mapped `value` from `old_min` - `old_max` to `new_min` to `new_max`
 NIKOLA_API const f32 remap(const f32 value, const f32 old_min, const f32 old_max, const f32 new_min, const f32 new_max);
 
@@ -263,6 +266,12 @@ NIKOLA_API const Vec2 vec2_normalize(const Vec2& v);
 /// Returns the clamped `value` between `min` and `max`
 NIKOLA_API const Vec2 vec2_clamp(const Vec2& value, const Vec2& min, const Vec2& max);
 
+/// Returns the linearly interpolated vector from `start` to `end` by `amount`.
+NIKOLA_API const Vec2 vec2_lerp(const Vec2& start, const Vec2& end, const f32 amount);
+
+/// Perform a hermite interpolation between `edge0` and `edge1` by `x`.
+NIKOLA_API const Vec2 vec2_smoothstep(const Vec2& edge0, const Vec2& edge1, const Vec2& x);
+
 /// Returns the lesser vector between `v1` and `v2`
 NIKOLA_API const Vec2 vec2_min(const Vec2& v1, const Vec2& v2);
 
@@ -273,7 +282,7 @@ NIKOLA_API const Vec2 vec2_max(const Vec2& v1, const Vec2& v2);
 NIKOLA_API const f32 vec2_dot(const Vec2& v1, const Vec2& v2);
 
 /// Returns the distance between `v1` and `v2`
-NIKOLA_API const f32 vec2_distance(const Vec2& v1, const Vec2& v2);
+NIKOLA_API const Vec2 vec2_distance(const Vec2& vec, const Vec2& target, const f32 );
 
 /// Returns the angle in radians between `point1` and `point2`
 NIKOLA_API const f32 vec2_angle(const Vec2& point1, const Vec2& point2);
@@ -292,6 +301,12 @@ NIKOLA_API const Vec3 vec3_normalize(const Vec3& v);
 
 /// Returns the clamped `value` between `min` and `max`
 NIKOLA_API const Vec3 vec3_clamp(const Vec3& value, const Vec3& min, const Vec3& max);
+
+/// Returns the linearly interpolated vector from `start` to `end` by `amount`.
+NIKOLA_API const Vec3 vec3_lerp(const Vec3& start, const Vec3& end, const f32 amount);
+
+/// Perform a hermite interpolation between `edge0` and `edge1` by `x`.
+NIKOLA_API const Vec3 vec3_smoothstep(const Vec3& edge0, const Vec3& edge1, const Vec3& x);
 
 /// Returns the lesser vector between `v1` and `v2`
 NIKOLA_API const Vec3 vec3_min(const Vec3& v1, const Vec3& v2);
@@ -322,6 +337,12 @@ NIKOLA_API const Vec4 vec4_normalize(const Vec4& v);
 
 /// Returns the clamped `value` between `min` and `max`
 NIKOLA_API const Vec4 vec4_clamp(const Vec4& value, const Vec4& min, const Vec4& max);
+
+/// Returns the linearly interpolated vector from `start` to `end` by `amount`.
+NIKOLA_API const Vec4 vec4_lerp(const Vec4& start, const Vec4& end, const f32 amount);
+
+/// Perform a hermite interpolation between `edge0` and `edge1` by `x`.
+NIKOLA_API const Vec4 vec4_smoothstep(const Vec4& edge0, const Vec4& edge1, const Vec4& x);
 
 /// Returns the lesser vector between `v1` and `v2`
 NIKOLA_API const Vec4 vec4_min(const Vec4& v1, const Vec4& v2);
