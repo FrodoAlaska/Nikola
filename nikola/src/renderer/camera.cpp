@@ -38,11 +38,11 @@ void camera_free_move_func(Camera& camera) {
  
   // Move right
   if(input_key_down(KEY_RIGHT)) {
-    camera.position -= vec3_normalize(vec3_cross(camera.front, camera.up)) * speed;
+    camera.position += vec3_normalize(vec3_cross(camera.front, camera.up)) * speed;
   }
   // Move left
   else if(input_key_down(KEY_LEFT)) {
-    camera.position += vec3_normalize(vec3_cross(camera.front, camera.up)) * speed;
+    camera.position -= vec3_normalize(vec3_cross(camera.front, camera.up)) * speed;
   }
 }
 

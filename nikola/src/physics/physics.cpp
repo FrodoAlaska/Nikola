@@ -14,6 +14,35 @@ namespace nikola { // Start of nikola
 /// *** Physics ***
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// PhysicsBody 
+struct PhysicsBody {
+  PhysicsBodyID id;
+  q3Body* body; 
+
+  Transform transform;
+  Vec3 linear_velocity; 
+  Vec3 angular_velocity;
+
+  void* user_data;
+};
+/// PhysicsBody 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Collider
+struct Collider {
+  ColliderID id;
+  q3Box* box; 
+
+  Transform local; 
+  Vec3 extents; 
+
+  void* user_data;
+};
+/// Collider
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// PhysicsWorld
 struct PhysicsWorld {
   q3Scene* scene;
@@ -21,8 +50,8 @@ struct PhysicsWorld {
   OnCollisionFunc begin_func;
   OnCollisionFunc end_func; 
 
-  HashMap<PhysicsBodyID, q3Body*> bodies; 
-  HashMap<ColliderID, q3Box*> colliders; 
+  HashMap<PhysicsBodyID, PhysicsBody> bodies; 
+  HashMap<ColliderID, Collider> colliders; 
 };
 
 static PhysicsWorld s_world;
@@ -40,11 +69,11 @@ class ContanctListener : public q3ContactListener
 {
 	void BeginContact(const q3ContactConstraint *contact) {
     CollisionPoint point = {
-      .body_a = *(PhysicsBodyID*)contact->bodyA->GetUserData(),
-      .body_b = *(PhysicsBodyID*)contact->bodyB->GetUserData(),
-
-      .coll_a = *(ColliderID*)contact->A->GetUserdata(),
-      .coll_b = *(ColliderID*)contact->B->GetUserdata(),
+      .body_a = ((PhysicsBody*)contact->bodyA->GetUserData())->id,
+      .body_b = ((PhysicsBody*)contact->bodyB->GetUserData())->id,
+    
+      .coll_a = ((Collider*)contact->A->GetUserdata())->id,
+      .coll_b = ((Collider*)contact->B->GetUserdata())->id,
     };
 
     s_world.begin_func(point);
@@ -52,11 +81,11 @@ class ContanctListener : public q3ContactListener
 
 	void EndContact(const q3ContactConstraint* contact) {
     CollisionPoint point = {
-      .body_a = *(PhysicsBodyID*)contact->bodyA->GetUserData(),
-      .body_b = *(PhysicsBodyID*)contact->bodyB->GetUserData(),
-
-      .coll_a = *(ColliderID*)contact->A->GetUserdata(),
-      .coll_b = *(ColliderID*)contact->B->GetUserdata(),
+      .body_a = ((PhysicsBody*)contact->bodyA->GetUserData())->id,
+      .body_b = ((PhysicsBody*)contact->bodyB->GetUserData())->id,
+    
+      .coll_a = ((Collider*)contact->A->GetUserdata())->id,
+      .coll_b = ((Collider*)contact->B->GetUserdata())->id,
     };
 
     s_world.end_func(point);
@@ -147,6 +176,7 @@ void physics_world_init(const Vec3& gravity, const f32 timestep) {
 
   s_world.begin_func = on_collision_begin;
   s_world.end_func   = on_collision_end;
+  s_world.scene->SetContactListener(new ContanctListener);
 }
 
 void physics_world_shutdown() {
@@ -189,27 +219,38 @@ Vec3 physics_world_get_gravity() {
 /// PhysicsBody functions
 
 PhysicsBodyID physics_body_create(const PhysicsBodyDesc& desc) {
-  PhysicsBodyID id = random_u64();
+  // Add the body to the world
+  PhysicsBodyID id   = random_u64();
+  s_world.bodies[id] = PhysicsBody{.id = id}; 
 
+  // q3Body init
   q3BodyDef def; 
   def.position = vec_to_q3vec(desc.position);
   def.bodyType = body_type_to_q3body_type(desc.type);
   def.axis     = vec_to_q3vec(desc.rotation_axis);
   def.angle    = desc.rotation_angle;
   def.awake    = desc.is_awake;
-  def.userData = desc.user_data;
+  def.userData = &s_world.bodies[id];
 
-  s_world.bodies[id] = s_world.scene->CreateBody(def);
+  // Physics body init
+  s_world.bodies[id].body             = s_world.scene->CreateBody(def);
+  s_world.bodies[id].transform        = q3transform_to_transform(s_world.bodies[id].body->GetTransform());
+  s_world.bodies[id].linear_velocity  = q3vec_to_vec(def.linearVelocity); 
+  s_world.bodies[id].angular_velocity = q3vec_to_vec(def.angularVelocity); 
+  s_world.bodies[id].user_data        = desc.user_data;
+
   return id;
 }
 
 void physics_body_destroy(PhysicsBodyID& id) {
-  s_world.scene->RemoveBody(s_world.bodies[id]);
+  s_world.scene->RemoveBody(s_world.bodies[id].body);
   s_world.bodies.erase(id);
 }
 
 ColliderID physics_body_add_collider(PhysicsBodyID& id, const ColliderDesc& desc) {
-  ColliderID coll_id = random_u64();
+  // Add the collider to the body
+  ColliderID coll_id         = random_u64();
+  s_world.colliders[coll_id] = Collider{.id = coll_id};
 
   // Transform init
   q3Transform trans; 
@@ -225,91 +266,101 @@ ColliderID physics_body_add_collider(PhysicsBodyID& id, const ColliderDesc& desc
   def.SetSensor(desc.is_sensor);
 
   // Box init
-  const q3Box* box = s_world.bodies[id]->AddBox(def);
-  box->SetUserdata(desc.user_data);
+  const q3Box* box = s_world.bodies[id].body->AddBox(def);
+  box->SetUserdata(&s_world.colliders[coll_id]);
 
   // Add the box
-  s_world.colliders[coll_id] = (q3Box*)box;
+  s_world.colliders[coll_id].box       = (q3Box*)box;
+  s_world.colliders[coll_id].local     = q3transform_to_transform(box->local);
+  s_world.colliders[coll_id].extents   = desc.extents;
+  s_world.colliders[coll_id].user_data = desc.user_data;
+
   return coll_id;
 }
 
 void physics_body_remove_collider(PhysicsBodyID& id, const ColliderID& coll_id) {
-  s_world.bodies[id]->RemoveBox(s_world.colliders[coll_id]);
+  s_world.bodies[id].body->RemoveBox(s_world.colliders[coll_id].box);
   s_world.colliders.erase(coll_id);
 }
 
 void physics_body_apply_force(PhysicsBodyID& id, const Vec3& force) {
-  s_world.bodies[id]->ApplyLinearForce(vec_to_q3vec(force));
+  s_world.bodies[id].body->ApplyLinearForce(vec_to_q3vec(force));
 }
 
 void physics_body_apply_force_at(PhysicsBodyID& id, const Vec3& force, const Vec3& point) {
-  s_world.bodies[id]->ApplyForceAtWorldPoint(vec_to_q3vec(force), vec_to_q3vec(point));
+  s_world.bodies[id].body->ApplyForceAtWorldPoint(vec_to_q3vec(force), vec_to_q3vec(point));
 }
 
 void physics_body_apply_impulse(PhysicsBodyID& id, const Vec3& impulse) {
-  s_world.bodies[id]->ApplyLinearImpulse(vec_to_q3vec(impulse));
+  s_world.bodies[id].body->ApplyLinearImpulse(vec_to_q3vec(impulse));
 }
 
 void physics_body_apply_impulse_at(PhysicsBodyID& id, const Vec3& impulse, const Vec3& point) {
-  s_world.bodies[id]->ApplyLinearImpulseAtWorldPoint(vec_to_q3vec(impulse), vec_to_q3vec(point));
+  s_world.bodies[id].body->ApplyLinearImpulseAtWorldPoint(vec_to_q3vec(impulse), vec_to_q3vec(point));
 }
 
 void physics_body_apply_torque(PhysicsBodyID& id, const Vec3& torque) {
-  s_world.bodies[id]->ApplyTorque(vec_to_q3vec(torque));
+  s_world.bodies[id].body->ApplyTorque(vec_to_q3vec(torque));
 }
 
 void physics_body_set_position(PhysicsBodyID& id, const Vec3& pos) {
-  s_world.bodies[id]->SetTransform(vec_to_q3vec(pos));
+  s_world.bodies[id].body->SetTransform(vec_to_q3vec(pos));
+  transform_translate(s_world.bodies[id].transform, pos);
 }
 
 void physics_body_set_rotation(PhysicsBodyID& id, const Vec3& axis, const f32 angle) {
   q3Vec3 pos = vec_to_q3vec(physics_body_get_transform(id).position);
-  s_world.bodies[id]->SetTransform(pos, vec_to_q3vec(axis), angle);
+  s_world.bodies[id].body->SetTransform(pos, vec_to_q3vec(axis), angle);
+  
+  transform_rotate(s_world.bodies[id].transform, axis, angle);
 }
 
 void physics_body_set_linear_velocity(PhysicsBodyID& id, const Vec3& vel) {
-  s_world.bodies[id]->SetLinearVelocity(vec_to_q3vec(vel));
+  s_world.bodies[id].body->SetLinearVelocity(vec_to_q3vec(vel));
+  s_world.bodies[id].linear_velocity = vel;
 }
 
 void physics_body_set_angular_velocity(PhysicsBodyID& id, const Vec3& vel) {
-  s_world.bodies[id]->SetAngularVelocity(vec_to_q3vec(vel));
+  s_world.bodies[id].body->SetAngularVelocity(vec_to_q3vec(vel));
+  s_world.bodies[id].angular_velocity = vel;
 }
 
 void physics_body_set_awake(PhysicsBodyID& id, const bool awake) {
   if(awake) {
-    s_world.bodies[id]->SetToAwake();
+    s_world.bodies[id].body->SetToAwake();
   }
   else {
-    s_world.bodies[id]->SetToSleep();
+    s_world.bodies[id].body->SetToSleep();
   }
 }
 
-Vec3 physics_body_get_position(PhysicsBodyID& id) {
-  return q3vec_to_vec(s_world.bodies[id]->GetTransform().position);
+Vec3& physics_body_get_position(const PhysicsBodyID& id) {
+  return s_world.bodies[id].transform.position;
 }
 
-Quat physics_body_get_quaternion(PhysicsBodyID& id) {
-  return q3quaternion_to_quat(s_world.bodies[id]->GetQuaternion());
+Quat& physics_body_get_quaternion(const PhysicsBodyID& id) {
+  return s_world.bodies[id].transform.rotation;
 }
 
-Transform physics_body_get_transform(PhysicsBodyID& id) {
-  return q3transform_to_transform(s_world.bodies[id]->GetTransform());
+Transform& physics_body_get_transform(const PhysicsBodyID& id) {
+  s_world.bodies[id].transform = q3transform_to_transform(s_world.bodies[id].body->GetTransform());
+  return s_world.bodies[id].transform;
 }
 
-Vec3 physics_body_get_linear_velocity(PhysicsBodyID& id) {
-  return q3vec_to_vec(s_world.bodies[id]->GetLinearVelocity());
+Vec3& physics_body_get_linear_velocity(const PhysicsBodyID& id) {
+  return s_world.bodies[id].linear_velocity;
 }
 
-Vec3 physics_body_get_angular_velocity(PhysicsBodyID& id) {
-  return q3vec_to_vec(s_world.bodies[id]->GetAngularVelocity());
+Vec3& physics_body_get_angular_velocity(const PhysicsBodyID& id) {
+  return s_world.bodies[id].angular_velocity;
 }
 
-bool physics_body_is_awake(PhysicsBodyID& id) {
-  return s_world.bodies[id]->IsAwake();
+bool physics_body_is_awake(const PhysicsBodyID& id) {
+  return s_world.bodies[id].body->IsAwake();
 }
 
-void* physics_body_get_user_data(PhysicsBodyID& id) {
-  return s_world.bodies[id]->GetUserData();
+void* physics_body_get_user_data(const PhysicsBodyID& id) {
+  return s_world.bodies[id].user_data;
 }
 
 /// PhysicsBody functions
@@ -318,44 +369,57 @@ void* physics_body_get_user_data(PhysicsBodyID& id) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Collider functions
 
+void collider_set_extents(ColliderID& id, const Vec3& extents) {
+  s_world.colliders[id].extents = extents;
+  s_world.colliders[id].box->e  = vec_to_q3vec(extents);
+}
+
 void collider_set_friction(ColliderID& id, const f32 friction) {
-  s_world.colliders[id]->friction = friction;
+  s_world.colliders[id].box->friction = friction;
 }
 
 void collider_set_restitution(ColliderID& id, const f32 restitution) {
-  s_world.colliders[id]->restitution = restitution;
+  s_world.colliders[id].box->restitution = restitution;
 }
 
 void collider_set_density(ColliderID& id, const f32 density) {
-  s_world.colliders[id]->density = density;
-}
-
-void collider_set_sensor(ColliderID& id, const bool sensor) {
-  s_world.colliders[id]->SetSensor(sensor);
+  s_world.colliders[id].box->density = density;
 }
 
 void collider_set_user_data(ColliderID& id, const void* user_data) {
-  s_world.colliders[id]->SetUserdata((void*)user_data);
+  s_world.colliders[id].user_data = (void*)user_data;
 }
 
-f32 collider_get_friction(ColliderID& id) {
-  return s_world.colliders[id]->friction;
+Vec3& collider_get_extents(const ColliderID& id) {
+  return s_world.colliders[id].extents;
 }
 
-f32 collider_get_restitution(ColliderID& id) {
-  return s_world.colliders[id]->restitution;
+f32 collider_get_friction(const ColliderID& id) {
+  return s_world.colliders[id].box->friction;
 }
 
-f32 collider_get_density(ColliderID& id) {
-  return s_world.colliders[id]->density;
+f32 collider_get_restitution(const ColliderID& id) {
+  return s_world.colliders[id].box->restitution;
 }
 
-bool collider_get_sensor(ColliderID& id) {
-  return s_world.colliders[id]->sensor;
+f32 collider_get_density(const ColliderID& id) {
+  return s_world.colliders[id].box->density;
 }
 
-void* collider_get_user_data(ColliderID& id) {
-  return s_world.colliders[id]->GetUserdata();
+bool collider_get_sensor(const ColliderID& id) {
+  return s_world.colliders[id].box->sensor;
+}
+
+void* collider_get_user_data(const ColliderID& id) {
+  return s_world.colliders[id].user_data;
+}
+
+Transform& collider_get_local_transform(const ColliderID& id) {
+  return s_world.colliders[id].local;
+}
+
+Transform collider_get_world_transform(const ColliderID& id) {
+  return q3transform_to_transform(q3Mul(s_world.colliders[id].box->body->GetTransform(), s_world.colliders[id].box->local));
 }
 
 /// Collider functions

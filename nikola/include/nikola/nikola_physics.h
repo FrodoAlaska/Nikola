@@ -129,19 +129,19 @@ NIKOLA_API void physics_body_set_angular_velocity(PhysicsBodyID& id, const Vec3&
 
 NIKOLA_API void physics_body_set_awake(PhysicsBodyID& id, const bool awake);
 
-NIKOLA_API Vec3 physics_body_get_position(PhysicsBodyID& id);
+NIKOLA_API Vec3& physics_body_get_position(const PhysicsBodyID& id);
 
-NIKOLA_API Quat physics_body_get_quaternion(PhysicsBodyID& id);
+NIKOLA_API Quat& physics_body_get_quaternion(const PhysicsBodyID& id);
 
-NIKOLA_API Transform physics_body_get_transform(PhysicsBodyID& id);
+NIKOLA_API Transform& physics_body_get_transform(const PhysicsBodyID& id);
 
-NIKOLA_API Vec3 physics_body_get_linear_velocity(PhysicsBodyID& id);
+NIKOLA_API Vec3& physics_body_get_linear_velocity(const PhysicsBodyID& id);
 
-NIKOLA_API Vec3 physics_body_get_angular_velocity(PhysicsBodyID& id);
+NIKOLA_API Vec3& physics_body_get_angular_velocity(const PhysicsBodyID& id);
 
-NIKOLA_API bool physics_body_is_awake(PhysicsBodyID& id);
+NIKOLA_API bool physics_body_is_awake(const PhysicsBodyID& id);
 
-NIKOLA_API void* physics_body_get_user_data(PhysicsBodyID& id);
+NIKOLA_API void* physics_body_get_user_data(const PhysicsBodyID& id);
 
 /// PhysicsBody functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -149,25 +149,31 @@ NIKOLA_API void* physics_body_get_user_data(PhysicsBodyID& id);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Collider functions
 
+NIKOLA_API void collider_set_extents(ColliderID& id, const Vec3& extents);
+
 NIKOLA_API void collider_set_friction(ColliderID& id, const f32 friction);
 
 NIKOLA_API void collider_set_restitution(ColliderID& id, const f32 restitution);
 
 NIKOLA_API void collider_set_density(ColliderID& id, const f32 density);
 
-NIKOLA_API void collider_set_sensor(ColliderID& id, const bool sensor);
-
 NIKOLA_API void collider_set_user_data(ColliderID& id, const void* user_data);
 
-NIKOLA_API f32 collider_get_friction(ColliderID& id);
+NIKOLA_API Vec3& collider_get_extents(const ColliderID& id);
 
-NIKOLA_API f32 collider_get_restitution(ColliderID& id);
+NIKOLA_API f32 collider_get_friction(const ColliderID& id);
 
-NIKOLA_API f32 collider_get_density(ColliderID& id);
+NIKOLA_API f32 collider_get_restitution(const ColliderID& id);
 
-NIKOLA_API bool collider_get_sensor(ColliderID& id);
+NIKOLA_API f32 collider_get_density(const ColliderID& id);
 
-NIKOLA_API void* collider_get_user_data(ColliderID& id);
+NIKOLA_API bool collider_get_sensor(const ColliderID& id);
+
+NIKOLA_API void* collider_get_user_data(const ColliderID& id);
+
+NIKOLA_API Transform& collider_get_local_transform(const ColliderID& id);
+
+NIKOLA_API Transform collider_get_world_transform(const ColliderID& id);
 
 /// Collider functions
 ///---------------------------------------------------------------------------------------------------------------------

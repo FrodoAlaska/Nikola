@@ -13,7 +13,8 @@ struct nikola::App {
   nikola::u16 res_group_id;
   nikola::ResourceID mesh_id, material_id;
 
-  nikola::Transform cube_transform, plane_transform;
+  nikola::PhysicsBodyID cube_body, plane_body;
+  nikola::ColliderID cube_collider, plane_collider;
 
   bool has_editor = false;
 };
@@ -41,6 +42,36 @@ static void init_resources(nikola::App* app) {
   app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMATRY_CUBE);
 }
 
+static void init_bodies(nikola::App* app) {
+  // Cube 
+  nikola::PhysicsBodyDesc body_desc = {
+    .position = nikola::Vec3(10.0f, 0.0f, 10.0f), 
+    .type     = nikola::PHYSICS_BODY_DYNAMIC, 
+  };
+  app->cube_body = nikola::physics_body_create(body_desc);
+
+  // Cube collider 
+  nikola::ColliderDesc coll_desc = {
+    .position = nikola::Vec3(0.0f),
+    .extents  = nikola::Vec3(1.0f), 
+  };
+  app->cube_collider = nikola::physics_body_add_collider(app->cube_body, coll_desc);
+
+  // Plane
+  body_desc = {
+    .position = nikola::Vec3(10.0f, -5.0f, 10.0f), 
+    .type     = nikola::PHYSICS_BODY_STATIC, 
+  };
+  app->plane_body = nikola::physics_body_create(body_desc);
+
+  // Plane collider
+  coll_desc = {
+    .position = nikola::Vec3(0.0f),
+    .extents  = nikola::Vec3(64.0f, 1.0f, 64.0f), 
+  };
+  app->plane_collider = nikola::physics_body_add_collider(app->plane_body, coll_desc);
+}
+
 /// Private functions 
 /// ----------------------------------------------------------------------
 
@@ -64,27 +95,27 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
     .target       = nikola::Vec3(-3.0f, 0.0f, 0.0f),
     .up_axis      = nikola::Vec3(0.0f, 1.0f, 0.0f),
     .aspect_ratio = nikola::window_get_aspect_ratio(app->window),
-    .move_func    = nikola::camera_fps_move_func,
+    .move_func    = nikola::camera_free_move_func,
   };
   nikola::camera_create(&app->frame_data.camera, cam_desc);
 
   // Resoruces init
   init_resources(app);
 
+  // Physics init
+  nikola::physics_world_init(nikola::Vec3(0.0f, -9.81f, 0.0f), 1 / 60.0f);
+
   // Lights init
   app->frame_data.dir_light.direction = nikola::Vec3(-1.0f, -1.0f, 1.0f);
   
-  // Transforms init
-  nikola::transform_translate(app->cube_transform, nikola::Vec3(10.0f, 0.0f, 10.0f));
-  nikola::transform_scale(app->cube_transform, nikola::Vec3(1.0f));
-  
-  nikola::transform_translate(app->plane_transform, nikola::Vec3(10.0f, -5.0f, 10.0f));
-  nikola::transform_scale(app->plane_transform, nikola::Vec3(128.0f, 0.1f, 128.0f));
+  // Physics bodies init
+  init_bodies(app);
 
   return app;
 }
 
 void app_shutdown(nikola::App* app) {
+  nikola::physics_world_shutdown();
   nikola::resources_destroy_group(app->res_group_id);
   nikola::gui_shutdown();
 
@@ -92,6 +123,8 @@ void app_shutdown(nikola::App* app) {
 }
 
 void app_update(nikola::App* app, const nikola::f64 delta_time) {
+  nikola::physics_world_step();
+
   // Quit the application when the specified exit key is pressed
   if(nikola::input_key_pressed(nikola::KEY_ESCAPE)) {
     nikola::event_dispatch(nikola::Event{.type = nikola::EVENT_APP_QUIT});
@@ -113,8 +146,20 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 void app_render(nikola::App* app) {
   // Render 3D 
   nikola::renderer_begin(app->frame_data);
-  nikola::renderer_queue_mesh(app->mesh_id, app->cube_transform);
-  nikola::renderer_queue_mesh(app->mesh_id, app->plane_transform, app->material_id);
+
+  nikola::Transform transform;
+
+  transform = nikola::physics_body_get_transform(app->cube_body);
+  nikola::transform_scale(transform, nikola::collider_get_extents(app->cube_collider));
+  nikola::renderer_queue_mesh(app->mesh_id, transform);
+  
+  transform = nikola::physics_body_get_transform(app->plane_body);
+  nikola::transform_scale(transform, nikola::collider_get_extents(app->plane_collider));
+  nikola::renderer_queue_mesh(app->mesh_id, transform, app->material_id);
+
+  // Debug stuff
+  nikola::renderer_debug_collider(app->cube_collider, nikola::Vec3(1.0f, 0.1f, 0.1f));
+  nikola::renderer_debug_collider(app->plane_collider, nikola::Vec3(0.1f, 1.0f, 0.1f));
   nikola::renderer_end();
   
   // Render 2D 
@@ -131,8 +176,10 @@ void app_render_gui(nikola::App* app) {
   nikola::gui_begin();
   
   nikola::gui_begin_panel("Entities");
-  nikola::gui_edit_transform("Cube Transform", &app->cube_transform);
+
   nikola::gui_edit_material("Cube Material", nikola::resources_get_material(app->material_id));
+  nikola::gui_edit_directional_light("Directional light", &app->frame_data.dir_light);
+
   nikola::gui_end_panel();
 
   nikola::gui_debug_info();

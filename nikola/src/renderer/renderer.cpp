@@ -2,6 +2,7 @@
 #include "nikola/nikola_base.h"
 #include "nikola/nikola_gfx.h"
 #include "nikola/nikola_math.h"
+#include "nikola/nikola_physics.h"
 
 #include "render_shaders.h"
 #include "light_shaders.h"
@@ -42,8 +43,11 @@ struct MeshRenderCommand {
   Material* material            = nullptr; 
   ShaderContext* shader_context = nullptr;
 
-  MeshRenderCommand(Mesh* mesh, const Transform& trans, Material* mat, ShaderContext* ctx) 
-    :mesh(mesh), transform(trans), material(mat), shader_context(ctx)
+  // @TODO (Renderer): Temporary
+  Vec4 color;
+
+  MeshRenderCommand(Mesh* mesh, const Transform& trans, Material* mat, ShaderContext* ctx, const Vec4& color = Vec4(1.0f)) 
+    :mesh(mesh), transform(trans), material(mat), shader_context(ctx), color(color)
   {}
 };
 /// MeshRenderCommand
@@ -66,6 +70,7 @@ struct Renderer {
   DynamicArray<RenderPassEntry> render_passes;
 
   DynamicArray<MeshRenderCommand> render_queue;
+  DynamicArray<MeshRenderCommand> debug_queue;
 };
 
 static Renderer s_renderer{};
@@ -115,6 +120,9 @@ static void init_defaults() {
 
   // Material init
   s_renderer.defaults.material = resources_get_material(resources_push_material(RESOURCE_CACHE_ID, default_texture_id));
+
+  // Cube mesh init
+  s_renderer.defaults.cube_mesh = resources_get_mesh(resources_push_mesh(RESOURCE_CACHE_ID, GEOMATRY_CUBE));
 
   // Shaders init
   ResourceID default_shader     = resources_push_shader(RESOURCE_CACHE_ID, generate_default_shader());
@@ -179,7 +187,7 @@ static void init_pipeline() {
 static void render_mesh(MeshRenderCommand& command) {
   // Setting uniforms 
   shader_context_set_uniform(command.shader_context, MATERIAL_UNIFORM_MODEL_MATRIX, command.transform.transform);
-  shader_context_set_uniform(command.shader_context, MATERIAL_UNIFORM_COLOR, command.material->color);
+  shader_context_set_uniform(command.shader_context, MATERIAL_UNIFORM_COLOR, command.color);
 
   // Using the shader 
   shader_context_use(command.shader_context);
@@ -271,8 +279,8 @@ static void end_pass(RenderPass& pass) {
   gfx_pipeline_draw_index(s_renderer.pipeline);
 }
 
-static void flush_queue() {
-  for(auto& command : s_renderer.render_queue) {
+static void flush_queue(DynamicArray<MeshRenderCommand>& queue) {
+  for(auto& command : queue) {
     render_mesh(command);
   }
 }
@@ -322,7 +330,11 @@ static void light_pass_fn(const RenderPass* previous, RenderPass* current, void*
   }
 
   // Render the frame with the light data 
-  flush_queue();
+  flush_queue(s_renderer.render_queue);
+
+  // @TODO (Renderer): Probably better not to flush 
+  // the debug queue here. But, oh well. 
+  flush_queue(s_renderer.debug_queue);
 
   // Updating some HDR uniforms
   shader_context_set_uniform(resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_HDR]), "u_exposure", s_renderer.frame_data->camera.exposure);
@@ -424,6 +436,18 @@ void renderer_queue_model(const ResourceID& model_id, const Transform& transform
   }
 }
 
+void renderer_debug_cube(const Transform& transform, const Vec4& color) {
+  ShaderContext* shader_context = resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_DEFAULT]);
+  s_renderer.debug_queue.emplace_back(s_renderer.defaults.cube_mesh, transform, s_renderer.defaults.material, shader_context, color);
+}
+
+void renderer_debug_collider(const ColliderID& coll_id, const Vec3& color) {
+  Transform transform = collider_get_world_transform(coll_id);
+  transform_scale(transform, collider_get_extents(coll_id));
+
+  renderer_debug_cube(transform, Vec4(color, 0.2f));
+}
+
 void renderer_begin(FrameData& data) {
   GfxBuffer* matrix_buffer = s_renderer.defaults.matrices_buffer;
 
@@ -460,10 +484,9 @@ void renderer_end() {
     end_pass(entry->pass);
   } 
   
-  // Clear the current render queue (if there's any there)
-  if(!s_renderer.render_queue.empty()) {
-    s_renderer.render_queue.clear();
-  }
+  // Clear the queues
+  s_renderer.render_queue.clear();
+  s_renderer.debug_queue.clear();
 }
 
 /// Renderer functions

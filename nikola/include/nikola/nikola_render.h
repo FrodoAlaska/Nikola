@@ -96,7 +96,9 @@ struct Camera {
 struct RendererDefaults {
   GfxTexture* texture        = nullptr;
   GfxBuffer* matrices_buffer = nullptr;
+  
   Material* material         = nullptr;
+  Mesh* cube_mesh            = nullptr;
 };
 /// RendererDefaults 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -242,6 +244,20 @@ NIKOLA_API void renderer_queue_mesh(const ResourceID& mesh_id, const Transform& 
 /// @NOTE: Both `mat_id` and `shader_context_id` are set to `RESOURCE_INVALID` by default, which will prompt the 
 /// renderer to use the default material and the default shader context.
 NIKOLA_API void renderer_queue_model(const ResourceID& model_id, const Transform& transform, const ResourceID& shader_context_id = {});
+
+/// Render a cube for debugging purposes. 
+/// The cube will not be shaded or effected by the main rendering pipeline. 
+///
+/// @NOTE: Please only use this for debugging purposes. It is not optimized 
+/// or batched in any way. Use with discretion.
+NIKOLA_API void renderer_debug_cube(const Transform& transform, const Vec4& color);
+
+/// Render the shape of the collider `coll_id` at its given position, rotation, and scale, 
+/// and shaded with `color` (by default set to `Vec3(1.0f)`).
+///
+/// @NOTE: Please only use this for debugging purposes. It is not optimized 
+/// or batched in any way. Use with discretion.
+NIKOLA_API void renderer_debug_collider(const ColliderID& coll_id, const Vec3& color = Vec3(1.0f));
 
 /// Setup the renderer for any upcoming render operations by 
 /// the data given in `data`.

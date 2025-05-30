@@ -100,8 +100,8 @@
     - [x] Add Spheres and their associated collision detection functions
 [] Physics v0.1
     - [x] Create a physics world, physics body, and what have you
-    - [] Add collision callbacks and debug render capabilities for the colliders
-    - [] Test the physics logic by making some testbeds.
+    - [x] Add collision callbacks and debug render capabilities for the colliders
+    - [x] Test the physics logic by making some testbeds.
     - [] Integrate the physics layer into the engine proper.
     - [] Ray testing 
     - [] Add the newly-added physics types to be edited by the GUI 

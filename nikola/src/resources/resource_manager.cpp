@@ -683,9 +683,9 @@ ResourceID resources_push_material(const u16 group_id, const ResourceID& diffuse
   material->shininess = 1.0f;
 
   // Default textures init
-  GfxTexture* default_texture  = renderer_get_defaults().texture;
-  material->diffuse_map        = RESOURCE_IS_VALID(diffuse_map) ? resources_get_texture(diffuse_map) : default_texture;
-  material->specular_map       = default_texture;
+  GfxTexture* default_texture = renderer_get_defaults().texture;
+  material->diffuse_map       = RESOURCE_IS_VALID(diffuse_map) ? resources_get_texture(diffuse_map) : default_texture;
+  material->specular_map      = default_texture;
 
   // Create material
   ResourceID id;
