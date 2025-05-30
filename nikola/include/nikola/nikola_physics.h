@@ -73,9 +73,36 @@ struct CollisionPoint {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// Ray
+struct Ray {
+  Vec3 position; 
+  Vec3 direction;
+};
+/// Ray
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// RayIntersection
+struct RayIntersection {
+  Vec3 point; 
+  Vec3 normal; 
+
+  f32 time_of_impact;
+  bool has_intersected;
+};
+/// RayIntersection
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// OnCollisionFunc
 using OnCollisionFunc = void(*)(const CollisionPoint& collision);
 /// OnCollisionFunc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// OnRayIntersectionFunc
+using OnRayIntersectionFunc = void(*)(const Ray& ray, const RayIntersection& info, const ColliderID& collider);
+/// OnRayIntersectionFunc
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -92,6 +119,8 @@ NIKOLA_API void physics_world_set_gravity(const Vec3& gravity);
 NIKOLA_API void physics_world_set_iterations_count(const i32 iterations);
 
 NIKOLA_API void physics_world_set_collision_callback(const OnCollisionFunc& begin_func, const OnCollisionFunc& end_func);
+
+NIKOLA_API void physics_world_check_raycast(const Ray& ray, const OnRayIntersectionFunc& ray_func);
 
 NIKOLA_API Vec3 physics_world_get_gravity();
 
@@ -149,6 +178,8 @@ NIKOLA_API void* physics_body_get_user_data(const PhysicsBodyID& id);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Collider functions
 
+NIKOLA_API RayIntersection collider_check_raycast(const ColliderID& id, const Ray& ray);
+
 NIKOLA_API void collider_set_extents(ColliderID& id, const Vec3& extents);
 
 NIKOLA_API void collider_set_friction(ColliderID& id, const f32 friction);
@@ -158,6 +189,8 @@ NIKOLA_API void collider_set_restitution(ColliderID& id, const f32 restitution);
 NIKOLA_API void collider_set_density(ColliderID& id, const f32 density);
 
 NIKOLA_API void collider_set_user_data(ColliderID& id, const void* user_data);
+
+NIKOLA_API PhysicsBodyID& collider_get_attached_body(const ColliderID& id);
 
 NIKOLA_API Vec3& collider_get_extents(const ColliderID& id);
 

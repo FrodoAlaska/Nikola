@@ -72,6 +72,14 @@ static void init_bodies(nikola::App* app) {
   app->plane_collider = nikola::physics_body_add_collider(app->plane_body, coll_desc);
 }
 
+static void on_raycast_hit(const nikola::Ray& ray, const nikola::RayIntersection& info, const nikola::ColliderID& coll) {
+  nikola::PhysicsBodyID body = nikola::collider_get_attached_body(coll);
+
+  if(info.has_intersected && nikola::input_button_pressed(nikola::MOUSE_BUTTON_LEFT)) {
+    nikola::physics_body_apply_force_at(body, ray.direction * 200.0f, info.point);
+  }
+}
+
 /// Private functions 
 /// ----------------------------------------------------------------------
 
@@ -85,6 +93,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // Window init
   app->window = window;
+  nikola::window_set_position(window, 100, 100);
 
   // Editor init
   nikola::gui_init(window);
@@ -102,9 +111,6 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Resoruces init
   init_resources(app);
 
-  // Physics init
-  nikola::physics_world_init(nikola::Vec3(0.0f, -9.81f, 0.0f), 1 / 60.0f);
-
   // Lights init
   app->frame_data.dir_light.direction = nikola::Vec3(-1.0f, -1.0f, 1.0f);
   
@@ -115,7 +121,6 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 }
 
 void app_shutdown(nikola::App* app) {
-  nikola::physics_world_shutdown();
   nikola::resources_destroy_group(app->res_group_id);
   nikola::gui_shutdown();
 
@@ -123,8 +128,6 @@ void app_shutdown(nikola::App* app) {
 }
 
 void app_update(nikola::App* app, const nikola::f64 delta_time) {
-  nikola::physics_world_step();
-
   // Quit the application when the specified exit key is pressed
   if(nikola::input_key_pressed(nikola::KEY_ESCAPE)) {
     nikola::event_dispatch(nikola::Event{.type = nikola::EVENT_APP_QUIT});
@@ -138,6 +141,18 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 
     nikola::input_cursor_show(app->has_editor);
   }
+
+  if(nikola::input_key_pressed(nikola::KEY_SPACE)) {
+    nikola::physics_body_apply_force(app->cube_body, nikola::Vec3(0.0f, 300.0f, 0.0f));
+  }
+
+  // Raycast test
+  nikola::Ray ray = {
+    .position  = app->frame_data.camera.position, 
+    .direction = app->frame_data.camera.front,
+  };
+  nikola::RayIntersection intersect = nikola::collider_check_raycast(app->cube_collider, ray); 
+  nikola::physics_world_check_raycast(ray, on_raycast_hit);
 
   // Update the camera
   nikola::camera_update(app->frame_data.camera);
@@ -158,14 +173,19 @@ void app_render(nikola::App* app) {
   nikola::renderer_queue_mesh(app->mesh_id, transform, app->material_id);
 
   // Debug stuff
-  nikola::renderer_debug_collider(app->cube_collider, nikola::Vec3(1.0f, 0.1f, 0.1f));
-  nikola::renderer_debug_collider(app->plane_collider, nikola::Vec3(0.1f, 1.0f, 0.1f));
+  // nikola::renderer_debug_collider(app->cube_collider, nikola::Vec3(1.0f, 0.1f, 0.1f));
+  // nikola::renderer_debug_collider(app->plane_collider, nikola::Vec3(0.1f, 1.0f, 0.1f));
+ 
   nikola::renderer_end();
   
   // Render 2D 
-  // nikola::batch_renderer_begin();
-  // nikola::batch_render_texture(app->material->diffuse_map, nikola::Vec2(200.0f), nikola::Vec2(128.0f));
-  // nikola::batch_renderer_end();
+  nikola::batch_renderer_begin();
+    
+  nikola::i32 width, height; 
+  nikola::window_get_size(app->window, &width, &height);
+
+  nikola::batch_render_quad(nikola::Vec2(width, height) / 2.0f, nikola::Vec2(10.0f), nikola::Vec4(1.0f));
+  nikola::batch_renderer_end();
 }
 
 void app_render_gui(nikola::App* app) {

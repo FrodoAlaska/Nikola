@@ -14,6 +14,21 @@ namespace nikola { // Start of nikola
 /// *** Physics ***
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// Private functions declarations
+
+static Vec3 q3vec_to_vec(const q3Vec3& vec);
+static Quat q3quaternion_to_quat(const q3Quaternion& quat);
+static Mat3 q3mat_to_mat(const q3Mat3& mat);
+static Transform q3transform_to_transform(const q3Transform& trans);
+static q3Vec3 vec_to_q3vec(const Vec3& vec);
+static q3Quaternion quat_to_q3quaternion(const Quat& quat);
+static q3Mat3 mat_to_q3mat(const Mat3& mat);
+static q3BodyType body_type_to_q3body_type(const PhysicsBodyType type);
+
+/// Private functions declarations
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// PhysicsBody 
 struct PhysicsBody {
   PhysicsBodyID id;
@@ -32,6 +47,8 @@ struct PhysicsBody {
 /// Collider
 struct Collider {
   ColliderID id;
+  PhysicsBodyID body_id;
+
   q3Box* box; 
 
   Transform local; 
@@ -49,6 +66,7 @@ struct PhysicsWorld {
 
   OnCollisionFunc begin_func;
   OnCollisionFunc end_func; 
+  OnRayIntersectionFunc ray_func;
 
   HashMap<PhysicsBodyID, PhysicsBody> bodies; 
   HashMap<ColliderID, Collider> colliders; 
@@ -92,6 +110,47 @@ class ContanctListener : public q3ContactListener
   }
 };
 /// ContanctListener
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// QueryCallback 
+class QueryCallback : public q3QueryCallback
+{
+  public:
+    q3RaycastData data;
+
+  public:
+    void Init(const q3RaycastData& raycast) {
+      data = raycast;
+    }
+
+    bool ReportShape( q3Box *box ) {
+      if(!box->Raycast(box->body->GetTransform(), &data)) {
+        return false;
+      }
+      
+
+      Ray ray = {
+        .position  = q3vec_to_vec(data.start),
+        .direction = q3vec_to_vec(data.dir),
+      };
+
+      RayIntersection intersect = {
+        .point           = q3vec_to_vec(data.GetImpactPoint()),
+        .normal          = q3vec_to_vec(data.normal),
+        .time_of_impact  = data.toi,
+        .has_intersected = true,
+      };
+      
+      if(s_world.ray_func) {
+        ColliderID coll = ((Collider*)box->GetUserdata())->id;
+        s_world.ray_func(ray, intersect, coll);
+      }
+
+      return true;
+    }
+};
+/// QueryCallback 
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -208,6 +267,18 @@ void physics_world_set_collision_callback(const OnCollisionFunc& begin_func, con
   s_world.end_func   = !end_func ? on_collision_end : end_func;
 }
 
+void physics_world_check_raycast(const Ray& ray, const OnRayIntersectionFunc& ray_func) {
+  s_world.ray_func = ray_func;
+
+  q3RaycastData data;
+  data.Set(vec_to_q3vec(ray.position), vec_to_q3vec(ray.direction), 10000.0f);
+
+  QueryCallback callback; 
+  callback.Init(data);
+
+  s_world.scene->RayCast(&callback, data);
+}
+
 Vec3 physics_world_get_gravity() {
   return q3vec_to_vec(s_world.scene->GetGravity());
 }
@@ -250,7 +321,7 @@ void physics_body_destroy(PhysicsBodyID& id) {
 ColliderID physics_body_add_collider(PhysicsBodyID& id, const ColliderDesc& desc) {
   // Add the collider to the body
   ColliderID coll_id         = random_u64();
-  s_world.colliders[coll_id] = Collider{.id = coll_id};
+  s_world.colliders[coll_id] = Collider{.id = coll_id, .body_id = id};
 
   // Transform init
   q3Transform trans; 
@@ -369,6 +440,30 @@ void* physics_body_get_user_data(const PhysicsBodyID& id) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Collider functions
 
+RayIntersection collider_check_raycast(const ColliderID& id, const Ray& ray) {
+  RayIntersection intersect = {};
+  q3Box* collider           = s_world.colliders[id].box;
+  
+  // Set the Qu3e raycast
+  q3RaycastData raycast;
+  raycast.Set(vec_to_q3vec(ray.position), vec_to_q3vec(ray.direction), 10000.0f);
+
+  // Check the intersection
+	intersect.has_intersected = collider->Raycast(collider->body->GetTransform(), &raycast);
+  
+  // No point to keep going if there is not intersection
+  if(!intersect.has_intersected) {
+    return intersect;
+  }
+
+  // Fill in some useful information
+  intersect.point          = q3vec_to_vec(raycast.GetImpactPoint());    
+  intersect.normal         = q3vec_to_vec(raycast.normal);
+  intersect.time_of_impact = raycast.toi;   
+
+  return intersect;
+}
+
 void collider_set_extents(ColliderID& id, const Vec3& extents) {
   s_world.colliders[id].extents = extents;
   s_world.colliders[id].box->e  = vec_to_q3vec(extents);
@@ -388,6 +483,10 @@ void collider_set_density(ColliderID& id, const f32 density) {
 
 void collider_set_user_data(ColliderID& id, const void* user_data) {
   s_world.colliders[id].user_data = (void*)user_data;
+}
+
+PhysicsBodyID& collider_get_attached_body(const ColliderID& id) {
+  return s_world.colliders[id].body_id;
 }
 
 Vec3& collider_get_extents(const ColliderID& id) {

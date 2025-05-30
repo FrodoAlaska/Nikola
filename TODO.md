@@ -101,10 +101,10 @@
 [] Physics v0.1
     - [x] Create a physics world, physics body, and what have you
     - [x] Add collision callbacks and debug render capabilities for the colliders
-    - [x] Test the physics logic by making some testbeds.
-    - [] Integrate the physics layer into the engine proper.
-    - [] Ray testing 
+    - [x] Integrate the physics layer into the engine proper.
+    - [x] Ray testing 
     - [] Add the newly-added physics types to be edited by the GUI 
+    - [] Test the physics logic by making some testbeds.
     - [] Documentation
 [] Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers

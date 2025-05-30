@@ -63,6 +63,9 @@ void engine_init(const AppDesc& desc) {
   // Batch renderer init
   batch_renderer_init();
 
+  // Physics world init
+  physics_world_init(Vec3(0.0f, -9.81f, 0.0f), 1 / 60.0f);
+
   // Check for any command line arguments
   Args cli_args; 
   for(u32 i = 0; i < desc.args_count; i++) {
@@ -81,13 +84,16 @@ void engine_init(const AppDesc& desc) {
 
 void engine_run() {
   while(window_is_open(s_engine.window)) {
-    // Update
+    // Physics step
+    physics_world_step(); 
+
+    // App update
     CHECK_VALID_CALLBACK(s_engine.app_desc.update_fn, s_engine.app, niclock_get_delta_time());
 
-    // Render
+    // App render
     CHECK_VALID_CALLBACK(s_engine.app_desc.render_fn, s_engine.app);
 
-    // Render the app's GUI
+    // App render GUI 
     CHECK_VALID_CALLBACK(s_engine.app_desc.render_gui_fn, s_engine.app);
 
     // Present to the backbuffer
@@ -100,7 +106,8 @@ void engine_run() {
 
 void engine_shutdown() {
   CHECK_VALID_CALLBACK(s_engine.app_desc.shutdown_fn, s_engine.app);
- 
+
+  physics_world_shutdown();
   batch_renderer_shutdown();
   renderer_shutdown();
   resource_manager_shutdown();
