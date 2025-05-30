@@ -4,6 +4,7 @@
 #include "nikola/nikola_render.h"
 #include "nikola/nikola_math.h"
 #include "nikola/nikola_audio.h"
+#include "nikola/nikola_physics.h"
 
 #include <GLFW/glfw3.h>
 
@@ -419,6 +420,68 @@ void gui_edit_audio_listener(const char* name) {
     audio_listener_set_velocity(listener.velocity);
   }
 
+  ImGui::PopID(); 
+}
+
+void gui_edit_physics_body(const char* name, PhysicsBodyID& body) {
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+  
+  // Position
+  Vec3 position = physics_body_get_position(body);
+  if(ImGui::DragFloat3("Position", &position[0])) {
+    physics_body_set_position(body, position);
+  }
+
+  // Linear velocity
+  Vec3 linear = physics_body_get_linear_velocity(body);
+  if(ImGui::DragFloat3("Linear velocity", &linear[0], 0.1f)) {
+    physics_body_set_linear_velocity(body, linear);
+  }
+  
+  // Angular velocity
+  Vec3 angular = physics_body_get_angular_velocity(body);
+  if(ImGui::DragFloat3("Angular velocity", &angular[0], 0.1f)) {
+    physics_body_set_angular_velocity(body, angular);
+  }
+  
+  // Awake
+  bool awake = physics_body_is_awake(body);
+  if(ImGui::Checkbox("Awake", &awake)) {
+    physics_body_set_awake(body, awake);
+  }
+
+  ImGui::PopID(); 
+}
+
+void gui_edit_collider(const char* name, ColliderID& collider) {
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+  
+  // Extents
+  Vec3 extents = collider_get_extents(collider);
+  if(ImGui::DragFloat3("Extents", &extents[0])) {
+    collider_set_extents(collider, extents);
+  }
+  
+  // Friction
+  f32 friction = collider_get_friction(collider);
+  if(ImGui::DragFloat("Friction", &friction)) {
+    collider_set_friction(collider, friction);
+  }
+  
+  // Restitution
+  f32 restitution = collider_get_restitution(collider);
+  if(ImGui::DragFloat("Restitution", &restitution)) {
+    collider_set_restitution(collider, restitution);
+  }
+  
+  // Density
+  f32 density = collider_get_density(collider);
+  if(ImGui::DragFloat("Density", &density)) {
+    collider_set_density(collider, density);
+  }
+  
   ImGui::PopID(); 
 }
 

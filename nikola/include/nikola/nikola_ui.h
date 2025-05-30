@@ -5,6 +5,7 @@
 #include "nikola_render.h"
 #include "nikola_containers.h"
 #include "nikola_audio.h"
+#include "nikola_physics.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -67,6 +68,12 @@ NIKOLA_API void gui_edit_audio_source(const char* name, AudioSourceID& source);
 
 /// Add an audio listener section identified by `name` to edit the global audio listener.
 NIKOLA_API void gui_edit_audio_listener(const char* name);
+
+/// Add a physics body section identified by `name` to edit the given `body`.
+NIKOLA_API void gui_edit_physics_body(const char* name, PhysicsBodyID& body);
+
+/// Add a collider section identified by `name` to edit the given `collider`.
+NIKOLA_API void gui_edit_collider(const char* name, ColliderID& collider);
 
 /// GUI functions
 ///---------------------------------------------------------------------------------------------------------------------
