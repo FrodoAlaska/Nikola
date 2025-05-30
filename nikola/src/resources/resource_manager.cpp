@@ -5,8 +5,7 @@
 #include "nikola/nikola_render.h"
 #include "nikola/nikola_audio.h"
 
-#include "loaders/mesh_loader.h"
-#include "loaders/skybox_loader.hpp"
+#include "loaders/geomatry_loader.h"
 
 #include <cstring>
 
@@ -110,16 +109,18 @@ static const char* texture_type_str(const GfxTextureType type) {
   }
 }
 
-static const char* mesh_type_str(const MeshType type) {
+static const char* geo_type_str(const GeomatryType type) {
   switch(type) {
-    case MESH_TYPE_CUBE:
-      return "MESH_TYPE_CUBE";
-    case MESH_TYPE_CIRCLE:
-      return "VERTEX_TYPE_PCUV";
-    case MESH_TYPE_CYLINDER:
-      return "MESH_TYPE_CYLINDER";
+    case GEOMATRY_CUBE:
+      return "GEOMATRY_CUBE";
+    case GEOMATRY_PLANE:
+      return "GEOMATRY_PLANE";
+    case GEOMATRY_SKYBOX:
+      return "GEOMATRY_SKYBOX";
+    case GEOMATRY_CIRCLE:
+      return "GEOMATRY_CIRCLE";
     default:
-      return "INVALID MESH TYPE";
+      return "INVALID GEOMATRY TYPE";
   }
 }
 
@@ -635,29 +636,38 @@ ResourceID resources_push_mesh(const u16 group_id, NBRMesh& nbr_mesh) {
 
   // New mesh added!
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed mesh:", group->name.c_str());
-  NIKOLA_LOG_DEBUG("     Vertex type  = %s", vertex_type_str((VertexType)nbr_mesh.vertex_type));
-  NIKOLA_LOG_DEBUG("     Vertices     = %zu", mesh->pipe_desc.vertices_count);
-  NIKOLA_LOG_DEBUG("     Indices      = %zu", mesh->pipe_desc.indices_count);
+  NIKOLA_LOG_DEBUG("     Vertex type   = %s", vertex_type_str((VertexType)nbr_mesh.vertex_type));
+  NIKOLA_LOG_DEBUG("     Vertices      = %zu", mesh->pipe_desc.vertices_count);
+  NIKOLA_LOG_DEBUG("     Indices       = %zu", mesh->pipe_desc.indices_count);
   return id;
 }
 
-ResourceID resources_push_mesh(const u16 group_id, const MeshType type) {
+ResourceID resources_push_mesh(const u16 group_id, const GeomatryType type) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
+  
+  // Allocate the mesh
+  Mesh* mesh = new Mesh{};
 
   // Use the loader to set up the mesh
-  NBRMesh nbr_mesh = {};
-  mesh_loader_load(group_id, &nbr_mesh, type);
+  geomatry_loader_load(group_id, &mesh->pipe_desc, type);
+
+  // Setting the buffers
+  mesh->vertex_buffer = mesh->pipe_desc.vertex_buffer;
+  mesh->index_buffer  = mesh->pipe_desc.index_buffer;
+
+  // Create the pipeline
+  mesh->pipe = gfx_pipeline_create(renderer_get_context(), mesh->pipe_desc);
 
   // Create the mesh
-  ResourceID id = resources_push_mesh(group_id, nbr_mesh); 
-
-  // Unwanted data!
-  memory_free(nbr_mesh.vertices);
-  memory_free(nbr_mesh.indices);
+  ResourceID id; 
+  PUSH_RESOURCE(group, meshes, mesh, RESOURCE_TYPE_MESH, id);
 
   // New mesh added!
-  NIKOLA_LOG_DEBUG("     Mesh type    = %s", mesh_type_str(type));
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed mesh:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Vertices      = %zu", mesh->pipe_desc.vertices_count);
+  NIKOLA_LOG_DEBUG("     Indices       = %zu", mesh->pipe_desc.indices_count);
+  NIKOLA_LOG_DEBUG("     Geomatry type = %s", geo_type_str(type));
   return id;
 }
 
@@ -707,7 +717,7 @@ ResourceID resources_push_skybox(const u16 group_id, const ResourceID& cubemap_i
   Skybox* skybox = new Skybox{};
   
   // Use the loader to set up the skybox
-  skybox_loader_load(group_id, skybox);
+  geomatry_loader_load(group_id, &skybox->pipe_desc, GEOMATRY_SKYBOX);
 
   // Set the cubemap
   skybox->cubemap = resources_get_cubemap(cubemap_id);

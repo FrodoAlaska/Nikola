@@ -7,7 +7,7 @@
 
 namespace nikola { // Start of nikola
 
-void mesh_loader_load(const u16 group_id, NBRMesh* mesh, const MeshType type);
+void geomatry_loader_load(const u16 group_id, GfxPipelineDesc* pipe_desc, const GeomatryType type);
 
 } // End of nikola
 

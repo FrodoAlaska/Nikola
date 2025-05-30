@@ -26,8 +26,7 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/math/vertex.cpp
   
   # Physics 
-  ${NIKOLA_SRC_DIR}/physics/collider.cpp
-  ${NIKOLA_SRC_DIR}/physics/ray.cpp
+  ${NIKOLA_SRC_DIR}/physics/physics.cpp
   
   # Resources
   ${NIKOLA_SRC_DIR}/resources/resource_manager.cpp
@@ -46,8 +45,7 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/time/timer_utils.cpp
 
   # Resources/Loaders 
-  ${NIKOLA_SRC_DIR}/resources/loaders/mesh_loader.cpp
-  ${NIKOLA_SRC_DIR}/resources/loaders/skybox_loader.cpp
+  ${NIKOLA_SRC_DIR}/resources/loaders/geomatry_loader.cpp
   
   # Renderer 
   ${NIKOLA_SRC_DIR}/renderer/camera.cpp

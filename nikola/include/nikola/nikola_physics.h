@@ -11,128 +11,165 @@ namespace nikola { // Start of nikola
 /// *** Physics ***
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// BoxCollider
-struct BoxCollider {
-  Vec3 half_size;
-  Vec3 min, max; 
-
-  /// Default constructor
-  BoxCollider() 
-    :half_size(0.5f)
-    {}
-
-  /// Given the `size`, the collider will 
-  /// half it for future calculations.
-  BoxCollider(const Vec3& size) {
-    half_size = size / 2.0f; 
-
-    min = Vec3(0.0f);
-    max = Vec3(0.0f);
-  }
-};
-/// BoxCollider
+/// PhysicsBodyID
+typedef u64 PhysicsBodyID;
+/// PhysicsBodyID
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// SphereCollider
-struct SphereCollider {
-  f32 radius = 0.0f; 
-  
-  /// Default constructor
-  SphereCollider() 
-    :radius(1.0f)
-    {}
+/// ColliderID
+typedef u64 ColliderID;
+/// ColliderID
+///---------------------------------------------------------------------------------------------------------------------
 
-  /// Set the given `radius` as the radius 
-  /// of the sphere collider.
-  SphereCollider(const f32 radius) 
-    :radius(radius)
-    {}
+///---------------------------------------------------------------------------------------------------------------------
+/// PhysicsBodyType
+enum PhysicsBodyType {
+  PHYSICS_BODY_STATIC    = 20 << 0, 
+  PHYSICS_BODY_DYNAMIC   = 20 << 1, 
+  PHYSICS_BODY_KINEMATIC = 20 << 2, 
 };
-/// SphereCollider
+/// PhysicsBodyType
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// PhysicsBodyDesc
+struct PhysicsBodyDesc {
+  Vec3 position; 
+  PhysicsBodyType type;
+
+  Vec3 rotation_axis = Vec3(0.0f);
+  f32 rotation_angle = 0.0f;
+
+  bool is_awake      = true; 
+  void* user_data    = nullptr;
+};
+/// PhysicsBodyDesc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// ColliderDesc
+struct ColliderDesc {
+  Vec3 position; 
+  Vec3 extents; 
+
+  f32 friction    = 0.4f; 
+  f32 restitution = 0.2f;
+  f32 density     = 1.0f;
+
+  bool is_sensor  = false;
+  void* user_data = nullptr;
+};
+/// ColliderDesc
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// CollisionPoint
 struct CollisionPoint {
-  /// The position of the first collided point.
-  Vec3 point_a; 
-  
-  /// The position of the second collided point.
-  Vec3 point_b;
-
-  /// The normal direction of the collision.
-  Vec3 normal; 
-  
-  /// The depth value of the collision.
-  f32 depth; 
-
-  /// A flag indicating if there was a collision or not.
-  bool has_collided = false;
+  PhysicsBodyID body_a, body_b; 
+  ColliderID coll_a, coll_b;
 };
 /// CollisionPoint
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// RayIntersection
-struct RayIntersection {
-  /// The point of intersection of the ray. 
-  Vec3 point;
- 
-  /// The distance travelled from the Ray's position till the `point`.
-  f32 distance; 
-
-  /// A flag indicating if there was an intersection or not.
-  bool has_intersected;
-};
-/// RayIntersection
+/// OnCollisionFunc
+using OnCollisionFunc = void(*)(const CollisionPoint& collision);
+/// OnCollisionFunc
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// Ray
-struct Ray {
-  /// The starting position of the ray.
-  Vec3 position; 
+/// Physics world functions
 
-  /// The direction of the ray.
-  Vec3 direction;
-};
-/// Ray
+NIKOLA_API void physics_world_init(const Vec3& gravity, const f32 timestep);
+
+NIKOLA_API void physics_world_shutdown();
+
+NIKOLA_API void physics_world_step();
+
+NIKOLA_API void physics_world_set_gravity(const Vec3& gravity);
+
+NIKOLA_API void physics_world_set_iterations_count(const i32 iterations);
+
+NIKOLA_API void physics_world_set_collision_callback(const OnCollisionFunc& begin_func, const OnCollisionFunc& end_func);
+
+NIKOLA_API Vec3 physics_world_get_gravity();
+
+/// Physics world functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// PhysicsBody functions
+
+NIKOLA_API PhysicsBodyID physics_body_create(const PhysicsBodyDesc& desc);
+
+NIKOLA_API void physics_body_destroy(PhysicsBodyID& id);
+
+NIKOLA_API ColliderID physics_body_add_collider(PhysicsBodyID& id, const ColliderDesc& desc);
+
+NIKOLA_API void physics_body_remove_collider(PhysicsBodyID& id, const ColliderID& coll_id);
+
+NIKOLA_API void physics_body_apply_force(PhysicsBodyID& id, const Vec3& force);
+
+NIKOLA_API void physics_body_apply_force_at(PhysicsBodyID& id, const Vec3& force, const Vec3& point);
+
+NIKOLA_API void physics_body_apply_impulse(PhysicsBodyID& id, const Vec3& impulse);
+
+NIKOLA_API void physics_body_apply_impulse_at(PhysicsBodyID& id, const Vec3& impulse, const Vec3& point);
+
+NIKOLA_API void physics_body_apply_torque(PhysicsBodyID& id, const Vec3& torque);
+
+NIKOLA_API void physics_body_set_position(PhysicsBodyID& id, const Vec3& pos);
+
+NIKOLA_API void physics_body_set_rotation(PhysicsBodyID& id, const Vec3& axis, const f32 angle);
+
+NIKOLA_API void physics_body_set_linear_velocity(PhysicsBodyID& id, const Vec3& vel);
+
+NIKOLA_API void physics_body_set_angular_velocity(PhysicsBodyID& id, const Vec3& vel);
+
+NIKOLA_API void physics_body_set_awake(PhysicsBodyID& id, const bool awake);
+
+NIKOLA_API Vec3 physics_body_get_position(PhysicsBodyID& id);
+
+NIKOLA_API Quat physics_body_get_quaternion(PhysicsBodyID& id);
+
+NIKOLA_API Transform physics_body_get_transform(PhysicsBodyID& id);
+
+NIKOLA_API Vec3 physics_body_get_linear_velocity(PhysicsBodyID& id);
+
+NIKOLA_API Vec3 physics_body_get_angular_velocity(PhysicsBodyID& id);
+
+NIKOLA_API bool physics_body_is_awake(PhysicsBodyID& id);
+
+NIKOLA_API void* physics_body_get_user_data(PhysicsBodyID& id);
+
+/// PhysicsBody functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// Collider functions
 
-/// Check and return the collision information between box collider `coll_a` located at `pos_a` and box collider 
-/// `coll_b` located at `pos_b`.
-NIKOLA_API CollisionPoint collider_check_collision(const BoxCollider& coll_a, const Vec3& pos_a, const BoxCollider& coll_b, const Vec3& pos_b);
+NIKOLA_API void collider_set_friction(ColliderID& id, const f32 friction);
 
-/// Check and return the collision information between sphere collider `coll_a` located at `pos_a` and sphere collider 
-/// `coll_b` located at `pos_b`.
-NIKOLA_API CollisionPoint collider_check_collision(const SphereCollider& coll_a, const Vec3& pos_a, const SphereCollider& coll_b, const Vec3& pos_b);
+NIKOLA_API void collider_set_restitution(ColliderID& id, const f32 restitution);
 
-/// Check and return the collision information between a box collider `box` located at `box_pos` and a sphere collider 
-/// `sphere` located at `sphere_pos`.
-NIKOLA_API CollisionPoint collider_check_collision(const BoxCollider& box, const Vec3& box_pos, const SphereCollider& sphere, const Vec3& sphere_pos);
+NIKOLA_API void collider_set_density(ColliderID& id, const f32 density);
 
-/// Return `true` if an AABB at `pos_a` with a `size_a` collided with an AABB at `pos_b` with a `size_b`.
-NIKOLA_API bool collider_check_collision(const Vec3& pos_a, const Vec3& size_a, const Vec3& pos_b, const Vec3& size_b);
+NIKOLA_API void collider_set_sensor(ColliderID& id, const bool sensor);
+
+NIKOLA_API void collider_set_user_data(ColliderID& id, const void* user_data);
+
+NIKOLA_API f32 collider_get_friction(ColliderID& id);
+
+NIKOLA_API f32 collider_get_restitution(ColliderID& id);
+
+NIKOLA_API f32 collider_get_density(ColliderID& id);
+
+NIKOLA_API bool collider_get_sensor(ColliderID& id);
+
+NIKOLA_API void* collider_get_user_data(ColliderID& id);
 
 /// Collider functions
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// Ray functions
-
-/// Check and return the ray intersection information between the given `ray` with a
-/// box collider `collider` located at `position`.
-NIKOLA_API RayIntersection ray_check_intersection(const Ray& ray, const Vec3& position, BoxCollider& collider);
-
-/// Check and return the ray intersection information between the given `ray` with a
-/// sphere collider `collider` located at `position`.
-NIKOLA_API RayIntersection ray_check_intersection(const Ray& ray, const Vec3& position, SphereCollider& collider);
-
-/// Ray functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 /// *** Physics ***

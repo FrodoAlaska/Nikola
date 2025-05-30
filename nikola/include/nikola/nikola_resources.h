@@ -388,18 +388,21 @@ enum ResourceType {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// MeshType
-enum MeshType {
-  /// A predefined cube mesh
-  MESH_TYPE_CUBE     = 17 << 0, 
+/// GeometryType
+enum GeomatryType {
+  /// A predefined cube geomatry shape
+  GEOMATRY_CUBE     = 17 << 0, 
   
-  /// A predefined circle mesh
-  MESH_TYPE_CIRCLE   = 17 << 1, 
+  /// A predefined plane geomatry shape
+  GEOMATRY_PLANE    = 17 << 1, 
   
-  /// A predefined cylinder mesh
-  MESH_TYPE_CYLINDER = 17 << 2, 
+  /// A predefined skybox geomatry shape
+  GEOMATRY_SKYBOX   = 17 << 2, 
+  
+  /// A predefined cube geomatry shape
+  GEOMATRY_CIRCLE   = 17 << 3, 
 };
-/// MeshType
+/// GeomatryType
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -676,9 +679,9 @@ NIKOLA_API ResourceID resources_push_shader_context(const u16 group_id, const Fi
 /// Often it is used to load Models, for example.
 NIKOLA_API ResourceID resources_push_mesh(const u16 group_id, NBRMesh& nbr_mesh);
 
-/// Allocate a new `Mesh` using a predefined mesh `type`, 
+/// Allocate a new `Mesh` using a predefined geomatry `type`, 
 /// store it in `group_id`, return a `ResourceID` to identified it. 
-NIKOLA_API ResourceID resources_push_mesh(const u16 group_id, const MeshType type);
+NIKOLA_API ResourceID resources_push_mesh(const u16 group_id, const GeomatryType type);
 
 /// Allocate a new `Material` store it in `group_id` with a diffuse map of `diffuse`, and 
 /// return a `ResourceID` to identify it.

@@ -69,11 +69,11 @@ void camera_fps_move_func(Camera& camera) {
  
   // Move right
   if(input_key_down(KEY_A)) {
-    camera.position += vec3_normalize(vec3_cross(camera.front, camera.up)) * speed;
+    camera.position -= vec3_normalize(vec3_cross(camera.front, camera.up)) * speed;
   }
   // Move left
   else if(input_key_down(KEY_D)) {
-    camera.position -= vec3_normalize(vec3_cross(camera.front, camera.up)) * speed;
+    camera.position += vec3_normalize(vec3_cross(camera.front, camera.up)) * speed;
   }
 }
 

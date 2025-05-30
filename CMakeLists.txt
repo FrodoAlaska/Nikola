@@ -26,7 +26,15 @@ FetchContent_Declare(
   URL https://github.com/kcat/openal-soft/archive/refs/tags/latest.zip
 )
 
-FetchContent_MakeAvailable(glfw glm OpenAL)
+# QU3E (CUBE)
+set(qu3e_build_demo OFF)
+
+FetchContent_Declare(
+  qu3e 
+  GIT_REPOSITORY https://github.com/RandyGaul/qu3e
+)
+
+FetchContent_MakeAvailable(glfw glm OpenAL qu3e)
 ############################################################
 
 ### Project Variables ###
@@ -43,11 +51,13 @@ set(NIKOLA_INCLUDES
   ${glfw_SOURCE_DIR}/include
   ${glm_SOURCE_DIR}
   ${OpenAL_SOURCE_DIR}/include
+  ${qu3e_SOURCE_DIR}/src
 )
 
 set(NIKOLA_LIBRARIES 
   glfw 
   OpenAL
+  qu3e
 )
 
 # This script includes a bunch of platform-specific variables 
