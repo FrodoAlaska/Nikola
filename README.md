@@ -14,6 +14,7 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 - [GLM](https://github.com/g-truc/glm)
 - [ImGui](https://github.com/ocornut/imgui)
 - [OpenAL-Soft](https://github.com/kcat/openal-soft)
+- [Qu3e](https://github.com/RandyGaul/qu3e)
 
 ### NBR Tool Dependencies:
 - [stb](https://github.com/nothings/stb)
@@ -31,13 +32,13 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 - Integrated ImGui support, featuring an abstracted `editor` layer for editing engine-specific types through a GUI.  
 - A versitile lighting system using the Blinn-Phong shading model with built-in HDR support.
 - A fully-fledged audio system with both 2D audio and 3D spatialized audio, supporting multiple formats such as **MP3, WAV, and OGG**.
+- A simple but powerful physics system that supports collision detection, collision resolution, ray-casting, and rigid body dynamics.
 
 ## Missing Features
 
 Some missing features are not currently in the works (Long-term) while others are planned for the future (Short-term). Some other features may _never_ be implemented since it does not fit the current philosophy of the engine (Never).
 
 - 3D animations (*Long-term*)
-- Physcis (*Short-term*)
 - Scripting (*Never*)
 
 ## Build Instructions
@@ -45,10 +46,8 @@ Some missing features are not currently in the works (Long-term) while others ar
 Before proceeding with any build or compilation step, *Nikola* needs to be cloned from the Git repo. 
 
 ```bash
-git clone --recursive https://github.com/FrodoAlaska/Nikola.git
+git clone https://github.com/FrodoAlaska/Nikola.git
 ```
-
-Make sure to add the `--recursive` flag since *Nikola* uses submodules to manage its dependencies. 
 
 And now that *Nikola* is cloned, we can start the build process. 
 
@@ -59,7 +58,6 @@ mkdir build
 cd build 
 cmake .. 
 ```
-
 And then to build *Nikola* you can use:
 
 ```bash
