@@ -27,7 +27,7 @@ NIKOLA_API void gui_begin();
 
 /// End a frame of the GUI context. 
 ///
-/// @NOTE: This MUST be called BEFORE at the end of the GUI frame.
+/// @NOTE: This MUST be called BEFORE the end of the GUI frame.
 NIKOLA_API void gui_end();
 
 /// Start a panel with the name `name`. 
@@ -35,6 +35,9 @@ NIKOLA_API bool gui_begin_panel(const char* name);
 
 /// End the panel with the latest `gui_begin_panel` call.
 NIKOLA_API void gui_end_panel();
+
+/// Returns `true` if the GUI is currently focused or capturing the mouse. 
+NIKOLA_API const bool gui_is_focused();
 
 /// Draw a preset panel with all of the debug information.
 NIKOLA_API void gui_debug_info();

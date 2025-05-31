@@ -102,6 +102,10 @@ void gui_end_panel() {
   ImGui::End();
 }
 
+const bool gui_is_focused() {
+  return ImGui::GetIO().WantCaptureMouse;
+}
+
 void gui_renderer_info() {
   if(!ImGui::Begin("Renderer Info")) {
     ImGui::End();
