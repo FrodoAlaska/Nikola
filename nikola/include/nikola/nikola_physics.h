@@ -11,15 +11,15 @@ namespace nikola { // Start of nikola
 /// *** Physics ***
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// PhysicsBodyID
-typedef u64 PhysicsBodyID;
-/// PhysicsBodyID
+/// PhysicsBody
+struct PhysicsBody;
+/// PhysicsBody
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// ColliderID
-typedef u32 ColliderID;
-/// ColliderID
+/// Collider
+struct Collider;
+/// Collider
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -123,10 +123,12 @@ struct ColliderDesc {
 /// CollisionPoint
 struct CollisionPoint {
   /// Both of the bodies invloved in the collision.
-  PhysicsBodyID body_a, body_b; 
+  PhysicsBody* body_a;
+  PhysicsBody* body_b; 
 
   /// The exact colliders invloved in the collision.
-  ColliderID coll_a, coll_b;
+  Collider* coll_a;
+  Collider* coll_b;
 };
 /// CollisionPoint
 ///---------------------------------------------------------------------------------------------------------------------
@@ -180,7 +182,7 @@ using OnCollisionFunc = void(*)(const CollisionPoint& collision);
 
 /// A callback to be invoked everytime a ray intersection occurs with a collider, passing in the 
 /// ray that started the intersection, intersection information, and the `collider`.
-using OnRayIntersectionFunc = void(*)(const Ray& ray, const RayIntersection& info, const ColliderID& collider);
+using OnRayIntersectionFunc = void(*)(const Ray& ray, const RayIntersection& info, const Collider* collider);
 
 /// OnRayIntersectionFunc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -229,81 +231,88 @@ NIKOLA_API Vec3 physics_world_get_gravity();
 /// PhysicsBody functions
 
 /// Create a new physics body in the world given the information in `desc` 
-/// and return a `PhysicsBodyID` identifier.
-NIKOLA_API PhysicsBodyID physics_body_create(const PhysicsBodyDesc& desc);
+/// and return a `PhysicsBody`.
+NIKOLA_API PhysicsBody* physics_body_create(const PhysicsBodyDesc& desc);
 
-/// Destroy and remove the physics body `id`, reclaiming any allocated memory. 
+/// Destroy and remove the physics body `body`, reclaiming any allocated memory. 
 ///
 /// @NOTE: Unless explicitly necessary, this is not required to be called since 
 /// the physics world will remove all the bodies on de-initialization.
-NIKOLA_API void physics_body_destroy(PhysicsBodyID& id);
+NIKOLA_API void physics_body_destroy(PhysicsBody* body);
 
-/// Add a new collider to the given `id` body with the information supplied at 
-/// `desc`, returning back a `ColliderID` identifier.
-NIKOLA_API ColliderID physics_body_add_collider(PhysicsBodyID& id, const ColliderDesc& desc);
+/// Add a new collider to the given `body` body with the information supplied at 
+/// `desc`, returning back a `Collider`.
+NIKOLA_API Collider* physics_body_add_collider(PhysicsBody* body, const ColliderDesc& desc);
 
-/// Remove the given `coll_id` from the body `id`.
+/// Remove the given `coll` from the body `body`.
 ///
 /// @NOTE: Unless explicitly necessary, this is not required to be called since 
 /// the physics world will remove all colliders on de-initialization.
-NIKOLA_API void physics_body_remove_collider(PhysicsBodyID& id, const ColliderID& coll_id);
+NIKOLA_API void physics_body_remove_collider(PhysicsBody* body, Collider* coll);
 
-/// Apply a linear force `force` to the body `id`.
-NIKOLA_API void physics_body_apply_force(PhysicsBodyID& id, const Vec3& force);
+/// Apply a linear force `force` to the body `body`.
+NIKOLA_API void physics_body_apply_force(PhysicsBody* body, const Vec3& force);
 
-/// Apply a linear force `force` at the world position `point` to the body `id`.
-NIKOLA_API void physics_body_apply_force_at(PhysicsBodyID& id, const Vec3& force, const Vec3& point);
+/// Apply a linear force `force` at the world position `point` to the body `body`.
+NIKOLA_API void physics_body_apply_force_at(PhysicsBody* body, const Vec3& force, const Vec3& point);
 
-/// Apply an impulse `impulse` to the body `id`.
-NIKOLA_API void physics_body_apply_impulse(PhysicsBodyID& id, const Vec3& impulse);
+/// Apply an impulse `impulse` to the body `body`.
+NIKOLA_API void physics_body_apply_impulse(PhysicsBody* body, const Vec3& impulse);
 
-/// Apply an impulse `impulse` at the world position `point` to the body `id`.
-NIKOLA_API void physics_body_apply_impulse_at(PhysicsBodyID& id, const Vec3& impulse, const Vec3& point);
+/// Apply an impulse `impulse` at the world position `point` to the body `body`.
+NIKOLA_API void physics_body_apply_impulse_at(PhysicsBody* body, const Vec3& impulse, const Vec3& point);
 
 /// Apply a rotational torque force `torque`.
-NIKOLA_API void physics_body_apply_torque(PhysicsBodyID& id, const Vec3& torque);
+NIKOLA_API void physics_body_apply_torque(PhysicsBody* body, const Vec3& torque);
 
-/// Set the current position of body `id` to `pos`. 
+/// Set the current position of body `body` to `pos`. 
 ///
 /// @NOTE: This is not recommended to be used unless necessary. 
 /// The simulation will alter the position in the next step.
-NIKOLA_API void physics_body_set_position(PhysicsBodyID& id, const Vec3& pos);
+NIKOLA_API void physics_body_set_position(PhysicsBody* body, const Vec3& pos);
 
-/// Set the current rotation of body `id` around `axis` by `angle` in radians. 
+/// Set the current rotation of body `body` around `axis` by `angle` in radians. 
 ///
 /// @NOTE: This is not recommended to be used unless necessary. 
 /// The simulation will alter the rotation in the next step.
-NIKOLA_API void physics_body_set_rotation(PhysicsBodyID& id, const Vec3& axis, const f32 angle);
+NIKOLA_API void physics_body_set_rotation(PhysicsBody* body, const Vec3& axis, const f32 angle);
 
-/// Set the linear velocity of body `id` to `vel`.
-NIKOLA_API void physics_body_set_linear_velocity(PhysicsBodyID& id, const Vec3& vel);
+/// Set the linear velocity of body `body` to `vel`.
+NIKOLA_API void physics_body_set_linear_velocity(PhysicsBody* body, const Vec3& vel);
 
-/// Set the angular (rotational) velocity of body `id` to `vel`.
-NIKOLA_API void physics_body_set_angular_velocity(PhysicsBodyID& id, const Vec3& vel);
+/// Set the angular (rotational) velocity of body `body` to `vel`.
+NIKOLA_API void physics_body_set_angular_velocity(PhysicsBody* body, const Vec3& vel);
 
-/// Set the awake state of body `id` to `awake`.
-NIKOLA_API void physics_body_set_awake(PhysicsBodyID& id, const bool awake);
+/// Set the awake state of body `body` to `awake`.
+NIKOLA_API void physics_body_set_awake(PhysicsBody* body, const bool awake);
 
-/// Retrieve the current position of body `id`.
-NIKOLA_API Vec3& physics_body_get_position(const PhysicsBodyID& id);
+/// Retrieve the current type of body `body`.
+NIKOLA_API PhysicsBodyType physics_body_get_type(const PhysicsBody* body);
 
-/// Retrieve the current rotation of body `id` represented as a `Quat`.
-NIKOLA_API Quat& physics_body_get_quaternion(const PhysicsBodyID& id);
+/// Retrieve the current position of body `body`.
+NIKOLA_API Vec3 physics_body_get_position(const PhysicsBody* body);
 
-/// Retrieve the current transform of body `id`.
-NIKOLA_API Transform& physics_body_get_transform(const PhysicsBodyID& id);
+/// Retrieve the current rotation of body `body` represented as a `Vec4`, 
+/// where `x, y, and z` are the rotation axis and `w` is the angle in radians.
+NIKOLA_API Vec4 physics_body_get_rotation(const PhysicsBody* body);
 
-/// Retrieve the current linear velocity of body `id`.
-NIKOLA_API Vec3& physics_body_get_linear_velocity(const PhysicsBodyID& id);
+/// Retrieve the current rotation of body `body` represented as a `Quat`.
+NIKOLA_API Quat physics_body_get_quaternion(const PhysicsBody* body);
 
-/// Retrieve the current angular (rotational) velocity of body `id`.
-NIKOLA_API Vec3& physics_body_get_angular_velocity(const PhysicsBodyID& id);
+/// Retrieve the current transform of body `body`.
+NIKOLA_API Transform physics_body_get_transform(const PhysicsBody* body);
 
-/// Retrieve the current awake state of body `id`.
-NIKOLA_API bool physics_body_is_awake(const PhysicsBodyID& id);
+/// Retrieve the current linear velocity of body `body`.
+NIKOLA_API Vec3 physics_body_get_linear_velocity(const PhysicsBody* body);
 
-/// Retrieve the user data of body `id`.
-NIKOLA_API void* physics_body_get_user_data(const PhysicsBodyID& id);
+/// Retrieve the current angular (rotational) velocity of body `body`.
+NIKOLA_API Vec3 physics_body_get_angular_velocity(const PhysicsBody* body);
+
+/// Retrieve the current awake state of body `body`.
+NIKOLA_API bool physics_body_is_awake(const PhysicsBody* body);
+
+/// Retrieve the user data of body `body`.
+NIKOLA_API void* physics_body_get_user_data(const PhysicsBody* body);
 
 /// PhysicsBody functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -311,54 +320,54 @@ NIKOLA_API void* physics_body_get_user_data(const PhysicsBodyID& id);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Collider functions
 
-/// Shoot a raycast supplied by `ray` at the collider `id` and 
+/// Shoot a raycast supplied by `ray` at the collider `coll` and 
 /// return the intersection information in `RayIntersection`.
-NIKOLA_API RayIntersection collider_check_raycast(const ColliderID& id, const Ray& ray);
+NIKOLA_API RayIntersection collider_check_raycast(const Collider* coll, const Ray& ray);
 
-/// Set extents of collider `id` to `extents`.
-NIKOLA_API void collider_set_extents(ColliderID& id, const Vec3& extents);
+/// Set extents of collider `coll` to `extents`.
+NIKOLA_API void collider_set_extents(Collider* coll, const Vec3& extents);
 
-/// Set friction of collider `id` to `friction`.
-NIKOLA_API void collider_set_friction(ColliderID& id, const f32 friction);
+/// Set friction of collider `coll` to `friction`.
+NIKOLA_API void collider_set_friction(Collider* coll, const f32 friction);
 
-/// Set restitution of collider `id` to `restitution`.
-NIKOLA_API void collider_set_restitution(ColliderID& id, const f32 restitution);
+/// Set restitution of collider `coll` to `restitution`.
+NIKOLA_API void collider_set_restitution(Collider* coll, const f32 restitution);
 
-/// Set density of collider `id` to `density`.
-NIKOLA_API void collider_set_density(ColliderID& id, const f32 density);
+/// Set density of collider `coll` to `density`.
+NIKOLA_API void collider_set_density(Collider* coll, const f32 density);
 
-/// Set a user-defined `user_data` of collider `id`.
-NIKOLA_API void collider_set_user_data(ColliderID& id, const void* user_data);
+/// Set a user-defined `user_data` of collider `coll`.
+NIKOLA_API void collider_set_user_data(Collider* coll, const void* user_data);
 
-/// Retrieve the current attached body of collider `id`.
-NIKOLA_API PhysicsBodyID& collider_get_attached_body(const ColliderID& id);
+/// Retrieve the current attached body of collider `coll`.
+NIKOLA_API PhysicsBody* collider_get_attached_body(const Collider* coll);
 
-/// Retrieve the current extents of collider `id`.
-NIKOLA_API Vec3& collider_get_extents(const ColliderID& id);
+/// Retrieve the current extents of collider `coll`.
+NIKOLA_API Vec3 collider_get_extents(const Collider* coll);
 
-/// Retrieve the current friction of collider `id`.
-NIKOLA_API f32 collider_get_friction(const ColliderID& id);
+/// Retrieve the current friction of collider `coll`.
+NIKOLA_API f32 collider_get_friction(const Collider* coll);
 
-/// Retrieve the current restitution of collider `id`.
-NIKOLA_API f32 collider_get_restitution(const ColliderID& id);
+/// Retrieve the current restitution of collider `coll`.
+NIKOLA_API f32 collider_get_restitution(const Collider* coll);
 
-/// Retrieve the current density of collider `id`.
-NIKOLA_API f32 collider_get_density(const ColliderID& id);
+/// Retrieve the current density of collider `coll`.
+NIKOLA_API f32 collider_get_density(const Collider* coll);
 
-/// Retrieve the current sensor state of collider `id`.
-NIKOLA_API bool collider_get_sensor(const ColliderID& id);
+/// Retrieve the current sensor state of collider `coll`.
+NIKOLA_API bool collider_get_sensor(const Collider* coll);
 
-/// Retrieve the user data of collider `id`.
-NIKOLA_API void* collider_get_user_data(const ColliderID& id);
+/// Retrieve the user data of collider `coll`.
+NIKOLA_API void* collider_get_user_data(const Collider* coll);
 
-/// Retrieve the local transform of collider `id`.
-NIKOLA_API Transform& collider_get_local_transform(const ColliderID& id);
+/// Retrieve the local transform of collider `coll`.
+NIKOLA_API Transform collider_get_local_transform(const Collider* coll);
 
-/// Retrieve the world transform of collider `id`.
+/// Retrieve the world transform of collider `coll`.
 ///
 /// @NOTE: This is usually the multiplied transform of the collider's 
 /// attached body and its local transform.
-NIKOLA_API Transform collider_get_world_transform(const ColliderID& id);
+NIKOLA_API Transform collider_get_world_transform(const Collider* coll);
 
 /// Collider functions
 ///---------------------------------------------------------------------------------------------------------------------

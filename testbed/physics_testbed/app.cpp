@@ -7,8 +7,8 @@
 /// ----------------------------------------------------------------------
 /// CubeEntity
 struct CubeEntity {
-  nikola::PhysicsBodyID body; 
-  nikola::ColliderID collider; 
+  nikola::PhysicsBody* body; 
+  nikola::Collider* collider; 
   nikola::ResourceID cube_mesh;
   nikola::Transform transform;
 
@@ -57,8 +57,8 @@ struct nikola::App {
   nikola::u16 res_group_id;
   nikola::ResourceID mesh_id, material_id;
 
-  nikola::PhysicsBodyID plane_body;
-  nikola::ColliderID plane_collider;
+  nikola::PhysicsBody* plane_body;
+  nikola::Collider* plane_collider;
 
   nikola::DynamicArray<CubeEntity> cubes;
 
@@ -104,8 +104,8 @@ static void init_bodies(nikola::App* app) {
   app->plane_collider = nikola::physics_body_add_collider(app->plane_body, coll_desc);
 }
 
-static void on_raycast_hit(const nikola::Ray& ray, const nikola::RayIntersection& info, const nikola::ColliderID& coll) {
-  nikola::PhysicsBodyID body = nikola::collider_get_attached_body(coll);
+static void on_raycast_hit(const nikola::Ray& ray, const nikola::RayIntersection& info, const nikola::Collider* coll) {
+  nikola::PhysicsBody* body = nikola::collider_get_attached_body(coll);
 
   if(info.has_intersected && nikola::input_button_pressed(nikola::MOUSE_BUTTON_LEFT)) {
     nikola::physics_body_apply_force_at(body, ray.direction * 200.0f, info.point);
@@ -174,6 +174,10 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     nikola::input_cursor_show(app->has_editor);
   }
 
+  if(nikola::input_key_pressed(nikola::KEY_S)) {
+    app->cubes.emplace_back(app->frame_data.camera.position, app->mesh_id);
+  }
+
   // Raycast test
   nikola::Ray ray = {
     .position  = app->frame_data.camera.position, 
@@ -227,10 +231,6 @@ void app_render_gui(nikola::App* app) {
 
   for(nikola::sizei i = 0; i < app->cubes.size(); i++) {
     app->cubes[i].render_gui(("Cube " + std::to_string(i))); 
-  }
-
-  if(ImGui::Button("Add Body")) {
-    app->cubes.emplace_back(app->frame_data.camera.position, app->mesh_id);
   }
   nikola::gui_end_panel();
 

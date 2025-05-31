@@ -70,10 +70,10 @@ NIKOLA_API void gui_edit_audio_source(const char* name, AudioSourceID& source);
 NIKOLA_API void gui_edit_audio_listener(const char* name);
 
 /// Add a physics body section identified by `name` to edit the given `body`.
-NIKOLA_API void gui_edit_physics_body(const char* name, PhysicsBodyID& body);
+NIKOLA_API void gui_edit_physics_body(const char* name, PhysicsBody* body);
 
 /// Add a collider section identified by `name` to edit the given `collider`.
-NIKOLA_API void gui_edit_collider(const char* name, ColliderID& collider);
+NIKOLA_API void gui_edit_collider(const char* name, Collider* collider);
 
 /// GUI functions
 ///---------------------------------------------------------------------------------------------------------------------

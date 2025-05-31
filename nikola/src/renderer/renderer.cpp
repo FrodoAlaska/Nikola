@@ -441,9 +441,9 @@ void renderer_debug_cube(const Transform& transform, const Vec4& color) {
   s_renderer.debug_queue.emplace_back(s_renderer.defaults.cube_mesh, transform, s_renderer.defaults.material, shader_context, color);
 }
 
-void renderer_debug_collider(const ColliderID& coll_id, const Vec3& color) {
-  Transform transform = collider_get_world_transform(coll_id);
-  transform_scale(transform, collider_get_extents(coll_id));
+void renderer_debug_collider(const Collider* coll, const Vec3& color) {
+  Transform transform = collider_get_world_transform(coll);
+  transform_scale(transform, collider_get_extents(coll));
 
   renderer_debug_cube(transform, Vec4(color, 0.2f));
 }

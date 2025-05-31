@@ -423,7 +423,7 @@ void gui_edit_audio_listener(const char* name) {
   ImGui::PopID(); 
 }
 
-void gui_edit_physics_body(const char* name, PhysicsBodyID& body) {
+void gui_edit_physics_body(const char* name, PhysicsBody* body) {
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
   
@@ -454,7 +454,7 @@ void gui_edit_physics_body(const char* name, PhysicsBodyID& body) {
   ImGui::PopID(); 
 }
 
-void gui_edit_collider(const char* name, ColliderID& collider) {
+void gui_edit_collider(const char* name, Collider* collider) {
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
   

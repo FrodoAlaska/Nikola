@@ -4,6 +4,7 @@
 #include "nikola_containers.h"
 #include "nikola_math.h"
 #include "nikola_audio.h"
+#include "nikola_physics.h"
 
 #include <fstream>
 
@@ -322,6 +323,16 @@ NIKOLA_API void file_write_bytes(File& file, const AudioSourceID& source);
 /// @NOTE: This function will raise an error if `file` is not opened.
 NIKOLA_API void file_write_bytes(File& file, const AudioListenerDesc& listener_desc);
 
+/// Write the contents of the given `body` into `file`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_write_bytes(File& file, const PhysicsBody* body);
+
+/// Write the contents of the given `collider` into `file`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_write_bytes(File& file, const Collider* collider);
+
 /// Write the given `string` into `file` as a string representation.
 ///
 /// @NOTE: This function will raise an error if `file` is not opened.
@@ -367,6 +378,16 @@ NIKOLA_API void file_read_bytes(File& file, AudioSourceID& source);
 ///
 /// @NOTE: This function will raise an error if `file` is not opened.
 NIKOLA_API void file_read_bytes(File& file, AudioListenerDesc* listener);
+
+/// Read a `PhysicsBodyDesc` from `file` and save it into `body_desc`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_read_bytes(File& file, PhysicsBodyDesc* body_desc);
+
+/// Read a `ColliderDesc` from `file` and save it into `collider_desc`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_read_bytes(File& file, ColliderDesc* collider_desc);
 
 /// Read the WHOLE `file` as a `String` and save it into `str`.
 ///

@@ -3,6 +3,7 @@
 #include "nikola/nikola_math.h"
 #include "nikola/nikola_render.h"
 #include "nikola/nikola_audio.h"
+#include "nikola/nikola_physics.h"
 
 #include <sstream>
 #include <filesystem>
@@ -106,10 +107,14 @@ const sizei file_write_bytes(File& file, const void* buff, const sizei buff_size
 }
 
 void file_write_bytes(File& file, const String& str) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  
   file_write_bytes(file, str.c_str(), str.size());
 }
 
 void file_write_bytes(File& file, const Transform& transform) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  
   f32 raw_data[] = {
     transform.position.x,  
     transform.position.y,  
@@ -129,6 +134,8 @@ void file_write_bytes(File& file, const Transform& transform) {
 }
 
 void file_write_bytes(File& file, const Camera& camera) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  
   f32 data[] = {
     camera.yaw, 
     camera.pitch, 
@@ -148,6 +155,8 @@ void file_write_bytes(File& file, const Camera& camera) {
 }
 
 void file_write_bytes(File& file, const DirectionalLight& light) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  
   f32 data[] = {
     light.direction.x,  
     light.direction.y,  
@@ -162,6 +171,8 @@ void file_write_bytes(File& file, const DirectionalLight& light) {
 }
 
 void file_write_bytes(File& file, const PointLight& light) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  
   f32 data[] = {
     light.position.x,  
     light.position.y,  
@@ -179,6 +190,8 @@ void file_write_bytes(File& file, const PointLight& light) {
 }
 
 void file_write_bytes(File& file, const AudioSourceID& source) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  
   AudioSourceDesc desc = audio_source_get_desc(source);
 
   f32 data[] = {
@@ -204,6 +217,8 @@ void file_write_bytes(File& file, const AudioSourceID& source) {
 }
 
 void file_write_bytes(File& file, const AudioListenerDesc& listener_desc) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  
   f32 data[] = {
     listener_desc.volume, 
 
@@ -217,6 +232,66 @@ void file_write_bytes(File& file, const AudioListenerDesc& listener_desc) {
   };
 
   file_write_bytes(file, data, sizeof(data));
+}
+
+void file_write_bytes(File& file, const PhysicsBody* body) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  NIKOLA_ASSERT(body, "Cannot save an invalid PhysicsBody");
+ 
+  Vec3 position        = physics_body_get_position(body);
+  Vec4 rotation        = physics_body_get_rotation(body);
+  PhysicsBodyType type = physics_body_get_type(body);
+  bool is_awake        = physics_body_is_awake(body);
+
+  f32 f_data[] = {
+    position.x,   
+    position.y,   
+    position.z,   
+    
+    rotation.x,   
+    rotation.y,   
+    rotation.z,   
+    rotation.w,   
+  };
+
+  u16 u_data[] = {
+    (u16)type, 
+    (u16)is_awake,
+  };
+
+  file_write_bytes(file, f_data, sizeof(f_data));
+  file_write_bytes(file, u_data, sizeof(u_data));
+}
+
+void file_write_bytes(File& file, const Collider* collider) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  NIKOLA_ASSERT(collider, "Cannot save an invalid Collider");
+  
+  Vec3 offset  = collider_get_local_transform(collider).position;
+  Vec3 extents = collider_get_extents(collider);
+
+  f32 friction    = collider_get_friction(collider);
+  f32 restitution = collider_get_restitution(collider);
+  f32 density     = collider_get_density(collider);
+
+  i32 sensor = (i32)collider_get_sensor(collider);
+
+  f32 data[] = {
+    offset.x,
+    offset.y,
+    offset.z,
+    
+    extents.x,
+    extents.y,
+    extents.z,
+
+    friction, 
+    restitution, 
+    density,
+  };
+  
+  file_write_bytes(file, data, sizeof(data));
+  file_write_bytes(file, &sensor, sizeof(sensor));
 }
 
 void file_write_string(File& file, const String& string) {
@@ -233,6 +308,8 @@ const sizei file_read_bytes(File& file, void* out_buff, const sizei size) {
 }
 
 void file_read_bytes(File& file, String* str) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+ 
   // @TODO (File): We should NOT assign arbitrary sizes to the read string
   char c_str[1024];
 
@@ -241,6 +318,8 @@ void file_read_bytes(File& file, String* str) {
 }
 
 void file_read_bytes(File& file, Transform* transform) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+ 
   f32 raw_data[10];
   file_read_bytes(file, raw_data, sizeof(raw_data));
 
@@ -250,6 +329,8 @@ void file_read_bytes(File& file, Transform* transform) {
 }
 
 void file_read_bytes(File& file, Camera* camera) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+ 
   f32 raw_data[10]; 
   file_read_bytes(file, raw_data, sizeof(raw_data));
 
@@ -264,6 +345,8 @@ void file_read_bytes(File& file, Camera* camera) {
 }
 
 void file_read_bytes(File& file, DirectionalLight* light) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+ 
   f32 raw_data[6];
   file_read_bytes(file, raw_data, sizeof(raw_data));
 
@@ -272,6 +355,8 @@ void file_read_bytes(File& file, DirectionalLight* light) {
 }
 
 void file_read_bytes(File& file, PointLight* light) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+ 
   f32 raw_data[8];
   file_read_bytes(file, raw_data, sizeof(raw_data));
 
@@ -283,6 +368,8 @@ void file_read_bytes(File& file, PointLight* light) {
 }
 
 void file_read_bytes(File& file, AudioSourceID& source) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+ 
   f32 raw_data[12];
   file_read_bytes(file, raw_data, sizeof(raw_data));
 
@@ -309,6 +396,8 @@ void file_read_bytes(File& file, AudioSourceID& source) {
 }
 
 void file_read_bytes(File& file, AudioListenerDesc* listener) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+ 
   f32 raw_data[7];
   file_read_bytes(file, raw_data, sizeof(raw_data));
 
@@ -319,6 +408,40 @@ void file_read_bytes(File& file, AudioListenerDesc* listener) {
   audio_listener_set_volume(listener->volume);
   audio_listener_set_position(listener->position);
   audio_listener_set_velocity(listener->velocity);
+}
+
+void file_read_bytes(File& file, PhysicsBodyDesc* body_desc) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+
+  f32 f_data[7] ;
+  file_read_bytes(file, f_data, sizeof(f_data));
+
+  u16 u_data[2];
+  file_read_bytes(file, u_data, sizeof(u_data));
+
+  // Read the data into the desc
+  body_desc->position       = Vec3(f_data[0], f_data[1], f_data[2]);
+  body_desc->type           = (PhysicsBodyType)u_data[0];
+  body_desc->rotation_axis  = Vec3(f_data[3], f_data[4], f_data[5]);
+  body_desc->rotation_angle = f_data[6];
+  body_desc->is_awake       = (bool)u_data[1];
+}
+
+void file_read_bytes(File& file, ColliderDesc* collider_desc) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+
+  f32 data[9];
+  file_read_bytes(file, data, sizeof(data));
+
+  i32 sensor; 
+  file_read_bytes(file, &sensor, sizeof(sensor));
+
+  collider_desc->position    = Vec3(data[0], data[1], data[2]);
+  collider_desc->extents     = Vec3(data[3], data[4], data[5]);
+  collider_desc->friction    = data[6];
+  collider_desc->restitution = data[7];
+  collider_desc->density     = data[8];
+  collider_desc->is_sensor   = (bool)sensor;
 }
 
 void file_read_string(File& file, String* str) {

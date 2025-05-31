@@ -112,6 +112,7 @@
     - [] Create an abstraction layer over threads, mutexes, aotmics, and all things multi-threading. 
     - [] Create a simple job system 
     - [] Improve resource loading time by adding asynchronous resource loading.
+    - [] Also look into custom memory pools/memory arenas since they can increase performance.
     - [] Documentation
 - [] UI v0.1
     - [] A canvas system for 2D game UI.
@@ -133,7 +134,7 @@
 - [] 3D Animations v0.1
 
 ## (Engine) BUGS: 
-- (Physics): There needs to be a way to indicate if a given body ID or collider ID _actually_ exist in the world or not. Besides that, there needs to be a _clear_ distinguishing feature between a body ID and a collider ID.
+- EMPTY FOR NOW...
 
 ## (Core) BUGS: 
 - EMPTY FOR NOW...

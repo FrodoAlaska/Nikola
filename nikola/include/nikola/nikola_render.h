@@ -252,12 +252,12 @@ NIKOLA_API void renderer_queue_model(const ResourceID& model_id, const Transform
 /// or batched in any way. Use with discretion.
 NIKOLA_API void renderer_debug_cube(const Transform& transform, const Vec4& color);
 
-/// Render the shape of the collider `coll_id` at its given position, rotation, and scale, 
+/// Render the shape of the collider `coll` at its given position, rotation, and scale, 
 /// and shaded with `color` (by default set to `Vec3(1.0f)`).
 ///
 /// @NOTE: Please only use this for debugging purposes. It is not optimized 
 /// or batched in any way. Use with discretion.
-NIKOLA_API void renderer_debug_collider(const ColliderID& coll_id, const Vec3& color = Vec3(1.0f));
+NIKOLA_API void renderer_debug_collider(const Collider* coll, const Vec3& color = Vec3(1.0f));
 
 /// Setup the renderer for any upcoming render operations by 
 /// the data given in `data`.
