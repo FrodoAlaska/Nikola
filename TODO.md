@@ -98,14 +98,14 @@
     - [x] Add raycasting 
     - [x] Add AABB VS. Ray collision detection
     - [x] Add Spheres and their associated collision detection functions
-[] Physics v0.1
+[x] Physics v0.1
     - [x] Create a physics world, physics body, and what have you
     - [x] Add collision callbacks and debug render capabilities for the colliders
     - [x] Integrate the physics layer into the engine proper.
     - [x] Ray testing 
     - [x] Add the newly-added physics types to be edited by the GUI 
     - [x] Test the physics logic by making some testbeds.
-    - [] Documentation
+    - [x] Documentation
 [] Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers
     - [x] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application.
@@ -133,7 +133,7 @@
 [] 3D Animations v0.1
 
 ## (Engine) BUGS: 
-- EMPTY FOR NOW...
+- (Physics): There needs to be a way to indicate if a given body ID or collider ID _actually_ exist in the world or not. Besides that, there needs to be a _clear_ distinguishing feature between a body ID and a collider ID.
 
 ## (Core) BUGS: 
 - EMPTY FOR NOW...
@@ -142,6 +142,5 @@
 - (GL) Shader attribute semantics (e.g, does Mat4 work there)
 
 ## FUTURE PLANS: 
-- Phyiscs. Yes. Just physics.
 - GPU particles
 - NUSL: Nikola Uniform Shading Language or shader-generating materials

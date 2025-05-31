@@ -236,6 +236,8 @@ void physics_world_init(const Vec3& gravity, const f32 timestep) {
   s_world.begin_func = on_collision_begin;
   s_world.end_func   = on_collision_end;
   s_world.scene->SetContactListener(new ContanctListener);
+  
+  NIKOLA_LOG_INFO("The physics world was successfully initialized");
 }
 
 void physics_world_shutdown() {
@@ -248,6 +250,8 @@ void physics_world_shutdown() {
   s_world.colliders.clear();
  
   delete s_world.scene;
+  
+  NIKOLA_LOG_INFO("The physics world was successfully shutdown"); 
 }
 
 void physics_world_step() {
