@@ -1,11 +1,9 @@
 ### Variables ###
 
 $working_dir = Get-Location
-$debug_dir   = "..\build-debug"
-$release_dir = "..\build-release"
 
 $build_config = "Debug" 
-$build_dir    = $debug_dir 
+$build_dir    = "..\build"
 $build_flags  = ""
 
 $can_run_testbed = $false 
@@ -29,7 +27,7 @@ function Log-Msg {
     Default {}
   }
 
-  Write-Host $msg -ForegroundColor $color
+  Write-Host $msg -Foregroundcolor $color
 }
 
 function Show-Help {
@@ -51,6 +49,7 @@ function Check-Build-Dir {
 
   # The directory exists. Everything is good
   if(Test-Path $dir) {
+    $build_dir = $dir
     return
   }
 
@@ -89,9 +88,9 @@ for ($i = 0; $i -lt $Args.Count; $i++) {
   $arg = $($args[$i]);
   
   switch ($arg) {
-    "--clean"       { $build_flags += "--target clean " }
-    "--debug"       { Check-Build-Dir -dir $debug_dir;   $build_config = "Debug" }
-    "--rel"         { Check-Build-Dir -dir $release_dir; $build_config = "Release" }
+    "--clean"       { $build_flags += " --target clean " }
+    "--debug"       { Check-Build-Dir $build_dir; $build_config = "Debug" }
+    "--rel"         { Check-Build-Dir $build_dir; $build_config = "Release" }
     "--jobs"        { $i++; $build_flags += "--parallel $($args[$i])" }
     "--run-testbed" { $can_run_testbed = $true }
     "--reload-res"  { $can_reload_res  = $true }
@@ -126,7 +125,10 @@ if($can_reload_res) {
 }
 
 if ($can_run_testbed) {
-  .\run-testbed.ps1 "--$($build_config.ToLower())" "NikolaTestbed"
+  cd $build_dir\testbed
+  & ".\$build_config\NikolaTestbed.exe"
+  cd $working_dir
+
   Check-Exit-Code -msg "Failed to run testbed..."
 }
 

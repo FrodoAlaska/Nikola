@@ -343,7 +343,7 @@ const u32 MATERIAL_UNIFORMS_MAX          = 4;
 /// Macros 
 
 /// Check if the given `res_id` is valid
-#define RESOURCE_IS_VALID(id) (id.group != RESOURCE_GROUP_INVALID)
+#define RESOURCE_IS_VALID(id) (id.group != nikola::RESOURCE_GROUP_INVALID)
 
 /// Macros 
 ///---------------------------------------------------------------------------------------------------------------------

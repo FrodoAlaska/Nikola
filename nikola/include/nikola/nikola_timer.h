@@ -43,8 +43,8 @@ NIKOLA_API String perf_timer_to_string(PerfTimer& timer);
   #define NIKOLA_PERF_TIMER_BEGIN(timer) nikola::perf_timer_start(timer);
   #define NIKOLA_PERF_TIMER_END(timer, tag) nikola::perf_timer_stop(timer); NIKOLA_LOG_TRACE("\'%s\' took %s to run", tag, nikola::perf_timer_to_string(timer).c_str());
 #else
-  #define NIKOLA_PERF_TIMER_BEGIN()
-  #define NIKOLA_PERF_TIMER_END()
+  #define NIKOLA_PERF_TIMER_BEGIN(timer)
+  #define NIKOLA_PERF_TIMER_END(timer, tag)
 #endif
 
 /// Macros

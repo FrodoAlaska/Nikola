@@ -349,7 +349,12 @@ u16 resources_create_group(const String& name, const FilePath& parent_dir) {
   // A default resource for later
   ResourceGroup* group = &s_manager.groups[group_id]; 
   group->named_ids["invalid"] = ResourceID{}; 
- 
+
+  // Create the parent directory if it doesn't exist
+  if(!nikola::filesystem_exists(parent_dir)) {
+    nikola::filesystem_create_directory(parent_dir);
+  }
+
   // Add a file watcher to the parent directory
   filewatcher_add_dir(parent_dir, resource_entry_update, group);
 

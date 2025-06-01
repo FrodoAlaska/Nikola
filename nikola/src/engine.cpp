@@ -71,7 +71,7 @@ void engine_init(const AppDesc& desc) {
   for(u32 i = 0; i < desc.args_count; i++) {
     cli_args.push_back(desc.args_values[i]);
   }
-  NIKOLA_PERF_TIMER_END(timer, "app_init");
+  NIKOLA_PERF_TIMER_END(timer, "engine_init");
 
   // App init 
   NIKOLA_PERF_TIMER_BEGIN(timer);

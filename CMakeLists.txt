@@ -7,7 +7,7 @@ include(FetchContent)
 
 # GLFW
 FetchContent_Declare(
-  glfw 
+  glfw-3.4 
   URL https://github.com/glfw/glfw/releases/download/3.4/glfw-3.4.zip
 )
 
@@ -34,7 +34,7 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/RandyGaul/qu3e
 )
 
-FetchContent_MakeAvailable(glfw glm OpenAL qu3e)
+FetchContent_MakeAvailable(glfw-3.4 glm OpenAL qu3e)
 ############################################################
 
 ### Project Variables ###
@@ -48,7 +48,7 @@ set(NIKOLA_INCLUDES
   ${NIKOLA_INCLUDE_DIR}
   ${NIKOLA_LIBS_DIR}
 
-  ${glfw_SOURCE_DIR}/include
+  ${glfw-3.4_SOURCE_DIR}/include
   ${glm_SOURCE_DIR}
   ${OpenAL_SOURCE_DIR}/include
   ${qu3e_SOURCE_DIR}/src
