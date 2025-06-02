@@ -122,7 +122,7 @@ static void init_defaults() {
   s_renderer.defaults.material = resources_get_material(resources_push_material(RESOURCE_CACHE_ID, default_texture_id));
 
   // Cube mesh init
-  s_renderer.defaults.cube_mesh = resources_get_mesh(resources_push_mesh(RESOURCE_CACHE_ID, GEOMATRY_CUBE));
+  s_renderer.defaults.cube_mesh = resources_get_mesh(resources_push_mesh(RESOURCE_CACHE_ID, GEOMETRY_CUBE));
 
   // Shaders init
   ResourceID default_shader     = resources_push_shader(RESOURCE_CACHE_ID, generate_default_shader());

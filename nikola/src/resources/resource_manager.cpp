@@ -5,7 +5,7 @@
 #include "nikola/nikola_render.h"
 #include "nikola/nikola_audio.h"
 
-#include "loaders/geomatry_loader.h"
+#include "loaders/geometry_loader.h"
 
 #include <cstring>
 
@@ -109,18 +109,18 @@ static const char* texture_type_str(const GfxTextureType type) {
   }
 }
 
-static const char* geo_type_str(const GeomatryType type) {
+static const char* geo_type_str(const GeometryType type) {
   switch(type) {
-    case GEOMATRY_CUBE:
-      return "GEOMATRY_CUBE";
-    case GEOMATRY_PLANE:
-      return "GEOMATRY_PLANE";
-    case GEOMATRY_SKYBOX:
-      return "GEOMATRY_SKYBOX";
-    case GEOMATRY_CIRCLE:
-      return "GEOMATRY_CIRCLE";
+    case GEOMETRY_CUBE:
+      return "GEOMETRY_CUBE";
+    case GEOMETRY_PLANE:
+      return "GEOMETRY_PLANE";
+    case GEOMETRY_SKYBOX:
+      return "GEOMETRY_SKYBOX";
+    case GEOMETRY_CIRCLE:
+      return "GEOMETRY_CIRCLE";
     default:
-      return "INVALID GEOMATRY TYPE";
+      return "INVALID GEOMETRY TYPE";
   }
 }
 
@@ -647,7 +647,7 @@ ResourceID resources_push_mesh(const u16 group_id, NBRMesh& nbr_mesh) {
   return id;
 }
 
-ResourceID resources_push_mesh(const u16 group_id, const GeomatryType type) {
+ResourceID resources_push_mesh(const u16 group_id, const GeometryType type) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
   
@@ -655,7 +655,7 @@ ResourceID resources_push_mesh(const u16 group_id, const GeomatryType type) {
   Mesh* mesh = new Mesh{};
 
   // Use the loader to set up the mesh
-  geomatry_loader_load(group_id, &mesh->pipe_desc, type);
+  geometry_loader_load(group_id, &mesh->pipe_desc, type);
 
   // Setting the buffers
   mesh->vertex_buffer = mesh->pipe_desc.vertex_buffer;
@@ -722,7 +722,7 @@ ResourceID resources_push_skybox(const u16 group_id, const ResourceID& cubemap_i
   Skybox* skybox = new Skybox{};
   
   // Use the loader to set up the skybox
-  geomatry_loader_load(group_id, &skybox->pipe_desc, GEOMATRY_SKYBOX);
+  geometry_loader_load(group_id, &skybox->pipe_desc, GEOMETRY_SKYBOX);
 
   // Set the cubemap
   skybox->cubemap = resources_get_cubemap(cubemap_id);

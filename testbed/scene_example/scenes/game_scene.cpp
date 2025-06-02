@@ -127,7 +127,7 @@ bool game_scene_create(Scene* scene) {
   nikola::ResourceID pav_material_id = nikola::resources_push_material(res_group, pav_texture);
   
   // Meshes init
-  nikola::ResourceID cube_mesh = nikola::resources_push_mesh(scene->resource_group, nikola::GEOMATRY_CUBE);
+  nikola::ResourceID cube_mesh = nikola::resources_push_mesh(scene->resource_group, nikola::GEOMETRY_CUBE);
 
   // Skyboxes init
   scene->frame_data.skybox_id = nikola::resources_push_skybox(res_group, "cubemaps/NightSky.nbrcubemap");

@@ -35,6 +35,9 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/resources/nbr_file.cpp
   ${NIKOLA_SRC_DIR}/resources/nbr_importer.cpp
 
+  # Resources/Loaders 
+  ${NIKOLA_SRC_DIR}/resources/loaders/geometry_loader.cpp
+
   # Filesystem
   ${NIKOLA_SRC_DIR}/filesystem/file.cpp
   ${NIKOLA_SRC_DIR}/filesystem/filesystem.cpp
@@ -43,9 +46,6 @@ set(NIKOLA_SOURCES
   
   # Timer 
   ${NIKOLA_SRC_DIR}/time/timer_utils.cpp
-
-  # Resources/Loaders 
-  ${NIKOLA_SRC_DIR}/resources/loaders/geomatry_loader.cpp
   
   # Renderer 
   ${NIKOLA_SRC_DIR}/renderer/camera.cpp

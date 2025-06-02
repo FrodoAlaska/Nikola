@@ -85,7 +85,7 @@ static void init_resources(nikola::App* app) {
   app->material_id = nikola::resources_push_material(app->res_group_id, nikola::resources_get_id(app->res_group_id, "grass"));
 
   // Mesh init
-  app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMATRY_CUBE);
+  app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
 }
 
 static void init_bodies(nikola::App* app) {

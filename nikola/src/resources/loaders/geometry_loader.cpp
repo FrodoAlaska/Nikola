@@ -1,4 +1,4 @@
-#include "geomatry_loader.h"
+#include "geometry_loader.h"
 
 #include "nikola/nikola_base.h"
 #include "nikola/nikola_resources.h"
@@ -169,11 +169,11 @@ static void create_skybox_geo(const u16 group_id, GfxPipelineDesc* pipe_desc) {
 }
 
 static void create_plane_geo(const u16 group_id, GfxPipelineDesc* pipe_desc) {
-  // @TODO (Geomatry): Create a plane geo
+  // @TODO (Geometry): Create a plane geo
 }
 
 static void create_circle_geo(const u16 group_id, GfxPipelineDesc* pipe_desc) {
-  // @TODO (Geomatry): Create a circle geo
+  // @TODO (Geometry): Create a circle geo
 }
 
 /// Private functions  
@@ -182,22 +182,22 @@ static void create_circle_geo(const u16 group_id, GfxPipelineDesc* pipe_desc) {
 /// ----------------------------------------------------------------------
 /// Mesh loader functions
 
-void geomatry_loader_load(const u16 group_id, GfxPipelineDesc* pipe_desc, const GeomatryType type) {
+void geometry_loader_load(const u16 group_id, GfxPipelineDesc* pipe_desc, const GeometryType type) {
   switch(type) {
-    case GEOMATRY_CUBE:
+    case GEOMETRY_CUBE:
       create_cube_geo(group_id, pipe_desc);
       break;
-    case GEOMATRY_PLANE:
+    case GEOMETRY_PLANE:
       create_plane_geo(group_id, pipe_desc);
       break;
-    case GEOMATRY_SKYBOX:
+    case GEOMETRY_SKYBOX:
       create_skybox_geo(group_id, pipe_desc);
       break;
-    case GEOMATRY_CIRCLE:
+    case GEOMETRY_CIRCLE:
       create_circle_geo(group_id, pipe_desc);
       break;
     default:
-      NIKOLA_LOG_ERROR("Invalid geomatry shape given");
+      NIKOLA_LOG_ERROR("Invalid geometry shape given");
       break;
   }
 }

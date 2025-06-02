@@ -34,7 +34,7 @@ static void init_resources(nikola::App* app) {
   app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group_id, "cubemaps/gloomy.nbrcubemap");
 
   // Mesh init
-  app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMATRY_CUBE);
+  app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
 }
 
 /// Private functions 
