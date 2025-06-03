@@ -8,7 +8,6 @@ set(TESTBED_INCLUDE_DIR ${TESTBED_SRC_DIR})
 set(TESTBED_LIBS_DIR libs)
 
 set(TESTBED_LIBRARIES 
-  ${NIKOLA_LIBRARIES}
   nikola
 )
 
@@ -49,8 +48,8 @@ add_executable(${PROJECT_NAME} ${TESTBED_SOURCES})
 # Make sure that Nikola is built before attempting to compile the testbeds
 add_dependencies(${PROJECT_NAME} nikola)
 
-target_include_directories(${PROJECT_NAME} PUBLIC BEFORE ${TESTBED_INCLUDES})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${TESTBED_LIBRARIES})
+target_include_directories(${PROJECT_NAME} PRIVATE BEFORE ${TESTBED_INCLUDES})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${TESTBED_LIBRARIES})
 ############################################################
 
 ### Compiling Options ###

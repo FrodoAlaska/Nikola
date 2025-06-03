@@ -168,7 +168,9 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 
   // Disable/enable the GUI
   if(nikola::input_key_pressed(nikola::KEY_F1)) {
-    app->has_editor = !app->has_editor;
+    app->has_editor                  = !app->has_editor;
+    app->frame_data.camera.is_active = !app->has_editor;
+    
     nikola::input_cursor_show(app->has_editor);
   }
 
@@ -216,10 +218,6 @@ void app_render_gui(nikola::App* app) {
   if(!app->has_editor) {
     return;
   }
-
-  // These flags are edited based on if the GUI
-  // currently has focus or not
-  app->frame_data.camera.is_active = !nikola::gui_is_focused();
 
   // Begin GUI frame
   nikola::gui_begin();
