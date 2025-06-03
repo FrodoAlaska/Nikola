@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nikola_base.h"
+#include "nikola_window.h"
 #include "nikola_containers.h"
 
 //////////////////////////////////////////////////////////////////////////

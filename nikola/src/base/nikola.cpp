@@ -1,4 +1,6 @@
 #include "nikola/nikola_base.h"
+#include "nikola/nikola_event.h"
+#include "nikola/nikola_input.h"
 
 //////////////////////////////////////////////////////////////////////////
 

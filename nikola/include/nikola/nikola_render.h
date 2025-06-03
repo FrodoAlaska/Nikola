@@ -1,15 +1,16 @@
 #pragma once
 
-#include "nikola_base.h"
 #include "nikola_gfx.h"
 #include "nikola_resources.h"
 #include "nikola_math.h"
 #include "nikola_containers.h"
-#include "nikola_physics.h"
 
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola
+
+// Forward declaration to help with compilation time.
+struct Collider;
 
 /// ----------------------------------------------------------------------
 /// *** Renderer ***

@@ -27,10 +27,13 @@ struct PerfTimer {
 ///---------------------------------------------------------------------------------------------------------------------
 /// PerfTimer functions
 
+/// Start the performance timer `timer`.
 NIKOLA_API void perf_timer_start(PerfTimer& timer);
 
+/// Stop the performance timer `timer`.
 NIKOLA_API void perf_timer_stop(PerfTimer& timer);
 
+/// Convert the contents of `timer` to a string format.
 NIKOLA_API String perf_timer_to_string(PerfTimer& timer);
 
 /// PerfTimer functions
@@ -54,11 +57,19 @@ NIKOLA_API String perf_timer_to_string(PerfTimer& timer);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Timer 
 struct Timer {
+  /// The internal counter of the timer.
   f32 counter = 0.0f; 
+
+  /// The maximum limit of the timer.
   f32 limit   = 0.0f;
 
+  /// Determines if the timer is one shot or not.
   bool is_one_shot = false;
+
+  /// Determines if the timer is currently active or not.
   bool is_active   = true;
+
+  /// Determines if the tiemr has run out or still going.
   bool has_runout  = false;
 };
 /// Timer 
@@ -67,10 +78,13 @@ struct Timer {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Timer functions
 
+/// Create a new `timer` with a maximum `limit`.
 NIKOLA_API void timer_create(Timer* timer, const f32 limit, const bool one_shot, const bool initial_active = true);
 
+/// Let the given `timer` tick.
 NIKOLA_API void timer_update(Timer& timer);
 
+/// Reset the `timer` to its initial state.
 NIKOLA_API void timer_reset(Timer& timer);
 
 /// Timer functions

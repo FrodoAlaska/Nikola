@@ -9,7 +9,7 @@ struct nikola::App {
   nikola::Window* window;
 
   nikola::FrameData frame_data;
-  nikola::u16 res_group;
+  nikola::ResourceGroupID res_group;
 
   nikola::AudioBufferID audio_buffer;
   nikola::AudioSourceID audio_source;

@@ -1,4 +1,5 @@
-#include "nikola/nikola_base.h"
+#include "nikola/nikola_input.h"
+#include "nikola/nikola_event.h"
 
 #include <GLFW/glfw3.h>
 
@@ -219,7 +220,7 @@ const bool input_gamepad_button_up(const JoystickID id, const GamepadButton butt
   return !s_state.current_gamepad_state[id][button];
 }
 
-const i8* input_gamepad_get_name(const JoystickID id) {
+const char* input_gamepad_get_name(const JoystickID id) {
   return glfwGetGamepadName(id);
 }
 

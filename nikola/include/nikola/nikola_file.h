@@ -4,13 +4,21 @@
 #include "nikola_containers.h"
 #include "nikola_math.h"
 #include "nikola_audio.h"
-#include "nikola_physics.h"
 
-#include <fstream>
+#include "nikola_pch.h"
 
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola
+
+// Forward declaration to help with compilation time.
+struct Camera; 
+struct DirectionalLight;
+struct PointLight;
+struct PhysicsBody;
+struct PhysicsBodyDesc;
+struct Collider;
+struct ColliderDesc;
 
 /// ----------------------------------------------------------------------
 /// *** File system ***
@@ -86,10 +94,6 @@ using FileWatchFunc = void(*)(const FileStatus status, const FilePath& path, voi
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// Predefines to prevent circular dependencies
-
-struct Camera; 
-struct DirectionalLight;
-struct PointLight;
 
 ///---------------------------------------------------------------------------------------------------------------------
 

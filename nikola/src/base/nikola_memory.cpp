@@ -22,8 +22,13 @@ static MemoryState s_state;
 /// Memory functions
 
 void* memory_allocate(const sizei size) {
+  NIKOLA_ASSERT((size > 0), "Cannot allocate a memory block of size 0");
+
   void* ptr = malloc(size);
   NIKOLA_ASSERT(ptr, "Could not allocate any more memory!");
+
+  // Initialize the memory to zero for convenience
+  memory_zero(ptr, size);
 
   s_state.alloc_count++;
   s_state.alloc_total_bytes += size;
@@ -34,8 +39,11 @@ void* memory_allocate(const sizei size) {
 void* memory_reallocate(void* ptr, const sizei new_size) {
   void* temp_ptr = realloc(ptr, new_size);
 
-  NIKOLA_ASSERT(ptr, "Could not allocate any more memory!");
+  NIKOLA_ASSERT(temp_ptr, "Could not allocate any more memory!");
   ptr = temp_ptr;
+
+  // Initialize the memory to zero for convenience
+  memory_zero(ptr, new_size);
   
   s_state.alloc_count++;
   s_state.alloc_total_bytes += new_size;
@@ -57,6 +65,9 @@ void* memory_zero(void* ptr, const sizei ptr_size) {
 void* memory_blocks_allocate(const sizei count, const sizei block_size) {
   void* ptr = calloc(count, block_size);
   NIKOLA_ASSERT(ptr, "Could not allocate any more memory!");
+  
+  // Initialize the memory to zero for convenience
+  memory_zero(ptr, count * block_size);
 
   s_state.alloc_count++;
   s_state.alloc_total_bytes += (count * block_size);

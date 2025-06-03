@@ -5,6 +5,7 @@
 #include "nikola/nikola_math.h"
 #include "nikola/nikola_audio.h"
 #include "nikola/nikola_physics.h"
+#include "nikola/nikola_input.h"
 
 #include <GLFW/glfw3.h>
 

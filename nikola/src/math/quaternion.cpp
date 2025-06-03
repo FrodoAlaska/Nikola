@@ -1,13 +1,6 @@
 #include "nikola/nikola_base.h"
 #include "nikola/nikola_math.h"
 
-#include <glm/glm.hpp>
-#include <glm/ext/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
-
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/euler_angles.hpp>
-
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola

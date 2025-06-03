@@ -98,6 +98,10 @@ add_dependencies(${PROJECT_NAME} nikola)
 
 target_include_directories(${PROJECT_NAME} PRIVATE BEFORE ${NBR_INCLUDES})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${NBR_LIBRARIES})
+
+target_precompile_headers(${PROJECT_NAME} PRIVATE 
+  "$<$<COMPILE_LANGUAGE:CXX>:${NBR_SRC_DIR}/nbr_pch.h>"
+)
 ############################################################
 
 ### Compiling Options ###

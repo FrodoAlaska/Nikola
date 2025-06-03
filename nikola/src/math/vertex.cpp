@@ -1,9 +1,6 @@
 #include "nikola/nikola_base.h"
 #include "nikola/nikola_math.h"
-
-#include <glm/glm.hpp>
-#include <glm/ext/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include "nikola/nikola_gfx.h"
 
 //////////////////////////////////////////////////////////////////////////
 

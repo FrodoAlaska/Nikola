@@ -62,17 +62,22 @@ set(NIKOLA_SOURCES
 set(NIKOLA_HEADERS
   ${NIKOLA_INCLUDE_DIR}/nikola/nikola_base.h
   ${NIKOLA_INCLUDE_DIR}/nikola/nikola_gfx.h
-  
+  ${NIKOLA_INCLUDE_DIR}/nikola/nikola_event.h
+  ${NIKOLA_INCLUDE_DIR}/nikola/nikola_window.h
+  ${NIKOLA_INCLUDE_DIR}/nikola/nikola_input.h
   ${NIKOLA_INCLUDE_DIR}/nikola/nikola_app.h
   ${NIKOLA_INCLUDE_DIR}/nikola/nikola_containers.h
   ${NIKOLA_INCLUDE_DIR}/nikola/nikola_file.h
   ${NIKOLA_INCLUDE_DIR}/nikola/nikola_math.h
   ${NIKOLA_INCLUDE_DIR}/nikola/nikola_render.h
   ${NIKOLA_INCLUDE_DIR}/nikola/nikola_resources.h
-  
   ${NIKOLA_INCLUDE_DIR}/nikola/nikola_ui.h
   
   ${NIKOLA_INCLUDE_DIR}/nikola/nikola.h
+)
+
+set(NIKOLA_PCH
+  ${NIKOLA_INCLUDE_DIR}/nikola/nikola_pch.h
 )
 ############################################################
 
@@ -114,8 +119,13 @@ add_library(${PROJECT_NAME} ${NIKOLA_BUILD_TYPE} ${NIKOLA_SOURCES} ${NIKOLA_HEAD
 target_include_directories(${PROJECT_NAME} PRIVATE BEFORE 
   ${NIKOLA_INCLUDES}
 )
+
 target_link_libraries(${PROJECT_NAME} PRIVATE 
   ${NIKOLA_LIBRARIES}
+)
+
+target_precompile_headers(${PROJECT_NAME} PRIVATE 
+  "$<$<COMPILE_LANGUAGE:CXX>:${NIKOLA_PCH}>"
 )
 ############################################################
 

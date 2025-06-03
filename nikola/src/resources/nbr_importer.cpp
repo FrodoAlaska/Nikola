@@ -46,7 +46,7 @@ void nbr_import_shader(NBRShader* nbr, GfxShaderDesc* desc) {
   desc->pixel_source  = nbr->pixel_source;
 }
 
-void nbr_import_mesh(NBRMesh* nbr, const u16 group_id, Mesh* mesh) {
+void nbr_import_mesh(NBRMesh* nbr, const ResourceGroupID& group_id, Mesh* mesh) {
   NIKOLA_ASSERT(nbr, "Invalid NBRMesh while importing");
   NIKOLA_ASSERT(mesh, "Invalid Mesh while importing");
   
@@ -86,12 +86,12 @@ void nbr_import_mesh(NBRMesh* nbr, const u16 group_id, Mesh* mesh) {
   mesh->pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
 }
 
-void nbr_import_material(NBRMaterial* nbr, const u16 group_id, Material* material) {
+void nbr_import_material(NBRMaterial* nbr, const ResourceGroupID& group_id, Material* material) {
   NIKOLA_ASSERT(nbr, "Invalid NBRMaterial while importing");
   NIKOLA_ASSERT(material, "Invalid Material while importing");
 }
 
-void nbr_import_model(NBRModel* nbr, const u16 group_id, Model* model) {
+void nbr_import_model(NBRModel* nbr, const ResourceGroupID& group_id, Model* model) {
   NIKOLA_ASSERT(nbr, "Invalid NBRModel while importing");
   NIKOLA_ASSERT(model, "Invalid Model while importing");
   
@@ -141,7 +141,7 @@ void nbr_import_model(NBRModel* nbr, const u16 group_id, Model* model) {
   }
 }
 
-void nbr_import_font(NBRFont* nbr, const u16 group_id, Font* font) {
+void nbr_import_font(NBRFont* nbr, const ResourceGroupID& group_id, Font* font) {
   NIKOLA_ASSERT(nbr, "Invalid NBRFont while importing");
   NIKOLA_ASSERT(font, "Invalid Font while importing");
 
@@ -202,7 +202,7 @@ void nbr_import_font(NBRFont* nbr, const u16 group_id, Font* font) {
   }
 }
 
-void nbr_import_audio(NBRAudio* nbr, const u16 group_id, AudioBufferDesc* desc) {
+void nbr_import_audio(NBRAudio* nbr, const ResourceGroupID& group_id, AudioBufferDesc* desc) {
   NIKOLA_ASSERT(nbr, "Invalid NBRAudio given while importing");
   NIKOLA_ASSERT(desc, "Invalid AudioBufferDesc given while importing");
 

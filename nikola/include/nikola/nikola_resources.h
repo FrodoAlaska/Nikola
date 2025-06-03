@@ -1,6 +1,5 @@
 #pragma once
 
-#include "nikola_base.h"
 #include "nikola_gfx.h"
 #include "nikola_file.h"
 #include "nikola_math.h"
@@ -343,9 +342,15 @@ const u32 MATERIAL_UNIFORMS_MAX          = 4;
 /// Macros 
 
 /// Check if the given `res_id` is valid
-#define RESOURCE_IS_VALID(id) (id.group != nikola::RESOURCE_GROUP_INVALID)
+#define RESOURCE_IS_VALID(res_id) (res_id.group != nikola::RESOURCE_GROUP_INVALID)
 
 /// Macros 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// ResourceGroupID 
+typedef u16 ResourceGroupID;
+/// ResourceGroupID 
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -436,7 +441,7 @@ struct ResourceID {
 
   /// The parent resource group that will be used to 
   /// retrieve the resource later. 
-  u16 group = RESOURCE_GROUP_INVALID;
+  ResourceGroupID group = RESOURCE_GROUP_INVALID;
 };
 /// ResourceID
 ///---------------------------------------------------------------------------------------------------------------------
@@ -579,19 +584,19 @@ NIKOLA_API void nbr_import_cubemap(NBRCubemap* nbr, GfxCubemapDesc* desc);
 NIKOLA_API void nbr_import_shader(NBRShader* nbr, GfxShaderDesc* desc);
 
 /// Convert the `nbr` mesh into a `Mesh`, using the `group_id`.
-NIKOLA_API void nbr_import_mesh(NBRMesh* nbr, const u16 group_id, Mesh* mesh);
+NIKOLA_API void nbr_import_mesh(NBRMesh* nbr, const ResourceGroupID& group_id, Mesh* mesh);
 
 /// Convert the `nbr` material into a `Material`, using the `group_id`.
-NIKOLA_API void nbr_import_material(NBRMaterial* nbr, const u16 group_id, Material* material);
+NIKOLA_API void nbr_import_material(NBRMaterial* nbr, const ResourceGroupID& group_id, Material* material);
 
 /// Convert the `nbr` model into a `Model`, using the `group_id`.
-NIKOLA_API void nbr_import_model(NBRModel* nbr, const u16 group_id, Model* model);
+NIKOLA_API void nbr_import_model(NBRModel* nbr, const ResourceGroupID&, Model* model);
 
 /// Convert the `nbr` font into a `Font`, using the `group_id`.
-NIKOLA_API void nbr_import_font(NBRFont* nbr, const u16 group_id, Font* font);
+NIKOLA_API void nbr_import_font(NBRFont* nbr, const ResourceGroupID& group_id, Font* font);
 
 /// Convert the `nbr` audio into an `AudioBuffer`, using the `group_id`.
-NIKOLA_API void nbr_import_audio(NBRAudio* nbr, const u16 group_id, AudioBufferDesc* desc);
+NIKOLA_API void nbr_import_audio(NBRAudio* nbr, const ResourceGroupID& group_id, AudioBufferDesc* desc);
 
 /// NBR importer functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -608,21 +613,21 @@ NIKOLA_API void resource_manager_shutdown();
 /// Create and return a new resource group (a.k.a `unsigned short`) with `name` and `parent_dir`. 
 ///
 /// @NOTE: Any `_push` function that takes a `path` will be prefixed with the given `parent_dir`.
-NIKOLA_API u16 resources_create_group(const String& name, const FilePath& parent_dir);
+NIKOLA_API ResourceGroupID resources_create_group(const String& name, const FilePath& parent_dir);
 
 /// Clear all of resources in `group_id`.
-NIKOLA_API void resources_clear_group(const u16 group_id);
+NIKOLA_API void resources_clear_group(const ResourceGroupID& group_id);
 
 /// Clear and destroy all of resources in `group_id`.
-NIKOLA_API void resources_destroy_group(const u16 group_id);
+NIKOLA_API void resources_destroy_group(const ResourceGroupID& group_id);
 
 /// Allocate a new `GfxBuffer` using `buff_desc`, store it in `group_id`, and return a `ResourceID` 
 /// to identify it.
-NIKOLA_API ResourceID resources_push_buffer(const u16 group_id, const GfxBufferDesc& buff_desc);
+NIKOLA_API ResourceID resources_push_buffer(const ResourceGroupID& group_id, const GfxBufferDesc& buff_desc);
 
 /// Allocate a new `GfxTexture` using `desc`, store it in `group`,
 /// and return a `ResourceID` to identify it.
-NIKOLA_API ResourceID resources_push_texture(const u16 group_id, const GfxTextureDesc& desc);
+NIKOLA_API ResourceID resources_push_texture(const ResourceGroupID& group_id, const GfxTextureDesc& desc);
 
 /// Allocate a new `GfxTexture` using the texture retrieved from the `nbr_path`, 
 /// store it in `group_id`, and return a `ResourceID` to identify it.
@@ -631,7 +636,7 @@ NIKOLA_API ResourceID resources_push_texture(const u16 group_id, const GfxTextur
 ///   - `format` = `GFX_TEXTURE_FORMAT_RGBA8`.
 ///   - `filter` = `GFX_TEXTURE_FILTER_MIN_MAG_NEAREST`.
 ///   - `wrap`   = `GFX_TEXTURE_WRAP_CLAMP`.
-NIKOLA_API ResourceID resources_push_texture(const u16 group_id, 
+NIKOLA_API ResourceID resources_push_texture(const ResourceGroupID& group_id, 
                                              const FilePath& nbr_path,
                                              const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
                                              const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
@@ -639,7 +644,7 @@ NIKOLA_API ResourceID resources_push_texture(const u16 group_id,
 
 /// Allocate a new `GfxCubemap` using `desc`, store it in `group_id`,
 /// and return a `ResourceID` to identify it.
-NIKOLA_API ResourceID resources_push_cubemap(const u16 group_id, const GfxCubemapDesc& desc);
+NIKOLA_API ResourceID resources_push_cubemap(const ResourceGroupID& group_id, const GfxCubemapDesc& desc);
 
 /// Allocate a new `GfxCubemap` using the cubemap retrieved from the `nbr_path`, 
 /// store it in `group_id`, and return a `ResourceID` to identify it.
@@ -650,7 +655,7 @@ NIKOLA_API ResourceID resources_push_cubemap(const u16 group_id, const GfxCubema
 ///   - `wrap`   = `GFX_TEXTURE_WRAP_CLAMP`.
 ///
 /// @NOTE: The number of faces of the cubemap will be determined inside the NBR file.
-NIKOLA_API ResourceID resources_push_cubemap(const u16 group_id, 
+NIKOLA_API ResourceID resources_push_cubemap(const ResourceGroupID& group_id, 
                                              const FilePath& nbr_path,
                                              const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
                                              const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
@@ -658,66 +663,66 @@ NIKOLA_API ResourceID resources_push_cubemap(const u16 group_id,
 
 /// Allocate a new `GfxShader` using `shader_desc`, store it in `group_id`, and return a `ResourceID` 
 /// to identify it.
-NIKOLA_API ResourceID resources_push_shader(const u16 group_id, const GfxShaderDesc& shader_desc);
+NIKOLA_API ResourceID resources_push_shader(const ResourceGroupID& group_id, const GfxShaderDesc& shader_desc);
 
 /// Allocate a new `GfxShader` using the shader retrieved from the `nbr_path`, 
 /// store it in `group_id`, and return a `ResourceID` to identify it.
-NIKOLA_API ResourceID resources_push_shader(const u16 group_id, const FilePath& nbr_path);
+NIKOLA_API ResourceID resources_push_shader(const ResourceGroupID& group_id, const FilePath& nbr_path);
 
 /// Allocate a new `ShaderContext` using the previously-added shader `shader_id`, 
 /// store it in `group_id`, and return a `ResourceID` to identify it.
-NIKOLA_API ResourceID resources_push_shader_context(const u16 group_id, const ResourceID& shader_id);
+NIKOLA_API ResourceID resources_push_shader_context(const ResourceGroupID& group_id, const ResourceID& shader_id);
 
 /// Allocate a new `ShaderContext` using the shader at `shader_path`, 
 /// store it in `group_id`, and return a `ResourceID` to identify it.
-NIKOLA_API ResourceID resources_push_shader_context(const u16 group_id, const FilePath& shader_path);
+NIKOLA_API ResourceID resources_push_shader_context(const ResourceGroupID& group_id, const FilePath& shader_path);
 
 /// Allocate a new `Mesh` using the given `nbr_mesh`,
 /// store it in `group_id`, return a `ResourceID` to identified it. 
 ///
 /// @NOTE: This function is usually meant for loading a mesh from an NBR format. 
 /// Often it is used to load Models, for example.
-NIKOLA_API ResourceID resources_push_mesh(const u16 group_id, NBRMesh& nbr_mesh);
+NIKOLA_API ResourceID resources_push_mesh(const ResourceGroupID& group_id, NBRMesh& nbr_mesh);
 
 /// Allocate a new `Mesh` using a predefined geometry `type`, 
 /// store it in `group_id`, return a `ResourceID` to identified it. 
-NIKOLA_API ResourceID resources_push_mesh(const u16 group_id, const GeometryType type);
+NIKOLA_API ResourceID resources_push_mesh(const ResourceGroupID& group_id, const GeometryType type);
 
 /// Allocate a new `Material` store it in `group_id` with a diffuse map of `diffuse`, and 
 /// return a `ResourceID` to identify it.
 ///
 /// @NOTE: The `diffuse_map` parametar is set to `INVALID` by default.
-NIKOLA_API ResourceID resources_push_material(const u16 group_id, const ResourceID& diffuse_map = {});
+NIKOLA_API ResourceID resources_push_material(const ResourceGroupID& group_id, const ResourceID& diffuse_map = {});
 
 /// Allocate a new `Material` store it in `group_id` with a diffuse map found at `diffuse_path`, and 
 /// return a `ResourceID` to identify it.
 ///
 /// @NOTE: The `diffuse_map` parametar is set to `INVALID` by default.
-NIKOLA_API ResourceID resources_push_material(const u16 group_id, const FilePath& diffuse_path);
+NIKOLA_API ResourceID resources_push_material(const ResourceGroupID& group_id, const FilePath& diffuse_path);
 
 /// Allocate a new `Skybox` using the previously-added `cubemap_id`, store it in `group_id`, 
 /// and return a `ResourceID` to identify it.
-NIKOLA_API ResourceID resources_push_skybox(const u16 group_id, const ResourceID& cubemap_id);
+NIKOLA_API ResourceID resources_push_skybox(const ResourceGroupID& group_id, const ResourceID& cubemap_id);
 
 /// Allocate a new `Skybox` using the cubemap at `cubemap_path`, store it in `group_id`, 
 /// and return a `ResourceID` to identify it.
-NIKOLA_API ResourceID resources_push_skybox(const u16 group_id, const FilePath& cubemap_path);
+NIKOLA_API ResourceID resources_push_skybox(const ResourceGroupID& group_id, const FilePath& cubemap_path);
 
 /// Allocate a new `Model` using the `NBRModel` retrieved from the `nbr_path`, 
 /// store it in `group_id`, and return a `ResourceID` to identify it.
-NIKOLA_API ResourceID resources_push_model(const u16 group_id, const FilePath& nbr_path);
+NIKOLA_API ResourceID resources_push_model(const ResourceGroupID& group_id, const FilePath& nbr_path);
 
 /// Allocate a new `Font` using the `NBRFont` retrieved from the `nbr_path`, 
 /// store it in `group_id`, and return a `ResourceID` to identify it.
-NIKOLA_API ResourceID resources_push_font(const u16 group_id, const FilePath& nbr_path);
+NIKOLA_API ResourceID resources_push_font(const ResourceGroupID& group_id, const FilePath& nbr_path);
 
 /// Allocate a new `AudioBufferID` using the given `AudioBufferDesc` , 
 /// store it in `group_id`, and return a `ResourceID` to identify it.
-NIKOLA_API ResourceID resources_push_audio_buffer(const u16 group_id, const AudioBufferDesc& desc);
+NIKOLA_API ResourceID resources_push_audio_buffer(const ResourceGroupID& group_id, const AudioBufferDesc& desc);
 
 /// Allocate a new `AudioBufferID` using the `NBRAudio` retrieved from the `nbr_path`, 
 /// store it in `group_id`, and return a `ResourceID` to identify it.
-NIKOLA_API ResourceID resources_push_audio_buffer(const u16 group_id, const FilePath& nbr_path);
+NIKOLA_API ResourceID resources_push_audio_buffer(const ResourceGroupID& group_id, const FilePath& nbr_path);
 
 /// Retrieve all of the valid resources from `dir` and store the resulting entries in an
 /// internal list (where the key is the file name of the resource and the value is its ID) 
@@ -725,11 +730,11 @@ NIKOLA_API ResourceID resources_push_audio_buffer(const u16 group_id, const File
 /// later using the function `resources_get_id`.
 ///
 /// @NOTE: The given `dir` is prepended with the `parent_dir` given when `group_id` was created.
-NIKOLA_API void resources_push_dir(const u16 group_id, const FilePath& dir);
+NIKOLA_API void resources_push_dir(const ResourceGroupID& group_id, const FilePath& dir);
 
 /// Search and retrieve the ID of the resource `filename` in `group_id`. 
 /// If `filename` was not found in `group_id`, a default `ResourceID` will be returned. 
-NIKOLA_API ResourceID& resources_get_id(const u16 group_id, const String& filename);
+NIKOLA_API ResourceID& resources_get_id(const ResourceGroupID& group_id, const String& filename);
 
 /// Retrieve `GfxBuffer` identified by `id` in `group`. 
 ///

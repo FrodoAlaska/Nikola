@@ -1,6 +1,9 @@
 #pragma once
 
 #include <nikola/nikola_base.h>
+#include <nikola/nikola_event.h>
+#include <nikola/nikola_input.h>
+#include <nikola/nikola_window.h>
 #include <nikola/nikola_gfx.h>
 #include <nikola/nikola_audio.h>
 #include <nikola/nikola_app.h>

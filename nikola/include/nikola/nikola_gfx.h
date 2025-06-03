@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nikola_base.h"
+#include "nikola_window.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -897,11 +897,15 @@ NIKOLA_API void gfx_context_present(GfxContext* gfx);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Framebuffer functions
 
-/// Allocate and return a `GfxFramebuffer` object, using the information in `desc`. 
-NIKOLA_API GfxFramebuffer* gfx_framebuffer_create(GfxContext* gfx, const GfxFramebufferDesc& desc);
+/// Allocate using the `alloc_fn` callback and return a `GfxFramebuffer` object, using the information in `desc`. 
+///
+/// @NOTE: The `alloc_fn` uses the default memory allocater.
+NIKOLA_API GfxFramebuffer* gfx_framebuffer_create(GfxContext* gfx, const GfxFramebufferDesc& desc, const AllocateMemoryFn& alloc_fn = memory_allocate);
 
-/// Free/reclaim any memory taken by `framebuffer`.
-NIKOLA_API void gfx_framebuffer_destroy(GfxFramebuffer* framebuffer);
+/// Free/reclaim any memory taken by `framebuffer` using the `free_fn` callback.
+///
+/// @NOTE: The `free_fn` uses the default memory allocater.
+NIKOLA_API void gfx_framebuffer_destroy(GfxFramebuffer* framebuffer, const FreeMemoryFn& free_fn = memory_free);
 
 /// Copy the contents of the buffer associated with `buffer_mask` (which is an ORable flag from the `GfxClearFlags` enum) 
 /// of the `src_frame` (confined by `src_x`, `src_y`, `src_width`, and `src_height`) framebuffer into the `dest_frame` 
@@ -932,11 +936,15 @@ NIKOLA_API void gfx_framebuffer_update(GfxFramebuffer* framebuffer, const GfxFra
 ///---------------------------------------------------------------------------------------------------------------------
 /// Buffer functions 
 
-/// Allocate and return a `GfxBuffer` object, using the information in `desc`.
-NIKOLA_API GfxBuffer* gfx_buffer_create(GfxContext* gfx, const GfxBufferDesc& desc);
+/// Allocate using the `alloc_fn` callback and return a `GfxBuffer` object, using the information in `desc`. 
+///
+/// @NOTE: The `alloc_fn` uses the default memory allocater.
+NIKOLA_API GfxBuffer* gfx_buffer_create(GfxContext* gfx, const GfxBufferDesc& desc, const AllocateMemoryFn& alloc_fn = memory_allocate);
 
-/// Free/reclaim any memory taken by `buff`.
-NIKOLA_API void gfx_buffer_destroy(GfxBuffer* buff);
+/// Free/reclaim any memory taken by `buff` using the `free_fn` callback.
+///
+/// @NOTE: The `free_fn` uses the default memory allocater.
+NIKOLA_API void gfx_buffer_destroy(GfxBuffer* buff, const FreeMemoryFn& free_fn = memory_free);
 
 /// Retrieve the internal `GfxBufferDesc` of `buffer`
 NIKOLA_API GfxBufferDesc& gfx_buffer_get_desc(GfxBuffer* buffer);
@@ -950,11 +958,15 @@ NIKOLA_API void gfx_buffer_update(GfxBuffer* buff, const sizei offset, const siz
 ///---------------------------------------------------------------------------------------------------------------------
 /// Shader functions 
 
-/// Allocate and return a `GfxShader`, using the information given in `desc`. 
-NIKOLA_API GfxShader* gfx_shader_create(GfxContext* gfx, const GfxShaderDesc& desc);
+/// Allocate using the `alloc_fn` callback and return a `GfxShader` object, using the information in `desc`. 
+///
+/// @NOTE: The `alloc_fn` uses the default memory allocater.
+NIKOLA_API GfxShader* gfx_shader_create(GfxContext* gfx, const GfxShaderDesc& desc, const AllocateMemoryFn& alloc_fn = memory_allocate);
 
-/// Free/reclaim any memory consumed by `shader`.
-NIKOLA_API void gfx_shader_destroy(GfxShader* shader);
+/// Free/reclaim any memory taken by `shader` using the `free_fn` callback.
+///
+/// @NOTE: The `free_fn` uses the default memory allocater.
+NIKOLA_API void gfx_shader_destroy(GfxShader* shader, const FreeMemoryFn& free_fn = memory_free);
 
 /// Use/activate the given `shader` in any subsequent draw call.
 ///
@@ -992,11 +1004,20 @@ NIKOLA_API void gfx_shader_upload_uniform(GfxShader* shader, const i32 location,
 ///---------------------------------------------------------------------------------------------------------------------
 /// Texture functions 
 
-/// Allocate and return a `GfxTexture` from the information provided by `desc`. 
-NIKOLA_API GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc);
+/// Allocate using the `alloc_fn` callback and return a `GfxTexture` object, using the information in `desc`. 
+///
+/// @NOTE: The `alloc_fn` uses the default memory allocater.
+NIKOLA_API GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc, const AllocateMemoryFn& alloc_fn = memory_allocate);
 
-/// Reclaim/free any memory allocated by `texture`.
-NIKOLA_API void gfx_texture_destroy(GfxTexture* texture);
+/// Free/reclaim any memory taken by `texture` using the `free_fn` callback.
+///
+/// @NOTE: The `free_fn` uses the default memory allocater.
+NIKOLA_API void gfx_texture_destroy(GfxTexture* texture, const FreeMemoryFn& free_fn = memory_free);
+
+/// Use/activate the given `texture` in any subsequent draw call. 
+///
+/// @NOTE: If the given `texture` is `nullptr`, the function will assert
+NIKOLA_API void gfx_texture_use(GfxTexture* texture);
 
 /// Use/activate the given `textures` array of `count` in any subsequent draw call. 
 ///
@@ -1028,11 +1049,20 @@ NIKOLA_API void gfx_texture_upload_data(GfxTexture* texture,
 ///---------------------------------------------------------------------------------------------------------------------
 /// Cubemap functions 
 
-/// Allocate and return a `GfxCubemap` from the information provided by `desc`. 
-NIKOLA_API GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc& desc);
+/// Allocate using the `alloc_fn` callback and return a `GfxCubemap` object, using the information in `desc`. 
+///
+/// @NOTE: The `alloc_fn` uses the default memory allocater.
+NIKOLA_API GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc& desc, const AllocateMemoryFn& alloc_fn = memory_allocate);
 
-/// Reclaim/free any memory allocated by `texture`.
-NIKOLA_API void gfx_cubemap_destroy(GfxCubemap* cubemap);
+/// Free/reclaim any memory taken by `cubemap` using the `free_fn` callback.
+///
+/// @NOTE: The `free_fn` uses the default memory allocater.
+NIKOLA_API void gfx_cubemap_destroy(GfxCubemap* cubemap, const FreeMemoryFn& free_fn = memory_free);
+
+/// Use/activate the given `cubemap` in any subsequent draw call. 
+///
+/// @NOTE: If the given `cubemap` is a `nullptr`, the function will assert.
+NIKOLA_API void gfx_cubemap_use(GfxCubemap* cubemap);
 
 /// Use/activate the given `cubemaps` array of `count` in any subsequent draw call. 
 ///
@@ -1065,11 +1095,15 @@ NIKOLA_API void gfx_cubemap_upload_data(GfxCubemap* cubemap,
 ///---------------------------------------------------------------------------------------------------------------------
 /// Pipeline functions 
 
-/// Allocate and return a `GfxPipeline` from the information provided by `desc`.
-NIKOLA_API GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc);
+/// Allocate using the `alloc_fn` callback and return a `GfxPipeline` object, using the information in `desc`. 
+///
+/// @NOTE: The `alloc_fn` uses the default memory allocater.
+NIKOLA_API GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc, const AllocateMemoryFn& alloc_fn = memory_allocate);
 
-/// Reclaim/free any memory allocated by `pipeline`.
-NIKOLA_API void gfx_pipeline_destroy(GfxPipeline* pipeline);
+/// Free/reclaim any memory taken by `pipeline` using the `free_fn` callback.
+///
+/// @NOTE: The `free_fn` uses the default memory allocater.
+NIKOLA_API void gfx_pipeline_destroy(GfxPipeline* pipeline, const FreeMemoryFn& free_fn = memory_free);
 
 /// Retrieve the internal `GfxPipelineDesc` of `pipeline`
 NIKOLA_API GfxPipelineDesc& gfx_pipeline_get_desc(GfxPipeline* pipeline);

@@ -10,7 +10,7 @@ namespace nikola { // Start of nikola
 /// ----------------------------------------------------------------------
 /// Private functions  
 
-static void create_cube_geo(const u16 group_id, GfxPipelineDesc* pipe_desc) {
+static void create_cube_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc) {
   f32 vertices[] = {
      // Position          Normal              UV coords
     
@@ -104,7 +104,7 @@ static void create_cube_geo(const u16 group_id, GfxPipelineDesc* pipe_desc) {
   pipe_desc->draw_mode = GFX_DRAW_MODE_TRIANGLE;
 }
 
-static void create_skybox_geo(const u16 group_id, GfxPipelineDesc* pipe_desc) {
+static void create_skybox_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc) {
   // Vertices
   float vertices[] = {
     -1.0f,  1.0f, -1.0f,
@@ -168,11 +168,11 @@ static void create_skybox_geo(const u16 group_id, GfxPipelineDesc* pipe_desc) {
   pipe_desc->draw_mode = GFX_DRAW_MODE_TRIANGLE;
 }
 
-static void create_plane_geo(const u16 group_id, GfxPipelineDesc* pipe_desc) {
+static void create_plane_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc) {
   // @TODO (Geometry): Create a plane geo
 }
 
-static void create_circle_geo(const u16 group_id, GfxPipelineDesc* pipe_desc) {
+static void create_circle_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc) {
   // @TODO (Geometry): Create a circle geo
 }
 
@@ -182,7 +182,7 @@ static void create_circle_geo(const u16 group_id, GfxPipelineDesc* pipe_desc) {
 /// ----------------------------------------------------------------------
 /// Mesh loader functions
 
-void geometry_loader_load(const u16 group_id, GfxPipelineDesc* pipe_desc, const GeometryType type) {
+void geometry_loader_load(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc, const GeometryType type) {
   switch(type) {
     case GEOMETRY_CUBE:
       create_cube_geo(group_id, pipe_desc);

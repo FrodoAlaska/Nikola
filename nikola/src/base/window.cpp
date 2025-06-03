@@ -1,4 +1,6 @@
-#include "nikola/nikola_base.h"
+#include "nikola/nikola_window.h"
+#include "nikola/nikola_event.h"
+#include "nikola/nikola_input.h"
 
 #include <GLFW/glfw3.h>
 
@@ -213,12 +215,6 @@ static bool nikola_quit_app_callback(const Event& event, const void* dispatcher,
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// Private functions
-static void set_gfx_context(Window* window) {
-#if defined(NIKOL_GFX_CONTEXT_OPENGL)
-#elif defined(NIKOL_GTX_CONTEXT_DX11) 
-  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-#endif
-}
 
 static void set_window_hints(Window* window) {
   // Setting the this for the MSAA down the line
@@ -277,7 +273,7 @@ static void set_window_hints(Window* window) {
   }
 }
 
-static void create_glfw_handle(Window* window, const i8* title) {
+static void create_glfw_handle(Window* window, const char* title) {
   // Creating the window
   window->handle = glfwCreateWindow(window->width, window->height, title, nullptr, nullptr);
 
@@ -316,9 +312,8 @@ static void set_window_callbacks(Window* window) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Window functions
 
-Window* window_open(const i8* title, const i32 width, const i32 height, i32 flags) {
+Window* window_open(const char* title, const i32 width, const i32 height, i32 flags) {
   Window* window = (Window*)memory_allocate(sizeof(Window));
-  memory_zero(window, sizeof(Window)); 
 
   window->width  = width; 
   window->height = height; 
@@ -362,7 +357,6 @@ Window* window_open(const i8* title, const i32 width, const i32 height, i32 flag
   }
   
   NIKOLA_LOG_INFO("Window: {t = \"%s\", w = %i, h = %i} was successfully opened", title, width, height);
-
   return window;
 }
 
@@ -418,7 +412,7 @@ void* window_get_handle(const Window* window) {
   return window->handle;
 }
 
-const i8* window_get_title(const Window* window) {
+const char* window_get_title(const Window* window) {
   return glfwGetWindowTitle(window->handle);
 }
 
@@ -492,7 +486,7 @@ void window_set_size(Window* window, const i32 width, const i32 height) {
   glfwSetWindowSize(window->handle, width, height);
 }
 
-void window_set_title(Window* window, const i8* title) {
+void window_set_title(Window* window, const char* title) {
   glfwSetWindowTitle(window->handle, title);
 }
 

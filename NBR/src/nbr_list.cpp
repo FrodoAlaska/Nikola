@@ -1,8 +1,7 @@
 #include "nbr.h"
 
 #include <nikola/nikola.h>
-
-#include <thread>
+#include <nbr_pch.h>
 
 //////////////////////////////////////////////////////////////////////////
 

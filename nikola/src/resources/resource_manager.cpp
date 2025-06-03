@@ -1,9 +1,6 @@
 #include "nikola/nikola_resources.h"
-#include "nikola/nikola_base.h"
-#include "nikola/nikola_gfx.h"
-#include "nikola/nikola_file.h"
+#include "nikola/nikola_event.h"
 #include "nikola/nikola_render.h"
-#include "nikola/nikola_audio.h"
 
 #include "loaders/geometry_loader.h"
 
@@ -18,7 +15,7 @@ namespace nikola { // Start of nikola
 struct ResourceGroup {
   String name; 
   FilePath parent_dir;
-  u16 id;
+  ResourceGroupID id;
 
   DynamicArray<GfxBuffer*> buffers;
   DynamicArray<GfxTexture*> textures;
@@ -42,7 +39,7 @@ struct ResourceGroup {
 /// ResourceManager 
 struct ResourceManager {
   GfxContext* gfx_context = nullptr;
-  HashMap<u16, ResourceGroup> groups;
+  HashMap<ResourceGroupID, ResourceGroup> groups;
 };
 
 static ResourceManager s_manager;
@@ -339,7 +336,7 @@ void resource_manager_shutdown() {
 }
 
 u16 resources_create_group(const String& name, const FilePath& parent_dir) {
-  u16 group_id               = random_u32(RESOURCE_CACHE_ID + 1, RESOURCE_GROUP_INVALID - 1); 
+  ResourceGroupID group_id   = random_u32(RESOURCE_CACHE_ID + 1, RESOURCE_GROUP_INVALID - 1); 
   s_manager.groups[group_id] = ResourceGroup {
     .name       = name, 
     .parent_dir = parent_dir,
@@ -362,7 +359,7 @@ u16 resources_create_group(const String& name, const FilePath& parent_dir) {
   return group_id;
 }
 
-void resources_clear_group(const u16 group_id) {
+void resources_clear_group(const ResourceGroupID& group_id) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
@@ -382,7 +379,7 @@ void resources_clear_group(const u16 group_id) {
   NIKOLA_LOG_INFO("Resource group \'%s\' was successfully cleared", group->name.c_str());
 }
 
-void resources_destroy_group(const u16 group_id) {
+void resources_destroy_group(const ResourceGroupID& group_id) {
   if(group_id == RESOURCE_GROUP_INVALID) {
     NIKOLA_LOG_WARN("Cannot destroy an invalid resource group");
     return;
@@ -409,7 +406,7 @@ void resources_destroy_group(const u16 group_id) {
   s_manager.groups.erase(group_id);
 }
 
-ResourceID resources_push_buffer(const u16 group_id, const GfxBufferDesc& buff_desc) {
+ResourceID resources_push_buffer(const ResourceGroupID& group_id, const GfxBufferDesc& buff_desc) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
@@ -424,7 +421,7 @@ ResourceID resources_push_buffer(const u16 group_id, const GfxBufferDesc& buff_d
   return id;
 }
 
-ResourceID resources_push_texture(const u16 group_id, const GfxTextureDesc& desc) {
+ResourceID resources_push_texture(const ResourceGroupID& group_id, const GfxTextureDesc& desc) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
@@ -439,7 +436,7 @@ ResourceID resources_push_texture(const u16 group_id, const GfxTextureDesc& desc
   return id;
 }
 
-ResourceID resources_push_texture(const u16 group_id, 
+ResourceID resources_push_texture(const ResourceGroupID& group_id, 
                                   const FilePath& nbr_path,
                                   const GfxTextureFormat format, 
                                   const GfxTextureFilter filter, 
@@ -484,7 +481,7 @@ ResourceID resources_push_texture(const u16 group_id,
   return id;
 }
 
-ResourceID resources_push_cubemap(const u16 group_id, const GfxCubemapDesc& cubemap_desc) {
+ResourceID resources_push_cubemap(const ResourceGroupID& group_id, const GfxCubemapDesc& cubemap_desc) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
@@ -499,7 +496,7 @@ ResourceID resources_push_cubemap(const u16 group_id, const GfxCubemapDesc& cube
   return id;
 }
 
-ResourceID resources_push_cubemap(const u16 group_id, 
+ResourceID resources_push_cubemap(const ResourceGroupID& group_id, 
                                   const FilePath& nbr_path,
                                   const GfxTextureFormat format, 
                                   const GfxTextureFilter filter, 
@@ -543,7 +540,7 @@ ResourceID resources_push_cubemap(const u16 group_id,
   return id;
 }
 
-ResourceID resources_push_shader(const u16 group_id, const GfxShaderDesc& shader_desc) {
+ResourceID resources_push_shader(const ResourceGroupID& group_id, const GfxShaderDesc& shader_desc) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
@@ -558,7 +555,7 @@ ResourceID resources_push_shader(const u16 group_id, const GfxShaderDesc& shader
   return id;
 }
 
-ResourceID resources_push_shader(const u16 group_id, const FilePath& nbr_path) {
+ResourceID resources_push_shader(const ResourceGroupID& group_id, const FilePath& nbr_path) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
   
@@ -590,7 +587,7 @@ ResourceID resources_push_shader(const u16 group_id, const FilePath& nbr_path) {
   return id;
 }
 
-ResourceID resources_push_shader_context(const u16 group_id, const ResourceID& shader_id) {
+ResourceID resources_push_shader_context(const ResourceGroupID& group_id, const ResourceID& shader_id) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
   
@@ -611,7 +608,7 @@ ResourceID resources_push_shader_context(const u16 group_id, const ResourceID& s
   return id;
 }
 
-ResourceID resources_push_shader_context(const u16 group_id, const FilePath& shader_path) {
+ResourceID resources_push_shader_context(const ResourceGroupID& group_id, const FilePath& shader_path) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
  
@@ -622,7 +619,7 @@ ResourceID resources_push_shader_context(const u16 group_id, const FilePath& sha
   return resources_push_shader_context(group_id, shader_id);
 }
 
-ResourceID resources_push_mesh(const u16 group_id, NBRMesh& nbr_mesh) {
+ResourceID resources_push_mesh(const ResourceGroupID& group_id, NBRMesh& nbr_mesh) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
@@ -647,7 +644,7 @@ ResourceID resources_push_mesh(const u16 group_id, NBRMesh& nbr_mesh) {
   return id;
 }
 
-ResourceID resources_push_mesh(const u16 group_id, const GeometryType type) {
+ResourceID resources_push_mesh(const ResourceGroupID& group_id, const GeometryType type) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
   
@@ -676,7 +673,7 @@ ResourceID resources_push_mesh(const u16 group_id, const GeometryType type) {
   return id;
 }
 
-ResourceID resources_push_material(const u16 group_id, const ResourceID& diffuse_map) {
+ResourceID resources_push_material(const ResourceGroupID& group_id, const ResourceID& diffuse_map) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
   
@@ -703,7 +700,7 @@ ResourceID resources_push_material(const u16 group_id, const ResourceID& diffuse
   return id;
 }
 
-ResourceID resources_push_material(const u16 group_id, const FilePath& diffuse_path) {
+ResourceID resources_push_material(const ResourceGroupID& group_id, const FilePath& diffuse_path) {
   // Get the texture first
   ResourceID diffuse_id = resources_push_texture(group_id, diffuse_path);
   
@@ -711,7 +708,7 @@ ResourceID resources_push_material(const u16 group_id, const FilePath& diffuse_p
   return resources_push_material(group_id, diffuse_id);
 }
 
-ResourceID resources_push_skybox(const u16 group_id, const ResourceID& cubemap_id) {
+ResourceID resources_push_skybox(const ResourceGroupID& group_id, const ResourceID& cubemap_id) {
   NIKOLA_ASSERT(RESOURCE_IS_VALID(cubemap_id), "Cannot push a new skybox with an invalid cubemap");
   GROUP_CHECK(group_id);
   
@@ -741,7 +738,7 @@ ResourceID resources_push_skybox(const u16 group_id, const ResourceID& cubemap_i
   return id;
 }
 
-ResourceID resources_push_skybox(const u16 group_id, const FilePath& cubemap_path) {
+ResourceID resources_push_skybox(const ResourceGroupID& group_id, const FilePath& cubemap_path) {
   // Get the cubemap first
   ResourceID cubemap_id = resources_push_cubemap(group_id, cubemap_path);
 
@@ -749,7 +746,7 @@ ResourceID resources_push_skybox(const u16 group_id, const FilePath& cubemap_pat
   return resources_push_skybox(group_id, cubemap_id);
 }
 
-ResourceID resources_push_model(const u16 group_id, const FilePath& nbr_path) {
+ResourceID resources_push_model(const ResourceGroupID& group_id, const FilePath& nbr_path) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
   
@@ -784,7 +781,7 @@ ResourceID resources_push_model(const u16 group_id, const FilePath& nbr_path) {
   return id;
 }
 
-ResourceID resources_push_font(const u16 group_id, const FilePath& nbr_path) {
+ResourceID resources_push_font(const ResourceGroupID& group_id, const FilePath& nbr_path) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
   
@@ -820,7 +817,7 @@ ResourceID resources_push_font(const u16 group_id, const FilePath& nbr_path) {
   return id;
 }
 
-ResourceID resources_push_audio_buffer(const u16 group_id, const AudioBufferDesc& desc) {
+ResourceID resources_push_audio_buffer(const ResourceGroupID& group_id, const AudioBufferDesc& desc) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
@@ -839,7 +836,7 @@ ResourceID resources_push_audio_buffer(const u16 group_id, const AudioBufferDesc
   return id;
 }
 
-ResourceID resources_push_audio_buffer(const u16 group_id, const FilePath& nbr_path) {
+ResourceID resources_push_audio_buffer(const ResourceGroupID& group_id, const FilePath& nbr_path) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
@@ -867,7 +864,7 @@ ResourceID resources_push_audio_buffer(const u16 group_id, const FilePath& nbr_p
   return id;
 }
 
-void resources_push_dir(const u16 group_id, const FilePath& dir) {
+void resources_push_dir(const ResourceGroupID& group_id, const FilePath& dir) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
  
@@ -875,7 +872,7 @@ void resources_push_dir(const u16 group_id, const FilePath& dir) {
   filesystem_directory_iterate(filepath_append(group->parent_dir, dir), resource_entry_iterate, group);
 }
 
-ResourceID& resources_get_id(const u16 group_id, const nikola::String& filename) {
+ResourceID& resources_get_id(const ResourceGroupID& group_id, const nikola::String& filename) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
  

@@ -1,5 +1,5 @@
 #include "nikola/nikola_gfx.h"
-#include "nikola/nikola_base.h"
+#include "nikola/nikola_event.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -1077,11 +1077,10 @@ void gfx_context_present(GfxContext* gfx) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Framebuffer functions
 
-GfxFramebuffer* gfx_framebuffer_create(GfxContext* gfx, const GfxFramebufferDesc& desc) {
+GfxFramebuffer* gfx_framebuffer_create(GfxContext* gfx, const GfxFramebufferDesc& desc, const AllocateMemoryFn& alloc_fn) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
 
-  GfxFramebuffer* buff = (GfxFramebuffer*)memory_allocate(sizeof(GfxFramebuffer));
-  memory_zero(buff, sizeof(GfxFramebuffer));
+  GfxFramebuffer* buff = (GfxFramebuffer*)alloc_fn(sizeof(GfxFramebuffer));
 
   buff->desc        = desc; 
   buff->clear_flags = get_gl_clear_flags(desc.clear_flags);
@@ -1096,13 +1095,13 @@ GfxFramebuffer* gfx_framebuffer_create(GfxContext* gfx, const GfxFramebufferDesc
   return buff;
 }
 
-void gfx_framebuffer_destroy(GfxFramebuffer* framebuffer) {
+void gfx_framebuffer_destroy(GfxFramebuffer* framebuffer, const FreeMemoryFn& free_fn) {
   if(!framebuffer) {
     return;
   }
 
   glDeleteFramebuffers(1, &framebuffer->id);
-  memory_free(framebuffer);
+  free_fn(framebuffer);
 }
 
 void gfx_framebuffer_copy(const GfxFramebuffer* src_frame, 
@@ -1151,11 +1150,10 @@ void gfx_framebuffer_update(GfxFramebuffer* framebuffer, const GfxFramebufferDes
 ///---------------------------------------------------------------------------------------------------------------------
 /// Buffer functions 
 
-GfxBuffer* gfx_buffer_create(GfxContext* gfx, const GfxBufferDesc& desc) {
+GfxBuffer* gfx_buffer_create(GfxContext* gfx, const GfxBufferDesc& desc, const AllocateMemoryFn& alloc_fn) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
 
-  GfxBuffer* buff = (GfxBuffer*)memory_allocate(sizeof(GfxBuffer));
-  memory_zero(buff, sizeof(GfxBuffer));
+  GfxBuffer* buff = (GfxBuffer*)alloc_fn(sizeof(GfxBuffer));
   
   buff->desc          = desc;
   buff->gfx           = gfx; 
@@ -1169,13 +1167,13 @@ GfxBuffer* gfx_buffer_create(GfxContext* gfx, const GfxBufferDesc& desc) {
   return buff;
 }
 
-void gfx_buffer_destroy(GfxBuffer* buff) {
+void gfx_buffer_destroy(GfxBuffer* buff, const FreeMemoryFn& free_fn) {
   if(!buff) {
     return;
   }
 
   glDeleteBuffers(1, &buff->id);
-  memory_free(buff);
+  free_fn(buff);
 }
 
 GfxBufferDesc& gfx_buffer_get_desc(GfxBuffer* buffer) {
@@ -1200,13 +1198,12 @@ void gfx_buffer_update(GfxBuffer* buff, const sizei offset, const sizei size, co
 ///---------------------------------------------------------------------------------------------------------------------
 /// Shader functions 
 
-GfxShader* gfx_shader_create(GfxContext* gfx, const GfxShaderDesc& desc) {
+GfxShader* gfx_shader_create(GfxContext* gfx, const GfxShaderDesc& desc, const AllocateMemoryFn& alloc_fn) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
   NIKOLA_ASSERT(desc.vertex_source, "Invalid Vertex source passed to the shader");
   NIKOLA_ASSERT(desc.pixel_source, "Invalid Pixel source passed to the shader");
 
-  GfxShader* shader = (GfxShader*)memory_allocate(sizeof(GfxShader));
-  memory_zero(shader, sizeof(GfxShader));
+  GfxShader* shader = (GfxShader*)alloc_fn(sizeof(GfxShader));
 
   shader->gfx  = gfx;
   shader->desc = desc;
@@ -1240,13 +1237,13 @@ GfxShader* gfx_shader_create(GfxContext* gfx, const GfxShaderDesc& desc) {
   return shader;
 }
 
-void gfx_shader_destroy(GfxShader* shader) {
+void gfx_shader_destroy(GfxShader* shader, const FreeMemoryFn& free_fn) {
   if(!shader) {
     return;
   }
   
   glDeleteProgram(shader->id);
-  memory_free(shader);
+  free_fn(shader);
 }
 
 GfxShaderDesc& gfx_shader_get_source(GfxShader* shader) {
@@ -1375,11 +1372,10 @@ void gfx_shader_upload_uniform(GfxShader* shader, const i32 location, const GfxL
 ///---------------------------------------------------------------------------------------------------------------------
 /// Texture functions 
 
-GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
+GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc, const AllocateMemoryFn& alloc_fn) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
 
-  GfxTexture* texture = (GfxTexture*)memory_allocate(sizeof(GfxTexture));
-  memory_zero(texture, sizeof(GfxTexture));
+  GfxTexture* texture = (GfxTexture*)alloc_fn(sizeof(GfxTexture));
  
   texture->desc = desc;
   texture->gfx  = gfx;
@@ -1417,13 +1413,19 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc) {
   return texture;
 }
 
-void gfx_texture_destroy(GfxTexture* texture) {
+void gfx_texture_destroy(GfxTexture* texture, const FreeMemoryFn& free_fn) {
   if(!texture) {
     return;
   }
   
   glDeleteTextures(1, &texture->id);
-  memory_free(texture);
+  free_fn(texture);
+}
+
+void gfx_texture_use(GfxTexture* texture) {
+  NIKOLA_ASSERT(texture, "Invalid GfxTexture passed to gfx_texture_use");
+  
+  glBindTextures(0, 1, &texture->id);
 }
 
 void gfx_texture_use(GfxTexture** textures, const sizei count) {
@@ -1499,11 +1501,10 @@ void gfx_texture_upload_data(GfxTexture* texture,
 ///---------------------------------------------------------------------------------------------------------------------
 /// Cubemap functions 
 
-GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc& desc) {
+GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc& desc, const AllocateMemoryFn& alloc_fn) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
 
-  GfxCubemap* cubemap = (GfxCubemap*)memory_allocate(sizeof(GfxCubemap));
-  memory_zero(cubemap, sizeof(GfxCubemap));
+  GfxCubemap* cubemap = (GfxCubemap*)alloc_fn(sizeof(GfxCubemap));
 
   cubemap->gfx  = gfx;
   cubemap->desc = desc;
@@ -1544,13 +1545,19 @@ GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc& desc) {
   return cubemap;
 }
 
-void gfx_cubemap_destroy(GfxCubemap* cubemap) {
+void gfx_cubemap_destroy(GfxCubemap* cubemap, const FreeMemoryFn& free_fn) {
   if(!cubemap) {
     return;
   }
   
   glDeleteTextures(1, &cubemap->id);
-  memory_free(cubemap);
+  free_fn(cubemap);
+}
+
+void gfx_cubemap_use(GfxCubemap* cubemap) {
+  NIKOLA_ASSERT(cubemap, "Invalid GfxCubemap to gfx_cubemap_use");
+
+  glBindTextures(0, 1, &cubemap->id);
 }
 
 void gfx_cubemap_use(GfxCubemap** cubemaps, const sizei count) {
@@ -1633,11 +1640,10 @@ void gfx_cubemap_upload_data(GfxCubemap* cubemap,
 ///---------------------------------------------------------------------------------------------------------------------
 /// Pipeline functions 
 
-GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc) {
+GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc, const AllocateMemoryFn& alloc_fn) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
 
-  GfxPipeline* pipe = (GfxPipeline*)memory_allocate(sizeof(GfxPipeline));
-  memory_zero(pipe, sizeof(GfxPipeline));
+  GfxPipeline* pipe = (GfxPipeline*)alloc_fn(sizeof(GfxPipeline));
 
   pipe->desc = desc;
   pipe->gfx  = gfx;
@@ -1669,14 +1675,14 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc) {
   return pipe;
 }
 
-void gfx_pipeline_destroy(GfxPipeline* pipeline) {
+void gfx_pipeline_destroy(GfxPipeline* pipeline, const FreeMemoryFn& free_fn) {
   NIKOLA_ASSERT(pipeline, "Attempting to free an invalid GfxPipeline");
 
   // Deleting the buffers
   glDeleteVertexArrays(1, &pipeline->vertex_array);
 
   // Free the pipeline
-  memory_free(pipeline);
+  free_fn(pipeline);
 }
 
 GfxPipelineDesc& gfx_pipeline_get_desc(GfxPipeline* pipeline) {
@@ -1687,15 +1693,10 @@ GfxPipelineDesc& gfx_pipeline_get_desc(GfxPipeline* pipeline) {
 
 void gfx_pipeline_update(GfxPipeline* pipeline, const GfxPipelineDesc& desc) {
   NIKOLA_ASSERT(pipeline, "Invalid GfxPipeline struct passed to gfx_pipeline_update");
-
+  
+  // Update the internal desc
   pipeline->desc = desc;
-}
-
-void gfx_pipeline_draw_vertex(GfxPipeline* pipeline) {
-  NIKOLA_ASSERT(pipeline->gfx, "Invalid GfxContext struct passed");
-  NIKOLA_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
-  NIKOLA_ASSERT(pipeline->vertex_buffer, "Must have a valid vertex buffer to draw");
-
+  
   // Setting the depth mask state of the pipeline 
   glDepthMask(pipeline->desc.depth_mask);
 
@@ -1705,6 +1706,12 @@ void gfx_pipeline_draw_vertex(GfxPipeline* pipeline) {
   // Setting the blend color of the pipeline state
   const f32* blend_color = pipeline->desc.blend_factor;
   glBlendColor(blend_color[0], blend_color[1], blend_color[2], blend_color[3]);
+}
+
+void gfx_pipeline_draw_vertex(GfxPipeline* pipeline) {
+  NIKOLA_ASSERT(pipeline->gfx, "Invalid GfxContext struct passed");
+  NIKOLA_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
+  NIKOLA_ASSERT(pipeline->vertex_buffer, "Must have a valid vertex buffer to draw");
 
   // Bind the vertex array
   glBindVertexArray(pipeline->vertex_array);
@@ -1722,16 +1729,6 @@ void gfx_pipeline_draw_index(GfxPipeline* pipeline) {
   NIKOLA_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
   NIKOLA_ASSERT(pipeline->vertex_buffer, "Must have a valid vertex buffer to draw");
   NIKOLA_ASSERT(pipeline->index_buffer, "Must have a valid index buffer to draw");
-
-  // Setting the depth mask state of the pipeline 
-  glDepthMask(pipeline->desc.depth_mask);
-
-  // Setting the stencil mask of the pipeline state
-  glStencilMask(pipeline->desc.stencil_ref);
-
-  // Setting the blend color of the pipeline state
-  const f32* blend_color = pipeline->desc.blend_factor;
-  glBlendColor(blend_color[0], blend_color[1], blend_color[2], blend_color[3]);
 
   // Bind the vertex array
   glBindVertexArray(pipeline->vertex_array);

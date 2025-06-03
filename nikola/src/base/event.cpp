@@ -1,25 +1,29 @@
-#include "nikola/nikola_base.h"
+#include "nikola/nikola_event.h"
 
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola
 
+/// ---------------------------------------------------------------------
 /// EventEntry
 struct EventEntry {
   EventFireFn func; 
   void* listener;
 };
 /// EventEntry
+/// ---------------------------------------------------------------------
 
+/// ---------------------------------------------------------------------
 /// EventPool
-/// A dynamic array to hold event entries of a specific type
 struct EventPool {
   EventEntry* entries;
   sizei size;
   sizei capacity;
 };
 /// EventPool
+/// ---------------------------------------------------------------------
 
+/// ---------------------------------------------------------------------
 /// EventState
 struct EventState {
   EventPool event_pool[EVENTS_MAX];
@@ -28,6 +32,7 @@ struct EventState {
 
 static EventState s_state;
 /// EventState
+/// ---------------------------------------------------------------------
 
 /// ---------------------------------------------------------------------
 /// Private functions 

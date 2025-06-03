@@ -1,6 +1,6 @@
 #include "nikola/nikola_render.h"
-#include "nikola/nikola_base.h"
 #include "nikola/nikola_gfx.h"
+#include "nikola/nikola_input.h"
 
 //////////////////////////////////////////////////////////////////////////
 

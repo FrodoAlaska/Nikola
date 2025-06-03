@@ -9,7 +9,7 @@ struct nikola::App {
   nikola::Window* window;
   nikola::FrameData frame_data;
 
-  nikola::u16 res_group_id;
+  nikola::ResourceGroupID res_group_id;
   nikola::ResourceID mesh_id;
 
   nikola::Transform transform;

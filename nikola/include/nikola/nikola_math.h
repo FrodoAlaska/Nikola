@@ -1,15 +1,16 @@
 #pragma once
 
 #include "nikola_base.h"
-#include "nikola_gfx.h"
 #include "nikola_containers.h"
 
-#include <glm/glm.hpp>
-#include <glm/ext/quaternion_float.hpp>
+#include "nikola_pch.h"
 
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola
+
+// Forward declaration to help with compilation time.
+struct GfxLayoutDesc;
 
 /// ----------------------------------------------------------------------
 /// *** Math ***

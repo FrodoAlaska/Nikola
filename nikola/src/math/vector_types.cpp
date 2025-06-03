@@ -1,8 +1,6 @@
 #include "nikola/nikola_base.h"
 #include "nikola/nikola_math.h"
 
-#include <glm/glm.hpp>
-
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola

@@ -5,9 +5,6 @@
 #include "nikola/nikola_audio.h"
 #include "nikola/nikola_physics.h"
 
-#include <sstream>
-#include <filesystem>
-
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola {

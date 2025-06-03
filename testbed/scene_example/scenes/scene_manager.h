@@ -47,7 +47,7 @@ struct Scene {
   const char* name;
   nikola::Window* window;
 
-  nikola::u16 resource_group; 
+  nikola::ResourceGroupID resource_group; 
   nikola::FrameData frame_data;
 
   bool has_editor = false;

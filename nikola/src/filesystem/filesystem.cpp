@@ -1,8 +1,6 @@
 #include "nikola/nikola_base.h"
 #include "nikola/nikola_file.h"
 
-#include <filesystem>
-
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola {

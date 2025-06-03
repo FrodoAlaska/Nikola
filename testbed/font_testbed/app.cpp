@@ -20,7 +20,7 @@ struct nikola::App {
   // @NOTE (Font tested): This is awful. Don't ACTUALLY do this! It's just for testing.
   nikola::Font* font;
 
-  nikola::u16 res_group;
+  nikola::ResourceGroupID res_group;
   nikola::ResourceID model_id;
 
   nikola::Transform transform;
