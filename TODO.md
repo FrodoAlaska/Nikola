@@ -1,5 +1,5 @@
 # Road To A Game 
-- [X] Filesystem
+- [x] Filesystem
 - [x] GUI v0.1
 - [x] Renderer v0.1
     - [x] Create a 2D batch renderer that can handle basic shapes and textures.
@@ -114,6 +114,11 @@
     - [] Improve resource loading time by adding asynchronous resource loading.
     - [] Also look into custom memory pools/memory arenas since they can increase performance.
     - [] Documentation
+- [] Resource Manager v0.5
+    - [] Have a `nkblob` that can be used to dump all of the resource manager data unto. The `nkblob` binary file can also be used to populate any resource manager 
+    - [] Perhaps remove all of the `NBR*` types and just have the existing resources be saved as-is? 
+    - [] Make the `ResourceID` type more private with its members. I know, I know. It's bad. But at least it's gonna be safer until I find a better option. 
+    - [] Improve resource load times. 
 - [] UI v0.1
     - [] A canvas system for 2D game UI.
     - [] A menu system
@@ -134,7 +139,10 @@
 - [] 3D Animations v0.1
 
 ## (Engine) BUGS: 
-- EMPTY FOR NOW...
+- (Physics): Deleting bodies has some problems since the world delets bodies by keeping a "world index" inside the internal body data structure, which then it uses to 
+get the correct position (as an iterator) in the vector to then delete. However, that index is sometimes _way_ higher than the actual size of the array of bodies. Is keeping a collection for bodies in the physics world 
+with a physics library really that necessary?
+- (Physics): Listen, just remove the physics library. It's really not all that useful. It bring more pain and suffering than joy. I can do a better one with my hands tied behind my back whilst singing Katyusha. 
 
 ## (Core) BUGS: 
 - EMPTY FOR NOW...

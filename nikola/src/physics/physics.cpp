@@ -31,7 +31,7 @@ static q3BodyType body_type_to_q3body_type(const PhysicsBodyType type);
 ///---------------------------------------------------------------------------------------------------------------------
 /// PhysicsBody 
 struct PhysicsBody {
-  sizei world_index = 0;
+  u64 id;
   q3Body* body; 
 
   PhysicsBodyType type;
@@ -66,7 +66,7 @@ struct PhysicsWorld {
   OnCollisionFunc end_func; 
   OnRayIntersectionFunc ray_func;
 
-  DynamicArray<PhysicsBody*> bodies; 
+  HashMap<u64, PhysicsBody*> bodies; 
   DynamicArray<Collider*> colliders;
 };
 
@@ -250,7 +250,7 @@ void physics_world_shutdown() {
   s_world.scene->Shutdown();
  
   // Clearing all bodies
-  for(auto& body : s_world.bodies) {
+  for(auto& [id, body] : s_world.bodies) {
     delete body; 
   }
   s_world.bodies.clear();
@@ -320,13 +320,13 @@ PhysicsBody* physics_body_create(const PhysicsBodyDesc& desc) {
   def.userData = body;
 
   // Physics body init
-  body->body             = s_world.scene->CreateBody(def);
-  body->user_data        = desc.user_data;
-  body->type             = desc.type;
+  body->body      = s_world.scene->CreateBody(def);
+  body->user_data = desc.user_data;
+  body->type      = desc.type;
+  body->id        = random_u64();
 
   // Add the body to the world
-  body->world_index = s_world.bodies.size(); 
-  s_world.bodies.push_back(body);
+  s_world.bodies[body->id] = body;
 
   return body;
 }
@@ -337,7 +337,7 @@ void physics_body_destroy(PhysicsBody* body) {
   }
 
   s_world.scene->RemoveBody(body->body);
-  s_world.bodies.erase(s_world.bodies.begin() + body->world_index);
+  s_world.bodies.erase(body->id);
 
   delete body;
 }

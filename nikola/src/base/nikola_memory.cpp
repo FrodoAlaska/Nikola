@@ -22,7 +22,7 @@ static MemoryState s_state;
 /// Memory functions
 
 void* memory_allocate(const sizei size) {
-  NIKOLA_ASSERT((size > 0), "Cannot allocate a memory block of size 0");
+  NIKOLA_ASSERT((size >= 0), "Cannot allocate a memory block of size 0");
 
   void* ptr = malloc(size);
   NIKOLA_ASSERT(ptr, "Could not allocate any more memory!");

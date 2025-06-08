@@ -44,6 +44,10 @@ struct CubeEntity {
     nikola::gui_edit_physics_body((name + " body").c_str(), body);
     nikola::gui_edit_collider((name + " collider").c_str(), collider);
   }
+
+  void destroy() {
+    nikola::physics_body_destroy(body);
+  }
 };
 /// CubeEntity
 /// ----------------------------------------------------------------------
@@ -153,6 +157,10 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 }
 
 void app_shutdown(nikola::App* app) {
+  for(auto& c : app->cubes) {
+    c.destroy();
+  }
+
   nikola::resources_destroy_group(app->res_group_id);
   nikola::gui_shutdown();
 
