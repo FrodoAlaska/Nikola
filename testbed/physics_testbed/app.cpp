@@ -178,7 +178,8 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
   if(nikola::input_key_pressed(nikola::KEY_F1)) {
     app->has_editor                  = !app->has_editor;
     app->frame_data.camera.is_active = !app->has_editor;
-    
+  
+    nikola::physics_world_set_paused(app->has_editor);
     nikola::input_cursor_show(app->has_editor);
   }
 

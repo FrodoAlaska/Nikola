@@ -60,7 +60,8 @@ struct Collider {
 ///---------------------------------------------------------------------------------------------------------------------
 /// PhysicsWorld
 struct PhysicsWorld {
-  q3Scene* scene;
+  q3Scene* scene = nullptr;
+  bool is_paused = false;
 
   OnCollisionFunc begin_func;
   OnCollisionFunc end_func; 
@@ -70,7 +71,7 @@ struct PhysicsWorld {
   DynamicArray<Collider*> colliders;
 };
 
-static PhysicsWorld s_world;
+static PhysicsWorld s_world{};
 /// PhysicsWorld
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -268,7 +269,15 @@ void physics_world_shutdown() {
 }
 
 void physics_world_step() {
+  if(s_world.is_paused) {
+    return;
+  }
+
   s_world.scene->Step();
+}
+
+void physics_world_set_paused(const bool paused) {
+  s_world.is_paused = paused;
 }
 
 void physics_world_set_gravity(const Vec3& gravity) {

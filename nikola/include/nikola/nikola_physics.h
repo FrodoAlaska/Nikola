@@ -209,6 +209,10 @@ NIKOLA_API void physics_world_step();
 /// Set the gravity of the physics world to the given `gravity`.
 NIKOLA_API void physics_world_set_gravity(const Vec3& gravity);
 
+/// Based on the given `paused` flag, the world will 
+/// either step through the simulation or pause completely.
+NIKOLA_API void physics_world_set_paused(const bool paused);
+
 /// Set the iterations count of the physics world to the given `iterations`.
 ///
 /// @NOTE: Iteration counts between 5 to 20 are the MOST ideal.
