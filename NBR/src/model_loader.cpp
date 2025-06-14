@@ -27,9 +27,10 @@ struct ObjData {
 /// Private functions
 
 static bool is_valid_extension(const nikola::FilePath& ext) {
-  return ext == ".obj" || 
-         ext == ".fbx" || 
-         ext == ".gltf";
+  return ext == ".obj"  || 
+         ext == ".fbx"  || 
+         ext == ".gltf" || 
+         ext == ".glb";
 }
 
 static void load_node_mesh(aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
@@ -76,18 +77,20 @@ static void load_node_mesh(aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
     // Adding the texture coordinates
     vertices.push_back(coord_u); vertices.push_back(coord_v);
 
+    // @TODO (Model loader): This causes issues with OBJ files.
+    //
     // Getting the colors
-    if(mesh->mColors[0]) {
-      nbr_mesh->vertex_type = (nikola::u8)nikola::VERTEX_TYPE_PNCUV;  
-
-      nikola::f32 r = mesh->mColors[0][i].r;      
-      nikola::f32 g = mesh->mColors[0][i].g;      
-      nikola::f32 b = mesh->mColors[0][i].b;      
-      nikola::f32 a = mesh->mColors[0][i].a;
-
-      // Adding the color 
-      vertices.push_back(r); vertices.push_back(g); vertices.push_back(b); vertices.push_back(a);
-    }
+    // if(mesh->mColors[0]) {
+    //   nbr_mesh->vertex_type = (nikola::u8)nikola::VERTEX_TYPE_PNCUV;  
+    //
+    //   nikola::f32 r = mesh->mColors[0][i].r;      
+    //   nikola::f32 g = mesh->mColors[0][i].g;      
+    //   nikola::f32 b = mesh->mColors[0][i].b;      
+    //   nikola::f32 a = mesh->mColors[0][i].a;
+    //
+    //   // Adding the color 
+    //   vertices.push_back(r); vertices.push_back(g); vertices.push_back(b); vertices.push_back(a);
+    // }
   }
 
   // Add the material index of the mesh to refrence it later on. Much later on.

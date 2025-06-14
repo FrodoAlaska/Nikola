@@ -70,6 +70,11 @@ struct PhysicsBodyDesc {
   /// have a long lifetime. It should not just live on the stack 
   /// in a limited scope.
   void* user_data    = nullptr;
+
+  /// Lock one of or all three axises
+  ///
+  /// @NOTE: None of the axises are locked by default.
+  BVec3 locked_axises = BVec3(false);
 };
 /// PhysicsBodyDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -330,6 +335,9 @@ NIKOLA_API RayIntersection collider_check_raycast(const Collider* coll, const Ra
 
 /// Set extents of collider `coll` to `extents`.
 NIKOLA_API void collider_set_extents(Collider* coll, const Vec3& extents);
+
+/// Set the local position of `coll`  to `local_pos`.
+NIKOLA_API void collider_set_local_position(Collider* coll, const Vec3& local_pos);
 
 /// Set friction of collider `coll` to `friction`.
 NIKOLA_API void collider_set_friction(Collider* coll, const f32 friction);

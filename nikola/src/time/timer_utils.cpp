@@ -63,7 +63,7 @@ void timer_update(Timer& timer) {
   timer.counter++;
 
   // Check if the timer has reached its limit
-  if(timer.counter >= timer.limit) {
+  if(timer.counter > timer.limit) {
     timer.counter    = 0.0f;
     timer.has_runout = true;
 

@@ -469,6 +469,12 @@ void gui_edit_collider(const char* name, Collider* collider) {
     collider_set_extents(collider, extents);
   }
   
+  // Local position
+  Vec3 local_pos = collider_get_local_transform(collider).position;
+  if(ImGui::DragFloat3("Local position", &local_pos[0])) {
+    collider_set_local_position(collider, local_pos);
+  }
+  
   // Friction
   f32 friction = collider_get_friction(collider);
   if(ImGui::DragFloat("Friction", &friction)) {

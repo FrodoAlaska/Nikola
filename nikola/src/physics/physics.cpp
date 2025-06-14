@@ -321,12 +321,15 @@ PhysicsBody* physics_body_create(const PhysicsBodyDesc& desc) {
 
   // q3Body init
   q3BodyDef def; 
-  def.position = vec_to_q3vec(desc.position);
-  def.bodyType = body_type_to_q3body_type(desc.type);
-  def.axis     = vec_to_q3vec(desc.rotation_axis);
-  def.angle    = desc.rotation_angle;
-  def.awake    = desc.is_awake;
-  def.userData = body;
+  def.position  = vec_to_q3vec(desc.position);
+  def.bodyType  = body_type_to_q3body_type(desc.type);
+  def.axis      = vec_to_q3vec(desc.rotation_axis);
+  def.angle     = desc.rotation_angle;
+  def.awake     = desc.is_awake;
+  def.userData  = body;
+  def.lockAxisX = desc.locked_axises.x;
+	def.lockAxisY = desc.locked_axises.y;
+	def.lockAxisZ = desc.locked_axises.z;
 
   // Physics body init
   body->body      = s_world.scene->CreateBody(def);
@@ -561,6 +564,12 @@ void collider_set_extents(Collider* coll, const Vec3& extents) {
   
   coll->extents = extents;
   coll->box->e  = vec_to_q3vec(extents);
+}
+
+void collider_set_local_position(Collider* coll, const Vec3& local_pos) {
+  NIKOLA_ASSERT(coll, "Invalid collider given to collider_set_local_position");
+  
+  coll->box->local.position = vec_to_q3vec(local_pos);
 }
 
 void collider_set_friction(Collider* coll, const f32 friction) {

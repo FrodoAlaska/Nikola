@@ -17,6 +17,7 @@ struct CubeEntity {
     nikola::PhysicsBodyDesc body_desc = {
       .position = pos, 
       .type     = nikola::PHYSICS_BODY_DYNAMIC,
+      .locked_axises = nikola::BVec3(true, false, true),
     };
     body = nikola::physics_body_create(body_desc);
 
