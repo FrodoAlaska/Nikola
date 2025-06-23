@@ -122,7 +122,7 @@ void input_update() {
   for(i32 i = 0; i < JOYSTICK_ID_LAST; i++) {
     // We don't care about non-gamepad joysticks
     if(!glfwJoystickIsGamepad(i)) {
-
+      continue;
     }
 
     // Check for every button press/release
@@ -130,7 +130,7 @@ void input_update() {
       GLFWgamepadstate gamepad_state;
       glfwGetGamepadState(i, &gamepad_state);
       
-      s_state.current_gamepad_state[i][j] = gamepad_state.buttons[j] == GLFW_PRESS; 
+      s_state.current_gamepad_state[i][j] = (gamepad_state.buttons[j] == GLFW_PRESS); 
     }
   }
 } 
