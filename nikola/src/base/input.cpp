@@ -193,7 +193,7 @@ const bool input_cursor_on_screen() {
 }
 
 const bool input_gamepad_connected(const JoystickID id) {
-  return s_state.connected_joysticks[id];
+  return glfwJoystickPresent(id);
 }
 
 void input_gamepad_axis_value(const JoystickID id, const GamepadAxis axis, f32* x, f32* y) {
