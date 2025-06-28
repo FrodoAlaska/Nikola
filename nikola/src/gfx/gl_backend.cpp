@@ -779,6 +779,22 @@ static void get_texture_gl_format(const GfxTextureFormat format, GLenum* in_form
       *gl_format = GL_RGBA;
       *gl_type   = GL_FLOAT;
       break;
+    case GFX_TEXTURE_FORMAT_DEPTH16:
+      *in_format = GL_DEPTH_COMPONENT16;
+      *gl_format = GL_DEPTH_COMPONENT;
+      *gl_type   = GL_UNSIGNED_SHORT;
+    case GFX_TEXTURE_FORMAT_DEPTH24:
+      *in_format = GL_DEPTH_COMPONENT24;
+      *gl_format = GL_DEPTH_COMPONENT;
+      *gl_type   = GL_UNSIGNED_INT;
+    case GFX_TEXTURE_FORMAT_DEPTH32F:
+      *in_format = GL_DEPTH_COMPONENT32F;
+      *gl_format = GL_DEPTH_COMPONENT;
+      *gl_type   = GL_FLOAT;
+    case GFX_TEXTURE_FORMAT_STENCIL8:
+      *in_format = GL_STENCIL_INDEX8;
+      *gl_format = GL_STENCIL_INDEX;
+      *gl_type   = GL_UNSIGNED_BYTE;
     case GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8:
       *in_format = GL_DEPTH24_STENCIL8;
       *gl_format = GL_DEPTH_STENCIL;

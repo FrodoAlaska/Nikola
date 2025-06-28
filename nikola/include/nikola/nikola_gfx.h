@@ -375,10 +375,22 @@ enum GfxTextureFormat {
   
   /// A `float` per pixel red, green, blue, and alpha channel texture format.
   GFX_TEXTURE_FORMAT_RGBA32F            = 9 << 11,
+  
+  /// An `unsigned short` per depth value to be used for the depth buffer.
+  GFX_TEXTURE_FORMAT_DEPTH16            = 9 << 12,
+
+  /// A 24-bits per depth value to be used for the depth buffer.
+  GFX_TEXTURE_FORMAT_DEPTH24            = 9 << 13,
+
+  /// A `float` per depth value to be used for the depth buffer.
+  GFX_TEXTURE_FORMAT_DEPTH32F           = 9 << 14,
+ 
+  /// An `unsigned char` per stencil value to be used for the stencil buffer.
+  GFX_TEXTURE_FORMAT_STENCIL8           = 9 << 15,
 
   /// A format to be used with the depth and stencil buffers where 
   /// the depth buffer gets 24 bits and the stencil buffer gets 8 bits.
-  GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8 = 9 << 12,
+  GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8 = 9 << 16,
 };
 /// GfxTextureFromat
 ///---------------------------------------------------------------------------------------------------------------------
