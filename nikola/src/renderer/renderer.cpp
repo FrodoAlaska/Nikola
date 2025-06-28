@@ -360,19 +360,19 @@ void renderer_init(Window* window) {
   init_pipeline();
 
   // Light pass init
-  nikola::RenderPassDesc light_pass = {
+  RenderPassDesc light_pass = {
     .frame_size        = Vec2(width, height), 
     .clear_color       = Vec4(1.0f),
     .clear_flags       = (GFX_CLEAR_FLAGS_COLOR_BUFFER | GFX_CLEAR_FLAGS_DEPTH_BUFFER | GFX_CLEAR_FLAGS_STENCIL_BUFFER),
     .shader_context_id = s_renderer.shader_contexts[SHADER_CONTEXT_HDR],
   };
   light_pass.targets.push_back(RenderTarget{
-      .type = GFX_TEXTURE_RENDER_TARGET, 
+      .type   = GFX_TEXTURE_RENDER_TARGET, 
       .format = GFX_TEXTURE_FORMAT_RGBA32F,
   });
   light_pass.targets.push_back(RenderTarget{
-      .type = GFX_TEXTURE_DEPTH_STENCIL_TARGET, 
-      .format = GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8
+      .type   = GFX_TEXTURE_DEPTH_TARGET, 
+      .format = GFX_TEXTURE_FORMAT_DEPTH24
   });
   renderer_push_pass(light_pass, light_pass_fn, nullptr);
   
