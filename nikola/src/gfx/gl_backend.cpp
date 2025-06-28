@@ -865,6 +865,8 @@ static GLenum create_gl_texture(const GfxTextureType type) {
     case GFX_TEXTURE_3D:
       glCreateTextures(GL_TEXTURE_3D, 1, &id);
       break;
+    case GFX_TEXTURE_DEPTH_TARGET:
+    case GFX_TEXTURE_STENCIL_TARGET:
     case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
       glCreateRenderbuffers(1, &id);
       break;
@@ -897,8 +899,6 @@ static void set_texture_pixel_align(const GfxTextureFormat format) {
     case GFX_TEXTURE_FORMAT_RGBA32F:
       glPixelStorei(GL_PACK_ALIGNMENT, 4);
       glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-      break;
-    case GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8:
       break;
     default:
       break;
