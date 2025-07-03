@@ -63,18 +63,24 @@ struct PhysicsBodyDesc {
   ///
   /// @NOTE: This is set to `true` by default.
   bool is_awake      = true; 
-  
+
+  /// Lock one of or all three axises
+  ///
+  /// @NOTE: None of the axises are locked by default.
+  BVec3 locked_axises = BVec3(false);
+
+  /// A bitmask collision layer where bodies on at least 
+  /// one layer mask can collide. 
+  ///
+  /// @NOTE: By default this is set to `0x000000001`.
+  i32 layers          = 0x000000001;
+
   /// The user data the physics body will cary for later use. 
   ///
   /// @NOTE: The value this pointer will point to MUST 
   /// have a long lifetime. It should not just live on the stack 
   /// in a limited scope.
   void* user_data    = nullptr;
-
-  /// Lock one of or all three axises
-  ///
-  /// @NOTE: None of the axises are locked by default.
-  BVec3 locked_axises = BVec3(false);
 };
 /// PhysicsBodyDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -295,6 +301,9 @@ NIKOLA_API void physics_body_set_angular_velocity(PhysicsBody* body, const Vec3&
 /// Set the awake state of body `body` to `awake`.
 NIKOLA_API void physics_body_set_awake(PhysicsBody* body, const bool awake);
 
+/// Set the current collision layers of body `body`. 
+NIKOLA_API void physics_body_set_layers(PhysicsBody* body, const i32 layers);
+
 /// Retrieve the current type of body `body`.
 NIKOLA_API PhysicsBodyType physics_body_get_type(const PhysicsBody* body);
 
@@ -319,6 +328,9 @@ NIKOLA_API Vec3 physics_body_get_angular_velocity(const PhysicsBody* body);
 
 /// Retrieve the current awake state of body `body`.
 NIKOLA_API bool physics_body_is_awake(const PhysicsBody* body);
+
+/// Retrieve the current collision layers of body `body`. 
+NIKOLA_API const i32 physics_body_get_layers(const PhysicsBody* body);
 
 /// Retrieve the user data of body `body`.
 NIKOLA_API void* physics_body_get_user_data(const PhysicsBody* body);

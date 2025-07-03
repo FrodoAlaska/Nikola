@@ -321,12 +321,16 @@ PhysicsBody* physics_body_create(const PhysicsBodyDesc& desc) {
 
   // q3Body init
   q3BodyDef def; 
-  def.position  = vec_to_q3vec(desc.position);
-  def.bodyType  = body_type_to_q3body_type(desc.type);
   def.axis      = vec_to_q3vec(desc.rotation_axis);
   def.angle     = desc.rotation_angle;
+  def.position  = vec_to_q3vec(desc.position);
+ 
+  def.layers    = desc.layers;
+  def.bodyType  = body_type_to_q3body_type(desc.type);
   def.awake     = desc.is_awake;
+  
   def.userData  = body;
+  
   def.lockAxisX = desc.locked_axises.x;
 	def.lockAxisY = desc.locked_axises.y;
 	def.lockAxisZ = desc.locked_axises.z;
@@ -467,6 +471,12 @@ void physics_body_set_awake(PhysicsBody* body, const bool awake) {
   }
 }
 
+void physics_body_set_layers(PhysicsBody* body, const i32 layers) {
+  NIKOLA_ASSERT(body, "Invalid body given to physics_body_set_awake");
+
+  body->body->SetLayers(layers);
+}
+
 PhysicsBodyType physics_body_get_type(const PhysicsBody* body) {
   NIKOLA_ASSERT(body, "Invalid body given to physics_body_get_type");
   
@@ -519,6 +529,12 @@ bool physics_body_is_awake(const PhysicsBody* body) {
   NIKOLA_ASSERT(body, "Invalid body given to physics_body_is_awake");
   
   return body->body->IsAwake();
+}
+
+const i32 physics_body_get_layers(const PhysicsBody* body) {
+  NIKOLA_ASSERT(body, "Invalid body given to physics_body_is_awake");
+  
+  return body->body->GetLayers();
 }
 
 void* physics_body_get_user_data(const PhysicsBody* body) {

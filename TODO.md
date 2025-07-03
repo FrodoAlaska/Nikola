@@ -106,31 +106,33 @@
     - [x] Add the newly-added physics types to be edited by the GUI 
     - [x] Test the physics logic by making some testbeds.
     - [x] Documentation
-- [] Performance Craze 0.1 
-    - [x] Implement both performance timers and normal timers
-    - [x] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application.
-    - [] Create an abstraction layer over threads, mutexes, aotmics, and all things multi-threading. 
-    - [] Create a simple job system 
-    - [] Improve resource loading time by adding asynchronous resource loading.
-    - [] Also look into custom memory pools/memory arenas since they can increase performance.
-    - [] Documentation
 - [] Resource Manager v0.5
     - [] Have a `nkblob` that can be used to dump all of the resource manager data unto. The `nkblob` binary file can also be used to populate any resource manager 
     - [] Perhaps remove all of the `NBR*` types and just have the existing resources be saved as-is? 
     - [] Make the `ResourceID` type more private with its members. I know, I know. It's bad. But at least it's gonna be safer until I find a better option. 
+    - [] Improve resource loading time by adding asynchronous resource loading.
     - [] Improve resource load times. 
+    - [] Create a custom pool allocater for resources
+    - [] Improve resource final distribution
 - [] UI v0.1
     - [] A canvas system for 2D game UI.
     - [] A menu system
     - [] Documentation
 - [] Renderer v0.6 
+    - [] Think about adding sokol?
     - [] YOU MUST ADD INSTANCING NOOOOOOWWW!!!!
     - [] Allow toggleablity of render passes
     - [] Bloom integration 
+    - [] Improve the lighting model, perhaps by adding dynamic shader creation with materials? That's a big MAYBE, though.
     - [] Improve lighting using clustered rendering
-    - [] Compute shaders 
-    - [] Better bloom for testing the new compute shaders
     - [] Cascaded shadow maps
+    - [] Documentation
+- [] Performance Craze 0.1 
+    - [x] Implement both performance timers and normal timers
+    - [x] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application.
+    - [] Create an abstraction layer over threads, mutexes, aotmics, and all things multi-threading. 
+    - [] Create a simple job system 
+    - [] Also look into custom memory pools/memory arenas since they can increase performance.
     - [] Documentation
 - [] Particles v0.1 
     - [] Add CPU-based particles that can render different shapes, sizes, and colors (maybe even certain textures?) 
