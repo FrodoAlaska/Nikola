@@ -59,8 +59,18 @@ struct CameraDesc {
   /// This can be a completely different value from the 
   /// default window aspect ratio if desired.
   ///
-  /// @NOTE: This is set to `0.0f`.
+  /// @NOTE: This is set to `0.0f` by default.
   f32 aspect_ratio = 0.0f;
+
+  /// The near distance of the camera. 
+  ///
+  /// @NOTE: This is set to `0.1f` by default.
+  f32 near         = 0.1f; 
+
+  /// The far distance of the camera. 
+  ///
+  /// @NOTE: This is set to `100.0f` by default.
+  f32 far          = 100.0f;
 
   /// The function callback to move the camera 
   ///

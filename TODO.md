@@ -106,33 +106,42 @@
     - [x] Add the newly-added physics types to be edited by the GUI 
     - [x] Test the physics logic by making some testbeds.
     - [x] Documentation
-- [] Resource Manager v0.5
-    - [] Have a `nkblob` that can be used to dump all of the resource manager data unto. The `nkblob` binary file can also be used to populate any resource manager 
-    - [] Perhaps remove all of the `NBR*` types and just have the existing resources be saved as-is? 
-    - [] Make the `ResourceID` type more private with its members. I know, I know. It's bad. But at least it's gonna be safer until I find a better option. 
-    - [] Improve resource loading time by adding asynchronous resource loading.
-    - [] Improve resource load times. 
-    - [] Create a custom pool allocater for resources
-    - [] Improve resource final distribution
-- [] UI v0.1
-    - [] A canvas system for 2D game UI.
-    - [] A menu system
-    - [] Documentation
-- [] Renderer v0.6 
-    - [] Think about adding sokol?
-    - [] YOU MUST ADD INSTANCING NOOOOOOWWW!!!!
-    - [] Allow toggleablity of render passes
-    - [] Bloom integration 
-    - [] Improve the lighting model, perhaps by adding dynamic shader creation with materials? That's a big MAYBE, though.
-    - [] Improve lighting using clustered rendering
-    - [] Cascaded shadow maps
-    - [] Documentation
 - [] Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers
     - [x] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application.
     - [] Create an abstraction layer over threads, mutexes, aotmics, and all things multi-threading. 
     - [] Create a simple job system 
+    - [] Improve resource loading time by adding asynchronous resource loading.
     - [] Also look into custom memory pools/memory arenas since they can increase performance.
+    - [] Documentation
+- [] UI v0.1
+    - [x] Text UI elements 
+    - [x] Text animation system
+    - [] Button UI elements
+    - [] Checkbox UI elements 
+    - [] Slider UI elements
+    - [] A layout system for 2D game UI.
+    - [] A menu system? 
+    - [] Documentation
+- [] Resource Manager v0.5
+    - [] Fix 3D models loading. 
+        - [] Get rid of Assimp? Replace with `cgltf` and `fastObj`
+        - [] Some 3D models that don't include a texture get messed up 
+        - [] Add a parent and child relationship between meshes. Basically, every mesh should have a `local_position` which is set to `Vec3(0.0f)` by default, and it will be take into account when rendering.
+        - [] I think the renderer assumes the vertex data of the mesh so if a model has even an extra vertex data like color, the renderer messes everything up.
+    - [] Have a `nkblob` that can be used to dump all of the resource manager data unto. The `nkblob` binary file can also be used to populate any resource manager 
+    - [] Perhaps remove all of the `NBR*` types and just have the existing resources be saved as-is? 
+    - [] Make the `ResourceID` type more private with its members. I know, I know. It's bad. But at least it's gonna be safer until I find a better option. 
+    - [] Improve resource load times. 
+    - [] Documentation
+- [] Renderer v0.6 
+    - [] YOU MUST ADD INSTANCING NOOOOOOWWW!!!!
+    - [] Allow toggleablity of render passes
+    - [] Bloom integration 
+    - [] Improve lighting using clustered rendering
+    - [] Compute shaders 
+    - [] Better bloom for testing the new compute shaders
+    - [] Cascaded shadow maps
     - [] Documentation
 - [] Particles v0.1 
     - [] Add CPU-based particles that can render different shapes, sizes, and colors (maybe even certain textures?) 

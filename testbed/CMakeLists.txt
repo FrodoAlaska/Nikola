@@ -22,7 +22,8 @@ set(TESTBED_TYPE
   # "core_testbed"
   # "font_testbed"
   # "audio_testbed"
-  "physics_testbed"
+  # "physics_testbed"
+  "ui_testbed"
 )
 ############################################################
 

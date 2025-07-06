@@ -5,10 +5,74 @@
 #include "nikola_containers.h"
 #include "nikola_audio.h"
 #include "nikola_physics.h"
+#include "nikola_timer.h"
 
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola
+
+/// ----------------------------------------------------------------------
+/// UIAnchor
+enum UIAnchor {
+  UI_ANCHOR_TOP_LEFT      = 21 << 0, 
+  UI_ANCHOR_TOP_CENTER    = 21 << 1, 
+  UI_ANCHOR_TOP_RIGHT     = 21 << 2, 
+  
+  UI_ANCHOR_CENTER_LEFT   = 21 << 3, 
+  UI_ANCHOR_CENTER        = 21 << 4, 
+  UI_ANCHOR_CENTER_RIGHT  = 21 << 5, 
+  
+  UI_ANCHOR_BOTTOM_LEFT   = 21 << 6, 
+  UI_ANCHOR_BOTTOM_CENTER = 21 << 7, 
+  UI_ANCHOR_BOTTOM_RIGHT  = 21 << 8, 
+};
+/// UIAnchor
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// UITextAnimation 
+enum UITextAnimation {
+  UI_TEXT_ANIMATION_FADE_IN     = 22 << 0, 
+  UI_TEXT_ANIMATION_FADE_OUT    = 22 << 1, 
+  UI_TEXT_ANIMATION_BALLON_UP   = 22 << 2, 
+  UI_TEXT_ANIMATION_BALLON_DOWN = 22 << 3, 
+};
+/// UITextAnimation 
+/// ----------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UIText
+struct UIText {
+  Vec2 position, offset, bounds;
+  Window* window_ref;
+
+  String string;
+  Font* font;
+  f32 font_size;
+
+  UIAnchor anchor; 
+  Vec4 color;
+  bool is_active;
+
+  Timer animation_timer;   
+};
+/// UIText
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UITextDesc
+struct UITextDesc {
+  String string;
+
+  ResourceID font_id;
+  f32 font_size;
+  UIAnchor anchor;
+
+  Vec2 offset = Vec2(0.0f);
+  Vec4 color  = Vec4(1.0f);
+};
+/// UITextDesc
+///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// GUI functions
@@ -78,6 +142,22 @@ NIKOLA_API void gui_edit_physics_body(const char* name, PhysicsBody* body);
 NIKOLA_API void gui_edit_collider(const char* name, Collider* collider);
 
 /// GUI functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UIText functions
+
+NIKOLA_API void ui_text_create(UIText* text, Window* window, const UITextDesc& desc);
+
+NIKOLA_API void ui_text_set_anchor(UIText& text, const UIAnchor& anchor);
+
+NIKOLA_API void ui_text_set_string(UIText& text, const String& new_string);
+
+NIKOLA_API void ui_text_apply_animation(UIText& text, const UITextAnimation anim_type, const f32 duration);
+
+NIKOLA_API void ui_text_render(const UIText& text);
+
+/// UIText functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 } // End of nikola

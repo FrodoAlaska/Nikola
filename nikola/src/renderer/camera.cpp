@@ -87,8 +87,8 @@ void camera_create(Camera* cam, const CameraDesc& desc) {
   cam->zoom         = 45.0f;
   cam->aspect_ratio = desc.aspect_ratio;
 
-  cam->near = 0.1f;
-  cam->far  = 100.0f;
+  cam->near = desc.near;
+  cam->far  = desc.far;
 
   cam->sensitivity = 0.1f;
   cam->exposure    = 1.0f;

@@ -57,6 +57,7 @@ set(NIKOLA_SOURCES
   
   # UI 
   ${NIKOLA_SRC_DIR}/ui/gui.cpp
+  ${NIKOLA_SRC_DIR}/ui/ui_text.cpp
 )
 
 set(NIKOLA_HEADERS
