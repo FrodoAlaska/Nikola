@@ -99,12 +99,12 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     nikola::input_cursor_show(app->has_editor);
   }
 
-  if(nikola::input_key_pressed(nikola::KEY_Q)) {
-    nikola::ui_text_set_anchor(app->ui_text, (nikola::UIAnchor)current_anchor);
+  if(nikola::input_action_pressed("ui-click")) {
+    nikola::ui_text_set_anchor(app->ui_text, (nikola::UIAnchor)(21 << current_anchor));
     current_anchor++;
   }
  
-  if(current_anchor > nikola::UI_ANCHOR_BOTTOM_RIGHT) {
+  if(current_anchor > 8) {
     current_anchor = 0;
   }
 
@@ -120,8 +120,8 @@ void app_render(nikola::App* app) {
   // Render 2D 
   nikola::batch_renderer_begin();
   
-  nikola::ui_text_apply_animation(app->ui_text, nikola::UI_TEXT_ANIMATION_FADE_OUT, 0.3f);
-  nikola::ui_text_apply_animation(app->ui_text, nikola::UI_TEXT_ANIMATION_BALLON_DOWN, 1.5f);
+  // nikola::ui_text_apply_animation(app->ui_text, nikola::UI_TEXT_ANIMATION_FADE_OUT, 0.3f);
+  // nikola::ui_text_apply_animation(app->ui_text, nikola::UI_TEXT_ANIMATION_BALLON_DOWN, 1.5f);
   nikola::ui_text_render(app->ui_text);
   
   nikola::batch_renderer_end();

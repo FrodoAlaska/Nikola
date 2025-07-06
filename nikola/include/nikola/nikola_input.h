@@ -12,7 +12,7 @@ namespace nikola { // Start of nikola
 ///---------------------------------------------------------------------------------------------------------------------
 /// Key 
 enum Key {
-  UNKNOWN       = -1, 
+  KEY_UNKNOWN       = -1, 
 
   KEY_SPACE         = 32,
   KEY_APOSTROPHE    = 39, 
@@ -147,6 +147,8 @@ enum Key {
 ///---------------------------------------------------------------------------------------------------------------------
 /// MouseButton 
 enum MouseButton {
+  MOUSE_BUTTON_UNKNOWN = -1, 
+
   MOUSE_BUTTON_1 = 0, 
   MOUSE_BUTTON_2 = 1, 
   MOUSE_BUTTON_3 = 2, 
@@ -160,8 +162,8 @@ enum MouseButton {
   MOUSE_BUTTON_LEFT   = MOUSE_BUTTON_1,
   MOUSE_BUTTON_RIGHT  = MOUSE_BUTTON_2,
   MOUSE_BUTTON_MIDDLE = MOUSE_BUTTON_3,
-  
-  MOUSE_BUTTONS_MAX = 8,
+
+  MOUSE_BUTTONS_MAX = MOUSE_BUTTON_8,
 };
 /// MouseButton 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -210,6 +212,8 @@ enum GamepadAxis {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GamepadButton 
 enum GamepadButton {
+  GAMEPAD_BUTTON_UNKNOWN = -1,
+
   GAMEPAD_BUTTON_A = 0,
   GAMEPAD_BUTTON_B,
   GAMEPAD_BUTTON_X,
@@ -239,6 +243,16 @@ enum GamepadButton {
   GAMEPAD_BUTTON_TRIANGLE = GAMEPAD_BUTTON_Y,
 };
 /// GamepadButton 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// InputAction
+struct InputAction {
+  Key key_bind               = KEY_UNKNOWN; 
+  MouseButton mouse_bind     = MOUSE_BUTTON_UNKNOWN; 
+  GamepadButton gamepad_bind = GAMEPAD_BUTTON_UNKNOWN;
+};
+/// InputAction
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -314,6 +328,21 @@ NIKOLA_API const bool input_gamepad_button_up(const JoystickID id, const Gamepad
 
 /// Get the name of the given gamepad `id` as a string if available.
 NIKOLA_API const char* input_gamepad_get_name(const JoystickID id);
+
+/// Bind the keys in `action` to the `action_name` for use later.
+NIKOLA_API void input_action_bind(const char* action_name, const InputAction action);
+
+/// Check if the binded keys for `action_name` are currently pressed.
+NIKOLA_API const bool input_action_pressed(const char* action_name);
+
+/// Check if the binded keys for `action_name` are currently released.
+NIKOLA_API const bool input_action_released(const char* action_name);
+
+/// Check if the binded keys for `action_name` are currently held down.
+NIKOLA_API const bool input_action_down(const char* action_name);
+
+/// Check if the binded keys for `action_name` are currently held up.
+NIKOLA_API const bool input_action_up(const char* action_name);
 
 /// Input functions 
 ///---------------------------------------------------------------------------------------------------------------------

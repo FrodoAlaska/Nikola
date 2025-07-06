@@ -1,9 +1,4 @@
-#include "nikola/nikola_app.h"
-#include "nikola/nikola_base.h"
-#include "nikola/nikola_render.h"
-#include "nikola/nikola_resources.h"
-#include "nikola/nikola_timer.h"
-#include "nikola/nikola_physics.h"
+#include "nikola/nikola.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -50,6 +45,14 @@ void engine_init(const AppDesc& desc) {
   // Window init 
   s_engine.window = window_open(desc.window_title.c_str(), desc.window_width, desc.window_height, desc.window_flags);
   NIKOLA_ASSERT(s_engine.window, "Failed to open a window");
+
+  // Useful input actions init
+  InputAction ui_click_action = {
+    .key_bind     = KEY_ENTER, 
+    .mouse_bind   = MOUSE_BUTTON_LEFT, 
+    .gamepad_bind = GAMEPAD_BUTTON_CROSS,
+  };
+  input_action_bind("ui-click", ui_click_action);
 
   // Audio init
   audio_device_init(nullptr);
