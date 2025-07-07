@@ -12,8 +12,7 @@ struct nikola::App {
   nikola::ResourceGroupID res_group_id;
   nikola::ResourceID font_id;
 
-  nikola::UIText ui_text;
-  nikola::UIButton ui_button;
+  nikola::UICheckbox ui_checkbox;
   nikola::UILayout ui_layout;
 
   bool has_editor = false;
@@ -94,30 +93,12 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::event_listen(nikola::EVENT_UI_BUTTON_ENTERED, on_button_event, app);
   nikola::event_listen(nikola::EVENT_UI_BUTTON_EXITED, on_button_event, app);
 
-  // UI text init
-  nikola::UITextDesc text_desc = {
-    .string = "Hello, Nikola", 
-
-    .font_id   = app->font_id, 
-    .font_size = 50.0f,
-
-    .anchor = nikola::UI_ANCHOR_TOP_CENTER,
+  // UI checkbox init
+  nikola::UICheckboxDesc checkbox_desc = {
+    .size   = 32.0f,
+    .anchor = nikola::UI_ANCHOR_TOP_LEFT,
   };
-  nikola::ui_text_create(&app->ui_text, app->window, text_desc);
-
-  // UI button init
-  nikola::UIButtonDesc button_desc = {
-    .text = "Quit", 
-
-    .font_id   = app->font_id, 
-    .font_size = 40.0f,
-    .anchor    = nikola::UI_ANCHOR_CENTER,
-
-    .padding = nikola::Vec2(40.0f, 10.0f),
-    
-    .outline_thickness = 7.0f,
-  };
-  nikola::ui_button_create(&app->ui_button, app->window, button_desc);
+  nikola::ui_checkbox_create(&app->ui_checkbox, app->window, checkbox_desc);
 
   // UI layout init
   nikola::ui_layout_create(&app->ui_layout, app->window, app->font_id);
@@ -178,7 +159,9 @@ void app_render(nikola::App* app) {
   
   // Render 2D 
   nikola::batch_renderer_begin();
-  
+ 
+  nikola::ui_checkbox_render(app->ui_checkbox);
+
   nikola::ui_text_apply_animation(app->ui_layout.texts[0], nikola::UI_TEXT_ANIMATION_FADE_IN, 0.4f);
   nikola::ui_layout_render(app->ui_layout);
 

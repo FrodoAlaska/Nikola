@@ -11,6 +11,7 @@ namespace nikola { // Start of nikola
 // Some useful forward declarations to avoid circular dependencies...
 
 struct UIButton;
+struct UICheckbox;
 
 /// ---------------------------------------------------------------------
 
@@ -62,7 +63,11 @@ enum EventType {
   EVENT_UI_BUTTON_ENTERED,
   EVENT_UI_BUTTON_EXITED,
 
-  EVENTS_MAX = EVENT_UI_BUTTON_EXITED + 1,
+  EVENT_UI_CHECKBOX_CLICKED,
+  EVENT_UI_CHECKBOX_ENTERED,
+  EVENT_UI_CHECKBOX_EXITED,
+
+  EVENTS_MAX = EVENT_UI_CHECKBOX_EXITED + 1,
 };
 /// EventType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -117,6 +122,9 @@ struct Event {
 
   /// The button UI element given to this event. 
   UIButton* button = nullptr;
+  
+  /// The checkox UI element given to this event. 
+  UICheckbox* checkbox = nullptr;
 };
 /// Event
 ///---------------------------------------------------------------------------------------------------------------------

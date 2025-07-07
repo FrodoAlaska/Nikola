@@ -30,10 +30,6 @@ static const bool is_hovered(const UIButton& button) {
          (mouse_pos.y > min.y && mouse_pos.y < max.y);
 }
 
-static const bool is_pressed(const UIButton& button) {
-  return is_hovered(button) && input_action_pressed("ui-click");
-}
-
 /// Private functions
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -104,19 +100,11 @@ void ui_button_render(UIButton& button) {
       event_dispatch(event);
     }
     
-    color.a            = 0.5f;
+    color.a            = 0.8f;
     button.was_hovered = true;
   }
-
-  // Pressed
-  if(is_pressed(button)) {
-    color.a = 0.1f;
-
-    Event event = {
-      .type   = EVENT_UI_BUTTON_CLICKED,
-      .button = &button,
-    };
-    event_dispatch(event);
+  else {
+    button.was_hovered = false;
   }
 
   // Exited
@@ -128,17 +116,25 @@ void ui_button_render(UIButton& button) {
     event_dispatch(event);
   }
 
+  // Pressed
+  if(button.was_hovered && input_action_pressed("ui-click")) {
+    color.a = 0.5f;
+
+    Event event = {
+      .type   = EVENT_UI_BUTTON_CLICKED,
+      .button = &button,
+    };
+    event_dispatch(event);
+  }
+
   // Render the button
-  batch_render_quad(button.position - (Vec2(button.outline_thickness) / 2.0f), 
-                    button.size + Vec2(button.outline_thickness),
+  batch_render_quad(button.position - (button.outline_thickness / 2.0f), 
+                    button.size + button.outline_thickness,
                     button.outline_color);
   batch_render_quad(button.position, button.size, color);
 
   // Render the text
   ui_text_render(button.text);
-
-  // Reset the hovered state
-  button.was_hovered = false;
 }
 
 /// UIButton functions

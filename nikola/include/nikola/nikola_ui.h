@@ -117,6 +117,39 @@ struct UIButtonDesc {
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// UICheckbox
+struct UICheckbox {
+  UIAnchor anchor;
+  Vec2 position, size, offset; 
+
+  u32 id;
+  Window* window_ref;
+
+  Vec4 color, outline_color;
+  bool is_active, is_checked, was_hovered;
+};
+/// UICheckbox
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// UICheckboxDesc
+struct UICheckboxDesc {
+  f32 size;
+
+  UIAnchor anchor;
+  Vec2 offset = Vec2(0.0f);
+  
+  u32 bind_id = 0;
+
+  Vec4 color         = Vec4(1.0f); 
+  Vec4 outline_color = Vec4(0.0f, 0.0f, 0.0f, 1.0f); 
+
+  bool initial_checked = true;
+};
+/// UICheckboxDesc
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// UILayout
 struct UILayout {
  ResourceID font_id; 
@@ -235,6 +268,18 @@ NIKOLA_API void ui_button_set_string(UIButton& button, const String& new_string)
 NIKOLA_API void ui_button_render(UIButton& button);
 
 /// UIButton functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UICheckbox
+
+NIKOLA_API void ui_checkbox_create(UICheckbox* checkbox, Window* window, const UICheckboxDesc& desc);
+
+NIKOLA_API void ui_checkbox_set_anchor(UICheckbox& checkbox, const UIAnchor& anchor);
+
+NIKOLA_API void ui_checkbox_render(UICheckbox& checkbox);
+
+/// UICheckbox
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------

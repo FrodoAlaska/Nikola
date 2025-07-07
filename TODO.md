@@ -119,7 +119,7 @@
     - [x] Text animation system
     - [x] Button UI elements
     - [x] A layout system for 2D game UI.
-    - [] Checkbox UI elements 
+    - [x] Checkbox UI elements 
     - [] Slider UI elements
     - [] Documentation
 - [] Resource Manager v0.5
