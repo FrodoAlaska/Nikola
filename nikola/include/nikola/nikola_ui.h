@@ -34,8 +34,12 @@ enum UIAnchor {
 enum UITextAnimation {
   UI_TEXT_ANIMATION_FADE_IN     = 22 << 0, 
   UI_TEXT_ANIMATION_FADE_OUT    = 22 << 1, 
+  
   UI_TEXT_ANIMATION_BALLON_UP   = 22 << 2, 
   UI_TEXT_ANIMATION_BALLON_DOWN = 22 << 3, 
+  
+  UI_TEXT_ANIMATION_SLIDE_UP   = 22 << 4, 
+  UI_TEXT_ANIMATION_SLIDE_DOWN = 22 << 5, 
 };
 /// UITextAnimation 
 /// ----------------------------------------------------------------------
@@ -110,6 +114,27 @@ struct UIButtonDesc {
   f32 outline_thickness = 7.0f;
 };
 /// UIButtonDesc
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// UILayout
+struct UILayout {
+ ResourceID font_id; 
+ Window* window_ref;
+  
+ DynamicArray<UIText> texts;
+ DynamicArray<UIButton> buttons;
+
+ UIAnchor current_anchor;
+ Vec2 extra_offset;
+ Vec2 current_offset;
+
+ f32 buttons_outline_thickness;
+ Vec2 buttons_padding;
+
+ bool is_active;
+};
+/// UILayout
 /// ----------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -210,6 +235,34 @@ NIKOLA_API void ui_button_set_string(UIButton& button, const String& new_string)
 NIKOLA_API void ui_button_render(UIButton& button);
 
 /// UIButton functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UILayout functions
+
+NIKOLA_API void ui_layout_create(UILayout* layout, Window* window, const ResourceID& font_id);
+
+NIKOLA_API void ui_layout_begin(UILayout& layout, const UIAnchor anchor, const Vec2& offset = Vec2(0.0f));
+
+NIKOLA_API void ui_layout_end(UILayout& layout);
+
+NIKOLA_API void ui_layout_push_text(UILayout& layout, 
+                                    const String& str, 
+                                    const f32 size, 
+                                    const Vec4& color, 
+                                    const Vec2& layout_padding = Vec2(0.0f));
+
+NIKOLA_API void ui_layout_push_button(UILayout& layout, 
+                                      const String& str, 
+                                      const f32 size, 
+                                      const Vec4& color, 
+                                      const Vec4& outline_color, 
+                                      const Vec4& text_color, 
+                                      const Vec2& layout_padding = Vec2(0.0f));
+
+NIKOLA_API void ui_layout_render(const UILayout& layout);
+
+/// UILayout functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 } // End of nikola

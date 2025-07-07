@@ -118,7 +118,7 @@
     - [x] Text UI elements 
     - [x] Text animation system
     - [x] Button UI elements
-    - [] A layout system for 2D game UI.
+    - [x] A layout system for 2D game UI.
     - [] Checkbox UI elements 
     - [] Slider UI elements
     - [] Documentation

@@ -14,6 +14,7 @@ struct nikola::App {
 
   nikola::UIText ui_text;
   nikola::UIButton ui_button;
+  nikola::UILayout ui_layout;
 
   bool has_editor = false;
 };
@@ -24,15 +25,20 @@ struct nikola::App {
 /// Callbacks
 
 static bool on_button_event(const nikola::Event& event, const void* dispatcher, const void* listener) {
-  switch(event.type) {
-    case nikola::EVENT_UI_BUTTON_CLICKED:
+  if(event.type != nikola::EVENT_UI_BUTTON_CLICKED) {
+    return false;
+  }
+
+  switch(event.button->id) {
+    case 0: // Play
+      break;
+    case 1: // Settings
+      break;
+    case 2: // Quit
       nikola::event_dispatch(nikola::Event{.type = nikola::EVENT_APP_QUIT});
       break;
-    case nikola::EVENT_UI_BUTTON_ENTERED:
-    case nikola::EVENT_UI_BUTTON_EXITED:
-      break;
     default:
-      return false;
+      break;
   }
 
   return true;
@@ -113,6 +119,23 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   };
   nikola::ui_button_create(&app->ui_button, app->window, button_desc);
 
+  // UI layout init
+  nikola::ui_layout_create(&app->ui_layout, app->window, app->font_id);
+  
+  nikola::ui_layout_begin(app->ui_layout, nikola::UI_ANCHOR_TOP_CENTER);
+  nikola::ui_layout_push_text(app->ui_layout, "Hello, Nikola", 80.0f, nikola::Vec4(1.0f));
+  nikola::ui_layout_end(app->ui_layout);
+ 
+  nikola::Vec4 color(1.0f);
+  nikola::Vec4 outline_color(0.0f, 0.0f, 0.0f, 1.0f);
+  nikola::Vec4 text_color(0.0f, 0.0f, 0.0f, 1.0f);
+
+  nikola::ui_layout_begin(app->ui_layout, nikola::UI_ANCHOR_CENTER, nikola::Vec2(0.0f, 65.0f));
+  nikola::ui_layout_push_button(app->ui_layout, "Play", 40.0f, color, outline_color, text_color);
+  nikola::ui_layout_push_button(app->ui_layout, "Settings", 40.0f, color, outline_color, text_color);
+  nikola::ui_layout_push_button(app->ui_layout, "Quit", 40.0f, color, outline_color, text_color);
+  nikola::ui_layout_end(app->ui_layout);
+
   return app;
 }
 
@@ -156,10 +179,8 @@ void app_render(nikola::App* app) {
   // Render 2D 
   nikola::batch_renderer_begin();
   
-  // nikola::ui_text_apply_animation(app->ui_text, nikola::UI_TEXT_ANIMATION_FADE_OUT, 0.3f);
-  // nikola::ui_text_apply_animation(app->ui_text, nikola::UI_TEXT_ANIMATION_BALLON_DOWN, 1.5f);
-  nikola::ui_text_render(app->ui_text);
-  nikola::ui_button_render(app->ui_button); 
+  nikola::ui_text_apply_animation(app->ui_layout.texts[0], nikola::UI_TEXT_ANIMATION_FADE_IN, 0.4f);
+  nikola::ui_layout_render(app->ui_layout);
 
   nikola::batch_renderer_end();
 }

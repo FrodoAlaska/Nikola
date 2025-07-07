@@ -67,6 +67,9 @@ static void apply_animation_ballon(UIText& text, const i32 dir, const f32 durati
   ui_text_set_anchor(text, text.anchor);
 }
 
+static void apply_animation_slide(UIText& text, const i32 dir, const f32 duration) {
+}
+
 /// Private functions
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -171,6 +174,12 @@ void ui_text_apply_animation(UIText& text, const UITextAnimation anim_type, cons
       break;
     case UI_TEXT_ANIMATION_BALLON_DOWN:
       apply_animation_ballon(text, -1, duration);
+      break;
+    case UI_TEXT_ANIMATION_SLIDE_UP:
+      text.position.y -= duration * niclock_get_delta_time();
+      break;
+    case UI_TEXT_ANIMATION_SLIDE_DOWN:
+      text.position.y += duration * niclock_get_delta_time();
       break;
   }
 }
