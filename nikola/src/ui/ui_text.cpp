@@ -2,7 +2,6 @@
 #include "nikola/nikola_resources.h"
 #include "nikola/nikola_render.h"
 #include "nikola/nikola_math.h"
-#include "nikola/nikola_timer.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -96,8 +95,6 @@ void ui_text_create(UIText* text, Window* window, const UITextDesc& desc) {
   ui_text_set_anchor(*text, text->anchor);
 
   text->is_active = true;
-
-  timer_create(&text->animation_timer, 1.0f, false);
 }
 
 void ui_text_set_anchor(UIText& text, const UIAnchor& anchor) {

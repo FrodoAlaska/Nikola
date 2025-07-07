@@ -40,7 +40,18 @@ enum UITextAnimation {
 /// UITextAnimation 
 /// ----------------------------------------------------------------------
 
-///---------------------------------------------------------------------------------------------------------------------
+/// ----------------------------------------------------------------------
+/// UIButtonState
+enum UIButtonState {
+  UI_BUTTON_STATE_NORMAL   = 23 << 0,
+  UI_BUTTON_STATE_HOVER    = 23 << 1, 
+  UI_BUTTON_STATE_CLICK    = 23 << 2, 
+  UI_BUTTON_STATE_DISABLED = 23 << 3,
+};
+/// UIButtonState
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// UIText
 struct UIText {
   Vec2 position, offset, bounds;
@@ -53,13 +64,11 @@ struct UIText {
   UIAnchor anchor; 
   Vec4 color;
   bool is_active;
-
-  Timer animation_timer;   
 };
 /// UIText
-///---------------------------------------------------------------------------------------------------------------------
+/// ----------------------------------------------------------------------
 
-///---------------------------------------------------------------------------------------------------------------------
+/// ----------------------------------------------------------------------
 /// UITextDesc
 struct UITextDesc {
   String string;
@@ -72,7 +81,48 @@ struct UITextDesc {
   Vec4 color  = Vec4(1.0f);
 };
 /// UITextDesc
-///---------------------------------------------------------------------------------------------------------------------
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// UIButton
+struct UIButton {
+  UIText text; 
+  u32 id;
+
+  Vec2 padding, offset;
+  Vec2 position, size;
+
+  f32 outline_thickness;
+  Vec4 color, outline_color;
+  
+  UIButtonState state;
+  bool is_active;
+};
+/// UIButton
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// UIButtonDesc
+struct UIButtonDesc {
+  String text; 
+  
+  ResourceID font_id; 
+  f32 font_size;
+  UIAnchor anchor; 
+  
+  u32 bind_id = 0;
+
+  Vec2 offset  = Vec2(0.0f);
+  Vec2 padding = Vec2(30.0f, 10.0f); 
+  
+  Vec4 color         = Vec4(1.0f);
+  Vec4 outline_color = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+  Vec4 text_color    = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+  
+  f32 outline_thickness = 7.0f;
+};
+/// UIButtonDesc
+/// ----------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// GUI functions
@@ -158,6 +208,20 @@ NIKOLA_API void ui_text_apply_animation(UIText& text, const UITextAnimation anim
 NIKOLA_API void ui_text_render(const UIText& text);
 
 /// UIText functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UIButton functions
+
+NIKOLA_API void ui_button_create(UIButton* button, Window* window, const UIButtonDesc& desc);
+
+NIKOLA_API void ui_button_set_anchor(UIButton& button, const UIAnchor& anchor);
+
+NIKOLA_API void ui_button_set_string(UIButton& button, const String& new_string);
+
+NIKOLA_API void ui_button_render(const UIButton& button);
+
+/// UIButton functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 } // End of nikola

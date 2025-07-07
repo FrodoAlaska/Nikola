@@ -13,6 +13,7 @@ struct nikola::App {
   nikola::ResourceID font_id;
 
   nikola::UIText ui_text;
+  nikola::UIButton ui_button;
 
   bool has_editor = false;
 };
@@ -61,16 +62,30 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Resoruces init
   init_resources(app);
 
-  // UI init
+  // UI text init
   nikola::UITextDesc text_desc = {
     .string = "Hello, Nikola", 
 
     .font_id   = app->font_id, 
     .font_size = 50.0f,
 
-    .anchor = nikola::UI_ANCHOR_CENTER,
+    .anchor = nikola::UI_ANCHOR_TOP_CENTER,
   };
   nikola::ui_text_create(&app->ui_text, app->window, text_desc);
+
+  // UI button init
+  nikola::UIButtonDesc button_desc = {
+    .text = "Settings", 
+
+    .font_id   = app->font_id, 
+    .font_size = 40.0f,
+    .anchor    = nikola::UI_ANCHOR_CENTER,
+
+    .padding = nikola::Vec2(40.0f, 10.0f),
+    
+    .outline_thickness = 7.0f,
+  };
+  nikola::ui_button_create(&app->ui_button, app->window, button_desc);
 
   return app;
 }
@@ -123,7 +138,8 @@ void app_render(nikola::App* app) {
   // nikola::ui_text_apply_animation(app->ui_text, nikola::UI_TEXT_ANIMATION_FADE_OUT, 0.3f);
   // nikola::ui_text_apply_animation(app->ui_text, nikola::UI_TEXT_ANIMATION_BALLON_DOWN, 1.5f);
   nikola::ui_text_render(app->ui_text);
-  
+  nikola::ui_button_render(app->ui_button); 
+
   nikola::batch_renderer_end();
 }
 

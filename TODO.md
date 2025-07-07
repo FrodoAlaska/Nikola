@@ -149,13 +149,13 @@
     - [] Documentation
 - [] 3D Animations v0.1
 
-## (Engine) BUGS: 
+## BUGS: 
 - (Physics): Deleting bodies has some problems since the world delets bodies by keeping a "world index" inside the internal body data structure, which then it uses to 
 get the correct position (as an iterator) in the vector to then delete. However, that index is sometimes _way_ higher than the actual size of the array of bodies. Is keeping a collection for bodies in the physics world 
 with a physics library really that necessary?
 - (Physics): Listen, just remove the physics library. It's really not all that useful. It bring more pain and suffering than joy. I can do a better one with my hands tied behind my back whilst singing Katyusha. 
 
-## (Core) BUGS: 
+## BUGS: 
 - EMPTY FOR NOW...
 
 ## TEST: 

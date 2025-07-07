@@ -15,6 +15,7 @@ struct Window {
   GLFWcursor* cursor  = nullptr;
 
   i32 width, height; 
+  i32 old_width, old_height;
   
   WindowFlags flags;
 
@@ -26,6 +27,9 @@ struct Window {
 
   i32 position_x = 0; 
   i32 position_y = 0;
+
+  i32 old_position_x = 0;
+  i32 old_position_y = 0;
 
   f64 mouse_position_x = 0.0f; 
   f64 mouse_position_y = 0.0f; 
@@ -230,7 +234,9 @@ static void set_window_hints(Window* window) {
   glfwSetErrorCallback(error_callback); 
 
   // Setting some defaults
+  
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+  window->is_cursor_shown = true;
 
   // Setting the flags...
 
@@ -274,11 +280,6 @@ static void set_window_hints(Window* window) {
 }
 
 static void create_glfw_handle(Window* window, const char* title) {
-  // Creating the window
-  window->handle = glfwCreateWindow(window->width, window->height, title, nullptr, nullptr);
-
-  // Setting the new refresh rate
-  window->refresh_rate = glfwGetVideoMode(glfwGetPrimaryMonitor())->refreshRate;
 }
 
 static void set_window_callbacks(Window* window) {
@@ -314,15 +315,42 @@ static void set_window_callbacks(Window* window) {
 
 Window* window_open(const char* title, const i32 width, const i32 height, i32 flags) {
   Window* window = (Window*)memory_allocate(sizeof(Window));
+  memory_zero(window, sizeof(Window));
 
   window->width  = width; 
   window->height = height; 
   window->flags  = (WindowFlags)flags;
 
+  window->old_width  = width;
+  window->old_height = height;
+
   // GLFW init and setup 
   glfwInit();
   set_window_hints(window);
-  create_glfw_handle(window, title);
+
+  // This will make it easier to make the window fullscreen initially
+  GLFWmonitor* monitor = nullptr;
+  if(window->is_fullscreen) {
+    monitor                = glfwGetPrimaryMonitor();
+    const GLFWvidmode* vid = glfwGetVideoMode(monitor);
+
+    // Reset the size of the window to the monitor's size
+    window->width  = vid->width;
+    window->height = vid->height;
+
+    // Just in case the user decides to go back to 
+    // non-fullscreen mode.
+    window->old_position_x = 100;
+    window->old_position_y = 100;
+  }
+
+  // Creating the window
+  window->handle = glfwCreateWindow(window->width, window->height, title, monitor, nullptr);
+
+  // Setting the new refresh rate
+  window->refresh_rate = glfwGetVideoMode(glfwGetPrimaryMonitor())->refreshRate;
+  
+  // Set some useful callbacks for later
   set_window_callbacks(window);
   
   // Something wrong...
@@ -348,13 +376,9 @@ Window* window_open(const char* title, const i32 width, const i32 height, i32 fl
   // Set the current context 
   glfwMakeContextCurrent(window->handle);
 
-  if(window->is_fullscreen) {
-    window_set_fullscreen(window, true);
-  }
-
-  if(!window->is_cursor_shown) {
-    glfwSetInputMode(window->handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-  }
+  // Set input mode
+  i32 mode = window->is_cursor_shown ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED;
+  glfwSetInputMode(window->handle, GLFW_CURSOR, mode);
   
   NIKOLA_LOG_INFO("Window: {t = \"%s\", w = %i, h = %i} was successfully opened", title, width, height);
   return window;
@@ -449,6 +473,12 @@ void window_set_fullscreen(Window* window, const bool fullscreen) {
   const GLFWvidmode* video_mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
   if(fullscreen) {
+    window->old_width  = window->width;
+    window->old_height = window->height;
+
+    window->old_position_x = window->position_x;
+    window->old_position_y = window->position_y;
+
     glfwSetWindowMonitor(window->handle, 
                          glfwGetPrimaryMonitor(), 
                          0, 0, 
@@ -458,8 +488,8 @@ void window_set_fullscreen(Window* window, const bool fullscreen) {
   else {
     glfwSetWindowMonitor(window->handle, 
                          nullptr, 
-                         window->position_x, window->position_y, 
-                         window->width, window->height, 
+                         window->old_position_x, window->old_position_y, 
+                         window->old_width, window->old_height, 
                          window->refresh_rate);
   }
   
