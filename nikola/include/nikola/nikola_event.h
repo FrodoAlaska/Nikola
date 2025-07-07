@@ -5,6 +5,15 @@
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola
+
+/// ---------------------------------------------------------------------
+
+// Some useful forward declarations to avoid circular dependencies...
+
+struct UIButton;
+
+/// ---------------------------------------------------------------------
+
  
 /// ---------------------------------------------------------------------
 /// *** Event ***
@@ -13,9 +22,11 @@ namespace nikola { // Start of nikola
 /// EventType
 enum EventType {
   /// App events 
+  
   EVENT_APP_QUIT = 0,
 
   /// Window events 
+  
   EVENT_WINDOW_MOVED,
   EVENT_WINDOW_MINIMIZED, 
   EVENT_WINDOW_MAXIMIZED,
@@ -26,6 +37,7 @@ enum EventType {
   EVENT_WINDOW_FULLSCREEN,
 
   /// Mouse events 
+  
   EVENT_MOUSE_MOVED, 
   EVENT_MOUSE_BUTTON_PRESSED, 
   EVENT_MOUSE_BUTTON_RELEASED,
@@ -35,14 +47,22 @@ enum EventType {
   EVENT_MOUSE_LEAVE,
 
   /// Keyboard events 
+  
   EVENT_KEY_PRESSED, 
   EVENT_KEY_RELEASED, 
 
   /// Joystick events
+  
   EVENT_JOYSTICK_CONNECTED, 
   EVENT_JOYSTICK_DISCONNECTED, 
 
-  EVENTS_MAX = EVENT_JOYSTICK_DISCONNECTED + 1,
+  /// UI events
+
+  EVENT_UI_BUTTON_CLICKED, 
+  EVENT_UI_BUTTON_ENTERED,
+  EVENT_UI_BUTTON_EXITED,
+
+  EVENTS_MAX = EVENT_UI_BUTTON_EXITED + 1,
 };
 /// EventType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -94,6 +114,9 @@ struct Event {
 
   /// The joystick ID given to this event.
   i32 joystick_id; 
+
+  /// The button UI element given to this event. 
+  UIButton* button = nullptr;
 };
 /// Event
 ///---------------------------------------------------------------------------------------------------------------------

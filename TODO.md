@@ -117,11 +117,10 @@
 - [] UI v0.1
     - [x] Text UI elements 
     - [x] Text animation system
-    - [] Button UI elements
+    - [x] Button UI elements
+    - [] A layout system for 2D game UI.
     - [] Checkbox UI elements 
     - [] Slider UI elements
-    - [] A layout system for 2D game UI.
-    - [] A menu system? 
     - [] Documentation
 - [] Resource Manager v0.5
     - [] Fix 3D models loading. 

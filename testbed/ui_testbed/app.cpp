@@ -21,6 +21,27 @@ struct nikola::App {
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// Callbacks
+
+static bool on_button_event(const nikola::Event& event, const void* dispatcher, const void* listener) {
+  switch(event.type) {
+    case nikola::EVENT_UI_BUTTON_CLICKED:
+      nikola::event_dispatch(nikola::Event{.type = nikola::EVENT_APP_QUIT});
+      break;
+    case nikola::EVENT_UI_BUTTON_ENTERED:
+    case nikola::EVENT_UI_BUTTON_EXITED:
+      break;
+    default:
+      return false;
+  }
+
+  return true;
+}
+
+/// Callbacks
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// Private functions 
 
 static void init_resources(nikola::App* app) {
@@ -62,6 +83,11 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Resoruces init
   init_resources(app);
 
+  // Listen to events
+  nikola::event_listen(nikola::EVENT_UI_BUTTON_CLICKED, on_button_event, app);
+  nikola::event_listen(nikola::EVENT_UI_BUTTON_ENTERED, on_button_event, app);
+  nikola::event_listen(nikola::EVENT_UI_BUTTON_EXITED, on_button_event, app);
+
   // UI text init
   nikola::UITextDesc text_desc = {
     .string = "Hello, Nikola", 
@@ -75,7 +101,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // UI button init
   nikola::UIButtonDesc button_desc = {
-    .text = "Settings", 
+    .text = "Quit", 
 
     .font_id   = app->font_id, 
     .font_size = 40.0f,
@@ -112,11 +138,6 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     app->frame_data.camera.is_active = !app->has_editor;
 
     nikola::input_cursor_show(app->has_editor);
-  }
-
-  if(nikola::input_action_pressed("ui-click")) {
-    nikola::ui_text_set_anchor(app->ui_text, (nikola::UIAnchor)(21 << current_anchor));
-    current_anchor++;
   }
  
   if(current_anchor > 8) {

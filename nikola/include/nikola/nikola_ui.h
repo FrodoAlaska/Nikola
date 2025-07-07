@@ -41,17 +41,6 @@ enum UITextAnimation {
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// UIButtonState
-enum UIButtonState {
-  UI_BUTTON_STATE_NORMAL   = 23 << 0,
-  UI_BUTTON_STATE_HOVER    = 23 << 1, 
-  UI_BUTTON_STATE_CLICK    = 23 << 2, 
-  UI_BUTTON_STATE_DISABLED = 23 << 3,
-};
-/// UIButtonState
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
 /// UIText
 struct UIText {
   Vec2 position, offset, bounds;
@@ -95,8 +84,7 @@ struct UIButton {
   f32 outline_thickness;
   Vec4 color, outline_color;
   
-  UIButtonState state;
-  bool is_active;
+  bool is_active, was_hovered;
 };
 /// UIButton
 /// ----------------------------------------------------------------------
@@ -219,7 +207,7 @@ NIKOLA_API void ui_button_set_anchor(UIButton& button, const UIAnchor& anchor);
 
 NIKOLA_API void ui_button_set_string(UIButton& button, const String& new_string);
 
-NIKOLA_API void ui_button_render(const UIButton& button);
+NIKOLA_API void ui_button_render(UIButton& button);
 
 /// UIButton functions
 ///---------------------------------------------------------------------------------------------------------------------
