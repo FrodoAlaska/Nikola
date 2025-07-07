@@ -60,6 +60,7 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/ui/ui_text.cpp
   ${NIKOLA_SRC_DIR}/ui/ui_button.cpp
   ${NIKOLA_SRC_DIR}/ui/ui_checkbox.cpp
+  ${NIKOLA_SRC_DIR}/ui/ui_slider.cpp
   ${NIKOLA_SRC_DIR}/ui/ui_layout.cpp
 )
 

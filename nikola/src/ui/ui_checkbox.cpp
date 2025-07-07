@@ -38,10 +38,10 @@ void ui_checkbox_create(UICheckbox* checkbox, Window* window, const UICheckboxDe
   checkbox->window_ref = window;
 
   checkbox->anchor = desc.anchor; 
-  ui_checkbox_set_anchor(*checkbox, checkbox->anchor);
-
   checkbox->size   = Vec2(desc.size);
   checkbox->offset = desc.offset;
+ 
+  ui_checkbox_set_anchor(*checkbox, checkbox->anchor);
 
   checkbox->color         = desc.color;
   checkbox->outline_color = desc.outline_color;
@@ -65,40 +65,41 @@ void ui_checkbox_set_anchor(UICheckbox& checkbox, const UIAnchor& anchor) {
   
   switch(checkbox.anchor) {
     case UI_ANCHOR_TOP_LEFT:  
-      checkbox.position = padding + checkbox.offset;
+      checkbox.position = padding;
       break;
     case UI_ANCHOR_TOP_CENTER:
-      checkbox.position.x = (window_center.x - half_size.x) + checkbox.offset.x; 
-      checkbox.position.y = padding.y + checkbox.offset.y; 
+      checkbox.position.x = (window_center.x - half_size.x); 
+      checkbox.position.y = padding.y; 
       break;
     case UI_ANCHOR_TOP_RIGHT:
-      checkbox.position.x = (window_size.x - checkbox.size.x - padding.x) + checkbox.offset.x; 
-      checkbox.position.y = padding.y + checkbox.offset.y;  
+      checkbox.position.x = (window_size.x - checkbox.size.x - padding.x); 
+      checkbox.position.y = padding.y;  
       break;
     case UI_ANCHOR_CENTER_LEFT:  
-      checkbox.position.x = padding.x + checkbox.offset.x;
-      checkbox.position.y = (window_center.y - half_size.y) + checkbox.offset.y; 
+      checkbox.position.x = padding.x;
+      checkbox.position.y = (window_center.y - half_size.y - padding.y); 
       break;
     case UI_ANCHOR_CENTER:
-      checkbox.position = (window_center - half_size) + checkbox.offset;
+      checkbox.position = (window_center - half_size);
       break;
     case UI_ANCHOR_CENTER_RIGHT:
-      checkbox.position.x = (window_size.x - checkbox.size.x - padding.x) + checkbox.offset.x; 
-      checkbox.position.y = (window_center.y - half_size.y) + checkbox.offset.y; 
+      checkbox.position.x = (window_size.x - checkbox.size.x - padding.x); 
+      checkbox.position.y = (window_center.y - half_size.y - padding.y); 
       break;
     case UI_ANCHOR_BOTTOM_LEFT:  
       checkbox.position.x = padding.x + checkbox.offset.x;
-      checkbox.position.y = (window_size.y - checkbox.size.y) + checkbox.offset.y; 
+      checkbox.position.y = (window_size.y - checkbox.size.y - padding.y); 
       break;
     case UI_ANCHOR_BOTTOM_CENTER:
-      checkbox.position.x = (window_center.x - half_size.x) + checkbox.offset.x;
-      checkbox.position.y = (window_size.y - checkbox.size.y) + checkbox.offset.y; 
+      checkbox.position.x = (window_center.x - half_size.x);
+      checkbox.position.y = (window_size.y - checkbox.size.y - padding.y); 
       break;
     case UI_ANCHOR_BOTTOM_RIGHT:
-      checkbox.position.x = (window_size.x - checkbox.size.x - padding.x) + checkbox.offset.x; 
-      checkbox.position.y = (window_size.y - checkbox.size.y) + checkbox.offset.y; 
+      checkbox.position = window_size - checkbox.size - padding; 
       break;
   }
+
+  checkbox.position += checkbox.offset;
 }
 
 void ui_checkbox_render(UICheckbox& checkbox) {

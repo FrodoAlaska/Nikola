@@ -14,16 +14,31 @@ namespace nikola { // Start of nikola
 /// ----------------------------------------------------------------------
 /// UIAnchor
 enum UIAnchor {
+  /// Anchor a UI element to the top-left of the screen.
   UI_ANCHOR_TOP_LEFT      = 21 << 0, 
+  
+  /// Anchor a UI element to the top-center of the screen.
   UI_ANCHOR_TOP_CENTER    = 21 << 1, 
+  
+  /// Anchor a UI element to the top-right of the screen.
   UI_ANCHOR_TOP_RIGHT     = 21 << 2, 
   
+  /// Anchor a UI element to the center-left of the screen.
   UI_ANCHOR_CENTER_LEFT   = 21 << 3, 
+  
+  /// Anchor a UI element to the center of the screen.
   UI_ANCHOR_CENTER        = 21 << 4, 
+  
+  /// Anchor a UI element to the center-right of the screen.
   UI_ANCHOR_CENTER_RIGHT  = 21 << 5, 
   
+  /// Anchor a UI element to the bottom-left of the screen.
   UI_ANCHOR_BOTTOM_LEFT   = 21 << 6, 
+  
+  /// Anchor a UI element to the bottom-center of the screen.
   UI_ANCHOR_BOTTOM_CENTER = 21 << 7, 
+  
+  /// Anchor a UI element to the bottom-right of the screen.
   UI_ANCHOR_BOTTOM_RIGHT  = 21 << 8, 
 };
 /// UIAnchor
@@ -32,13 +47,22 @@ enum UIAnchor {
 /// ----------------------------------------------------------------------
 /// UITextAnimation 
 enum UITextAnimation {
+  /// Apply a fade in animation on a text UI element.
   UI_TEXT_ANIMATION_FADE_IN     = 22 << 0, 
+  
+  /// Apply a fade out animation on a text UI element.
   UI_TEXT_ANIMATION_FADE_OUT    = 22 << 1, 
   
+  /// Apply a ballon up (increase size) animation on a text UI element.
   UI_TEXT_ANIMATION_BALLON_UP   = 22 << 2, 
+  
+  /// Apply a ballon down (decrease size) animation on a text UI element.
   UI_TEXT_ANIMATION_BALLON_DOWN = 22 << 3, 
   
+  /// Apply a slide up animation on a text UI element.
   UI_TEXT_ANIMATION_SLIDE_UP   = 22 << 4, 
+  
+  /// Apply a slide down animation on a text UI element.
   UI_TEXT_ANIMATION_SLIDE_DOWN = 22 << 5, 
 };
 /// UITextAnimation 
@@ -62,21 +86,6 @@ struct UIText {
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// UITextDesc
-struct UITextDesc {
-  String string;
-
-  ResourceID font_id;
-  f32 font_size;
-  UIAnchor anchor;
-
-  Vec2 offset = Vec2(0.0f);
-  Vec4 color  = Vec4(1.0f);
-};
-/// UITextDesc
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
 /// UIButton
 struct UIButton {
   UIText text; 
@@ -91,29 +100,6 @@ struct UIButton {
   bool is_active, was_hovered;
 };
 /// UIButton
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
-/// UIButtonDesc
-struct UIButtonDesc {
-  String text; 
-  
-  ResourceID font_id; 
-  f32 font_size;
-  UIAnchor anchor; 
-  
-  u32 bind_id = 0;
-
-  Vec2 offset  = Vec2(0.0f);
-  Vec2 padding = Vec2(30.0f, 10.0f); 
-  
-  Vec4 color         = Vec4(1.0f);
-  Vec4 outline_color = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
-  Vec4 text_color    = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
-  
-  f32 outline_thickness = 7.0f;
-};
-/// UIButtonDesc
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -132,21 +118,27 @@ struct UICheckbox {
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// UICheckboxDesc
-struct UICheckboxDesc {
-  f32 size;
-
+/// UISlider
+struct UISlider {
   UIAnchor anchor;
-  Vec2 offset = Vec2(0.0f);
+  Vec2 offset;
+
+  Vec2 old_mouse_position;
+  Vec2 position, notch_position;
+  Vec2 size, notch_size; 
   
-  u32 bind_id = 0;
+  u32 id;
+  Window* window_ref;
+  
+  f32* value;
+  f32 min, max, step;
 
-  Vec4 color         = Vec4(1.0f); 
-  Vec4 outline_color = Vec4(0.0f, 0.0f, 0.0f, 1.0f); 
+  Vec4 color       = Vec4(1.0f); 
+  Vec4 notch_color = Vec4(1.0f);
 
-  bool initial_checked = true;
+  bool is_active, is_hovering;
 };
-/// UICheckboxDesc
+/// UISlider
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -157,6 +149,8 @@ struct UILayout {
   
  DynamicArray<UIText> texts;
  DynamicArray<UIButton> buttons;
+ DynamicArray<UICheckbox> checkboxes;
+ DynamicArray<UISlider> sliders;
 
  UIAnchor current_anchor;
  Vec2 extra_offset;
@@ -168,6 +162,172 @@ struct UILayout {
  bool is_active;
 };
 /// UILayout
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// UITextDesc
+struct UITextDesc {
+  /// The string to be set on the text UI element.
+  String string;
+
+  /// The id of a font resource to be used later.
+  ResourceID font_id;
+  
+  /// The total size of the font of the text UI element.
+  f32 font_size;
+
+  /// The anchor point of the text UI element.
+  UIAnchor anchor;
+
+  /// The extra offset to be applied to the text UI element.
+  ///
+  /// @NOTE: This is set to `Vec2(0.0f, 0.0f)` by default.
+  Vec2 offset = Vec2(0.0f);
+  
+  /// The color of the text UI element.
+  ///
+  /// @NOTE: This is set to `Vec4(1.0f, 1.0f, 1.0f, 1.0f)` by default.
+  Vec4 color  = Vec4(1.0f);
+};
+/// UITextDesc
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// UIButtonDesc
+struct UIButtonDesc {
+  /// The text of the button.
+  String text; 
+  
+  /// The id of a font resource to be used later.
+  ResourceID font_id; 
+  
+  /// The total size of the font of the button's text UI element.
+  f32 font_size;
+  
+  /// The anchor point of the button UI element.
+  UIAnchor anchor; 
+ 
+  /// The binded id that will be used to identify the button.
+  ///
+  /// @NOTE: This is set to `0` by default.
+  u32 bind_id = 0;
+
+  /// The extra offset to be applied to the button UI element.
+  ///
+  /// @NOTE: This is set to `Vec2(0.0f, 0.0f)` by default.
+  Vec2 offset  = Vec2(0.0f);
+
+  /// The text padding to be applied to the button UI element. 
+  ///
+  /// @NOTE: This is set to `Vec2(30.0f, 10.0f)` by default.
+  Vec2 padding = Vec2(30.0f, 10.0f); 
+  
+  /// The color of the button UI element.
+  ///
+  /// @NOTE: This is set to `Vec4(1.0f, 1.0f, 1.0f, 1.0f)` by default.
+  Vec4 color         = Vec4(1.0f);
+  
+  /// The outline color of the button UI element.
+  ///
+  /// @NOTE: This is set to `Vec4(0.0f, 0.0f, 0.0f, 1.0f)` by default.
+  Vec4 outline_color = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+  
+  /// The color of text of the button UI element.
+  ///
+  /// @NOTE: This is set to `Vec4(0.0f, 0.0f, 0.0f, 1.0f)` by default.
+  Vec4 text_color    = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+ 
+  /// The thickness of the button's outline.
+  ///
+  /// @NOTE: This is set to `7.0f` by default.
+  f32 outline_thickness = 7.0f;
+};
+/// UIButtonDesc
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// UICheckboxDesc
+struct UICheckboxDesc {
+  /// The total size of the checkbox.
+  f32 size;
+
+  /// The anchor point of the checkbox.
+  UIAnchor anchor;
+  
+  /// The extra offset to be applied to the checkbox.
+  ///
+  /// @NOTE: This is set to `Vec2(0.0f, 0.0f)` by default.
+  Vec2 offset = Vec2(0.0f);
+  
+  /// The binded id that will be used to identify the checkbox.
+  ///
+  /// @NOTE: This is set to `0` by default.
+  u32 bind_id = 0;
+
+  /// The color of the checkbox UI element.
+  ///
+  /// @NOTE: This is set to `Vec4(1.0f, 1.0f, 1.0f, 1.0f)` by default.
+  Vec4 color         = Vec4(1.0f);
+  
+  /// The outline color of the checkbox UI element.
+  ///
+  /// @NOTE: This is set to `Vec4(0.0f, 0.0f, 0.0f, 1.0f)` by default.
+  Vec4 outline_color = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+  /// The initial checked state of the checkbox. 
+  ///
+  /// @NOTE: This is set to `true` by default.
+  bool initial_checked = true;
+};
+/// UICheckboxDesc
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// UISliderDesc
+struct UISliderDesc {
+  /// The anchor point of the checkbox.
+  UIAnchor anchor; 
+  
+  /// The extra offset to be applied to the slider.
+  ///
+  /// @NOTE: This is set to `Vec2(0.0f, 0.0f)` by default.
+  Vec2 offset = Vec2(0.0f);
+ 
+  /// A pointer to the value to be manipulated by the slider. 
+  f32* value = nullptr; 
+
+  /// The minimum value of `value`.
+  ///
+  /// @NOTE: This is set to `-1.0f` by default.
+  f32 min    = -1.0f; 
+  
+  /// The maximum value of `value`.
+  ///
+  /// @NOTE: This is set to `1.0f` by default.
+  f32 max    = 1.0f;
+
+  /// The amount of increaments/decrements 
+  /// the slider will change the `value` by.
+  ///
+  /// @NOTE: This is set to `0.01f` by default.
+  f32 step   = 0.01f;
+
+  /// The binded id that will be used to identify the slider.
+  ///
+  /// @NOTE: This is set to `0` by default.
+  u32 bind_id = 0;
+
+  /// The color of the slider UI element.
+  ///
+  /// @NOTE: This is set to `Vec4(1.0f, 1.0f, 1.0f, 1.0f)` by default.
+  Vec4 color       = Vec4(1.0f);
+  
+  /// The color of the notch knob of the slider UI element.
+  ///
+  /// @NOTE: This is set to `Vec4(0.5f, 0.5f, 0.5f, 1.0f)` by default.
+  Vec4 notch_color = Vec4(0.5f, 0.5f, 0.5f, 1.0f);
+};
+/// UISliderDesc
 /// ----------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -243,14 +403,19 @@ NIKOLA_API void gui_edit_collider(const char* name, Collider* collider);
 ///---------------------------------------------------------------------------------------------------------------------
 /// UIText functions
 
+/// Initialize the UI `text` element, using the given `window` and the information in `desc`.
 NIKOLA_API void ui_text_create(UIText* text, Window* window, const UITextDesc& desc);
 
+/// Set the position of `text` based on the anchor point `anchor`.
 NIKOLA_API void ui_text_set_anchor(UIText& text, const UIAnchor& anchor);
 
+/// Set the internal string `text` to `new_string` and re-position accordingly.
 NIKOLA_API void ui_text_set_string(UIText& text, const String& new_string);
 
+/// Apply the animation `anim_type` to the given `text` UI element with the duration of `duration`.
 NIKOLA_API void ui_text_apply_animation(UIText& text, const UITextAnimation anim_type, const f32 duration);
 
+/// Render the given `text` UI element.
 NIKOLA_API void ui_text_render(const UIText& text);
 
 /// UIText functions
@@ -259,12 +424,16 @@ NIKOLA_API void ui_text_render(const UIText& text);
 ///---------------------------------------------------------------------------------------------------------------------
 /// UIButton functions
 
+/// Initialize the UI `button` element, using the given `window` and the information in `desc`.
 NIKOLA_API void ui_button_create(UIButton* button, Window* window, const UIButtonDesc& desc);
 
+/// Set the position of `button` based on the anchor point `anchor`.
 NIKOLA_API void ui_button_set_anchor(UIButton& button, const UIAnchor& anchor);
 
+/// Set the internal string of `button` to `new_string` and re-position accordingly.
 NIKOLA_API void ui_button_set_string(UIButton& button, const String& new_string);
 
+/// Render the given `button` UI element.
 NIKOLA_API void ui_button_render(UIButton& button);
 
 /// UIButton functions
@@ -273,30 +442,60 @@ NIKOLA_API void ui_button_render(UIButton& button);
 ///---------------------------------------------------------------------------------------------------------------------
 /// UICheckbox
 
+/// Initialize the UI `checkbox` element, using the given `window` and the information in `desc`.
 NIKOLA_API void ui_checkbox_create(UICheckbox* checkbox, Window* window, const UICheckboxDesc& desc);
 
+/// Set the position of `checkbox` based on the anchor point `anchor`.
 NIKOLA_API void ui_checkbox_set_anchor(UICheckbox& checkbox, const UIAnchor& anchor);
 
+/// Render the given `checkbox` UI element.
 NIKOLA_API void ui_checkbox_render(UICheckbox& checkbox);
 
 /// UICheckbox
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// UISlider
+
+/// Initialize the UI `slider` element, using the given `window` and the information in `desc`.
+NIKOLA_API void ui_slider_create(UISlider* slider, Window* window, const UISliderDesc& desc);
+
+/// Set the position of `slider` based on the anchor point `anchor`.
+NIKOLA_API void ui_slider_set_anchor(UISlider& slider, const UIAnchor& anchor);
+
+/// Render the given `slider` UI element.
+NIKOLA_API void ui_slider_render(UISlider& slider);
+
+/// UISlider
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// UILayout functions
 
+/// Initialize the UI `layout` element, using the given `window` and the `font_id` to be used 
+/// for any text in this specific layout.
 NIKOLA_API void ui_layout_create(UILayout* layout, Window* window, const ResourceID& font_id);
 
+/// Begin a new layout segment of `layout` at anchor point `anchor`, increasing by `offset` every 
+/// new entry using the `ui_layout_push_*` functions.
 NIKOLA_API void ui_layout_begin(UILayout& layout, const UIAnchor anchor, const Vec2& offset = Vec2(0.0f));
 
+/// End the previous layout segment in `layout` and reset everything back to normal.
 NIKOLA_API void ui_layout_end(UILayout& layout);
 
+/// Push a new text entry to `layout`, using `str`, `size`, and `color`.
+/// Use `layout_padding` for extra padding between this element and the next.
 NIKOLA_API void ui_layout_push_text(UILayout& layout, 
                                     const String& str, 
                                     const f32 size, 
                                     const Vec4& color, 
                                     const Vec2& layout_padding = Vec2(0.0f));
 
+/// Push a new button entry to `layout`, using `str`, `size`, `color`, `outline_color`, and `text_color`.
+/// Use `layout_padding` for extra padding between this element and the next.
+///
+/// @NOTE: The outline thickness as well as the internal button padding can be set 
+/// using the internal `buttons_outline_thickness` and `buttons_padding` in `UILayout`.
 NIKOLA_API void ui_layout_push_button(UILayout& layout, 
                                       const String& str, 
                                       const f32 size, 
@@ -305,6 +504,26 @@ NIKOLA_API void ui_layout_push_button(UILayout& layout,
                                       const Vec4& text_color, 
                                       const Vec2& layout_padding = Vec2(0.0f));
 
+/// Push a new checkbox entry to `layout`, using `size`, `color`, and `outline_color`.
+/// Use `layout_padding` for extra padding between this element and the next.
+NIKOLA_API void ui_layout_push_checkbox(UILayout& layout, 
+                                        const f32 size, 
+                                        const Vec4& color, 
+                                        const Vec4& outline_color, 
+                                        const Vec2& layout_padding = Vec2(0.0f));
+
+/// Push a new slider entry to `layout`, using `value`, `min`, `max`, `step`, `color`, and `notch_color`.
+/// Use `layout_padding` for extra padding between this element and the next.
+NIKOLA_API void ui_layout_push_slider(UILayout& layout, 
+                                      f32* value,
+                                      const f32 min, 
+                                      const f32 max,
+                                      const f32 step,
+                                      const Vec4& color, 
+                                      const Vec4& notch_color    = Vec4(0.5f, 0.5f, 0.5f, 1.0f), 
+                                      const Vec2& layout_padding = Vec2(0.0f));
+
+/// Render all of the active UI elements in the given `layout`.
 NIKOLA_API void ui_layout_render(const UILayout& layout);
 
 /// UILayout functions

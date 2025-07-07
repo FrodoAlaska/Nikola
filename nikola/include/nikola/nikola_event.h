@@ -12,6 +12,7 @@ namespace nikola { // Start of nikola
 
 struct UIButton;
 struct UICheckbox;
+struct UISlider;
 
 /// ---------------------------------------------------------------------
 
@@ -66,8 +67,11 @@ enum EventType {
   EVENT_UI_CHECKBOX_CLICKED,
   EVENT_UI_CHECKBOX_ENTERED,
   EVENT_UI_CHECKBOX_EXITED,
+  
+  EVENT_UI_SLIDER_CLICKED,
+  EVENT_UI_SLIDER_CHANGED,
 
-  EVENTS_MAX = EVENT_UI_CHECKBOX_EXITED + 1,
+  EVENTS_MAX = EVENT_UI_SLIDER_CHANGED + 1,
 };
 /// EventType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -121,10 +125,13 @@ struct Event {
   i32 joystick_id; 
 
   /// The button UI element given to this event. 
-  UIButton* button = nullptr;
+  UIButton* button     = nullptr;
   
   /// The checkox UI element given to this event. 
   UICheckbox* checkbox = nullptr;
+  
+  /// The slider UI element given to this event. 
+  UISlider* slider     = nullptr;
 };
 /// Event
 ///---------------------------------------------------------------------------------------------------------------------

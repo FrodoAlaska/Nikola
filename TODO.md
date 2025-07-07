@@ -114,14 +114,14 @@
     - [] Improve resource loading time by adding asynchronous resource loading.
     - [] Also look into custom memory pools/memory arenas since they can increase performance.
     - [] Documentation
-- [] UI v0.1
+- [x] UI v0.1
     - [x] Text UI elements 
     - [x] Text animation system
     - [x] Button UI elements
     - [x] A layout system for 2D game UI.
     - [x] Checkbox UI elements 
-    - [] Slider UI elements
-    - [] Documentation
+    - [x] Slider UI elements
+    - [x] Documentation
 - [] Resource Manager v0.5
     - [] Fix 3D models loading. 
         - [] Get rid of Assimp? Replace with `cgltf` and `fastObj`

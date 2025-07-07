@@ -80,7 +80,7 @@ const f32 smoothstep(const f32 edge0, const f32 edge1, const f32 x) {
 }
 
 const f32 remap(const f32 value, const f32 old_min, const f32 old_max, const f32 new_min, const f32 new_max) {
-  return (value - old_min) / (old_max - old_min) * (new_max - new_min) + new_max;
+  return (value - old_min) / (old_max - old_min) * (new_max - new_min) + new_min;
 }
 
 /// Math common functions

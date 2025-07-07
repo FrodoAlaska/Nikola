@@ -95,11 +95,71 @@ void ui_layout_push_button(UILayout& layout,
 
     .color         = color,
     .outline_color = outline_color,
-    .text_color    = outline_color,
+    .text_color    = text_color,
 
     .outline_thickness = layout.buttons_outline_thickness,
   };
   ui_button_create(button, layout.window_ref, button_desc);
+
+  // Add the extra offset for the next UI element
+  layout.current_offset += layout.extra_offset;
+}
+
+void ui_layout_push_checkbox(UILayout& layout, 
+                             const f32 size, 
+                             const Vec4& color, 
+                             const Vec4& outline_color, 
+                             const Vec2& layout_padding) {
+  // Create the checkbox
+
+  layout.checkboxes.push_back(UICheckbox{});
+  UICheckbox* checkbox = &layout.checkboxes[layout.checkboxes.size() - 1];
+
+  UICheckboxDesc desc = {
+    .size = size, 
+
+    .anchor = layout.current_anchor,
+    .offset = layout.current_offset + layout_padding, 
+    
+    .bind_id = (u32)(layout.checkboxes.size() - 1),
+
+    .color         = color,
+    .outline_color = outline_color,
+  };
+  ui_checkbox_create(checkbox, layout.window_ref, desc);
+
+  // Add the extra offset for the next UI element
+  layout.current_offset += layout.extra_offset;
+}
+
+void ui_layout_push_slider(UILayout& layout, 
+                           f32* value,
+                           const f32 min, 
+                           const f32 max,
+                           const f32 step,
+                           const Vec4& color, 
+                           const Vec4& notch_color, 
+                           const Vec2& layout_padding) {
+  // Create the slider
+
+  layout.sliders.push_back(UISlider{});
+  UISlider* slider = &layout.sliders[layout.sliders.size() - 1];
+
+  UISliderDesc desc = {
+    .anchor = layout.current_anchor,
+    .offset = layout.current_offset + layout_padding, 
+   
+    .value = value, 
+    .min   = min, 
+    .max   = max,
+    .step  = step,
+
+    .bind_id = (u32)(layout.sliders.size() - 1),
+
+    .color       = color,
+    .notch_color = notch_color,
+  };
+  ui_slider_create(slider, layout.window_ref, desc);
 
   // Add the extra offset for the next UI element
   layout.current_offset += layout.extra_offset;
@@ -118,6 +178,16 @@ void ui_layout_render(const UILayout& layout) {
   // Render the buttons
   for(auto& button : layout.buttons) {
     ui_button_render((UIButton&)button);
+  }
+  
+  // Render the checkboxes
+  for(auto& checkbox : layout.checkboxes) {
+    ui_checkbox_render((UICheckbox&)checkbox);
+  }
+  
+  // Render the sliders
+  for(auto& slider : layout.sliders) {
+    ui_slider_render((UISlider&)slider);
   }
 }
 
