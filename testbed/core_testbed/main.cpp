@@ -26,7 +26,7 @@ int main() {
   // Main loop
   while(nikola::window_is_open(window)) {
     // Will stop the application when F1 is pressed
-    if(nikola::input_key_pressed(nikola::KEY_F1)) {
+    if(nikola::input_key_pressed(nikola::KEY_ESCAPE)) {
       break;
     }
     

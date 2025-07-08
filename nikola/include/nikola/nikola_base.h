@@ -111,7 +111,6 @@ typedef double f64;
 /// Windows
 #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
 #define NIKOLA_PLATFORM_WINDOWS 1
-#define NIKOLA_GFX_CONTEXT_OPENGL
 #ifndef _WIN64 
 #error "[NIKOLA-FATAL]: Only support 64-bit machines\n"
 #endif 
@@ -119,7 +118,6 @@ typedef double f64;
 /// Linux
 #elif defined(__linux__) || defined(__gnu_linux__)
 #define NIKOLA_PLATFORM_LINUX   1 
-#define NIKOLA_GFX_CONTEXT_OPENGL
 #endif
 
 /// *** Platform detection ***

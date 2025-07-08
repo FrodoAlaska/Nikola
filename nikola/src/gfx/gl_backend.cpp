@@ -3,8 +3,6 @@
 
 //////////////////////////////////////////////////////////////////////////
 
-#ifdef NIKOLA_GFX_CONTEXT_OPENGL  // OpenGL check
-
 #include <glad/glad.h>
 
 #include <cstring>
@@ -1764,7 +1762,5 @@ void gfx_pipeline_draw_index(GfxPipeline* pipeline) {
 /// ---------------------------------------------------------------------
 
 } // End of nikola
-
-#endif // OpenGL check
 
 //////////////////////////////////////////////////////////////////////////

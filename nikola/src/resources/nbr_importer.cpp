@@ -86,11 +86,6 @@ void nbr_import_mesh(NBRMesh* nbr, const ResourceGroupID& group_id, Mesh* mesh) 
   mesh->pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
 }
 
-void nbr_import_material(NBRMaterial* nbr, const ResourceGroupID& group_id, Material* material) {
-  NIKOLA_ASSERT(nbr, "Invalid NBRMaterial while importing");
-  NIKOLA_ASSERT(material, "Invalid Material while importing");
-}
-
 void nbr_import_model(NBRModel* nbr, const ResourceGroupID& group_id, Model* model) {
   NIKOLA_ASSERT(nbr, "Invalid NBRModel while importing");
   NIKOLA_ASSERT(model, "Invalid Model while importing");

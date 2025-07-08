@@ -91,7 +91,12 @@ set(NIKOLA_PCH
 set(LIBS_SOURCES 
   # GLAD
   ${NIKOLA_LIBS_DIR}/glad/glad.c
-  
+
+  # Sokol 
+  ${NIKOLA_LIBS_DIR}/sokol/sokol_gfx.cpp
+  ${NIKOLA_LIBS_DIR}/sokol/sokol_app.cpp
+  ${NIKOLA_LIBS_DIR}/sokol/sokol_glue.cpp
+
   # ImGui
   ${NIKOLA_LIBS_DIR}/imgui/backends/imgui_impl_glfw.cpp
   ${NIKOLA_LIBS_DIR}/imgui/backends/imgui_impl_glfw.h

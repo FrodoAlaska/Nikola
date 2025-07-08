@@ -60,7 +60,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
     .target       = nikola::Vec3(-3.0f, 0.0f, 0.0f),
     .up_axis      = nikola::Vec3(0.0f, 1.0f, 0.0f),
     .aspect_ratio = nikola::window_get_aspect_ratio(app->window),
-    .move_func    = nikola::camera_default_move_func,
+    .move_func    = nikola::camera_free_move_func,
   };
   nikola::camera_create(&app->frame_data.camera, cam_desc);
 
@@ -68,7 +68,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   init_resources(app);
 
   // Transform init
-  nikola::transform_translate(app->transform, nikola::Vec3(10.0f, 0.0f, 10.0f));
+  nikola::transform_translate(app->transform, nikola::Vec3(10.0f, 0.0f, 40.0f));
   nikola::transform_scale(app->transform, nikola::Vec3(1.0f));
 
   return app;

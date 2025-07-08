@@ -122,25 +122,29 @@
     - [x] Checkbox UI elements 
     - [x] Slider UI elements
     - [x] Documentation
+- [] GFX v1.1 
+    - [] Replace everything with `sokol_gfx.h`
+    - [] Integrate `sokol_imgui` to enable ImGui support
+    - [] Possibly get `sokol_shape` for creating simpler shapes like planes, cubes, spheres, and the like. 
+    - [] Check if everything still works properly.
+    - [] Documentation
 - [] Resource Manager v0.5
     - [] Fix 3D models loading. 
-        - [] Get rid of Assimp? Replace with `cgltf` and `fastObj`
         - [] Some 3D models that don't include a texture get messed up 
         - [] Add a parent and child relationship between meshes. Basically, every mesh should have a `local_position` which is set to `Vec3(0.0f)` by default, and it will be take into account when rendering.
         - [] I think the renderer assumes the vertex data of the mesh so if a model has even an extra vertex data like color, the renderer messes everything up.
-    - [] Have a `nkblob` that can be used to dump all of the resource manager data unto. The `nkblob` binary file can also be used to populate any resource manager 
-    - [] Perhaps remove all of the `NBR*` types and just have the existing resources be saved as-is? 
+        - [] Get rid of Assimp? Replace with `cgltf` and `fastObj`
+    - [] Fix material resources 
     - [] Make the `ResourceID` type more private with its members. I know, I know. It's bad. But at least it's gonna be safer until I find a better option. 
     - [] Improve resource load times. 
     - [] Documentation
 - [] Renderer v0.6 
-    - [] YOU MUST ADD INSTANCING NOOOOOOWWW!!!!
     - [] Allow toggleablity of render passes
-    - [] Bloom integration 
-    - [] Improve lighting using clustered rendering
-    - [] Compute shaders 
-    - [] Better bloom for testing the new compute shaders
+    - [] Improve the Blinn-Phong lighting model by actually using specular maps and maybe fixing the material system a bit 
+    - [] Emissive materials
     - [] Cascaded shadow maps
+    - [] Bloom integration 
+    - [] Improve lighting using clustered rendering. Or, if it's too difficult, you can limit the amount of point lights a scene can have.
     - [] Documentation
 - [] Particles v0.1 
     - [] Add CPU-based particles that can render different shapes, sizes, and colors (maybe even certain textures?) 

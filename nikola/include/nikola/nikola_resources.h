@@ -586,9 +586,6 @@ NIKOLA_API void nbr_import_shader(NBRShader* nbr, GfxShaderDesc* desc);
 /// Convert the `nbr` mesh into a `Mesh`, using the `group_id`.
 NIKOLA_API void nbr_import_mesh(NBRMesh* nbr, const ResourceGroupID& group_id, Mesh* mesh);
 
-/// Convert the `nbr` material into a `Material`, using the `group_id`.
-NIKOLA_API void nbr_import_material(NBRMaterial* nbr, const ResourceGroupID& group_id, Material* material);
-
 /// Convert the `nbr` model into a `Model`, using the `group_id`.
 NIKOLA_API void nbr_import_model(NBRModel* nbr, const ResourceGroupID&, Model* model);
 

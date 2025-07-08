@@ -10,7 +10,7 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 
 ### Engine Dependencies:
 - [GLFW](https://github.com/glfw/glfw)
-- [GLAD](https://github.com/Dav1dde/glad)
+- [Sokol](https://github.com/floooh/sokol)
 - [GLM](https://github.com/g-truc/glm)
 - [ImGui](https://github.com/ocornut/imgui)
 - [OpenAL-Soft](https://github.com/kcat/openal-soft)
@@ -33,6 +33,7 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 - A versitile lighting system using the Blinn-Phong shading model with built-in HDR support.
 - A fully-fledged audio system with both 2D audio and 3D spatialized audio, supporting multiple formats such as **MP3, WAV, and OGG**.
 - A simple but powerful physics system that supports collision detection, collision resolution, ray-casting, and rigid body dynamics.
+- A robust and easy-to-use 2D game UI system with canvas anchoring, including widgets like buttons, sliders, checkboxes, and texts.
 
 ## Missing Features
 
