@@ -10,7 +10,6 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 
 ### Engine Dependencies:
 - [GLFW](https://github.com/glfw/glfw)
-- [Sokol](https://github.com/floooh/sokol)
 - [GLM](https://github.com/g-truc/glm)
 - [ImGui](https://github.com/ocornut/imgui)
 - [OpenAL-Soft](https://github.com/kcat/openal-soft)
@@ -25,7 +24,7 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 - A fully documented, single-header implementation for each library module.  
 - Cross-platform window creation with OpenGL 4.5+.  
 - Gamepad, keyboard, and mouse input support.  
-- A flexible, configurable rendering API.  
+- A flexible, configurable rendering API with instancing support.  
 - A simple resource manager with a custom resource format (**NBR**) that supports hot-reloading of resources.  
 - Support for multiple image formats including **JPEG, PNG, BMP, TGA, and more**.  
 - 3D model loading with support for **OBJ, FBX, and GLTF** formats.  
