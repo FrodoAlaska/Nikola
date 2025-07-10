@@ -161,6 +161,56 @@ inline nikola::GfxShaderDesc generate_hdr_shader() {
   };
 }
 
+inline nikola::GfxShaderDesc generate_instance_shader() {
+  return nikola::GfxShaderDesc {
+    "#version 460 core\n"
+    "\n"
+    "// Layouts\n"
+    "layout (location = 0) in vec3 aPos;\n"
+    "layout (location = 1) in vec3 aNormal;\n"
+    "layout (location = 2) in vec2 aTexCoords;\n"
+    "layout (location = 3) in mat4 aModel;\n"
+    "layout (location = 7) in vec4 aColor;\n"
+    "\n"
+    "// Uniform block\n"
+    "layout(std140, binding = 0) uniform Matrices {\n"
+    "  mat4 u_view;\n"
+    "  mat4 u_projection;\n"
+    "};\n"
+    "\n"
+    "// Outputs\n"
+    "out VS_OUT {\n"
+    "  vec3 normal;\n"
+    "  vec2 texture_coords;\n"
+    "  vec4 color;\n"
+    "} vs_out;\n"
+    "\n"
+    "void main() {\n"
+    "  gl_Position = u_projection * u_view * aModel * vec4(aPos, 1.0f);\n"
+    "\n"
+    "  vs_out.normal         = aNormal;\n"
+    "  vs_out.texture_coords = aTexCoords;\n"
+    "  vs_out.color          = aColor;\n"
+    "}\n",
+
+    "#version 460 core\n"
+    "\n"
+    "// Inputs\n"
+    "in VS_OUT {\n"
+    "  vec3 normal;\n"
+    "  vec2 texture_coords;\n"
+    "  vec4 color;\n"
+    "} fs_in;\n"
+    "\n"
+    "// Outputs\n"
+    "layout (location = 0) out vec4 frag_color;\n"
+    "\n"
+    "void main() {\n"
+    "  frag_color = fs_in.color;\n"
+    "}"
+  };
+}
+
 inline nikola::GfxShaderDesc generate_batch_quad_shader() {
   return nikola::GfxShaderDesc {
     "#version 460 core\n"

@@ -105,7 +105,7 @@ static void init_pipeline() {
   // Vertex buffer init 
   GfxBufferDesc vert_desc = {
     .data  = nullptr,
-    .size  = sizeof(Vertex3D_PCUV) * MAX_VERTICES,
+    .size  = sizeof(Vertex2D) * MAX_VERTICES,
     .type  = GFX_BUFFER_VERTEX, 
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
@@ -113,11 +113,11 @@ static void init_pipeline() {
   s_batch.pipe_desc.vertices_count = 0;
 
   // Layout init
-  s_batch.pipe_desc.layout[0]     = GfxLayoutDesc{"POS", GFX_LAYOUT_FLOAT2, 0};
-  s_batch.pipe_desc.layout[1]     = GfxLayoutDesc{"COLOR", GFX_LAYOUT_FLOAT4, 0};
-  s_batch.pipe_desc.layout[2]     = GfxLayoutDesc{"TEX", GFX_LAYOUT_FLOAT2, 0};
-  s_batch.pipe_desc.layout[3]     = GfxLayoutDesc{"SHAPE", GFX_LAYOUT_FLOAT2, 0};
-  s_batch.pipe_desc.layout_count  = 4;
+  s_batch.pipe_desc.layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT2;
+  s_batch.pipe_desc.layouts[0].attributes[1]    = GFX_LAYOUT_FLOAT4;
+  s_batch.pipe_desc.layouts[0].attributes[2]    = GFX_LAYOUT_FLOAT2;
+  s_batch.pipe_desc.layouts[0].attributes[3]    = GFX_LAYOUT_FLOAT2;
+  s_batch.pipe_desc.layouts[0].attributes_count = 4;
 
   // Draw mode init 
   s_batch.pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
@@ -195,14 +195,15 @@ static void flush_batch(BatchCall& batch, GfxShader* shader) {
   gfx_texture_use(&batch.texture, 1);
 
   // Update the vertex buffer
-  gfx_buffer_update(s_batch.pipe_desc.vertex_buffer, 
-                    0, 
-                    sizeof(Vertex2D) * batch.vertices.size(), 
-                    batch.vertices.data());
+  gfx_buffer_upload_data(s_batch.pipe_desc.vertex_buffer, 
+                         0, 
+                         sizeof(Vertex2D) * batch.vertices.size(), 
+                         batch.vertices.data());
 
   // Render the batch
   gfx_pipeline_update(s_batch.pipeline, s_batch.pipe_desc); 
-  gfx_pipeline_draw_vertex(s_batch.pipeline); 
+  gfx_pipeline_use(s_batch.pipeline); 
+  gfx_context_draw(s_batch.context, 0);
 
   // Reset back to normal
   batch.vertices_count = 0;

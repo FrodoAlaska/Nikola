@@ -27,8 +27,11 @@ const sizei CUBEMAP_FACES_MAX           = 6;
 /// The maximum amount of uniform buffers to be created in a shader type.
 const sizei UNIFORM_BUFFERS_MAX         = 16;
 
-/// The maximum number of elements a buffer's layout can have.
-const sizei LAYOUT_ELEMENTS_MAX         = 32;
+/// The maximum number of attributes a buffer's layout can have.
+const sizei VERTEX_ATTRIBUTES_MAX       = 16;
+
+/// The maximum number of vertex layouts a pipeline can have.
+const sizei VERTEX_LAYOUTS_MAX          = 2;
 
 /// The maximum number of render targets to be bound at once.
 const sizei RENDER_TARGETS_MAX          = 8;
@@ -262,50 +265,98 @@ enum GfxDrawMode {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxLayoutType
 enum GfxLayoutType {
-  /// Equivalent to `float`.
-  GFX_LAYOUT_FLOAT1 = 7 << 0,
+  /// Equivalent to `f32`.
+  GFX_LAYOUT_FLOAT1  = 7 << 0,
   
-  /// Equivalent to `fVector2`.
-  GFX_LAYOUT_FLOAT2 = 7 << 1,
+  /// Equivalent to 2 `f32`s.
+  GFX_LAYOUT_FLOAT2  = 7 << 1,
   
-  /// Equivalent to `fVector3`.
-  GFX_LAYOUT_FLOAT3 = 7 << 2,
+  /// Equivalent to 3 `f32`s.
+  GFX_LAYOUT_FLOAT3  = 7 << 2,
   
-  /// Equivalent to `fVector4`.
-  GFX_LAYOUT_FLOAT4 = 7 << 3,
+  /// Equivalent to 4 `f32`s.
+  GFX_LAYOUT_FLOAT4  = 7 << 3,
   
-  /// Equivalent to `int`.
-  GFX_LAYOUT_INT1   = 7 << 4,
+  /// Equivalent to `i8`.
+  GFX_LAYOUT_BYTE1   = 7 << 4,
   
-  /// Equivalent to `iVector2`.
-  GFX_LAYOUT_INT2   = 7 << 5,
+  /// Equivalent to 2 `i8`s.
+  GFX_LAYOUT_BYTE2   = 7 << 5,
   
-  /// Equivalent to `iVector3`.
-  GFX_LAYOUT_INT3   = 7 << 6,
+  /// Equivalent to 3 `i8`s.
+  GFX_LAYOUT_BYTE3   = 7 << 6,
   
-  /// Equivalent to `iVector4`.
-  GFX_LAYOUT_INT4   = 7 << 7,
+  /// Equivalent to 4 `i8`s.
+  GFX_LAYOUT_BYTE4   = 7 << 7,
   
-  /// Equivalent to `unsigned int`.
-  GFX_LAYOUT_UINT1  = 7 << 8,
+  /// Equivalent to `u8`.
+  GFX_LAYOUT_UBYTE1  = 7 << 8,
   
-  /// Equivalent to `uVector2`.
-  GFX_LAYOUT_UINT2  = 7 << 9,
+  /// Equivalent to 2 `u8`s.
+  GFX_LAYOUT_UBYTE2  = 7 << 9,
   
-  /// Equivalent to `uVector3`.
-  GFX_LAYOUT_UINT3  = 7 << 10,
+  /// Equivalent to 3 `u8`s.
+  GFX_LAYOUT_UBYTE3  = 7 << 10,
   
-  /// Equivalent to `uVector4`.
-  GFX_LAYOUT_UINT4  = 7 << 11,
-
-  /// A 2x2 matrix (or 4 `float`s).
-  GFX_LAYOUT_MAT2   = 7 << 12,
+  /// Equivalent to 4 `u8`s.
+  GFX_LAYOUT_UBYTE4  = 7 << 11,
   
-  /// A 3x3 matrix (or 9 `float`s).
-  GFX_LAYOUT_MAT3   = 7 << 13,
+  /// Equivalent to `i16`.
+  GFX_LAYOUT_SHORT1  = 7 << 12,
   
-  /// A 4x4 matrix (or 16 `float`s).
-  GFX_LAYOUT_MAT4   = 7 << 14,
+  /// Equivalent to 2 `i16`s.
+  GFX_LAYOUT_SHORT2  = 7 << 13,
+  
+  /// Equivalent to 3 `i16`s.
+  GFX_LAYOUT_SHORT3  = 7 << 14,
+  
+  /// Equivalent to 4 `i16`s.
+  GFX_LAYOUT_SHORT4  = 7 << 15,
+  
+  /// Equivalent to `u16`.
+  GFX_LAYOUT_USHORT1 = 7 << 16,
+  
+  /// Equivalent to 2 `u16`s.
+  GFX_LAYOUT_USHORT2 = 7 << 17,
+  
+  /// Equivalent to 3 `u16`s.
+  GFX_LAYOUT_USHORT3 = 7 << 18,
+  
+  /// Equivalent to 4 `u16`s.
+  GFX_LAYOUT_USHORT4 = 7 << 19,
+  
+  /// Equivalent to `i32`.
+  GFX_LAYOUT_INT1    = 7 << 20,
+  
+  /// Equivalent to 2 `i32`s.
+  GFX_LAYOUT_INT2    = 7 << 21,
+  
+  /// Equivalent to 3 `i32`s.
+  GFX_LAYOUT_INT3    = 7 << 22,
+  
+  /// Equivalent to 4 `i32`s.
+  GFX_LAYOUT_INT4    = 7 << 23,
+  
+  /// Equivalent to `u32`.
+  GFX_LAYOUT_UINT1   = 7 << 24,
+  
+  /// Equivalent to 2 `u32`s.
+  GFX_LAYOUT_UINT2   = 7 << 25,
+  
+  /// Equivalent to 3 `u32`s.
+  GFX_LAYOUT_UINT3   = 7 << 26,
+  
+  /// Equivalent to 4 `u32`s.
+  GFX_LAYOUT_UINT4   = 7 << 27,
+  
+  /// Equivalent to `Mat2`.
+  GFX_LAYOUT_MAT2   = 7 << 28,
+  
+  /// Equivalent to `Mat3`.
+  GFX_LAYOUT_MAT3   = 7 << 29,
+  
+  /// Equivalent to `Mat4`.
+  GFX_LAYOUT_MAT4   = 7 << 30,
 };
 /// GfxLayoutType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -448,8 +499,8 @@ enum GfxShaderType {
   /// A pixel/fragment shader.
   GFX_SHADER_PIXEL    = 12 << 1, 
 
-  /// A geometry shader.
-  GFX_SHADER_GEOMETRY = 12 << 2,
+  /// A compute shader.
+  GFX_SHADER_COMPUTE  = 12 << 2,
 };
 /// GfxShaderType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -697,23 +748,30 @@ struct GfxShaderDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// GfxLayoutDesc
-struct GfxLayoutDesc {
-  /// The name of the layout attribute. 
-  ///
-  /// @NOTE: This can be left blank for OpenGL.
-  const i8* name; 
+/// GfxVertexLayout
+struct GfxVertexLayout {
+  /// An attributes array up to `VERTEX_ATTRIBUTES_MAX`, indicating 
+  /// the type of each attribute in the layout.
+  GfxLayoutType attributes[VERTEX_ATTRIBUTES_MAX]; 
 
-  /// The type of the layout.
-  GfxLayoutType type; 
+  /// The first attribute the buffer should process.
+  /// 
+  /// @NOTE: This value is set to `0` by default.
+  sizei start_index      = 0;
+
+  /// The amount of active attributes in the `attributes` array.
+  ///
+  /// @NOTE: The buffer will process attributes from starting from `start_index` 
+  /// all the till `start_index + attributes_count`.
+  sizei attributes_count = 0;
 
   /// If this value is set to `0`, the layout will 
   /// be sent immediately to the shader. However, 
   /// if it is set to a value >= `1`, the layout 
   /// will be sent after the nth instance. 
-  u32 instance_rate = 0;
+  u32 instance_rate      = 0;
 };
-/// GfxLayoutDesc
+/// GfxVertexLayout
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -819,12 +877,23 @@ struct GfxPipelineDesc {
 
   /// The amount of indices in the `index_buffer` to be drawn.
   sizei indices_count                = 0;
-  
-  /// Layout array up to `LAYOUT_ELEMENTS_MAX` describing each layout attribute.
-  GfxLayoutDesc layout[LAYOUT_ELEMENTS_MAX];
+ 
+  /// The type of each index in the `index_buffer`. 
+  /// 
+  /// @NOTE: The default is set to `GFX_LAYOUT_UINT1`.
+  GfxLayoutType indices_type         = GFX_LAYOUT_UINT1;
 
-  /// The amount of layouts to be set in `layout`.
-  sizei layout_count                 = 0; 
+  /// The instance buffer to be used in a `draw_instanced` draw command.
+  ///
+  /// @NOTE: This buffer _must_ be set if a `draw_instanced` command is used.
+  /// Otherwise, it can be left as `nullptr`.
+  GfxBuffer* instance_buffer         = nullptr;
+
+  /// Layout array up to `VERTEX_LAYOUTS_MAX` describing each layout attribute.
+  ///
+  /// @NOTE: The layout types `GFX_LAYOUT_MAT2`, `GFX_LAYOUT_MAT3`, and `GFX_LAYOUT_MAT4` 
+  /// are not supported currently.
+  GfxVertexLayout layouts[VERTEX_LAYOUTS_MAX];
 
   /// The draw mode of the entire pipeline.
   ///
@@ -898,6 +967,20 @@ NIKOLA_API void gfx_context_set_target(GfxContext* gfx, GfxFramebuffer* framebuf
 /// active render target (i.e framebuffer).
 NIKOLA_API void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a);
 
+/// Draw the currently bound `GfxPipeline` object of `gfx`, starting at `start_element`, drawing 
+/// either `GfxPipeline.vertices_count` or `GfxPipeline.indieces_count` amount of elements and/or vertices, 
+/// depending on which buffer is active.
+///
+/// @NOTE: If the currently bound `GfxPipeline` object only has one valid `vertex_buffer`, then 
+/// this draw call will use the vertex buffer. Otherwise, the index buffer will be used. 
+NIKOLA_API void gfx_context_draw(GfxContext* gfx, const u32 start_element);
+
+/// Equivalent to the `gfx_context_draw` but uses instancing, using the `instance_count` parametar.
+/// Naturally, the `instance_buffer` member of the currently bound `GfxPipeline` object MUST be valid.
+///
+/// @NOTE: If the given `instance_count` is == 1, the function will STILL use instancing.
+NIKOLA_API void gfx_context_draw_instanced(GfxContext* gfx, const u32 start_element, const u32 instance_count);
+
 /// Switch to the back buffer or, rather, present the back buffer to the screen. 
 /// 
 /// @NOTE: This function will be affected by vsync. 
@@ -961,8 +1044,13 @@ NIKOLA_API void gfx_buffer_destroy(GfxBuffer* buff, const FreeMemoryFn& free_fn 
 /// Retrieve the internal `GfxBufferDesc` of `buffer`
 NIKOLA_API GfxBufferDesc& gfx_buffer_get_desc(GfxBuffer* buffer);
 
+/// Update the internal `GfxBufferDesc` of `buff` to the given `desc`.
+NIKOLA_API void gfx_buffer_update(GfxBuffer* buff, const GfxBufferDesc& desc);
+
 /// Update the contents of `buff` starting at `offset` with `data` of size `size`.
-NIKOLA_API void gfx_buffer_update(GfxBuffer* buff, const sizei offset, const sizei size, const void* data);
+/// 
+/// @NOTE: If the `offset + size` is > `GfxBuffer.size`, this function will assert.
+NIKOLA_API void gfx_buffer_upload_data(GfxBuffer* buff, const sizei offset, const sizei size, const void* data);
 
 /// Buffer functions 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1123,11 +1211,8 @@ NIKOLA_API GfxPipelineDesc& gfx_pipeline_get_desc(GfxPipeline* pipeline);
 /// Update the `pipeline`'s information from the given `desc`.
 NIKOLA_API void gfx_pipeline_update(GfxPipeline* pipeline, const GfxPipelineDesc& desc);
 
-/// Draw the contents of the `vertex_buffer` in `pipeline`.
-NIKOLA_API void gfx_pipeline_draw_vertex(GfxPipeline* pipeline);
-
-/// Draw the contents of the `vertex_buffer` using the `index_buffer` in `pipeline`.
-NIKOLA_API void gfx_pipeline_draw_index(GfxPipeline* pipeline);
+/// Use/activate the given `pipeline` for the next draw call.
+NIKOLA_API void gfx_pipeline_use(GfxPipeline* pipeline);
 
 /// Pipeline functions 
 ///---------------------------------------------------------------------------------------------------------------------

@@ -35,6 +35,14 @@ namespace nikola { // Start of nikola
 
 /// Macros
 ///---------------------------------------------------------------------------------------------------------------------
+///---------------------------------------------------------------------------------------------------------------------
+/// _PipelineLayout
+struct _PipelineLayout {
+  sizei offsets[VERTEX_LAYOUTS_MAX];
+  sizei strides[VERTEX_LAYOUTS_MAX]; 
+};
+/// _PipelineLayout
+///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxContext
@@ -46,6 +54,8 @@ struct GfxContext {
 
   u32 default_clear_flags = 0;
   u32 current_clear_flags = 0;
+
+  GfxPipeline* bound_pipeline = nullptr;
 };
 /// GfxContext
 ///---------------------------------------------------------------------------------------------------------------------
@@ -122,8 +132,10 @@ struct GfxPipeline {
   GfxBuffer* vertex_buffer = nullptr;
   sizei vertex_count       = 0;
 
-  GfxBuffer* index_buffer  = nullptr; 
-  sizei index_count        = 0;
+  GfxBuffer* index_buffer = nullptr; 
+  sizei index_count       = 0;
+
+  GfxBuffer* instance_buffer = nullptr;
 
   GfxDrawMode draw_mode;
 };
@@ -509,28 +521,46 @@ static sizei get_layout_size(const GfxLayoutType layout) {
       return sizeof(f32) * 3;
     case GFX_LAYOUT_FLOAT4:
       return sizeof(f32) * 4;
+
+    case GFX_LAYOUT_BYTE1:
+    case GFX_LAYOUT_UBYTE1:
+      return sizeof(i8);
+    case GFX_LAYOUT_BYTE2:
+    case GFX_LAYOUT_UBYTE2:
+      return sizeof(i8) * 2;
+    case GFX_LAYOUT_BYTE3:
+    case GFX_LAYOUT_UBYTE3:
+      return sizeof(i8) * 3;
+    case GFX_LAYOUT_BYTE4:
+    case GFX_LAYOUT_UBYTE4:
+      return sizeof(i8) * 4;
+
+    case GFX_LAYOUT_SHORT1:
+    case GFX_LAYOUT_USHORT1:
+      return sizeof(i16);
+    case GFX_LAYOUT_SHORT2:
+    case GFX_LAYOUT_USHORT2:
+      return sizeof(i16) * 2;
+    case GFX_LAYOUT_SHORT3:
+    case GFX_LAYOUT_USHORT3:
+      return sizeof(i16) * 3;
+    case GFX_LAYOUT_SHORT4:
+    case GFX_LAYOUT_USHORT4:
+      return sizeof(i16) * 4;
+
     case GFX_LAYOUT_INT1:
+    case GFX_LAYOUT_UINT1:
       return sizeof(i32);
     case GFX_LAYOUT_INT2:
+    case GFX_LAYOUT_UINT2:
       return sizeof(i32) * 2;
     case GFX_LAYOUT_INT3:
+    case GFX_LAYOUT_UINT3:
       return sizeof(i32) * 3;
     case GFX_LAYOUT_INT4:
-      return sizeof(i32) * 4;
-    case GFX_LAYOUT_UINT1:
-      return sizeof(u32);
-    case GFX_LAYOUT_UINT2:
-      return sizeof(u32) * 2;
-    case GFX_LAYOUT_UINT3:
-      return sizeof(u32) * 3;
     case GFX_LAYOUT_UINT4:
-      return sizeof(u32) * 4;
-    case GFX_LAYOUT_MAT2:
-      return sizeof(f32) * 4;
-    case GFX_LAYOUT_MAT3:
-      return sizeof(f32) * 9;
-    case GFX_LAYOUT_MAT4:
-      return sizeof(f32) * 16;
+      return sizeof(i32) * 4;
+
     default: 
       return 0;
   }
@@ -542,10 +572,29 @@ static sizei get_layout_type(const GfxLayoutType layout) {
     case GFX_LAYOUT_FLOAT2:
     case GFX_LAYOUT_FLOAT3:
     case GFX_LAYOUT_FLOAT4:
-    case GFX_LAYOUT_MAT2:
     case GFX_LAYOUT_MAT3:
     case GFX_LAYOUT_MAT4:
       return GL_FLOAT;
+    case GFX_LAYOUT_BYTE1:
+    case GFX_LAYOUT_BYTE2:
+    case GFX_LAYOUT_BYTE3:
+    case GFX_LAYOUT_BYTE4:
+      return GL_BYTE;
+    case GFX_LAYOUT_UBYTE1:
+    case GFX_LAYOUT_UBYTE2:
+    case GFX_LAYOUT_UBYTE3:
+    case GFX_LAYOUT_UBYTE4:
+      return GL_UNSIGNED_BYTE;
+    case GFX_LAYOUT_SHORT1:
+    case GFX_LAYOUT_SHORT2:
+    case GFX_LAYOUT_SHORT3:
+    case GFX_LAYOUT_SHORT4:
+      return GL_SHORT;
+    case GFX_LAYOUT_USHORT1:
+    case GFX_LAYOUT_USHORT2:
+    case GFX_LAYOUT_USHORT3:
+    case GFX_LAYOUT_USHORT4:
+      return GL_UNSIGNED_SHORT;
     case GFX_LAYOUT_INT1:
     case GFX_LAYOUT_INT2:
     case GFX_LAYOUT_INT3:
@@ -564,131 +613,75 @@ static sizei get_layout_type(const GfxLayoutType layout) {
 static sizei get_layout_count(const GfxLayoutType layout) {
   switch(layout) {
     case GFX_LAYOUT_FLOAT1:
+    case GFX_LAYOUT_BYTE1:
+    case GFX_LAYOUT_UBYTE1:
+    case GFX_LAYOUT_SHORT1:
+    case GFX_LAYOUT_USHORT1:
     case GFX_LAYOUT_INT1:
     case GFX_LAYOUT_UINT1:
       return 1;
     case GFX_LAYOUT_FLOAT2:
+    case GFX_LAYOUT_BYTE2:
+    case GFX_LAYOUT_UBYTE2:
+    case GFX_LAYOUT_SHORT2:
+    case GFX_LAYOUT_USHORT2:
     case GFX_LAYOUT_INT2:
     case GFX_LAYOUT_UINT2:
-    case GFX_LAYOUT_MAT2:
       return 2;
     case GFX_LAYOUT_FLOAT3:
+    case GFX_LAYOUT_BYTE3:
+    case GFX_LAYOUT_UBYTE3:
+    case GFX_LAYOUT_SHORT3:
+    case GFX_LAYOUT_USHORT3:
     case GFX_LAYOUT_INT3:
     case GFX_LAYOUT_UINT3:
-    case GFX_LAYOUT_MAT3:
       return 3;
     case GFX_LAYOUT_FLOAT4:
+    case GFX_LAYOUT_BYTE4:
+    case GFX_LAYOUT_UBYTE4:
+    case GFX_LAYOUT_SHORT4:
+    case GFX_LAYOUT_USHORT4:
     case GFX_LAYOUT_INT4:
     case GFX_LAYOUT_UINT4:
-    case GFX_LAYOUT_MAT4:
       return 4;
     default:
       return 0;
   }
 }
 
-static sizei get_semantic_count(const GfxLayoutType layout) {
-  switch(layout) {
-    case GFX_LAYOUT_MAT2:
-      return 2;
-    case GFX_LAYOUT_MAT3:
-      return 3;
-    case GFX_LAYOUT_MAT4:
-      return 4;
-    default:
-      return 1;
-  }
-}
+static void init_pipeline_layout(const GfxPipeline* pipe, _PipelineLayout* layout) {
+  sizei stride = 0;
 
-static sizei get_semantic_size(const GfxLayoutType layout) {
-  switch(layout) {
-    case GFX_LAYOUT_MAT2:
-      return sizeof(f32) * 2;
-    case GFX_LAYOUT_MAT3:
-      return sizeof(f32) * 3;
-    case GFX_LAYOUT_MAT4:
-      return sizeof(f32) * 4;
-    default: // Other types don't have semantics 
-      return 0;
-  }
-}
+  // Set the layouts of the buffers
 
-static sizei calc_stride(const GfxLayoutDesc* layout, const sizei count) {
-  sizei stride = 0; 
+  for(sizei i = 0; i < VERTEX_LAYOUTS_MAX; i++) {
+    NIKOLA_ASSERT((pipe->desc.layouts[i].attributes_count >= 0) && (pipe->desc.layouts[i].attributes_count < VERTEX_ATTRIBUTES_MAX), 
+                   "Attributes count cannot exceed VERTEX_ATTRIBUTES_MAX");
 
-  for(sizei i = 0; i < count; i++) {
-    stride += get_layout_size(layout[i].type);
-  }
+    // Set the attributes of the buffer
 
-  return stride;
-}
+    sizei start = pipe->desc.layouts[i].start_index;
 
-static bool is_semantic_attrib(const GfxLayoutType layout) {
-  return layout == GFX_LAYOUT_MAT2 || 
-         layout == GFX_LAYOUT_MAT3 || 
-         layout == GFX_LAYOUT_MAT4;
-}
+    for(sizei j = start; j < start + pipe->desc.layouts[i].attributes_count; j++) {
+      GfxLayoutType attribute = pipe->desc.layouts[i].attributes[j];
+      
+      GLenum gl_comp_type = get_layout_type(attribute);
+      sizei comp_count    = get_layout_count(attribute);
+      sizei size          = get_layout_size(attribute);
 
-static void set_vertex_attrib(const u32 vao, const GfxLayoutDesc& layout, const sizei index, sizei* offset) {
-  glEnableVertexArrayAttrib(vao, index);
-
-  GLenum gl_comp_type = get_layout_type(layout.type);
-  sizei comp_count    = get_layout_count(layout.type);
-  sizei size          = get_layout_size(layout.type);
-
-  glVertexArrayAttribFormat(vao, index, comp_count, gl_comp_type, false, *offset);
-  glVertexArrayBindingDivisor(vao, index, layout.instance_rate);
-  glVertexArrayAttribBinding(vao, index, 0);
-
-  *offset += size;
-}
-
-static sizei set_semantic_attrib(const u32 vao, const GfxLayoutDesc& layout, const sizei index, sizei* offset) {
-  sizei semantic_count = get_semantic_count(layout.type);  
-  sizei semantic_size  = get_semantic_size(layout.type); 
-  sizei semantic_index = 0;
-  
-  GLenum gl_comp_type = get_layout_type(layout.type);
-  sizei comp_count    = get_layout_count(layout.type);
-
-  for(sizei j = 0; j < semantic_count; j++) {
-    semantic_index = j + index;
-
-    glEnableVertexArrayAttrib(vao, semantic_index);
-  
-    glVertexArrayAttribFormat(vao, semantic_index, comp_count, gl_comp_type, false, *offset);
-    glVertexArrayBindingDivisor(vao, semantic_index, layout.instance_rate);
-    glVertexArrayAttribBinding(vao, semantic_index, 0);
-
-    *offset += semantic_size;
-  }
-
-  return semantic_index;
-}
-
-static sizei set_buffer_layout(const u32 vao, const GfxLayoutDesc* layout, const sizei layout_count) {
-  sizei stride         = calc_stride(layout, layout_count);
-  sizei offset         = 0;
-  sizei semantic_index = 0;
-
-  for(sizei i = 0; i < layout_count; i++) {
-    /// @NOTE: A "semantic" is the inner value of an attribute. 
-    /// For example, the semantic of a 'Mat4' is just a `Vec4` or, rather, 
-    /// 4 `Vec4`s. In that case `semantic_count` would be `4` and `semantic_size`
-    /// would be `16` since it's just a `FLOAT4` under the hood.
-    
-    // Different configuration if the current layout is a semantic or not
-    if(is_semantic_attrib(layout[i].type)) {
-      semantic_index = set_semantic_attrib(vao, layout[i], semantic_index, &offset); 
+      glEnableVertexArrayAttrib(pipe->vertex_array, j);
+      glVertexArrayAttribFormat(pipe->vertex_array, j, comp_count, gl_comp_type, GL_FALSE, stride);
+      glVertexArrayAttribBinding(pipe->vertex_array, j, i);
+      
+      // Increase the stride for the next round
+      stride += size;
     }
-    else {
-      set_vertex_attrib(vao, layout[i], semantic_index, &offset);
-    }
-
-    semantic_index += 1;
-  }
+ 
+    layout->strides[i] = stride;
+    glVertexArrayBindingDivisor(pipe->vertex_array, i, pipe->desc.layouts[i].instance_rate);
   
-  return stride;
+    stride = 0;
+  }
 }
 
 static void check_shader_compile_error(const sizei shader) {
@@ -1080,6 +1073,53 @@ void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, c
   glClearColor(r, g, b, a);
 }
 
+void gfx_context_draw(GfxContext* gfx, const u32 start_element) {
+  NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
+  NIKOLA_ASSERT(gfx->bound_pipeline, "Cannot draw using an invalid bound pipeline");
+  NIKOLA_ASSERT(gfx->bound_pipeline->vertex_buffer, "Must have a valid vertex buffer to draw");
+
+  GfxPipeline* pipe = gfx->bound_pipeline;
+  GLenum draw_mode = get_draw_mode(pipe->desc.draw_mode);
+
+  glBindVertexArray(pipe->vertex_array);
+
+  // Draw the index buffer (if it is valid)
+  if(pipe->index_buffer) {
+    GLenum index_type = get_layout_type(pipe->desc.indices_type);
+    glDrawElements(draw_mode, pipe->index_count, index_type, 0);
+  }
+  // Draw the vertex buffer instead
+  else {
+    glDrawArrays(draw_mode, start_element, pipe->vertex_count);
+  }
+  
+  glBindVertexArray(0);
+}
+
+void gfx_context_draw_instanced(GfxContext* gfx, const u32 start_element, const u32 instance_count) {
+  NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
+  NIKOLA_ASSERT(gfx->bound_pipeline, "Cannot draw using an invalid bound pipeline");
+  NIKOLA_ASSERT(gfx->bound_pipeline->vertex_buffer, "Must have a valid vertex buffer to draw");
+  NIKOLA_ASSERT(gfx->bound_pipeline->instance_buffer, "Must have a valid index buffer to instance draw");
+
+  GfxPipeline* pipe = gfx->bound_pipeline;
+  GLenum draw_mode = get_draw_mode(pipe->desc.draw_mode);
+  
+  glBindVertexArray(pipe->vertex_array);
+
+  // Draw the index buffer (if it is valid)
+  if(pipe->index_buffer) {
+    GLenum index_type = get_layout_type(pipe->desc.indices_type);
+    glDrawElementsInstanced(draw_mode, pipe->index_count, index_type, 0, instance_count);
+  }
+  // Draw the vertex buffer instead
+  else {
+    glDrawArraysInstanced(draw_mode, start_element, pipe->vertex_count, instance_count);
+  }
+  
+  glBindVertexArray(0);
+}
+
 void gfx_context_present(GfxContext* gfx) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
   window_swap_buffers(gfx->desc.window, gfx->desc.has_vsync);
@@ -1196,12 +1236,17 @@ GfxBufferDesc& gfx_buffer_get_desc(GfxBuffer* buffer) {
   return buffer->desc;
 }
 
-void gfx_buffer_update(GfxBuffer* buff, const sizei offset, const sizei size, const void* data) {
-  NIKOLA_ASSERT(buff->gfx, "Invalid GfxContext struct passed");
+void gfx_buffer_update(GfxBuffer* buff, const GfxBufferDesc& desc) {
   NIKOLA_ASSERT(buff, "Invalid GfxBuffer struct passed");
+  NIKOLA_ASSERT(buff->gfx, "Invalid GfxContext struct passed");
 
-  buff->desc.size = size;
-  buff->desc.data = (void*)data;
+  buff->desc = desc;
+}
+
+void gfx_buffer_upload_data(GfxBuffer* buff, const sizei offset, const sizei size, const void* data) {
+  NIKOLA_ASSERT(buff, "Invalid GfxBuffer struct passed");
+  NIKOLA_ASSERT(buff->gfx, "Invalid GfxContext struct passed");
+  NIKOLA_ASSERT((offset + size) <= buff->desc.size, "The GfxBuffer does not have enough memory to upload this data");
 
   glNamedBufferSubData(buff->id, offset, size, data);
 }
@@ -1372,6 +1417,9 @@ void gfx_shader_upload_uniform_array(GfxShader* shader, const i32 location, cons
       break;
     case GFX_LAYOUT_MAT4:
       glUniformMatrix4fv(location, count, GL_FALSE, (f32*)data);
+      break;
+    default:
+      NIKOLA_LOG_WARN("Shader layout type not supported %i", (u32)type);
       break;
   }
 }
@@ -1656,6 +1704,7 @@ void gfx_cubemap_upload_data(GfxCubemap* cubemap,
 
 GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc, const AllocateMemoryFn& alloc_fn) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
+  NIKOLA_ASSERT(desc.vertex_buffer, "Must have a vertex buffer to create a GfxPipeline struct");
 
   GfxPipeline* pipe = (GfxPipeline*)alloc_fn(sizeof(GfxPipeline));
 
@@ -1665,15 +1714,18 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc, c
   // VAO init
   glCreateVertexArrays(1, &pipe->vertex_array);
 
-  // Layout init 
-  sizei stride = set_buffer_layout(pipe->vertex_array, desc.layout, desc.layout_count); 
-  NIKOLA_ASSERT(desc.vertex_buffer, "Must have a vertex buffer to create a GfxPipeline struct");
+  // Pipeline layout init
+  _PipelineLayout layout; 
+  init_pipeline_layout(pipe, &layout);
 
   // VBO init
   pipe->vertex_buffer = desc.vertex_buffer; 
   pipe->vertex_count  = desc.vertices_count; 
-
-  glVertexArrayVertexBuffer(pipe->vertex_array, 0, pipe->vertex_buffer->id, 0, stride);
+  glVertexArrayVertexBuffer(pipe->vertex_array,      // VAO
+                            0,                       // Binding index
+                            pipe->vertex_buffer->id, // Buffer ID
+                            0,       // Starting offset
+                            layout.strides[0]);      // Buffer stride
 
   // EBO init
   if(desc.index_buffer) {
@@ -1682,7 +1734,17 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc, c
 
     glVertexArrayElementBuffer(pipe->vertex_array, pipe->index_buffer->id);
   }
-  
+
+  // Instance buffer init
+  if(desc.instance_buffer) {
+    pipe->instance_buffer = desc.instance_buffer; 
+    glVertexArrayVertexBuffer(pipe->vertex_array,        // VAO
+                              1,                         // Binding index
+                              pipe->instance_buffer->id, // Buffer ID
+                              0,         // Starting offset
+                              layout.strides[1]);        // Buffer stride
+  }
+
   // Set the draw mode for the whole pipeline
   pipe->draw_mode = desc.draw_mode;
    
@@ -1708,9 +1770,29 @@ GfxPipelineDesc& gfx_pipeline_get_desc(GfxPipeline* pipeline) {
 void gfx_pipeline_update(GfxPipeline* pipeline, const GfxPipelineDesc& desc) {
   NIKOLA_ASSERT(pipeline, "Invalid GfxPipeline struct passed to gfx_pipeline_update");
   
-  // Update the internal desc
-  pipeline->desc = desc;
+  // Update the internal pipeline
   
+  pipeline->desc = desc;
+
+  pipeline->vertex_buffer = desc.vertex_buffer;
+  pipeline->index_buffer  = desc.index_buffer;
+  
+  pipeline->vertex_count = desc.vertices_count;
+  pipeline->index_count  = desc.indices_count;
+  
+  pipeline->instance_buffer = desc.instance_buffer;
+  
+  pipeline->draw_mode = desc.draw_mode;
+}
+
+void gfx_pipeline_use(GfxPipeline* pipeline) {
+  NIKOLA_ASSERT(pipeline->gfx, "Invalid GfxContext struct passed");
+  NIKOLA_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
+  NIKOLA_ASSERT(pipeline->vertex_buffer, "Must have a valid vertex buffer to draw");
+ 
+  // Bind this pipeline
+  pipeline->gfx->bound_pipeline = pipeline;
+
   // Setting the depth mask state of the pipeline 
   glDepthMask(pipeline->desc.depth_mask);
 
@@ -1720,39 +1802,6 @@ void gfx_pipeline_update(GfxPipeline* pipeline, const GfxPipelineDesc& desc) {
   // Setting the blend color of the pipeline state
   const f32* blend_color = pipeline->desc.blend_factor;
   glBlendColor(blend_color[0], blend_color[1], blend_color[2], blend_color[3]);
-}
-
-void gfx_pipeline_draw_vertex(GfxPipeline* pipeline) {
-  NIKOLA_ASSERT(pipeline->gfx, "Invalid GfxContext struct passed");
-  NIKOLA_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
-  NIKOLA_ASSERT(pipeline->vertex_buffer, "Must have a valid vertex buffer to draw");
-
-  // Bind the vertex array
-  glBindVertexArray(pipeline->vertex_array);
-
-  // Draw the vertices
-  GLenum draw_mode = get_draw_mode(pipeline->desc.draw_mode); 
-  glDrawArrays(draw_mode, 0, pipeline->desc.vertices_count);
-
-  // Unbind the vertex array for debugging purposes
-  glBindVertexArray(0);
-}
-
-void gfx_pipeline_draw_index(GfxPipeline* pipeline) {
-  NIKOLA_ASSERT(pipeline->gfx, "Invalid GfxContext struct passed");
-  NIKOLA_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
-  NIKOLA_ASSERT(pipeline->vertex_buffer, "Must have a valid vertex buffer to draw");
-  NIKOLA_ASSERT(pipeline->index_buffer, "Must have a valid index buffer to draw");
-
-  // Bind the vertex array
-  glBindVertexArray(pipeline->vertex_array);
-
-  // Draw the indices
-  GLenum draw_mode = get_draw_mode(pipeline->desc.draw_mode); 
-  glDrawElements(draw_mode, pipeline->desc.indices_count, GL_UNSIGNED_INT, 0);
-  
-  // Unbind the vertex array for debugging purposes
-  glBindVertexArray(0);
 }
 
 /// Pipeline functions 

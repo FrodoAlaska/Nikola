@@ -108,8 +108,8 @@ struct RendererDefaults {
   GfxTexture* texture        = nullptr;
   GfxBuffer* matrices_buffer = nullptr;
   
-  Material* material         = nullptr;
-  Mesh* cube_mesh            = nullptr;
+  Material* material = nullptr;
+  Mesh* cube_mesh    = nullptr;
 };
 /// RendererDefaults 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -250,11 +250,17 @@ NIKOLA_API void renderer_push_pass(const RenderPassDesc& desc, const RenderPassF
 /// renderer to use the default material and the default shader context.
 NIKOLA_API void renderer_queue_mesh(const ResourceID& mesh_id, const Transform& transform, const ResourceID& mat_id = {}, const ResourceID& shader_context_id = {});
 
-/// Queue a mesh rendering command using the given `mesh_id`, `transform`, and `shader_context_id`. 
+/// Queue a model rendering command using the given `model_id`, `transform`, and `shader_context_id`. 
 ///
-/// @NOTE: Both `mat_id` and `shader_context_id` are set to `RESOURCE_INVALID` by default, which will prompt the 
-/// renderer to use the default material and the default shader context.
+/// @NOTE: The given `shader_context_id` is set to `RESOURCE_INVALID` by default, which will prompt the 
+/// renderer to use the default the default shader context.
 NIKOLA_API void renderer_queue_model(const ResourceID& model_id, const Transform& transform, const ResourceID& shader_context_id = {});
+
+/// Render `instance_count` cube meshes using an array of the given `transforms` for positions, scales, and rotations. 
+/// As well as shading the cubes using the given `colors` array. 
+///
+/// @NOTE: Both the `transforms` and the `colors` array should have a size of < `instance_count`.
+NIKOLA_API void renderer_render_cube_instanced(const Transform* transforms, const Vec4* colors, const u32 instance_count);
 
 /// Render a cube for debugging purposes. 
 /// The cube will not be shaded or effected by the main rendering pipeline. 

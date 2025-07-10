@@ -123,10 +123,11 @@
     - [x] Slider UI elements
     - [x] Documentation
 - [] GFX v1.1 
-    - [] Replace everything with `sokol_gfx.h`
-    - [] Integrate `sokol_imgui` to enable ImGui support
-    - [] Possibly get `sokol_shape` for creating simpler shapes like planes, cubes, spheres, and the like. 
-    - [] Check if everything still works properly.
+    - [x] Add instancing
+    - [x] Test instancing
+    - [] Improve shader workflow (using `glGetProgramiv` to get various information about the shader)
+    - [] Compute shader support, with dispatching.
+    - [] State-specific configuration
     - [] Documentation
 - [] Resource Manager v0.5
     - [] Fix 3D models loading. 
@@ -136,9 +137,12 @@
         - [] Get rid of Assimp? Replace with `cgltf` and `fastObj`
     - [] Fix material resources 
     - [] Make the `ResourceID` type more private with its members. I know, I know. It's bad. But at least it's gonna be safer until I find a better option. 
+    - [] Instead of using an abstracted `NBR` layer over everything, write extra `file_write_bytes` functions for the various resources, which will write a _compressed_ version of the resources, and load them as well.
+    - [] Do resources actually reload? 
     - [] Improve resource load times. 
     - [] Documentation
 - [] Renderer v0.6 
+    - [] Tear it up and do it from the ground up with actual plans of what to do? Debug rendering, lighting, better material workflow, instancing, and the like? Maybe an instanced-based renderer?
     - [] Allow toggleablity of render passes
     - [] Improve the Blinn-Phong lighting model by actually using specular maps and maybe fixing the material system a bit 
     - [] Emissive materials
@@ -162,8 +166,7 @@ with a physics library really that necessary?
 - EMPTY FOR NOW...
 
 ## TEST: 
-- (GL) Shader attribute semantics (e.g, does Mat4 work there)
+- EMPTY FOR NOW...
 
 ## FUTURE PLANS: 
-- GPU particles
 - NUSL: Nikola Uniform Shading Language or shader-generating materials

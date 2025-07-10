@@ -10,7 +10,7 @@
 namespace nikola { // Start of nikola
 
 // Forward declaration to help with compilation time.
-struct GfxLayoutDesc;
+struct GfxVertexLayout;
 
 /// ----------------------------------------------------------------------
 /// *** Math ***
@@ -513,8 +513,8 @@ NIKOLA_API const u8 vertex_type_components(const VertexType type);
 /// Convert and return a string representation of the vertex with `type`.
 NIKOLA_API const char* vertex_type_str(const VertexType type); 
 
-/// Apply a layout of the vertex with `type`, returning the filled `layout` with `count` amount of layouts.
-NIKOLA_API void vertex_type_layout(const VertexType type, GfxLayoutDesc* layout, sizei* count); 
+/// Apply a layout of the vertex with `type`, returning the filled `layout.
+NIKOLA_API void vertex_type_layout(const VertexType type, GfxVertexLayout* out_layout); 
 
 /// Vertex functions
 ///---------------------------------------------------------------------------------------------------------------------

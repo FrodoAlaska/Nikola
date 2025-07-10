@@ -1,7 +1,5 @@
-#include "geometry_loader.h"
-
-#include "nikola/nikola_base.h"
 #include "nikola/nikola_resources.h"
+#include "nikola/nikola_base.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -98,7 +96,7 @@ static void create_cube_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pi
   pipe_desc->indices_count = 36;  
 
   // Layout init
-  vertex_type_layout(VERTEX_TYPE_PNUV, pipe_desc->layout, &pipe_desc->layout_count);
+  vertex_type_layout(VERTEX_TYPE_PNUV, &pipe_desc->layouts[0]);
 
   // Draw mode init
   pipe_desc->draw_mode = GFX_DRAW_MODE_TRIANGLE;
@@ -161,8 +159,8 @@ static void create_skybox_geo(const ResourceGroupID& group_id, GfxPipelineDesc* 
   pipe_desc->vertices_count = 36;
 
   // Layout init
-  pipe_desc->layout[0]    = {"TEX", GFX_LAYOUT_FLOAT3, 0};
-  pipe_desc->layout_count = 1;
+  pipe_desc->layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT3;
+  pipe_desc->layouts[0].attributes_count = 1;
 
   // Draw mode init
   pipe_desc->draw_mode = GFX_DRAW_MODE_TRIANGLE;

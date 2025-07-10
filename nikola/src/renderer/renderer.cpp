@@ -14,13 +14,13 @@ namespace nikola { // Start of nikola
 /// ----------------------------------------------------------------------
 /// ShaderContextID
 enum ShaderContextID {
-  SHADER_CONTEXT_DEFAULT     = 0, 
-  SHADER_CONTEXT_SKYBOX      = 1, 
-  SHADER_CONTEXT_FRAEMBUFFER = 2, 
-  SHADER_CONTEXT_HDR         = 3, 
-  SHADER_CONTEXT_BLINN       = 4, 
+  SHADER_CONTEXT_DEFAULT = 0, 
+  SHADER_CONTEXT_SKYBOX, 
+  SHADER_CONTEXT_HDR, 
+  SHADER_CONTEXT_INSTANCE, 
+  SHADER_CONTEXT_BLINN, 
 
-  SHADER_CONTEXTS_MAX        = SHADER_CONTEXT_BLINN + 1,
+  SHADER_CONTEXTS_MAX = SHADER_CONTEXT_BLINN + 1,
 };
 /// ShaderContextID
 /// ----------------------------------------------------------------------
@@ -54,17 +54,39 @@ struct MeshRenderCommand {
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// _InstanceData
+struct _InstanceData {
+  Mat4 model; 
+  Vec4 color;
+};
+/// _InstanceData
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// Renderer
 struct Renderer {
-  GfxContext* context = nullptr;
+  // Context data
 
+  GfxContext* context = nullptr;
   Vec4 clear_color;
 
-  GfxPipelineDesc pipe_desc  = {};
-  GfxPipeline* pipeline      = nullptr; 
+  // Instance data
+
+  _InstanceData instance_data[1000];
+  sizei instance_count = 0;
+  
+  GfxPipelineDesc inst_pipe_desc = {};
+  GfxPipeline* instance_pipe     = nullptr;
+  
+  // Defaults data
 
   RendererDefaults defaults = {};
   ResourceID shader_contexts[SHADER_CONTEXTS_MAX];
+  
+  // Render data
+
+  GfxPipelineDesc pipe_desc  = {};
+  GfxPipeline* pipeline      = nullptr; 
   
   FrameData* frame_data;
   DynamicArray<RenderPassEntry> render_passes;
@@ -127,16 +149,41 @@ static void init_defaults() {
   // Shaders init
   ResourceID default_shader     = resources_push_shader(RESOURCE_CACHE_ID, generate_default_shader());
   ResourceID skybox_shader      = resources_push_shader(RESOURCE_CACHE_ID, generate_skybox_shader());
-  ResourceID framebuffer_shader = resources_push_shader(RESOURCE_CACHE_ID, generate_framebuffer_shader());
   ResourceID hdr_shader         = resources_push_shader(RESOURCE_CACHE_ID, generate_hdr_shader());
+  ResourceID inst_shader        = resources_push_shader(RESOURCE_CACHE_ID, generate_instance_shader());
   ResourceID blinn_phong_shader = resources_push_shader(RESOURCE_CACHE_ID, generate_blinn_phong_shader());
 
   // Shader contexts init
-  s_renderer.shader_contexts[SHADER_CONTEXT_DEFAULT]     = resources_push_shader_context(RESOURCE_CACHE_ID, default_shader);
-  s_renderer.shader_contexts[SHADER_CONTEXT_SKYBOX]      = resources_push_shader_context(RESOURCE_CACHE_ID, skybox_shader);
-  s_renderer.shader_contexts[SHADER_CONTEXT_FRAEMBUFFER] = resources_push_shader_context(RESOURCE_CACHE_ID, framebuffer_shader);
-  s_renderer.shader_contexts[SHADER_CONTEXT_HDR]         = resources_push_shader_context(RESOURCE_CACHE_ID, hdr_shader);
-  s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]       = resources_push_shader_context(RESOURCE_CACHE_ID, blinn_phong_shader);
+  s_renderer.shader_contexts[SHADER_CONTEXT_DEFAULT]  = resources_push_shader_context(RESOURCE_CACHE_ID, default_shader);
+  s_renderer.shader_contexts[SHADER_CONTEXT_SKYBOX]   = resources_push_shader_context(RESOURCE_CACHE_ID, skybox_shader);
+  s_renderer.shader_contexts[SHADER_CONTEXT_HDR]      = resources_push_shader_context(RESOURCE_CACHE_ID, hdr_shader);
+  s_renderer.shader_contexts[SHADER_CONTEXT_INSTANCE] = resources_push_shader_context(RESOURCE_CACHE_ID, inst_shader);
+  s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]    = resources_push_shader_context(RESOURCE_CACHE_ID, blinn_phong_shader);
+
+  // @TEMP
+  // Instance pipeline init
+ 
+  geometry_loader_load(RESOURCE_CACHE_ID, &s_renderer.inst_pipe_desc, GEOMETRY_CUBE);
+
+  sizei start = s_renderer.inst_pipe_desc.layouts[0].attributes_count;
+
+  s_renderer.inst_pipe_desc.layouts[1].start_index   = start;
+  s_renderer.inst_pipe_desc.layouts[1].instance_rate = 1;
+
+  for(sizei i = start; i < start + 5; i++) {
+    s_renderer.inst_pipe_desc.layouts[1].attributes[i] = GFX_LAYOUT_FLOAT4;
+    s_renderer.inst_pipe_desc.layouts[1].attributes_count++;
+  }
+
+  GfxBufferDesc inst_buff_desc = {
+    .data  = nullptr,
+    .size  = sizeof(_InstanceData) * 1000,
+    .type  = GFX_BUFFER_VERTEX, 
+    .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
+  };
+  s_renderer.inst_pipe_desc.instance_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, inst_buff_desc));
+
+  s_renderer.instance_pipe = gfx_pipeline_create(s_renderer.context, s_renderer.inst_pipe_desc);
 }
 
 static void init_pipeline() {
@@ -173,9 +220,9 @@ static void init_pipeline() {
   s_renderer.pipe_desc.indices_count = 6;
 
   // Layout init
-  s_renderer.pipe_desc.layout[0]     = GfxLayoutDesc{"POS", GFX_LAYOUT_FLOAT2, 0};
-  s_renderer.pipe_desc.layout[1]     = GfxLayoutDesc{"TEX", GFX_LAYOUT_FLOAT2, 0};
-  s_renderer.pipe_desc.layout_count  = 2;
+  s_renderer.pipe_desc.layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT2;
+  s_renderer.pipe_desc.layouts[0].attributes[1]    = GFX_LAYOUT_FLOAT2;
+  s_renderer.pipe_desc.layouts[0].attributes_count = 2;
 
   // Draw mode init 
   s_renderer.pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
@@ -196,7 +243,8 @@ static void render_mesh(MeshRenderCommand& command) {
   material_use(command.material);  
 
   // Draw the mesh
-  gfx_pipeline_draw_index(command.mesh->pipe);
+  gfx_pipeline_use(command.mesh->pipe);
+  gfx_context_draw(s_renderer.context, 0);
 }
 
 static void render_skybox(const ResourceID& skybox_id) {
@@ -210,7 +258,8 @@ static void render_skybox(const ResourceID& skybox_id) {
   gfx_cubemap_use(&skybox->cubemap, 1);
 
   // Draw the skybox
-  gfx_pipeline_draw_vertex(skybox->pipe);
+  gfx_pipeline_use(skybox->pipe);
+  gfx_context_draw(s_renderer.context, 0);
 }
 
 static void create_render_pass(RenderPass* pass, const RenderPassDesc& desc) {
@@ -276,7 +325,8 @@ static void end_pass(RenderPass& pass) {
 
   // Render the final render target
   gfx_pipeline_update(s_renderer.pipeline, s_renderer.pipe_desc);
-  gfx_pipeline_draw_index(s_renderer.pipeline);
+  gfx_pipeline_use(s_renderer.pipeline);
+  gfx_context_draw(s_renderer.context, 0);
 }
 
 static void flush_queue(DynamicArray<MeshRenderCommand>& queue) {
@@ -335,6 +385,17 @@ static void light_pass_fn(const RenderPass* previous, RenderPass* current, void*
   // @TODO (Renderer): Probably better not to flush 
   // the debug queue here. But, oh well. 
   flush_queue(s_renderer.debug_queue);
+
+  // Flush the instance pipeline
+  
+  shader_context_use(resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_INSTANCE]));
+  
+  gfx_buffer_upload_data(s_renderer.inst_pipe_desc.instance_buffer, 0, sizeof(_InstanceData) * s_renderer.instance_count, &s_renderer.instance_data[0]);
+  gfx_pipeline_use(s_renderer.instance_pipe);
+  
+  gfx_context_draw_instanced(s_renderer.context, 0, s_renderer.instance_count);
+
+  s_renderer.instance_count = 0;
 
   // Updating some HDR uniforms
   shader_context_set_uniform(resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_HDR]), "u_exposure", s_renderer.frame_data->camera.exposure);
@@ -423,6 +484,14 @@ void renderer_queue_mesh(const ResourceID& mesh_id, const Transform& transform, 
   s_renderer.render_queue.emplace_back(mesh, transform, mat, ctx);
 }
 
+void renderer_render_cube_instanced(const Transform* transforms, const Vec4* colors, const u32 instance_count) {
+  for(sizei i = 0; i < instance_count; i++) {
+    s_renderer.instance_data[i].model = transforms[i].transform;
+    s_renderer.instance_data[i].color = colors[i];
+  }
+  s_renderer.instance_count = instance_count;
+}
+
 void renderer_queue_model(const ResourceID& model_id, const Transform& transform, const ResourceID& shader_context_id) {
   Model* model       = resources_get_model(model_id);
   ShaderContext* ctx = RESOURCE_IS_VALID(shader_context_id) ? resources_get_shader_context(shader_context_id) : resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]);
@@ -453,8 +522,8 @@ void renderer_begin(FrameData& data) {
 
   // Updating the internal matrices buffer for each shader
   s_renderer.frame_data = &data;
-  gfx_buffer_update(matrix_buffer, 0, sizeof(Mat4), mat4_raw_data(data.camera.view));
-  gfx_buffer_update(matrix_buffer, sizeof(Mat4), sizeof(Mat4), mat4_raw_data(data.camera.projection));
+  gfx_buffer_upload_data(matrix_buffer, 0, sizeof(Mat4), mat4_raw_data(data.camera.view));
+  gfx_buffer_upload_data(matrix_buffer, sizeof(Mat4), sizeof(Mat4), mat4_raw_data(data.camera.projection));
 
   // Setup some lighting
   setup_light_enviornment(data);

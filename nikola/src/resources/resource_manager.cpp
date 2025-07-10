@@ -2,8 +2,6 @@
 #include "nikola/nikola_event.h"
 #include "nikola/nikola_render.h"
 
-#include "loaders/geometry_loader.h"
-
 #include <cstring>
 
 //////////////////////////////////////////////////////////////////////////

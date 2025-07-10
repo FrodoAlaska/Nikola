@@ -396,16 +396,16 @@ enum ResourceType {
 /// GeometryType
 enum GeometryType {
   /// A predefined cube geometry shape
-  GEOMETRY_CUBE     = 17 << 0, 
+  GEOMETRY_CUBE   = 17 << 0, 
   
   /// A predefined plane geometry shape
-  GEOMETRY_PLANE    = 17 << 1, 
+  GEOMETRY_PLANE  = 17 << 1, 
   
   /// A predefined skybox geometry shape
-  GEOMETRY_SKYBOX   = 17 << 2, 
+  GEOMETRY_SKYBOX = 17 << 2, 
   
   /// A predefined cube geometry shape
-  GEOMETRY_CIRCLE   = 17 << 3, 
+  GEOMETRY_CIRCLE = 17 << 3, 
 };
 /// GeometryType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -569,6 +569,15 @@ NIKOLA_API void shader_context_use(ShaderContext* ctx_id);
 NIKOLA_API void material_use(Material* mat);
 
 /// Material functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Geometry functions
+
+/// Fill the given `pipe_desc` structure with geometry data based on the give `type`. 
+NIKOLA_API void geometry_loader_load(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc, const GeometryType type);
+
+/// Geometry functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------

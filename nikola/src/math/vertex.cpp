@@ -47,26 +47,26 @@ const char* vertex_type_str(const VertexType type) {
   }
 }
 
-void vertex_type_layout(const VertexType type, GfxLayoutDesc* layout, sizei* count) {
+void vertex_type_layout(const VertexType type, GfxVertexLayout* out_layout) {
   switch(type) {
     case VERTEX_TYPE_PCUV: 
-      layout[0] = {"POSITION", GFX_LAYOUT_FLOAT3, 0};
-      layout[1] = {"COLOR", GFX_LAYOUT_FLOAT4, 0};
-      layout[2] = {"TEX", GFX_LAYOUT_FLOAT2, 0};
-      *count    = 3;
+      out_layout->attributes[0]    = GFX_LAYOUT_FLOAT3;
+      out_layout->attributes[1]    = GFX_LAYOUT_FLOAT4;
+      out_layout->attributes[2]    = GFX_LAYOUT_FLOAT2;
+      out_layout->attributes_count = 3;
       break;
     case VERTEX_TYPE_PNUV: 
-      layout[0] = {"POSITION", GFX_LAYOUT_FLOAT3, 0};
-      layout[1] = {"NORMAL", GFX_LAYOUT_FLOAT3, 0};
-      layout[2] = {"TEX", GFX_LAYOUT_FLOAT2, 0};
-      *count    = 3;
+      out_layout->attributes[0]    = GFX_LAYOUT_FLOAT3;
+      out_layout->attributes[1]    = GFX_LAYOUT_FLOAT3;
+      out_layout->attributes[2]    = GFX_LAYOUT_FLOAT2;
+      out_layout->attributes_count = 3;
       break;
     case VERTEX_TYPE_PNCUV: 
-      layout[0] = {"POSITION", GFX_LAYOUT_FLOAT3, 0};
-      layout[1] = {"NORMAL", GFX_LAYOUT_FLOAT3, 0};
-      layout[2] = {"COLOR", GFX_LAYOUT_FLOAT4, 0};
-      layout[3] = {"TEX", GFX_LAYOUT_FLOAT2, 0};
-      *count    = 3;
+      out_layout->attributes[0]    = GFX_LAYOUT_FLOAT3;
+      out_layout->attributes[1]    = GFX_LAYOUT_FLOAT3;
+      out_layout->attributes[2]    = GFX_LAYOUT_FLOAT4;
+      out_layout->attributes[3]    = GFX_LAYOUT_FLOAT2;
+      out_layout->attributes_count = 4;
       break;
   }
 }

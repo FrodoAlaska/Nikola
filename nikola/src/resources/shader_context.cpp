@@ -90,7 +90,7 @@ void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, 
 void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const Mat4& value) {
   NIKOLA_ASSERT(ctx, "Invalid ShaderContext passed to shader_context_set_uniform");
   NIKOLA_ASSERT(ctx->shader, "Invalid shader in ShaderContext passed to shader_context_set_uniform");
-
+  
   check_and_send_uniform(ctx, uniform_name, GFX_LAYOUT_MAT4, &value);
 }
 

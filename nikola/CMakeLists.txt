@@ -32,11 +32,11 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/resources/resource_manager.cpp
   ${NIKOLA_SRC_DIR}/resources/material.cpp
   ${NIKOLA_SRC_DIR}/resources/shader_context.cpp
+  ${NIKOLA_SRC_DIR}/resources/geometry_loader.cpp
   ${NIKOLA_SRC_DIR}/resources/nbr_file.cpp
   ${NIKOLA_SRC_DIR}/resources/nbr_importer.cpp
 
   # Resources/Loaders 
-  ${NIKOLA_SRC_DIR}/resources/loaders/geometry_loader.cpp
 
   # Filesystem
   ${NIKOLA_SRC_DIR}/filesystem/file.cpp
@@ -91,11 +91,6 @@ set(NIKOLA_PCH
 set(LIBS_SOURCES 
   # GLAD
   ${NIKOLA_LIBS_DIR}/glad/glad.c
-
-  # Sokol 
-  ${NIKOLA_LIBS_DIR}/sokol/sokol_gfx.cpp
-  ${NIKOLA_LIBS_DIR}/sokol/sokol_app.cpp
-  ${NIKOLA_LIBS_DIR}/sokol/sokol_glue.cpp
 
   # ImGui
   ${NIKOLA_LIBS_DIR}/imgui/backends/imgui_impl_glfw.cpp

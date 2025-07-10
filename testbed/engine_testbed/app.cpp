@@ -10,7 +10,7 @@ struct nikola::App {
   nikola::FrameData frame_data;
 
   nikola::ResourceGroupID res_group_id;
-  nikola::ResourceID mesh_id;
+  nikola::ResourceID mesh_id, font_id;
 
   nikola::Transform transform;
 
@@ -27,14 +27,14 @@ static void init_resources(nikola::App* app) {
   nikola::FilePath res_path = nikola::filepath_append(nikola::filesystem_current_path(), "res");
   app->res_group_id = nikola::resources_create_group("app_res", res_path);
 
-  // Resoruces init
-  nikola::resources_push_dir(app->res_group_id, "textures");
-
   // Skybox init
   app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group_id, "cubemaps/gloomy.nbrcubemap");
 
   // Mesh init
-  app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
+  app->mesh_id = nikola::resources_push_model(app->res_group_id, "models/bridge.nbrmodel");//nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
+
+  // Font init
+  app->font_id = nikola::resources_push_font(app->res_group_id, "fonts/bit5x3.nbrfont");
 }
 
 /// Private functions 
@@ -68,7 +68,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   init_resources(app);
 
   // Transform init
-  nikola::transform_translate(app->transform, nikola::Vec3(10.0f, 0.0f, 40.0f));
+  nikola::transform_translate(app->transform, nikola::Vec3(5.0f, 0.0f, 5.0f));
   nikola::transform_scale(app->transform, nikola::Vec3(1.0f));
 
   return app;
@@ -103,14 +103,36 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 void app_render(nikola::App* app) {
   // Render 3D 
   nikola::renderer_begin(app->frame_data);
-  nikola::renderer_queue_mesh(app->mesh_id, app->transform);
+  // nikola::renderer_queue_model(app->mesh_id, app->transform);
+
+  constexpr nikola::sizei CUBES_MAX = 1000;
+
+  nikola::Transform instance_transforms[CUBES_MAX];
+  nikola::Vec4 instance_colors[CUBES_MAX];
+
+  nikola::Vec4 color; 
+  color.r = nikola::sin(nikola::niclock_get_time() * 2.0f);
+  color.g = nikola::sin(nikola::niclock_get_time() * 1.3f);
+  color.b = nikola::sin(nikola::niclock_get_time() * 0.7f);
+  color.a = 1.0f;
+
+  for(nikola::sizei i = 0; i < 100; i++) {
+    for(nikola::sizei j = 0; j < 10; j++) {
+      nikola::sizei index = (j * 100) + i;
+
+      nikola::transform_translate(instance_transforms[index], nikola::Vec3(i * 2.0f, 0.0f, j * 2.0f));
+      nikola::transform_scale(instance_transforms[index], nikola::Vec3(1.0f));
+
+      instance_colors[index] = color;
+    }
+  } 
+  nikola::renderer_render_cube_instanced(instance_transforms, instance_colors, CUBES_MAX);
+  
   nikola::renderer_end();
   
   // Render 2D 
-  // nikola::batch_renderer_begin();
-  // nikola::batch_render_texture(app->material->diffuse_map, nikola::Vec2(200.0f), nikola::Vec2(128.0f));
-  // nikola::batch_renderer_end();
-
+  nikola::batch_renderer_begin();
+  nikola::batch_renderer_end();
 }
 
 void app_render_gui(nikola::App* app) {
@@ -119,11 +141,13 @@ void app_render_gui(nikola::App* app) {
   }
 
   nikola::gui_begin();
-  nikola::gui_begin_panel("Entities");
-
-  nikola::gui_edit_transform("Mesh Transform", &app->transform);
   
+  nikola::gui_debug_info();
+  
+  nikola::gui_begin_panel("Entities");
+  nikola::gui_edit_transform("Mesh Transform", &app->transform);
   nikola::gui_end_panel();
+  
   nikola::gui_end();
 }
 

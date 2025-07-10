@@ -80,7 +80,7 @@ void nbr_import_mesh(NBRMesh* nbr, const ResourceGroupID& group_id, Mesh* mesh) 
   mesh->pipe_desc.indices_count = nbr->indices_count;  
 
   // Layout init
-  vertex_type_layout((VertexType)nbr->vertex_type, mesh->pipe_desc.layout, &mesh->pipe_desc.layout_count);
+  vertex_type_layout((VertexType)nbr->vertex_type, &mesh->pipe_desc.layouts[0]);
   
   // Draw mode init
   mesh->pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
