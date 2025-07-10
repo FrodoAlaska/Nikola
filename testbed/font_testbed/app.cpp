@@ -56,13 +56,13 @@ static void init_resources(nikola::App* app) {
   app->res_group            = nikola::resources_create_group("FontApp_res", res_path);
 
   // Cubemaps init
-  nikola::ResourceID cubemap_id = nikola::resources_push_cubemap(app->res_group, "cubemaps/accurate_night.nbrcubemap");
+  nikola::ResourceID cubemap_id = nikola::resources_push_cubemap(app->res_group, "cubemaps/accurate_night.nbr");
 
   // Fonts init
-  app->font = nikola::resources_get_font(nikola::resources_push_font(app->res_group, "fonts/IosevkaNerdFont-Bold.nbrfont"));
+  app->font = nikola::resources_get_font(nikola::resources_push_font(app->res_group, "fonts/IosevkaNerdFont-Bold.nbr"));
 
   // Models init
-  app->model_id = nikola::resources_push_model(app->res_group, "models/langya.nbrmodel");
+  app->model_id = nikola::resources_push_model(app->res_group, "models/langya.nbr");
 
   // Skybox init
   app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group, cubemap_id);

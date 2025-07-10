@@ -15,10 +15,22 @@ namespace nikola { // Start of nikola
 struct Camera; 
 struct DirectionalLight;
 struct PointLight;
+
 struct PhysicsBody;
 struct PhysicsBodyDesc;
 struct Collider;
 struct ColliderDesc;
+
+struct NBRHeader;
+struct NBRTexture;
+struct NBRCubemap;
+struct NBRShader;
+struct NBRMaterial;
+struct NBRMesh;
+struct NBRModel;
+struct NBRGlyph;
+struct NBRFont;
+struct NBRAudio;
 
 /// ----------------------------------------------------------------------
 /// *** File system ***
@@ -297,6 +309,20 @@ NIKOLA_API const sizei file_write_bytes(File& file, const void* buff, const size
 /// @NOTE: This function will raise an error if `file` is not opened.
 NIKOLA_API void file_write_bytes(File& file, const String& str);
 
+/// A list of functions to write in bytes the information of the given 
+/// `NBR*` structures into `file`. 
+///
+/// @NOTE: These functions will raise an error if `file` is not opened.
+NIKOLA_API void file_write_bytes(File& file, const NBRHeader& header);
+NIKOLA_API void file_write_bytes(File& file, const NBRTexture& texture);
+NIKOLA_API void file_write_bytes(File& file, const NBRCubemap& cubemap);
+NIKOLA_API void file_write_bytes(File& file, const NBRShader& shader);
+NIKOLA_API void file_write_bytes(File& file, const NBRMaterial& material);
+NIKOLA_API void file_write_bytes(File& file, const NBRMesh& mesh);
+NIKOLA_API void file_write_bytes(File& file, const NBRModel& model);
+NIKOLA_API void file_write_bytes(File& file, const NBRFont& font);
+NIKOLA_API void file_write_bytes(File& file, const NBRAudio& audio);
+
 /// Write the contents of the given `transform` into `file`.
 ///
 /// @NOTE: This function will raise an error if `file` is not opened.
@@ -352,6 +378,24 @@ NIKOLA_API const sizei file_read_bytes(File& file, void* out_buff, const sizei s
 ///
 /// @NOTE: This function will raise an error if `file` is not opened.
 NIKOLA_API void file_read_bytes(File& file, String* str);
+
+/// A list of functions to read the contents of `file` into the given 
+/// `NBR*` structures.
+///
+/// @NOTE: These functions will allocated memory for the internal 
+/// data of the `NBR*` structures. You will need to free the allocated 
+/// memory after calling these functions.
+///
+/// @NOTE: These functions will raise an error if `file` is not opened.
+NIKOLA_API void file_read_bytes(File& file, NBRHeader* out_header);
+NIKOLA_API void file_read_bytes(File& file, NBRTexture* out_texture);
+NIKOLA_API void file_read_bytes(File& file, NBRCubemap* out_cubemap);
+NIKOLA_API void file_read_bytes(File& file, NBRShader* out_shader);
+NIKOLA_API void file_read_bytes(File& file, NBRMaterial* out_material);
+NIKOLA_API void file_read_bytes(File& file, NBRMesh* out_mesh);
+NIKOLA_API void file_read_bytes(File& file, NBRModel* out_model);
+NIKOLA_API void file_read_bytes(File& file, NBRFont* out_font);
+NIKOLA_API void file_read_bytes(File& file, NBRAudio* out_audio);
 
 /// Read a `Transform` from `file` and save it into `transform`.
 ///

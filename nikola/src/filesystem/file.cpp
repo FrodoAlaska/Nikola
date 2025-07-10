@@ -4,6 +4,7 @@
 #include "nikola/nikola_render.h"
 #include "nikola/nikola_audio.h"
 #include "nikola/nikola_physics.h"
+#include "nikola/nikola_resources.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -11,6 +12,7 @@ namespace nikola {
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// Private functions
+
 static std::ios::openmode get_mode(const i32 mode) {
   std::ios::openmode cpp_mode = (std::ios::openmode)0;
 
@@ -44,6 +46,30 @@ static std::ios::openmode get_mode(const i32 mode) {
 
   return cpp_mode;
 }
+
+static void read_nbr_header(File& file, u16* res_type) {
+  u8 iden   = 0;
+  i16 major = 0; 
+  i16 minor = 0; 
+  
+  // Check for the validity of the identifier
+  if(iden != NBR_VALID_IDENTIFIER) {
+    NIKOLA_LOG_ERROR("Invalid identifier found in NBR file. Expected \'%i\' got \'%i\'", 
+                      NBR_VALID_IDENTIFIER, iden);
+
+    file_close(file);
+    return;
+  }  
+
+  // Check for the validity of the versions
+  if(((major != NBR_VALID_MAJOR_VERSION) || (minor != NBR_VALID_MINOR_VERSION))) {
+    NIKOLA_LOG_ERROR("Invalid version found in NBR file!");
+
+    file_close(file);
+    return;
+  }
+}
+
 /// Private functions
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -107,6 +133,162 @@ void file_write_bytes(File& file, const String& str) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
   
   file_write_bytes(file, str.c_str(), str.size());
+}
+
+void file_write_bytes(File& file, const NBRHeader& header) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+
+  // Write the header information
+  
+  file_write_bytes(file, &header.identifier, sizeof(header.identifier));
+  file_write_bytes(file, &header.major_version, sizeof(header.major_version));
+  file_write_bytes(file, &header.minor_version, sizeof(header.major_version));
+  file_write_bytes(file, &header.resource_type, sizeof(header.resource_type));
+}
+
+void file_write_bytes(File& file, const NBRTexture& texture) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+
+  // Write the resource's information
+  
+  file_write_bytes(file, &texture.width, sizeof(texture.width));
+  file_write_bytes(file, &texture.height, sizeof(texture.height));
+  
+  file_write_bytes(file, &texture.channels, sizeof(texture.channels));
+ 
+  sizei data_size = (texture.width * texture.height) * texture.channels;
+  file_write_bytes(file, texture.pixels, data_size);
+}
+
+void file_write_bytes(File& file, const NBRCubemap& cubemap) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+
+  // Write the resource's information
+  
+  file_write_bytes(file, &cubemap.width, sizeof(cubemap.width));
+  file_write_bytes(file, &cubemap.height, sizeof(cubemap.height));
+
+  file_write_bytes(file, &cubemap.channels, sizeof(cubemap.channels));
+
+  file_write_bytes(file, &cubemap.faces_count, sizeof(cubemap.faces_count));
+
+  sizei data_size = (cubemap.width * cubemap.height) * cubemap.channels;
+  for(sizei i = 0; i < cubemap.faces_count; i++) {
+    file_write_bytes(file, cubemap.pixels[i], data_size);
+  }
+}
+
+void file_write_bytes(File& file, const NBRShader& shader) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  
+  // Write the resource's information
+  
+  file_write_bytes(file, &shader.vertex_length, sizeof(u16));
+  file_write_bytes(file, shader.vertex_source, sizeof(i8) * shader.vertex_length);
+  file_write_bytes(file, &shader.pixel_length, sizeof(u16));
+  file_write_bytes(file, shader.pixel_source, sizeof(i8) * shader.pixel_length);
+}
+
+void file_write_bytes(File& file, const NBRMaterial& material) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  
+  // Write the resource's information
+  
+  file_write_bytes(file, material.ambient, sizeof(f32) * 3); 
+  file_write_bytes(file, material.diffuse, sizeof(f32) * 3); 
+  file_write_bytes(file, material.specular, sizeof(f32) * 3); 
+ 
+  file_write_bytes(file, &material.diffuse_index, sizeof(i8)); 
+  file_write_bytes(file, &material.specular_index, sizeof(i8)); 
+}
+
+void file_write_bytes(File& file, const NBRMesh& mesh) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  
+  // Write the resource's information
+  
+  file_write_bytes(file, &mesh.vertex_type, sizeof(u8));
+
+  file_write_bytes(file, &mesh.vertices_count, sizeof(u32));
+  file_write_bytes(file, mesh.vertices, sizeof(f32) * mesh.vertices_count);
+
+  file_write_bytes(file, &mesh.indices_count, sizeof(u32));
+  file_write_bytes(file, mesh.indices, sizeof(u32) * mesh.indices_count);
+
+  file_write_bytes(file, &mesh.material_index, sizeof(u8));
+}
+
+void file_write_bytes(File& file, const NBRModel& model) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  
+  // Write the resource's information
+  
+  // Save the meshes
+  file_write_bytes(file, &model.meshes_count, sizeof(u16));
+  for(sizei i = 0; i < model.meshes_count; i++) {
+    file_write_bytes(file, model.meshes[i]);
+  }
+
+  // Save the materials
+  file_write_bytes(file, &model.materials_count, sizeof(u8));
+  for(sizei i = 0; i < model.materials_count; i++) {
+    file_write_bytes(file, model.materials[i]);
+  }
+
+  // Save the textures
+  file_write_bytes(file, &model.textures_count, sizeof(u8));
+  for(sizei i = 0; i < model.textures_count; i++) {
+    file_write_bytes(file, model.textures[i]);
+  }
+}
+
+void file_write_bytes(File& file, const NBRFont& font) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  
+  // Write the resource's information
+  
+  // Write the glyphs 
+  
+  file_write_bytes(file, &font.glyphs_count, sizeof(font.glyphs_count));
+  for(u32 i = 0; i < font.glyphs_count; i++) {
+    file_write_bytes(file, &font.glyphs[i].unicode, sizeof(i8));
+  
+    file_write_bytes(file, &font.glyphs[i].width, sizeof(u16));
+    file_write_bytes(file, &font.glyphs[i].height, sizeof(u16));
+
+    file_write_bytes(file, &font.glyphs[i].left, sizeof(i16));
+    file_write_bytes(file, &font.glyphs[i].right, sizeof(i16));
+    file_write_bytes(file, &font.glyphs[i].top, sizeof(i16));
+    file_write_bytes(file, &font.glyphs[i].bottom, sizeof(i16));
+
+    file_write_bytes(file, &font.glyphs[i].offset_x, sizeof(i16));
+    file_write_bytes(file, &font.glyphs[i].offset_y, sizeof(i16));
+    
+    file_write_bytes(file, &font.glyphs[i].advance_x, sizeof(i16));
+    file_write_bytes(file, &font.glyphs[i].kern, sizeof(i16));
+    file_write_bytes(file, &font.glyphs[i].left_bearing, sizeof(i16));
+  
+    sizei pixels_size = font.glyphs[i].width * font.glyphs[i].height;
+    file_write_bytes(file, font.glyphs[i].pixels, pixels_size);
+  }
+
+  // Write font information
+  
+  file_write_bytes(file, &font.ascent, sizeof(font.ascent));
+  file_write_bytes(file, &font.descent, sizeof(font.descent));
+  file_write_bytes(file, &font.line_gap, sizeof(font.line_gap));
+}
+
+void file_write_bytes(File& file, const NBRAudio& audio) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  
+  // Write the resource's information
+  
+  file_write_bytes(file, &audio.format, sizeof(audio.format));
+  file_write_bytes(file, &audio.sample_rate, sizeof(audio.sample_rate));
+  file_write_bytes(file, &audio.channels, sizeof(audio.channels));
+  file_write_bytes(file, &audio.size, sizeof(audio.size));
+  file_write_bytes(file, audio.samples, audio.size);
 }
 
 void file_write_bytes(File& file, const Transform& transform) {
@@ -312,6 +494,180 @@ void file_read_bytes(File& file, String* str) {
 
   file_read_bytes(file, c_str, sizeof(c_str));
   *str = String(c_str);
+}
+
+void file_read_bytes(File& file, NBRHeader* out_header) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  NIKOLA_ASSERT(out_header, "Invalid NBRHeader type given to file_read_bytes");
+  
+  file_read_bytes(file, &out_header->identifier, sizeof(out_header->identifier));
+
+  file_read_bytes(file, &out_header->major_version, sizeof(out_header->major_version));
+  file_read_bytes(file, &out_header->minor_version, sizeof(out_header->minor_version));
+
+  file_read_bytes(file, &out_header->resource_type, sizeof(out_header->resource_type));
+}
+
+void file_read_bytes(File& file, NBRTexture* out_texture) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  NIKOLA_ASSERT(out_texture, "Invalid NBRTexture type given to file_read_bytes");
+  
+  file_read_bytes(file, &out_texture->width, sizeof(out_texture->width));  
+  file_read_bytes(file, &out_texture->height, sizeof(out_texture->height));  
+  
+  file_read_bytes(file, &out_texture->channels, sizeof(out_texture->channels));  
+
+  sizei data_size = (out_texture->width * out_texture->height) * out_texture->channels;
+  out_texture->pixels = memory_allocate(data_size);
+  file_read_bytes(file, out_texture->pixels, data_size);
+}
+
+void file_read_bytes(File& file, NBRCubemap* out_cubemap) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  NIKOLA_ASSERT(out_cubemap, "Invalid NBRCubemap type given to file_read_bytes");
+  
+  file_read_bytes(file, &out_cubemap->width, sizeof(out_cubemap->width));  
+  file_read_bytes(file, &out_cubemap->height, sizeof(out_cubemap->height));  
+
+  file_read_bytes(file, &out_cubemap->channels, sizeof(out_cubemap->channels));  
+
+  file_read_bytes(file, &out_cubemap->faces_count, sizeof(out_cubemap->faces_count));  
+
+  sizei data_size = (out_cubemap->width * out_cubemap->height) * out_cubemap->channels;
+  for(sizei i = 0; i < out_cubemap->faces_count; i++) {
+    out_cubemap->pixels[i] = (u8*)memory_allocate(data_size);
+    file_read_bytes(file, out_cubemap->pixels[i], data_size);
+  }
+}
+
+void file_read_bytes(File& file, NBRShader* out_shader) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  NIKOLA_ASSERT(out_shader, "Invalid NBRShader type given to file_read_bytes");
+  
+  file_read_bytes(file, &out_shader->vertex_length, sizeof(u16));
+  out_shader->vertex_length += 1; // For the null terminator
+
+  out_shader->vertex_source = (i8*)memory_allocate(out_shader->vertex_length); 
+  file_read_bytes(file, out_shader->vertex_source, out_shader->vertex_length - 1);
+  out_shader->vertex_source[out_shader->vertex_length - 1] = '\0';
+ 
+  file_read_bytes(file, &out_shader->pixel_length, sizeof(u16));
+  out_shader->pixel_length += 1;
+
+  out_shader->pixel_source = (i8*)memory_allocate(out_shader->pixel_length); 
+  file_read_bytes(file, out_shader->pixel_source, out_shader->pixel_length - 1);
+  out_shader->pixel_source[out_shader->pixel_length - 1] = '\0';
+}
+
+void file_read_bytes(File& file, NBRMaterial* out_material) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  NIKOLA_ASSERT(out_material, "Invalid NBRMaterial type given to file_read_bytes");
+  
+  file_read_bytes(file, out_material->ambient, sizeof(f32) * 3); 
+  file_read_bytes(file, out_material->diffuse, sizeof(f32) * 3); 
+  file_read_bytes(file, out_material->specular, sizeof(f32) * 3); 
+ 
+  file_read_bytes(file, &out_material->diffuse_index, sizeof(i8)); 
+  file_read_bytes(file, &out_material->specular_index, sizeof(i8)); 
+}
+
+void file_read_bytes(File& file, NBRMesh* out_mesh) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  NIKOLA_ASSERT(out_mesh, "Invalid NBRMesh type given to file_read_bytes");
+  
+  file_read_bytes(file, &out_mesh->vertex_type, sizeof(u8));
+
+  file_read_bytes(file, &out_mesh->vertices_count, sizeof(u32));
+  out_mesh->vertices = (f32*)memory_allocate(sizeof(f32) * out_mesh->vertices_count); 
+  file_read_bytes(file, out_mesh->vertices, sizeof(f32) * out_mesh->vertices_count);
+
+  file_read_bytes(file, &out_mesh->indices_count, sizeof(u32));
+  out_mesh->indices = (u32*)memory_allocate(sizeof(u32) * out_mesh->indices_count); 
+  file_read_bytes(file, out_mesh->indices, sizeof(u32) * out_mesh->indices_count);
+
+  file_read_bytes(file, &out_mesh->material_index, sizeof(u8));
+}
+
+void file_read_bytes(File& file, NBRModel* out_model) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  NIKOLA_ASSERT(out_model, "Invalid NBRModel type given to file_read_bytes");
+  
+  // Load the meshes
+  
+  file_read_bytes(file, &out_model->meshes_count, sizeof(u16));
+  out_model->meshes = (NBRMesh*)memory_allocate(sizeof(NBRMesh) * out_model->meshes_count); 
+  for(sizei i = 0; i < out_model->meshes_count; i++) {
+    file_read_bytes(file, &out_model->meshes[i]);
+  }
+
+  // Load the materials 
+  
+  file_read_bytes(file, &out_model->materials_count, sizeof(u8));
+  out_model->materials = (NBRMaterial*)memory_allocate(sizeof(NBRMaterial) * out_model->materials_count); 
+  for(sizei i = 0; i < out_model->materials_count; i++) {
+    file_read_bytes(file, &out_model->materials[i]); 
+  }
+
+  // Load the textures 
+  
+  file_read_bytes(file, &out_model->textures_count, sizeof(u8));
+  out_model->textures = (NBRTexture*)memory_allocate(sizeof(NBRTexture) * out_model->textures_count); 
+  for(sizei i = 0; i < out_model->textures_count; i++) {
+    file_read_bytes(file, &out_model->textures[i]);
+  }
+}
+
+void file_read_bytes(File& file, NBRFont* out_font) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  NIKOLA_ASSERT(out_font, "Invalid NBRFont type given to file_read_bytes");
+  
+  // Load the glyphs 
+  
+  file_read_bytes(file, &out_font->glyphs_count, sizeof(out_font->glyphs_count));
+  out_font->glyphs = (NBRGlyph*)memory_allocate(sizeof(NBRGlyph) * out_font->glyphs_count);
+
+  for(u32 i = 0; i < out_font->glyphs_count; i++) {
+    file_read_bytes(file, &out_font->glyphs[i].unicode, sizeof(i8));
+  
+    file_read_bytes(file, &out_font->glyphs[i].width, sizeof(u16));
+    file_read_bytes(file, &out_font->glyphs[i].height, sizeof(u16));
+
+    file_read_bytes(file, &out_font->glyphs[i].left, sizeof(u16));
+    file_read_bytes(file, &out_font->glyphs[i].right, sizeof(u16));
+    file_read_bytes(file, &out_font->glyphs[i].top, sizeof(u16));
+    file_read_bytes(file, &out_font->glyphs[i].bottom, sizeof(u16));
+
+    file_read_bytes(file, &out_font->glyphs[i].offset_x, sizeof(i16));
+    file_read_bytes(file, &out_font->glyphs[i].offset_y, sizeof(i16));
+    
+    file_read_bytes(file, &out_font->glyphs[i].advance_x, sizeof(i16));
+    file_read_bytes(file, &out_font->glyphs[i].kern, sizeof(i16));
+    file_read_bytes(file, &out_font->glyphs[i].left_bearing, sizeof(i16));
+  
+    sizei pixels_size      = out_font->glyphs[i].width * out_font->glyphs[i].height;
+    out_font->glyphs[i].pixels = (u8*)memory_allocate(pixels_size); 
+
+    file_read_bytes(file, out_font->glyphs[i].pixels, pixels_size);
+  }
+
+  // Load font information
+  
+  file_read_bytes(file, &out_font->ascent, sizeof(out_font->ascent));
+  file_read_bytes(file, &out_font->descent, sizeof(out_font->descent));
+  file_read_bytes(file, &out_font->line_gap, sizeof(out_font->line_gap));
+}
+
+void file_read_bytes(File& file, NBRAudio* out_audio) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  NIKOLA_ASSERT(out_audio, "Invalid NBRAudio type given to file_read_bytes");
+  
+  file_read_bytes(file, &out_audio->format, sizeof(out_audio->format));
+  file_read_bytes(file, &out_audio->sample_rate, sizeof(out_audio->sample_rate));
+  file_read_bytes(file, &out_audio->channels, sizeof(out_audio->channels));
+  file_read_bytes(file, &out_audio->size, sizeof(out_audio->size));
+  
+  out_audio->samples = (i16*)memory_allocate(out_audio->size); 
+  file_read_bytes(file, out_audio->samples, out_audio->size);
 }
 
 void file_read_bytes(File& file, Transform* transform) {

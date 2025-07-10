@@ -84,7 +84,7 @@ static void init_resources(nikola::App* app) {
   nikola::resources_push_dir(app->res_group_id, "textures");
 
   // Skybox init
-  app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group_id, "cubemaps/accurate_night.nbrcubemap");
+  app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group_id, "cubemaps/accurate_night.nbr");
 
   // Materials init
   app->material_id = nikola::resources_push_material(app->res_group_id, nikola::resources_get_id(app->res_group_id, "grass"));

@@ -55,7 +55,7 @@ static void init_resources(nikola::App* app) {
   app->res_group_id = nikola::resources_create_group("app_res", res_path);
 
   // Resoruces init
-  app->font_id = nikola::resources_push_font(app->res_group_id, "fonts/IosevkaNerdFont-Bold.nbrfont");
+  app->font_id = nikola::resources_push_font(app->res_group_id, "fonts/IosevkaNerdFont-Bold.nbr");
 }
 
 /// Private functions 

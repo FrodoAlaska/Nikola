@@ -122,24 +122,21 @@
     - [x] Checkbox UI elements 
     - [x] Slider UI elements
     - [x] Documentation
+- [] Resource Manager v0.5
+    - [x] Instead of using an abstracted `NBR` layer over everything, write extra `file_write_bytes` functions for the various resources, which will write a _compressed_ version of the resources, and load them as well.
+    - [] Do resources actually reload? 
+    - [] Fix 3D models loading. 
+        - [] Some 3D models that don't include a texture get messed up 
+        - [] Add a parent and child relationship between meshes. Basically, every mesh should have a `local_position` which is set to `Vec3(0.0f)` by default, and it will be take into account when rendering.
+        - [] I think the renderer assumes the vertex data of the mesh so if a model has even an extra vertex data like color, the renderer messes everything up.
+    - [] Improve resource load times (aka multi-threading). 
+    - [] Documentation
 - [] GFX v1.1 
     - [x] Add instancing
     - [x] Test instancing
     - [] Improve shader workflow (using `glGetProgramiv` to get various information about the shader)
     - [] Compute shader support, with dispatching.
     - [] State-specific configuration
-    - [] Documentation
-- [] Resource Manager v0.5
-    - [] Fix 3D models loading. 
-        - [] Some 3D models that don't include a texture get messed up 
-        - [] Add a parent and child relationship between meshes. Basically, every mesh should have a `local_position` which is set to `Vec3(0.0f)` by default, and it will be take into account when rendering.
-        - [] I think the renderer assumes the vertex data of the mesh so if a model has even an extra vertex data like color, the renderer messes everything up.
-        - [] Get rid of Assimp? Replace with `cgltf` and `fastObj`
-    - [] Fix material resources 
-    - [] Make the `ResourceID` type more private with its members. I know, I know. It's bad. But at least it's gonna be safer until I find a better option. 
-    - [] Instead of using an abstracted `NBR` layer over everything, write extra `file_write_bytes` functions for the various resources, which will write a _compressed_ version of the resources, and load them as well.
-    - [] Do resources actually reload? 
-    - [] Improve resource load times. 
     - [] Documentation
 - [] Renderer v0.6 
     - [] Tear it up and do it from the ground up with actual plans of what to do? Debug rendering, lighting, better material workflow, instancing, and the like? Maybe an instanced-based renderer?

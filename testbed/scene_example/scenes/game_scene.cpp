@@ -113,13 +113,13 @@ bool game_scene_create(Scene* scene) {
   nikola::camera_create(&scene->frame_data.camera, cam_desc);
    
   // Models init
-  nikola::ResourceID model = nikola::resources_push_model(res_group, "models/tempel.nbrmodel");
-  // nikola::ResourceID model = nikola::resources_push_model(res_group, "models/bridge.nbrmodel");
-  // nikola::ResourceID model = nikola::resources_push_model(res_group, "models/ps1.nbrmodel");
+  nikola::ResourceID model = nikola::resources_push_model(res_group, "models/tempel.nbr");
+  // nikola::ResourceID model = nikola::resources_push_model(res_group, "models/bridge.nbr");
+  // nikola::ResourceID model = nikola::resources_push_model(res_group, "models/ps1.nbr");
 
   // Textures init
-  nikola::ResourceID mesh_texture = nikola::resources_push_texture(res_group, "textures/opengl.nbrtexture");
-  nikola::ResourceID pav_texture  = nikola::resources_push_texture(res_group, "textures/paviment.nbrtexture");
+  nikola::ResourceID mesh_texture = nikola::resources_push_texture(res_group, "textures/opengl.nbr");
+  nikola::ResourceID pav_texture  = nikola::resources_push_texture(res_group, "textures/paviment.nbr");
 
   // Materials init
   nikola::ResourceID material_id = nikola::resources_push_material(res_group, mesh_texture);
@@ -130,7 +130,7 @@ bool game_scene_create(Scene* scene) {
   nikola::ResourceID cube_mesh = nikola::resources_push_mesh(scene->resource_group, nikola::GEOMETRY_CUBE);
 
   // Skyboxes init
-  scene->frame_data.skybox_id = nikola::resources_push_skybox(res_group, "cubemaps/NightSky.nbrcubemap");
+  scene->frame_data.skybox_id = nikola::resources_push_skybox(res_group, "cubemaps/NightSky.nbr");
   // scene->frame_data.skybox_id = {};
 
   // Model init
@@ -143,7 +143,7 @@ bool game_scene_create(Scene* scene) {
   s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), cube_mesh, pav_material_id, "Ground"); 
 
   // Torches 
-  nikola::ResourceID torch_model = nikola::resources_push_model(res_group, "models/column_torch.nbrmodel");
+  nikola::ResourceID torch_model = nikola::resources_push_model(res_group, "models/column_torch.nbr");
   s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), torch_model, material_id, "Torch 0"); 
   s_entities.emplace_back(nikola::Vec3(10.0f, 0.0f, 10.0f), torch_model, material_id, "Torch 1"); 
 

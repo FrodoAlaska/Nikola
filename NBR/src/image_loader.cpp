@@ -37,7 +37,7 @@ static void directory_iterate_func(const nikola::FilePath& base_dir, const nikol
 
   // Check for the extension
   if(!check_valid_extension(nikola::filepath_extension(current_path))) {
-    NIKOLA_LOG_ERROR("Invalid image file at \'%s\'", current_path.c_str());
+    NIKOLA_LOG_WARN("Invalid image file found at \'%s\'. Ignoring it.", current_path.c_str());
     return;
   }
 
@@ -61,7 +61,7 @@ static void directory_iterate_func(const nikola::FilePath& base_dir, const nikol
 
 bool image_loader_load_texture(nikola::NBRTexture* texture, const nikola::FilePath& path) {
   if(!check_valid_extension(nikola::filepath_extension(path))) {
-    NIKOLA_LOG_ERROR("Invalid image file at \'%s\'", path.c_str());
+    NIKOLA_LOG_WARN("Invalid image file found at \'%s\'. Ignoring it.", path.c_str());
     return false;
   }
 

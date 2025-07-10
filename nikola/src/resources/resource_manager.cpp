@@ -1,6 +1,7 @@
 #include "nikola/nikola_resources.h"
 #include "nikola/nikola_event.h"
 #include "nikola/nikola_render.h"
+#include "nikola/nikola_file.h"
 
 #include <cstring>
 
@@ -74,6 +75,41 @@ static ResourceManager s_manager;
 /// ----------------------------------------------------------------------
 /// Private functions 
 
+static bool open_and_check_nbr_file(const FilePath& parent_dir, const FilePath& nbr_path, File* file, NBRHeader* header) {
+  FilePath path = filepath_append(parent_dir, nbr_path);
+
+  // Open the NBR file 
+  if(!file_open(file, path, (i32)(FILE_OPEN_READ | FILE_OPEN_BINARY))) {
+    NIKOLA_LOG_ERROR("Cannot load NBR file at \'%s\'", path.c_str());
+    return false;
+  }
+
+  // Read the header
+  file_read_bytes(*file, header);
+
+  // Check the validity of the reosurce type
+  NIKOLA_ASSERT((header->resource_type != RESOURCE_TYPE_INVALID), 
+                "Invalid resource type found in NBR file!");
+  
+  // Check for the validity of the identifier
+  if(header->identifier != NBR_VALID_IDENTIFIER) {
+    NIKOLA_LOG_ERROR("Invalid identifier found in NBR file at \'%s\'. Expected \'%i\' got \'%i\'", 
+                      path.c_str(), NBR_VALID_IDENTIFIER, header->identifier);
+
+    return false;
+  }  
+
+  // Check for the validity of the versions
+  bool is_valid_version = ((header->major_version == NBR_VALID_MAJOR_VERSION) || 
+                           (header->minor_version == NBR_VALID_MINOR_VERSION));
+  if(!is_valid_version) {
+    NIKOLA_LOG_ERROR("Invalid version found in NBR file at \'%s\'", path.c_str());
+    return false;
+  }
+
+  return true;
+}
+
 static const char* buffer_type_str(const GfxBufferType type) {
   switch(type) {
     case GFX_BUFFER_VERTEX: 
@@ -141,49 +177,45 @@ static T get_resource(const ResourceID& id, DynamicArray<T>& res, const Resource
   return res[id._id];
 }
 
-static ResourceType get_resource_extension_type(const FilePath& path) {
-  FilePath ext = filepath_extension(path); 
-
-  if(ext == ".nbrtexture") {
-    return RESOURCE_TYPE_TEXTURE;
-  }
-  else if(ext == ".nbrcubemap") {
-    return RESOURCE_TYPE_CUBEMAP;
-  }
-  else if(ext == ".nbrshader") {
-    return RESOURCE_TYPE_SHADER;
-  }
-  else if(ext == ".nbrmodel") {
-    return RESOURCE_TYPE_MODEL;
-  }
-  else if(ext == ".nbrfont") {
-    return RESOURCE_TYPE_FONT;
-  }
-  else if(ext == ".nbraudio") {
-    return RESOURCE_TYPE_AUDIO_BUFFER;
-  }
-}
-
-static void reload_texture(NBRFile& file, const ResourceID& id) {
+static void reload_texture(const ResourceID& id, File& file) {
   GfxTexture* texture = resources_get_texture(id);  
 
-  // Create the new texture
-  NBRTexture* nbr_texture     = (NBRTexture*)file.body_data;
-  GfxTextureDesc texture_desc = gfx_texture_get_desc(texture);
-  nbr_import_texture(nbr_texture, &texture_desc);
+  // Read the NBR texture
+  NBRTexture nbr_texture; 
+  file_read_bytes(file, &nbr_texture);
+
+  // Update the texture desc
+
+  GfxTextureDesc text_desc = gfx_texture_get_desc(texture);
   
+  text_desc.width    = nbr_texture.width; 
+  text_desc.height   = nbr_texture.height; 
+  text_desc.data     = nbr_texture.pixels;
+
   // Update the texture
-  gfx_texture_update(texture, texture_desc);
-  gfx_texture_upload_data(texture, texture_desc.width, texture_desc.height, texture_desc.depth, texture_desc.data);
+  gfx_texture_upload_data(texture, 
+                          text_desc.width, text_desc.height, 
+                          text_desc.depth, text_desc.data);
 }
 
-static void reload_cubemap(NBRFile& file, const ResourceID& id) {
+static void reload_cubemap(const ResourceID& id, File& file) {
   GfxCubemap* cubemap = resources_get_cubemap(id);  
+  
+  // Read the NBR cubemap
+  NBRCubemap nbr_cubemap; 
+  file_read_bytes(file, &nbr_cubemap);
 
-  // Create the new cubemap
-  NBRCubemap* nbr_cubemap     = (NBRCubemap*)file.body_data;
-  GfxCubemapDesc cubemap_desc = gfx_cubemap_get_desc(cubemap);
-  nbr_import_cubemap(nbr_cubemap, &cubemap_desc);
+  // Update the cubemap desc
+
+  GfxCubemapDesc cube_desc = gfx_cubemap_get_desc(cubemap);
+  
+  cube_desc.width       = nbr_cubemap.width; 
+  cube_desc.height      = nbr_cubemap.height; 
+  cube_desc.faces_count = nbr_cubemap.faces_count; 
+  
+  for(sizei i = 0; i < cube_desc.faces_count; i++) {
+    cube_desc.data[i] = nbr_cubemap.pixels[i];
+  }
  
   /* @NOTE (19/4/2025, Mohamed):
    *
@@ -195,43 +227,26 @@ static void reload_cubemap(NBRFile& file, const ResourceID& id) {
    */
 
   // Update the cubemap
-  gfx_cubemap_update(cubemap, cubemap_desc);
-  gfx_cubemap_upload_data(cubemap, cubemap_desc.width, cubemap_desc.height, (const void**)cubemap_desc.data, cubemap_desc.faces_count);
+  gfx_cubemap_upload_data(cubemap, 
+                          cube_desc.width, cube_desc.height, 
+                          (const void**)cube_desc.data, cube_desc.faces_count);
 }
 
-static void reload_shader(NBRFile& file, const ResourceID& id) {
+static void reload_shader(const ResourceID& id, File& file) {
   GfxShader* shader = resources_get_shader(id);  
+  
+  // Load the NBR shader
+  NBRShader nbr_shader;
+  file_read_bytes(file, &nbr_shader);
 
-  // Create the new shader
-  NBRShader* nbr_shader     = (NBRShader*)file.body_data;
+  // Update the shader desc
   GfxShaderDesc shader_desc = {};
-  nbr_import_shader(nbr_shader, &shader_desc);
+  shader_desc.vertex_source = nbr_shader.vertex_source;
+  shader_desc.pixel_source  = nbr_shader.pixel_source;
   
   // Update the shader
   gfx_shader_update(shader, shader_desc);
 }
-
-static void reload_core_resource(const ResourceGroup* group, const ResourceID& id, const FilePath& nbr_path) {
-  // Load the NBR file
-  NBRFile nbr;
-  nbr_file_load(&nbr, nbr_path);
-
-  switch (id._type) {
-    case RESOURCE_TYPE_TEXTURE:
-      reload_texture(nbr, id);
-      break;
-    case RESOURCE_TYPE_CUBEMAP:
-      reload_cubemap(nbr, id);
-      break;
-    case RESOURCE_TYPE_SHADER:
-      reload_shader(nbr, id);
-      break;
-    default:
-      break;
-  }
-
-  nbr_file_unload(nbr);
-} 
 
 /// Private functions 
 /// ----------------------------------------------------------------------
@@ -247,28 +262,32 @@ static void resource_entry_iterate(const FilePath& base, const FilePath& path, v
     return;
   }
   
-  FilePath filename = filepath_filename(path);
-  ResourceType type = get_resource_extension_type(filename);
-  filepath_set_extension(filename, ""); // Need to remove the extension
+  // Load the NBR header
+  NBRHeader header;
+  File file;
+  if(!open_and_check_nbr_file(base, filepath_filename(path), &file, &header)) {
+    return;
+  }
+  file_close(file);
 
-  switch (type) {
+  switch (header.resource_type) {
     case RESOURCE_TYPE_TEXTURE:
-      group->named_ids[filename] = resources_push_texture(group->id, path);
+      resources_push_texture(group->id, path);
       break;
     case RESOURCE_TYPE_CUBEMAP:
-      group->named_ids[filename] = resources_push_cubemap(group->id, path);
+      resources_push_cubemap(group->id, path);
       break;
     case RESOURCE_TYPE_SHADER:
-      group->named_ids[filename] = resources_push_shader(group->id, path);
+      resources_push_shader(group->id, path);
       break;
     case RESOURCE_TYPE_MODEL:
-      group->named_ids[filename] = resources_push_model(group->id, path);
+      resources_push_model(group->id, path);
       break;
     case RESOURCE_TYPE_FONT:
-      group->named_ids[filename] = resources_push_font(group->id, path);
+      resources_push_font(group->id, path);
       break;
     case RESOURCE_TYPE_AUDIO_BUFFER:
-      group->named_ids[filename] = resources_push_audio_buffer(group->id, path);
+      resources_push_audio_buffer(group->id, path);
       break;
     default:
       NIKOLA_LOG_ERROR("Invalid resource type \'%s\'", path.c_str());
@@ -281,6 +300,13 @@ static void resource_entry_update(const FileStatus status, const FilePath& path,
   if(status != FILE_STATUS_MODIFIED) {
     return;
   }
+  
+  // Load the NBR header
+  NBRHeader header;
+  File file;
+  if(!open_and_check_nbr_file(path, "", &file, &header)) {
+    return;
+  }
  
   // Get the filename without the extension
   FilePath filename = filepath_filename(path); 
@@ -289,11 +315,15 @@ static void resource_entry_update(const FileStatus status, const FilePath& path,
   ResourceGroup* group = (ResourceGroup*)user_data;
   ResourceID res_id    = resources_get_id(group->id, filename);
 
-  switch (res_id._type) {
+  switch (header.resource_type) {
     case RESOURCE_TYPE_TEXTURE:
+      reload_texture(res_id, file);
+      break;
     case RESOURCE_TYPE_CUBEMAP:
+      reload_cubemap(res_id, file);
+      break;
     case RESOURCE_TYPE_SHADER:
-      reload_core_resource(group, res_id, path);
+      reload_shader(res_id, file);
       break;
     case RESOURCE_TYPE_MODEL:
       // @TODO (Resource)
@@ -305,9 +335,11 @@ static void resource_entry_update(const FileStatus status, const FilePath& path,
       // @TODO (Resource)
       break;
     default:
-      NIKOLA_LOG_ERROR("Unknown resource type");
+      NIKOLA_LOG_ERROR("Unsupported resource type for reloading");
       break;
   }
+
+  file_close(file);
 }
 
 /// Callbacks
@@ -341,17 +373,13 @@ u16 resources_create_group(const String& name, const FilePath& parent_dir) {
     .id         = group_id,
   };
 
-  // A default resource for later
-  ResourceGroup* group = &s_manager.groups[group_id]; 
-  group->named_ids["invalid"] = ResourceID{}; 
-
   // Create the parent directory if it doesn't exist
   if(!nikola::filesystem_exists(parent_dir)) {
     nikola::filesystem_create_directory(parent_dir);
   }
 
   // Add a file watcher to the parent directory
-  filewatcher_add_dir(parent_dir, resource_entry_update, group);
+  filewatcher_add_dir(parent_dir, resource_entry_update, &s_manager.groups[group_id]);
 
   NIKOLA_LOG_INFO("Successfully created a resource group \'%s\'", name.c_str());
   return group_id;
@@ -443,38 +471,46 @@ ResourceID resources_push_texture(const ResourceGroupID& group_id,
   ResourceGroup* group = &s_manager.groups[group_id];
  
   // Load the NBR file
-  NBRFile nbr;
-  nbr_file_load(&nbr, filepath_append(group->parent_dir, nbr_path));
+  NBRHeader header;
+  File file;
+  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
+    return ResourceID{};
+  }
 
   // Make sure it is the correct resource type
-  NIKOLA_ASSERT((nbr.resource_type == RESOURCE_TYPE_TEXTURE), "Expected RESOURCE_TYPE_TEXTURE");
+  NIKOLA_ASSERT((header.resource_type == RESOURCE_TYPE_TEXTURE), "Expected RESOURCE_TYPE_TEXTURE");
 
-  NBRTexture* nbr_texture = (NBRTexture*)nbr.body_data;
+  // Load the NBR texture type
+  NBRTexture nbr_texture;
+  file_read_bytes(file, &nbr_texture);
+
+  // Convert the NBR format to a valid texture
+  
   GfxTextureDesc tex_desc; 
   tex_desc.format    = format; 
   tex_desc.filter    = filter; 
   tex_desc.wrap_mode = wrap;
-
-  // Convert the NBR format to a valid texture
-  nbr_import_texture(nbr_texture, &tex_desc);
+  tex_desc.width    = nbr_texture.width; 
+  tex_desc.height   = nbr_texture.height; 
+  tex_desc.depth    = 0; 
+  tex_desc.mips     = 1; 
+  tex_desc.type     = GFX_TEXTURE_2D; 
+  tex_desc.data     = nbr_texture.pixels;
 
   // Create the texture 
-  ResourceID id; 
-  GfxTexture* texture = gfx_texture_create(renderer_get_context(), tex_desc);
-  PUSH_RESOURCE(group, textures, texture, RESOURCE_TYPE_TEXTURE, id);
+  ResourceID id = resources_push_texture(group_id, tex_desc); 
 
-  // Remember to close the NBR
-  nbr_file_unload(nbr);
-
+  // Freeing NBR data
+  memory_free(nbr_texture.pixels);
+  file_close(file); 
+  
   // Add the resource to the named resources
+  
   FilePath filename_without_ext = filepath_filename(nbr_path);
   filepath_set_extension(filename_without_ext, "");
   group->named_ids[filename_without_ext] = id;
 
   // New texture added!
-  NIKOLA_LOG_DEBUG("Group \'%s\' pushed texture:", group->name.c_str());
-  NIKOLA_LOG_DEBUG("     Size = %i X %i", tex_desc.width, tex_desc.height);
-  NIKOLA_LOG_DEBUG("     Type = %s", texture_type_str(tex_desc.type));
   NIKOLA_LOG_DEBUG("     Path = %s", nbr_path.c_str());
   return id;
 }
@@ -503,27 +539,44 @@ ResourceID resources_push_cubemap(const ResourceGroupID& group_id,
   ResourceGroup* group = &s_manager.groups[group_id];
 
   // Load the NBR file
-  NBRFile nbr;
-  nbr_file_load(&nbr, filepath_append(group->parent_dir, nbr_path));
+  NBRHeader header;
+  File file;
+  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
+    return ResourceID{};
+  }
 
   // Make sure it is the correct resource type
-  NIKOLA_ASSERT((nbr.resource_type == RESOURCE_TYPE_CUBEMAP), "Expected RESOURCE_TYPE_CUBEMAP");
+  NIKOLA_ASSERT((header.resource_type == RESOURCE_TYPE_CUBEMAP), "Expected RESOURCE_TYPE_CUBEMAP");
+
+  // Load the NBR cubemap
+  NBRCubemap nbr_cubemap;
+  file_read_bytes(file, &nbr_cubemap);
 
   // Convert the NBR format to a valid cubemap
-  NBRCubemap* nbr_cubemap = (NBRCubemap*)nbr.body_data;
+  
   GfxCubemapDesc cube_desc; 
-  cube_desc.format    = format; 
-  cube_desc.filter    = filter; 
-  cube_desc.wrap_mode = wrap;
-  nbr_import_cubemap(nbr_cubemap, &cube_desc);
+  cube_desc.format      = format; 
+  cube_desc.filter      = filter; 
+  cube_desc.wrap_mode   = wrap;
+  cube_desc.width       = nbr_cubemap.width; 
+  cube_desc.height      = nbr_cubemap.height; 
+  cube_desc.mips        = 1; 
+  cube_desc.faces_count = nbr_cubemap.faces_count; 
 
-  // Create the cubemap
-  ResourceID id; 
-  GfxCubemap* cubemap = gfx_cubemap_create(renderer_get_context(), cube_desc);
-  PUSH_RESOURCE(group, cubemaps, cubemap, RESOURCE_TYPE_CUBEMAP, id);
+  for(sizei i = 0; i < cube_desc.faces_count; i++) {
+    cube_desc.data[i] = nbr_cubemap.pixels[i];
+  }
+  
+  // Create the cubemap 
+  ResourceID id = resources_push_cubemap(group_id, cube_desc); 
 
-  // Remember to close the NBR
-  nbr_file_unload(nbr);
+  // Freeing NBR data
+  
+  for(sizei i = 0; i < nbr_cubemap.faces_count; i++) {
+    memory_free(nbr_cubemap.pixels[i]);
+  }
+  
+  file_close(file); 
 
   // Add the resource to the named resources
   FilePath filename_without_ext = filepath_filename(nbr_path);
@@ -531,9 +584,6 @@ ResourceID resources_push_cubemap(const ResourceGroupID& group_id,
   group->named_ids[filename_without_ext] = id;
 
   // New cubemap added!
-  NIKOLA_LOG_DEBUG("Group \'%s\' pushed cubemap:", group->name.c_str());
-  NIKOLA_LOG_DEBUG("     Size  = %i X %i", cube_desc.width, cube_desc.height);
-  NIKOLA_LOG_DEBUG("     Faces = %i", cube_desc.faces_count);
   NIKOLA_LOG_DEBUG("     Path  = %s", nbr_path.c_str());
   return id;
 }
@@ -558,22 +608,33 @@ ResourceID resources_push_shader(const ResourceGroupID& group_id, const FilePath
   ResourceGroup* group = &s_manager.groups[group_id];
   
   // Load the NBR file
-  NBRFile nbr;
-  nbr_file_load(&nbr, filepath_append(group->parent_dir, nbr_path));
+  NBRHeader header;
+  File file;
+  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
+    return ResourceID{};
+  }
   
   // Make sure it is the correct resource type
-  NIKOLA_ASSERT((nbr.resource_type == RESOURCE_TYPE_SHADER), "Expected RESOURCE_TYPE_SHADER");
+  NIKOLA_ASSERT((header.resource_type == RESOURCE_TYPE_SHADER), "Expected RESOURCE_TYPE_SHADER");
+
+  // Load the NBR shader type
+  NBRShader nbr_shader;
+  file_read_bytes(file, &nbr_shader);
 
   // Convert the NBR format to a valid shader
-  NBRShader* nbr_shader     = (NBRShader*)nbr.body_data;
+ 
   GfxShaderDesc shader_desc = {};
-  nbr_import_shader(nbr_shader, &shader_desc);
+  shader_desc.vertex_source = nbr_shader.vertex_source;
+  shader_desc.pixel_source  = nbr_shader.pixel_source;
 
   // Create the shader
   ResourceID id = resources_push_shader(group_id, shader_desc);
 
-  // Remember to close the NBR
-  nbr_file_unload(nbr);
+  // Freeing NBR data
+  memory_free(nbr_shader.vertex_source);
+  memory_free(nbr_shader.pixel_source);
+  
+  file_close(file); 
 
   // Add the resource to the named resources
   FilePath filename_without_ext = filepath_filename(nbr_path);
@@ -622,19 +683,46 @@ ResourceID resources_push_mesh(const ResourceGroupID& group_id, NBRMesh& nbr_mes
   ResourceGroup* group = &s_manager.groups[group_id];
 
   // Allocate the mesh
-  Mesh* mesh = new Mesh{};
+  
+  Mesh* mesh      = new Mesh{};
+  mesh->pipe_desc = {}; 
 
   // Convert the NBR mesh into the engine's mesh format 
-  nbr_import_mesh(&nbr_mesh, group_id, mesh);
+  
+  GfxBufferDesc buff_desc = {
+    .data  = (void*)nbr_mesh.vertices,
+    .size  = nbr_mesh.vertices_count * sizeof(f32), 
+    .type  = GFX_BUFFER_VERTEX, 
+    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
+  };
+  mesh->vertex_buffer = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
+    
+  buff_desc = {
+    .data  = (void*)nbr_mesh.indices,
+    .size  = nbr_mesh.indices_count * sizeof(u32), 
+    .type  = GFX_BUFFER_INDEX, 
+    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
+  };
+  mesh->index_buffer = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
 
-  // Create the pipeline
+  mesh->pipe_desc.vertex_buffer  = mesh->vertex_buffer;
+  mesh->pipe_desc.vertices_count = nbr_mesh.vertices_count;  
+  mesh->pipe_desc.index_buffer   = mesh->index_buffer;
+  mesh->pipe_desc.indices_count  = nbr_mesh.indices_count;  
+  mesh->pipe_desc.draw_mode      = GFX_DRAW_MODE_TRIANGLE;
+
+  vertex_type_layout((VertexType)nbr_mesh.vertex_type, &mesh->pipe_desc.layouts[0]);
   mesh->pipe = gfx_pipeline_create(renderer_get_context(), mesh->pipe_desc);
 
   // Create the mesh
+  
   ResourceID id; 
   PUSH_RESOURCE(group, meshes, mesh, RESOURCE_TYPE_MESH, id);
 
+  // Freeing NBR data
+
   // New mesh added!
+  
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed mesh:", group->name.c_str());
   NIKOLA_LOG_DEBUG("     Vertex type   = %s", vertex_type_str((VertexType)nbr_mesh.vertex_type));
   NIKOLA_LOG_DEBUG("     Vertices      = %zu", mesh->pipe_desc.vertices_count);
@@ -749,24 +837,101 @@ ResourceID resources_push_model(const ResourceGroupID& group_id, const FilePath&
   ResourceGroup* group = &s_manager.groups[group_id];
   
   // Load the NBR file
-  NBRFile nbr;
-  nbr_file_load(&nbr, filepath_append(group->parent_dir, nbr_path));
+  NBRHeader header;
+  File file;
+  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
+    return ResourceID{};
+  }
+  
+  // Make sure it is the correct resource type
+  NIKOLA_ASSERT((header.resource_type == RESOURCE_TYPE_MODEL), "Expected RESOURCE_TYPE_MODEL");
 
   // Allocate the model
   Model* model = new Model{};
   
+  // Load the NBR model
+  NBRModel nbr_model;
+  file_read_bytes(file, &nbr_model);
+  
   // Convert the NBR format to a valid model
-  NBRModel* nbr_model = (NBRModel*)nbr.body_data; 
-  nbr_import_model(nbr_model, group_id, model);
+  
+  // Make some space for the arrays for some better performance  
+  model->meshes.reserve(nbr_model.meshes_count);
+  model->materials.reserve(nbr_model.materials_count);
+  model->material_indices.reserve(nbr_model.meshes_count);
+  
+  DynamicArray<ResourceID> texture_ids; // @FIX (Resource): This is bad. Don't do this!
+
+  // Convert the textures
+  
+  for(sizei i = 0; i < nbr_model.textures_count; i++) {
+    NBRTexture* nbr_texture = &nbr_model.textures[i];
+
+    GfxTextureDesc desc; 
+    desc.format    = GFX_TEXTURE_FORMAT_RGBA8; 
+    desc.filter    = GFX_TEXTURE_FILTER_MIN_MAG_LINEAR; 
+    desc.wrap_mode = GFX_TEXTURE_WRAP_CLAMP;
+    desc.width     = nbr_texture->width; 
+    desc.height    = nbr_texture->height; 
+    desc.depth     = 0; 
+    desc.mips      = 1; 
+    desc.type      = GFX_TEXTURE_2D; 
+    desc.data      = nbr_texture->pixels;
+  
+    texture_ids.push_back(resources_push_texture(group_id, desc));
+  }
+  
+  // Convert the material 
+  
+  for(sizei i = 0; i < nbr_model.materials_count; i++) {
+    ResourceID mat_id = resources_push_material(group_id, texture_ids[nbr_model.materials[i].diffuse_index]);
+    Material* mat     = resources_get_material(mat_id);
+    
+    // Insert a valid specular texture (if one exists)
+    i8 specular_index = nbr_model.materials[i].specular_index;
+    mat->specular_map = specular_index != -1 ? resources_get_texture(texture_ids[specular_index]) : nullptr;
+
+    mat->color = Vec4(nbr_model.materials[i].diffuse[0], 
+                      nbr_model.materials[i].diffuse[1], 
+                      nbr_model.materials[i].diffuse[2], 
+                      1.0f); 
+
+    model->materials.push_back(mat); 
+  }
+  
+  // Convert the vertices 
+  
+  for(sizei i = 0; i < nbr_model.meshes_count; i++) {
+    ResourceID mesh_id = resources_push_mesh(group_id, nbr_model.meshes[i]);
+    model->meshes.push_back(resources_get_mesh(mesh_id));
+
+    model->material_indices.push_back(nbr_model.meshes[i].material_index);
+  }
 
   // New model added!
+  
   ResourceID id;
   PUSH_RESOURCE(group, models, model, RESOURCE_TYPE_MODEL, id);
 
-  // Remember to close the NBR
-  nbr_file_unload(nbr);
+  // Freeing NBR data
+  
+  for(sizei i = 0; i < nbr_model.meshes_count; i++) {
+    memory_free(nbr_model.meshes[i].vertices);
+    memory_free(nbr_model.meshes[i].indices);
+  }
+
+  for(sizei i = 0; i < nbr_model.textures_count; i++) {
+    memory_free(nbr_model.textures[i].pixels);
+  }
+
+  memory_free(nbr_model.meshes);
+  memory_free(nbr_model.materials);
+  memory_free(nbr_model.textures);
+  
+  file_close(file); 
 
   // Add the resource to the named resources
+  
   FilePath filename_without_ext = filepath_filename(nbr_path);
   filepath_set_extension(filename_without_ext, "");
   group->named_ids[filename_without_ext] = id;
@@ -774,7 +939,7 @@ ResourceID resources_push_model(const ResourceGroupID& group_id, const FilePath&
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed model:", group->name.c_str());
   NIKOLA_LOG_DEBUG("     Meshes    = %zu", model->meshes.size());
   NIKOLA_LOG_DEBUG("     Materials = %zu", model->materials.size());
-  NIKOLA_LOG_DEBUG("     Textures  = %i", nbr_model->textures_count);
+  NIKOLA_LOG_DEBUG("     Textures  = %i", nbr_model.textures_count);
   NIKOLA_LOG_DEBUG("     Path      = %s", nbr_path.c_str());
   return id;
 }
@@ -784,24 +949,94 @@ ResourceID resources_push_font(const ResourceGroupID& group_id, const FilePath& 
   ResourceGroup* group = &s_manager.groups[group_id];
   
   // Load the NBR file
-  NBRFile nbr;
-  nbr_file_load(&nbr, filepath_append(group->parent_dir, nbr_path));
+  NBRHeader header;
+  File file;
+  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
+    return ResourceID{};
+  }
+
+  // Make sure it is the correct resource type
+  NIKOLA_ASSERT((header.resource_type == RESOURCE_TYPE_FONT), "Expected RESOURCE_TYPE_FONT");
 
   // Allocate the model
   Font* font = new Font{};
   
+  // Load the NBR font
+  NBRFont nbr_font;
+  file_read_bytes(file, &nbr_font);
+  
   // Convert the NBR format to a valid model
-  NBRFont* nbr_font = (NBRFont*)nbr.body_data; 
-  nbr_import_font(nbr_font, group_id, font);
+
+  // Import the font information
+  
+  font->ascent   = (f32)nbr_font.ascent;
+  font->descent  = (f32)nbr_font.descent;
+  font->line_gap = (f32)nbr_font.line_gap;
+
+  // Import the glyphs 
+  
+  for(sizei i = 0; i < nbr_font.glyphs_count; i++) {
+    Glyph glyph;
+
+    glyph.unicode = nbr_font.glyphs[i].unicode;
+
+    glyph.size.x = nbr_font.glyphs[i].width;
+    glyph.size.y = nbr_font.glyphs[i].height;
+    
+    glyph.offset.x = nbr_font.glyphs[i].offset_x;
+    glyph.offset.y = nbr_font.glyphs[i].offset_y;
+    
+    glyph.left   = nbr_font.glyphs[i].left;
+    glyph.top    = nbr_font.glyphs[i].top;
+    glyph.right  = nbr_font.glyphs[i].right;
+    glyph.bottom = nbr_font.glyphs[i].bottom;
+    
+    glyph.advance_x    = nbr_font.glyphs[i].advance_x;
+    glyph.kern         = nbr_font.glyphs[i].kern;
+    glyph.left_bearing = nbr_font.glyphs[i].left_bearing;
+
+    // We don't care about glyphs that have a "non-size"
+    if(glyph.size.x <= 0) {
+      continue;
+    }
+  
+    // Importing the texture
+    
+    GfxTextureDesc face_desc {
+      .width  = (u32)nbr_font.glyphs[i].width,
+      .height = (u32)nbr_font.glyphs[i].height,
+      .depth  = 0, 
+      .mips   = 1,
+
+      .type      = GFX_TEXTURE_2D, 
+      .format    = GFX_TEXTURE_FORMAT_R8, 
+      .filter    = GFX_TEXTURE_FILTER_MIN_MAG_LINEAR, 
+      .wrap_mode = GFX_TEXTURE_WRAP_CLAMP,
+      
+      .data = (void*)nbr_font.glyphs[i].pixels,
+    };
+    glyph.texture = resources_get_texture(resources_push_texture(group_id, face_desc));
+
+    font->glyphs[glyph.unicode] = glyph;
+  }
 
   // New font added!
+  
   ResourceID id;
   PUSH_RESOURCE(group, fonts, font, RESOURCE_TYPE_FONT, id);
 
-  // Remember to close the NBR
-  nbr_file_unload(nbr);
+  // Freeing NBR data
+  
+  for(u32 i = 0; i < nbr_font.glyphs_count; i++) {
+    memory_free(nbr_font.glyphs[i].pixels);
+  }
+
+  memory_free(nbr_font.glyphs);
+  
+  file_close(file); 
 
   // Add the resource to the named resources
+  
   FilePath filename_without_ext = filepath_filename(nbr_path);
   filepath_set_extension(filename_without_ext, "");
   group->named_ids[filename_without_ext] = id;
@@ -839,21 +1074,37 @@ ResourceID resources_push_audio_buffer(const ResourceGroupID& group_id, const Fi
   ResourceGroup* group = &s_manager.groups[group_id];
 
   // Load the NBR file
-  NBRFile nbr;
-  nbr_file_load(&nbr, filepath_append(group->parent_dir, nbr_path));
+  NBRHeader header;
+  File file;
+  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
+    return ResourceID{};
+  }
+  
+  // Make sure it is the correct resource type
+  NIKOLA_ASSERT((header.resource_type == RESOURCE_TYPE_AUDIO_BUFFER), "Expected RESOURCE_TYPE_AUDIO_BUFFER");
+  
+  // Load the NBR audio
+  NBRAudio nbr_audio;
+  file_read_bytes(file, &nbr_audio);
   
   // Convert the NBR format to a valid audio buffer desc
+  
   AudioBufferDesc desc = {};
-  NBRAudio* nbr_audio  = (NBRAudio*)nbr.body_data; 
-  nbr_import_audio(nbr_audio, group_id, &desc);
+  desc.format      = (AudioBufferFormat)nbr_audio.format; 
+  desc.channels    = nbr_audio.channels; 
+  desc.sample_rate = nbr_audio.sample_rate;
+  desc.size        = nbr_audio.size;
+  desc.data        = (void*)nbr_audio.samples;
 
   // New audio buffer added!
   ResourceID id = resources_push_audio_buffer(group_id, desc);
  
-  // Remember to close the NBR
-  nbr_file_unload(nbr);
-  
+  // Freeing NBR data
+  memory_free(nbr_audio.samples);
+  file_close(file); 
+
   // Add the resource to the named resources
+  
   FilePath filename_without_ext = filepath_filename(nbr_path);
   filepath_set_extension(filename_without_ext, "");
   group->named_ids[filename_without_ext] = id;

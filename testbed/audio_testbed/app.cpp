@@ -32,7 +32,7 @@ static void init_resources(nikola::App* app) {
   app->frame_data.skybox_id = {};
 
   // Audio init
-  nikola::ResourceID audio_id = nikola::resources_push_audio_buffer(app->res_group, "audio/alexandra.nbraudio");
+  nikola::ResourceID audio_id = nikola::resources_push_audio_buffer(app->res_group, "audio/alexandra.nbr");
   app->audio_buffer           = nikola::resources_get_audio_buffer(audio_id);
 
   // Audio sources init

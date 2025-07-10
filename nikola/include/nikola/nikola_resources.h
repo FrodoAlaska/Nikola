@@ -25,9 +25,27 @@ const u8 NBR_VALID_IDENTIFIER     = 107;
 const i16 NBR_VALID_MAJOR_VERSION = 0;
 
 /// The currently valid minor version of any `.nbr` file
-const i16 NBR_VALID_MINOR_VERSION = 1;
+const i16 NBR_VALID_MINOR_VERSION = 3;
 
 /// NBR consts
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// NBRHeader 
+struct NBRHeader {
+  /// A 1-byte value to correctly identify an NBR file.
+  u8 identifier;                 
+
+  /// A 2-bytes value for the major version of the file.
+  i16 major_version;
+  
+  /// A 2-bytes value for the minor version of the file. 
+  i16 minor_version; 
+
+  /// A 2-bytes value for the resource type to be parsed.
+  u16 resource_type;                
+};
+/// NBRHeader
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -239,66 +257,6 @@ struct NBRAudio {
 /// NBRAudio
 ///---------------------------------------------------------------------------------------------------------------------
 
-///---------------------------------------------------------------------------------------------------------------------
-/// NBRFile 
-struct NBRFile {
-  /// A reference to the initial given file path.
-  FilePath path;
-
-  /// The internal handle for the opened file.
-  File file_handle;
-
-  /// A 1-byte value to correctly identify an NBR file.
-  u8 identifier;                 
-
-  /// A 2-bytes value for the major version of the file.
-  i16 major_version;
-  
-  /// A 2-bytes value for the minor version of the file. 
-  i16 minor_version; 
-
-  /// A 2-bytes value for the resource type to be parsed.
-  u16 resource_type;                
-
-  /// The actual data of the file.
-  void* body_data; 
-};
-/// NBRFile
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// NBR file functions
-
-/// Open and load the appropriate data found at `path` into the given `nbr`.
-NIKOLA_API void nbr_file_load(NBRFile* nbr, const FilePath& path);
-
-/// Reclaim/free any memory consumed by `nbr`.
-NIKOLA_API void nbr_file_unload(NBRFile& nbr);
-
-/// Returns `true` if the given `nbr_path` has a valid NBR extension. 
-NIKOLA_API const bool nbr_file_valid_extension(const FilePath& nbr_path);
-
-/// Save the given `texture` at `path` using `nbr`'s information.
-NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRTexture& texture, const FilePath& path);
-
-/// Save the given `cubemap` at `path` using `nbr`'s information.
-NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRCubemap& cubemap, const FilePath& path);
-
-/// Save the given `shader` at `path` using `nbr`'s information.
-NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRShader& shader, const FilePath& path);
-
-/// Save the given `model` at `path` using `nbr`'s information.
-NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRModel& model, const FilePath& path);
-
-/// Save the given `font` at `path` using `nbr`'s information.
-NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRFont& font, const FilePath& path);
-
-/// Save the given `audio` at `path` using `nbr`'s information.
-NIKOLA_API void nbr_file_save(NBRFile& nbr, const NBRAudio& audio, const FilePath& path);
-
-/// NBR file functions
-///---------------------------------------------------------------------------------------------------------------------
-
 /// ** NBR (Nikola Binary Resource) ***
 /// ----------------------------------------------------------------------
 
@@ -356,37 +314,40 @@ typedef u16 ResourceGroupID;
 ///---------------------------------------------------------------------------------------------------------------------
 /// ResourceType
 enum ResourceType {
-  /// A flag to denote a `GfxBuffer` resource
+  /// Indicated an invalid resource.
+  RESOURCE_TYPE_INVALID        = 16 << -1,
+
+  /// A flag to denote a `GfxBuffer` resource.
   RESOURCE_TYPE_BUFFER         = 16 << 0, 
 
-  /// A flag to denote a `GfxTexture` resource
+  /// A flag to denote a `GfxTexture` resource.
   RESOURCE_TYPE_TEXTURE        = 16 << 1, 
   
-  /// A flag to denote a `GfxCubemap` resource
+  /// A flag to denote a `GfxCubemap` resource.
   RESOURCE_TYPE_CUBEMAP        = 16 << 2,
   
-  /// A flag to denote a `GfxShader` resource
+  /// A flag to denote a `GfxShader` resource.
   RESOURCE_TYPE_SHADER         = 16 << 4,
   
-  /// A flag to denote a `Mesh` resource
+  /// A flag to denote a `Mesh` resource.
   RESOURCE_TYPE_MESH           = 16 << 5,
   
-  /// A flag to denote a `Material` resource
+  /// A flag to denote a `Material` resource.
   RESOURCE_TYPE_MATERIAL       = 16 << 6,
   
-  /// A flag to denote a `Skybox` resource
+  /// A flag to denote a `Skybox` resource.
   RESOURCE_TYPE_SKYBOX         = 16 << 7,
   
-  /// A flag to denote a `Model` resource
+  /// A flag to denote a `Model` resource.
   RESOURCE_TYPE_MODEL          = 16 << 8,
   
-  /// A flag to denote a `Font` resource
+  /// A flag to denote a `Font` resource.
   RESOURCE_TYPE_FONT           = 16 << 9,
   
-  /// A flag to denote a `ShaderContext` resource
+  /// A flag to denote a `ShaderContext` resource.
   RESOURCE_TYPE_SHADER_CONTEXT = 16 << 10,
   
-  /// A flag to denote a `AudioBuffer` resource
+  /// A flag to denote a `AudioBuffer` resource.
   RESOURCE_TYPE_AUDIO_BUFFER   = 16 << 11,
 };
 /// ResourceType

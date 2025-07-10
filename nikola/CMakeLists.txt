@@ -33,8 +33,6 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/resources/material.cpp
   ${NIKOLA_SRC_DIR}/resources/shader_context.cpp
   ${NIKOLA_SRC_DIR}/resources/geometry_loader.cpp
-  ${NIKOLA_SRC_DIR}/resources/nbr_file.cpp
-  ${NIKOLA_SRC_DIR}/resources/nbr_importer.cpp
 
   # Resources/Loaders 
 

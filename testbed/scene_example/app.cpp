@@ -100,13 +100,13 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::gui_init(window);
 
   // Fonts init
-  app->font = nikola::resources_get_font(nikola::resources_push_font(nikola::RESOURCE_CACHE_ID, "fonts/bit5x3.nbrfont"));
+  // app->font = nikola::resources_get_font(nikola::resources_push_font(nikola::RESOURCE_CACHE_ID, "fonts/bit5x3.nbr"));
 
   // Shader contexts init
-  app->post_shader_context_id = nikola::resources_push_shader_context(nikola::RESOURCE_CACHE_ID, "shaders/post_process.nbrshader");
+  // app->post_shader_context_id = nikola::resources_push_shader_context(nikola::RESOURCE_CACHE_ID, "shaders/post_process.nbr");
 
   // Render passes init
-  init_passes(app); 
+  // init_passes(app); 
 
   // Scene manager init
   scenes_init(window);
@@ -142,7 +142,7 @@ void app_render(nikola::App* app) {
   
   // 2D renderer
   nikola::batch_renderer_begin();
-  nikola::batch_render_fps(app->font, nikola::Vec2(10.0f, 40.0f), 32.0f, nikola::Vec4(1.0f));
+  // nikola::batch_render_fps(app->font, nikola::Vec2(10.0f, 40.0f), 32.0f, nikola::Vec4(1.0f));
   nikola::batch_renderer_end();
 }
 
