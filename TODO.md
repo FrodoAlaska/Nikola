@@ -106,14 +106,6 @@
     - [x] Add the newly-added physics types to be edited by the GUI 
     - [x] Test the physics logic by making some testbeds.
     - [x] Documentation
-- [] Performance Craze 0.1 
-    - [x] Implement both performance timers and normal timers
-    - [x] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application.
-    - [] Create an abstraction layer over threads, mutexes, aotmics, and all things multi-threading. 
-    - [] Create a simple job system 
-    - [] Improve resource loading time by adding asynchronous resource loading.
-    - [] Also look into custom memory pools/memory arenas since they can increase performance.
-    - [] Documentation
 - [x] UI v0.1
     - [x] Text UI elements 
     - [x] Text animation system
@@ -122,30 +114,41 @@
     - [x] Checkbox UI elements 
     - [x] Slider UI elements
     - [x] Documentation
-- [] Resource Manager v0.5
-    - [x] Instead of using an abstracted `NBR` layer over everything, write extra `file_write_bytes` functions for the various resources, which will write a _compressed_ version of the resources, and load them as well.
-    - [] Do resources actually reload? 
-    - [] Fix 3D models loading. 
-        - [] Some 3D models that don't include a texture get messed up 
-        - [] Add a parent and child relationship between meshes. Basically, every mesh should have a `local_position` which is set to `Vec3(0.0f)` by default, and it will be take into account when rendering.
-        - [] I think the renderer assumes the vertex data of the mesh so if a model has even an extra vertex data like color, the renderer messes everything up.
-    - [] Improve resource load times (aka multi-threading). 
-    - [] Documentation
 - [] GFX v1.1 
     - [x] Add instancing
     - [x] Test instancing
-    - [] Improve shader workflow (using `glGetProgramiv` to get various information about the shader)
+    - [x] Improve shader workflow (using `glGetProgramiv` to get various information about the shader)
     - [] Compute shader support, with dispatching.
     - [] State-specific configuration
     - [] Documentation
+- [] Resource Manager v0.5
+    - [x] Instead of using an abstracted `NBR` layer over everything, write extra `file_write_bytes` functions for the various resources, which will write a _compressed_ version of the resources, and load them as well.
+    - [] Improve the NBR tool to have a "packging" option that compiles all of the resources into one "blob" called `nkpkg`.
+    - [] Implement a way to load `nkpkg` files with a function called `resources_push_package`.
+    - [] Fix 3D models loading. 
+        - [] Add a parent and child relationship between meshes. Basically, every mesh should have a `local_position` which is set to `Vec3(0.0f)` by default, and it will be take into account when rendering.
+        - [] I think the renderer assumes the vertex data of the mesh so if a model has even an extra vertex data like color, the renderer messes everything up. Or limit all 3D models to a certain vertx data set. 
+        - [] Make sure that materials are loaded correctly using Assimp (colors and other uniforms).
+    - [] Let the material be created using a `MaterialDesc` structure for more effecient material usage. 
+    - [] Improve the `ShaderContext` loading configuration using the new `gfx_shader_query` function.
+    - [] Documentation
 - [] Renderer v0.6 
-    - [] Tear it up and do it from the ground up with actual plans of what to do? Debug rendering, lighting, better material workflow, instancing, and the like? Maybe an instanced-based renderer?
-    - [] Allow toggleablity of render passes
-    - [] Improve the Blinn-Phong lighting model by actually using specular maps and maybe fixing the material system a bit 
-    - [] Emissive materials
+    - [] Re-introduce the command system into the renderer. Have a `RenderCommand` structure that can be queued by the renderer. It can include a flag which makes the renderer "dispatch" the command to the dispatch shader instead          of rendering it. 
+    - [] Improve the Blinn-Phong lighting model by actually using specular maps and maybe fixing the material system a bit. 
+    - [] Normal/roughness mapping.
+    - [] Look into making the renderer "instanced" rather than rendering everything as is.
+    - [] Improve the render pass system to be more versitile. It's very "stiff" right now.
     - [] Cascaded shadow maps
     - [] Bloom integration 
     - [] Improve lighting using clustered rendering. Or, if it's too difficult, you can limit the amount of point lights a scene can have.
+    - [] Documentation
+- [] Performance Craze 0.1 
+    - [x] Implement both performance timers and normal timers
+    - [x] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application.
+    - [] Create an abstraction layer over threads, mutexes, aotmics, and all things multi-threading. 
+    - [] Create a simple job system 
+    - [] Improve resource loading time by adding asynchronous resource loading.
+    - [] Also look into custom memory pools/memory arenas since they can increase performance.
     - [] Documentation
 - [] Particles v0.1 
     - [] Add CPU-based particles that can render different shapes, sizes, and colors (maybe even certain textures?) 

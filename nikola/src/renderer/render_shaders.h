@@ -18,6 +18,7 @@ inline nikola::GfxShaderDesc generate_default_shader() {
     "layout (std140, binding = 0) uniform Matrices {"
     "  mat4 u_view;"
     "  mat4 u_projection;"
+    "  vec3 u_camera_pos;"
     "};"
     "\n"
     "uniform mat4 u_model;"
@@ -43,14 +44,15 @@ inline nikola::GfxShaderDesc generate_default_shader() {
     "  sampler2D diffuse_map;" 
     "  sampler2D specular_map;" 
     "\n"
-    "  vec4 color;"
+    "  vec3 color;"
     "  float shininess;"
+    "  float transparency;"
     "};"
     "\n"
     "uniform Material u_material;"
     "\n"
     "void main() {"
-    "  frag_color = u_material.color;"
+    "  frag_color = vec4(u_material.color, u_material.transparency);"
     "}"
   };
 }
@@ -68,6 +70,7 @@ inline nikola::GfxShaderDesc generate_skybox_shader() {
     "layout (std140, binding = 0) uniform Matrices {"
     "  mat4 u_view;"
     "  mat4 u_projection;"
+    "  vec3 u_camera_pos;"
     "};"
     "\n"
     "void main() {"
@@ -89,38 +92,6 @@ inline nikola::GfxShaderDesc generate_skybox_shader() {
     "\n"
     "void main() {"
     "  frag_color = texture(u_cubemap, fs_in.tex_coords);"
-    "}"
-  };
-}
-
-inline nikola::GfxShaderDesc generate_framebuffer_shader() {
-  return nikola::GfxShaderDesc {
-    "#version 460 core"
-    "\n"
-    "layout (location = 0) in vec2 aPos;"
-    "layout (location = 1) in vec2 aTextureCoords;"
-    "\n"
-    "out VS_OUT {"
-    "  vec2 tex_coords;"
-    "} vs_out;"
-    "\n"
-    "void main() {"
-    "  vs_out.tex_coords = aTextureCoords;"
-    "  gl_Position       = vec4(aPos, 0.0, 1.0);"
-    "}",
-
-    "#version 460 core"
-    "\n"
-    "layout (location = 0) out vec4 frag_color;"
-    "\n"
-    "in VS_OUT {"
-    "  vec2 tex_coords;"
-    "} fs_in;"
-    "\n"
-    "uniform sampler2D u_texture;"
-    "\n"
-    "void main() {"
-    "  frag_color = texture(u_texture, fs_in.tex_coords);"
     "}"
   };
 }
@@ -176,6 +147,7 @@ inline nikola::GfxShaderDesc generate_instance_shader() {
     "layout(std140, binding = 0) uniform Matrices {\n"
     "  mat4 u_view;\n"
     "  mat4 u_projection;\n"
+    "  vec3 u_camera_pos;\n"
     "};\n"
     "\n"
     "// Outputs\n"

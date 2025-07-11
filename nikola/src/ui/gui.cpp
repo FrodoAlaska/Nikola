@@ -264,15 +264,9 @@ void gui_edit_material(const char* name, Material* material) {
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
 
-  // Colors 
-  // -------------------------------------------------------------------
-  ImGui::SliderFloat4("Color", &material->color[0], 0.0f, 1.0f);
-  // -------------------------------------------------------------------
- 
-  // Lighting values
-  // -------------------------------------------------------------------
-  ImGui::SliderFloat("Shininess", &material->shininess, 0.0f, 100.0f);
-  // -------------------------------------------------------------------
+  ImGui::ColorEdit3("Color", &material->color[0]);
+  ImGui::DragFloat("Shininess", &material->shininess, 0.01f);
+  ImGui::DragFloat("Transparency", &material->transparency, 0.01f, 0.0f, 1.0f);
   
   ImGui::PopID(); 
 }

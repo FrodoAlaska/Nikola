@@ -425,8 +425,9 @@ struct Material {
   GfxTexture* diffuse_map  = nullptr;
   GfxTexture* specular_map = nullptr;
   
-  Vec4 color    = Vec4(1.0f);
-  f32 shininess = 1.0f;
+  Vec3 color       = Vec3(1.0f);
+  f32 shininess    = 1.0f;
+  f32 transparency = 1.0f;
 };
 /// Material 
 ///---------------------------------------------------------------------------------------------------------------------

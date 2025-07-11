@@ -44,9 +44,9 @@ struct MeshRenderCommand {
   ShaderContext* shader_context = nullptr;
 
   // @TODO (Renderer): Temporary
-  Vec4 color;
+  Vec3 color;
 
-  MeshRenderCommand(Mesh* mesh, const Transform& trans, Material* mat, ShaderContext* ctx, const Vec4& color = Vec4(1.0f)) 
+  MeshRenderCommand(Mesh* mesh, const Transform& trans, Material* mat, ShaderContext* ctx, const Vec3& color = Vec3(1.0f)) 
     :mesh(mesh), transform(trans), material(mat), shader_context(ctx), color(color)
   {}
 };
@@ -54,12 +54,21 @@ struct MeshRenderCommand {
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// _InstanceData
-struct _InstanceData {
+/// InstanceData
+struct InstanceData {
   Mat4 model; 
   Vec4 color;
 };
-/// _InstanceData
+/// InstanceData
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// RenderUniformBuffer
+struct RenderUniformBuffer {
+  Mat4 view, projection; 
+  Vec3 camera_position;
+};
+/// RenderUniformBuffer
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -72,7 +81,7 @@ struct Renderer {
 
   // Instance data
 
-  _InstanceData instance_data[1000];
+  InstanceData instance_data[1000];
   sizei instance_count = 0;
   
   GfxPipelineDesc inst_pipe_desc = {};
@@ -134,7 +143,7 @@ static void init_defaults() {
   // Matrices buffer init
   GfxBufferDesc buff_desc = {
     .data  = nullptr, 
-    .size  = sizeof(Mat4) * 2,
+    .size  = sizeof(RenderUniformBuffer),
     .type  = GFX_BUFFER_UNIFORM,
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
@@ -177,7 +186,7 @@ static void init_defaults() {
 
   GfxBufferDesc inst_buff_desc = {
     .data  = nullptr,
-    .size  = sizeof(_InstanceData) * 1000,
+    .size  = sizeof(InstanceData) * 1000,
     .type  = GFX_BUFFER_VERTEX, 
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
@@ -234,13 +243,15 @@ static void init_pipeline() {
 static void render_mesh(MeshRenderCommand& command) {
   // Setting uniforms 
   shader_context_set_uniform(command.shader_context, MATERIAL_UNIFORM_MODEL_MATRIX, command.transform.transform);
-  shader_context_set_uniform(command.shader_context, MATERIAL_UNIFORM_COLOR, command.color);
 
   // Using the shader 
   shader_context_use(command.shader_context);
 
   // Using the internal material data
   material_use(command.material);  
+  shader_context_set_uniform(command.shader_context, MATERIAL_UNIFORM_COLOR, command.material->color);
+  shader_context_set_uniform(command.shader_context, "u_material.shininess", command.material->shininess);
+  shader_context_set_uniform(command.shader_context, "u_material.transparency", command.material->transparency);
 
   // Draw the mesh
   gfx_pipeline_use(command.mesh->pipe);
@@ -361,7 +372,6 @@ static void setup_light_enviornment(FrameData& data) {
   
   shader_context_set_uniform(ctx, "u_ambient", data.ambient); 
   shader_context_set_uniform(ctx, "u_point_lights_count", (i32)data.point_lights.size()); 
-  shader_context_set_uniform(ctx, "u_view_pos", data.camera.direction); 
 
   use_directional_light(data.dir_light, ctx);
   use_point_lights(data.point_lights, ctx);
@@ -387,15 +397,17 @@ static void light_pass_fn(const RenderPass* previous, RenderPass* current, void*
   flush_queue(s_renderer.debug_queue);
 
   // Flush the instance pipeline
-  
+ 
+  /*
   shader_context_use(resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_INSTANCE]));
   
-  gfx_buffer_upload_data(s_renderer.inst_pipe_desc.instance_buffer, 0, sizeof(_InstanceData) * s_renderer.instance_count, &s_renderer.instance_data[0]);
+  gfx_buffer_upload_data(s_renderer.inst_pipe_desc.instance_buffer, 0, sizeof(InstanceData) * s_renderer.instance_count, &s_renderer.instance_data[0]);
   gfx_pipeline_use(s_renderer.instance_pipe);
   
   gfx_context_draw_instanced(s_renderer.context, 0, s_renderer.instance_count);
 
   s_renderer.instance_count = 0;
+  */
 
   // Updating some HDR uniforms
   shader_context_set_uniform(resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_HDR]), "u_exposure", s_renderer.frame_data->camera.exposure);
@@ -507,23 +519,28 @@ void renderer_queue_model(const ResourceID& model_id, const Transform& transform
 
 void renderer_debug_cube(const Transform& transform, const Vec4& color) {
   ShaderContext* shader_context = resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_DEFAULT]);
-  s_renderer.debug_queue.emplace_back(s_renderer.defaults.cube_mesh, transform, s_renderer.defaults.material, shader_context, color);
+  s_renderer.debug_queue.emplace_back(s_renderer.defaults.cube_mesh, transform, s_renderer.defaults.material, shader_context, Vec3(color));
 }
 
 void renderer_debug_collider(const Collider* coll, const Vec3& color) {
   Transform transform = collider_get_world_transform(coll);
   transform_scale(transform, collider_get_extents(coll));
 
-  renderer_debug_cube(transform, Vec4(color, 0.2f));
+  renderer_debug_cube(transform, Vec4(color, 1.0f));
 }
 
 void renderer_begin(FrameData& data) {
   GfxBuffer* matrix_buffer = s_renderer.defaults.matrices_buffer;
-
+  s_renderer.frame_data    = &data;
+   
   // Updating the internal matrices buffer for each shader
-  s_renderer.frame_data = &data;
-  gfx_buffer_upload_data(matrix_buffer, 0, sizeof(Mat4), mat4_raw_data(data.camera.view));
-  gfx_buffer_upload_data(matrix_buffer, sizeof(Mat4), sizeof(Mat4), mat4_raw_data(data.camera.projection));
+ 
+  RenderUniformBuffer uni_buff = {
+    .view            = data.camera.view, 
+    .projection      = data.camera.projection, 
+    .camera_position = data.camera.position,
+  };
+  gfx_buffer_upload_data(matrix_buffer, 0, sizeof(RenderUniformBuffer), &uni_buff);
 
   // Setup some lighting
   setup_light_enviornment(data);

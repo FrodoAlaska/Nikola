@@ -651,18 +651,22 @@ ResourceID resources_push_shader_context(const ResourceGroupID& group_id, const 
   ResourceGroup* group = &s_manager.groups[group_id];
   
   // Allocate the context
+  
   ShaderContext* ctx = new ShaderContext{};
   ctx->shader        = resources_get_shader(shader_id);
-  
+
   // Create the context
+  
   ResourceID id; 
   PUSH_RESOURCE(group, shader_contexts, ctx, RESOURCE_TYPE_SHADER_CONTEXT, id);
  
   // Set a default matrices buffer 
+  
   GfxBuffer* matrix_buffer = renderer_get_defaults().matrices_buffer;
   shader_context_set_uniform_buffer(ctx, SHADER_MATRICES_BUFFER_INDEX, matrix_buffer);
 
   // New context added!
+  
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed shader context:", group->name.c_str());
   return id;
 }

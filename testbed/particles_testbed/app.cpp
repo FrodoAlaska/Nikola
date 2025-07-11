@@ -10,7 +10,7 @@ struct nikola::App {
   nikola::FrameData frame_data;
 
   nikola::ResourceGroupID res_group_id;
-  nikola::ResourceID mesh_id, font_id;
+  nikola::ResourceID mesh_id, font_id, material_id;
 
   nikola::Transform transform;
 
@@ -31,10 +31,13 @@ static void init_resources(nikola::App* app) {
   app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group_id, "cubemaps/gloomy.nbr");
 
   // Mesh init
-  app->mesh_id = nikola::resources_push_model(app->res_group_id, "models/bridge.nbr");//nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
+  app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
 
   // Font init
   app->font_id = nikola::resources_push_font(app->res_group_id, "fonts/bit5x3.nbr");
+
+  // Material init
+  app->material_id = nikola::resources_push_material(app->res_group_id, nikola::resources_push_texture(app->res_group_id, "textures/moon.nbr"));
 }
 
 /// Private functions 
@@ -69,7 +72,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // Transform init
   nikola::transform_translate(app->transform, nikola::Vec3(5.0f, 0.0f, 5.0f));
-  nikola::transform_scale(app->transform, nikola::Vec3(1.0f));
+  nikola::transform_scale(app->transform, nikola::Vec3(10.0f));
 
   return app;
 }
@@ -103,30 +106,7 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 void app_render(nikola::App* app) {
   // Render 3D 
   nikola::renderer_begin(app->frame_data);
-  // nikola::renderer_queue_model(app->mesh_id, app->transform);
-
-  constexpr nikola::sizei CUBES_MAX = 1000;
-
-  nikola::Transform instance_transforms[CUBES_MAX];
-  nikola::Vec4 instance_colors[CUBES_MAX];
-
-  nikola::Vec4 color; 
-  color.r = nikola::sin(nikola::niclock_get_time() * 2.0f);
-  color.g = nikola::sin(nikola::niclock_get_time() * 1.3f);
-  color.b = nikola::sin(nikola::niclock_get_time() * 0.7f);
-  color.a = 1.0f;
-
-  for(nikola::sizei i = 0; i < 100; i++) {
-    for(nikola::sizei j = 0; j < 10; j++) {
-      nikola::sizei index = (j * 100) + i;
-
-      nikola::transform_translate(instance_transforms[index], nikola::Vec3(i * 2.0f, 0.0f, j * 2.0f));
-      nikola::transform_scale(instance_transforms[index], nikola::Vec3(1.0f));
-
-      instance_colors[index] = color;
-    }
-  } 
-  nikola::renderer_render_cube_instanced(instance_transforms, instance_colors, CUBES_MAX);
+  nikola::renderer_queue_mesh(app->mesh_id, app->transform, app->material_id);
   
   nikola::renderer_end();
   
@@ -144,8 +124,9 @@ void app_render_gui(nikola::App* app) {
   
   nikola::gui_debug_info();
   
-  nikola::gui_begin_panel("Entities");
+  nikola::gui_begin_panel("Scene");
   nikola::gui_edit_transform("Mesh Transform", &app->transform);
+  nikola::gui_edit_material("Material", nikola::resources_get_material(app->material_id));
   nikola::gui_end_panel();
   
   nikola::gui_end();

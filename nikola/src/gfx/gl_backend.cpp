@@ -320,154 +320,6 @@ static GLenum get_gl_cull_mode(const GfxCullMode mode) {
   }
 }
 
-static void set_state(GfxContext* gfx, const GfxStates state, const bool value) {
-  switch(state) {
-    case GFX_STATE_DEPTH:
-      SET_GFX_STATE(value, GL_DEPTH_TEST);
-      break;
-    case GFX_STATE_STENCIL:
-      SET_GFX_STATE(value, GL_STENCIL_TEST);
-      break;
-    case GFX_STATE_BLEND:
-      SET_GFX_STATE(value, GL_BLEND);
-      break;
-    case GFX_STATE_MSAA:
-      SET_GFX_STATE(value, GL_MULTISAMPLE);
-      break;
-    case GFX_STATE_CULL:
-      SET_GFX_STATE(value, GL_CULL_FACE);
-      break;
-  }
-}
-
-static void set_depth_state(GfxContext* gfx) {
-  GLenum func = get_gl_compare_func(gfx->desc.depth_desc.compare_func);
-
-  glDepthFunc(func);
-  glDepthMask(gfx->desc.depth_desc.depth_write_enabled);
-}
-
-static void set_stencil_state(GfxContext* gfx) {
-  GLenum func  = get_gl_compare_func(gfx->desc.stencil_desc.compare_func);
-  GLenum face  = get_gl_cull_mode(gfx->desc.stencil_desc.polygon_face); 
-  GLenum sfail = get_gl_operation(gfx->desc.stencil_desc.stencil_fail_op); 
-  GLenum dfail = get_gl_operation(gfx->desc.stencil_desc.depth_fail_op); 
-  GLenum dpass = get_gl_operation(gfx->desc.stencil_desc.depth_pass_op); 
-
-  glStencilFuncSeparate(face, func, gfx->desc.stencil_desc.ref, gfx->desc.stencil_desc.mask);
-  glStencilOpSeparate(face, sfail, dfail, dpass);
-  glStencilMaskSeparate(face, gfx->desc.stencil_desc.mask);
-}
-
-static void set_blend_state(GfxContext* gfx) {
-  GLenum src_color = get_gl_blend_mode(gfx->desc.blend_desc.src_color_blend);
-  GLenum dst_color = get_gl_blend_mode(gfx->desc.blend_desc.dest_color_blend);
-
-  GLenum src_alpha = get_gl_blend_mode(gfx->desc.blend_desc.src_alpha_blend);
-  GLenum dst_alpha = get_gl_blend_mode(gfx->desc.blend_desc.dest_alpha_blend);
-
-  f32* factor = gfx->desc.blend_desc.blend_factor;
-  
-  glBlendFuncSeparate(src_color, dst_color, src_alpha, dst_alpha);
-  glBlendColor(factor[0], factor[1], factor[2], factor[3]);
-}
-
-static void set_cull_state(GfxContext* gfx) {
-  GLenum front_face = get_gl_cull_order(gfx->desc.cull_desc.front_face);
-  GLenum face       = get_gl_cull_mode(gfx->desc.cull_desc.cull_mode);
-  
-  glCullFace(face);
-  glFrontFace(front_face);
-}
-
-static void set_gfx_states(GfxContext* gfx) {
-  set_depth_state(gfx);
-  set_stencil_state(gfx);
-  set_cull_state(gfx);
-  set_blend_state(gfx);
-
-  if(IS_BIT_SET(gfx->states, GFX_STATE_DEPTH)) {
-    set_state(gfx, GFX_STATE_DEPTH, true);   
-    gfx->default_clear_flags |= GL_DEPTH_BUFFER_BIT;
-  }
-  
-  if(IS_BIT_SET(gfx->states, GFX_STATE_STENCIL)) {
-    set_state(gfx, GFX_STATE_STENCIL, true);   
-    gfx->default_clear_flags |= GL_STENCIL_BUFFER_BIT;
-  }
-  
-  if(IS_BIT_SET(gfx->states, GFX_STATE_BLEND)) {
-    set_state(gfx, GFX_STATE_BLEND, true);   
-  }
-  
-  if(IS_BIT_SET(gfx->states, GFX_STATE_MSAA)) {
-    set_state(gfx, GFX_STATE_MSAA, true);   
-  }
-
-  if(IS_BIT_SET(gfx->states, GFX_STATE_CULL)) {
-    set_state(gfx, GFX_STATE_CULL, true);   
-  }
-}
-
-static u32 get_gl_clear_flags(const u32 flags) {
-  u32 gl_flags = 0;
-
-  if(IS_BIT_SET(flags, GFX_CLEAR_FLAGS_COLOR_BUFFER)) {
-    gl_flags |= GL_COLOR_BUFFER_BIT;    
-  }
-  
-  if(IS_BIT_SET(flags, GFX_CLEAR_FLAGS_DEPTH_BUFFER)) {
-    gl_flags |= GL_DEPTH_BUFFER_BIT;    
-  }
-  
-  if(IS_BIT_SET(flags, GFX_CLEAR_FLAGS_STENCIL_BUFFER)) {
-    gl_flags |= GL_STENCIL_BUFFER_BIT;    
-  }
-
-  return gl_flags;
-}
-
-static void framebuffer_attach(GfxFramebuffer* framebuffer, GfxTexture* attachment) {
-  NIKOLA_ASSERT(framebuffer, "Invalid GfxFramebuffer struct passed");
-  NIKOLA_ASSERT(attachment, "Invalid GfxTexture struct passed for attachment");
-  
-  switch(attachment->desc.type) {
-    case GFX_TEXTURE_RENDER_TARGET:
-      glNamedFramebufferTexture(framebuffer->id, 
-                                GL_COLOR_ATTACHMENT0 + framebuffer->color_buffers_count, 
-                                attachment->id, 
-                                0);
-      framebuffer->targets[framebuffer->color_buffers_count] = GL_COLOR_ATTACHMENT0 + framebuffer->color_buffers_count;
-      framebuffer->color_buffers_count++;
-      break;
-    case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
-      glNamedFramebufferRenderbuffer(framebuffer->id, 
-                                     GL_DEPTH_STENCIL_ATTACHMENT, 
-                                     GL_RENDERBUFFER, 
-                                     attachment->id);
-      break;
-    case GFX_TEXTURE_DEPTH_TARGET:
-      glNamedFramebufferRenderbuffer(framebuffer->id, 
-                                     GL_DEPTH_ATTACHMENT, 
-                                     GL_RENDERBUFFER, 
-                                     attachment->id);
-      break;
-    case GFX_TEXTURE_STENCIL_TARGET:
-      glNamedFramebufferRenderbuffer(framebuffer->id, 
-                                     GL_STENCIL_ATTACHMENT, 
-                                     GL_RENDERBUFFER, 
-                                     attachment->id);
-      break;
-    default:
-      NIKOLA_LOG_FATAL("Cannot attach a non render target texture type");
-      return;
-  }
-
-  if(glCheckNamedFramebufferStatus(framebuffer->id, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-    NIKOLA_LOG_WARN("GL-ERROR: Framebuffer %i is incomplete", framebuffer->id);
-  }
-}
-
 static GLenum get_buffer_type(const GfxBufferType type) {
   switch(type) {
     case GFX_BUFFER_VERTEX:
@@ -649,65 +501,6 @@ static sizei get_layout_count(const GfxLayoutType layout) {
   }
 }
 
-static void init_pipeline_layout(const GfxPipeline* pipe, _PipelineLayout* layout) {
-  sizei stride = 0;
-
-  // Set the layouts of the buffers
-
-  for(sizei i = 0; i < VERTEX_LAYOUTS_MAX; i++) {
-    NIKOLA_ASSERT((pipe->desc.layouts[i].attributes_count >= 0) && (pipe->desc.layouts[i].attributes_count < VERTEX_ATTRIBUTES_MAX), 
-                   "Attributes count cannot exceed VERTEX_ATTRIBUTES_MAX");
-
-    // Set the attributes of the buffer
-
-    sizei start = pipe->desc.layouts[i].start_index;
-
-    for(sizei j = start; j < start + pipe->desc.layouts[i].attributes_count; j++) {
-      GfxLayoutType attribute = pipe->desc.layouts[i].attributes[j];
-      
-      GLenum gl_comp_type = get_layout_type(attribute);
-      sizei comp_count    = get_layout_count(attribute);
-      sizei size          = get_layout_size(attribute);
-
-      glEnableVertexArrayAttrib(pipe->vertex_array, j);
-      glVertexArrayAttribFormat(pipe->vertex_array, j, comp_count, gl_comp_type, GL_FALSE, stride);
-      glVertexArrayAttribBinding(pipe->vertex_array, j, i);
-      
-      // Increase the stride for the next round
-      stride += size;
-    }
- 
-    layout->strides[i] = stride;
-    glVertexArrayBindingDivisor(pipe->vertex_array, i, pipe->desc.layouts[i].instance_rate);
-  
-    stride = 0;
-  }
-}
-
-static void check_shader_compile_error(const sizei shader) {
-  i32 success;
-  i8 log_info[512];
-
-  glGetShaderiv(shader, GL_COMPILE_STATUS, &success); 
-
-  if(!success) {
-    glGetShaderInfoLog(shader, 512, nullptr, log_info);
-    NIKOLA_LOG_WARN("SHADER-ERROR: %s", log_info);
-  }
-}
-
-static void check_shader_linker_error(const GfxShader* shader) {
-  i32 success;
-  i8 log_info[512];
-
-  glGetProgramiv(shader->id, GL_LINK_STATUS, &success); 
-
-  if(!success) {
-    glGetProgramInfoLog(shader->id, 512, nullptr, log_info);
-    NIKOLA_LOG_WARN("SHADER-ERROR: %s", log_info);
-  }
-}
-
 static void get_texture_gl_format(const GfxTextureFormat format, GLenum* in_format, GLenum* gl_format, GLenum* gl_type) {
   switch(format) {
     case GFX_TEXTURE_FORMAT_R8:
@@ -839,6 +632,314 @@ static GLenum get_texture_gl_wrap(const GfxTextureWrap wrap) {
       return GL_CLAMP_TO_BORDER;
     default:
       return 0;
+  }
+}
+
+static GfxUniformType get_shader_type(const GLenum gl_type) {
+  switch(gl_type) {
+    case GL_FLOAT: 
+      return GFX_UNIFORM_FLOAT1;
+    case GL_FLOAT_VEC2: 
+      return GFX_UNIFORM_FLOAT2;
+    case GL_FLOAT_VEC3: 
+      return GFX_UNIFORM_FLOAT3;
+    case GL_FLOAT_VEC4: 
+      return GFX_UNIFORM_FLOAT4;
+    
+    case GL_INT: 
+      return GFX_UNIFORM_INT1;
+    case GL_INT_VEC2: 
+      return GFX_UNIFORM_INT2;
+    case GL_INT_VEC3: 
+      return GFX_UNIFORM_INT3;
+    case GL_INT_VEC4: 
+      return GFX_UNIFORM_INT4;
+    
+    case GL_UNSIGNED_INT: 
+      return GFX_UNIFORM_UINT1;
+    case GL_UNSIGNED_INT_VEC2: 
+      return GFX_UNIFORM_UINT2;
+    case GL_UNSIGNED_INT_VEC3: 
+      return GFX_UNIFORM_UINT3;
+    case GL_UNSIGNED_INT_VEC4: 
+      return GFX_UNIFORM_UINT4;
+    
+    case GL_BOOL: 
+      return GFX_UNIFORM_BOOL1;
+    case GL_BOOL_VEC2: 
+      return GFX_UNIFORM_BOOL2;
+    case GL_BOOL_VEC3: 
+      return GFX_UNIFORM_BOOL3;
+    case GL_BOOL_VEC4: 
+      return GFX_UNIFORM_BOOL4;
+    
+    case GL_FLOAT_MAT2: 
+      return GFX_UNIFORM_MAT2;
+    case GL_FLOAT_MAT3: 
+      return GFX_UNIFORM_MAT3;
+    case GL_FLOAT_MAT4: 
+      return GFX_UNIFORM_MAT4;
+    case GL_FLOAT_MAT2x3: 
+      return GFX_UNIFORM_MAT2X3;
+    case GL_FLOAT_MAT2x4: 
+      return GFX_UNIFORM_MAT2X4;
+    case GL_FLOAT_MAT3x2: 
+      return GFX_UNIFORM_MAT3X2;
+    case GL_FLOAT_MAT3x4: 
+      return GFX_UNIFORM_MAT3X4;
+    case GL_FLOAT_MAT4x2: 
+      return GFX_UNIFORM_MAT4X2;
+    case GL_FLOAT_MAT4x3: 
+      return GFX_UNIFORM_MAT4X3;
+    
+    case GL_SAMPLER_1D: 
+      return GFX_UNIFORM_SAMPLER_1D;
+    case GL_SAMPLER_2D: 
+      return GFX_UNIFORM_SAMPLER_2D;
+    case GL_SAMPLER_3D: 
+      return GFX_UNIFORM_SAMPLER_3D;
+    case GL_SAMPLER_CUBE: 
+      return GFX_UNIFORM_SAMPLER_CUBE;
+    
+    case GL_SAMPLER_1D_SHADOW: 
+      return GFX_UNIFORM_SAMPLER_1D_SHADOW;
+    case GL_SAMPLER_2D_SHADOW: 
+      return GFX_UNIFORM_SAMPLER_2D_SHADOW;
+    case GL_SAMPLER_CUBE_SHADOW: 
+      return GFX_UNIFORM_SAMPLER_CUBE_SHADOW;
+    
+    case GL_SAMPLER_1D_ARRAY: 
+      return GFX_UNIFORM_SAMPLER_1D_ARRAY;
+    case GL_SAMPLER_2D_ARRAY: 
+      return GFX_UNIFORM_SAMPLER_2D_ARRAY;
+    case GL_SAMPLER_1D_ARRAY_SHADOW: 
+      return GFX_UNIFORM_SAMPLER_1D_ARRAY_SHADOW;
+    case GL_SAMPLER_2D_ARRAY_SHADOW: 
+      return GFX_UNIFORM_SAMPLER_2D_ARRAY_SHADOW;
+    
+    case GL_IMAGE_1D: 
+      return GFX_UNIFORM_IMAGE_1D;
+    case GL_IMAGE_2D: 
+      return GFX_UNIFORM_IMAGE_2D;
+    case GL_IMAGE_3D: 
+      return GFX_UNIFORM_IMAGE_3D;
+    case GL_IMAGE_CUBE: 
+      return GFX_UNIFORM_IMAGE_CUBE;
+    
+    case GL_IMAGE_1D_ARRAY: 
+      return GFX_UNIFORM_IMAGE_1D_ARRAY;
+    case GL_IMAGE_2D_ARRAY: 
+      return GFX_UNIFORM_IMAGE_2D_ARRAY;
+
+    default: 
+      return (GfxUniformType)-1;
+  }
+}
+
+static void set_state(GfxContext* gfx, const GfxStates state, const bool value) {
+  switch(state) {
+    case GFX_STATE_DEPTH:
+      SET_GFX_STATE(value, GL_DEPTH_TEST);
+      break;
+    case GFX_STATE_STENCIL:
+      SET_GFX_STATE(value, GL_STENCIL_TEST);
+      break;
+    case GFX_STATE_BLEND:
+      SET_GFX_STATE(value, GL_BLEND);
+      break;
+    case GFX_STATE_MSAA:
+      SET_GFX_STATE(value, GL_MULTISAMPLE);
+      break;
+    case GFX_STATE_CULL:
+      SET_GFX_STATE(value, GL_CULL_FACE);
+      break;
+  }
+}
+
+static void set_depth_state(GfxContext* gfx) {
+  GLenum func = get_gl_compare_func(gfx->desc.depth_desc.compare_func);
+
+  glDepthFunc(func);
+  glDepthMask(gfx->desc.depth_desc.depth_write_enabled);
+}
+
+static void set_stencil_state(GfxContext* gfx) {
+  GLenum func  = get_gl_compare_func(gfx->desc.stencil_desc.compare_func);
+  GLenum face  = get_gl_cull_mode(gfx->desc.stencil_desc.polygon_face); 
+  GLenum sfail = get_gl_operation(gfx->desc.stencil_desc.stencil_fail_op); 
+  GLenum dfail = get_gl_operation(gfx->desc.stencil_desc.depth_fail_op); 
+  GLenum dpass = get_gl_operation(gfx->desc.stencil_desc.depth_pass_op); 
+
+  glStencilFuncSeparate(face, func, gfx->desc.stencil_desc.ref, gfx->desc.stencil_desc.mask);
+  glStencilOpSeparate(face, sfail, dfail, dpass);
+  glStencilMaskSeparate(face, gfx->desc.stencil_desc.mask);
+}
+
+static void set_blend_state(GfxContext* gfx) {
+  GLenum src_color = get_gl_blend_mode(gfx->desc.blend_desc.src_color_blend);
+  GLenum dst_color = get_gl_blend_mode(gfx->desc.blend_desc.dest_color_blend);
+
+  GLenum src_alpha = get_gl_blend_mode(gfx->desc.blend_desc.src_alpha_blend);
+  GLenum dst_alpha = get_gl_blend_mode(gfx->desc.blend_desc.dest_alpha_blend);
+
+  f32* factor = gfx->desc.blend_desc.blend_factor;
+  
+  glBlendFuncSeparate(src_color, dst_color, src_alpha, dst_alpha);
+  glBlendColor(factor[0], factor[1], factor[2], factor[3]);
+}
+
+static void set_cull_state(GfxContext* gfx) {
+  GLenum front_face = get_gl_cull_order(gfx->desc.cull_desc.front_face);
+  GLenum face       = get_gl_cull_mode(gfx->desc.cull_desc.cull_mode);
+  
+  glCullFace(face);
+  glFrontFace(front_face);
+}
+
+static void set_gfx_states(GfxContext* gfx) {
+  set_depth_state(gfx);
+  set_stencil_state(gfx);
+  set_cull_state(gfx);
+  set_blend_state(gfx);
+
+  if(IS_BIT_SET(gfx->states, GFX_STATE_DEPTH)) {
+    set_state(gfx, GFX_STATE_DEPTH, true);   
+    gfx->default_clear_flags |= GL_DEPTH_BUFFER_BIT;
+  }
+  
+  if(IS_BIT_SET(gfx->states, GFX_STATE_STENCIL)) {
+    set_state(gfx, GFX_STATE_STENCIL, true);   
+    gfx->default_clear_flags |= GL_STENCIL_BUFFER_BIT;
+  }
+  
+  if(IS_BIT_SET(gfx->states, GFX_STATE_BLEND)) {
+    set_state(gfx, GFX_STATE_BLEND, true);   
+  }
+  
+  if(IS_BIT_SET(gfx->states, GFX_STATE_MSAA)) {
+    set_state(gfx, GFX_STATE_MSAA, true);   
+  }
+
+  if(IS_BIT_SET(gfx->states, GFX_STATE_CULL)) {
+    set_state(gfx, GFX_STATE_CULL, true);   
+  }
+}
+
+static u32 get_gl_clear_flags(const u32 flags) {
+  u32 gl_flags = 0;
+
+  if(IS_BIT_SET(flags, GFX_CLEAR_FLAGS_COLOR_BUFFER)) {
+    gl_flags |= GL_COLOR_BUFFER_BIT;    
+  }
+  
+  if(IS_BIT_SET(flags, GFX_CLEAR_FLAGS_DEPTH_BUFFER)) {
+    gl_flags |= GL_DEPTH_BUFFER_BIT;    
+  }
+  
+  if(IS_BIT_SET(flags, GFX_CLEAR_FLAGS_STENCIL_BUFFER)) {
+    gl_flags |= GL_STENCIL_BUFFER_BIT;    
+  }
+
+  return gl_flags;
+}
+
+static void framebuffer_attach(GfxFramebuffer* framebuffer, GfxTexture* attachment) {
+  NIKOLA_ASSERT(framebuffer, "Invalid GfxFramebuffer struct passed");
+  NIKOLA_ASSERT(attachment, "Invalid GfxTexture struct passed for attachment");
+  
+  switch(attachment->desc.type) {
+    case GFX_TEXTURE_RENDER_TARGET:
+      glNamedFramebufferTexture(framebuffer->id, 
+                                GL_COLOR_ATTACHMENT0 + framebuffer->color_buffers_count, 
+                                attachment->id, 
+                                0);
+      framebuffer->targets[framebuffer->color_buffers_count] = GL_COLOR_ATTACHMENT0 + framebuffer->color_buffers_count;
+      framebuffer->color_buffers_count++;
+      break;
+    case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
+      glNamedFramebufferRenderbuffer(framebuffer->id, 
+                                     GL_DEPTH_STENCIL_ATTACHMENT, 
+                                     GL_RENDERBUFFER, 
+                                     attachment->id);
+      break;
+    case GFX_TEXTURE_DEPTH_TARGET:
+      glNamedFramebufferRenderbuffer(framebuffer->id, 
+                                     GL_DEPTH_ATTACHMENT, 
+                                     GL_RENDERBUFFER, 
+                                     attachment->id);
+      break;
+    case GFX_TEXTURE_STENCIL_TARGET:
+      glNamedFramebufferRenderbuffer(framebuffer->id, 
+                                     GL_STENCIL_ATTACHMENT, 
+                                     GL_RENDERBUFFER, 
+                                     attachment->id);
+      break;
+    default:
+      NIKOLA_LOG_FATAL("Cannot attach a non render target texture type");
+      return;
+  }
+
+  if(glCheckNamedFramebufferStatus(framebuffer->id, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    NIKOLA_LOG_WARN("GL-ERROR: Framebuffer %i is incomplete", framebuffer->id);
+  }
+}
+
+static void init_pipeline_layout(const GfxPipeline* pipe, _PipelineLayout* layout) {
+  sizei stride = 0;
+
+  // Set the layouts of the buffers
+
+  for(sizei i = 0; i < VERTEX_LAYOUTS_MAX; i++) {
+    NIKOLA_ASSERT((pipe->desc.layouts[i].attributes_count >= 0) && (pipe->desc.layouts[i].attributes_count < VERTEX_ATTRIBUTES_MAX), 
+                   "Attributes count cannot exceed VERTEX_ATTRIBUTES_MAX");
+
+    // Set the attributes of the buffer
+
+    sizei start = pipe->desc.layouts[i].start_index;
+
+    for(sizei j = start; j < start + pipe->desc.layouts[i].attributes_count; j++) {
+      GfxLayoutType attribute = pipe->desc.layouts[i].attributes[j];
+      
+      GLenum gl_comp_type = get_layout_type(attribute);
+      sizei comp_count    = get_layout_count(attribute);
+      sizei size          = get_layout_size(attribute);
+
+      glEnableVertexArrayAttrib(pipe->vertex_array, j);
+      glVertexArrayAttribFormat(pipe->vertex_array, j, comp_count, gl_comp_type, GL_FALSE, stride);
+      glVertexArrayAttribBinding(pipe->vertex_array, j, i);
+      
+      // Increase the stride for the next round
+      stride += size;
+    }
+ 
+    layout->strides[i] = stride;
+    glVertexArrayBindingDivisor(pipe->vertex_array, i, pipe->desc.layouts[i].instance_rate);
+  
+    stride = 0;
+  }
+}
+
+static void check_shader_compile_error(const sizei shader) {
+  i32 success;
+  i8 log_info[512];
+
+  glGetShaderiv(shader, GL_COMPILE_STATUS, &success); 
+
+  if(!success) {
+    glGetShaderInfoLog(shader, 512, nullptr, log_info);
+    NIKOLA_LOG_WARN("SHADER-ERROR: %s", log_info);
+  }
+}
+
+static void check_shader_linker_error(const GfxShader* shader) {
+  i32 success;
+  i8 log_info[512];
+
+  glGetProgramiv(shader->id, GL_LINK_STATUS, &success); 
+
+  if(!success) {
+    glGetProgramInfoLog(shader->id, 512, nullptr, log_info);
+    NIKOLA_LOG_WARN("SHADER-ERROR: %s", log_info);
   }
 }
 
@@ -1271,27 +1372,26 @@ GfxShader* gfx_shader_create(GfxContext* gfx, const GfxShaderDesc& desc, const A
   i32 frag_src_len = strlen(shader->desc.pixel_source);
 
   // Vertex shader
+  
   shader->vert_id = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(shader->vert_id, 1, &shader->desc.vertex_source, &vert_src_len); 
   glCompileShader(shader->vert_id);
   check_shader_compile_error(shader->vert_id);
-    
+   
   // Fragment shader
+  
   shader->frag_id = glCreateShader(GL_FRAGMENT_SHADER);
   glShaderSource(shader->frag_id, 1, &shader->desc.pixel_source, &frag_src_len); 
   glCompileShader(shader->frag_id);
   check_shader_compile_error(shader->frag_id);
 
   // Linking
+  
   shader->id = glCreateProgram();
   glAttachShader(shader->id, shader->vert_id);
   glAttachShader(shader->id, shader->frag_id);
   glLinkProgram(shader->id);
   check_shader_linker_error(shader);
-  
-  // Detaching
-  glDetachShader(shader->id, shader->vert_id);
-  glDetachShader(shader->id, shader->frag_id);
 
   return shader;
 }
@@ -1301,7 +1401,10 @@ void gfx_shader_destroy(GfxShader* shader, const FreeMemoryFn& free_fn) {
     return;
   }
   
+  glDetachShader(shader->id, shader->vert_id);
+  glDetachShader(shader->id, shader->frag_id);
   glDeleteProgram(shader->id);
+  
   free_fn(shader);
 }
 
@@ -1328,24 +1431,117 @@ void gfx_shader_update(GfxShader* shader, const GfxShaderDesc& desc) {
   i32 frag_src_len = strlen(shader->desc.pixel_source);
   
   // Vertex shader
+  
   glShaderSource(shader->vert_id, 1, &shader->desc.vertex_source, &vert_src_len); 
   glCompileShader(shader->vert_id);
   check_shader_compile_error(shader->vert_id);
   
   // Fragment shader
+  
   glShaderSource(shader->frag_id, 1, &shader->desc.pixel_source, &frag_src_len); 
   glCompileShader(shader->frag_id);
   check_shader_compile_error(shader->frag_id);
 
   // Linking
+  
   glAttachShader(shader->id, shader->vert_id);
   glAttachShader(shader->id, shader->frag_id);
   glLinkProgram(shader->id);
   check_shader_linker_error(shader);
+}
+
+void gfx_shader_query(GfxShader* shader, GfxShaderQueryDesc* out_desc) {
+  NIKOLA_ASSERT(shader->gfx, "Invalid GfxContext struct passed");
+  NIKOLA_ASSERT(shader, "Invalid GfxShader struct passed");
+ 
+  // Check if the shader is actually linked properly
+ 
+  i32 success; 
+  char log_info[512];
+
+  glGetProgramiv(shader->id, GL_LINK_STATUS, &success); 
+  if(!success) {
+    glGetProgramInfoLog(shader->id, 512, nullptr, log_info);
+    NIKOLA_LOG_WARN("SHADER-ERROR: %s", log_info);
+
+    return;
+  }
   
-  // Detaching
-  glDetachShader(shader->id, shader->vert_id);
-  glDetachShader(shader->id, shader->frag_id);
+  i32 max_name_len = 0;
+
+  // Retrieve the attributes information
+
+  glGetProgramiv(shader->id, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &max_name_len); 
+  glGetProgramiv(shader->id, GL_ACTIVE_ATTRIBUTES, &out_desc->attributes_count);
+  
+  for(i32 i = 0; i < out_desc->attributes_count; i++) {
+    GLenum gl_type = (GLenum)0;
+    i32 comp_count = 0; 
+    char attr_name[512];
+
+    glGetActiveAttrib(shader->id,   // Program
+                      i,            // Attribute index
+                      max_name_len, // Max name length
+                      nullptr,      // Out name length
+                      &comp_count,  // Attribute component count
+                      &gl_type,     // Attribute type
+                      attr_name);   // Attribute name
+  
+    out_desc->active_attributes[i] = get_shader_type(gl_type);
+  } 
+  
+  // Retrieve the uniforms information
+  
+  glGetProgramiv(shader->id, GL_ACTIVE_UNIFORM_MAX_LENGTH, &max_name_len); 
+  glGetProgramiv(shader->id, GL_ACTIVE_UNIFORMS, &out_desc->uniforms_count);
+
+  for(i32 i = 0; i < out_desc->uniforms_count; i++) {
+    GLsizei name_len = 0; 
+    i32 comp_count   = 0;
+    GLenum gl_type   = (GLenum)0;
+
+    GfxUniformDesc uniform_desc = {};
+
+    glGetActiveUniform(shader->id,             // Program
+                      i,                       // Uniform index
+                      max_name_len,            // Max name length
+                      &name_len,               // Out name length
+                      &comp_count,             // Uniform component count
+                      &gl_type,                // Uniform type
+                      uniform_desc.name);      // Uniform name
+
+    uniform_desc.type            = get_shader_type(gl_type);
+    uniform_desc.location        = i;
+    uniform_desc.component_count = comp_count;
+    out_desc->active_uniforms[i] = uniform_desc;
+  }
+  
+  // Retrieve the uniform blocks information
+  
+  glGetProgramiv(shader->id, GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, &max_name_len); 
+  glGetProgramiv(shader->id, GL_ACTIVE_UNIFORM_BLOCKS, &out_desc->uniform_blocks_count);
+  
+  for(i32 i = 0; i < out_desc->uniform_blocks_count; i++) {
+    glGetActiveUniformBlockiv(shader->id,                           // Program
+                              i,                                    // Block index
+                              GL_UNIFORM_BLOCK_BINDING,             // Query variable name
+                              &out_desc->active_uniform_blocks[i]); // Block param
+  }
+
+  // Retrieve the compute shader work groups information (if a compute shader exists)
+ 
+  i32 shaders_count = 0; 
+  glGetProgramiv(shader->id, GL_ATTACHED_SHADERS, &shaders_count);
+  if(shaders_count <= 2) { // There's only the vertex and fragment shaders
+    return;
+  }
+
+  i32 groups[3]; 
+  glGetProgramiv(shader->id, GL_COMPUTE_WORK_GROUP_SIZE, groups);
+
+  out_desc->work_group_x = groups[0];
+  out_desc->work_group_y = groups[1];
+  out_desc->work_group_z = groups[2];
 }
 
 void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer, const u32 bind_point) {

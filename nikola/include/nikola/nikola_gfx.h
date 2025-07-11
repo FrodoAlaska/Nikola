@@ -13,28 +13,37 @@ namespace nikola { // Start of nikola
 // Consts
 
 /// The maximum amount of textures the GPU supports at a time. 
-const sizei TEXTURES_MAX                = 32;
+const sizei TEXTURES_MAX                     = 32;
 
 /// The maximum amount of attachments that can be attached to a framebuffer. 
-const sizei FRAMEBUFFER_ATTACHMENTS_MAX = 8;
+const sizei FRAMEBUFFER_ATTACHMENTS_MAX      = 8;
 
 /// The maximum amount of textures the GPU supports at a time. 
-const sizei CUBEMAPS_MAX                = 5;
+const sizei CUBEMAPS_MAX                     = 5;
 
 /// The maximum amount of faces in a cubemap
-const sizei CUBEMAP_FACES_MAX           = 6;
+const sizei CUBEMAP_FACES_MAX                = 6;
+
+/// The maximum number of uniforms a shader is allowed to have.
+const sizei UNIFORMS_MAX                     = 256;
 
 /// The maximum amount of uniform buffers to be created in a shader type.
-const sizei UNIFORM_BUFFERS_MAX         = 16;
+const sizei UNIFORM_BUFFERS_MAX              = 16;
+
+/// The maximum number of characters a uniform name is allowed to have.
+const sizei UNIFORM_NAME_LENGTH_MAX          = 64;
 
 /// The maximum number of attributes a buffer's layout can have.
-const sizei VERTEX_ATTRIBUTES_MAX       = 16;
+const sizei VERTEX_ATTRIBUTES_MAX            = 16;
 
 /// The maximum number of vertex layouts a pipeline can have.
-const sizei VERTEX_LAYOUTS_MAX          = 2;
+const sizei VERTEX_LAYOUTS_MAX               = 2;
+
+/// The maximum number of characters a vertex attribute name is allowed to have.
+const sizei VERTEX_ATTRIBUTE_NAME_LENGTH_MAX = 64;
 
 /// The maximum number of render targets to be bound at once.
-const sizei RENDER_TARGETS_MAX          = 8;
+const sizei RENDER_TARGETS_MAX               = 8;
 
 // Consts
 ///---------------------------------------------------------------------------------------------------------------------
@@ -506,6 +515,88 @@ enum GfxShaderType {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// GfxUniformType
+enum GfxUniformType {
+  /// Float uniform types
+  
+  GFX_UNIFORM_FLOAT1 = 0, 
+  GFX_UNIFORM_FLOAT2, 
+  GFX_UNIFORM_FLOAT3, 
+  GFX_UNIFORM_FLOAT4, 
+  
+  /// Double uniform types
+  
+  GFX_UNIFORM_DOUBLE1, 
+  GFX_UNIFORM_DOUBLE2, 
+  GFX_UNIFORM_DOUBLE3, 
+  GFX_UNIFORM_DOUBLE4, 
+  
+  /// Signed int uniform types
+  
+  GFX_UNIFORM_INT1, 
+  GFX_UNIFORM_INT2, 
+  GFX_UNIFORM_INT3, 
+  GFX_UNIFORM_INT4, 
+  
+  /// Unsigned int uniform types
+  
+  GFX_UNIFORM_UINT1, 
+  GFX_UNIFORM_UINT2, 
+  GFX_UNIFORM_UINT3, 
+  GFX_UNIFORM_UINT4, 
+  
+  /// Bool uniform types
+  
+  GFX_UNIFORM_BOOL1, 
+  GFX_UNIFORM_BOOL2, 
+  GFX_UNIFORM_BOOL3, 
+  GFX_UNIFORM_BOOL4, 
+  
+  /// Matrix uniform types
+  
+  GFX_UNIFORM_MAT2, 
+  GFX_UNIFORM_MAT3, 
+  GFX_UNIFORM_MAT4, 
+  
+  GFX_UNIFORM_MAT2X3, 
+  GFX_UNIFORM_MAT2X4, 
+  
+  GFX_UNIFORM_MAT3X2, 
+  GFX_UNIFORM_MAT3X4,
+
+  GFX_UNIFORM_MAT4X2, 
+  GFX_UNIFORM_MAT4X3, 
+ 
+  /// Sampler uniform types
+  
+  GFX_UNIFORM_SAMPLER_1D, 
+  GFX_UNIFORM_SAMPLER_2D, 
+  GFX_UNIFORM_SAMPLER_3D, 
+  GFX_UNIFORM_SAMPLER_CUBE, 
+  
+  GFX_UNIFORM_SAMPLER_1D_SHADOW, 
+  GFX_UNIFORM_SAMPLER_2D_SHADOW, 
+  GFX_UNIFORM_SAMPLER_CUBE_SHADOW, 
+  
+  GFX_UNIFORM_SAMPLER_1D_ARRAY, 
+  GFX_UNIFORM_SAMPLER_2D_ARRAY, 
+  GFX_UNIFORM_SAMPLER_1D_ARRAY_SHADOW, 
+  GFX_UNIFORM_SAMPLER_2D_ARRAY_SHADOW, 
+
+  /// Image uniform types 
+
+  GFX_UNIFORM_IMAGE_1D,
+  GFX_UNIFORM_IMAGE_2D,
+  GFX_UNIFORM_IMAGE_3D,
+  GFX_UNIFORM_IMAGE_CUBE,
+  
+  GFX_UNIFORM_IMAGE_1D_ARRAY,
+  GFX_UNIFORM_IMAGE_2D_ARRAY,
+};
+/// GfxUniformType
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// GfxContext
 struct GfxContext; 
 /// GfxContext
@@ -777,20 +868,38 @@ struct GfxVertexLayout {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxUniformDesc
 struct GfxUniformDesc {
-  /// The type of the shader the uniform will be 
-  /// uploaded to. 
-  GfxShaderType shader_type;
+  char name[UNIFORM_NAME_LENGTH_MAX];
+  GfxUniformType type;
 
-  /// The index of the uniform buffer. 
-  sizei index; 
-
-  /// The data that will be sent to the shader.
-  void* data;
-
-  /// The size of `data`.
-  sizei size;
+  i32 location        = 0;
+  u32 component_count = 0;
 };
 /// GfxUniformDesc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxShaderQueryDesc
+struct GfxShaderQueryDesc {
+  // Active attributes
+
+  GfxUniformType active_attributes[VERTEX_ATTRIBUTES_MAX];
+  i32 attributes_count = 0;
+
+  // Active uniforms
+ 
+  GfxUniformDesc active_uniforms[UNIFORMS_MAX];
+  i32 uniforms_count = 0;
+
+  // Active uniform blocks
+
+  i32 active_uniform_blocks[UNIFORM_BUFFERS_MAX];
+  i32 uniform_blocks_count = 0;
+
+  // Active work group size
+
+  i32 work_group_x, work_group_y, work_group_z;
+};
+/// GfxShaderQueryDesc
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1078,6 +1187,12 @@ NIKOLA_API GfxShaderDesc& gfx_shader_get_source(GfxShader* shader);
 
 /// Update the `shader`'s information from the given `desc`.
 NIKOLA_API void gfx_shader_update(GfxShader* shader, const GfxShaderDesc& desc);
+
+/// Query the shader for its information and store it in the given `out_desc` structure.
+///
+/// @NOTE: If the given `shader` has not been correctly linked, 
+/// this function will raise an error.
+NIKOLA_API void gfx_shader_query(GfxShader* shader, GfxShaderQueryDesc* out_desc);
 
 /// Attaches the uniform `buffer` to the `shader` of type `type` to point `bind_point`. 
 /// Any updates to `buffer` will have an effect on the `shader`.
