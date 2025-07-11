@@ -763,21 +763,30 @@ ResourceID resources_push_mesh(const ResourceGroupID& group_id, const GeometryTy
   return id;
 }
 
-ResourceID resources_push_material(const ResourceGroupID& group_id, const ResourceID& diffuse_map) {
+ResourceID resources_push_material(const ResourceGroupID& group_id, const MaterialDesc& desc) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
   
   // Allocate the material
   Material* material = new Material{};
+  
+  material->color        = desc.color;
+  material->shininess    = desc.shininess;
+  material->transparency = desc.transparency;
+  material->diffuse_map  = renderer_get_defaults().texture;
+  material->specular_map = renderer_get_defaults().texture;
 
-  // Set default values for the material
-  material->color     = Vec4(1.0f); 
-  material->shininess = 1.0f;
-
-  // Default textures init
-  GfxTexture* default_texture = renderer_get_defaults().texture;
-  material->diffuse_map       = RESOURCE_IS_VALID(diffuse_map) ? resources_get_texture(diffuse_map) : default_texture;
-  material->specular_map      = default_texture;
+  // Textures init
+  
+  if(RESOURCE_IS_VALID(desc.diffuse_id)) {
+    material->diffuse_map = resources_get_texture(desc.diffuse_id);
+    material->map_flags  |= MATERIAL_TEXTURE_DIFFUSE;
+  }
+  
+  if(RESOURCE_IS_VALID(desc.specular_id)) {
+    material->specular_map = resources_get_texture(desc.specular_id);
+    material->map_flags   |= MATERIAL_TEXTURE_SPECULAR;
+  }
 
   // Create material
   ResourceID id;
@@ -785,17 +794,10 @@ ResourceID resources_push_material(const ResourceGroupID& group_id, const Resour
 
   // New material added
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed material:", group->name.c_str());
-  NIKOLA_LOG_DEBUG("     Color     = \'%s\'", vec3_to_string(material->color).c_str());
-  NIKOLA_LOG_DEBUG("     Shininess = \'%f\'", material->shininess);
+  NIKOLA_LOG_DEBUG("     Color        = \'%s\'", vec3_to_string(material->color).c_str());
+  NIKOLA_LOG_DEBUG("     Shininess    = \'%f\'", material->shininess);
+  NIKOLA_LOG_DEBUG("     Transparency = \'%f\'", material->transparency);
   return id;
-}
-
-ResourceID resources_push_material(const ResourceGroupID& group_id, const FilePath& diffuse_path) {
-  // Get the texture first
-  ResourceID diffuse_id = resources_push_texture(group_id, diffuse_path);
-  
-  // New material added!
-  return resources_push_material(group_id, diffuse_id);
 }
 
 ResourceID resources_push_skybox(const ResourceGroupID& group_id, const ResourceID& cubemap_id) {
@@ -888,19 +890,20 @@ ResourceID resources_push_model(const ResourceGroupID& group_id, const FilePath&
   // Convert the material 
   
   for(sizei i = 0; i < nbr_model.materials_count; i++) {
-    ResourceID mat_id = resources_push_material(group_id, texture_ids[nbr_model.materials[i].diffuse_index]);
-    Material* mat     = resources_get_material(mat_id);
-    
-    // Insert a valid specular texture (if one exists)
+    Vec3 color        = Vec3(nbr_model.materials[i].diffuse[0], 
+                             nbr_model.materials[i].diffuse[1], 
+                             nbr_model.materials[i].diffuse[2]);
     i8 specular_index = nbr_model.materials[i].specular_index;
-    mat->specular_map = specular_index != -1 ? resources_get_texture(texture_ids[specular_index]) : nullptr;
 
-    mat->color = Vec4(nbr_model.materials[i].diffuse[0], 
-                      nbr_model.materials[i].diffuse[1], 
-                      nbr_model.materials[i].diffuse[2], 
-                      1.0f); 
+    MaterialDesc mat_desc = {
+      .diffuse_id  = texture_ids[nbr_model.materials[i].diffuse_index], 
+      .specular_id = specular_index != -1 ? texture_ids[specular_index] : ResourceID{},
 
-    model->materials.push_back(mat); 
+      .color = color,
+    };
+    ResourceID mat_id = resources_push_material(group_id, mat_desc);
+
+    model->materials.push_back(resources_get_material(mat_id)); 
   }
   
   // Convert the vertices 

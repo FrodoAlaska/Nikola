@@ -422,12 +422,20 @@ struct Mesh {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Material 
 struct Material {
+  /// Texture maps.
+
   GfxTexture* diffuse_map  = nullptr;
   GfxTexture* specular_map = nullptr;
-  
+ 
+  /// Useful surface-defining variables.
+
   Vec3 color       = Vec3(1.0f);
   f32 shininess    = 1.0f;
   f32 transparency = 1.0f;
+  
+  /// A bitwise flag, detemnining which texture 
+  /// maps to use in the shader.
+  i32 map_flags = 0;
 };
 /// Material 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -486,6 +494,20 @@ struct Font {
   HashMap<i8, Glyph> glyphs;
 };
 /// Font 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// MaterialDesc
+struct MaterialDesc {
+  ResourceID diffuse_id  = {};
+  ResourceID specular_id = {};
+
+  Vec3 color = Vec3(1.0f); 
+
+  f32 shininess    = 0.1f; 
+  f32 transparency = 1.0f;
+};
+/// MaterialDesc
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -656,17 +678,9 @@ NIKOLA_API ResourceID resources_push_mesh(const ResourceGroupID& group_id, NBRMe
 /// store it in `group_id`, return a `ResourceID` to identified it. 
 NIKOLA_API ResourceID resources_push_mesh(const ResourceGroupID& group_id, const GeometryType type);
 
-/// Allocate a new `Material` store it in `group_id` with a diffuse map of `diffuse`, and 
-/// return a `ResourceID` to identify it.
-///
-/// @NOTE: The `diffuse_map` parametar is set to `INVALID` by default.
-NIKOLA_API ResourceID resources_push_material(const ResourceGroupID& group_id, const ResourceID& diffuse_map = {});
-
-/// Allocate a new `Material` store it in `group_id` with a diffuse map found at `diffuse_path`, and 
-/// return a `ResourceID` to identify it.
-///
-/// @NOTE: The `diffuse_map` parametar is set to `INVALID` by default.
-NIKOLA_API ResourceID resources_push_material(const ResourceGroupID& group_id, const FilePath& diffuse_path);
+/// Allocate a new `Material` store it in `group_id` using the information in the given `desc`, 
+/// and return a `ResourceID` to identify it.
+NIKOLA_API ResourceID resources_push_material(const ResourceGroupID& group_id, const MaterialDesc& desc);
 
 /// Allocate a new `Skybox` using the previously-added `cubemap_id`, store it in `group_id`, 
 /// and return a `ResourceID` to identify it.

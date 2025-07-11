@@ -129,12 +129,13 @@
         - [] Add a parent and child relationship between meshes. Basically, every mesh should have a `local_position` which is set to `Vec3(0.0f)` by default, and it will be take into account when rendering.
         - [] I think the renderer assumes the vertex data of the mesh so if a model has even an extra vertex data like color, the renderer messes everything up. Or limit all 3D models to a certain vertx data set. 
         - [] Make sure that materials are loaded correctly using Assimp (colors and other uniforms).
-    - [] Let the material be created using a `MaterialDesc` structure for more effecient material usage. 
+    - [x] Let the material be created using a `MaterialDesc` structure for more effecient material usage. 
     - [] Improve the `ShaderContext` loading configuration using the new `gfx_shader_query` function.
     - [] Documentation
 - [] Renderer v0.6 
     - [] Re-introduce the command system into the renderer. Have a `RenderCommand` structure that can be queued by the renderer. It can include a flag which makes the renderer "dispatch" the command to the dispatch shader instead          of rendering it. 
     - [] Improve the Blinn-Phong lighting model by actually using specular maps and maybe fixing the material system a bit. 
+    - [] Put all of the lighting-related variables into a uniform buffer and update it instead? 
     - [] Normal/roughness mapping.
     - [] Look into making the renderer "instanced" rather than rendering everything as is.
     - [] Improve the render pass system to be more versitile. It's very "stiff" right now.

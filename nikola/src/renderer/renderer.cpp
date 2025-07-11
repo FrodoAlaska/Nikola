@@ -150,7 +150,10 @@ static void init_defaults() {
   s_renderer.defaults.matrices_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
 
   // Material init
-  s_renderer.defaults.material = resources_get_material(resources_push_material(RESOURCE_CACHE_ID, default_texture_id));
+  MaterialDesc mat_desc = {
+    .diffuse_id = default_texture_id,
+  };
+  s_renderer.defaults.material = resources_get_material(resources_push_material(RESOURCE_CACHE_ID, mat_desc));
 
   // Cube mesh init
   s_renderer.defaults.cube_mesh = resources_get_mesh(resources_push_mesh(RESOURCE_CACHE_ID, GEOMETRY_CUBE));

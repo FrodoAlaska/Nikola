@@ -122,9 +122,13 @@ bool game_scene_create(Scene* scene) {
   nikola::ResourceID pav_texture  = nikola::resources_push_texture(res_group, "textures/paviment.nbr");
 
   // Materials init
-  nikola::ResourceID material_id = nikola::resources_push_material(res_group, mesh_texture);
-  
-  nikola::ResourceID pav_material_id = nikola::resources_push_material(res_group, pav_texture);
+  nikola::MaterialDesc mat_desc = {
+    .diffuse_id = mesh_texture,
+  };
+  nikola::ResourceID material_id = nikola::resources_push_material(res_group, mat_desc);
+ 
+  mat_desc.diffuse_id = pav_texture;
+  nikola::ResourceID pav_material_id = nikola::resources_push_material(res_group, mat_desc);
   
   // Meshes init
   nikola::ResourceID cube_mesh = nikola::resources_push_mesh(scene->resource_group, nikola::GEOMETRY_CUBE);

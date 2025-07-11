@@ -37,7 +37,11 @@ static void init_resources(nikola::App* app) {
   app->font_id = nikola::resources_push_font(app->res_group_id, "fonts/bit5x3.nbr");
 
   // Material init
-  app->material_id = nikola::resources_push_material(app->res_group_id, nikola::resources_push_texture(app->res_group_id, "textures/moon.nbr"));
+  nikola::MaterialDesc mat_desc = {
+    .diffuse_id  = nikola::resources_push_texture(app->res_group_id, "textures/container_diffuse.nbr"),
+    .specular_id = nikola::resources_push_texture(app->res_group_id, "textures/container_specular.nbr"),
+  };
+  app->material_id = nikola::resources_push_material(app->res_group_id, mat_desc);
 }
 
 /// Private functions 
@@ -125,8 +129,32 @@ void app_render_gui(nikola::App* app) {
   nikola::gui_debug_info();
   
   nikola::gui_begin_panel("Scene");
+  
   nikola::gui_edit_transform("Mesh Transform", &app->transform);
   nikola::gui_edit_material("Material", nikola::resources_get_material(app->material_id));
+  
+  // Lights
+  if(ImGui::CollapsingHeader("Lights")) {
+    nikola::gui_edit_directional_light("Directional", &app->frame_data.dir_light);
+
+    for(int i = 0; i < app->frame_data.point_lights.size(); i++) {
+      nikola::PointLight* light = &app->frame_data.point_lights[i];
+      nikola::String light_name = ("Point " + std::to_string(i));
+
+      nikola::gui_edit_point_light(light_name.c_str(), light);
+    }
+  
+    if(ImGui::Button("Add PointLight")) {
+      app->frame_data.point_lights.push_back(nikola::PointLight{nikola::Vec3(10.0f, 0.0f, 10.0f)});
+    }
+  }
+
+  // Camera
+  if(ImGui::CollapsingHeader("Camera")) {
+    nikola::gui_edit_camera("Editor Camera", &app->frame_data.camera); 
+    ImGui::DragFloat3("Ambient", &app->frame_data.ambient[0], 0.1f, 0.0f, 1.0f);
+  } 
+
   nikola::gui_end_panel();
   
   nikola::gui_end();
