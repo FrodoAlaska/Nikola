@@ -151,7 +151,7 @@ static bool framebuffer_resize(const Event& event, const void* disp, const void*
     return false;
   }
 
-  glViewport(0, 0, event.window_framebuffer_width, event.window_framebuffer_height);
+ glViewport(0, 0, event.window_framebuffer_width, event.window_framebuffer_height);
 
   return true;
 }
@@ -755,6 +755,8 @@ static void set_state(GfxContext* gfx, const GfxStates state, const bool value) 
       break;
     case GFX_STATE_CULL:
       SET_GFX_STATE(value, GL_CULL_FACE);
+    case GFX_STATE_SCISSOR:
+      SET_GFX_STATE(value, GL_SCISSOR_TEST);
       break;
   }
 }
@@ -825,6 +827,10 @@ static void set_gfx_states(GfxContext* gfx) {
 
   if(IS_BIT_SET(gfx->states, GFX_STATE_CULL)) {
     set_state(gfx, GFX_STATE_CULL, true);   
+  }
+  
+  if(IS_BIT_SET(gfx->states, GFX_STATE_SCISSOR)) {
+    set_state(gfx, GFX_STATE_SCISSOR, true);   
   }
 }
 
@@ -1110,6 +1116,46 @@ GfxContextDesc& gfx_context_get_desc(GfxContext* gfx) {
 void gfx_context_set_state(GfxContext* gfx, const GfxStates state, const bool value) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
   set_state(gfx, state, value);
+}
+
+void gfx_context_set_depth_state(GfxContext* gfx, const GfxDepthDesc& depth_desc) {
+  NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
+  
+  gfx->desc.depth_desc = depth_desc; 
+  set_depth_state(gfx);
+}
+
+void gfx_context_set_stencil_state(GfxContext* gfx, const GfxStencilDesc& stencil_desc) {
+  NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
+  
+  gfx->desc.stencil_desc = stencil_desc; 
+  set_stencil_state(gfx);
+}
+
+void gfx_context_set_cull_state(GfxContext* gfx, const GfxCullDesc& cull_desc) {
+  NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
+  
+  gfx->desc.cull_desc = cull_desc; 
+  set_cull_state(gfx);
+}
+
+void gfx_context_set_blend_state(GfxContext* gfx, const GfxBlendDesc& blend_desc) {
+  NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
+  
+  gfx->desc.blend_desc = blend_desc; 
+  set_blend_state(gfx);
+} 
+
+void gfx_context_set_scissor_rect(GfxContext* gfx, const i32 x, const i32 y, const i32 width, const i32 height) {
+  NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
+  
+  glScissor(x, y, width, height);
+}
+
+void gfx_context_set_viewport(GfxContext* gfx, const i32 x, const i32 y, const i32 width, const i32 height) {
+  NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
+ 
+  glViewport(x, y, width, height);
 }
 
 void gfx_context_set_target(GfxContext* gfx, GfxFramebuffer* framebuffer) {

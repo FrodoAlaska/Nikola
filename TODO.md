@@ -118,8 +118,8 @@
     - [x] Add instancing
     - [x] Test instancing
     - [x] Improve shader workflow (using `glGetProgramiv` to get various information about the shader)
-    - [] Improve framebuffers
-    - [] State-specific configuration
+    - [x] Improve framebuffers
+    - [x] State-specific configuration
     - [] Compute shader support, with dispatching.
     - [] Documentation
 - [] Renderer v0.6 
@@ -157,6 +157,12 @@
     - [] Implement a GPU-based particle system, using something like instancing.
     - [] Documentation
 - [] 3D Animations v0.1
+
+## Showcases
+
+- Showing the gradual change with each render pass in a simple scene.
+- Particles showcase, using instancing. 
+- Compute shaders with the planet blowing up?
 
 ## BUGS:
 - (Dist): Improve the `NikolaProjectTemplate` by adding a template shader.

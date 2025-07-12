@@ -65,6 +65,9 @@ enum GfxStates {
 
   /// Enable face culling. 
   GFX_STATE_CULL    = 2 << 4,
+
+  /// Enable face culling. 
+  GFX_STATE_SCISSOR = 2 << 5,
 };
 /// GfxStates
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1075,6 +1078,34 @@ NIKOLA_API GfxContextDesc& gfx_context_get_desc(GfxContext* gfx);
 /// Set any `state` of the context `gfx` to `value`. 
 /// i.e, this function can turn on or off the `state` in the given `gfx` context.
 NIKOLA_API void gfx_context_set_state(GfxContext* gfx, const GfxStates state, const bool value);
+
+/// Set the information of the Depth state of the pipeline to the new `depth_desc`.
+/// 
+/// @NOTE: The new changes will only take effect if the depth state is enabled.
+NIKOLA_API void gfx_context_set_depth_state(GfxContext* gfx, const GfxDepthDesc& depth_desc);
+
+/// Set the information of the Stencil state of the pipeline to the new `stencil_desc`.
+/// 
+/// @NOTE: The new changes will only take effect if the stencil state is enabled.
+NIKOLA_API void gfx_context_set_stencil_state(GfxContext* gfx, const GfxStencilDesc& stencil_desc);
+
+/// Set the information of the Cull state of the pipeline to the new `cull_desc`.
+/// 
+/// @NOTE: The new changes will only take effect if the cull state is enabled.
+NIKOLA_API void gfx_context_set_cull_state(GfxContext* gfx, const GfxCullDesc& cull_desc);
+
+/// Set the information of the Blend state of the pipeline to the new `blend_desc`.
+/// 
+/// @NOTE: The new changes will only take effect if the blend state is enabled.
+NIKOLA_API void gfx_context_set_blend_state(GfxContext* gfx, const GfxBlendDesc& blend_desc);
+
+/// Set the scissor rectangle of `gfx` to the given `x`, `y`, `width`, `height`
+/// 
+/// @NOTE: The new changes will only take effect if the scissor state is enabled.
+NIKOLA_API void gfx_context_set_scissor_rect(GfxContext* gfx, const i32 x, const i32 y, const i32 width, const i32 height);
+
+/// Set the viewport of `gfx` to the given `x`, `y`, `width`, `height`
+NIKOLA_API void gfx_context_set_viewport(GfxContext* gfx, const i32 x, const i32 y, const i32 width, const i32 height);
 
 /// Set the context's current render target to `framebuffer`. The clear flags 
 /// as well as any attachments will be sampled from `framebuffer`. However, 

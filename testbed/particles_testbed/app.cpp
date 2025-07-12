@@ -161,7 +161,7 @@ void app_render_gui(nikola::App* app) {
   if(ImGui::CollapsingHeader("Camera")) {
     nikola::gui_edit_camera("Editor Camera", &app->frame_data.camera); 
     ImGui::DragFloat3("Ambient", &app->frame_data.ambient[0], 0.1f, 0.0f, 1.0f);
-  } 
+  }
 
   nikola::gui_end_panel();
   
