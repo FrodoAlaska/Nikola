@@ -659,7 +659,10 @@ ResourceID resources_push_shader_context(const ResourceGroupID& group_id, const 
   
   ResourceID id; 
   PUSH_RESOURCE(group, shader_contexts, ctx, RESOURCE_TYPE_SHADER_CONTEXT, id);
- 
+
+  // @TODO (Resource): Query the shader for uniform information
+  // @TODO (Resource): Do something with the query information...
+
   // Set a default matrices buffer 
   
   GfxBuffer* matrix_buffer = renderer_get_defaults().matrices_buffer;
@@ -770,11 +773,15 @@ ResourceID resources_push_material(const ResourceGroupID& group_id, const Materi
   // Allocate the material
   Material* material = new Material{};
   
+  material->diffuse_map  = renderer_get_defaults().texture;
+  material->specular_map = renderer_get_defaults().texture;
+  
   material->color        = desc.color;
   material->shininess    = desc.shininess;
   material->transparency = desc.transparency;
-  material->diffuse_map  = renderer_get_defaults().texture;
-  material->specular_map = renderer_get_defaults().texture;
+
+  material->depth_mask  = desc.depth_mask;
+  material->stencil_ref = desc.stencil_ref;
 
   // Textures init
   

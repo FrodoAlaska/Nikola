@@ -110,7 +110,15 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 void app_render(nikola::App* app) {
   // Render 3D 
   nikola::renderer_begin(app->frame_data);
-  nikola::renderer_queue_mesh(app->mesh_id, app->transform, app->material_id);
+
+  nikola::RenderCommand cmd = {
+    .type      = nikola::RENDERABLE_MESH, 
+    .transform = app->transform, 
+
+    .renderable_id = app->mesh_id, 
+    .material_id   = app->material_id,
+  };
+  nikola::renderer_queue_command(cmd);
   
   nikola::renderer_end();
   

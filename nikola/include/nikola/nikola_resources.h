@@ -281,18 +281,6 @@ const sizei SHADER_MATRICES_BUFFER_INDEX = 0;
 /// The maximum amount of preset uniforms. 
 const u32 MATERIAL_UNIFORMS_MAX          = 4;
 
-/// The name of the color uniform in materials. 
-#define MATERIAL_UNIFORM_COLOR        "u_material.color" 
-
-/// The name of the shininess uniform in materials. 
-#define MATERIAL_UNIFORM_SHININESS    "u_material.shininess" 
-
-/// The name of the screen size uniform in materials. 
-#define MATERIAL_UNIFORM_SCREEN_SIZE  "u_material.screen_size" 
-
-/// The name of the model transform uniform in materials. 
-#define MATERIAL_UNIFORM_MODEL_MATRIX "u_model" 
-
 /// Resources consts
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -427,12 +415,18 @@ struct Material {
   GfxTexture* diffuse_map  = nullptr;
   GfxTexture* specular_map = nullptr;
  
-  /// Useful surface-defining variables.
+  /// Useful surface-defining flags.
 
   Vec3 color       = Vec3(1.0f);
   f32 shininess    = 1.0f;
   f32 transparency = 1.0f;
-  
+ 
+  /// Pipeline-related flags 
+
+  Vec4 blend_factor = Vec4(0.0f);
+  bool depth_mask   = true;
+  i32 stencil_ref   = 1;
+
   /// A bitwise flag, detemnining which texture 
   /// maps to use in the shader.
   i32 map_flags = 0;
@@ -504,8 +498,11 @@ struct MaterialDesc {
 
   Vec3 color = Vec3(1.0f); 
 
-  f32 shininess    = 0.1f; 
+  f32 shininess    = 1.0f; 
   f32 transparency = 1.0f;
+
+  bool depth_mask  = true;
+  u32 stencil_ref  = 0xFF;
 };
 /// MaterialDesc
 ///---------------------------------------------------------------------------------------------------------------------

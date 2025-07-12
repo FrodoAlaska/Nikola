@@ -118,8 +118,21 @@
     - [x] Add instancing
     - [x] Test instancing
     - [x] Improve shader workflow (using `glGetProgramiv` to get various information about the shader)
-    - [] Compute shader support, with dispatching.
+    - [] Improve framebuffers
     - [] State-specific configuration
+    - [] Compute shader support, with dispatching.
+    - [] Documentation
+- [] Renderer v0.6 
+    - [x] Re-introduce the command system into the renderer. Have a `RenderCommand` structure that can be queued by the renderer. 
+    - [x] Improve the render pass system to be more versitile. It's very "stiff" right now.
+    - [] Introduce a `RenderComputeCommand`. It will make the renderer "dispatch" the command to the compute shader instead of rendering it, using the work groups as it's input. 
+    - [] Look into making the renderer "instanced" rather than rendering everything as is.
+    - [] Improve the Blinn-Phong lighting model by actually using specular maps and maybe fixing the material system a bit. 
+    - [] Improve lighting using clustered rendering. Or, if it's too difficult, you can limit the amount of point lights a scene can have.
+    - [] Cascaded shadow maps
+    - [] Bloom integration 
+    - [] Decals
+    - [] Normal/roughness mapping.
     - [] Documentation
 - [] Resource Manager v0.5
     - [x] Instead of using an abstracted `NBR` layer over everything, write extra `file_write_bytes` functions for the various resources, which will write a _compressed_ version of the resources, and load them as well.
@@ -130,18 +143,6 @@
         - [] I think the renderer assumes the vertex data of the mesh so if a model has even an extra vertex data like color, the renderer messes everything up. Or limit all 3D models to a certain vertx data set. 
         - [] Make sure that materials are loaded correctly using Assimp (colors and other uniforms).
     - [x] Let the material be created using a `MaterialDesc` structure for more effecient material usage. 
-    - [] Improve the `ShaderContext` loading configuration using the new `gfx_shader_query` function.
-    - [] Documentation
-- [] Renderer v0.6 
-    - [] Re-introduce the command system into the renderer. Have a `RenderCommand` structure that can be queued by the renderer. It can include a flag which makes the renderer "dispatch" the command to the dispatch shader instead          of rendering it. 
-    - [] Improve the Blinn-Phong lighting model by actually using specular maps and maybe fixing the material system a bit. 
-    - [] Put all of the lighting-related variables into a uniform buffer and update it instead? 
-    - [] Normal/roughness mapping.
-    - [] Look into making the renderer "instanced" rather than rendering everything as is.
-    - [] Improve the render pass system to be more versitile. It's very "stiff" right now.
-    - [] Cascaded shadow maps
-    - [] Bloom integration 
-    - [] Improve lighting using clustered rendering. Or, if it's too difficult, you can limit the amount of point lights a scene can have.
     - [] Documentation
 - [] Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers
@@ -157,17 +158,14 @@
     - [] Documentation
 - [] 3D Animations v0.1
 
-## BUGS: 
+## BUGS:
+- (Dist): Improve the `NikolaProjectTemplate` by adding a template shader.
 - (Physics): Deleting bodies has some problems since the world delets bodies by keeping a "world index" inside the internal body data structure, which then it uses to 
 get the correct position (as an iterator) in the vector to then delete. However, that index is sometimes _way_ higher than the actual size of the array of bodies. Is keeping a collection for bodies in the physics world 
 with a physics library really that necessary?
 - (Physics): Listen, just remove the physics library. It's really not all that useful. It bring more pain and suffering than joy. I can do a better one with my hands tied behind my back whilst singing Katyusha. 
 
-## BUGS: 
-- EMPTY FOR NOW...
-
-## TEST: 
-- EMPTY FOR NOW...
+- Check all of the `TODO`, `FIX`, and `TEMP` in the codebase.
 
 ## FUTURE PLANS: 
 - NUSL: Nikola Uniform Shading Language or shader-generating materials

@@ -68,8 +68,9 @@ struct GfxFramebuffer {
   u32 clear_flags;
   u32 id;
 
-  u32 targets[RENDER_TARGETS_MAX];
-  u32 color_buffers_count = 0;
+  u32 color_textures[FRAMEBUFFER_ATTACHMENTS_MAX];
+  u32 depth_texture   = 0; 
+  u32 stencil_texture = 0;
 };
 /// GfxFramebuffer
 ///---------------------------------------------------------------------------------------------------------------------
@@ -229,6 +230,8 @@ static GLenum get_gl_compare_func(const GfxCompareFunc func) {
       return GL_ALWAYS;
     case GFX_COMPARE_NEVER:
       return GL_NEVER;
+    case GFX_COMPARE_EQUAL:
+      return GL_EQUAL;
     case GFX_COMPARE_LESS:
       return GL_LESS;
     case GFX_COMPARE_LESS_EQUAL:
@@ -843,47 +846,6 @@ static u32 get_gl_clear_flags(const u32 flags) {
   return gl_flags;
 }
 
-static void framebuffer_attach(GfxFramebuffer* framebuffer, GfxTexture* attachment) {
-  NIKOLA_ASSERT(framebuffer, "Invalid GfxFramebuffer struct passed");
-  NIKOLA_ASSERT(attachment, "Invalid GfxTexture struct passed for attachment");
-  
-  switch(attachment->desc.type) {
-    case GFX_TEXTURE_RENDER_TARGET:
-      glNamedFramebufferTexture(framebuffer->id, 
-                                GL_COLOR_ATTACHMENT0 + framebuffer->color_buffers_count, 
-                                attachment->id, 
-                                0);
-      framebuffer->targets[framebuffer->color_buffers_count] = GL_COLOR_ATTACHMENT0 + framebuffer->color_buffers_count;
-      framebuffer->color_buffers_count++;
-      break;
-    case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
-      glNamedFramebufferRenderbuffer(framebuffer->id, 
-                                     GL_DEPTH_STENCIL_ATTACHMENT, 
-                                     GL_RENDERBUFFER, 
-                                     attachment->id);
-      break;
-    case GFX_TEXTURE_DEPTH_TARGET:
-      glNamedFramebufferRenderbuffer(framebuffer->id, 
-                                     GL_DEPTH_ATTACHMENT, 
-                                     GL_RENDERBUFFER, 
-                                     attachment->id);
-      break;
-    case GFX_TEXTURE_STENCIL_TARGET:
-      glNamedFramebufferRenderbuffer(framebuffer->id, 
-                                     GL_STENCIL_ATTACHMENT, 
-                                     GL_RENDERBUFFER, 
-                                     attachment->id);
-      break;
-    default:
-      NIKOLA_LOG_FATAL("Cannot attach a non render target texture type");
-      return;
-  }
-
-  if(glCheckNamedFramebufferStatus(framebuffer->id, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-    NIKOLA_LOG_WARN("GL-ERROR: Framebuffer %i is incomplete", framebuffer->id);
-  }
-}
-
 static void init_pipeline_layout(const GfxPipeline* pipe, _PipelineLayout* layout) {
   sizei stride = 0;
 
@@ -1162,7 +1124,9 @@ void gfx_context_set_target(GfxContext* gfx, GfxFramebuffer* framebuffer) {
     gfx->current_target      = framebuffer->id; 
 
     // Set the number render targets to draw to
-    glNamedFramebufferDrawBuffers(framebuffer->id, framebuffer->color_buffers_count, framebuffer->targets);
+    glNamedFramebufferDrawBuffers(framebuffer->id,  
+                                  framebuffer->desc.attachments_count, 
+                                  framebuffer->color_textures);
   }
 }
 
@@ -1235,6 +1199,9 @@ void gfx_context_present(GfxContext* gfx) {
 GfxFramebuffer* gfx_framebuffer_create(GfxContext* gfx, const GfxFramebufferDesc& desc, const AllocateMemoryFn& alloc_fn) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
 
+  bool is_count_valid = (desc.attachments_count >= 0) && (desc.attachments_count < FRAMEBUFFER_ATTACHMENTS_MAX);
+  NIKOLA_ASSERT(is_count_valid, "Attachments count in GfxFramebuffer cannot exceed FRAMEBUFFER_ATTACHMENTS_MAX");
+
   GfxFramebuffer* buff = (GfxFramebuffer*)alloc_fn(sizeof(GfxFramebuffer));
 
   buff->desc        = desc; 
@@ -1242,9 +1209,41 @@ GfxFramebuffer* gfx_framebuffer_create(GfxContext* gfx, const GfxFramebufferDesc
 
   glCreateFramebuffers(1, &buff->id);
 
-  // Attach all of the given attachments
+  // Attach color attachments
+
   for(sizei i = 0; i < desc.attachments_count; i++) {
-    framebuffer_attach(buff, desc.attachments[i]);
+    glNamedFramebufferTexture(buff->id, 
+                              GL_COLOR_ATTACHMENT0 + i, 
+                              desc.color_attachments[i]->id, 
+                              0);
+    buff->color_textures[i] = GL_COLOR_ATTACHMENT0 + i;
+  }
+
+  // Attach the depth attachments (if it exists)
+  if(desc.depth_attachment) {
+    GLenum depth_type = GL_DEPTH_ATTACHMENT; 
+    if(desc.depth_attachment->desc.type == GFX_TEXTURE_DEPTH_STENCIL_TARGET) {
+      depth_type = GL_DEPTH_STENCIL_ATTACHMENT;
+    }
+
+    glNamedFramebufferRenderbuffer(buff->id, 
+                                   depth_type, 
+                                   GL_RENDERBUFFER, 
+                                   desc.depth_attachment->id);
+    buff->depth_texture = depth_type;
+  }
+  
+  // Attach the stencil attachments (if it exists)
+  if(desc.stencil_attachment) {
+    glNamedFramebufferRenderbuffer(buff->id, 
+                                   GL_STENCIL_ATTACHMENT, 
+                                   GL_RENDERBUFFER, 
+                                   desc.stencil_attachment->id);
+    buff->stencil_texture = GL_STENCIL_ATTACHMENT;
+  }
+
+  if(glCheckNamedFramebufferStatus(buff->id, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    NIKOLA_LOG_WARN("GL-ERROR: Framebuffer %i is incomplete", buff->id);
   }
 
   return buff;
@@ -1293,9 +1292,41 @@ void gfx_framebuffer_update(GfxFramebuffer* framebuffer, const GfxFramebufferDes
   framebuffer->desc        = desc; 
   framebuffer->clear_flags = get_gl_clear_flags(desc.clear_flags);
 
-  // Attach all of the given attachments
+  // Attach color attachments
+
   for(sizei i = 0; i < desc.attachments_count; i++) {
-    framebuffer_attach(framebuffer, desc.attachments[i]);
+    glNamedFramebufferTexture(framebuffer->id, 
+                              GL_COLOR_ATTACHMENT0 + i, 
+                              desc.color_attachments[i]->id, 
+                              0);
+    framebuffer->color_textures[i] = desc.color_attachments[i]->id;
+  }
+
+  // Attach the depth attachments (if it exists)
+  if(desc.depth_attachment) {
+    GLenum depth_type = GL_DEPTH_ATTACHMENT; 
+    if(desc.depth_attachment->desc.type == GFX_TEXTURE_DEPTH_STENCIL_TARGET) {
+      depth_type = GL_DEPTH_STENCIL_ATTACHMENT;
+    }
+
+    glNamedFramebufferRenderbuffer(framebuffer->id, 
+                                   depth_type, 
+                                   GL_RENDERBUFFER, 
+                                   desc.depth_attachment->id);
+    framebuffer->depth_texture = desc.depth_attachment->id;
+  }
+  
+  // Attach the stencil attachments (if it exists)
+  if(desc.stencil_attachment) {
+    glNamedFramebufferRenderbuffer(framebuffer->id, 
+                                   GL_STENCIL_ATTACHMENT, 
+                                   GL_RENDERBUFFER, 
+                                   desc.stencil_attachment->id);
+    framebuffer->stencil_texture = desc.stencil_attachment->id;
+  }
+
+  if(glCheckNamedFramebufferStatus(framebuffer->id, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    NIKOLA_LOG_WARN("GL-ERROR: Framebuffer %i is incomplete", framebuffer->id);
   }
 }
 
@@ -1490,6 +1521,25 @@ void gfx_shader_query(GfxShader* shader, GfxShaderQueryDesc* out_desc) {
     out_desc->active_attributes[i] = get_shader_type(gl_type);
   } 
   
+  // Retrieve the uniform blocks information
+  
+  glGetProgramiv(shader->id, GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, &max_name_len); 
+  glGetProgramiv(shader->id, GL_ACTIVE_UNIFORM_BLOCKS, &out_desc->uniform_blocks_count);
+
+  i32 uniform_blocks_active_uniforms = 0;
+
+  for(i32 i = 0; i < out_desc->uniform_blocks_count; i++) {
+    glGetActiveUniformBlockiv(shader->id,                           // Program
+                              i,                                    // Block index
+                              GL_UNIFORM_BLOCK_BINDING,             // Query block binding
+                              &out_desc->active_uniform_blocks[i]); // Block param
+    
+    glGetActiveUniformBlockiv(shader->id,                       // Program
+                              i,                                // Block index
+                              GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, // Query block active uniforms
+                              &uniform_blocks_active_uniforms); // Block param
+  }
+  
   // Retrieve the uniforms information
   
   glGetProgramiv(shader->id, GL_ACTIVE_UNIFORM_MAX_LENGTH, &max_name_len); 
@@ -1502,30 +1552,18 @@ void gfx_shader_query(GfxShader* shader, GfxShaderQueryDesc* out_desc) {
 
     GfxUniformDesc uniform_desc = {};
 
-    glGetActiveUniform(shader->id,             // Program
-                      i,                       // Uniform index
-                      max_name_len,            // Max name length
-                      &name_len,               // Out name length
-                      &comp_count,             // Uniform component count
-                      &gl_type,                // Uniform type
-                      uniform_desc.name);      // Uniform name
+    glGetActiveUniform(shader->id,        // Program
+                      i,                  // Uniform index
+                      max_name_len,       // Max name length
+                      &name_len,          // Out name length
+                      &comp_count,        // Uniform component count
+                      &gl_type,           // Uniform type
+                      uniform_desc.name); // Uniform name
 
     uniform_desc.type            = get_shader_type(gl_type);
     uniform_desc.location        = i;
     uniform_desc.component_count = comp_count;
     out_desc->active_uniforms[i] = uniform_desc;
-  }
-  
-  // Retrieve the uniform blocks information
-  
-  glGetProgramiv(shader->id, GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, &max_name_len); 
-  glGetProgramiv(shader->id, GL_ACTIVE_UNIFORM_BLOCKS, &out_desc->uniform_blocks_count);
-  
-  for(i32 i = 0; i < out_desc->uniform_blocks_count; i++) {
-    glGetActiveUniformBlockiv(shader->id,                           // Program
-                              i,                                    // Block index
-                              GL_UNIFORM_BLOCK_BINDING,             // Query variable name
-                              &out_desc->active_uniform_blocks[i]); // Block param
   }
 
   // Retrieve the compute shader work groups information (if a compute shader exists)
@@ -1688,7 +1726,7 @@ void gfx_texture_use(GfxTexture* texture) {
 
 void gfx_texture_use(GfxTexture** textures, const sizei count) {
   NIKOLA_ASSERT(textures, "Invalid GfxTexture array passed to gfx_texture_use");
-  NIKOLA_ASSERT(((count >= 0) && (count <= TEXTURES_MAX)), "The count parametar in gfx_texture_use is invalid");
+  NIKOLA_ASSERT(((count >= 0) && (count < TEXTURES_MAX)), "The count parametar in gfx_texture_use is invalid");
   
   u32 gl_textures[TEXTURES_MAX];
   for(sizei i = 0; i < count; i++) {

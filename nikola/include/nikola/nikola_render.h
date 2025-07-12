@@ -16,6 +16,18 @@ struct Collider;
 /// *** Renderer ***
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// RenderableType
+enum RenderableType {
+  RENDERABLE_MESH = 0, 
+  RENDERABLE_MODEL, 
+  RENDERABLE_DEBUG,
+
+  // @TODO (Renderer): Add more renderable types...
+};
+/// RenderableType
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// Camera consts 
 
 /// The maximum degrees the camera can achieve 
@@ -28,15 +40,20 @@ const f32 CAMERA_MAX_ZOOM    = 180.0f;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// Camera function pointers
+/// Callbacks
 
 // Have to do this to fix underfined variable errors in the callback.
 struct Camera;
+struct RenderPass;
 
 /// A function callback to move the camera every frame.
 using CameraMoveFn = void(*)(Camera& camera);
 
-/// Camera function pointers
+/// A function to be called every render pass, passing in the `previous` and 
+/// `current` render passes, and some `user_data`.
+using RenderPassFn = void(*)(const RenderPass* previous, RenderPass* current, void* user_data);
+
+/// Callbacks
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -115,25 +132,27 @@ struct RendererDefaults {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// RenderTarget 
-struct RenderTarget {
-  GfxTextureType type      = GFX_TEXTURE_RENDER_TARGET;
-  GfxTextureFormat format  = GFX_TEXTURE_FORMAT_RGBA8;
-  GfxTextureFilter filter  = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST;
-  GfxTextureWrap wrap_mode = GFX_TEXTURE_WRAP_MIRROR;
+/// RenderCommand
+struct RenderCommand {
+  RenderableType type;
+  Transform transform;
+
+  ResourceID renderable_id = {};
+  ResourceID material_id   = {};
 };
-/// RenderTarget 
+/// RenderCommand
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderPassDesc
 struct RenderPassDesc {
-  Vec2 frame_size  = Vec2(0.0f);
-  Vec4 clear_color = Vec4(1.0f);
-  u32 clear_flags  = 0;
+  Vec2 frame_size = Vec2(0.0f);
+  u32 clear_flags = 0;
   
   ResourceID shader_context_id = {};
-  DynamicArray<RenderTarget> targets;
+  DynamicArray<GfxTextureFormat> targets;
+
+  void* user_data = nullptr;
 };
 /// RenderPassDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -141,12 +160,15 @@ struct RenderPassDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderPass
 struct RenderPass {
-  Vec2 frame_size  = Vec2(0.0f);
-  Vec4 clear_color = Vec4(1.0f);
+  Vec2 frame_size = Vec2(0.0f);
   
   GfxFramebufferDesc frame_desc = {};
   GfxFramebuffer* frame         = nullptr;
-  ResourceID shader_context_id  = {};
+  ShaderContext* shader_context = nullptr;
+
+  bool is_active         = true;
+  void* user_data        = nullptr;
+  RenderPassFn pass_func = nullptr;
 };
 /// RenderPass
 ///---------------------------------------------------------------------------------------------------------------------
@@ -196,12 +218,6 @@ struct Rect {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// RenderPassFn 
-using RenderPassFn = void(*)(const RenderPass* previous, RenderPass* current, void* user_data);
-/// RenderPassFn 
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
 /// Camera functions
 
 /// A function to mimick a free-form camera movement.
@@ -240,41 +256,25 @@ NIKOLA_API void renderer_set_clear_color(const Vec4& clear_color);
 /// Return the renderer's current clear color.
 NIKOLA_API Vec4& renderer_get_clear_color();
 
-/// Add an additional render pass using the information from `desc`. 
+/// Add an additional render pass using the information from `desc`, returning back an
+/// identifying ID for later use.
+///
 /// Internally, the renderer will call `func`, passing in `user_data`.
-NIKOLA_API void renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& func, const void* user_data);
+NIKOLA_API const u32 renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& func);
 
-/// Queue a mesh rendering command using the given `mesh_id`, `transform`, `mat_id`, and `shader_context_id`. 
-///
-/// @NOTE: Both `mat_id` and `shader_context_id` are set to `RESOURCE_INVALID` by default, which will prompt the 
-/// renderer to use the default material and the default shader context.
-NIKOLA_API void renderer_queue_mesh(const ResourceID& mesh_id, const Transform& transform, const ResourceID& mat_id = {}, const ResourceID& shader_context_id = {});
+/// Queue a rendering command using the given `command` as a specifier. 
+NIKOLA_API void renderer_queue_command(const RenderCommand& command);
 
-/// Queue a model rendering command using the given `model_id`, `transform`, and `shader_context_id`. 
+/// Flush/render the internal command queue of the renderer, using the given 
+/// `shader_context_id` as the main shader for rendering. 
 ///
-/// @NOTE: The given `shader_context_id` is set to `RESOURCE_INVALID` by default, which will prompt the 
-/// renderer to use the default the default shader context.
-NIKOLA_API void renderer_queue_model(const ResourceID& model_id, const Transform& transform, const ResourceID& shader_context_id = {});
-
-/// Render `instance_count` cube meshes using an array of the given `transforms` for positions, scales, and rotations. 
-/// As well as shading the cubes using the given `colors` array. 
+/// @NOTE: Internally, the renderer will call this function inside many of 
+/// its render passes. However, it can also be called explicitly by the client code 
+/// for any specific reason. The internal queue will not be discarded until the end of the frame.
 ///
-/// @NOTE: Both the `transforms` and the `colors` array should have a size of < `instance_count`.
-NIKOLA_API void renderer_render_cube_instanced(const Transform* transforms, const Vec4* colors, const u32 instance_count);
-
-/// Render a cube for debugging purposes. 
-/// The cube will not be shaded or effected by the main rendering pipeline. 
-///
-/// @NOTE: Please only use this for debugging purposes. It is not optimized 
-/// or batched in any way. Use with discretion.
-NIKOLA_API void renderer_debug_cube(const Transform& transform, const Vec4& color);
-
-/// Render the shape of the collider `coll` at its given position, rotation, and scale, 
-/// and shaded with `color` (by default set to `Vec3(1.0f)`).
-///
-/// @NOTE: Please only use this for debugging purposes. It is not optimized 
-/// or batched in any way. Use with discretion.
-NIKOLA_API void renderer_debug_collider(const Collider* coll, const Vec3& color = Vec3(1.0f));
+/// @NOTE: The `shader_context_id` can be left untouched to let the renderer 
+/// handle the shading of the objects.
+NIKOLA_API void renderer_flush_queue_command(const ResourceID& shader_context_id = {});
 
 /// Setup the renderer for any upcoming render operations by 
 /// the data given in `data`.

@@ -15,8 +15,8 @@ namespace nikola { // Start of nikola
 /// The maximum amount of textures the GPU supports at a time. 
 const sizei TEXTURES_MAX                     = 32;
 
-/// The maximum amount of attachments that can be attached to a framebuffer. 
-const sizei FRAMEBUFFER_ATTACHMENTS_MAX      = 8;
+/// The maximum amount of color attachments that can be attached to a framebuffer. 
+const sizei FRAMEBUFFER_ATTACHMENTS_MAX      = 4;
 
 /// The maximum amount of textures the GPU supports at a time. 
 const sizei CUBEMAPS_MAX                     = 5;
@@ -77,21 +77,24 @@ enum GfxCompareFunc {
 
   /// Never passes the comparison.
   GFX_COMPARE_NEVER         = 3 << 1,
+  
+  /// Passes the comparison when `a == b`.
+  GFX_COMPARE_EQUAL         = 3 << 2,
 
   /// Passes the comparison when the `a < b`.
-  GFX_COMPARE_LESS          = 3 << 2, 
+  GFX_COMPARE_LESS          = 3 << 3, 
 
   /// Passes the comparison when the `a <= b`.
-  GFX_COMPARE_LESS_EQUAL    = 3 << 3, 
+  GFX_COMPARE_LESS_EQUAL    = 3 << 4, 
 
   /// Passes the comparison when the `a > b`.
-  GFX_COMPARE_GREATER       = 3 << 4, 
+  GFX_COMPARE_GREATER       = 3 << 5, 
 
   /// Passes the comparison when the `a >= b`.
-  GFX_COMPARE_GREATER_EQUAL = 3 << 5, 
+  GFX_COMPARE_GREATER_EQUAL = 3 << 6, 
 
   /// Passes the comparison when the `a != b`.
-  GFX_COMPARE_NOT_EQUAL     = 3 << 6,
+  GFX_COMPARE_NOT_EQUAL     = 3 << 7,
 };
 /// GfxCompareFunc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -797,13 +800,22 @@ struct GfxFramebufferDesc {
   /// which buffers to clear every frame. 
   u32 clear_flags = 0;
 
-  /// An array of attachments up to `FRAMEBUFFER_ATTACHMENTS_MAX`. 
+  /// An array of color attachments up to `FRAMEBUFFER_ATTACHMENTS_MAX`. 
   ///
-  /// @NOTE: Each texture in this array have one of the texture types `GFX_TEXTURE_*_TARGET`. 
-  GfxTexture* attachments[FRAMEBUFFER_ATTACHMENTS_MAX];
+  /// @NOTE: Each texture in this array have to be a texture of type `GFX_TEXTURE_RENDER_TARGET`. 
+  GfxTexture* color_attachments[FRAMEBUFFER_ATTACHMENTS_MAX];
 
-  /// The amount of attachments in the `attachments` array.
+  /// The amount of color attachments in the `attachments` array.
   sizei attachments_count = 0;
+
+  /// A pointer to the depth attachment texture. 
+  ///
+  /// @NOTE: If this texture was created using the `GFX_TEXTURE_DEPTH_STENCIL_TARGET` 
+  /// texture type, then this texture will represent _both_ the depth and stencil attachments.
+  GfxTexture* depth_attachment   = nullptr;
+  
+  /// A pointer to the stencil attachment texture. 
+  GfxTexture* stencil_attachment = nullptr;
 };
 /// GfxFramebufferDesc
 ///---------------------------------------------------------------------------------------------------------------------
