@@ -125,13 +125,13 @@
 - [] Renderer v0.6 
     - [x] Re-introduce the command system into the renderer. Have a `RenderCommand` structure that can be queued by the renderer. 
     - [x] Improve the render pass system to be more versitile. It's very "stiff" right now.
+    - [x] Improve the current render passes and test with client-side render passes.
     - [] Introduce a `RenderComputeCommand`. It will make the renderer "dispatch" the command to the compute shader instead of rendering it, using the work groups as it's input. 
     - [] Look into making the renderer "instanced" rather than rendering everything as is.
     - [] Improve the Blinn-Phong lighting model by actually using specular maps and maybe fixing the material system a bit. 
     - [] Improve lighting using clustered rendering. Or, if it's too difficult, you can limit the amount of point lights a scene can have.
     - [] Cascaded shadow maps
     - [] Bloom integration 
-    - [] Decals
     - [] Normal/roughness mapping.
     - [] Documentation
 - [] Resource Manager v0.5
@@ -157,6 +157,11 @@
     - [] Implement a GPU-based particle system, using something like instancing.
     - [] Documentation
 - [] 3D Animations v0.1
+- [] Renderer v0.7 
+    - [] Decal rendering 
+    - [] Terrain rendering 
+    - [] Screen-Space effects (Screen-Space Reflections, Screen-Space Ambient Occlussion, etc)
+    - [] Documentation
 
 ## Showcases
 

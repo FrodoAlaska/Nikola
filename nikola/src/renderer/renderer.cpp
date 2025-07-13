@@ -16,6 +16,7 @@ namespace nikola { // Start of nikola
 enum ShaderContextID {
   SHADER_CONTEXT_DEFAULT = 0, 
   SHADER_CONTEXT_SKYBOX, 
+  SHADER_CONTEXT_SCREEN_SPACE, 
   SHADER_CONTEXT_HDR, 
   SHADER_CONTEXT_INSTANCE, 
   SHADER_CONTEXT_BLINN, 
@@ -108,17 +109,6 @@ static Renderer s_renderer{};
 /// ----------------------------------------------------------------------
 /// Private functions
 
-static void init_context(Window* window) { 
-  GfxContextDesc gfx_desc = {
-    .window       = window,
-    .states       = GFX_STATE_DEPTH | GFX_STATE_STENCIL | GFX_STATE_BLEND | GFX_STATE_SCISSOR,
-    .has_vsync    = false,
-  };
-  
-  s_renderer.context = gfx_context_init(gfx_desc);
-  NIKOLA_ASSERT(s_renderer.context, "Failed to initialize the graphics context");
-}
-
 static void init_defaults() {
   // Default texture init
   u32 pixels = 0xffffffff; 
@@ -156,18 +146,21 @@ static void init_defaults() {
   s_renderer.defaults.cube_mesh = resources_get_mesh(resources_push_mesh(RESOURCE_CACHE_ID, GEOMETRY_CUBE));
 
   // Shaders init
-  ResourceID default_shader     = resources_push_shader(RESOURCE_CACHE_ID, generate_default_shader());
-  ResourceID skybox_shader      = resources_push_shader(RESOURCE_CACHE_ID, generate_skybox_shader());
-  ResourceID hdr_shader         = resources_push_shader(RESOURCE_CACHE_ID, generate_hdr_shader());
-  ResourceID inst_shader        = resources_push_shader(RESOURCE_CACHE_ID, generate_instance_shader());
-  ResourceID blinn_phong_shader = resources_push_shader(RESOURCE_CACHE_ID, generate_blinn_phong_shader());
+  ResourceID default_shader      = resources_push_shader(RESOURCE_CACHE_ID, generate_default_shader());
+  ResourceID skybox_shader       = resources_push_shader(RESOURCE_CACHE_ID, generate_skybox_shader());
+  ResourceID screen_space_shader = resources_push_shader(RESOURCE_CACHE_ID, generate_screen_space_shader());
+  ResourceID hdr_shader          = resources_push_shader(RESOURCE_CACHE_ID, generate_hdr_shader());
+  ResourceID inst_shader         = resources_push_shader(RESOURCE_CACHE_ID, generate_instance_shader());
+  ResourceID blinn_phong_shader  = resources_push_shader(RESOURCE_CACHE_ID, generate_blinn_phong_shader());
 
   // Shader contexts init
-  s_renderer.shader_contexts[SHADER_CONTEXT_DEFAULT]  = resources_push_shader_context(RESOURCE_CACHE_ID, default_shader);
-  s_renderer.shader_contexts[SHADER_CONTEXT_SKYBOX]   = resources_push_shader_context(RESOURCE_CACHE_ID, skybox_shader);
-  s_renderer.shader_contexts[SHADER_CONTEXT_HDR]      = resources_push_shader_context(RESOURCE_CACHE_ID, hdr_shader);
-  s_renderer.shader_contexts[SHADER_CONTEXT_INSTANCE] = resources_push_shader_context(RESOURCE_CACHE_ID, inst_shader);
-  s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]    = resources_push_shader_context(RESOURCE_CACHE_ID, blinn_phong_shader);
+  
+  s_renderer.shader_contexts[SHADER_CONTEXT_DEFAULT]      = resources_push_shader_context(RESOURCE_CACHE_ID, default_shader);
+  s_renderer.shader_contexts[SHADER_CONTEXT_SKYBOX]       = resources_push_shader_context(RESOURCE_CACHE_ID, skybox_shader);
+  s_renderer.shader_contexts[SHADER_CONTEXT_SCREEN_SPACE] = resources_push_shader_context(RESOURCE_CACHE_ID, screen_space_shader);
+  s_renderer.shader_contexts[SHADER_CONTEXT_HDR]          = resources_push_shader_context(RESOURCE_CACHE_ID, hdr_shader);
+  s_renderer.shader_contexts[SHADER_CONTEXT_INSTANCE]     = resources_push_shader_context(RESOURCE_CACHE_ID, inst_shader);
+  s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]        = resources_push_shader_context(RESOURCE_CACHE_ID, blinn_phong_shader);
 
   // @TEMP
   // Instance pipeline init
@@ -259,32 +252,6 @@ static void queue_model(Model* model, Material* material, const Transform& trans
   }  
 }
 
-static void render_mesh(MeshRenderCommand& command, ShaderContext* ctx) {
-  // Setting and using shader uniforms 
-  
-  shader_context_set_uniform(ctx, "u_model", command.transform.transform);
-  shader_context_use(ctx);
-
-  // Using the internal material data
-  
-  material_use(command.material);  
-  shader_context_set_uniform(ctx, "u_material.color", command.material->color);
-  shader_context_set_uniform(ctx, "u_material.shininess", command.material->shininess);
-  shader_context_set_uniform(ctx, "u_material.transparency", command.material->transparency);
-
-  // Set pipeline-related flags from the material
-
-  command.mesh->pipe_desc.depth_mask  = command.material->depth_mask;
-  command.mesh->pipe_desc.stencil_ref = command.material->stencil_ref;
-
-  gfx_pipeline_update(command.mesh->pipe, command.mesh->pipe_desc);
-
-  // Draw the mesh
-  
-  gfx_pipeline_use(command.mesh->pipe);
-  gfx_context_draw(s_renderer.context, 0);
-}
-
 static void render_skybox(const ResourceID& skybox_id) {
   Skybox* skybox     = resources_get_skybox(skybox_id); 
   ShaderContext* ctx = resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_SKYBOX]);
@@ -308,10 +275,13 @@ static void begin_pass(RenderPass& pass) {
   Vec4 col = s_renderer.clear_color;
   gfx_context_clear(s_renderer.context, col.r, col.g, col.b, col.a);
   gfx_context_set_state(s_renderer.context, GFX_STATE_DEPTH, true); 
+
+  // Reset the pass's state
+  pass.input_textures_count = 0;
 }
 
 static void end_pass(RenderPass& pass) {
-  // Render to the default framebuffer
+  // Render back to the default framebuffer
   
   gfx_context_set_target(s_renderer.context, nullptr);
   
@@ -323,58 +293,12 @@ static void end_pass(RenderPass& pass) {
   shader_context_use(pass.shader_context);
   
   // Apply the textures from the pass
-
-  GfxTexture* textures[6]; // FRAMEBUFFER_ATTACHMENTS_MAX (4) + depth (1) + stencil (1)
-  u32 textures_count = 0; 
-
-  for(sizei i = 0; i < pass.frame_desc.attachments_count; i++) {
-    textures[i] = pass.frame_desc.color_attachments[i];
-    textures_count++;
-  }
-
-  if(pass.frame_desc.depth_attachment) {
-    textures[textures_count] = pass.frame_desc.depth_attachment;
-    textures_count++;
-  }
-
-  if(pass.frame_desc.stencil_attachment) {
-    textures[textures_count] = pass.frame_desc.stencil_attachment;
-    textures_count++;
-  }
-  
-  gfx_texture_use(textures, textures_count); 
+  gfx_texture_use(pass.input_textures, pass.input_textures_count); 
 
   // Render the final render target
   gfx_pipeline_update(s_renderer.pipeline, s_renderer.pipe_desc);
   gfx_pipeline_use(s_renderer.pipeline);
   gfx_context_draw(s_renderer.context, 0);
-}
-
-static void setup_light_enviornment(FrameData& data) {
-  ShaderContext* ctx = resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]);
- 
-  // Set globals
-
-  shader_context_set_uniform(ctx, "u_ambient", data.ambient); 
-  shader_context_set_uniform(ctx, "u_point_lights_count", (i32)data.point_lights.size()); 
-  shader_context_set_uniform(ctx, "u_dir_light.direction", data.dir_light.direction); 
-  shader_context_set_uniform(ctx, "u_dir_light.color", data.dir_light.color); 
-
-  // Set point lights
-
-  i32 index = 0;
-
-  for(auto& point : data.point_lights) {
-    String point_index = "u_point_lights[" + std::to_string(index) + "].";
-
-    shader_context_set_uniform(ctx, (point_index + "position"), point.position); 
-    shader_context_set_uniform(ctx, (point_index + "color"), point.color); 
-
-    shader_context_set_uniform(ctx, (point_index + "linear"), point.linear); 
-    shader_context_set_uniform(ctx, (point_index + "quadratic"), point.quadratic); 
-  
-    index++;
-  }
 }
 
 /// Private functions
@@ -390,11 +314,20 @@ static void light_pass_fn(const RenderPass* previous, RenderPass* current, void*
   }
 
   // Flush our queues 
-
   renderer_flush_queue_command();
+  
+  current->input_textures[0]    = current->frame_desc.color_attachments[0];
+  current->input_textures_count++;
+}
+
+static void hdr_pass_fn(const RenderPass* previous, RenderPass* current, void* user_data) {
+  current->input_textures[0]    = (GfxTexture*)previous->frame_desc.color_attachments[0];
+  current->input_textures_count++;
 
   // Updating some HDR uniforms
-  shader_context_set_uniform(resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_HDR]), "u_exposure", s_renderer.frame_data->camera.exposure);
+  shader_context_set_uniform(resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_HDR]), 
+                             "u_exposure", 
+                             s_renderer.frame_data->camera.exposure);
 }
 
 /// Callbacks 
@@ -405,10 +338,15 @@ static void light_pass_fn(const RenderPass* previous, RenderPass* current, void*
 
 void renderer_init(Window* window) {
   // Context init 
-  init_context(window);
   
-  i32 width, height;
-  window_get_size(window, &width, &height); 
+  GfxContextDesc gfx_desc = {
+    .window       = window,
+    .states       = GFX_STATE_DEPTH | GFX_STATE_STENCIL | GFX_STATE_BLEND,
+    .has_vsync    = false,
+  };
+  
+  s_renderer.context = gfx_context_init(gfx_desc);
+  NIKOLA_ASSERT(s_renderer.context, "Failed to initialize the graphics context");
 
   // Defaults init
   init_defaults();
@@ -416,22 +354,46 @@ void renderer_init(Window* window) {
   // Pipeline init
   init_pipeline();
 
-  // Light pass init
+  // Render passes init
+  
+  i32 width, height;
+  window_get_size(window, &width, &height); 
+
+  // Light pass
+
   RenderPassDesc light_pass = {
-    .frame_size  = Vec2(width, height), 
-    .clear_flags = (GFX_CLEAR_FLAGS_COLOR_BUFFER | GFX_CLEAR_FLAGS_DEPTH_BUFFER | GFX_CLEAR_FLAGS_STENCIL_BUFFER),
+    .frame_size        = IVec2(width, height), 
+    .clear_flags       = (GFX_CLEAR_FLAGS_COLOR_BUFFER | GFX_CLEAR_FLAGS_DEPTH_BUFFER | GFX_CLEAR_FLAGS_STENCIL_BUFFER),
+    .shader_context_id = s_renderer.shader_contexts[SHADER_CONTEXT_SCREEN_SPACE],
+  };
+  light_pass.targets.push_back(GFX_TEXTURE_FORMAT_RGBA8);
+  light_pass.targets.push_back(GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8);
+  
+  renderer_push_pass(light_pass, light_pass_fn);
+
+  // HDR pass
+
+  RenderPassDesc hdr_pass = {
+    .frame_size        = IVec2(width, height), 
+    .clear_flags       = GFX_CLEAR_FLAGS_COLOR_BUFFER,
     .shader_context_id = s_renderer.shader_contexts[SHADER_CONTEXT_HDR],
   };
-  light_pass.targets.push_back(GFX_TEXTURE_FORMAT_RGBA32F);
-  light_pass.targets.push_back(GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8);
+  hdr_pass.targets.push_back(GFX_TEXTURE_FORMAT_RGBA32F);
 
-  renderer_push_pass(light_pass, light_pass_fn);
+  renderer_push_pass(hdr_pass, hdr_pass_fn);
   
   NIKOLA_LOG_INFO("Successfully initialized the renderer context");
 }
 
 void renderer_shutdown() {
   for(auto& entry : s_renderer.render_passes) {
+    for(sizei i = 0; i < entry.frame_desc.attachments_count; i++) {
+      gfx_texture_destroy(entry.frame_desc.color_attachments[i]);
+    }
+
+    gfx_texture_destroy(entry.frame_desc.depth_attachment);
+    gfx_texture_destroy(entry.frame_desc.stencil_attachment);
+    
     gfx_framebuffer_destroy(entry.frame);
   }
 
@@ -464,7 +426,6 @@ const u32 renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& fun
 
   // Framebuffer init
 
-  pass.frame_size     = desc.frame_size;
   pass.shader_context = resources_get_shader_context(desc.shader_context_id);
 
   pass.frame_desc              = {}; 
@@ -494,8 +455,8 @@ const u32 renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& fun
     }
 
     GfxTextureDesc texture_desc = {
-      .width     = (u32)pass.frame_size.x, 
-      .height    = (u32)pass.frame_size.y, 
+      .width     = (u32)desc.frame_size.x, 
+      .height    = (u32)desc.frame_size.y, 
       .depth     = 0, 
       .mips      = 1, 
       .type      = type,
@@ -526,6 +487,13 @@ const u32 renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& fun
   s_renderer.render_passes.push_back(pass);
 
   return (u32)s_renderer.render_passes.size() - 1;
+}
+
+void renderer_pass_set_active(const u32& pass_id, const bool active) {
+  bool is_valid_pass_id = (pass_id >= 0) && (pass_id < (u32)s_renderer.render_passes.size());
+  NIKOLA_ASSERT(is_valid_pass_id, "Out of range pass id given to renderer_pass_set_active");
+
+  s_renderer.render_passes[pass_id].is_active = active;
 }
 
 void renderer_queue_command(const RenderCommand& command) {
@@ -568,14 +536,48 @@ void renderer_flush_queue_command(const ResourceID& shader_context_id) {
   // Flush the opaque queue
 
   for(auto& cmd : s_renderer.queues[RENDER_QUEUE_OPAQUE]) {
-    render_mesh(cmd, default_ctx);
+    // Setting and using shader uniforms 
+
+    shader_context_set_uniform(default_ctx, "u_model", cmd.transform.transform);
+    shader_context_use(default_ctx);
+
+    // Using the internal material data
+
+    material_use(cmd.material);  
+    shader_context_set_uniform(default_ctx, "u_material.color", cmd.material->color);
+    shader_context_set_uniform(default_ctx, "u_material.shininess", cmd.material->shininess);
+    shader_context_set_uniform(default_ctx, "u_material.transparency", cmd.material->transparency);
+
+    // Set pipeline-related flags from the material
+
+    cmd.mesh->pipe_desc.depth_mask  = cmd.material->depth_mask;
+    cmd.mesh->pipe_desc.stencil_ref = cmd.material->stencil_ref;
+    gfx_pipeline_update(cmd.mesh->pipe, cmd.mesh->pipe_desc);
+
+    // Draw the mesh
+
+    gfx_pipeline_use(cmd.mesh->pipe);
+    gfx_context_draw(s_renderer.context, 0);
   }
 
   // Flush the debug queue
   // @TODO (Renderer): Do we need this here?
 
   for(auto& cmd : s_renderer.queues[RENDER_QUEUE_DEBUG]) {
-    render_mesh(cmd, debug_ctx);
+    // Setting and using shader uniforms 
+
+    shader_context_set_uniform(debug_ctx, "u_model", cmd.transform.transform);
+    shader_context_use(debug_ctx);
+
+    // Using the internal material data
+
+    shader_context_set_uniform(debug_ctx, "u_material.color", cmd.material->color);
+    shader_context_set_uniform(debug_ctx, "u_material.transparency", cmd.material->transparency);
+
+    // Draw the mesh
+
+    gfx_pipeline_use(cmd.mesh->pipe);
+    gfx_context_draw(s_renderer.context, 0);
   }
 }
 
@@ -593,7 +595,31 @@ void renderer_begin(FrameData& data) {
   gfx_buffer_upload_data(matrix_buffer, 0, sizeof(RenderUniformBuffer), &uni_buff);
 
   // Setup some lighting
-  setup_light_enviornment(data);
+  
+  ShaderContext* ctx = resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]);
+ 
+  // Set globals
+
+  shader_context_set_uniform(ctx, "u_ambient", data.ambient); 
+  shader_context_set_uniform(ctx, "u_point_lights_count", (i32)data.point_lights.size()); 
+  shader_context_set_uniform(ctx, "u_dir_light.direction", data.dir_light.direction); 
+  shader_context_set_uniform(ctx, "u_dir_light.color", data.dir_light.color); 
+
+  // Set point lights
+
+  i32 index = 0;
+
+  for(auto& point : data.point_lights) {
+    String point_index = "u_point_lights[" + std::to_string(index) + "].";
+
+    shader_context_set_uniform(ctx, (point_index + "position"), point.position); 
+    shader_context_set_uniform(ctx, (point_index + "color"), point.color); 
+
+    shader_context_set_uniform(ctx, (point_index + "linear"), point.linear); 
+    shader_context_set_uniform(ctx, (point_index + "quadratic"), point.quadratic); 
+  
+    index++;
+  }
 }
 
 void renderer_end() {
@@ -612,19 +638,14 @@ void renderer_end() {
 
   // Initiate all of the custrom render passes 
   
-  sizei previous_index = 0;
-
   for(sizei i = 1; i < s_renderer.render_passes.size(); i++) {
     RenderPass* entry = &s_renderer.render_passes[i];
-    if(!entry->is_active) { 
-      continue;
+
+    if(entry->is_active) {
+      begin_pass(*entry);
+      entry->pass_func(&s_renderer.render_passes[i - 1], entry, entry->user_data);
+      end_pass(*entry);
     } 
-
-    begin_pass(*entry);
-    entry->pass_func(&s_renderer.render_passes[previous_index], entry, entry->user_data);
-    end_pass(*entry);
-
-    previous_index++;
   } 
   
   // Clear the queues

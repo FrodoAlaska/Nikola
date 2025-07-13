@@ -18,6 +18,9 @@ struct Collider;
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderableType
 enum RenderableType {
+  /// The currently supported renderable types to be used 
+  /// in conjunction with a `RenderCommand`.
+
   RENDERABLE_MESH = 0, 
   RENDERABLE_MODEL, 
   RENDERABLE_DEBUG,
@@ -25,6 +28,22 @@ enum RenderableType {
   // @TODO (Renderer): Add more renderable types...
 };
 /// RenderableType
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// RenderPassID
+enum RenderPassID {
+  /// The currently available render passes the 
+  /// renderer goes through in execution order.
+  /// 
+  /// Using the `renderer_pass_set_active` function, 
+  /// passing in one of these values, the specified 
+  /// render pass can either be enabled or disabled.
+
+  RENDER_PASS_LIGHT = 0, 
+  RENDER_PASS_HDR,
+};
+/// RenderPassID
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -146,12 +165,25 @@ struct RenderCommand {
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderPassDesc
 struct RenderPassDesc {
-  Vec2 frame_size = Vec2(0.0f);
+  /// The size of the framebuffer 
+  IVec2 frame_size = Vec2(0.0f);
+
+  /// The clear flags to be used every frame.
   u32 clear_flags = 0;
-  
+ 
+  /// The shader context ID to be used later. 
   ResourceID shader_context_id = {};
+
+  /// The number of render targets of the render pass. 
+  ///
+  /// @NOTE: Depending on the format given, the framebuffer 
+  /// will push the appropriate render target type. For example, 
+  /// if the `GFX_TEXTURE_FORMAT_DEPTH24` type is given, the 
+  /// framebuffer will push a depth attachment.
   DynamicArray<GfxTextureFormat> targets;
 
+  /// Some user data to be sent every execution of the 
+  /// `RenderPassFn` callback.
   void* user_data = nullptr;
 };
 /// RenderPassDesc
@@ -160,14 +192,30 @@ struct RenderPassDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderPass
 struct RenderPass {
-  Vec2 frame_size = Vec2(0.0f);
-  
+  /// Framebuffer information.
+
   GfxFramebufferDesc frame_desc = {};
   GfxFramebuffer* frame         = nullptr;
+ 
+  /// The shader context that will be used 
+  /// upon calling `pass_func`.
   ShaderContext* shader_context = nullptr;
 
-  bool is_active         = true;
-  void* user_data        = nullptr;
+  /// The input textures which will be given 
+  /// to the `shader_context`.
+  /// 
+  /// @NOTE: The maximum number of inputs cannot exceed `RENDER_TARGETS_MAX` (found in `nikola_gfx.h`).
+
+  GfxTexture* input_textures[RENDER_TARGETS_MAX];
+  sizei input_textures_count = 0;
+
+  /// State handling
+
+  bool is_active  = true;
+  void* user_data = nullptr;
+
+  /// The callback function to call during 
+  /// execution.
   RenderPassFn pass_func = nullptr;
 };
 /// RenderPass
@@ -261,6 +309,12 @@ NIKOLA_API Vec4& renderer_get_clear_color();
 ///
 /// Internally, the renderer will call `func`, passing in `user_data`.
 NIKOLA_API const u32 renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& func);
+
+/// Enable/disable a render pass identified by its `pass_id`.
+///
+/// @NOTE: If the given `pass_id` is < 0 or >= the maximum amount of render passes, 
+/// this function will assert. 
+NIKOLA_API void renderer_pass_set_active(const u32& pass_id, const bool active);
 
 /// Queue a rendering command using the given `command` as a specifier. 
 NIKOLA_API void renderer_queue_command(const RenderCommand& command);

@@ -163,6 +163,14 @@ void app_render_gui(nikola::App* app) {
     ImGui::DragFloat3("Ambient", &app->frame_data.ambient[0], 0.1f, 0.0f, 1.0f);
   }
 
+  // Renderer
+  if(ImGui::CollapsingHeader("Renderer")) {
+    static bool state_active = true;
+    if(ImGui::Checkbox("HDR active", &state_active)) {
+      nikola::renderer_pass_set_active(nikola::RENDER_PASS_HDR, state_active);
+    }
+  }
+
   nikola::gui_end_panel();
   
   nikola::gui_end();
