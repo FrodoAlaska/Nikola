@@ -123,25 +123,36 @@
     - [] Compute shader support, with dispatching.
     - [] Documentation
 - [] Renderer v0.6 
-    - [x] Re-introduce the command system into the renderer. Have a `RenderCommand` structure that can be queued by the renderer. 
-    - [x] Improve the render pass system to be more versitile. It's very "stiff" right now.
-    - [x] Improve the current render passes and test with client-side render passes.
-    - [] Introduce a `RenderComputeCommand`. It will make the renderer "dispatch" the command to the compute shader instead of rendering it, using the work groups as it's input. 
-    - [] Look into making the renderer "instanced" rather than rendering everything as is.
-    - [] Improve the Blinn-Phong lighting model by actually using specular maps and maybe fixing the material system a bit. 
-    - [] Improve lighting using clustered rendering. Or, if it's too difficult, you can limit the amount of point lights a scene can have.
-    - [] Cascaded shadow maps
-    - [] Bloom integration 
-    - [] Normal/roughness mapping.
+    - [x] Improve draw calls and render passes
+        - [x] Re-introduce the command system into the renderer. Have a `RenderCommand` structure that can be queued by the renderer. 
+        - [x] Improve the render pass system to be more versitile. It's very "stiff" right now.
+        - [x] Improve the current render passes and test with client-side render passes.
+    - [] Add new rendering features/effects 
+        - [x] Improve the Blinn-Phong lighting model by actually using specular maps and maybe fixing the material system a bit. 
+        - [] Cascaded shadow maps
+        - [] Normal/roughness mapping.
+        - [] Gaussian blur
+        - [] Bloom integration 
+    - [] Increase performance/improve workflow
+        - [x] Introduce the `RenderInstanceCommand` to enable full support of instancing in the renderer.
+        - [x] Change the instance data to become an instance uniform buffer that gets updated every frame. Each instance can aquire its data using `gl_InstanceID` instead of per-vertex instance data.
+        - [] Introduce a `RenderComputeCommand`. It will make the renderer "dispatch" the command to the compute shader instead of rendering it, using the work groups as it's input. 
+        - [] Improve lighting using clustered rendering. Or, if it's too difficult, you can limit the amount of point lights a scene can have.
+        - [] Look into making the renderer "instanced" rather than rendering everything as is.
+    - [] Documentation
+- [] Particles v0.1 
+    - [] Add CPU-based particles that can render different shapes, sizes, and colors (maybe even certain textures?) 
+    - [] Implement a GPU-based particle system, using something like instancing.
     - [] Documentation
 - [] Resource Manager v0.5
     - [x] Instead of using an abstracted `NBR` layer over everything, write extra `file_write_bytes` functions for the various resources, which will write a _compressed_ version of the resources, and load them as well.
-    - [] Improve the NBR tool to have a "packging" option that compiles all of the resources into one "blob" called `nkpkg`.
-    - [] Implement a way to load `nkpkg` files with a function called `resources_push_package`.
+    - [] Improve packaging/distribution  
+        - [] Improve the NBR tool to have a "packging" option that compiles all of the resources into one "blob" called `nkpkg`.
+        - [] Implement a way to load `nkpkg` files with a function called `resources_push_package`.
     - [] Fix 3D models loading. 
         - [] Add a parent and child relationship between meshes. Basically, every mesh should have a `local_position` which is set to `Vec3(0.0f)` by default, and it will be take into account when rendering.
         - [] I think the renderer assumes the vertex data of the mesh so if a model has even an extra vertex data like color, the renderer messes everything up. Or limit all 3D models to a certain vertx data set. 
-        - [] Make sure that materials are loaded correctly using Assimp (colors and other uniforms).
+        - [x] Make sure that materials are loaded correctly using Assimp (colors and other uniforms).
     - [x] Let the material be created using a `MaterialDesc` structure for more effecient material usage. 
     - [] Documentation
 - [] Performance Craze 0.1 
@@ -152,21 +163,17 @@
     - [] Improve resource loading time by adding asynchronous resource loading.
     - [] Also look into custom memory pools/memory arenas since they can increase performance.
     - [] Documentation
-- [] Particles v0.1 
-    - [] Add CPU-based particles that can render different shapes, sizes, and colors (maybe even certain textures?) 
-    - [] Implement a GPU-based particle system, using something like instancing.
-    - [] Documentation
 - [] 3D Animations v0.1
 - [] Renderer v0.7 
     - [] Decal rendering 
-    - [] Terrain rendering 
+    - [] Terrain rendering (terrain generation using `stb_perlin` and loading from heightmap)
     - [] Screen-Space effects (Screen-Space Reflections, Screen-Space Ambient Occlussion, etc)
     - [] Documentation
 
 ## Showcases
 
+- Particles showcase, using instancing. A dark corridor with absolutely no or little natural light. The player can shoot flares that emit a very bright red color, emanating the corridor.  
 - Showing the gradual change with each render pass in a simple scene.
-- Particles showcase, using instancing. 
 - Compute shaders with the planet blowing up?
 
 ## BUGS:

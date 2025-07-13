@@ -12,16 +12,13 @@ namespace nikola {
 void material_use(Material* mat) {
   NIKOLA_ASSERT(mat, "Invalid Material given to material_use");
 
+  // @TODO (Renderer): Do we really need this here???
+
   GfxTexture* textures[2] = {
     mat->diffuse_map, 
     mat->specular_map, 
   };
-  u32 textures_count = 0;
-
-  // Use the diffuse texture (if they are valid)
-  if(mat->diffuse_map) {
-    textures_count++;
-  }
+  u32 textures_count = 1;
  
   // Use the specular texture (if they are valid)
   if(mat->specular_map) {
@@ -29,9 +26,7 @@ void material_use(Material* mat) {
   }
 
   // Use all the valid textures
-  if(textures_count > 0) { 
-    gfx_texture_use(textures, textures_count);
-  }
+  gfx_texture_use(textures, textures_count);
 }
 
 /// Material functions

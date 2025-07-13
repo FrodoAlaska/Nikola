@@ -774,7 +774,7 @@ ResourceID resources_push_material(const ResourceGroupID& group_id, const Materi
   Material* material = new Material{};
   
   material->diffuse_map  = renderer_get_defaults().texture;
-  material->specular_map = renderer_get_defaults().texture;
+  material->specular_map = nullptr;
   
   material->color        = desc.color;
   material->shininess    = desc.shininess;
@@ -900,10 +900,12 @@ ResourceID resources_push_model(const ResourceGroupID& group_id, const FilePath&
     Vec3 color        = Vec3(nbr_model.materials[i].diffuse[0], 
                              nbr_model.materials[i].diffuse[1], 
                              nbr_model.materials[i].diffuse[2]);
+    
+    i8 diffuse_index  = nbr_model.materials[i].diffuse_index;
     i8 specular_index = nbr_model.materials[i].specular_index;
 
     MaterialDesc mat_desc = {
-      .diffuse_id  = texture_ids[nbr_model.materials[i].diffuse_index], 
+      .diffuse_id  = diffuse_index != -1 ? texture_ids[diffuse_index] : ResourceID{}, 
       .specular_id = specular_index != -1 ? texture_ids[specular_index] : ResourceID{},
 
       .color = color,

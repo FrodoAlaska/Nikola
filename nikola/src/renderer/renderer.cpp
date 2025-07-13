@@ -38,6 +38,14 @@ enum RenderQueueID {
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// InstanceData
+struct InstanceData {
+  Mat4 model; 
+};
+/// InstanceData
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// MeshRenderCommand
 struct MeshRenderCommand {
   Transform transform = {};
@@ -53,12 +61,23 @@ struct MeshRenderCommand {
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// InstanceData
-struct InstanceData {
-  Mat4 model; 
-  Vec4 color;
+/// MeshRenderInstanceCommand
+struct MeshRenderInstanceCommand {
+  InstanceData instance_data[RENDERER_MAX_INSTANCES]; 
+  
+  Mesh* mesh         = nullptr;
+  Material* material = nullptr;
+
+  sizei instance_count = 1;
+
+  MeshRenderInstanceCommand(Mesh* mesh, const Transform* transforms, Material* mat, const sizei count) 
+    :mesh(mesh), material(mat), instance_count(count) {
+    for(sizei i = 0; i < count; i++) {
+      instance_data[i].model = transforms[i].transform;
+    }
+  }
 };
-/// InstanceData
+/// MeshRenderInstanceCommand
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -80,11 +99,10 @@ struct Renderer {
 
   // Instance data
 
-  InstanceData instance_data[1000];
+  InstanceData instance_data[RENDERER_MAX_INSTANCES];
   sizei instance_count = 0;
-  
-  GfxPipelineDesc inst_pipe_desc = {};
-  GfxPipeline* instance_pipe     = nullptr;
+ 
+  GfxBuffer* instance_buffer = nullptr;
   
   // Defaults data
 
@@ -93,13 +111,14 @@ struct Renderer {
   
   // Render data
 
-  GfxPipelineDesc pipe_desc  = {};
-  GfxPipeline* pipeline      = nullptr; 
+  GfxPipelineDesc pipe_desc = {};
+  GfxPipeline* pipeline     = nullptr; 
   
   FrameData* frame_data;
   DynamicArray<RenderPass> render_passes;
 
   DynamicArray<MeshRenderCommand> queues[RENDER_QUEUES_MAX];
+  DynamicArray<MeshRenderInstanceCommand> instance_queue;
 };
 
 static Renderer s_renderer{};
@@ -111,6 +130,7 @@ static Renderer s_renderer{};
 
 static void init_defaults() {
   // Default texture init
+  
   u32 pixels = 0xffffffff; 
   GfxTextureDesc texture_desc = {
     .width     = 1, 
@@ -128,6 +148,7 @@ static void init_defaults() {
   s_renderer.defaults.texture   = resources_get_texture(default_texture_id);
 
   // Matrices buffer init
+  
   GfxBufferDesc buff_desc = {
     .data  = nullptr, 
     .size  = sizeof(RenderUniformBuffer),
@@ -146,6 +167,7 @@ static void init_defaults() {
   s_renderer.defaults.cube_mesh = resources_get_mesh(resources_push_mesh(RESOURCE_CACHE_ID, GEOMETRY_CUBE));
 
   // Shaders init
+  
   ResourceID default_shader      = resources_push_shader(RESOURCE_CACHE_ID, generate_default_shader());
   ResourceID skybox_shader       = resources_push_shader(RESOURCE_CACHE_ID, generate_skybox_shader());
   ResourceID screen_space_shader = resources_push_shader(RESOURCE_CACHE_ID, generate_screen_space_shader());
@@ -162,30 +184,20 @@ static void init_defaults() {
   s_renderer.shader_contexts[SHADER_CONTEXT_INSTANCE]     = resources_push_shader_context(RESOURCE_CACHE_ID, inst_shader);
   s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]        = resources_push_shader_context(RESOURCE_CACHE_ID, blinn_phong_shader);
 
-  // @TEMP
-  // Instance pipeline init
- 
-  geometry_loader_load(RESOURCE_CACHE_ID, &s_renderer.inst_pipe_desc, GEOMETRY_CUBE);
-
-  sizei start = s_renderer.inst_pipe_desc.layouts[0].attributes_count;
-
-  s_renderer.inst_pipe_desc.layouts[1].start_index   = start;
-  s_renderer.inst_pipe_desc.layouts[1].instance_rate = 1;
-
-  for(sizei i = start; i < start + 5; i++) {
-    s_renderer.inst_pipe_desc.layouts[1].attributes[i] = GFX_LAYOUT_FLOAT4;
-    s_renderer.inst_pipe_desc.layouts[1].attributes_count++;
-  }
-
+  // Instance buffer init
+  
   GfxBufferDesc inst_buff_desc = {
     .data  = nullptr,
-    .size  = sizeof(InstanceData) * 1000,
+    .size  = sizeof(InstanceData) * RENDERER_MAX_INSTANCES,
     .type  = GFX_BUFFER_VERTEX, 
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
-  s_renderer.inst_pipe_desc.instance_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, inst_buff_desc));
+  s_renderer.instance_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, inst_buff_desc));
 
-  s_renderer.instance_pipe = gfx_pipeline_create(s_renderer.context, s_renderer.inst_pipe_desc);
+  // @TODO (Renderer): Maybe have this somewhere else?
+  shader_context_set_uniform_buffer(resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_INSTANCE]), 
+                                    SHADER_INSTANCE_BUFFER_INDEX, 
+                                    s_renderer.instance_buffer);
 }
 
 static void init_pipeline() {
@@ -249,6 +261,25 @@ static void queue_model(Model* model, Material* material, const Transform& trans
     // @TODO(Renderer): Have a transform parent-child relationship
 
     s_renderer.queues[RENDER_QUEUE_OPAQUE].emplace_back(mesh, transform, mat);
+  }  
+}
+
+static void queue_model_instanced(Model* model, Material* material, const Transform* transforms, const sizei inst_count) {
+  for(sizei i = 0; i < model->meshes.size(); i++) {
+    Mesh* mesh    = model->meshes[i];
+    Material* mat = model->materials[model->material_indices[i]];
+
+    // Let the main given material "influence" the model's material 
+
+    mat->color       *= material->color; 
+    mat->shininess    = material->shininess;
+    mat->transparency = material->transparency;
+    mat->depth_mask   = material->depth_mask;
+
+    // @TODO(Renderer): Make sure to include transparent objects
+    // @TODO(Renderer): Have a transform parent-child relationship
+
+    s_renderer.instance_queue.emplace_back(mesh, transforms, mat, inst_count);
   }  
 }
 
@@ -387,19 +418,10 @@ void renderer_init(Window* window) {
 
 void renderer_shutdown() {
   for(auto& entry : s_renderer.render_passes) {
-    for(sizei i = 0; i < entry.frame_desc.attachments_count; i++) {
-      gfx_texture_destroy(entry.frame_desc.color_attachments[i]);
-    }
-
-    gfx_texture_destroy(entry.frame_desc.depth_attachment);
-    gfx_texture_destroy(entry.frame_desc.stencil_attachment);
-    
     gfx_framebuffer_destroy(entry.frame);
   }
 
   gfx_pipeline_destroy(s_renderer.pipeline);
-  gfx_pipeline_destroy(s_renderer.instance_pipe);
-  
   gfx_context_shutdown(s_renderer.context);
   
   NIKOLA_LOG_INFO("Successfully shutdown the renderer context");
@@ -527,11 +549,41 @@ void renderer_queue_command(const RenderCommand& command) {
   // i.e, transparent objects need a `transparent_queue` and so on.
 }
 
+void renderer_queue_command(const RenderInstanceCommand& command) {
+  NIKOLA_ASSERT(RESOURCE_IS_VALID(command.renderable_id), "Cannot render an invalid resource");
+
+  Material* material = s_renderer.defaults.material;
+  if(RESOURCE_IS_VALID(command.material_id)) {
+    material = resources_get_material(command.material_id);
+  }
+
+  switch(command.type) {
+    case RENDERABLE_MESH:
+      s_renderer.instance_queue.emplace_back(resources_get_mesh(command.renderable_id), 
+                                             command.transforms, 
+                                             material, 
+                                             command.instance_count);
+      break;
+    case RENDERABLE_MODEL:
+      queue_model_instanced(resources_get_model(command.renderable_id), 
+                            material, 
+                            command.transforms, 
+                            command.instance_count); 
+      break;
+    case RENDERABLE_DEBUG:
+      break;
+    default:
+      NIKOLA_LOG_ERROR("Invalid or unsupported render command given... skiping");
+      break;
+  }
+}
+
 void renderer_flush_queue_command(const ResourceID& shader_context_id) {
   ResourceID ctx_id  = RESOURCE_IS_VALID(shader_context_id) ? shader_context_id : s_renderer.shader_contexts[SHADER_CONTEXT_BLINN];
   
   ShaderContext* default_ctx = resources_get_shader_context(ctx_id);
   ShaderContext* debug_ctx   = resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_DEFAULT]);
+  ShaderContext* inst_ctx    = resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_INSTANCE]);
 
   // Flush the opaque queue
 
@@ -578,6 +630,36 @@ void renderer_flush_queue_command(const ResourceID& shader_context_id) {
 
     gfx_pipeline_use(cmd.mesh->pipe);
     gfx_context_draw(s_renderer.context, 0);
+  }
+
+  // Flush the instance queue
+
+  for(auto& cmd : s_renderer.instance_queue) {
+    // Setting and using shader uniforms 
+
+    shader_context_use(inst_ctx);
+
+    // Using the internal material data
+
+    material_use(cmd.material);  
+    shader_context_set_uniform(inst_ctx, "u_material.color", cmd.material->color);
+    shader_context_set_uniform(inst_ctx, "u_material.transparency", cmd.material->transparency);
+
+    // Set pipeline-related flags from the material
+
+    cmd.mesh->pipe_desc.depth_mask      = cmd.material->depth_mask;
+    cmd.mesh->pipe_desc.stencil_ref     = cmd.material->stencil_ref;
+    cmd.mesh->pipe_desc.instance_buffer = s_renderer.instance_buffer;
+
+    gfx_pipeline_update(cmd.mesh->pipe, cmd.mesh->pipe_desc);
+
+    // Update the instance buffer
+    gfx_buffer_upload_data(s_renderer.instance_buffer, 0, sizeof(InstanceData) * cmd.instance_count, cmd.instance_data);
+
+    // Draw the mesh
+
+    gfx_pipeline_use(cmd.mesh->pipe);
+    gfx_context_draw_instanced(s_renderer.context, 0, cmd.instance_count);
   }
 }
 
@@ -653,6 +735,8 @@ void renderer_end() {
   for(sizei i = 0; i < RENDER_QUEUES_MAX; i++) {
     s_renderer.queues[i].clear();
   }
+
+  s_renderer.instance_queue.clear();
 }
 
 /// Renderer functions

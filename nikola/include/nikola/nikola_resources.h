@@ -115,12 +115,12 @@ struct NBRMaterial {
 
   /// The diffuse index into the `textures` array in `NBRModel`.
   ///
-  /// @NOTE: This index will be `0` if there is no diffuse texture present
+  /// @NOTE: This index will be `-1` if there is no diffuse texture present
   i8 diffuse_index;
   
   /// The diffuse index into the `textures` array in `NBRModel`.
   ///
-  /// @NOTE: This index will be `0` if there is no specular texture present
+  /// @NOTE: This index will be `-1` if there is no specular texture present
   i8 specular_index;
 };
 /// NBRMaterial
@@ -273,10 +273,13 @@ const u16 RESOURCE_GROUP_INVALID         = ((u16)-1);
 const u16 RESOURCE_CACHE_ID              = 0;
 
 /// The maximum amount of declared uniform buffers in all shaders.
-const sizei SHADER_UNIFORM_BUFFERS_MAX   = 1;
+const sizei SHADER_UNIFORM_BUFFERS_MAX   = 2;
 
 /// The index of the matrices uniform buffer within all shaders.
 const sizei SHADER_MATRICES_BUFFER_INDEX = 0;
+
+/// The index of the instance uniform buffer within all shaders.
+const sizei SHADER_INSTANCE_BUFFER_INDEX = 1;
 
 /// The maximum amount of preset uniforms. 
 const u32 MATERIAL_UNIFORMS_MAX          = 4;

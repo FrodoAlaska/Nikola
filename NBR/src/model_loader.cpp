@@ -76,21 +76,6 @@ static void load_node_mesh(aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
    
     // Adding the texture coordinates
     vertices.push_back(coord_u); vertices.push_back(coord_v);
-
-    // @TODO (Model loader): This causes issues with OBJ files.
-    //
-    // Getting the colors
-    // if(mesh->mColors[0]) {
-    //   nbr_mesh->vertex_type = (nikola::u8)nikola::VERTEX_TYPE_PNCUV;  
-    //
-    //   nikola::f32 r = mesh->mColors[0][i].r;      
-    //   nikola::f32 g = mesh->mColors[0][i].g;      
-    //   nikola::f32 b = mesh->mColors[0][i].b;      
-    //   nikola::f32 a = mesh->mColors[0][i].a;
-    //
-    //   // Adding the color 
-    //   vertices.push_back(r); vertices.push_back(g); vertices.push_back(b); vertices.push_back(a);
-    // }
   }
 
   // Add the material index of the mesh to refrence it later on. Much later on.
@@ -144,9 +129,7 @@ static void load_scene_meshes(const aiScene* scene, ObjData* data, aiNode* node)
 }
 
 static void load_material_texture(aiMaterial* material, aiTextureType type, ObjData* data, nikola::i8* index) {
-  nikola::sizei textures_count = material->GetTextureCount(type); 
-
-  for(nikola::sizei i = 0; i < textures_count; i++) {
+  for(nikola::u32 i = 0; i < material->GetTextureCount(type); i++) {
     aiString str;
     material->GetTexture(type, i, &str);
 
@@ -154,10 +137,10 @@ static void load_material_texture(aiMaterial* material, aiTextureType type, ObjD
     nikola::NBRTexture texture;
     image_loader_load_texture(&texture, nikola::filepath_append(data->parent_dir, str.C_Str()));
     data->textures.push_back(texture);
+
+    *index += 1;
+    NIKOLA_LOG_TRACE("HERE, %i", *index);
   }
-  
-  // Set the appropriate index of the newly loaded texture
-  *index = (nikola::i8)data->textures.size() - 1;
 }
 
 static void load_scene_materials(const aiScene* scene, ObjData* data) {
@@ -186,7 +169,7 @@ static void load_scene_materials(const aiScene* scene, ObjData* data) {
     nbr_material.specular[0] = specular.r; nbr_material.specular[1] = specular.g; nbr_material.specular[2] = specular.b;
 
     // Set the default values for the texture indices
-    nbr_material.diffuse_index  = 0; 
+    nbr_material.diffuse_index  = -1; 
     nbr_material.specular_index = -1; 
 
     // Load the texture types and set the appropriate indices.
@@ -224,20 +207,6 @@ bool model_loader_load(nikola::NBRModel* model, const nikola::FilePath& path) {
   ObjData data; 
   data.parent_dir = nikola::filepath_parent_path(path); // Usually, `path` will refer to the 3D model file directly so we need its immediate parent
 
-  /*
-   * @NOTE (29/3/2025): 
-   * Just in case the material has no textures, we will 
-   * give it a default white texture to use instead.
-  */
-  data.default_texture = {
-    .width    = 1, 
-    .height   = 1, 
-    .channels = 4, 
-    .pixels   = nikola::memory_allocate(4), // 4 = width * height * channels
-  };
-  nikola::memory_set(data.default_texture.pixels, 1, 4);
-  data.textures.push_back(data.default_texture); 
-
   // Meshes init 
   load_scene_meshes(scene, &data, scene->mRootNode);
   model->meshes_count  = data.meshes.size();
@@ -251,6 +220,24 @@ bool model_loader_load(nikola::NBRModel* model, const nikola::FilePath& path) {
   nikola::memory_copy(model->materials, data.materials.data(), data.materials.size() * sizeof(nikola::NBRMaterial));
 
   // Textures init
+  
+  /*
+   * @NOTE (29/3/2025): 
+   *
+   * Just in case the material has no textures, we will 
+   * give it a default white texture to use instead.
+  */
+  if(data.textures.empty()) {
+    data.default_texture = {
+      .width    = 1, 
+      .height   = 1, 
+      .channels = 4, 
+      .pixels   = nikola::memory_allocate(4), // 4 = width * height * channels
+    };
+    nikola::memory_set(data.default_texture.pixels, 0xFF, 4);
+    data.textures.push_back(data.default_texture); 
+  }
+
   model->textures_count = data.textures.size(); 
   model->textures       = (nikola::NBRTexture*)nikola::memory_allocate(sizeof(nikola::NBRTexture) * model->textures_count);
   nikola::memory_copy(model->textures, data.textures.data(), data.textures.size() * sizeof(nikola::NBRTexture));

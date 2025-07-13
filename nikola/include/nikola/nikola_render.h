@@ -16,6 +16,21 @@ struct Collider;
 /// *** Renderer ***
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// Consts
+
+/// The maximum amount of instances a renderer can dispatch.
+const sizei RENDERER_MAX_INSTANCES = 2048;
+
+/// The maximum degrees the camera can achieve. 
+const f32 CAMERA_MAX_DEGREES       = 89.0f;
+
+/// The maximum amount of zoom the camera can achieve.
+const f32 CAMERA_MAX_ZOOM          = 180.0f;
+
+/// Consts
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// RenderableType
 enum RenderableType {
   /// The currently supported renderable types to be used 
@@ -44,18 +59,6 @@ enum RenderPassID {
   RENDER_PASS_HDR,
 };
 /// RenderPassID
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// Camera consts 
-
-/// The maximum degrees the camera can achieve 
-const f32 CAMERA_MAX_DEGREES = 89.0f;
-
-/// The maximum amount of zoom the camera can achieve
-const f32 CAMERA_MAX_ZOOM    = 180.0f;
-
-/// Camera consts 
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -153,13 +156,52 @@ struct RendererDefaults {
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderCommand
 struct RenderCommand {
+  /// The type of resource this command will render. 
   RenderableType type;
+
+  /// The object's transform.
   Transform transform;
 
+  /// The resource ID of the renderable. 
   ResourceID renderable_id = {};
+
+  /// The material to be used. 
+  ///
+  /// @NOTE: If this material is left to its default, 
+  /// the renderer will use the default material to render.
   ResourceID material_id   = {};
 };
 /// RenderCommand
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// RenderInstanceCommand
+struct RenderInstanceCommand {
+  /// The type of resource this command will render. 
+  RenderableType type; 
+  
+  /// An array of transforms for each of the instances. 
+  ///
+  /// @NOTE: The number of elements in this array will 
+  /// be queried form `instance_count`.
+  Transform* transforms;
+
+  /// The resource ID of the renderable. 
+  ResourceID renderable_id = {};
+  
+  /// The material to be used. 
+  ///
+  /// @NOTE: If this material is left to its default, 
+  /// the renderer will use the default material to render.
+  ResourceID material_id   = {}; 
+
+  /// The number of instances to render. 
+  /// By default, this is set to `1`.
+  ///
+  /// @NOTE: The instance count cannot exceed `RENDERER_MAX_INSTANCES`.
+  sizei instance_count = 1;
+};
+/// RenderInstanceCommand
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -318,6 +360,9 @@ NIKOLA_API void renderer_pass_set_active(const u32& pass_id, const bool active);
 
 /// Queue a rendering command using the given `command` as a specifier. 
 NIKOLA_API void renderer_queue_command(const RenderCommand& command);
+
+/// Queue an instanced rendering command using the given `command` as a specifier. 
+NIKOLA_API void renderer_queue_command(const RenderInstanceCommand& command);
 
 /// Flush/render the internal command queue of the renderer, using the given 
 /// `shader_context_id` as the main shader for rendering. 
