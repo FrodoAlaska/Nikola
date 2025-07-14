@@ -10,7 +10,7 @@ struct nikola::App {
   nikola::FrameData frame_data;
 
   nikola::ResourceGroupID res_group_id;
-  nikola::ResourceID mesh_id, font_id;
+  nikola::ResourceID mesh_id, font_id, material_id;
 
   nikola::Transform transform;
 
@@ -31,10 +31,17 @@ static void init_resources(nikola::App* app) {
   app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group_id, "cubemaps/gloomy.nbr");
 
   // Mesh init
-  app->mesh_id = nikola::resources_push_model(app->res_group_id, "models/bridge.nbr");//nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
+  app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
 
   // Font init
   app->font_id = nikola::resources_push_font(app->res_group_id, "fonts/bit5x3.nbr");
+
+  // Material init
+  nikola::MaterialDesc mat_desc = {
+    .diffuse_id  = nikola::resources_push_texture(app->res_group_id, "textures/container_diffuse.nbr"),
+    .specular_id = nikola::resources_push_texture(app->res_group_id, "textures/container_specular.nbr"),
+  };
+  app->material_id = nikola::resources_push_material(app->res_group_id, mat_desc);
 }
 
 /// Private functions 
@@ -103,35 +110,35 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 void app_render(nikola::App* app) {
   // Render 3D 
   nikola::renderer_begin(app->frame_data);
-  // nikola::renderer_queue_model(app->mesh_id, app->transform);
 
-  constexpr nikola::sizei CUBES_MAX = 1000;
+  constexpr int MAX_CUBES = 100;
 
-  nikola::Transform instance_transforms[CUBES_MAX];
-  nikola::Vec4 instance_colors[CUBES_MAX];
+  nikola::Transform transforms[MAX_CUBES];
+  for(int i = 0; i < 10; i++) {
+    for(int j = 0; j < 10; j++) {
+      int index = (i * 10) + j;
 
-  nikola::Vec4 color; 
-  color.r = nikola::sin(nikola::niclock_get_time() * 2.0f);
-  color.g = nikola::sin(nikola::niclock_get_time() * 1.3f);
-  color.b = nikola::sin(nikola::niclock_get_time() * 0.7f);
-  color.a = 1.0f;
-
-  for(nikola::sizei i = 0; i < 100; i++) {
-    for(nikola::sizei j = 0; j < 10; j++) {
-      nikola::sizei index = (j * 100) + i;
-
-      nikola::transform_translate(instance_transforms[index], nikola::Vec3(i * 2.0f, 0.0f, j * 2.0f));
-      nikola::transform_scale(instance_transforms[index], nikola::Vec3(1.0f));
-
-      instance_colors[index] = color;
+      nikola::transform_translate(transforms[index], nikola::Vec3(j * 2.0f, 0.0f, i * 2.0f));
+      nikola::transform_scale(transforms[index], app->transform.scale);
     }
-  } 
-  nikola::renderer_render_cube_instanced(instance_transforms, instance_colors, CUBES_MAX);
+  }
+
+  nikola::RenderInstanceCommand cmd = {
+    .type       = nikola::RENDERABLE_MESH, 
+    .transforms = transforms, 
+
+    .renderable_id = app->mesh_id, 
+    .material_id   = app->material_id,
+
+    .instance_count = MAX_CUBES,
+  };
+  nikola::renderer_queue_command(cmd);
   
   nikola::renderer_end();
   
   // Render 2D 
   nikola::batch_renderer_begin();
+  nikola::batch_render_fps(nikola::resources_get_font(app->font_id), nikola::Vec2(10.0f, 32.0f), 32.0f, nikola::Vec4(1.0f)); 
   nikola::batch_renderer_end();
 }
 
@@ -144,8 +151,41 @@ void app_render_gui(nikola::App* app) {
   
   nikola::gui_debug_info();
   
-  nikola::gui_begin_panel("Entities");
+  nikola::gui_begin_panel("Scene");
+  
   nikola::gui_edit_transform("Mesh Transform", &app->transform);
+  nikola::gui_edit_material("Material", nikola::resources_get_material(app->material_id));
+  
+  // Lights
+  if(ImGui::CollapsingHeader("Lights")) {
+    nikola::gui_edit_directional_light("Directional", &app->frame_data.dir_light);
+
+    for(int i = 0; i < app->frame_data.point_lights.size(); i++) {
+      nikola::PointLight* light = &app->frame_data.point_lights[i];
+      nikola::String light_name = ("Point " + std::to_string(i));
+
+      nikola::gui_edit_point_light(light_name.c_str(), light);
+    }
+  
+    if(ImGui::Button("Add PointLight")) {
+      app->frame_data.point_lights.push_back(nikola::PointLight{nikola::Vec3(10.0f, 0.0f, 10.0f)});
+    }
+  }
+
+  // Camera
+  if(ImGui::CollapsingHeader("Camera")) {
+    nikola::gui_edit_camera("Editor Camera", &app->frame_data.camera); 
+    ImGui::DragFloat3("Ambient", &app->frame_data.ambient[0], 0.1f, 0.0f, 1.0f);
+  }
+
+  // Renderer
+  if(ImGui::CollapsingHeader("Renderer")) {
+    static bool state_active = true;
+    if(ImGui::Checkbox("HDR active", &state_active)) {
+      nikola::renderer_pass_set_active(nikola::RENDER_PASS_HDR, state_active);
+    }
+  }
+
   nikola::gui_end_panel();
   
   nikola::gui_end();

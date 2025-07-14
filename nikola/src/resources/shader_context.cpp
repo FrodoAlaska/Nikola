@@ -98,18 +98,9 @@ void shader_context_set_uniform_buffer(ShaderContext* ctx, const sizei index, co
   NIKOLA_ASSERT(ctx, "Invalid ShaderContext passed to shader_context_set_uniform_buffer");
   NIKOLA_ASSERT(ctx->shader, "Invalid shader in ShaderContext passed to shader_context_set_uniform_buffer");
   NIKOLA_ASSERT(buffer, "Invalid buffer given to shader_context_set_uniform_buffer");
-  NIKOLA_ASSERT(((index < SHADER_UNIFORM_BUFFERS_MAX) && (index >= 0)), "Cannot exceed SHADER_UNIFORM_BUFFERS_MAX"); 
 
   // Attach the uniform
-  ctx->uniform_buffers[index] = (GfxBuffer*)buffer;
   gfx_shader_attach_uniform(ctx->shader, GFX_SHADER_VERTEX, (GfxBuffer*)buffer, index);
-}
-
-void shader_context_use(ShaderContext* ctx) {
-  NIKOLA_ASSERT(ctx, "Invalid ShaderContext passed to shader_context_use");
-  NIKOLA_ASSERT(ctx->shader, "Invalid shader in ShaderContext passed to shader_context_use");
-
-  gfx_shader_use(ctx->shader);
 }
 
 /// ShaderContext functions

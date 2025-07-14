@@ -6,6 +6,7 @@
 
 #include "render_shaders.h"
 #include "light_shaders.h"
+#include "compute_shaders.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -20,8 +21,9 @@ enum ShaderContextID {
   SHADER_CONTEXT_HDR, 
   SHADER_CONTEXT_INSTANCE, 
   SHADER_CONTEXT_BLINN, 
+  SHADER_CONTEXT_COMPUTE, 
 
-  SHADER_CONTEXTS_MAX = SHADER_CONTEXT_BLINN + 1,
+  SHADER_CONTEXTS_MAX = SHADER_CONTEXT_COMPUTE + 1,
 };
 /// ShaderContextID
 /// ----------------------------------------------------------------------
@@ -38,11 +40,20 @@ enum RenderQueueID {
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// InstanceData
-struct InstanceData {
+/// InstanceUniformBuffer
+struct InstanceUniformBuffer {
   Mat4 model; 
 };
-/// InstanceData
+/// InstanceUniformBuffer
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// MatrixUniformBuffer
+struct MatrixUniformBuffer {
+  Mat4 view, projection; 
+  Vec3 camera_position;
+};
+/// MatrixUniformBuffer
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -63,7 +74,7 @@ struct MeshRenderCommand {
 /// ----------------------------------------------------------------------
 /// MeshRenderInstanceCommand
 struct MeshRenderInstanceCommand {
-  InstanceData instance_data[RENDERER_MAX_INSTANCES]; 
+  InstanceUniformBuffer instance_data[RENDERER_MAX_INSTANCES]; 
   
   Mesh* mesh         = nullptr;
   Material* material = nullptr;
@@ -81,15 +92,6 @@ struct MeshRenderInstanceCommand {
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// RenderUniformBuffer
-struct RenderUniformBuffer {
-  Mat4 view, projection; 
-  Vec3 camera_position;
-};
-/// RenderUniformBuffer
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
 /// Renderer
 struct Renderer {
   // Context data
@@ -99,16 +101,13 @@ struct Renderer {
 
   // Instance data
 
-  InstanceData instance_data[RENDERER_MAX_INSTANCES];
-  sizei instance_count = 0;
- 
   GfxBuffer* instance_buffer = nullptr;
   
   // Defaults data
 
   RendererDefaults defaults = {};
   ResourceID shader_contexts[SHADER_CONTEXTS_MAX];
-  
+
   // Render data
 
   GfxPipelineDesc pipe_desc = {};
@@ -151,7 +150,7 @@ static void init_defaults() {
   
   GfxBufferDesc buff_desc = {
     .data  = nullptr, 
-    .size  = sizeof(RenderUniformBuffer),
+    .size  = sizeof(MatrixUniformBuffer),
     .type  = GFX_BUFFER_UNIFORM,
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
@@ -174,6 +173,7 @@ static void init_defaults() {
   ResourceID hdr_shader          = resources_push_shader(RESOURCE_CACHE_ID, generate_hdr_shader());
   ResourceID inst_shader         = resources_push_shader(RESOURCE_CACHE_ID, generate_instance_shader());
   ResourceID blinn_phong_shader  = resources_push_shader(RESOURCE_CACHE_ID, generate_blinn_phong_shader());
+  ResourceID compute_shader      = resources_push_shader(RESOURCE_CACHE_ID, generate_particle_compute_shader());
 
   // Shader contexts init
   
@@ -183,13 +183,14 @@ static void init_defaults() {
   s_renderer.shader_contexts[SHADER_CONTEXT_HDR]          = resources_push_shader_context(RESOURCE_CACHE_ID, hdr_shader);
   s_renderer.shader_contexts[SHADER_CONTEXT_INSTANCE]     = resources_push_shader_context(RESOURCE_CACHE_ID, inst_shader);
   s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]        = resources_push_shader_context(RESOURCE_CACHE_ID, blinn_phong_shader);
+  s_renderer.shader_contexts[SHADER_CONTEXT_COMPUTE]      = resources_push_shader_context(RESOURCE_CACHE_ID, compute_shader);
 
   // Instance buffer init
   
   GfxBufferDesc inst_buff_desc = {
     .data  = nullptr,
-    .size  = sizeof(InstanceData) * RENDERER_MAX_INSTANCES,
-    .type  = GFX_BUFFER_VERTEX, 
+    .size  = sizeof(InstanceUniformBuffer) * RENDERER_MAX_INSTANCES,
+    .type  = GFX_BUFFER_UNIFORM, 
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
   s_renderer.instance_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, inst_buff_desc));
@@ -252,12 +253,10 @@ static void queue_model(Model* model, Material* material, const Transform& trans
 
     // Let the main given material "influence" the model's material 
 
-    mat->color       *= material->color; 
     mat->shininess    = material->shininess;
     mat->transparency = material->transparency;
     mat->depth_mask   = material->depth_mask;
 
-    // @TODO(Renderer): Make sure to include transparent objects
     // @TODO(Renderer): Have a transform parent-child relationship
 
     s_renderer.queues[RENDER_QUEUE_OPAQUE].emplace_back(mesh, transform, mat);
@@ -271,12 +270,10 @@ static void queue_model_instanced(Model* model, Material* material, const Transf
 
     // Let the main given material "influence" the model's material 
 
-    mat->color       *= material->color; 
     mat->shininess    = material->shininess;
     mat->transparency = material->transparency;
     mat->depth_mask   = material->depth_mask;
 
-    // @TODO(Renderer): Make sure to include transparent objects
     // @TODO(Renderer): Have a transform parent-child relationship
 
     s_renderer.instance_queue.emplace_back(mesh, transforms, mat, inst_count);
@@ -287,14 +284,19 @@ static void render_skybox(const ResourceID& skybox_id) {
   Skybox* skybox     = resources_get_skybox(skybox_id); 
   ShaderContext* ctx = resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_SKYBOX]);
 
-  // Using the shader 
-  shader_context_use(ctx);
+  // Using the resources 
+  
+  GfxBindingDesc bind_desc = {
+    .shader = ctx->shader, 
 
-  // Use the cubemap
-  gfx_cubemap_use(&skybox->cubemap, 1);
+    .cubemaps       = &skybox->cubemap, 
+    .cubemaps_count = 1,
+  };
+  gfx_context_use_bindings(s_renderer.context, bind_desc);
 
   // Draw the skybox
-  gfx_pipeline_use(skybox->pipe);
+  
+  gfx_context_use_pipeline(s_renderer.context, skybox->pipe);
   gfx_context_draw(s_renderer.context, 0);
 }
 
@@ -320,15 +322,18 @@ static void end_pass(RenderPass& pass) {
   gfx_context_clear(s_renderer.context, col.r, col.g, col.b, col.a);
   gfx_context_set_state(s_renderer.context, GFX_STATE_DEPTH, false); 
   
-  // Apply the shader from the pass
-  shader_context_use(pass.shader_context);
-  
-  // Apply the textures from the pass
-  gfx_texture_use(pass.input_textures, pass.input_textures_count); 
+  GfxBindingDesc bind_desc = {
+    .shader = pass.shader_context->shader, 
 
-  // Render the final render target
+    .textures       = pass.input_textures, 
+    .textures_count = pass.input_textures_count,
+  };
+  gfx_context_use_bindings(s_renderer.context, bind_desc);
+  
+  // Draw the final result to the screen
+  
   gfx_pipeline_update(s_renderer.pipeline, s_renderer.pipe_desc);
-  gfx_pipeline_use(s_renderer.pipeline);
+  gfx_context_use_pipeline(s_renderer.context, s_renderer.pipeline);
   gfx_context_draw(s_renderer.context, 0);
 }
 
@@ -336,7 +341,7 @@ static void end_pass(RenderPass& pass) {
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// Callbacks 
+/// Render pass Callbacks 
 
 static void light_pass_fn(const RenderPass* previous, RenderPass* current, void* user_data) {
   // Render the current set skybox first (if it exists)
@@ -347,12 +352,23 @@ static void light_pass_fn(const RenderPass* previous, RenderPass* current, void*
   // Flush our queues 
   renderer_flush_queue_command();
   
-  current->input_textures[0]    = current->frame_desc.color_attachments[0];
+  current->input_textures[0] = current->frame_desc.color_attachments[0];
   current->input_textures_count++;
 }
 
+static void compute_pass_fn(const RenderPass* previous, RenderPass* current, void* user_data) {
+  // gfx_context_dispatch(s_renderer.context, 
+  //                      1600, 
+  //                      900, 
+  //                      1);
+  // gfx_context_memory_barrier(s_renderer.context, GFX_MEMORY_BARRIER_SHADER_IMAGE_ACCESS);
+  // 
+  // current->input_textures[0] = current->frame_desc.color_attachments[0];
+  // current->input_textures_count++;
+}
+
 static void hdr_pass_fn(const RenderPass* previous, RenderPass* current, void* user_data) {
-  current->input_textures[0]    = (GfxTexture*)previous->frame_desc.color_attachments[0];
+  current->input_textures[0] = (GfxTexture*)previous->frame_desc.color_attachments[0];
   current->input_textures_count++;
 
   // Updating some HDR uniforms
@@ -361,7 +377,7 @@ static void hdr_pass_fn(const RenderPass* previous, RenderPass* current, void* u
                              s_renderer.frame_data->camera.exposure);
 }
 
-/// Callbacks 
+/// Render pass callbacks 
 /// ----------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -401,6 +417,18 @@ void renderer_init(Window* window) {
   light_pass.targets.push_back(GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8);
   
   renderer_push_pass(light_pass, light_pass_fn);
+ 
+  // Compute pass
+
+  RenderPassDesc compute_pass = {
+    .frame_size        = IVec2(width, height), 
+    .clear_flags       = GFX_CLEAR_FLAGS_COLOR_BUFFER,
+    .shader_context_id = s_renderer.shader_contexts[SHADER_CONTEXT_SCREEN_SPACE],
+    .access_mode       = GFX_TEXTURE_ACCESS_READ_WRITE,
+  };
+  compute_pass.targets.push_back(GFX_TEXTURE_FORMAT_RGBA32F);
+
+  // renderer_push_pass(compute_pass, compute_pass_fn);
 
   // HDR pass
 
@@ -412,7 +440,7 @@ void renderer_init(Window* window) {
   hdr_pass.targets.push_back(GFX_TEXTURE_FORMAT_RGBA32F);
 
   renderer_push_pass(hdr_pass, hdr_pass_fn);
-  
+
   NIKOLA_LOG_INFO("Successfully initialized the renderer context");
 }
 
@@ -460,6 +488,7 @@ const u32 renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& fun
   
   for(sizei i = 0; i < desc.targets.size(); i++) {
     GfxTextureType type = GFX_TEXTURE_RENDER_TARGET;
+
     switch(desc.targets[i]) {
       case GFX_TEXTURE_FORMAT_DEPTH16:
       case GFX_TEXTURE_FORMAT_DEPTH24:
@@ -485,6 +514,7 @@ const u32 renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& fun
       .format    = desc.targets[i],
       .filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST,
       .wrap_mode = GFX_TEXTURE_WRAP_MIRROR,
+      .access    = desc.access_mode,
       .data      = nullptr,
     };
 
@@ -583,7 +613,7 @@ void renderer_flush_queue_command(const ResourceID& shader_context_id) {
   
   ShaderContext* default_ctx = resources_get_shader_context(ctx_id);
   ShaderContext* debug_ctx   = resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_DEFAULT]);
-  ShaderContext* inst_ctx    = resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_INSTANCE]);
+  ShaderContext* inst_ctx    = resources_get_shader_context(s_renderer.shader_contexts[SHADER_CONTEXT_BLINN]);
 
   // Flush the opaque queue
 
@@ -591,14 +621,24 @@ void renderer_flush_queue_command(const ResourceID& shader_context_id) {
     // Setting and using shader uniforms 
 
     shader_context_set_uniform(default_ctx, "u_model", cmd.transform.transform);
-    shader_context_use(default_ctx);
-
-    // Using the internal material data
-
-    material_use(cmd.material);  
     shader_context_set_uniform(default_ctx, "u_material.color", cmd.material->color);
     shader_context_set_uniform(default_ctx, "u_material.shininess", cmd.material->shininess);
     shader_context_set_uniform(default_ctx, "u_material.transparency", cmd.material->transparency);
+
+    // Use the required resources
+
+    GfxTexture* textures[] = {
+      cmd.material->diffuse_map,
+      cmd.material->specular_map,
+    };
+
+    GfxBindingDesc bind_desc = {
+      .shader = default_ctx->shader,
+
+      .textures       = textures, 
+      .textures_count = 2,
+    };
+    gfx_context_use_bindings(s_renderer.context, bind_desc);
 
     // Set pipeline-related flags from the material
 
@@ -608,7 +648,7 @@ void renderer_flush_queue_command(const ResourceID& shader_context_id) {
 
     // Draw the mesh
 
-    gfx_pipeline_use(cmd.mesh->pipe);
+    gfx_context_use_pipeline(s_renderer.context, cmd.mesh->pipe);
     gfx_context_draw(s_renderer.context, 0);
   }
 
@@ -619,46 +659,62 @@ void renderer_flush_queue_command(const ResourceID& shader_context_id) {
     // Setting and using shader uniforms 
 
     shader_context_set_uniform(debug_ctx, "u_model", cmd.transform.transform);
-    shader_context_use(debug_ctx);
-
-    // Using the internal material data
-
     shader_context_set_uniform(debug_ctx, "u_material.color", cmd.material->color);
     shader_context_set_uniform(debug_ctx, "u_material.transparency", cmd.material->transparency);
 
+    // Use the required resources
+
+    GfxBindingDesc bind_desc = {
+      .shader = default_ctx->shader,
+    };
+    gfx_context_use_bindings(s_renderer.context, bind_desc);
+
     // Draw the mesh
 
-    gfx_pipeline_use(cmd.mesh->pipe);
+    gfx_context_use_pipeline(s_renderer.context, cmd.mesh->pipe);
     gfx_context_draw(s_renderer.context, 0);
   }
 
   // Flush the instance queue
 
   for(auto& cmd : s_renderer.instance_queue) {
+    // Update the instance buffer
+    gfx_buffer_upload_data(s_renderer.instance_buffer,
+                           0, 
+                           sizeof(InstanceUniformBuffer) * cmd.instance_count, 
+                           cmd.instance_data);
+    
     // Setting and using shader uniforms 
 
-    shader_context_use(inst_ctx);
-
-    // Using the internal material data
-
-    material_use(cmd.material);  
     shader_context_set_uniform(inst_ctx, "u_material.color", cmd.material->color);
+    shader_context_set_uniform(inst_ctx, "u_material.shininess", cmd.material->shininess);
     shader_context_set_uniform(inst_ctx, "u_material.transparency", cmd.material->transparency);
+
+    // Use the required resources
+
+    GfxTexture* textures[] = {
+      cmd.material->diffuse_map,
+      cmd.material->specular_map,
+    };
+
+    GfxBindingDesc bind_desc = {
+      .shader = inst_ctx->shader,
+
+      .textures       = textures, 
+      .textures_count = 2,
+    };
+    gfx_context_use_bindings(s_renderer.context, bind_desc);
 
     // Set pipeline-related flags from the material
 
     cmd.mesh->pipe_desc.depth_mask      = cmd.material->depth_mask;
     cmd.mesh->pipe_desc.stencil_ref     = cmd.material->stencil_ref;
     cmd.mesh->pipe_desc.instance_buffer = s_renderer.instance_buffer;
-
     gfx_pipeline_update(cmd.mesh->pipe, cmd.mesh->pipe_desc);
-
-    // Update the instance buffer
-    gfx_buffer_upload_data(s_renderer.instance_buffer, 0, sizeof(InstanceData) * cmd.instance_count, cmd.instance_data);
 
     // Draw the mesh
 
-    gfx_pipeline_use(cmd.mesh->pipe);
+    gfx_context_use_pipeline(s_renderer.context, cmd.mesh->pipe);
     gfx_context_draw_instanced(s_renderer.context, 0, cmd.instance_count);
   }
 }
@@ -669,12 +725,12 @@ void renderer_begin(FrameData& data) {
    
   // Updating the internal matrices buffer for each shader
  
-  RenderUniformBuffer uni_buff = {
+  MatrixUniformBuffer uni_buff = {
     .view            = data.camera.view, 
     .projection      = data.camera.projection, 
     .camera_position = data.camera.position,
   };
-  gfx_buffer_upload_data(matrix_buffer, 0, sizeof(RenderUniformBuffer), &uni_buff);
+  gfx_buffer_upload_data(matrix_buffer, 0, sizeof(MatrixUniformBuffer), &uni_buff);
 
   // Setup some lighting
   
@@ -722,12 +778,13 @@ void renderer_end() {
   
   for(sizei i = 1; i < s_renderer.render_passes.size(); i++) {
     RenderPass* entry = &s_renderer.render_passes[i];
-
-    if(entry->is_active) {
-      begin_pass(*entry);
-      entry->pass_func(&s_renderer.render_passes[i - 1], entry, entry->user_data);
-      end_pass(*entry);
+    if(!entry->is_active) {
+      continue;
     } 
+
+    begin_pass(*entry);
+    entry->pass_func(&s_renderer.render_passes[i - 1], entry, entry->user_data);
+    end_pass(*entry);
   } 
   
   // Clear the queues
@@ -735,7 +792,6 @@ void renderer_end() {
   for(sizei i = 0; i < RENDER_QUEUES_MAX; i++) {
     s_renderer.queues[i].clear();
   }
-
   s_renderer.instance_queue.clear();
 }
 

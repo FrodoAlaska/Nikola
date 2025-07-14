@@ -45,6 +45,9 @@ const sizei VERTEX_ATTRIBUTE_NAME_LENGTH_MAX = 64;
 /// The maximum number of render targets to be bound at once.
 const sizei RENDER_TARGETS_MAX               = 8;
 
+/// The maximum number of render targets to be bound at once.
+const sizei MAX_COMPUTE_WORK_GROUPS_COUNT    = 65535;
+
 // Consts
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -76,28 +79,28 @@ enum GfxStates {
 /// GfxCompareFunc
 enum GfxCompareFunc {
   /// Always passes the comparison.
-  GFX_COMPARE_ALWAYS        = 3 << 0,
+  GFX_COMPARE_ALWAYS,
 
   /// Never passes the comparison.
-  GFX_COMPARE_NEVER         = 3 << 1,
+  GFX_COMPARE_NEVER,
   
   /// Passes the comparison when `a == b`.
-  GFX_COMPARE_EQUAL         = 3 << 2,
+  GFX_COMPARE_EQUAL,
 
   /// Passes the comparison when the `a < b`.
-  GFX_COMPARE_LESS          = 3 << 3, 
+  GFX_COMPARE_LESS, 
 
   /// Passes the comparison when the `a <= b`.
-  GFX_COMPARE_LESS_EQUAL    = 3 << 4, 
+  GFX_COMPARE_LESS_EQUAL, 
 
   /// Passes the comparison when the `a > b`.
-  GFX_COMPARE_GREATER       = 3 << 5, 
+  GFX_COMPARE_GREATER, 
 
   /// Passes the comparison when the `a >= b`.
-  GFX_COMPARE_GREATER_EQUAL = 3 << 6, 
+  GFX_COMPARE_GREATER_EQUAL, 
 
   /// Passes the comparison when the `a != b`.
-  GFX_COMPARE_NOT_EQUAL     = 3 << 7,
+  GFX_COMPARE_NOT_EQUAL,
 };
 /// GfxCompareFunc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -106,28 +109,28 @@ enum GfxCompareFunc {
 /// GfxOperation 
 enum GfxOperation {
   /// Always keep the value.
-  GFX_OP_KEEP      = 4 << 0, 
+  GFX_OP_KEEP, 
   
   /// Always set the value to `0`.
-  GFX_OP_ZERO      = 4 << 1, 
+  GFX_OP_ZERO, 
 
   /// Invert the value.
-  GFX_OP_INVERT    = 4 << 2, 
+  GFX_OP_INVERT, 
 
   /// Replace the value `a` with the other value `b`.
-  GFX_OP_REPLACE   = 4 << 3, 
+  GFX_OP_REPLACE, 
 
   /// Increase the value by `1`.
-  GFX_OP_INCR      = 4 << 4, 
+  GFX_OP_INCR, 
 
   /// Decrease the value by `1`.
-  GFX_OP_DECR      = 4 << 5, 
+  GFX_OP_DECR, 
 
   /// Increase the value by `1` and wrap to the beginning when it reaches the maximum.
-  GFX_OP_INCR_WRAP = 4 << 6, 
+  GFX_OP_INCR_WRAP, 
 
   /// Decrease the value by `1` and wrap to the end when it reaches the minimum.
-  GFX_OP_DECR_WRAP = 4 << 7, 
+  GFX_OP_DECR_WRAP, 
 };
 /// GfxOperation 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -136,37 +139,37 @@ enum GfxOperation {
 /// GfxBlendMode 
 enum GfxBlendMode {
   /// Always keep the blended value at `0`.
-  GFX_BLEND_ZERO               = 5 << 0,
+  GFX_BLEND_ZERO,
   
   /// Always keep the blended value at `1`.
-  GFX_BLEND_ONE                = 5 << 1, 
+  GFX_BLEND_ONE, 
   
   /// Take the source's color as the blended value.
-  GFX_BLEND_SRC_COLOR          = 5 << 2,
+  GFX_BLEND_SRC_COLOR,
   
   /// Take the destination's color as the blended value.
-  GFX_BLEND_DEST_COLOR         = 5 << 3, 
+  GFX_BLEND_DEST_COLOR, 
   
   /// Take the source's alpha value as the blended value.
-  GFX_BLEND_SRC_ALPHA          = 5 << 4, 
+  GFX_BLEND_SRC_ALPHA, 
   
   /// Take the destination's alpha value as the blended value.
-  GFX_BLEND_DEST_ALPHA         = 5 << 5, 
+  GFX_BLEND_DEST_ALPHA, 
   
   /// Take the inverse of the source's color as the blended value.
-  GFX_BLEND_INV_SRC_COLOR      = 5 << 6, 
+  GFX_BLEND_INV_SRC_COLOR, 
   
   /// Take the inverse of the destination's color as the blended value.
-  GFX_BLEND_INV_DEST_COLOR     = 5 << 7, 
+  GFX_BLEND_INV_DEST_COLOR, 
   
   /// Take the inverse of the source's alpha value as the blended value.
-  GFX_BLEND_INV_SRC_ALPHA      = 5 << 8, 
+  GFX_BLEND_INV_SRC_ALPHA, 
   
   /// Take the inverse of the destination's alpha value as the blended value.
-  GFX_BLEND_INV_DEST_ALPHA     = 5 << 9,
+  GFX_BLEND_INV_DEST_ALPHA,
   
   /// Take the saturated alpha value of the source's color as the blended value.
-  GFX_BLEND_SRC_ALPHA_SATURATE = 5 << 10,
+  GFX_BLEND_SRC_ALPHA_SATURATE,
 };
 /// GfxBlendMode 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -175,13 +178,13 @@ enum GfxBlendMode {
 /// GfxCullMode
 enum GfxCullMode {
   /// Only cull the front faces.
-  GFX_CULL_FRONT          = 6 << 0,
+  GFX_CULL_FRONT,
   
   /// Only cull the back faces.
-  GFX_CULL_BACK           = 6 << 1,
+  GFX_CULL_BACK,
   
   /// Cull both the front and back faces.
-  GFX_CULL_FRONT_AND_BACK = 6 << 2,
+  GFX_CULL_FRONT_AND_BACK,
 };
 /// GfxCullMode
 ///---------------------------------------------------------------------------------------------------------------------
@@ -190,10 +193,10 @@ enum GfxCullMode {
 /// GfxCullOrder
 enum GfxCullOrder {
   /// Clockwise vertices are the front faces.
-  GFX_ORDER_CLOCKWISE         = 7 << 0, 
+  GFX_ORDER_CLOCKWISE, 
   
   /// Counter-clockwise vertices are the front faces.
-  GFX_ORDER_COUNTER_CLOCKWISE = 7 << 1,
+  GFX_ORDER_COUNTER_CLOCKWISE,
 };
 /// GfxCullOrder
 ///---------------------------------------------------------------------------------------------------------------------
@@ -201,20 +204,20 @@ enum GfxCullOrder {
 ///---------------------------------------------------------------------------------------------------------------------
 enum GfxClearFlags {
   /// No buffers will be cleared.
-  GFX_CLEAR_FLAGS_NONE                   = 3 << 0,
+  GFX_CLEAR_FLAGS_NONE           = 3 << 0,
   
   /// Clear the color buffer of the current context. 
-  GFX_CLEAR_FLAGS_COLOR_BUFFER     = 3 << 1,
+  GFX_CLEAR_FLAGS_COLOR_BUFFER   = 3 << 1,
 
   /// Clear the depth buffer of the current context. 
   ///
   /// @NOTE: This flag will be ignored if the depth state is disabled.
-  GFX_CLEAR_FLAGS_DEPTH_BUFFER     = 3 << 2,
+  GFX_CLEAR_FLAGS_DEPTH_BUFFER   = 3 << 2,
   
   /// Clear the stencil buffer of the current context. 
   ///
   /// @NOTE: This flag will be ignored if the stencil state is disabled.
-  GFX_CLEAR_FLAGS_STENCIL_BUFFER   = 3 << 3,
+  GFX_CLEAR_FLAGS_STENCIL_BUFFER = 3 << 3,
 };
 /// GfxContextFlags 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -223,13 +226,16 @@ enum GfxClearFlags {
 /// GfxBufferType
 enum GfxBufferType {
   /// A vertex buffer.
-  GFX_BUFFER_VERTEX  = 4 << 0, 
+  GFX_BUFFER_VERTEX, 
 
   /// An index buffer.
-  GFX_BUFFER_INDEX   = 4 << 1, 
+  GFX_BUFFER_INDEX, 
 
   /// A uniform buffer.
-  GFX_BUFFER_UNIFORM = 4 << 2,
+  GFX_BUFFER_UNIFORM,
+
+  /// A shader storage buffer.
+  GFX_BUFFER_SHADER_STORAGE,
 };
 /// GfxBufferType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -239,19 +245,19 @@ enum GfxBufferType {
 enum GfxBufferUsage {
   /// Set the buffer to be dynamically written to.
   /// This will be used for frequently writing to the buffer.
-  GFX_BUFFER_USAGE_DYNAMIC_DRAW = 5 << 0,
+  GFX_BUFFER_USAGE_DYNAMIC_DRAW = 4 << 0,
   
   /// Set the buffer to be dynamically read from.
   /// This will be used for frequent reading from the buffer.
-  GFX_BUFFER_USAGE_DYNAMIC_READ = 5 << 1,
+  GFX_BUFFER_USAGE_DYNAMIC_READ = 4 << 1,
 
   /// Set the buffer to be statically written to.
   /// This will be used for writing to the buffer once or rarely.
-  GFX_BUFFER_USAGE_STATIC_DRAW  = 5 << 2,
+  GFX_BUFFER_USAGE_STATIC_DRAW  = 4 << 2,
 
   /// Set the buffer to be statically read from.
   /// This will be used for reading from the buffer once or rarely.
-  GFX_BUFFER_USAGE_STATIC_READ  = 5 << 3,
+  GFX_BUFFER_USAGE_STATIC_READ  = 4 << 3,
 };
 /// GfxBufferUsage
 ///---------------------------------------------------------------------------------------------------------------------
@@ -260,19 +266,19 @@ enum GfxBufferUsage {
 /// GfxDrawMode
 enum GfxDrawMode {
   /// Will set up the pipeline to draw points.
-  GFX_DRAW_MODE_POINT          = 6 << 0,
+  GFX_DRAW_MODE_POINT,
 
   /// Will set up the pipeline to draw triangles.
-  GFX_DRAW_MODE_TRIANGLE       = 6 << 1,
+  GFX_DRAW_MODE_TRIANGLE,
   
   /// Will set up the pipeline to draw triangle strips.
-  GFX_DRAW_MODE_TRIANGLE_STRIP = 6 << 2,
+  GFX_DRAW_MODE_TRIANGLE_STRIP,
   
   /// Will set up the pipeline to draw lines.
-  GFX_DRAW_MODE_LINE           = 6 << 3,
+  GFX_DRAW_MODE_LINE,
   
   /// Will set up the pipeline to draw line strips.
-  GFX_DRAW_MODE_LINE_STRIP     = 6 << 4,
+  GFX_DRAW_MODE_LINE_STRIP,
 };
 /// GfxDrawMode
 ///---------------------------------------------------------------------------------------------------------------------
@@ -281,97 +287,97 @@ enum GfxDrawMode {
 /// GfxLayoutType
 enum GfxLayoutType {
   /// Equivalent to `f32`.
-  GFX_LAYOUT_FLOAT1  = 7 << 0,
+  GFX_LAYOUT_FLOAT1,
   
   /// Equivalent to 2 `f32`s.
-  GFX_LAYOUT_FLOAT2  = 7 << 1,
+  GFX_LAYOUT_FLOAT2,
   
   /// Equivalent to 3 `f32`s.
-  GFX_LAYOUT_FLOAT3  = 7 << 2,
+  GFX_LAYOUT_FLOAT3,
   
   /// Equivalent to 4 `f32`s.
-  GFX_LAYOUT_FLOAT4  = 7 << 3,
+  GFX_LAYOUT_FLOAT4,
   
   /// Equivalent to `i8`.
-  GFX_LAYOUT_BYTE1   = 7 << 4,
+  GFX_LAYOUT_BYTE1,
   
   /// Equivalent to 2 `i8`s.
-  GFX_LAYOUT_BYTE2   = 7 << 5,
+  GFX_LAYOUT_BYTE2,
   
   /// Equivalent to 3 `i8`s.
-  GFX_LAYOUT_BYTE3   = 7 << 6,
+  GFX_LAYOUT_BYTE3,
   
   /// Equivalent to 4 `i8`s.
-  GFX_LAYOUT_BYTE4   = 7 << 7,
+  GFX_LAYOUT_BYTE4,
   
   /// Equivalent to `u8`.
-  GFX_LAYOUT_UBYTE1  = 7 << 8,
+  GFX_LAYOUT_UBYTE1,
   
   /// Equivalent to 2 `u8`s.
-  GFX_LAYOUT_UBYTE2  = 7 << 9,
+  GFX_LAYOUT_UBYTE2,
   
   /// Equivalent to 3 `u8`s.
-  GFX_LAYOUT_UBYTE3  = 7 << 10,
+  GFX_LAYOUT_UBYTE3,
   
   /// Equivalent to 4 `u8`s.
-  GFX_LAYOUT_UBYTE4  = 7 << 11,
+  GFX_LAYOUT_UBYTE4,
   
   /// Equivalent to `i16`.
-  GFX_LAYOUT_SHORT1  = 7 << 12,
+  GFX_LAYOUT_SHORT1,
   
   /// Equivalent to 2 `i16`s.
-  GFX_LAYOUT_SHORT2  = 7 << 13,
+  GFX_LAYOUT_SHORT2,
   
   /// Equivalent to 3 `i16`s.
-  GFX_LAYOUT_SHORT3  = 7 << 14,
+  GFX_LAYOUT_SHORT3,
   
   /// Equivalent to 4 `i16`s.
-  GFX_LAYOUT_SHORT4  = 7 << 15,
+  GFX_LAYOUT_SHORT4,
   
   /// Equivalent to `u16`.
-  GFX_LAYOUT_USHORT1 = 7 << 16,
+  GFX_LAYOUT_USHORT1,
   
   /// Equivalent to 2 `u16`s.
-  GFX_LAYOUT_USHORT2 = 7 << 17,
+  GFX_LAYOUT_USHORT2,
   
   /// Equivalent to 3 `u16`s.
-  GFX_LAYOUT_USHORT3 = 7 << 18,
+  GFX_LAYOUT_USHORT3,
   
   /// Equivalent to 4 `u16`s.
-  GFX_LAYOUT_USHORT4 = 7 << 19,
+  GFX_LAYOUT_USHORT4,
   
   /// Equivalent to `i32`.
-  GFX_LAYOUT_INT1    = 7 << 20,
+  GFX_LAYOUT_INT1,
   
   /// Equivalent to 2 `i32`s.
-  GFX_LAYOUT_INT2    = 7 << 21,
+  GFX_LAYOUT_INT2,
   
   /// Equivalent to 3 `i32`s.
-  GFX_LAYOUT_INT3    = 7 << 22,
+  GFX_LAYOUT_INT3,
   
   /// Equivalent to 4 `i32`s.
-  GFX_LAYOUT_INT4    = 7 << 23,
+  GFX_LAYOUT_INT4,
   
   /// Equivalent to `u32`.
-  GFX_LAYOUT_UINT1   = 7 << 24,
+  GFX_LAYOUT_UINT1,
   
   /// Equivalent to 2 `u32`s.
-  GFX_LAYOUT_UINT2   = 7 << 25,
+  GFX_LAYOUT_UINT2,
   
   /// Equivalent to 3 `u32`s.
-  GFX_LAYOUT_UINT3   = 7 << 26,
+  GFX_LAYOUT_UINT3,
   
   /// Equivalent to 4 `u32`s.
-  GFX_LAYOUT_UINT4   = 7 << 27,
+  GFX_LAYOUT_UINT4,
   
   /// Equivalent to `Mat2`.
-  GFX_LAYOUT_MAT2   = 7 << 28,
+  GFX_LAYOUT_MAT2,
   
   /// Equivalent to `Mat3`.
-  GFX_LAYOUT_MAT3   = 7 << 29,
+  GFX_LAYOUT_MAT3,
   
   /// Equivalent to `Mat4`.
-  GFX_LAYOUT_MAT4   = 7 << 30,
+  GFX_LAYOUT_MAT4,
 };
 /// GfxLayoutType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -380,25 +386,34 @@ enum GfxLayoutType {
 /// GfxTextureType
 enum GfxTextureType {
   /// Creates a 1D texture.
-  GFX_TEXTURE_1D                   = 8 << 0,
+  GFX_TEXTURE_1D,
   
   /// Creates a 2D texture.
-  GFX_TEXTURE_2D                   = 8 << 1,
+  GFX_TEXTURE_2D,
   
   /// Creates a 3D texture.
-  GFX_TEXTURE_3D                   = 8 << 2,
+  GFX_TEXTURE_3D,
+  
+  /// Creates a 1D image.
+  GFX_TEXTURE_IMAGE_1D,
+  
+  /// Creates a 2D image.
+  GFX_TEXTURE_IMAGE_2D,
+  
+  /// Creates a 3D image.
+  GFX_TEXTURE_IMAGE_3D,
   
   /// Creates a texture to be used as a render target.
-  GFX_TEXTURE_RENDER_TARGET        = 8 << 3,
+  GFX_TEXTURE_RENDER_TARGET,
   
   /// Creates a texture to be used as the depth target.
-  GFX_TEXTURE_DEPTH_TARGET         = 8 << 4,
+  GFX_TEXTURE_DEPTH_TARGET,
   
   /// Creates a texture to be used as the stencil target.
-  GFX_TEXTURE_STENCIL_TARGET       = 8 << 5,
+  GFX_TEXTURE_STENCIL_TARGET,
   
   /// Creates a texture to be used as both the depth and stencil target.
-  GFX_TEXTURE_DEPTH_STENCIL_TARGET = 8 << 6,
+  GFX_TEXTURE_DEPTH_STENCIL_TARGET,
 };
 /// GfxTextureType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -407,56 +422,56 @@ enum GfxTextureType {
 /// GfxTextureFormat
 enum GfxTextureFormat {
   /// An `unsigned char` per pixel red channel texture format.
-  GFX_TEXTURE_FORMAT_R8                 = 9 << 0,
+  GFX_TEXTURE_FORMAT_R8,
   
   /// An `unsigned short` per pixel red channel texture format.
-  GFX_TEXTURE_FORMAT_R16                = 9 << 1,
+  GFX_TEXTURE_FORMAT_R16,
   
   /// A `half float` per pixel red channel texture format.
-  GFX_TEXTURE_FORMAT_R16F               = 9 << 2,
+  GFX_TEXTURE_FORMAT_R16F,
   
   /// A `float` per pixel red channel texture format.
-  GFX_TEXTURE_FORMAT_R32F               = 9 << 3,
+  GFX_TEXTURE_FORMAT_R32F,
 
   /// An `unsigned char` per pixel red and green channel texture format.
-  GFX_TEXTURE_FORMAT_RG8                = 9 << 4,
+  GFX_TEXTURE_FORMAT_RG8,
   
   /// An `unsigned short` per pixel red and green channel texture format.
-  GFX_TEXTURE_FORMAT_RG16               = 9 << 5,
+  GFX_TEXTURE_FORMAT_RG16,
   
   /// A `half float` per pixel red and green channel texture format.
-  GFX_TEXTURE_FORMAT_RG16F              = 9 << 6,
+  GFX_TEXTURE_FORMAT_RG16F,
   
   /// A `float` per pixel red and green channel texture format.
-  GFX_TEXTURE_FORMAT_RG32F              = 9 << 7,
+  GFX_TEXTURE_FORMAT_RG32F,
   
   /// An `unsigned char` per pixel red, green, blue, and alpha channel texture format.
-  GFX_TEXTURE_FORMAT_RGBA8              = 9 << 8,
+  GFX_TEXTURE_FORMAT_RGBA8,
   
   /// An `unsigned short` bits per pixel red, green, blue, and alpha channel texture format.
-  GFX_TEXTURE_FORMAT_RGBA16             = 9 << 9,
+  GFX_TEXTURE_FORMAT_RGBA16,
   
   /// A `half float` per pixel red, green, blue, and alpha channel texture format.
-  GFX_TEXTURE_FORMAT_RGBA16F            = 9 << 10,
+  GFX_TEXTURE_FORMAT_RGBA16F,
   
   /// A `float` per pixel red, green, blue, and alpha channel texture format.
-  GFX_TEXTURE_FORMAT_RGBA32F            = 9 << 11,
+  GFX_TEXTURE_FORMAT_RGBA32F,
   
   /// An `unsigned short` per depth value to be used for the depth buffer.
-  GFX_TEXTURE_FORMAT_DEPTH16            = 9 << 12,
+  GFX_TEXTURE_FORMAT_DEPTH16,
 
   /// A 24-bits per depth value to be used for the depth buffer.
-  GFX_TEXTURE_FORMAT_DEPTH24            = 9 << 13,
+  GFX_TEXTURE_FORMAT_DEPTH24,
 
   /// A `float` per depth value to be used for the depth buffer.
-  GFX_TEXTURE_FORMAT_DEPTH32F           = 9 << 14,
+  GFX_TEXTURE_FORMAT_DEPTH32F,
  
   /// An `unsigned char` per stencil value to be used for the stencil buffer.
-  GFX_TEXTURE_FORMAT_STENCIL8           = 9 << 15,
+  GFX_TEXTURE_FORMAT_STENCIL8,
 
   /// A format to be used with the depth and stencil buffers where 
   /// the depth buffer gets 24 bits and the stencil buffer gets 8 bits.
-  GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8 = 9 << 16,
+  GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8,
 };
 /// GfxTextureFromat
 ///---------------------------------------------------------------------------------------------------------------------
@@ -465,24 +480,24 @@ enum GfxTextureFormat {
 /// GfxTextureFilter
 enum GfxTextureFilter {
   /// Uses linear filtering in both modes.
-  GFX_TEXTURE_FILTER_MIN_MAG_LINEAR            = 10 << 0,
+  GFX_TEXTURE_FILTER_MIN_MAG_LINEAR,
   
   /// Uses nearest filtering on both modes.
-  GFX_TEXTURE_FILTER_MIN_MAG_NEAREST           = 10 << 1,
+  GFX_TEXTURE_FILTER_MIN_MAG_NEAREST,
   
   /// Uses linear filtering on minification and nearest filtering magnification. 
-  GFX_TEXTURE_FILTER_MIN_LINEAR_MAG_NEAREST    = 10 << 2,
+  GFX_TEXTURE_FILTER_MIN_LINEAR_MAG_NEAREST,
   
   /// Uses nearest filtering on minification and linear filtering magnification. 
-  GFX_TEXTURE_FILTER_MIN_NEAREST_MAG_LINEAR    = 10 << 3,
+  GFX_TEXTURE_FILTER_MIN_NEAREST_MAG_LINEAR,
   
   /// Uses trilinear filtering (the weighted average of the two closest mipmaps)
   /// on minification and linear filtering on magnification.
-  GFX_TEXTURE_FILTER_MIN_TRILINEAR_MAG_LINEAR  = 10 << 4,
+  GFX_TEXTURE_FILTER_MIN_TRILINEAR_MAG_LINEAR,
   
   /// Uses trilinear filtering (the weighted average of the two closest mipmaps)
   /// on minification and nearest filtering on magnification.
-  GFX_TEXTURE_FILTER_MIN_TRILINEAR_MAG_NEAREST = 10 << 5,
+  GFX_TEXTURE_FILTER_MIN_TRILINEAR_MAG_NEAREST,
 };
 /// GfxTextureFilter
 ///---------------------------------------------------------------------------------------------------------------------
@@ -491,31 +506,46 @@ enum GfxTextureFilter {
 /// GfxTextureWrap
 enum GfxTextureWrap {
   /// Repeat the pixel when wrapped.
-  GFX_TEXTURE_WRAP_REPEAT       = 11 << 0, 
+  GFX_TEXTURE_WRAP_REPEAT, 
   
   /// Mirror the pixel when wrapped.
-  GFX_TEXTURE_WRAP_MIRROR       = 11 << 1, 
+  GFX_TEXTURE_WRAP_MIRROR, 
   
   /// Clamp the pixel when wrapped.
-  GFX_TEXTURE_WRAP_CLAMP        = 11 << 2, 
+  GFX_TEXTURE_WRAP_CLAMP, 
   
   /// Use the border color when wrapped.
-  GFX_TEXTURE_WRAP_BORDER_COLOR = 11 << 3,
+  GFX_TEXTURE_WRAP_BORDER_COLOR,
 };
 /// GfxTextureWrap
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxTextureAccess
+enum GfxTextureAccess {
+  /// Create a texture with read-only memory.
+  GFX_TEXTURE_ACCESS_READ, 
+  
+  /// Create a texture with write-only memory.
+  GFX_TEXTURE_ACCESS_WRITE, 
+  
+  /// Create a texture with read and write memory.
+  GFX_TEXTURE_ACCESS_READ_WRITE, 
+};
+/// GfxTextureAccess
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxShaderType
 enum GfxShaderType {
   /// A vertex shader.
-  GFX_SHADER_VERTEX   = 12 << 0, 
+  GFX_SHADER_VERTEX, 
 
   /// A pixel/fragment shader.
-  GFX_SHADER_PIXEL    = 12 << 1, 
+  GFX_SHADER_PIXEL, 
 
   /// A compute shader.
-  GFX_SHADER_COMPUTE  = 12 << 2,
+  GFX_SHADER_COMPUTE,
 };
 /// GfxShaderType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -600,6 +630,45 @@ enum GfxUniformType {
   GFX_UNIFORM_IMAGE_2D_ARRAY,
 };
 /// GfxUniformType
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxMemoryBarrierType
+enum GfxMemoryBarrierType {
+  /// Create a memory barrier for vertex attribute operations. 
+  GFX_MEMORY_BARRIER_VERTEX_ATTRIBUTE      = 5 << 0,
+
+  /// Create a memory barrier for index buffer operations.
+  GFX_MEMORY_BARRIER_INDEX_BUFFER          = 5 << 1, 
+  
+  /// Create a memory barrier for uniform buffer operations.
+  GFX_MEMORY_BARRIER_UNIFORM_BUFFER        = 5 << 2, 
+  
+  /// Create a memory barrier for shader storage buffer operations.
+  GFX_MEMORY_BARRIER_SHADER_STORAGE_BUFFER = 5 << 3, 
+  
+  /// Create a memory barrier for framebuffer operations.
+  GFX_MEMORY_BARRIER_FRAMEBUFFER           = 5 << 4, 
+  
+  /// Create a memory barrier for buffer update operations.
+  GFX_MEMORY_BARRIER_BUFFER_UPDATE         = 5 << 5, 
+  
+  /// Create a memory barrier for texture fetch operations.
+  GFX_MEMORY_BARRIER_TEXTURE_FETCH         = 5 << 6, 
+  
+  /// Create a memory barrier for texture update operations.
+  GFX_MEMORY_BARRIER_TEXTURE_UPDATE        = 5 << 7, 
+  
+  /// Create a memory barrier for image access by shader operations.
+  GFX_MEMORY_BARRIER_SHADER_IMAGE_ACCESS   = 5 << 8, 
+  
+  /// Create a memory barrier for atmoic counting operations.
+  GFX_MEMORY_BARRIER_ATOMIC_COUNTER        = 5 << 9, 
+  
+  /// Create a memory barrier for all operations above.
+  GFX_MEMORY_BARRIER_ALL                   = 5 << 10, 
+};
+/// GfxMemoryBarrierType
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -845,10 +914,18 @@ struct GfxBufferDesc {
 /// GfxShaderDesc
 struct GfxShaderDesc {
   /// The full source code for the vertex shader. 
-  const i8* vertex_source = nullptr;
+  const i8* vertex_source  = nullptr;
 
   /// The full source code for the pixel/fragment shader. 
-  const i8* pixel_source  = nullptr;
+  const i8* pixel_source   = nullptr;
+
+  /// The full source code for the compute shader.
+  ///
+  /// @NOTE: If this is a valid string, the other 
+  /// two strings will not be evaluated. The shader 
+  /// will be known as a compute shader moving on, 
+  /// and can be used with the `gfx_context_dispatch` function.
+  const i8* compute_source = nullptr;
 };
 /// GfxShaderDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -927,12 +1004,12 @@ struct GfxTextureDesc {
   ///
   /// If the texture `type` is anything other than `GFX_TEXTURE_3D`, 
   /// the `depth` member will be ignored.
-  u32 depth;
+  u32 depth = 0;
 
   /// The mipmap level of the texture. 
   ///
   /// @NOTE: Leave this as `1` if the mipmap levels are not important.
-  u32 mips; 
+  u32 mips  = 1; 
 
   /// The type of the texture to be used.
   GfxTextureType type;
@@ -945,6 +1022,12 @@ struct GfxTextureDesc {
 
   /// The addressing mode of the texture.
   GfxTextureWrap wrap_mode;
+
+  /// The access mode of the texture.
+  ///
+  /// @NOTE: This flag will only be taken into account 
+  /// with the `gfx_texture_use_as_image` function.
+  GfxTextureAccess access;
   
   /// The pixels that will be sent to the GPU.
   void* data = nullptr;
@@ -979,6 +1062,33 @@ struct GfxCubemapDesc {
   sizei faces_count = 0;
 };
 /// GfxCubemapDesc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxBindingDesc
+struct GfxBindingDesc {
+  /// The shader to bind during the binding operation.
+  GfxShader* shader = nullptr; 
+
+  /// An array of textures of `textures_count`.
+  ///
+  /// @NOTE: The `textures_count` member MUST be < `TEXTURES_MAX`.
+  GfxTexture** textures = nullptr;
+  sizei textures_count  = 0;
+
+  /// An array of images of `images_count`.
+  ///
+  /// @NOTE: The `images_count` member MUST be < `TEXTURES_MAX`.
+  GfxTexture** images = nullptr;
+  sizei images_count  = 0;
+
+  /// An array of cubemaps of `cubemaps_count`.
+  ///
+  /// @NOTE: The `cubemaps_count` member MUST be < `CUBEMAPS_MAX`.
+  GfxCubemap** cubemaps = nullptr;
+  sizei cubemaps_count  = 0;
+};
+/// GfxBindingDesc
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1119,6 +1229,12 @@ NIKOLA_API void gfx_context_set_target(GfxContext* gfx, GfxFramebuffer* framebuf
 /// active render target (i.e framebuffer).
 NIKOLA_API void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, const f32 a);
 
+/// Use/activate all of the resources in `binding_desc` for the next draw call in the given `gfx` context.
+NIKOLA_API void gfx_context_use_bindings(GfxContext* gfx, const GfxBindingDesc& binding_desc);
+
+/// Use/activate the given `pipeline` for the next draw call in the given `gfx` context.
+NIKOLA_API void gfx_context_use_pipeline(GfxContext* gfx, GfxPipeline* pipeline);
+
 /// Draw the currently bound `GfxPipeline` object of `gfx`, starting at `start_element`, drawing 
 /// either `GfxPipeline.vertices_count` or `GfxPipeline.indieces_count` amount of elements and/or vertices, 
 /// depending on which buffer is active.
@@ -1128,10 +1244,20 @@ NIKOLA_API void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, con
 NIKOLA_API void gfx_context_draw(GfxContext* gfx, const u32 start_element);
 
 /// Equivalent to the `gfx_context_draw` but uses instancing, using the `instance_count` parametar.
-/// Naturally, the `instance_buffer` member of the currently bound `GfxPipeline` object MUST be valid.
 ///
 /// @NOTE: If the given `instance_count` is == 1, the function will STILL use instancing.
 NIKOLA_API void gfx_context_draw_instanced(GfxContext* gfx, const u32 start_element, const u32 instance_count);
+
+/// Dispatch the currently active compute shader in `work_group_x`, `work_group_y`, and `work_group_z`. 
+/// Before calling this function, a previous call to `gfx_shader_use` MUST be made with the appropriate 
+/// compute shader to be used.
+///
+/// @NOTE: The `work_group_*` parametars should NEVER be < 1 or > `MAX_COMPUTE_WORK_GROUPS_COUNT`.
+NIKOLA_API void gfx_context_dispatch(GfxContext* gfx, const u32 work_group_x, const u32 work_group_y, const u32 work_group_z); 
+
+/// Apply a memory barrier to the given `gfx` context, using the bitwise fields in `barrier_bits`.
+/// Use the `GfxMemoryBarrierType` to set `barrier_bits`.
+NIKOLA_API void gfx_context_memory_barrier(GfxContext* gfx, const i32 barrier_bits); 
 
 /// Switch to the back buffer or, rather, present the back buffer to the screen. 
 /// 
@@ -1220,11 +1346,6 @@ NIKOLA_API GfxShader* gfx_shader_create(GfxContext* gfx, const GfxShaderDesc& de
 /// @NOTE: The `free_fn` uses the default memory allocater.
 NIKOLA_API void gfx_shader_destroy(GfxShader* shader, const FreeMemoryFn& free_fn = memory_free);
 
-/// Use/activate the given `shader` in any subsequent draw call.
-///
-/// @NOTE: If `shader` is a `nullptr`, the function will assert.
-NIKOLA_API void gfx_shader_use(GfxShader* shader);
-
 /// Retrieve the internal `GfxShaderDesc` of `shader`.
 NIKOLA_API GfxShaderDesc& gfx_shader_get_source(GfxShader* shader);
 
@@ -1238,7 +1359,9 @@ NIKOLA_API void gfx_shader_update(GfxShader* shader, const GfxShaderDesc& desc);
 NIKOLA_API void gfx_shader_query(GfxShader* shader, GfxShaderQueryDesc* out_desc);
 
 /// Attaches the uniform `buffer` to the `shader` of type `type` to point `bind_point`. 
-/// Any updates to `buffer` will have an effect on the `shader`.
+/// Any updates to `buffer` will have an effect on the `shader`. Besides that, the 
+/// given `buffer` MUST be of type `GFX_BUFFER_UNIFORM`. Otherwise, this function 
+/// will assert.
 /// 
 /// @NOTE: For GLSL (OpenGL), you _need_ to specify the binding point of the uniform buffer in the shader itself. For example, 
 /// do something like, `layout (std140, binding = 0)`. Now the uniform buffer will be bound to the point `0` and the shader 
@@ -1272,18 +1395,6 @@ NIKOLA_API GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc&
 /// @NOTE: The `free_fn` uses the default memory allocater.
 NIKOLA_API void gfx_texture_destroy(GfxTexture* texture, const FreeMemoryFn& free_fn = memory_free);
 
-/// Use/activate the given `texture` in any subsequent draw call. 
-///
-/// @NOTE: If the given `texture` is `nullptr`, the function will assert
-NIKOLA_API void gfx_texture_use(GfxTexture* texture);
-
-/// Use/activate the given `textures` array of `count` in any subsequent draw call. 
-///
-/// @NOTE: If any texture inside the `textures` array is a `nullptr`, the function will assert.
-///
-/// @NOTE: The given `count` CANNOT exceed `TEXTURES_MAX`.
-NIKOLA_API void gfx_texture_use(GfxTexture** textures, const sizei count);
-
 /// Retrieve the internal `GfxTextureDesc` of `texture`
 NIKOLA_API GfxTextureDesc& gfx_texture_get_desc(GfxTexture* texture);
 
@@ -1316,18 +1427,6 @@ NIKOLA_API GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc&
 ///
 /// @NOTE: The `free_fn` uses the default memory allocater.
 NIKOLA_API void gfx_cubemap_destroy(GfxCubemap* cubemap, const FreeMemoryFn& free_fn = memory_free);
-
-/// Use/activate the given `cubemap` in any subsequent draw call. 
-///
-/// @NOTE: If the given `cubemap` is a `nullptr`, the function will assert.
-NIKOLA_API void gfx_cubemap_use(GfxCubemap* cubemap);
-
-/// Use/activate the given `cubemaps` array of `count` in any subsequent draw call. 
-///
-/// @NOTE: If any cubemap inside the `cubemaps` array is a `nullptr`, the function will assert.
-///
-/// @NOTE: The given `count` CANNOT exceed `CUBEMAPS_MAX`.
-NIKOLA_API void gfx_cubemap_use(GfxCubemap** cubemaps, const sizei count);
 
 /// Retrieve the internal `GfxCubemapDesc` of `cubemap`
 NIKOLA_API GfxCubemapDesc& gfx_cubemap_get_desc(GfxCubemap* cubemap);
@@ -1368,9 +1467,6 @@ NIKOLA_API GfxPipelineDesc& gfx_pipeline_get_desc(GfxPipeline* pipeline);
 
 /// Update the `pipeline`'s information from the given `desc`.
 NIKOLA_API void gfx_pipeline_update(GfxPipeline* pipeline, const GfxPipelineDesc& desc);
-
-/// Use/activate the given `pipeline` for the next draw call.
-NIKOLA_API void gfx_pipeline_use(GfxPipeline* pipeline);
 
 /// Pipeline functions 
 ///---------------------------------------------------------------------------------------------------------------------

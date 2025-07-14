@@ -27,15 +27,15 @@ struct Collider;
 enum PhysicsBodyType {
   /// Indicates to a physics body to be static, 
   /// completely unmoving, even by external forces.
-  PHYSICS_BODY_STATIC    = 20 << 0, 
+  PHYSICS_BODY_STATIC, 
 
   /// Indicates to a physics body to be dynmaic. 
   /// Affected by all forces. 
-  PHYSICS_BODY_DYNAMIC   = 20 << 1, 
+  PHYSICS_BODY_DYNAMIC, 
 
   /// Indicates to a physics body to be kinematic. 
   /// Not affected by external forces, but movable.
-  PHYSICS_BODY_KINEMATIC = 20 << 2, 
+  PHYSICS_BODY_KINEMATIC, 
 };
 /// PhysicsBodyType
 ///---------------------------------------------------------------------------------------------------------------------

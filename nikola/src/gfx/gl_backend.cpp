@@ -1,5 +1,6 @@
 #include "nikola/nikola_gfx.h"
 #include "nikola/nikola_event.h"
+#include "nikola/nikola_containers.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -35,6 +36,7 @@ namespace nikola { // Start of nikola
 
 /// Macros
 ///---------------------------------------------------------------------------------------------------------------------
+
 ///---------------------------------------------------------------------------------------------------------------------
 /// _PipelineLayout
 struct _PipelineLayout {
@@ -95,7 +97,8 @@ struct GfxShader {
   GfxContext* gfx    = nullptr;
   GfxShaderDesc desc = {};
 
-  u32 id, vert_id, frag_id;
+  u32 id; 
+  u32 vert_id, frag_id, compute_id;
 };
 /// GfxShader
 ///---------------------------------------------------------------------------------------------------------------------
@@ -224,6 +227,35 @@ static void gl_error_callback(GLenum source, GLenum type, GLuint id, GLenum seve
   }
 }
 
+static GLbitfield get_gl_barrier(const GfxMemoryBarrierType func) {
+  switch(func) {
+    case GFX_MEMORY_BARRIER_VERTEX_ATTRIBUTE:
+      return GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT;
+    case GFX_MEMORY_BARRIER_INDEX_BUFFER:
+      return GL_ELEMENT_ARRAY_BARRIER_BIT;
+    case GFX_MEMORY_BARRIER_UNIFORM_BUFFER:
+      return GL_UNIFORM_BARRIER_BIT;
+    case GFX_MEMORY_BARRIER_SHADER_STORAGE_BUFFER:
+      return GL_SHADER_STORAGE_BARRIER_BIT;
+    case GFX_MEMORY_BARRIER_FRAMEBUFFER:
+      return GL_FRAMEBUFFER_BARRIER_BIT;
+    case GFX_MEMORY_BARRIER_BUFFER_UPDATE:
+      return GL_BUFFER_UPDATE_BARRIER_BIT;
+    case GFX_MEMORY_BARRIER_TEXTURE_FETCH:
+      return GL_TEXTURE_FETCH_BARRIER_BIT;
+    case GFX_MEMORY_BARRIER_TEXTURE_UPDATE:
+      return GL_TEXTURE_UPDATE_BARRIER_BIT;
+    case GFX_MEMORY_BARRIER_SHADER_IMAGE_ACCESS:
+      return GL_SHADER_IMAGE_ACCESS_BARRIER_BIT;
+    case GFX_MEMORY_BARRIER_ATOMIC_COUNTER:
+      return GL_ATOMIC_COUNTER_BARRIER_BIT;
+    case GFX_MEMORY_BARRIER_ALL:
+      return GL_ALL_BARRIER_BITS;
+    default:
+      return 0;
+  } 
+}
+
 static GLenum get_gl_compare_func(const GfxCompareFunc func) {
   switch(func) {
     case GFX_COMPARE_ALWAYS:
@@ -331,6 +363,8 @@ static GLenum get_buffer_type(const GfxBufferType type) {
       return GL_ELEMENT_ARRAY_BUFFER;
     case GFX_BUFFER_UNIFORM:
       return GL_UNIFORM_BUFFER;
+    case GFX_BUFFER_SHADER_STORAGE:
+      return GL_SHADER_STORAGE_BUFFER;
   } 
 }
 
@@ -638,6 +672,19 @@ static GLenum get_texture_gl_wrap(const GfxTextureWrap wrap) {
   }
 }
 
+static GLenum get_texture_gl_access(const GfxTextureAccess access) {
+  switch(access) {
+    case GFX_TEXTURE_ACCESS_READ: 
+      return GL_READ_ONLY;
+    case GFX_TEXTURE_ACCESS_WRITE: 
+      return GL_WRITE_ONLY;
+    case GFX_TEXTURE_ACCESS_READ_WRITE: 
+      return GL_READ_WRITE;
+    default:
+      return 0;
+  }
+}
+
 static GfxUniformType get_shader_type(const GLenum gl_type) {
   switch(gl_type) {
     case GL_FLOAT: 
@@ -916,13 +963,16 @@ static GLenum create_gl_texture(const GfxTextureType type) {
 
   switch(type) {
     case GFX_TEXTURE_1D:
+    case GFX_TEXTURE_IMAGE_1D:
       glCreateTextures(GL_TEXTURE_1D, 1, &id);
       break;
     case GFX_TEXTURE_2D:
+    case GFX_TEXTURE_IMAGE_2D:
     case GFX_TEXTURE_RENDER_TARGET:
       glCreateTextures(GL_TEXTURE_2D, 1, &id);
       break;
     case GFX_TEXTURE_3D:
+    case GFX_TEXTURE_IMAGE_3D:
       glCreateTextures(GL_TEXTURE_3D, 1, &id);
       break;
     case GFX_TEXTURE_DEPTH_TARGET:
@@ -968,6 +1018,7 @@ static void set_texture_pixel_align(const GfxTextureFormat format) {
 static void update_gl_texture_pixels(GfxTexture* texture, GLenum gl_format, GLenum gl_pixel_type) {
   switch(texture->desc.type) {
     case GFX_TEXTURE_1D: 
+    case GFX_TEXTURE_IMAGE_1D:
       glTextureSubImage1D(texture->id, 
                           texture->desc.mips, 
                           0, 
@@ -977,6 +1028,7 @@ static void update_gl_texture_pixels(GfxTexture* texture, GLenum gl_format, GLen
                           texture->desc.data);
       break;
     case GFX_TEXTURE_2D:
+    case GFX_TEXTURE_IMAGE_2D:
       glTextureSubImage2D(texture->id, 
                           0, 
                           0, 0,
@@ -986,6 +1038,7 @@ static void update_gl_texture_pixels(GfxTexture* texture, GLenum gl_format, GLen
                           texture->desc.data);
       break;
     case GFX_TEXTURE_3D:
+    case GFX_TEXTURE_IMAGE_3D:
       glTextureSubImage3D(texture->id, 
                           0, 
                           0, 0, 0,
@@ -1015,12 +1068,15 @@ static void update_gl_texture_pixels(GfxTexture* texture, GLenum gl_format, GLen
 static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format) {
   switch(texture->desc.type) {
     case GFX_TEXTURE_1D: 
+    case GFX_TEXTURE_IMAGE_1D:
       glTextureStorage1D(texture->id, texture->desc.mips, in_format, texture->desc.width);
       break;
     case GFX_TEXTURE_2D:
+    case GFX_TEXTURE_IMAGE_2D:
       glTextureStorage2D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height);
       break;
     case GFX_TEXTURE_3D:
+    case GFX_TEXTURE_IMAGE_3D:
       glTextureStorage3D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height, texture->desc.height);
       break;
     case GFX_TEXTURE_RENDER_TARGET:
@@ -1078,16 +1134,20 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
   event_listen(EVENT_WINDOW_FRAMEBUFFER_RESIZED, framebuffer_resize);
 
   // Getting some OpenGL information
+  
   const u8* vendor       = glGetString(GL_VENDOR); 
   const u8* renderer     = glGetString(GL_RENDERER); 
   const u8* gl_version   = glGetString(GL_VERSION);
   const u8* glsl_version = glGetString(GL_SHADING_LANGUAGE_VERSION);
 
   // Getting the version number
+  
   i32 major_ver, minor_ver;
   glGetIntegerv(GL_MAJOR_VERSION, &major_ver);
   glGetIntegerv(GL_MINOR_VERSION, &minor_ver);
   check_supported_gl_version(major_ver, minor_ver);
+
+  // Getting maximum values
 
   NIKOLA_LOG_INFO("An OpenGL graphics context was successfully created:\n" 
                  "              VENDOR: %s\n" 
@@ -1184,15 +1244,79 @@ void gfx_context_clear(GfxContext* gfx, const f32 r, const f32 g, const f32 b, c
   glClearColor(r, g, b, a);
 }
 
+void gfx_context_use_bindings(GfxContext* gfx, const GfxBindingDesc& binding_desc) {
+  NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
+  NIKOLA_ASSERT(binding_desc.shader, "Must have a valid GfxShader to bind resources");
+
+  // Bind the shader
+  glUseProgram(binding_desc.shader->id);
+
+  // Bind the textures 
+
+  NIKOLA_ASSERT(((binding_desc.textures_count >= 0) && (binding_desc.textures_count < TEXTURES_MAX)), 
+      "Textures count in gfx_context_use_bindings exceeding TEXTURES_MAX");
+
+  for(sizei i = 0; i < binding_desc.textures_count; i++) {
+    NIKOLA_ASSERT(binding_desc.textures[i], "An invalid texture found in texutres array");
+    glBindTextureUnit(i, binding_desc.textures[i]->id);
+  }
+
+  // Bind the images
+  
+  NIKOLA_ASSERT(((binding_desc.images_count >= 0) && (binding_desc.images_count < TEXTURES_MAX)), 
+                "Images count in gfx_context_use_bindings exceeding TEXTURES_MAX");
+  
+  for(sizei i = 0; i < binding_desc.images_count; i++) {
+    NIKOLA_ASSERT(binding_desc.images[i], "An invalid texture found in texutres array");
+  
+    GLenum access = get_texture_gl_access(binding_desc.images[i]->desc.access);
+    GLenum in_format, gl_format, gl_pixel_type;
+    get_texture_gl_format(binding_desc.images[i]->desc.format, &in_format, &gl_format, &gl_pixel_type);
+
+    glBindImageTexture(i,                          // Image unit
+                       binding_desc.images[i]->id, // Image ID 
+                       0,                          // Level
+                       false,                      // Layered state (for texture arrays)
+                       0,                          // Layer index
+                       access,                     // Image access type
+                       in_format);                 // Image format            
+  }
+
+  // Bind the cubemaps
+  
+  NIKOLA_ASSERT(((binding_desc.cubemaps_count >= 0) && (binding_desc.cubemaps_count < CUBEMAPS_MAX)), 
+                "Cubemaps count in gfx_context_use_bindings exceeding CUBEMAPS_MAX");
+
+  for(sizei i = 0; i < binding_desc.cubemaps_count; i++) {
+    glBindTextureUnit(i, binding_desc.cubemaps[i]->id);
+  }
+}
+
+void gfx_context_use_pipeline(GfxContext* gfx, GfxPipeline* pipeline) {
+  NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
+  NIKOLA_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
+  NIKOLA_ASSERT(pipeline->vertex_buffer, "Must at least have a valid vertex buffer to draw");
+
+  // Use the pipline data to setup for the next draw call
+
+  pipeline->gfx->bound_pipeline = pipeline;
+
+  glDepthMask(pipeline->desc.depth_mask);
+  glStencilMask(pipeline->desc.stencil_ref);
+
+  const f32* blend_color = pipeline->desc.blend_factor;
+  glBlendColor(blend_color[0], blend_color[1], blend_color[2], blend_color[3]);
+
+  // Bind the new bound pipeline
+  glBindVertexArray(pipeline->vertex_array);
+}
+
 void gfx_context_draw(GfxContext* gfx, const u32 start_element) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
   NIKOLA_ASSERT(gfx->bound_pipeline, "Cannot draw using an invalid bound pipeline");
-  NIKOLA_ASSERT(gfx->bound_pipeline->vertex_buffer, "Must have a valid vertex buffer to draw");
 
   GfxPipeline* pipe = gfx->bound_pipeline;
   GLenum draw_mode = get_draw_mode(pipe->desc.draw_mode);
-
-  glBindVertexArray(pipe->vertex_array);
 
   // Draw the index buffer (if it is valid)
   if(pipe->index_buffer) {
@@ -1203,21 +1327,19 @@ void gfx_context_draw(GfxContext* gfx, const u32 start_element) {
   else {
     glDrawArrays(draw_mode, start_element, pipe->vertex_count);
   }
-  
+
+  // Unbind the vertex array for better debugging.
   glBindVertexArray(0);
 }
 
 void gfx_context_draw_instanced(GfxContext* gfx, const u32 start_element, const u32 instance_count) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
   NIKOLA_ASSERT(gfx->bound_pipeline, "Cannot draw using an invalid bound pipeline");
-  NIKOLA_ASSERT(gfx->bound_pipeline->vertex_buffer, "Must have a valid vertex buffer to draw");
-  NIKOLA_ASSERT(gfx->bound_pipeline->instance_buffer, "Must have a valid index buffer to instance draw");
+  NIKOLA_ASSERT(gfx->bound_pipeline->instance_buffer, "Must have a valid instance buffer to instance draw");
 
   GfxPipeline* pipe = gfx->bound_pipeline;
   GLenum draw_mode = get_draw_mode(pipe->desc.draw_mode);
   
-  glBindVertexArray(pipe->vertex_array);
-
   // Draw the index buffer (if it is valid)
   if(pipe->index_buffer) {
     GLenum index_type = get_layout_type(pipe->desc.indices_type);
@@ -1229,6 +1351,40 @@ void gfx_context_draw_instanced(GfxContext* gfx, const u32 start_element, const 
   }
   
   glBindVertexArray(0);
+}
+
+void gfx_context_dispatch(GfxContext* gfx, const u32 work_group_x, const u32 work_group_y, const u32 work_group_z) {
+  NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
+
+  // Some bookkeeping...
+
+  bool is_group_x_count_valid = (work_group_x >= 1) && (work_group_x < MAX_COMPUTE_WORK_GROUPS_COUNT);
+  bool is_group_y_count_valid = (work_group_y >= 1) && (work_group_y < MAX_COMPUTE_WORK_GROUPS_COUNT);
+  bool is_group_z_count_valid = (work_group_z >= 1) && (work_group_z < MAX_COMPUTE_WORK_GROUPS_COUNT);
+  NIKOLA_ASSERT((is_group_x_count_valid && is_group_y_count_valid && is_group_z_count_valid), 
+                "Invalid work group counts given to gfx_context_dispatch");
+
+  glDispatchCompute(work_group_x, work_group_y, work_group_z);
+}
+
+void gfx_context_memory_barrier(GfxContext* gfx, const i32 barrier_bits) {
+  NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
+  
+  GLbitfield barriers = 0;
+ 
+  // Unset and check the buffer bits and set them to OpenGL equivalents
+ 
+  // 10 = the maximum number of barriers
+  // @FIX (GL-Backend): A magic number like that is probably not the best idea...
+  for(sizei i = 0; i < 10; i++) {
+    i32 type = (GFX_MEMORY_BARRIER_VERTEX_ATTRIBUTE << i);
+
+    if(IS_BIT_SET(barriers, type)) {
+      barriers |= get_gl_barrier((GfxMemoryBarrierType)type);
+    }
+  }
+
+  glMemoryBarrier(barriers);
 }
 
 void gfx_context_present(GfxContext* gfx) {
@@ -1437,36 +1593,61 @@ void gfx_buffer_upload_data(GfxBuffer* buff, const sizei offset, const sizei siz
 
 GfxShader* gfx_shader_create(GfxContext* gfx, const GfxShaderDesc& desc, const AllocateMemoryFn& alloc_fn) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
-  NIKOLA_ASSERT(desc.vertex_source, "Invalid Vertex source passed to the shader");
-  NIKOLA_ASSERT(desc.pixel_source, "Invalid Pixel source passed to the shader");
 
   GfxShader* shader = (GfxShader*)alloc_fn(sizeof(GfxShader));
 
   shader->gfx  = gfx;
   shader->desc = desc;
+  shader->id   = glCreateProgram();
 
-  i32 vert_src_len = strlen(shader->desc.vertex_source);
-  i32 frag_src_len = strlen(shader->desc.pixel_source);
+  // Create the compute shader if the source exists. 
+  // Do not continue if this is true, since compute 
+  // shaders are quite special flakes. 
+
+  if(desc.compute_source) {
+    i32 compute_src_len = strlen(shader->desc.compute_source);
+    shader->compute_id   = glCreateShader(GL_COMPUTE_SHADER);
+
+    glShaderSource(shader->compute_id, 1, &shader->desc.compute_source, &compute_src_len); 
+    glCompileShader(shader->compute_id);
+    check_shader_compile_error(shader->compute_id);
+    glAttachShader(shader->id, shader->compute_id);
+
+    // Linking
+
+    glLinkProgram(shader->id);
+    check_shader_linker_error(shader);
+
+    return shader;
+  }
+
+  // Necessary asserts
+
+  NIKOLA_ASSERT(desc.vertex_source, "Invalid Vertex source passed to the shader");
+  NIKOLA_ASSERT(desc.pixel_source, "Invalid Pixel source passed to the shader");
 
   // Vertex shader
   
-  shader->vert_id = glCreateShader(GL_VERTEX_SHADER);
+  i32 vert_src_len = strlen(shader->desc.vertex_source);
+  shader->vert_id  = glCreateShader(GL_VERTEX_SHADER);
+  
   glShaderSource(shader->vert_id, 1, &shader->desc.vertex_source, &vert_src_len); 
   glCompileShader(shader->vert_id);
   check_shader_compile_error(shader->vert_id);
+  glAttachShader(shader->id, shader->vert_id);
    
   // Fragment shader
   
-  shader->frag_id = glCreateShader(GL_FRAGMENT_SHADER);
+  i32 frag_src_len = strlen(shader->desc.pixel_source);
+  shader->frag_id  = glCreateShader(GL_FRAGMENT_SHADER);
+  
   glShaderSource(shader->frag_id, 1, &shader->desc.pixel_source, &frag_src_len); 
   glCompileShader(shader->frag_id);
   check_shader_compile_error(shader->frag_id);
+  glAttachShader(shader->id, shader->frag_id);
 
   // Linking
   
-  shader->id = glCreateProgram();
-  glAttachShader(shader->id, shader->vert_id);
-  glAttachShader(shader->id, shader->frag_id);
   glLinkProgram(shader->id);
   check_shader_linker_error(shader);
 
@@ -1478,22 +1659,12 @@ void gfx_shader_destroy(GfxShader* shader, const FreeMemoryFn& free_fn) {
     return;
   }
   
-  glDetachShader(shader->id, shader->vert_id);
-  glDetachShader(shader->id, shader->frag_id);
   glDeleteProgram(shader->id);
-  
   free_fn(shader);
 }
 
 GfxShaderDesc& gfx_shader_get_source(GfxShader* shader) {
   return shader->desc;
-}
-
-void gfx_shader_use(GfxShader* shader) {
-  NIKOLA_ASSERT(shader->gfx, "Invalid GfxContext struct passed");
-  NIKOLA_ASSERT(shader, "Invalid GfxShader struct passed");
-
-  glUseProgram(shader->id);
 }
 
 void gfx_shader_update(GfxShader* shader, const GfxShaderDesc& desc) {
@@ -1503,26 +1674,49 @@ void gfx_shader_update(GfxShader* shader, const GfxShaderDesc& desc) {
   NIKOLA_ASSERT(desc.pixel_source, "Invalid Pixel source passed to the shader");
 
   shader->desc = desc;
-  
-  i32 vert_src_len = strlen(shader->desc.vertex_source);
-  i32 frag_src_len = strlen(shader->desc.pixel_source);
-  
+
+  // Create the compute shader if the source exists. 
+  // Do not continue if this is true, since compute 
+  // shaders are quite special flakes. 
+
+  if(desc.compute_source) {
+    i32 compute_src_len = strlen(shader->desc.compute_source);
+    glShaderSource(shader->compute_id, 1, &shader->desc.compute_source, &compute_src_len); 
+    glCompileShader(shader->compute_id);
+    check_shader_compile_error(shader->compute_id);
+    glAttachShader(shader->id, shader->compute_id);
+
+    // Linking
+
+    glLinkProgram(shader->id);
+    check_shader_linker_error(shader);
+
+    return;
+  }
+
+  // Necessary asserts
+
+  NIKOLA_ASSERT(desc.vertex_source, "Invalid Vertex source passed to the shader");
+  NIKOLA_ASSERT(desc.pixel_source, "Invalid Pixel source passed to the shader");
+
   // Vertex shader
   
+  i32 vert_src_len = strlen(shader->desc.vertex_source);
   glShaderSource(shader->vert_id, 1, &shader->desc.vertex_source, &vert_src_len); 
   glCompileShader(shader->vert_id);
   check_shader_compile_error(shader->vert_id);
-  
+  glAttachShader(shader->id, shader->vert_id);
+   
   // Fragment shader
   
+  i32 frag_src_len = strlen(shader->desc.pixel_source);
   glShaderSource(shader->frag_id, 1, &shader->desc.pixel_source, &frag_src_len); 
   glCompileShader(shader->frag_id);
   check_shader_compile_error(shader->frag_id);
+  glAttachShader(shader->id, shader->frag_id);
 
   // Linking
   
-  glAttachShader(shader->id, shader->vert_id);
-  glAttachShader(shader->id, shader->frag_id);
   glLinkProgram(shader->id);
   check_shader_linker_error(shader);
 }
@@ -1616,7 +1810,7 @@ void gfx_shader_query(GfxShader* shader, GfxShaderQueryDesc* out_desc) {
  
   i32 shaders_count = 0; 
   glGetProgramiv(shader->id, GL_ATTACHED_SHADERS, &shaders_count);
-  if(shaders_count <= 2) { // There's only the vertex and fragment shaders
+  if(shader->compute_id <= 0) { // The compute shader ID has not been generated
     return;
   }
 
@@ -1631,7 +1825,10 @@ void gfx_shader_query(GfxShader* shader, GfxShaderQueryDesc* out_desc) {
 void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer, const u32 bind_point) {
   NIKOLA_ASSERT(shader->gfx, "Invalid GfxContext struct passed");
   NIKOLA_ASSERT(shader, "Invalid GfxShader struct passed");
-   
+
+  bool is_valid_buffer = (buffer->desc.type == GFX_BUFFER_UNIFORM) || (buffer->desc.type == GFX_BUFFER_SHADER_STORAGE);
+  NIKOLA_ASSERT(is_valid_buffer, "Cannot attach a non-uniform or non-shader storage buffer to shader");
+
   glBindBufferBase(GL_UNIFORM_BUFFER, bind_point, buffer->id);
 }
 
@@ -1764,24 +1961,6 @@ void gfx_texture_destroy(GfxTexture* texture, const FreeMemoryFn& free_fn) {
   free_fn(texture);
 }
 
-void gfx_texture_use(GfxTexture* texture) {
-  NIKOLA_ASSERT(texture, "Invalid GfxTexture passed to gfx_texture_use");
-  
-  glBindTextures(0, 1, &texture->id);
-}
-
-void gfx_texture_use(GfxTexture** textures, const sizei count) {
-  NIKOLA_ASSERT(textures, "Invalid GfxTexture array passed to gfx_texture_use");
-  NIKOLA_ASSERT(((count >= 0) && (count < TEXTURES_MAX)), "The count parametar in gfx_texture_use is invalid");
-  
-  u32 gl_textures[TEXTURES_MAX];
-  for(sizei i = 0; i < count; i++) {
-    gl_textures[i] = textures[i]->id;
-  }
-
-  glBindTextures(0, count, gl_textures);
-}
-
 GfxTextureDesc& gfx_texture_get_desc(GfxTexture* texture) {
   NIKOLA_ASSERT(texture, "Invalid GfxTexture struct passed");
 
@@ -1894,24 +2073,6 @@ void gfx_cubemap_destroy(GfxCubemap* cubemap, const FreeMemoryFn& free_fn) {
   
   glDeleteTextures(1, &cubemap->id);
   free_fn(cubemap);
-}
-
-void gfx_cubemap_use(GfxCubemap* cubemap) {
-  NIKOLA_ASSERT(cubemap, "Invalid GfxCubemap to gfx_cubemap_use");
-
-  glBindTextures(0, 1, &cubemap->id);
-}
-
-void gfx_cubemap_use(GfxCubemap** cubemaps, const sizei count) {
-  NIKOLA_ASSERT(cubemaps, "Invalid GfxCubemap array passed to gfx_cubemap_use");
-  NIKOLA_ASSERT(((count >= 0) && (count <= CUBEMAPS_MAX)), "The count parametar in gfx_cubemap_use is invalid");
-
-  u32 gl_cubemaps[CUBEMAPS_MAX];
-  for(sizei i = 0; i < count; i++) {
-    gl_cubemaps[i] = cubemaps[i]->id;
-  }
-
-  glBindTextures(0, count, gl_cubemaps);
 }
 
 GfxCubemapDesc& gfx_cubemap_get_desc(GfxCubemap* cubemap) {
@@ -2063,25 +2224,6 @@ void gfx_pipeline_update(GfxPipeline* pipeline, const GfxPipelineDesc& desc) {
   pipeline->instance_buffer = desc.instance_buffer;
   
   pipeline->draw_mode = desc.draw_mode;
-}
-
-void gfx_pipeline_use(GfxPipeline* pipeline) {
-  NIKOLA_ASSERT(pipeline->gfx, "Invalid GfxContext struct passed");
-  NIKOLA_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
-  NIKOLA_ASSERT(pipeline->vertex_buffer, "Must have a valid vertex buffer to draw");
- 
-  // Bind this pipeline
-  pipeline->gfx->bound_pipeline = pipeline;
-
-  // Setting the depth mask state of the pipeline 
-  glDepthMask(pipeline->desc.depth_mask);
-
-  // Setting the stencil mask of the pipeline state
-  glStencilMask(pipeline->desc.stencil_ref);
-
-  // Setting the blend color of the pipeline state
-  const f32* blend_color = pipeline->desc.blend_factor;
-  glBlendColor(blend_color[0], blend_color[1], blend_color[2], blend_color[3]);
 }
 
 /// Pipeline functions 

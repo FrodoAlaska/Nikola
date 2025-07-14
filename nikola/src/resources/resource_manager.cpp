@@ -598,8 +598,13 @@ ResourceID resources_push_shader(const ResourceGroupID& group_id, const GfxShade
   PUSH_RESOURCE(group, shaders, shader, RESOURCE_TYPE_SHADER, id);
 
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed shader:", group->name.c_str());
-  NIKOLA_LOG_DEBUG("     Vertex source length = %zu", strlen(shader_desc.vertex_source));
-  NIKOLA_LOG_DEBUG("     Pixel source length  = %zu", strlen(shader_desc.pixel_source));
+  if(shader_desc.vertex_source) {
+    NIKOLA_LOG_DEBUG("     Vertex source length = %zu", strlen(shader_desc.vertex_source));
+    NIKOLA_LOG_DEBUG("     Pixel source length  = %zu", strlen(shader_desc.pixel_source));
+  }
+  else {
+    NIKOLA_LOG_DEBUG("     Compute source length = %zu", strlen(shader_desc.compute_source));
+  }
   return id;
 }
 
@@ -624,15 +629,21 @@ ResourceID resources_push_shader(const ResourceGroupID& group_id, const FilePath
   // Convert the NBR format to a valid shader
  
   GfxShaderDesc shader_desc = {};
-  shader_desc.vertex_source = nbr_shader.vertex_source;
-  shader_desc.pixel_source  = nbr_shader.pixel_source;
+  shader_desc.vertex_source  = nbr_shader.vertex_source;
+  shader_desc.pixel_source   = nbr_shader.pixel_source;
+  shader_desc.compute_source = nbr_shader.compute_source;
 
   // Create the shader
   ResourceID id = resources_push_shader(group_id, shader_desc);
 
   // Freeing NBR data
-  memory_free(nbr_shader.vertex_source);
-  memory_free(nbr_shader.pixel_source);
+  if(nbr_shader.vertex_source) {
+    memory_free(nbr_shader.vertex_source);
+    memory_free(nbr_shader.pixel_source);
+  }
+  else {
+    memory_free(nbr_shader.compute_source);
+  }
   
   file_close(file); 
 
@@ -774,7 +785,7 @@ ResourceID resources_push_material(const ResourceGroupID& group_id, const Materi
   Material* material = new Material{};
   
   material->diffuse_map  = renderer_get_defaults().texture;
-  material->specular_map = nullptr;
+  material->specular_map = renderer_get_defaults().texture;
   
   material->color        = desc.color;
   material->shininess    = desc.shininess;

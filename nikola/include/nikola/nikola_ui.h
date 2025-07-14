@@ -15,31 +15,31 @@ namespace nikola { // Start of nikola
 /// UIAnchor
 enum UIAnchor {
   /// Anchor a UI element to the top-left of the screen.
-  UI_ANCHOR_TOP_LEFT      = 21 << 0, 
+  UI_ANCHOR_TOP_LEFT, 
   
   /// Anchor a UI element to the top-center of the screen.
-  UI_ANCHOR_TOP_CENTER    = 21 << 1, 
+  UI_ANCHOR_TOP_CENTER, 
   
   /// Anchor a UI element to the top-right of the screen.
-  UI_ANCHOR_TOP_RIGHT     = 21 << 2, 
+  UI_ANCHOR_TOP_RIGHT, 
   
   /// Anchor a UI element to the center-left of the screen.
-  UI_ANCHOR_CENTER_LEFT   = 21 << 3, 
+  UI_ANCHOR_CENTER_LEFT, 
   
   /// Anchor a UI element to the center of the screen.
-  UI_ANCHOR_CENTER        = 21 << 4, 
+  UI_ANCHOR_CENTER, 
   
   /// Anchor a UI element to the center-right of the screen.
-  UI_ANCHOR_CENTER_RIGHT  = 21 << 5, 
+  UI_ANCHOR_CENTER_RIGHT, 
   
   /// Anchor a UI element to the bottom-left of the screen.
-  UI_ANCHOR_BOTTOM_LEFT   = 21 << 6, 
+  UI_ANCHOR_BOTTOM_LEFT, 
   
   /// Anchor a UI element to the bottom-center of the screen.
-  UI_ANCHOR_BOTTOM_CENTER = 21 << 7, 
+  UI_ANCHOR_BOTTOM_CENTER, 
   
   /// Anchor a UI element to the bottom-right of the screen.
-  UI_ANCHOR_BOTTOM_RIGHT  = 21 << 8, 
+  UI_ANCHOR_BOTTOM_RIGHT, 
 };
 /// UIAnchor
 /// ----------------------------------------------------------------------
@@ -48,22 +48,22 @@ enum UIAnchor {
 /// UITextAnimation 
 enum UITextAnimation {
   /// Apply a fade in animation on a text UI element.
-  UI_TEXT_ANIMATION_FADE_IN     = 22 << 0, 
+  UI_TEXT_ANIMATION_FADE_IN, 
   
   /// Apply a fade out animation on a text UI element.
-  UI_TEXT_ANIMATION_FADE_OUT    = 22 << 1, 
+  UI_TEXT_ANIMATION_FADE_OUT, 
   
   /// Apply a ballon up (increase size) animation on a text UI element.
-  UI_TEXT_ANIMATION_BALLON_UP   = 22 << 2, 
+  UI_TEXT_ANIMATION_BALLON_UP, 
   
   /// Apply a ballon down (decrease size) animation on a text UI element.
-  UI_TEXT_ANIMATION_BALLON_DOWN = 22 << 3, 
+  UI_TEXT_ANIMATION_BALLON_DOWN, 
   
   /// Apply a slide up animation on a text UI element.
-  UI_TEXT_ANIMATION_SLIDE_UP   = 22 << 4, 
+  UI_TEXT_ANIMATION_SLIDE_UP, 
   
   /// Apply a slide down animation on a text UI element.
-  UI_TEXT_ANIMATION_SLIDE_DOWN = 22 << 5, 
+  UI_TEXT_ANIMATION_SLIDE_DOWN, 
 };
 /// UITextAnimation 
 /// ----------------------------------------------------------------------

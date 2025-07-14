@@ -189,23 +189,33 @@ static void flush_batch(BatchCall& batch, GfxShader* shader) {
     return;
   }
 
-  // Apply the batch
-  s_batch.pipe_desc.vertices_count = batch.vertices_count;
-  gfx_shader_use(shader);
-  gfx_texture_use(&batch.texture, 1);
+  // Use the resources
+  
+  GfxBindingDesc bind_desc = {
+    .shader = shader,
 
-  // Update the vertex buffer
+    .textures       = &batch.texture, 
+    .textures_count = 1,
+  };
+  gfx_context_use_bindings(s_batch.context, bind_desc);
+
+  // Update the required resources
+  
   gfx_buffer_upload_data(s_batch.pipe_desc.vertex_buffer, 
                          0, 
                          sizeof(Vertex2D) * batch.vertices.size(), 
                          batch.vertices.data());
+  
+  s_batch.pipe_desc.vertices_count = batch.vertices_count;
+  gfx_pipeline_update(s_batch.pipeline, s_batch.pipe_desc); 
 
   // Render the batch
-  gfx_pipeline_update(s_batch.pipeline, s_batch.pipe_desc); 
-  gfx_pipeline_use(s_batch.pipeline); 
+  
+  gfx_context_use_pipeline(s_batch.context, s_batch.pipeline); 
   gfx_context_draw(s_batch.context, 0);
 
   // Reset back to normal
+  
   batch.vertices_count = 0;
   batch.vertices.clear();
 }

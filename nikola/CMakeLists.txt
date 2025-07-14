@@ -30,7 +30,6 @@ set(NIKOLA_SOURCES
   
   # Resources
   ${NIKOLA_SRC_DIR}/resources/resource_manager.cpp
-  ${NIKOLA_SRC_DIR}/resources/material.cpp
   ${NIKOLA_SRC_DIR}/resources/shader_context.cpp
   ${NIKOLA_SRC_DIR}/resources/geometry_loader.cpp
 

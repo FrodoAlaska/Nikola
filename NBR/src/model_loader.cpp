@@ -139,7 +139,6 @@ static void load_material_texture(aiMaterial* material, aiTextureType type, ObjD
     data->textures.push_back(texture);
 
     *index += 1;
-    NIKOLA_LOG_TRACE("HERE, %i", *index);
   }
 }
 

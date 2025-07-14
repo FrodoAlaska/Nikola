@@ -180,13 +180,24 @@ void file_write_bytes(File& file, const NBRCubemap& cubemap) {
 
 void file_write_bytes(File& file, const NBRShader& shader) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
-  
-  // Write the resource's information
-  
+
+  // Write the compue shader
+
+  file_write_bytes(file, &shader.compute_length, sizeof(u16));
+  if(shader.compute_length > 0) {
+    file_write_bytes(file, shader.compute_source, sizeof(i8) * shader.compute_length + 1);
+    return;
+  }
+
+  // Write the vertex shader
+
   file_write_bytes(file, &shader.vertex_length, sizeof(u16));
-  file_write_bytes(file, shader.vertex_source, sizeof(i8) * shader.vertex_length);
+  file_write_bytes(file, shader.vertex_source, sizeof(i8) * shader.vertex_length + 1);
+  
+  // Write the pixel shader
+  
   file_write_bytes(file, &shader.pixel_length, sizeof(u16));
-  file_write_bytes(file, shader.pixel_source, sizeof(i8) * shader.pixel_length);
+  file_write_bytes(file, shader.pixel_source, sizeof(i8) * shader.pixel_length + 1);
 }
 
 void file_write_bytes(File& file, const NBRMaterial& material) {
@@ -543,20 +554,37 @@ void file_read_bytes(File& file, NBRCubemap* out_cubemap) {
 void file_read_bytes(File& file, NBRShader* out_shader) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
   NIKOLA_ASSERT(out_shader, "Invalid NBRShader type given to file_read_bytes");
-  
-  file_read_bytes(file, &out_shader->vertex_length, sizeof(u16));
-  out_shader->vertex_length += 1; // For the null terminator
 
-  out_shader->vertex_source = (i8*)memory_allocate(out_shader->vertex_length); 
-  file_read_bytes(file, out_shader->vertex_source, out_shader->vertex_length - 1);
-  out_shader->vertex_source[out_shader->vertex_length - 1] = '\0';
+  // Read the compute shader 
+
+  file_read_bytes(file, &out_shader->compute_length, sizeof(u16));
+  if(out_shader->compute_length > 0) {
+    out_shader->compute_source = (i8*)memory_allocate(out_shader->compute_length + 1); 
+    file_read_bytes(file, out_shader->compute_source, out_shader->compute_length + 1);
+    
+    out_shader->compute_source[out_shader->compute_length] = '\0';
+
+    out_shader->vertex_source = nullptr;
+    out_shader->pixel_source  = nullptr;
+
+    return;
+  }
  
-  file_read_bytes(file, &out_shader->pixel_length, sizeof(u16));
-  out_shader->pixel_length += 1;
+  // Read the vertex shader
 
-  out_shader->pixel_source = (i8*)memory_allocate(out_shader->pixel_length); 
-  file_read_bytes(file, out_shader->pixel_source, out_shader->pixel_length - 1);
-  out_shader->pixel_source[out_shader->pixel_length - 1] = '\0';
+  file_read_bytes(file, &out_shader->vertex_length, sizeof(u16));
+  out_shader->vertex_source = (i8*)memory_allocate(out_shader->vertex_length + 1); 
+
+  file_read_bytes(file, out_shader->vertex_source, out_shader->vertex_length + 1);
+  out_shader->vertex_source[out_shader->vertex_length + 1] = 0;
+
+  // Read the pixel shader
+
+  file_read_bytes(file, &out_shader->pixel_length, sizeof(u16));
+  out_shader->pixel_source = (i8*)memory_allocate(out_shader->pixel_length + 1); 
+
+  file_read_bytes(file, out_shader->pixel_source, out_shader->pixel_length + 1);
+  out_shader->pixel_source[out_shader->pixel_length + 1] = 0;
 }
 
 void file_read_bytes(File& file, NBRMaterial* out_material) {

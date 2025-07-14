@@ -227,6 +227,13 @@ struct RenderPassDesc {
   /// Some user data to be sent every execution of the 
   /// `RenderPassFn` callback.
   void* user_data = nullptr;
+
+  /// Specify the access mode of the render pass. 
+  /// i.e, whether the render pass will read, write, or 
+  /// read AND write to the framebuffer.
+  ///
+  /// @NOTE: The default access mode is `GFX_TEXTURE_ACCESS_READ`.
+  GfxTextureAccess access_mode = GFX_TEXTURE_ACCESS_READ;
 };
 /// RenderPassDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -255,6 +262,11 @@ struct RenderPass {
 
   bool is_active  = true;
   void* user_data = nullptr;
+
+  /// Compute data 
+
+  bool is_compute = false; 
+  IVec3 work_group_counts;
 
   /// The callback function to call during 
   /// execution.

@@ -114,14 +114,19 @@
     - [x] Checkbox UI elements 
     - [x] Slider UI elements
     - [x] Documentation
-- [] GFX v1.1 
+- [x] GFX v1.1 
     - [x] Add instancing
     - [x] Test instancing
     - [x] Improve shader workflow (using `glGetProgramiv` to get various information about the shader)
     - [x] Improve framebuffers
     - [x] State-specific configuration
-    - [] Compute shader support, with dispatching.
-    - [] Documentation
+    - [x] Compute shader support, with dispatching.
+    - [x] Memory barrier support. 
+    - [x] Images, not textures. 
+    - [x] Shader storage buffers.
+    - [x] Have a specific type called `GfxBindingDesc` to use per draw call. This can be associated with the function `gfx_context_use_bindings`.
+    - [x] Instead of having the `gfx_pipeline_use` function, we can move that to a context-specific function called `gfx_context_use_pipeline`.
+    - [x] Documentation
 - [] Renderer v0.6 
     - [x] Improve draw calls and render passes
         - [x] Re-introduce the command system into the renderer. Have a `RenderCommand` structure that can be queued by the renderer. 
@@ -137,23 +142,25 @@
         - [x] Introduce the `RenderInstanceCommand` to enable full support of instancing in the renderer.
         - [x] Change the instance data to become an instance uniform buffer that gets updated every frame. Each instance can aquire its data using `gl_InstanceID` instead of per-vertex instance data.
         - [] Introduce a `RenderComputeCommand`. It will make the renderer "dispatch" the command to the compute shader instead of rendering it, using the work groups as it's input. 
-        - [] Improve lighting using clustered rendering. Or, if it's too difficult, you can limit the amount of point lights a scene can have.
+        - [] If performance is still an issue, make all of the scene's lights into a buffer and send it to the shader as a buffer update instead of uniforms.
         - [] Look into making the renderer "instanced" rather than rendering everything as is.
-    - [] Documentation
-- [] Particles v0.1 
-    - [] Add CPU-based particles that can render different shapes, sizes, and colors (maybe even certain textures?) 
-    - [] Implement a GPU-based particle system, using something like instancing.
+        - [] Improve lighting using clustered rendering. Or, if it's too difficult, you can limit the amount of point lights a scene can have.
     - [] Documentation
 - [] Resource Manager v0.5
     - [x] Instead of using an abstracted `NBR` layer over everything, write extra `file_write_bytes` functions for the various resources, which will write a _compressed_ version of the resources, and load them as well.
+    - [x] Let the material be created using a `MaterialDesc` structure for more effecient material usage. 
     - [] Improve packaging/distribution  
+        - [] Fix `RESOURCE_CACHE_ID` somehow? The fact that it has a different path is annoying.
         - [] Improve the NBR tool to have a "packging" option that compiles all of the resources into one "blob" called `nkpkg`.
         - [] Implement a way to load `nkpkg` files with a function called `resources_push_package`.
     - [] Fix 3D models loading. 
         - [] Add a parent and child relationship between meshes. Basically, every mesh should have a `local_position` which is set to `Vec3(0.0f)` by default, and it will be take into account when rendering.
         - [] I think the renderer assumes the vertex data of the mesh so if a model has even an extra vertex data like color, the renderer messes everything up. Or limit all 3D models to a certain vertx data set. 
         - [x] Make sure that materials are loaded correctly using Assimp (colors and other uniforms).
-    - [x] Let the material be created using a `MaterialDesc` structure for more effecient material usage. 
+    - [] Remove `ShaderContext` and have the uniform caches in `GfxShader` instead?
+    - [] Documentation
+- [] Particles v0.1 
+    - [] Add GPU-based particles that can render different shapes, sizes, and colors (maybe even certain textures?) 
     - [] Documentation
 - [] Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers

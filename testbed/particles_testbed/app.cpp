@@ -31,7 +31,7 @@ static void init_resources(nikola::App* app) {
   app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group_id, "cubemaps/gloomy.nbr");
 
   // Mesh init
-  app->mesh_id = nikola::resources_push_model(app->res_group_id, "models/behelit.nbr");//nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
+  app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
 
   // Font init
   app->font_id = nikola::resources_push_font(app->res_group_id, "fonts/bit5x3.nbr");
@@ -76,7 +76,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // Transform init
   nikola::transform_translate(app->transform, nikola::Vec3(5.0f, 0.0f, 5.0f));
-  nikola::transform_scale(app->transform, nikola::Vec3(0.01f));
+  nikola::transform_scale(app->transform, nikola::Vec3(1.0f));
 
   return app;
 }
@@ -111,20 +111,20 @@ void app_render(nikola::App* app) {
   // Render 3D 
   nikola::renderer_begin(app->frame_data);
 
-  constexpr int MAX_CUBES = 25;
+  constexpr int MAX_CUBES = 100;
 
   nikola::Transform transforms[MAX_CUBES];
-  for(int i = 0; i < 5; i++) {
-    for(int j = 0; j < 5; j++) {
-      int index = (i * 5) + j;
+  for(int i = 0; i < 10; i++) {
+    for(int j = 0; j < 10; j++) {
+      int index = (i * 10) + j;
 
-      nikola::transform_translate(transforms[index], nikola::Vec3(j * 15.0f, 0.0f, i * 15.0f));
+      nikola::transform_translate(transforms[index], nikola::Vec3(j * 2.0f, 0.0f, i * 2.0f));
       nikola::transform_scale(transforms[index], app->transform.scale);
     }
   }
 
   nikola::RenderInstanceCommand cmd = {
-    .type       = nikola::RENDERABLE_MODEL, 
+    .type       = nikola::RENDERABLE_MESH, 
     .transforms = transforms, 
 
     .renderable_id = app->mesh_id, 

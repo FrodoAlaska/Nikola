@@ -97,6 +97,12 @@ struct NBRShader {
   
   /// The full string representation of the pixel/fragment shader.
   i8* pixel_source;
+  
+  /// The total amount of characters in the `compute_source` string.
+  u16 compute_length; 
+  
+  /// The full string representation of the compute shader.
+  i8* compute_source;
 };
 /// NBRShader
 ///---------------------------------------------------------------------------------------------------------------------
@@ -272,9 +278,6 @@ const u16 RESOURCE_GROUP_INVALID         = ((u16)-1);
 /// The ID of the group associated with the resource cache.
 const u16 RESOURCE_CACHE_ID              = 0;
 
-/// The maximum amount of declared uniform buffers in all shaders.
-const sizei SHADER_UNIFORM_BUFFERS_MAX   = 2;
-
 /// The index of the matrices uniform buffer within all shaders.
 const sizei SHADER_MATRICES_BUFFER_INDEX = 0;
 
@@ -306,40 +309,40 @@ typedef u16 ResourceGroupID;
 /// ResourceType
 enum ResourceType {
   /// Indicated an invalid resource.
-  RESOURCE_TYPE_INVALID        = 16 << -1,
+  RESOURCE_TYPE_INVALID,
 
   /// A flag to denote a `GfxBuffer` resource.
-  RESOURCE_TYPE_BUFFER         = 16 << 0, 
+  RESOURCE_TYPE_BUFFER, 
 
   /// A flag to denote a `GfxTexture` resource.
-  RESOURCE_TYPE_TEXTURE        = 16 << 1, 
+  RESOURCE_TYPE_TEXTURE, 
   
   /// A flag to denote a `GfxCubemap` resource.
-  RESOURCE_TYPE_CUBEMAP        = 16 << 2,
+  RESOURCE_TYPE_CUBEMAP,
   
   /// A flag to denote a `GfxShader` resource.
-  RESOURCE_TYPE_SHADER         = 16 << 4,
+  RESOURCE_TYPE_SHADER,
   
   /// A flag to denote a `Mesh` resource.
-  RESOURCE_TYPE_MESH           = 16 << 5,
+  RESOURCE_TYPE_MESH,
   
   /// A flag to denote a `Material` resource.
-  RESOURCE_TYPE_MATERIAL       = 16 << 6,
+  RESOURCE_TYPE_MATERIAL,
   
   /// A flag to denote a `Skybox` resource.
-  RESOURCE_TYPE_SKYBOX         = 16 << 7,
+  RESOURCE_TYPE_SKYBOX,
   
   /// A flag to denote a `Model` resource.
-  RESOURCE_TYPE_MODEL          = 16 << 8,
+  RESOURCE_TYPE_MODEL,
   
   /// A flag to denote a `Font` resource.
-  RESOURCE_TYPE_FONT           = 16 << 9,
+  RESOURCE_TYPE_FONT,
   
   /// A flag to denote a `ShaderContext` resource.
-  RESOURCE_TYPE_SHADER_CONTEXT = 16 << 10,
+  RESOURCE_TYPE_SHADER_CONTEXT,
   
   /// A flag to denote a `AudioBuffer` resource.
-  RESOURCE_TYPE_AUDIO_BUFFER   = 16 << 11,
+  RESOURCE_TYPE_AUDIO_BUFFER,
 };
 /// ResourceType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -348,16 +351,16 @@ enum ResourceType {
 /// GeometryType
 enum GeometryType {
   /// A predefined cube geometry shape
-  GEOMETRY_CUBE   = 17 << 0, 
+  GEOMETRY_CUBE, 
   
   /// A predefined plane geometry shape
-  GEOMETRY_PLANE  = 17 << 1, 
+  GEOMETRY_PLANE, 
   
   /// A predefined skybox geometry shape
-  GEOMETRY_SKYBOX = 17 << 2, 
+  GEOMETRY_SKYBOX, 
   
   /// A predefined cube geometry shape
-  GEOMETRY_CIRCLE = 17 << 3, 
+  GEOMETRY_CIRCLE, 
 };
 /// GeometryType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -366,13 +369,13 @@ enum GeometryType {
 /// MaterialTextureType
 enum MaterialTextureType {
   /// Indicate the diffuse texture in a `Material`.
-  MATERIAL_TEXTURE_DIFFUSE  = 18 << 0,
+  MATERIAL_TEXTURE_DIFFUSE  = 7 << 0,
   
   /// Indicate the specular texture in a `Material`.
-  MATERIAL_TEXTURE_SPECULAR = 18 << 1,
+  MATERIAL_TEXTURE_SPECULAR = 7 << 1,
   
   /// Indicate the normal texture in a `Material`.
-  MATERIAL_TEXTURE_NORMAL   = 18 << 2,
+  MATERIAL_TEXTURE_NORMAL   = 7 << 2,
 };
 /// MaterialTextureType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -441,8 +444,6 @@ struct Material {
 /// ShaderContext
 struct ShaderContext {
   GfxShader* shader = nullptr; 
-  GfxBuffer* uniform_buffers[SHADER_UNIFORM_BUFFERS_MAX];
-
   HashMap<String, i32> uniforms_cache;
 };
 /// ShaderContext
@@ -539,20 +540,7 @@ NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uni
 /// Set the data of the uniform buffer at `index` of the associated shader in `ctx` to `buffer`
 NIKOLA_API void shader_context_set_uniform_buffer(ShaderContext* ctx, const sizei index, const GfxBuffer* buffer);
 
-/// Use the shader currently binded to `ctx`. If the shader in `ctx` is invalid, 
-/// the function will simply return and do nothing.
-NIKOLA_API void shader_context_use(ShaderContext* ctx_id);
-
 /// ShaderContext functions
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// Material functions
-
-/// Use the textures that are currently valid in `mat`.
-NIKOLA_API void material_use(Material* mat);
-
-/// Material functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------

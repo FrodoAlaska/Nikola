@@ -43,13 +43,13 @@ const f64 FLOAT_MAX = 3.40282e+38F;
 /// VertexType 
 enum VertexType {
   /// A vertex with a position, a normal, and a U/V coordinate.
-  VERTEX_TYPE_PNUV = 13 << 0, 
+  VERTEX_TYPE_PNUV, 
   
   /// A vertex with a position, a color, and a U/V coordinate.
-  VERTEX_TYPE_PCUV = 13 << 1, 
+  VERTEX_TYPE_PCUV, 
   
   /// A vertex with a position, a normal, a color, and a U/V coordinate.
-  VERTEX_TYPE_PNCUV = 13 << 2, 
+  VERTEX_TYPE_PNCUV, 
 };
 /// VertexType 
 ///---------------------------------------------------------------------------------------------------------------------

@@ -39,25 +39,25 @@ struct NBRAudio;
 /// FileOpenMode
 enum FileOpenMode {
   /// Open a file in read-only mode.
-  FILE_OPEN_READ       = 14 << 0,
+  FILE_OPEN_READ       = 6 << 0,
  
   /// Open a file in write-only mode.
-  FILE_OPEN_WRITE      = 14 << 1,
+  FILE_OPEN_WRITE      = 6 << 1,
  
   /// Open a binary file.
-  FILE_OPEN_BINARY     = 14 << 2,
+  FILE_OPEN_BINARY     = 6 << 2,
  
   /// Open a file and append any extra data at the end of the file.
-  FILE_OPEN_APPEND     = 14 << 3,
+  FILE_OPEN_APPEND     = 6 << 3,
  
   /// Open a file and remove any existing data within.
-  FILE_OPEN_TRUNCATE   = 14 << 4,
+  FILE_OPEN_TRUNCATE   = 6 << 4,
  
   /// Open a file and start at the end.
-  FILE_OPEN_AT_END     = 14 << 5,
+  FILE_OPEN_AT_END     = 6 << 5,
 
   /// Open a file in read and write mode.
-  FILE_OPEN_READ_WRITE = 14 << 6
+  FILE_OPEN_READ_WRITE = 6 << 6
 };
 /// FileOpenMode
 ///---------------------------------------------------------------------------------------------------------------------
@@ -66,16 +66,16 @@ enum FileOpenMode {
 /// FileStatus
 enum FileStatus {
   /// Used when a file gets created.
-  FILE_STATUS_CREATED  = 15 << 0, 
+  FILE_STATUS_CREATED, 
   
   /// Used when a file gets modified.
-  FILE_STATUS_MODIFIED = 15 << 2, 
+  FILE_STATUS_MODIFIED, 
   
   /// Used when a file gets deleted.
-  FILE_STATUS_DELETED  = 15 << 2, 
+  FILE_STATUS_DELETED, 
 
   /// Used when a file gets renamed 
-  FILE_STATUS_RENAMED  = 15 << 3, 
+  FILE_STATUS_RENAMED, 
 };
 /// FileStatus
 ///---------------------------------------------------------------------------------------------------------------------
