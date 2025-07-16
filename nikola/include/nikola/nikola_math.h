@@ -428,8 +428,16 @@ NIKOLA_API const Mat4 mat4_scale(const Vec3& scale);
 /// @NOTE: The fov is in radians.
 NIKOLA_API const Mat4 mat4_perspective(const f32 fov, const f32 aspect_ratio, const f32 near, const f32 far);
 
-/// Generates a 4x4 matrix for a orthographic view frustrum, using the left hand coordinate system
-NIKOLA_API const Mat4 mat4_ortho(const f32 left, const f32 right, const f32 bottom, const f32 top);
+/// Generates a 4x4 matrix for a orthographic view frustrum for a 2D space, 
+/// using the left hand coordinate system
+NIKOLA_API const Mat4 mat4_ortho(const f32 left, const f32 right, 
+                                 const f32 bottom, const f32 top);
+
+/// Generates a 4x4 matrix for a orthographic view frustrum for a 3D space, 
+/// using the left hand coordinate system
+NIKOLA_API const Mat4 mat4_ortho(const f32 left, const f32 right, 
+                                 const f32 bottom, const f32 top, 
+                                 const f32 near, const f32 far);
 
 /// Generates a 4x4 look at view matrix, using ther left handed coordinate system 
 NIKOLA_API const Mat4 mat4_look_at(const Vec3& eye, const Vec3& center, const Vec3& up);

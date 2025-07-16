@@ -72,6 +72,10 @@ const Mat4 mat4_ortho(const f32 left, const f32 right, const f32 bottom, const f
   return glm::ortho(left, right, bottom, left);
 }
 
+const Mat4 mat4_ortho(const f32 left, const f32 right, const f32 bottom, const f32 top, const f32 near, const f32 far) {
+  return glm::ortho(left, right, bottom, left, near, far);
+}
+
 const Mat4 mat4_look_at(const Vec3& eye, const Vec3& center, const Vec3& up) {
   return glm::lookAt(eye, center, up);
 }

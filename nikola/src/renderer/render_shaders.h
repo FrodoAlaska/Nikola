@@ -126,7 +126,7 @@ inline nikola::GfxShaderDesc generate_screen_space_shader() {
       layout(binding = 0) uniform sampler2D u_input;
       
       void main() {
-        frag_color = texture(u_input, fs_in.tex_coords);
+        frag_color = texture(u_input, fs_in.tex_coords, 1.0);
       }
     )",
   };
@@ -134,38 +134,75 @@ inline nikola::GfxShaderDesc generate_screen_space_shader() {
 
 inline nikola::GfxShaderDesc generate_hdr_shader() {
   return nikola::GfxShaderDesc {
-    "#version 460 core"
-    "\n"
-    "layout (location = 0) in vec2 aPos;"
-    "layout (location = 1) in vec2 aTextureCoords;"
-    "\n"
-    "out VS_OUT {"
-    "  vec2 tex_coords;"
-    "} vs_out;"
-    "\n"
-    "void main() {"
-    "  vs_out.tex_coords = aTextureCoords;"
-    "  gl_Position       = vec4(aPos, 0.0, 1.0);"
-    "}",
+    .vertex_source = R"(
+      #version 460 core
+      
+      layout (location = 0) in vec2 aPos;
+      layout (location = 1) in vec2 aTextureCoords;
+      
+      out VS_OUT {
+        vec2 tex_coords;
+      } vs_out;
+      
+      void main() {
+        vs_out.tex_coords = aTextureCoords;
+        gl_Position       = vec4(aPos, 0.0, 1.0);
+      }
+    )",
 
-    "#version 460 core"
-    "\n"
-    "layout (location = 0) out vec4 frag_color;"
-    "\n"
-    "in VS_OUT {"
-    "  vec2 tex_coords;"
-    "} fs_in;"
-    "\n"
-    "layout(binding = 0) uniform sampler2D u_input;"
-    ""
-    "uniform float u_exposure;"
-    "\n"
-    "void main() {"
-    "  vec3 hdr_color = texture(u_input, fs_in.tex_coords).rgb;"
-    "  vec3 mapped    = vec3(1.0) - exp(-hdr_color * u_exposure);"
-    "\n"
-    "  frag_color = vec4(mapped, 1.0);"
-    "}"
+    .pixel_source = R"(
+      #version 460 core
+      
+      layout (location = 0) out vec4 frag_color;
+      
+      in VS_OUT {
+        vec2 tex_coords;
+      } fs_in;
+      
+      layout(binding = 0) uniform sampler2D u_input;
+      
+      uniform float u_exposure;
+      
+      void main() {
+        vec3 hdr_color = texture(u_input, fs_in.tex_coords).rgb;
+        vec3 mapped    = vec3(1.0) - exp(-hdr_color * u_exposure);
+      
+        frag_color = vec4(mapped, 1.0);
+      }
+    )"
+  };
+}
+
+inline nikola::GfxShaderDesc generate_shadow_shader() {
+  return nikola::GfxShaderDesc {
+    .vertex_source = R"(
+      #version 460 core
+
+      // Layouts
+      layout (location = 0) in vec3 aPos;
+      layout (location = 1) in vec3 aNormal;
+      layout (location = 2) in vec2 aTexCoords;
+
+      // Uniforms
+      
+      layout (location = 0) uniform mat4 u_light_space;
+
+      layout(std140, binding = 1) uniform InstanceBuffer {
+        mat4 u_model[1024];
+      };
+      
+      void main() {
+        gl_Position = u_light_space * u_model[gl_InstanceID] * vec4(aPos, 1.0f);
+      }
+    )",
+  
+    .pixel_source = R"(
+      #version 460 core
+      
+      void main() {
+        // Does nothing. Just for the depth buffer...
+      }
+    )",
   };
 }
 
@@ -258,8 +295,7 @@ inline nikola::GfxShaderDesc generate_batch_quad_shader() {
     "  vs_out.sides_count = aShapeSide.y;\n"
     "\n"
     "  gl_Position = vec4(aPos, 0.0f, 1.0f);\n"
-    "}\n"
-    "\n",
+    "}\n",
   
     "#version 460 core\n"
     ""

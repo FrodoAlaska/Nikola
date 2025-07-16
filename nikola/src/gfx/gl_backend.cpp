@@ -966,10 +966,15 @@ static GLenum create_gl_texture(const GfxTextureType type) {
     case GFX_TEXTURE_IMAGE_1D:
       glCreateTextures(GL_TEXTURE_1D, 1, &id);
       break;
+    case GFX_TEXTURE_1D_ARRAY:
+      glCreateTextures(GL_TEXTURE_1D_ARRAY, 1, &id);
+      break;
     case GFX_TEXTURE_2D:
     case GFX_TEXTURE_IMAGE_2D:
-    case GFX_TEXTURE_RENDER_TARGET:
       glCreateTextures(GL_TEXTURE_2D, 1, &id);
+      break;
+    case GFX_TEXTURE_2D_ARRAY:
+      glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &id);
       break;
     case GFX_TEXTURE_3D:
     case GFX_TEXTURE_IMAGE_3D:
@@ -1029,6 +1034,7 @@ static void update_gl_texture_pixels(GfxTexture* texture, GLenum gl_format, GLen
       break;
     case GFX_TEXTURE_2D:
     case GFX_TEXTURE_IMAGE_2D:
+    case GFX_TEXTURE_1D_ARRAY:
       glTextureSubImage2D(texture->id, 
                           0, 
                           0, 0,
@@ -1039,6 +1045,7 @@ static void update_gl_texture_pixels(GfxTexture* texture, GLenum gl_format, GLen
       break;
     case GFX_TEXTURE_3D:
     case GFX_TEXTURE_IMAGE_3D:
+    case GFX_TEXTURE_2D_ARRAY:
       glTextureSubImage3D(texture->id, 
                           0, 
                           0, 0, 0,
@@ -1047,14 +1054,6 @@ static void update_gl_texture_pixels(GfxTexture* texture, GLenum gl_format, GLen
                           gl_pixel_type, 
                           texture->desc.data);
       break;
-    case GFX_TEXTURE_RENDER_TARGET:
-      glTextureSubImage2D(texture->id, 
-                          0, 
-                          0, 0,
-                          texture->desc.width, texture->desc.height,
-                          gl_format, 
-                          gl_pixel_type, 
-                          nullptr);
       break;
     case GFX_TEXTURE_DEPTH_TARGET:
     case GFX_TEXTURE_STENCIL_TARGET:
@@ -1073,14 +1072,13 @@ static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format) {
       break;
     case GFX_TEXTURE_2D:
     case GFX_TEXTURE_IMAGE_2D:
+    case GFX_TEXTURE_1D_ARRAY:
       glTextureStorage2D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height);
       break;
     case GFX_TEXTURE_3D:
     case GFX_TEXTURE_IMAGE_3D:
-      glTextureStorage3D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height, texture->desc.height);
-      break;
-    case GFX_TEXTURE_RENDER_TARGET:
-      glTextureStorage2D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height);
+    case GFX_TEXTURE_2D_ARRAY:
+      glTextureStorage3D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height, texture->desc.depth);
       break;
     case GFX_TEXTURE_DEPTH_TARGET:
     case GFX_TEXTURE_STENCIL_TARGET:
@@ -1829,7 +1827,7 @@ void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxB
   bool is_valid_buffer = (buffer->desc.type == GFX_BUFFER_UNIFORM) || (buffer->desc.type == GFX_BUFFER_SHADER_STORAGE);
   NIKOLA_ASSERT(is_valid_buffer, "Cannot attach a non-uniform or non-shader storage buffer to shader");
 
-  glBindBufferBase(GL_UNIFORM_BUFFER, bind_point, buffer->id);
+  glBindBufferBase(get_buffer_type(buffer->desc.type), bind_point, buffer->id);
 }
 
 i32 gfx_shader_uniform_lookup(GfxShader* shader, const i8* uniform_name) {
@@ -1934,10 +1932,16 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc, cons
   texture->id = create_gl_texture(desc.type);
 
   // Setting texture parameters
+  
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
   glTextureParameteri(texture->id, GL_TEXTURE_MIN_FILTER, min_filter);
   glTextureParameteri(texture->id, GL_TEXTURE_MAG_FILTER, mag_filter);
+
+  int compare_func = (gl_format == GL_DEPTH_COMPONENT) ? GL_COMPARE_REF_TO_TEXTURE : GL_NONE;
+  glTextureParameteri(texture->id, GL_TEXTURE_COMPARE_MODE, compare_func);
+  
+  glTextureParameteri(texture->id, GL_TEXTURE_COMPARE_FUNC, get_gl_compare_func(desc.compare_func));
 
   // Setting the pixel store alignment
   set_texture_pixel_align(desc.format);
@@ -1972,23 +1976,35 @@ void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc) {
   NIKOLA_ASSERT(texture, "Invalid GfxTexture struct passed");
  
   texture->desc = desc;
-
+ 
   // Updating the formats
+  
   GLenum in_format, gl_format, gl_pixel_type;
-  get_texture_gl_format(desc.format, &in_format, &gl_format, &gl_pixel_type);
+  get_texture_gl_format(texture->desc.format, &in_format, &gl_format, &gl_pixel_type);
 
   // Updating the addressing mode
+ 
   GLenum gl_wrap_format = get_texture_gl_wrap(desc.wrap_mode);
   
-  // Updating the filters
-  GLenum min_filter, mag_filter;
-  get_texture_gl_filter(desc.filter, &min_filter, &mag_filter); 
-
-  // Set texture parameters again
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
+  
+  // Updating the filters
+  
+  GLenum min_filter, mag_filter;
+  get_texture_gl_filter(desc.filter, &min_filter, &mag_filter); 
+  
   glTextureParameteri(texture->id, GL_TEXTURE_MIN_FILTER, min_filter);
   glTextureParameteri(texture->id, GL_TEXTURE_MAG_FILTER, mag_filter);
+
+  // Updating the comparison parametars
+
+  int compare_func = (gl_format == GL_DEPTH_COMPONENT) ? GL_COMPARE_REF_TO_TEXTURE : GL_NONE;
+  glTextureParameteri(texture->id, GL_TEXTURE_COMPARE_MODE, compare_func);
+  glTextureParameteri(texture->id, GL_TEXTURE_COMPARE_FUNC, get_gl_compare_func(desc.compare_func));
+
+  // Setting the pixel store alignment
+  set_texture_pixel_align(desc.format);
 }
 
 void gfx_texture_upload_data(GfxTexture* texture, 
@@ -1999,6 +2015,7 @@ void gfx_texture_upload_data(GfxTexture* texture,
   NIKOLA_ASSERT(data, "Invalid texture data passed to gfx_texture_upload_data");
  
   // Updating the formats
+  
   GLenum in_format, gl_format, gl_pixel_type;
   get_texture_gl_format(texture->desc.format, &in_format, &gl_format, &gl_pixel_type);
   

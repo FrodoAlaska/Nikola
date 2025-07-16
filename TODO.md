@@ -138,6 +138,7 @@
         - [] Normal/roughness mapping.
         - [] Gaussian blur
         - [] Bloom integration 
+        - [] Debug rendering
     - [] Increase performance/improve workflow
         - [x] Introduce the `RenderInstanceCommand` to enable full support of instancing in the renderer.
         - [x] Change the instance data to become an instance uniform buffer that gets updated every frame. Each instance can aquire its data using `gl_InstanceID` instead of per-vertex instance data.
@@ -160,7 +161,9 @@
     - [] Remove `ShaderContext` and have the uniform caches in `GfxShader` instead?
     - [] Documentation
 - [] Particles v0.1 
-    - [] Add GPU-based particles that can render different shapes, sizes, and colors (maybe even certain textures?) 
+    - [] CPU-based particle system, giving each particle a position, velocity, and color. Use instancing to render a particle batch.
+    - [] GPU-based particle system, using compute shaders.
+    - [] Test both with either fluid simulation or sand simulation.
     - [] Documentation
 - [] Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers
@@ -173,14 +176,14 @@
 - [] 3D Animations v0.1
 - [] Renderer v0.7 
     - [] Decal rendering 
-    - [] Terrain rendering (terrain generation using `stb_perlin` and loading from heightmap)
+    - [] Terrain rendering and procedural generation (terrain generation using `stb_perlin` and loading from heightmap)
     - [] Screen-Space effects (Screen-Space Reflections, Screen-Space Ambient Occlussion, etc)
     - [] Documentation
 
 ## Showcases
 
-- Particles showcase, using instancing. A dark corridor with absolutely no or little natural light. The player can shoot flares that emit a very bright red color, emanating the corridor.  
 - Showing the gradual change with each render pass in a simple scene.
+- Particles showcase, using instancing. A dark corridor with absolutely no or little natural light. The player can shoot flares that emit a very bright red color, emanating the corridor.  
 - Compute shaders with the planet blowing up?
 
 ## BUGS:

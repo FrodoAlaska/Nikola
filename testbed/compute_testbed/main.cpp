@@ -11,6 +11,8 @@ struct ComputeState {
   nikola::GfxShader* default_shader = nullptr;
 
   nikola::GfxBuffer* storage_buffer = nullptr;
+
+  nikola::DynamicArray<nikola::Vec2> vertices;
 };
 
 static ComputeState s_state{};
@@ -21,24 +23,45 @@ static void init_shaders() {
   nikola::GfxShaderDesc compute_desc = {
     .compute_source = R"(
       #version 460 core 
-
-      layout (rgba32f, binding = 0) uniform image2D u_output;
-      layout (std430, binding = 0) buffer Time {
-        float u_time;
-      };
-      layout (location = 0) uniform float u_delta;
+      
+      layout (rgba32f, binding = 0) uniform image2D u_screen;
 
       layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
       void main() {
-        ivec2 coord    = ivec2(gl_GlobalInvocationID.xy);
-        ivec2 img_size = imageSize(u_output);
+        vec4 color = vec4(0.062745, 0.054902, 0.109804, 1.0);
+        vec2 coord = vec2(gl_GlobalInvocationID.xy);
 
-        vec2 color = vec2(coord) / vec2(img_size);
-        imageStore(u_output, coord, vec4(color.x, u_delta, 0.0, 1.0));
+        vec2 img_size = vec2(imageSize(u_screen));
+
+        float x = -((coord.x * 2.0 - img_size.x) / img_size.x);
+        float y = -((coord.y * 2.0 - img_size.y) / img_size.y);
+
+        float fov = 90.0f;
+        vec3 cam_o = vec3(0.0, 0.0, -tan(fov / 2.0));
+        vec3 ray_o = vec3(x, y, 0.0);
+        vec3 ray_d = normalize(ray_o - cam_o);
+
+        vec3 sphere_c  = vec3(0.0, 0.0, -5.0);
+        float sphere_r = 0.5;
+
+        vec3 o_c = ray_o - sphere_c;
+
+        float b = dot(ray_d, o_c);
+        float c = dot(o_c, o_c) - (sphere_r * sphere_r);
+
+        float intersect_state = (b * b) - c;
+        vec3 intersection     = ray_o + ray_d * (-b + sqrt(intersect_state));
+
+        if(intersect_state >= 0.0) {
+          color = vec4(normalize(intersection - sphere_c) + 1.0 / 2.0, 1.0);
+        }
+
+        imageStore(u_screen, ivec2(gl_GlobalInvocationID), color);
       }
     )",
   };
   s_state.compute_shader = nikola::gfx_shader_create(s_state.gfx, compute_desc);
+  NIKOLA_LOG_TRACE("COMPUTE loaded");
 
   // Default shader init
 
@@ -47,15 +70,14 @@ static void init_shaders() {
       #version 460 core
       
       layout (location = 0) in vec2 aPos;
-      layout (location = 1) in vec2 aTextureCoords;
-      
-      out VS_OUT {
-        vec2 tex_coords;
-      } vs_out;
-      
+      layout (location = 1) in vec2 aTexCoord;
+
+      out vec2 tex_coord;
+
       void main() {
-        vs_out.tex_coords = aTextureCoords;
-        gl_Position       = vec4(aPos, 0.0, 1.0);
+        gl_Position = vec4(aPos, 0.0, 1.0);
+
+        tex_coord = aTexCoord;
       }
     )",
 
@@ -63,25 +85,23 @@ static void init_shaders() {
       #version 460 core
       
       layout (location = 0) out vec4 frag_color;
-      
-      in VS_OUT {
-        vec2 tex_coords;
-      } fs_in;
-      
-      layout(binding = 0) uniform sampler2D u_input;
-      
+      layout (binding = 0) uniform sampler2D u_texture; 
+
+      in vec2 tex_coord;
+
       void main() {
-        frag_color = texture(u_input, fs_in.tex_coords);
+        frag_color = texture(u_texture, tex_coord);
       }
     )",
   };
   s_state.default_shader = nikola::gfx_shader_create(s_state.gfx, default_desc);
+  NIKOLA_LOG_TRACE("DEFUALT loaded");
 }
 
 static void init_texture() {
   nikola::GfxTextureDesc tex_desc = {
-    .width  = 1280, 
-    .height = 720,
+    .width  = 1024, 
+    .height = 1024,
 
     .type      = nikola::GFX_TEXTURE_2D,
     .format    = nikola::GFX_TEXTURE_FORMAT_RGBA32F, 
@@ -98,61 +118,50 @@ static void init_texture() {
 static void init_storage_buffer() {
   // Shader storage init
 
-  float f_time = (float)nikola::niclock_get_time();
+  nikola::Vec2 vertices[128];
+  for(int i = 0; i < 16; i++) {
+    for(int j = 0; j < 8; j++) {
+      int index = (i * 8) + j;
+
+      vertices[index] = nikola::Vec2(0.005f * i, 0.001f * j);
+    }
+  }
 
   nikola::GfxBufferDesc buff_desc = {
-    .data  = &f_time, 
-    .size  = sizeof(float), 
+    .data  = vertices, 
+    .size  = sizeof(nikola::Vec2) * 128, 
     .type  = nikola::GFX_BUFFER_SHADER_STORAGE, 
     .usage = nikola::GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
   s_state.storage_buffer = nikola::gfx_buffer_create(s_state.gfx, buff_desc);
-
-  // Bind the shader storage to the compute shader
-  nikola::gfx_shader_attach_uniform(s_state.compute_shader, nikola::GFX_SHADER_COMPUTE, s_state.storage_buffer, 0);
 }
 
 static void init_pipeline() {
   // Vertex buffer init
 
   float vertices[] = {
-     // Position        Texture coords
-    -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-    -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-     1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-     1.0f,  1.0f, 0.0f, 1.0f, 1.0f
+    // Position    // Texture coords
+    -1.0f,  1.0f,  0.0f, 1.0f,
+    -1.0f, -1.0f,  0.0f, 0.0f,
+     1.0f, -1.0f,  1.0f, 0.0f,
+     
+     1.0f, -1.0f,  1.0f, 0.0f,
+     1.0f,  1.0f,  1.0f, 1.0f,
+    -1.0f,  1.0f,  0.0f, 1.0f,
   };
 
   nikola::GfxBufferDesc vert_desc = {
-    .data  = vertices, 
+    .data  = vertices,
     .size  = sizeof(vertices), 
     .type  = nikola::GFX_BUFFER_VERTEX, 
     .usage = nikola::GFX_BUFFER_USAGE_STATIC_DRAW,
   };
-
   s_state.pipe_desc.vertex_buffer  = nikola::gfx_buffer_create(s_state.gfx, vert_desc);
-  s_state.pipe_desc.vertices_count = 4;
+  s_state.pipe_desc.vertices_count = 6;
   
-  // Index buffer init
-
-  nikola::u32 indices[] = {
-    0, 1, 2, 
-    2, 3, 0,
-  };
-
-  nikola::GfxBufferDesc index_desc = {
-    .data  = indices, 
-    .size  = sizeof(indices), 
-    .type  = nikola::GFX_BUFFER_INDEX, 
-    .usage = nikola::GFX_BUFFER_USAGE_STATIC_DRAW,
-  };
-
-  s_state.pipe_desc.index_buffer  = nikola::gfx_buffer_create(s_state.gfx, index_desc);
-  s_state.pipe_desc.indices_count = 6;
-
   // Vertex attributes init
 
-  s_state.pipe_desc.layouts[0].attributes[0]    = nikola::GFX_LAYOUT_FLOAT3,
+  s_state.pipe_desc.layouts[0].attributes[0]    = nikola::GFX_LAYOUT_FLOAT2,
   s_state.pipe_desc.layouts[0].attributes[1]    = nikola::GFX_LAYOUT_FLOAT2,
   s_state.pipe_desc.layouts[0].attributes_count = 2;
 
@@ -173,7 +182,7 @@ int main() {
   
   nikola::i32 win_flags  = nikola::WINDOW_FLAGS_FOCUS_ON_CREATE | 
                            nikola::WINDOW_FLAGS_CENTER_MOUSE    |
-                           nikola::WINDOW_FLAGS_FULLSCREEN      | 
+                           nikola::WINDOW_FLAGS_FULLSCREEN      |
                            nikola::WINDOW_FLAGS_HIDE_CURSOR;
   nikola::Window* window = nikola::window_open("Compute Testbed", 1280, 720, win_flags);
   if(!window) {
@@ -184,7 +193,7 @@ int main() {
   
   nikola::GfxContextDesc gfx_desc = {
     .window = window,
-    .states = nikola::GFX_STATE_DEPTH | nikola::GFX_STATE_STENCIL | nikola::GFX_STATE_BLEND,
+    .states = nikola::GFX_STATE_BLEND | nikola::GFX_STATE_MSAA,
   };
   s_state.gfx = nikola::gfx_context_init(gfx_desc);
   if(!s_state.gfx) {
@@ -193,10 +202,10 @@ int main() {
 
   // Resources init
   
-  init_shaders();
   init_texture();
-  init_storage_buffer();
+  init_shaders();
   init_pipeline();
+  init_storage_buffer();
 
   // Main loop
   
@@ -204,18 +213,12 @@ int main() {
     if(nikola::input_key_pressed(nikola::KEY_ESCAPE)) {
       break;
     }
-    
+
     // Clear the screen
 
-    nikola::f32 r = 16.0f / 255.0f; 
-    nikola::f32 g = 14.0f / 255.0f; 
-    nikola::f32 b = 28.0f / 255.0f; 
-    nikola::gfx_context_clear(s_state.gfx, r, g, b, 1.0f);
- 
-    // Dispatch call
+    nikola::gfx_context_clear(s_state.gfx, 0.062745f, 0.054902f, 0.109804f, 1.0f);
 
-    float f_time = nikola::sin(nikola::niclock_get_time()) * 2.0f - 1.0f; 
-    nikola::gfx_shader_upload_uniform(s_state.compute_shader, 0, nikola::GFX_LAYOUT_FLOAT1, &f_time);
+    // Dispatch call
 
     nikola::GfxBindingDesc bind_desc = {
       .shader = s_state.compute_shader,
@@ -224,17 +227,18 @@ int main() {
       .images_count = 1,
     };
     nikola::gfx_context_use_bindings(s_state.gfx, bind_desc);
-    
-    nikola::gfx_context_dispatch(s_state.gfx, 1280, 720, 1);
-    nikola::gfx_context_memory_barrier(s_state.gfx, (nikola::GFX_MEMORY_BARRIER_SHADER_IMAGE_ACCESS | nikola::GFX_MEMORY_BARRIER_SHADER_STORAGE_BUFFER));
+
+    nikola::gfx_context_dispatch(s_state.gfx, 1024, 1024, 1);
+    nikola::gfx_context_memory_barrier(s_state.gfx, nikola::GFX_MEMORY_BARRIER_SHADER_IMAGE_ACCESS);
 
     // Draw call
-  
-    nikola::gfx_context_set_state(s_state.gfx, nikola::GFX_STATE_DEPTH, false); 
-   
-    bind_desc.shader         = s_state.default_shader;
-    bind_desc.textures       = &s_state.texture;
-    bind_desc.textures_count = 1;
+
+    bind_desc = {
+      .shader = s_state.default_shader,
+
+      .textures       = &s_state.texture, 
+      .textures_count = 1,
+    };
     nikola::gfx_context_use_bindings(s_state.gfx, bind_desc);
     
     nikola::gfx_context_use_pipeline(s_state.gfx, s_state.pipe);

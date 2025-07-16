@@ -50,13 +50,11 @@ enum RenderableType {
 enum RenderPassID {
   /// The currently available render passes the 
   /// renderer goes through in execution order.
-  /// 
-  /// Using the `renderer_pass_set_active` function, 
-  /// passing in one of these values, the specified 
-  /// render pass can either be enabled or disabled.
 
-  RENDER_PASS_LIGHT = 0, 
+  RENDER_PASS_SHADOW = 0, 
+  RENDER_PASS_LIGHT,
   RENDER_PASS_HDR,
+  RENDER_PASS_BLOOM,
 };
 /// RenderPassID
 ///---------------------------------------------------------------------------------------------------------------------
@@ -65,15 +63,19 @@ enum RenderPassID {
 /// Callbacks
 
 // Have to do this to fix underfined variable errors in the callback.
+
 struct Camera;
 struct RenderPass;
+struct RenderPassDesc;
+struct FrameData;
 
 /// A function callback to move the camera every frame.
 using CameraMoveFn = void(*)(Camera& camera);
 
-/// A function to be called every render pass, passing in the `previous` and 
-/// `current` render passes, and some `user_data`.
-using RenderPassFn = void(*)(const RenderPass* previous, RenderPass* current, void* user_data);
+/// Render pass callbacks
+
+using RenderPassPrepareFn = void(*)(RenderPass* pass, const FrameData& data);
+using RenderPassSumbitFn  = void(*)(RenderPass* pass);
 
 /// Callbacks
 ///---------------------------------------------------------------------------------------------------------------------
@@ -145,10 +147,14 @@ struct Camera {
 /// RendererDefaults 
 struct RendererDefaults {
   GfxTexture* texture        = nullptr;
+  
   GfxBuffer* matrices_buffer = nullptr;
+  GfxBuffer* instance_buffer = nullptr;
   
   Material* material = nullptr;
   Mesh* cube_mesh    = nullptr;
+
+  GfxPipeline* screen_quad = nullptr;
 };
 /// RendererDefaults 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -207,33 +213,28 @@ struct RenderInstanceCommand {
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderPassDesc
 struct RenderPassDesc {
-  /// The size of the framebuffer 
-  IVec2 frame_size = Vec2(0.0f);
+  /// Render pass functions to be called.
+
+  RenderPassPrepareFn prepare_func; 
+  RenderPassSumbitFn sumbit_func;
+
+  /// Resources to be extrated to the render pass.
+
+  ResourceGroupID res_group_id;
+  ResourceID shader_context_id;
+
+  /// The size of the framebuffer.
+  IVec2 frame_size;
 
   /// The clear flags to be used every frame.
-  u32 clear_flags = 0;
- 
-  /// The shader context ID to be used later. 
-  ResourceID shader_context_id = {};
+  u32 clear_flags;
 
   /// The number of render targets of the render pass. 
-  ///
-  /// @NOTE: Depending on the format given, the framebuffer 
-  /// will push the appropriate render target type. For example, 
-  /// if the `GFX_TEXTURE_FORMAT_DEPTH24` type is given, the 
-  /// framebuffer will push a depth attachment.
-  DynamicArray<GfxTextureFormat> targets;
+  DynamicArray<GfxTextureDesc> targets;
 
   /// Some user data to be sent every execution of the 
   /// `RenderPassFn` callback.
   void* user_data = nullptr;
-
-  /// Specify the access mode of the render pass. 
-  /// i.e, whether the render pass will read, write, or 
-  /// read AND write to the framebuffer.
-  ///
-  /// @NOTE: The default access mode is `GFX_TEXTURE_ACCESS_READ`.
-  GfxTextureAccess access_mode = GFX_TEXTURE_ACCESS_READ;
 };
 /// RenderPassDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -241,36 +242,45 @@ struct RenderPassDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderPass
 struct RenderPass {
+  /// A reference to the main graphics context.
+  GfxContext* gfx;
+
+  /// Render pass functions to be called.
+
+  RenderPassPrepareFn prepare_func; 
+  RenderPassSumbitFn sumbit_func;
+
   /// Framebuffer information.
 
-  GfxFramebufferDesc frame_desc = {};
-  GfxFramebuffer* frame         = nullptr;
+  IVec2 frame_size;
+  GfxFramebufferDesc framebuffer_desc;
+  GfxFramebuffer* framebuffer;
  
   /// The shader context that will be used 
-  /// upon calling `pass_func`.
+  /// across the render pass.
   ShaderContext* shader_context = nullptr;
 
-  /// The input textures which will be given 
-  /// to the `shader_context`.
+  /// The outputs textures which will be given to the next 
+  /// render pass or to be rendered to the default framebuffer 
+  /// at the end of the render pass chain.
   /// 
   /// @NOTE: The maximum number of inputs cannot exceed `RENDER_TARGETS_MAX` (found in `nikola_gfx.h`).
 
-  GfxTexture* input_textures[RENDER_TARGETS_MAX];
-  sizei input_textures_count = 0;
+  GfxTexture* outputs[RENDER_TARGETS_MAX];
+  sizei outputs_count = 0;
 
+  /// References to the previous and next passes.
+  ///
+  /// @NOTE: Either or both of these pointers can be `nullptr`.
+  /// Be sure to check them before using them.
+
+  RenderPass* previous; 
+  RenderPass* next;
+  
   /// State handling
 
   bool is_active  = true;
   void* user_data = nullptr;
-
-  /// Compute data 
-
-  bool is_compute = false; 
-  IVec3 work_group_counts;
-
-  /// The callback function to call during 
-  /// execution.
-  RenderPassFn pass_func = nullptr;
 };
 /// RenderPass
 ///---------------------------------------------------------------------------------------------------------------------
@@ -290,8 +300,7 @@ struct PointLight {
   Vec3 position = Vec3(0.0f); 
   Vec3 color    = Vec3(1.0f);
 
-  f32 linear    = 0.09f; 
-  f32 quadratic = 0.032f;
+  f32 radius = 3.50f; 
 };
 /// PointLight
 ///---------------------------------------------------------------------------------------------------------------------
@@ -346,6 +355,13 @@ NIKOLA_API void renderer_init(Window* window);
 /// Free/reclaim any memory consumed by the global renderer
 NIKOLA_API void renderer_shutdown();
 
+/// Setup the renderer for any upcoming render operations by 
+/// the data given in `data`.
+NIKOLA_API void renderer_begin(FrameData& data);
+
+/// Start the render passes chain, flushing the given `RenderQueue` in the process. 
+NIKOLA_API void renderer_end();
+
 /// Retrieve the internal `GfxContext` of the global renderer.
 NIKOLA_API GfxContext* renderer_get_context();
 
@@ -358,17 +374,32 @@ NIKOLA_API void renderer_set_clear_color(const Vec4& clear_color);
 /// Return the renderer's current clear color.
 NIKOLA_API Vec4& renderer_get_clear_color();
 
-/// Add an additional render pass using the information from `desc`, returning back an
-/// identifying ID for later use.
-///
-/// Internally, the renderer will call `func`, passing in `user_data`.
-NIKOLA_API const u32 renderer_push_pass(const RenderPassDesc& desc, const RenderPassFn& func);
+/// Create a new render pass using the information from `desc`, returning back a
+/// pointer to the newly added render pass. 
+NIKOLA_API RenderPass* renderer_create_pass(const RenderPassDesc& desc);
 
-/// Enable/disable a render pass identified by its `pass_id`.
+/// Append the given `pass` to the renderer's pass chain to be 
+/// initiated at the end of the chain.
+NIKOLA_API void renderer_append_pass(RenderPass* pass);
+
+/// Prepend the given `pass` to the renderer's pass chain to be 
+/// initiated at the beginning of the chain. 
+NIKOLA_API void renderer_prepend_pass(RenderPass* pass);
+
+/// Insert the given `pass` at the given `index` in the renderer's pass chain to be 
+/// initiated at the certain given `index`.
 ///
-/// @NOTE: If the given `pass_id` is < 0 or >= the maximum amount of render passes, 
-/// this function will assert. 
-NIKOLA_API void renderer_pass_set_active(const u32& pass_id, const bool active);
+/// @NOTE: There is no maximum value the `index` can check up against. 
+/// However, if the end of the pass chain is reached before the given `index`, 
+/// the renderer will simply `append` the new pass at the end of the chain.
+NIKOLA_API void renderer_insert_pass(RenderPass* pass, const sizei index);
+
+/// Return a const reference to the render pass at `index`.
+///
+/// @NOTE: If the given `index` is greater than the number of currently 
+/// active render passes, this function will just return the 
+/// last added render pass.
+NIKOLA_API RenderPass* renderer_peek_pass(const sizei index);
 
 /// Queue a rendering command using the given `command` as a specifier. 
 NIKOLA_API void renderer_queue_command(const RenderCommand& command);
@@ -377,22 +408,12 @@ NIKOLA_API void renderer_queue_command(const RenderCommand& command);
 NIKOLA_API void renderer_queue_command(const RenderInstanceCommand& command);
 
 /// Flush/render the internal command queue of the renderer, using the given 
-/// `shader_context_id` as the main shader for rendering. 
+/// `shader_context` as the main shader for rendering. 
 ///
 /// @NOTE: Internally, the renderer will call this function inside many of 
 /// its render passes. However, it can also be called explicitly by the client code 
 /// for any specific reason. The internal queue will not be discarded until the end of the frame.
-///
-/// @NOTE: The `shader_context_id` can be left untouched to let the renderer 
-/// handle the shading of the objects.
-NIKOLA_API void renderer_flush_queue_command(const ResourceID& shader_context_id = {});
-
-/// Setup the renderer for any upcoming render operations by 
-/// the data given in `data`.
-NIKOLA_API void renderer_begin(FrameData& data);
-
-/// Start the render passes chain, flushing the given `RenderQueue` in the process. 
-NIKOLA_API void renderer_end();
+NIKOLA_API void renderer_flush_queue_command(ShaderContext* shader_context);
 
 /// Renderer functions
 ///---------------------------------------------------------------------------------------------------------------------

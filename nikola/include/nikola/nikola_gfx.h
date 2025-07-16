@@ -394,6 +394,12 @@ enum GfxTextureType {
   /// Creates a 3D texture.
   GFX_TEXTURE_3D,
   
+  /// Creates a 1D texture array.
+  GFX_TEXTURE_1D_ARRAY,
+  
+  /// Creates a 2D texture array.
+  GFX_TEXTURE_2D_ARRAY,
+  
   /// Creates a 1D image.
   GFX_TEXTURE_IMAGE_1D,
   
@@ -402,9 +408,6 @@ enum GfxTextureType {
   
   /// Creates a 3D image.
   GFX_TEXTURE_IMAGE_3D,
-  
-  /// Creates a texture to be used as a render target.
-  GFX_TEXTURE_RENDER_TARGET,
   
   /// Creates a texture to be used as the depth target.
   GFX_TEXTURE_DEPTH_TARGET,
@@ -873,8 +876,6 @@ struct GfxFramebufferDesc {
   u32 clear_flags = 0;
 
   /// An array of color attachments up to `FRAMEBUFFER_ATTACHMENTS_MAX`. 
-  ///
-  /// @NOTE: Each texture in this array have to be a texture of type `GFX_TEXTURE_RENDER_TARGET`. 
   GfxTexture* color_attachments[FRAMEBUFFER_ATTACHMENTS_MAX];
 
   /// The amount of color attachments in the `attachments` array.
@@ -1018,16 +1019,27 @@ struct GfxTextureDesc {
   GfxTextureFormat format;
 
   /// The filter to be used on the texture when magnified or minified.
-  GfxTextureFilter filter;
+  ///
+  /// @NOTE: The default filter is set to `GFX_TEXTURE_FILTER_MIN_MAG_LINEAR`.
+  GfxTextureFilter filter     = GFX_TEXTURE_FILTER_MIN_MAG_LINEAR;
 
   /// The addressing mode of the texture.
-  GfxTextureWrap wrap_mode;
+  ///
+  /// @NOTE: The default wrap mode is set to `GFX_TEXTURE_FILTER_MIN_MAG_LINEAR`.
+  GfxTextureWrap wrap_mode    = GFX_TEXTURE_WRAP_REPEAT;
 
   /// The access mode of the texture.
+  /// By default, this value is set to `GFX_TEXTURE_ACCESS_WRITE`.
   ///
   /// @NOTE: This flag will only be taken into account 
   /// with the `gfx_texture_use_as_image` function.
-  GfxTextureAccess access;
+  GfxTextureAccess access     = GFX_TEXTURE_ACCESS_WRITE;
+
+  /// The comparison function to carry out 
+  /// if the given `format` is any of the `GFX_TEXTURE_FORMAT_DEPTH_*` variants. 
+  ///
+  /// @NOTE: By default, this is set to `GFX_COMPARE_ALWAYS`.
+  GfxCompareFunc compare_func = GFX_COMPARE_ALWAYS;
   
   /// The pixels that will be sent to the GPU.
   void* data = nullptr;

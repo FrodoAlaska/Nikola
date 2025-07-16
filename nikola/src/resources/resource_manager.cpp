@@ -118,6 +118,8 @@ static const char* buffer_type_str(const GfxBufferType type) {
       return "GFX_BUFFER_INDEX";
     case GFX_BUFFER_UNIFORM: 
       return "GFX_BUFFER_UNIFORM";
+    case GFX_BUFFER_SHADER_STORAGE: 
+      return "GFX_BUFFER_SHADER_STORAGE";
     default:
       return "INVALID BUFFER TYPE";
   }
@@ -131,8 +133,6 @@ static const char* texture_type_str(const GfxTextureType type) {
       return "GFX_TEXTURE_2D";
     case GFX_TEXTURE_3D:
       return "GFX_TEXTURE_3D";
-    case GFX_TEXTURE_RENDER_TARGET:
-      return "GFX_TEXTURE_RENDER_TARGET";
     case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
       return "GFX_TEXTURE_DEPTH_STENCIL_TARGET";
     default:

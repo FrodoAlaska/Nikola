@@ -424,7 +424,7 @@ struct Material {
   /// Useful surface-defining flags.
 
   Vec3 color       = Vec3(1.0f);
-  f32 shininess    = 1.0f;
+  f32 shininess    = 16.0f;
   f32 transparency = 1.0f;
  
   /// Pipeline-related flags 

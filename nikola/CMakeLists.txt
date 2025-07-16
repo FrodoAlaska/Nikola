@@ -33,8 +33,6 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/resources/shader_context.cpp
   ${NIKOLA_SRC_DIR}/resources/geometry_loader.cpp
 
-  # Resources/Loaders 
-
   # Filesystem
   ${NIKOLA_SRC_DIR}/filesystem/file.cpp
   ${NIKOLA_SRC_DIR}/filesystem/filesystem.cpp
@@ -48,6 +46,7 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/renderer/camera.cpp
   ${NIKOLA_SRC_DIR}/renderer/renderer.cpp
   ${NIKOLA_SRC_DIR}/renderer/batch_renderer.cpp
+  ${NIKOLA_SRC_DIR}/renderer/render_passes/light_pass.cpp
   
   # Audio 
   ${NIKOLA_SRC_DIR}/audio/audio_openal.cpp

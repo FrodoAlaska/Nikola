@@ -10,9 +10,10 @@ struct nikola::App {
   nikola::FrameData frame_data;
 
   nikola::ResourceGroupID res_group_id;
-  nikola::ResourceID mesh_id, font_id, material_id;
+  nikola::ResourceID mesh_id, building_id;
+  nikola::ResourceID font_id, material_id;
 
-  nikola::Transform transform;
+  nikola::Transform transforms[5];
 
   bool has_editor = false;
 };
@@ -28,18 +29,20 @@ static void init_resources(nikola::App* app) {
   app->res_group_id = nikola::resources_create_group("app_res", res_path);
 
   // Skybox init
-  app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group_id, "cubemaps/gloomy.nbr");
+  app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group_id, "cubemaps/accurate_night.nbr");
 
   // Mesh init
   app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
+
+  // Model init
+  app->building_id = nikola::resources_push_model(app->res_group_id, "models/cottage_obj.nbr");
 
   // Font init
   app->font_id = nikola::resources_push_font(app->res_group_id, "fonts/bit5x3.nbr");
 
   // Material init
   nikola::MaterialDesc mat_desc = {
-    .diffuse_id  = nikola::resources_push_texture(app->res_group_id, "textures/container_diffuse.nbr"),
-    .specular_id = nikola::resources_push_texture(app->res_group_id, "textures/container_specular.nbr"),
+    .diffuse_id  = nikola::resources_push_texture(app->res_group_id, "textures/paviment.nbr"),
   };
   app->material_id = nikola::resources_push_material(app->res_group_id, mat_desc);
 }
@@ -63,20 +66,38 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // Camera init
   nikola::CameraDesc cam_desc = {
-    .position     = nikola::Vec3(10.0f, 0.0f, 10.0f),
-    .target       = nikola::Vec3(-3.0f, 0.0f, 0.0f),
+    .position     = nikola::Vec3(-40.0f, 2.5f, -18.0f),
+    .target       = nikola::Vec3(-3.0f, 2.5f, 0.0f),
     .up_axis      = nikola::Vec3(0.0f, 1.0f, 0.0f),
     .aspect_ratio = nikola::window_get_aspect_ratio(app->window),
     .move_func    = nikola::camera_free_move_func,
   };
   nikola::camera_create(&app->frame_data.camera, cam_desc);
+  app->frame_data.camera.exposure = 0.7f;
 
   // Resoruces init
   init_resources(app);
 
   // Transform init
-  nikola::transform_translate(app->transform, nikola::Vec3(5.0f, 0.0f, 5.0f));
-  nikola::transform_scale(app->transform, nikola::Vec3(1.0f));
+  
+  nikola::transform_translate(app->transforms[0], nikola::Vec3(5.0f, 0.05f, 5.0f));
+  nikola::transform_scale(app->transforms[0], nikola::Vec3(256.0f, 0.1f, 256.0f));
+  
+  nikola::transform_translate(app->transforms[1], nikola::Vec3(5.0f, 0.0f, 5.0f));
+  nikola::transform_scale(app->transforms[1], nikola::Vec3(1.0f));
+
+  // Lights init
+
+  app->frame_data.dir_light.color = nikola::Vec3(0.0f);
+ 
+  nikola::PointLight point = {
+    .position = nikola::Vec3(-15.0f, 20.0f, 6.0f), 
+    .color    = nikola::Vec3(1.5f, 2.0f, 1.0f), 
+    .radius   = 5.0f,
+  };
+  app->frame_data.point_lights.push_back(point);
+
+  app->frame_data.ambient = nikola::Vec3(0.1f, 0.1f, 0.125f);
 
   return app;
 }
@@ -111,29 +132,30 @@ void app_render(nikola::App* app) {
   // Render 3D 
   nikola::renderer_begin(app->frame_data);
 
-  constexpr int MAX_CUBES = 100;
-
-  nikola::Transform transforms[MAX_CUBES];
-  for(int i = 0; i < 10; i++) {
-    for(int j = 0; j < 10; j++) {
-      int index = (i * 10) + j;
-
-      nikola::transform_translate(transforms[index], nikola::Vec3(j * 2.0f, 0.0f, i * 2.0f));
-      nikola::transform_scale(transforms[index], app->transform.scale);
-    }
-  }
-
-  nikola::RenderInstanceCommand cmd = {
+  // Render the ground
+  
+  nikola::RenderInstanceCommand mesh_cmd = {
     .type       = nikola::RENDERABLE_MESH, 
-    .transforms = transforms, 
+    .transforms = &app->transforms[0], 
 
     .renderable_id = app->mesh_id, 
     .material_id   = app->material_id,
 
-    .instance_count = MAX_CUBES,
+    .instance_count = 1,
   };
-  nikola::renderer_queue_command(cmd);
+  nikola::renderer_queue_command(mesh_cmd);
+ 
+  // Render the building 
   
+  nikola::RenderInstanceCommand model_cmd = {
+    .type       = nikola::RENDERABLE_MODEL, 
+    .transforms = &app->transforms[1], 
+
+    .renderable_id  = app->building_id, 
+    .instance_count = 1,
+  };
+  nikola::renderer_queue_command(model_cmd);
+
   nikola::renderer_end();
   
   // Render 2D 
@@ -152,9 +174,12 @@ void app_render_gui(nikola::App* app) {
   nikola::gui_debug_info();
   
   nikola::gui_begin_panel("Scene");
-  
-  nikola::gui_edit_transform("Mesh Transform", &app->transform);
-  nikola::gui_edit_material("Material", nikola::resources_get_material(app->material_id));
+ 
+  // Transforms
+  if(ImGui::CollapsingHeader("Transforms")) {
+    nikola::gui_edit_transform("Mesh Transform", &app->transforms[0]);
+    nikola::gui_edit_transform("Model Transform", &app->transforms[1]);
+  }
   
   // Lights
   if(ImGui::CollapsingHeader("Lights")) {
@@ -180,10 +205,10 @@ void app_render_gui(nikola::App* app) {
 
   // Renderer
   if(ImGui::CollapsingHeader("Renderer")) {
-    static bool state_active = true;
-    if(ImGui::Checkbox("HDR active", &state_active)) {
-      nikola::renderer_pass_set_active(nikola::RENDER_PASS_HDR, state_active);
-    }
+    // static bool state_active = true;
+    // if(ImGui::Checkbox("HDR active", &state_active)) {
+    //   nikola::renderer_pass_set_active(nikola::RENDER_PASS_HDR, state_active);
+    // }
   }
 
   nikola::gui_end_panel();

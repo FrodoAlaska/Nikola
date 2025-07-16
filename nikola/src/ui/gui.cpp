@@ -254,8 +254,7 @@ void gui_edit_point_light(const char* name, PointLight* point_light) {
   ImGui::DragFloat3("Position", &point_light->position[0], 1.0f);
   ImGui::DragFloat3("Color", &point_light->color[0], 0.01f, 0.0f, 1.0f);
 
-  ImGui::DragFloat("Linear", &point_light->linear, 0.01f);
-  ImGui::DragFloat("Quadratic", &point_light->quadratic, 0.01f);
+  ImGui::DragFloat("Radius", &point_light->radius, 0.01f);
 
   ImGui::PopID(); 
 }
