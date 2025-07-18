@@ -73,7 +73,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
     .move_func    = nikola::camera_free_move_func,
   };
   nikola::camera_create(&app->frame_data.camera, cam_desc);
-  app->frame_data.camera.exposure = 0.7f;
+  app->frame_data.camera.exposure = 1.2f;
 
   // Resoruces init
   init_resources(app);
@@ -81,23 +81,20 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Transform init
   
   nikola::transform_translate(app->transforms[0], nikola::Vec3(5.0f, 0.05f, 5.0f));
-  nikola::transform_scale(app->transforms[0], nikola::Vec3(256.0f, 0.1f, 256.0f));
+  nikola::transform_scale(app->transforms[0], nikola::Vec3(128.0f, 0.1f, 128.0f));
   
   nikola::transform_translate(app->transforms[1], nikola::Vec3(5.0f, 0.0f, 5.0f));
   nikola::transform_scale(app->transforms[1], nikola::Vec3(1.0f));
+  // nikola::transform_rotate(app->transforms[1], nikola::Vec3(-90.0f * nikola::DEG2RAD, 0.0f, 0.0f));
 
   // Lights init
 
-  app->frame_data.dir_light.color = nikola::Vec3(0.0f);
- 
-  nikola::PointLight point = {
-    .position = nikola::Vec3(-15.0f, 20.0f, 6.0f), 
-    .color    = nikola::Vec3(1.5f, 2.0f, 1.0f), 
-    .radius   = 5.0f,
-  };
-  app->frame_data.point_lights.push_back(point);
+  app->frame_data.dir_light.direction = nikola::Vec3(1.0f, -1.0f, -1.0f);
+  app->frame_data.dir_light.color     = nikola::Vec3(0.5f, 0.3f, 0.0f);
 
   app->frame_data.ambient = nikola::Vec3(0.1f, 0.1f, 0.125f);
+
+  app->frame_data.spot_lights.push_back(nikola::SpotLight(app->frame_data.camera.position, app->frame_data.camera.front, nikola::Vec3(1.0f), 0.1f));
 
   return app;
 }
@@ -126,35 +123,18 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 
   // Update the camera
   nikola::camera_update(app->frame_data.camera);
-} 
+  app->frame_data.spot_lights[0].position  = app->frame_data.camera.position;
+  app->frame_data.spot_lights[0].direction = app->frame_data.camera.front;
+}
 
 void app_render(nikola::App* app) {
   // Render 3D 
   nikola::renderer_begin(app->frame_data);
 
-  // Render the ground
+  // Render the objects
   
-  nikola::RenderInstanceCommand mesh_cmd = {
-    .type       = nikola::RENDERABLE_MESH, 
-    .transforms = &app->transforms[0], 
-
-    .renderable_id = app->mesh_id, 
-    .material_id   = app->material_id,
-
-    .instance_count = 1,
-  };
-  nikola::renderer_queue_command(mesh_cmd);
- 
-  // Render the building 
-  
-  nikola::RenderInstanceCommand model_cmd = {
-    .type       = nikola::RENDERABLE_MODEL, 
-    .transforms = &app->transforms[1], 
-
-    .renderable_id  = app->building_id, 
-    .instance_count = 1,
-  };
-  nikola::renderer_queue_command(model_cmd);
+  nikola::renderer_queue_command(nikola::RENDERABLE_MESH, app->mesh_id, app->transforms[0].transform, app->material_id);
+  nikola::renderer_queue_command(nikola::RENDERABLE_MODEL, app->building_id, app->transforms[1].transform);
 
   nikola::renderer_end();
   
@@ -191,9 +171,23 @@ void app_render_gui(nikola::App* app) {
 
       nikola::gui_edit_point_light(light_name.c_str(), light);
     }
-  
+    
+    for(int i = 0; i < app->frame_data.spot_lights.size(); i++) {
+      nikola::SpotLight* light = &app->frame_data.spot_lights[i];
+      nikola::String light_name = ("Spot " + std::to_string(i));
+
+      nikola::gui_edit_spot_light(light_name.c_str(), light);
+    }
+ 
+    ImGui::Separator();
     if(ImGui::Button("Add PointLight")) {
-      app->frame_data.point_lights.push_back(nikola::PointLight{nikola::Vec3(10.0f, 0.0f, 10.0f)});
+      nikola::Vec3 point_pos = nikola::Vec3(10.0f, 5.0f, 10.0f);
+      app->frame_data.point_lights.push_back(nikola::PointLight(point_pos));
+    }
+    
+    if(ImGui::Button("Add SpotLight")) {
+      nikola::Vec3 spot_pos = nikola::Vec3(10.0f, 5.0f, 10.0f);
+      app->frame_data.spot_lights.push_back(nikola::SpotLight());
     }
   }
 
@@ -205,10 +199,9 @@ void app_render_gui(nikola::App* app) {
 
   // Renderer
   if(ImGui::CollapsingHeader("Renderer")) {
-    // static bool state_active = true;
-    // if(ImGui::Checkbox("HDR active", &state_active)) {
-    //   nikola::renderer_pass_set_active(nikola::RENDER_PASS_HDR, state_active);
-    // }
+    // @TODO
+    // nikola::RenderPass* hdr_pass = nikola::renderer_peek_pass(1);
+    // ImGui::Checkbox("HDR active", &hdr_pass->is_active);
   }
 
   nikola::gui_end_panel();

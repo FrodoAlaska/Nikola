@@ -1,6 +1,7 @@
 #include "nikola/nikola_resources.h"
 #include "nikola/nikola_base.h"
 #include "nikola/nikola_gfx.h"
+#include "nikola/nikola_render.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -34,9 +35,7 @@ static void check_and_send_uniform(ShaderContext* ctx, const String& name, GfxLa
     return;
   }
   
-  // Uniform exists but isn't cached. So, cache it.
-  cache_uniform(ctx, name); 
-  gfx_shader_upload_uniform(shader, ctx->uniforms_cache[name], type, data);
+  // @TODO: Silent error??
 }
 
 /// Private functions
@@ -94,12 +93,50 @@ void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, 
   check_and_send_uniform(ctx, uniform_name, GFX_LAYOUT_MAT4, &value);
 }
 
+void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const Material* value) {
+  NIKOLA_ASSERT(ctx, "Invalid ShaderContext passed to shader_context_set_uniform_buffer");
+  NIKOLA_ASSERT(ctx->shader, "Invalid shader in ShaderContext passed to shader_context_set_uniform_buffer");
+  NIKOLA_ASSERT(value, "Invalid Material given to shader_context_set_uniform");
+
+  shader_context_set_uniform(ctx, (uniform_name + ".color"), value->color);
+  shader_context_set_uniform(ctx, (uniform_name + ".shininess"), value->shininess);
+  shader_context_set_uniform(ctx, (uniform_name + ".transparency"), value->transparency);
+}
+
+void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const PointLight& value) {
+  NIKOLA_ASSERT(ctx, "Invalid ShaderContext passed to shader_context_set_uniform_buffer");
+  NIKOLA_ASSERT(ctx->shader, "Invalid shader in ShaderContext passed to shader_context_set_uniform_buffer");
+
+  shader_context_set_uniform(ctx, (uniform_name + ".position"), value.position);
+  shader_context_set_uniform(ctx, (uniform_name + ".color"), value.color);
+  shader_context_set_uniform(ctx, (uniform_name + ".radius"), value.radius);
+}
+
+void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const DirectionalLight& value) {
+  NIKOLA_ASSERT(ctx, "Invalid ShaderContext passed to shader_context_set_uniform_buffer");
+  NIKOLA_ASSERT(ctx->shader, "Invalid shader in ShaderContext passed to shader_context_set_uniform_buffer");
+
+  shader_context_set_uniform(ctx, (uniform_name + ".direction"), value.direction);
+  shader_context_set_uniform(ctx, (uniform_name + ".color"), value.color);
+}
+
+void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const SpotLight& value) {
+  NIKOLA_ASSERT(ctx, "Invalid ShaderContext passed to shader_context_set_uniform_buffer");
+  NIKOLA_ASSERT(ctx->shader, "Invalid shader in ShaderContext passed to shader_context_set_uniform_buffer");
+
+  shader_context_set_uniform(ctx, (uniform_name + ".position"), value.position);
+  shader_context_set_uniform(ctx, (uniform_name + ".direction"), value.direction);
+  shader_context_set_uniform(ctx, (uniform_name + ".color"), value.color);
+  shader_context_set_uniform(ctx, (uniform_name + ".radius"), (f32)nikola::cos(value.radius));
+  shader_context_set_uniform(ctx, (uniform_name + ".outer_radius"), (f32)nikola::cos(value.outer_radius));
+}
+
+
 void shader_context_set_uniform_buffer(ShaderContext* ctx, const sizei index, const GfxBuffer* buffer) {
   NIKOLA_ASSERT(ctx, "Invalid ShaderContext passed to shader_context_set_uniform_buffer");
   NIKOLA_ASSERT(ctx->shader, "Invalid shader in ShaderContext passed to shader_context_set_uniform_buffer");
   NIKOLA_ASSERT(buffer, "Invalid buffer given to shader_context_set_uniform_buffer");
 
-  // Attach the uniform
   gfx_shader_attach_uniform(ctx->shader, GFX_SHADER_VERTEX, (GfxBuffer*)buffer, index);
 }
 

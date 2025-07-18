@@ -242,7 +242,7 @@ void gui_edit_directional_light(const char* name, DirectionalLight* dir_light) {
   ImGui::PushID(name); 
   
   ImGui::DragFloat3("Direction", &dir_light->direction[0], 0.01f, -1.0f, 1.0f);
-  ImGui::DragFloat3("Color", &dir_light->color[0], 0.01f, 0.0f, 1.0f);
+  ImGui::DragFloat3("Color", &dir_light->color[0], 0.01f, 0.0f);
 
   ImGui::PopID(); 
 }
@@ -252,9 +252,21 @@ void gui_edit_point_light(const char* name, PointLight* point_light) {
   ImGui::PushID(name); 
 
   ImGui::DragFloat3("Position", &point_light->position[0], 1.0f);
-  ImGui::DragFloat3("Color", &point_light->color[0], 0.01f, 0.0f, 1.0f);
+  ImGui::DragFloat3("Color", &point_light->color[0], 0.01f, 0.0f);
+  ImGui::SliderFloat("Radius", &point_light->radius, 0.001f, 20.0f);
 
-  ImGui::DragFloat("Radius", &point_light->radius, 0.01f);
+  ImGui::PopID(); 
+}
+
+void gui_edit_spot_light(const char* name, SpotLight* spot_light) {
+  ImGui::SeparatorText(name);
+  ImGui::PushID(name); 
+
+  ImGui::DragFloat3("Position", &spot_light->position[0], 1.0f);
+  ImGui::DragFloat3("Direction", &spot_light->direction[0], 0.01f, -1.0f, 1.0f);
+  ImGui::DragFloat3("Color", &spot_light->color[0], 0.01f, 0.0f);
+  ImGui::SliderFloat("Radius", &spot_light->radius, 0.0f, 1.0f);
+  ImGui::SliderFloat("Outer radius", &spot_light->outer_radius, 0.0f, 1.0f);
 
   ImGui::PopID(); 
 }

@@ -1,6 +1,7 @@
 #include "render_passes.h"
 
-#include "../light_shaders.h"
+#include "../shaders/bling_phong.glsl.h"
+
 #include "nikola/nikola_render.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -25,17 +26,20 @@ void light_pass_init(Window* window) {
   ResourceID blinn_phong_shader = resources_push_shader(RESOURCE_CACHE_ID, generate_blinn_phong_shader());
   pass_desc.shader_context_id   = resources_push_shader_context(RESOURCE_CACHE_ID, blinn_phong_shader);
 
+  // Buffer injection
+
   shader_context_set_uniform_buffer(resources_get_shader_context(pass_desc.shader_context_id), 
                                     SHADER_INSTANCE_BUFFER_INDEX, 
                                     (GfxBuffer*)renderer_get_defaults().instance_buffer);
 
-  // Other init
+  // Frame size and flags init
 
   i32 width, height; 
   window_get_size(window, &width, &height);
 
   pass_desc.frame_size  = IVec2(width, height);
   pass_desc.clear_flags = (GFX_CLEAR_FLAGS_COLOR_BUFFER | GFX_CLEAR_FLAGS_DEPTH_BUFFER); 
+  pass_desc.queue_type  = RENDER_QUEUE_OPAQUE;
 
   // Color attachment init
 
@@ -55,7 +59,7 @@ void light_pass_init(Window* window) {
     .height = (u32)height,
 
     .type   = GFX_TEXTURE_DEPTH_TARGET, 
-    .format = GFX_TEXTURE_FORMAT_DEPTH24, 
+    .format = GFX_TEXTURE_FORMAT_DEPTH16, 
   };
   pass_desc.targets.push_back(target_desc);
 
@@ -70,29 +74,59 @@ void light_pass_prepare(RenderPass* pass, const FrameData& data) {
 
   // Set globals
 
-  shader_context_set_uniform(ctx, "u_ambient", data.ambient); 
-  shader_context_set_uniform(ctx, "u_point_lights_count", (i32)data.point_lights.size()); 
-  shader_context_set_uniform(ctx, "u_dir_light.direction", data.dir_light.direction); 
-  shader_context_set_uniform(ctx, "u_dir_light.color", data.dir_light.color); 
+  Mat4 light_space = shadow_pass_get_light_space(pass->previous);
+ 
+  // Turning the light space view into a texture coordinate
+  Mat4 shadow_space = light_space * mat4_translate(Vec3(0.5f - 0.0025f)) * mat4_scale(Vec3(0.5f));
+  shader_context_set_uniform(pass->shader_context, "u_light_space", shadow_space);
 
-  // Set point lights
-
-  i32 index = 0;
-
-  for(auto& point : data.point_lights) {
-    String point_index = "u_point_lights[" + std::to_string(index) + "].";
-
-    shader_context_set_uniform(ctx, (point_index + "position"), point.position); 
-    shader_context_set_uniform(ctx, (point_index + "color"), point.color); 
-
-    shader_context_set_uniform(ctx, (point_index + "radius"), point.radius); 
+  // Set the lighting uniforms
+ 
+  shader_context_set_uniform(pass->shader_context, "u_dir_light", data.dir_light);
+  shader_context_set_uniform(pass->shader_context, "u_ambient", data.ambient);
   
-    index++;
+  shader_context_set_uniform(pass->shader_context, "u_points_count", (i32)data.point_lights.size());
+  for(sizei i = 0; i < data.point_lights.size(); i++) {
+    shader_context_set_uniform(pass->shader_context, ("u_points[" + std::to_string(i) + "]"), data.point_lights[i]);
   }
+  
+  shader_context_set_uniform(pass->shader_context, "u_spots_count", (i32)data.spot_lights.size());
+  for(sizei i = 0; i < data.spot_lights.size(); i++) {
+    shader_context_set_uniform(pass->shader_context, ("u_spots[" + std::to_string(i) + "]"), data.spot_lights[i]);
+  }
+
+  // Render the skybox
+  // @TEMP
+
+  renderer_draw_skybox(data.skybox_id);
 }
 
-void light_pass_sumbit(RenderPass* pass) {
-  renderer_flush_queue_command(pass->shader_context); 
+void light_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue) {
+  // Render everything 
+
+  for(auto& geo : queue) {
+    // Setup uniforms
+    shader_context_set_uniform(pass->shader_context, "u_material", geo.material);
+
+    // Use the required resources
+
+    GfxTexture* textures[] = {
+      geo.material->diffuse_map,
+      geo.material->specular_map,
+
+      pass->previous->outputs[0], // Should be the shadow pass's result
+    };
+
+    GfxBindingDesc bind_desc = {
+      .shader = pass->shader_context->shader,
+
+      .textures       = textures, 
+      .textures_count = 3,
+    };
+    gfx_context_use_bindings(pass->gfx, bind_desc);
+
+    renderer_draw_geometry_primitive(geo);
+  }
 
   // Setting the output textures
 

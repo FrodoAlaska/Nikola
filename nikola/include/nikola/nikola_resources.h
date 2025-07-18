@@ -9,6 +9,11 @@
 
 namespace nikola { // Start of nikola
 
+// Forward declarations
+struct PointLight;
+struct DirectionalLight;
+struct SpotLight;
+
 /// ----------------------------------------------------------------------
 /// ** NBR (Nikola Binary Resource) ***
 
@@ -284,6 +289,9 @@ const sizei SHADER_MATRICES_BUFFER_INDEX = 0;
 /// The index of the instance uniform buffer within all shaders.
 const sizei SHADER_INSTANCE_BUFFER_INDEX = 1;
 
+/// The index of the light uniform buffer within all shaders.
+const sizei SHADER_LIGHT_BUFFER_INDEX    = 2;
+
 /// The maximum amount of preset uniforms. 
 const u32 MATERIAL_UNIFORMS_MAX          = 4;
 
@@ -536,6 +544,18 @@ NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uni
 
 /// Set a uniform of type `Mat4` with the name `uniform_name` in `ctx` to the given `value`. 
 NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const Mat4& value);
+
+/// Set a uniform of type `Material` with the name `uniform_name` in `ctx` to the given `value`. 
+NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const Material* value);
+
+/// Set a uniform of type `PointLight` with the name `uniform_name` in `ctx` to the given `value`. 
+NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const PointLight& value);
+
+/// Set a uniform of type `DirectionalLight` with the name `uniform_name` in `ctx` to the given `value`. 
+NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const DirectionalLight& value);
+
+/// Set a uniform of type `SpotLight` with the name `uniform_name` in `ctx` to the given `value`. 
+NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const SpotLight& value);
 
 /// Set the data of the uniform buffer at `index` of the associated shader in `ctx` to `buffer`
 NIKOLA_API void shader_context_set_uniform_buffer(ShaderContext* ctx, const sizei index, const GfxBuffer* buffer);

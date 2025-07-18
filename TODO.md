@@ -128,10 +128,11 @@
     - [x] Instead of having the `gfx_pipeline_use` function, we can move that to a context-specific function called `gfx_context_use_pipeline`.
     - [x] Documentation
 - [] Renderer v0.6 
-    - [x] Improve draw calls and render passes
-        - [x] Re-introduce the command system into the renderer. Have a `RenderCommand` structure that can be queued by the renderer. 
+    - [] Improve draw calls and render passes
+        - [x] Fix the render commands
         - [x] Improve the render pass system to be more versitile. It's very "stiff" right now.
         - [x] Improve the current render passes and test with client-side render passes.
+        - [] Have the batch renderer as an extra pass to the renderer instead of its own thing.
     - [] Add new rendering features/effects 
         - [x] Improve the Blinn-Phong lighting model by actually using specular maps and maybe fixing the material system a bit. 
         - [] Cascaded shadow maps
@@ -140,11 +141,9 @@
         - [] Bloom integration 
         - [] Debug rendering
     - [] Increase performance/improve workflow
-        - [x] Introduce the `RenderInstanceCommand` to enable full support of instancing in the renderer.
         - [x] Change the instance data to become an instance uniform buffer that gets updated every frame. Each instance can aquire its data using `gl_InstanceID` instead of per-vertex instance data.
-        - [] Introduce a `RenderComputeCommand`. It will make the renderer "dispatch" the command to the compute shader instead of rendering it, using the work groups as it's input. 
         - [] If performance is still an issue, make all of the scene's lights into a buffer and send it to the shader as a buffer update instead of uniforms.
-        - [] Look into making the renderer "instanced" rather than rendering everything as is.
+        - [x] Look into making the renderer "instanced" rather than rendering everything as is.
         - [] Improve lighting using clustered rendering. Or, if it's too difficult, you can limit the amount of point lights a scene can have.
     - [] Documentation
 - [] Resource Manager v0.5

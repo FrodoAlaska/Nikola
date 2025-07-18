@@ -1799,7 +1799,7 @@ void gfx_shader_query(GfxShader* shader, GfxShaderQueryDesc* out_desc) {
                       uniform_desc.name); // Uniform name
 
     uniform_desc.type            = get_shader_type(gl_type);
-    uniform_desc.location        = i;
+    uniform_desc.location        = gfx_shader_uniform_lookup(shader, uniform_desc.name);
     uniform_desc.component_count = comp_count;
     out_desc->active_uniforms[i] = uniform_desc;
   }
@@ -1931,6 +1931,13 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc, cons
   // Creating the texutre based on its type
   texture->id = create_gl_texture(desc.type);
 
+  // Setting the pixel store alignment
+  set_texture_pixel_align(desc.format);
+
+  // Filling the texture with the data based on its type
+  update_gl_texture_storage(texture, in_format);
+  update_gl_texture_pixels(texture, gl_format, gl_pixel_type);
+
   // Setting texture parameters
   
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
@@ -1938,17 +1945,10 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc, cons
   glTextureParameteri(texture->id, GL_TEXTURE_MIN_FILTER, min_filter);
   glTextureParameteri(texture->id, GL_TEXTURE_MAG_FILTER, mag_filter);
 
-  int compare_func = (gl_format == GL_DEPTH_COMPONENT) ? GL_COMPARE_REF_TO_TEXTURE : GL_NONE;
+  GLint compare_func = (gl_format == GL_DEPTH_COMPONENT) ? GL_COMPARE_REF_TO_TEXTURE : GL_NONE;
+
   glTextureParameteri(texture->id, GL_TEXTURE_COMPARE_MODE, compare_func);
-  
   glTextureParameteri(texture->id, GL_TEXTURE_COMPARE_FUNC, get_gl_compare_func(desc.compare_func));
-
-  // Setting the pixel store alignment
-  set_texture_pixel_align(desc.format);
-
-  // Filling the texture with the data based on its type
-  update_gl_texture_storage(texture, in_format);
-  update_gl_texture_pixels(texture, gl_format, gl_pixel_type);
 
   // Generating some mipmaps
   glGenerateTextureMipmap(texture->id);

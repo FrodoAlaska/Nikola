@@ -133,6 +133,18 @@ static const char* texture_type_str(const GfxTextureType type) {
       return "GFX_TEXTURE_2D";
     case GFX_TEXTURE_3D:
       return "GFX_TEXTURE_3D";
+    case GFX_TEXTURE_2D_ARRAY:
+      return "GFX_TEXTURE_2D_ARRAY";
+    case GFX_TEXTURE_IMAGE_1D:
+      return "GFX_TEXTURE_IMAGE_1D";
+    case GFX_TEXTURE_IMAGE_2D:
+      return "GFX_TEXTURE_IMAGE_2D";
+    case GFX_TEXTURE_IMAGE_3D:
+      return "GFX_TEXTURE_IMAGE_3D";
+    case GFX_TEXTURE_DEPTH_TARGET:
+      return "GFX_TEXTURE_DEPTH_TARGET";
+    case GFX_TEXTURE_STENCIL_TARGET:
+      return "GFX_TEXTURE_STENCIL_TARGET";
     case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
       return "GFX_TEXTURE_DEPTH_STENCIL_TARGET";
     default:
@@ -671,8 +683,19 @@ ResourceID resources_push_shader_context(const ResourceGroupID& group_id, const 
   ResourceID id; 
   PUSH_RESOURCE(group, shader_contexts, ctx, RESOURCE_TYPE_SHADER_CONTEXT, id);
 
-  // @TODO (Resource): Query the shader for uniform information
-  // @TODO (Resource): Do something with the query information...
+  // Query the shader for uniform information
+
+  GfxShaderQueryDesc query_desc = {};
+  gfx_shader_query(ctx->shader, &query_desc);
+
+  for(sizei i = 0; i < query_desc.uniforms_count; i++) {
+    GfxUniformDesc* uniform = &query_desc.active_uniforms[i];
+    if(uniform->location == -1) { // Invalid uniform. Why??
+      continue;
+    }
+    
+    ctx->uniforms_cache[uniform->name] = uniform->location;
+  }
 
   // Set a default matrices buffer 
   
@@ -682,6 +705,9 @@ ResourceID resources_push_shader_context(const ResourceGroupID& group_id, const 
   // New context added!
   
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed shader context:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Attributes count      = %i", query_desc.attributes_count);
+  NIKOLA_LOG_DEBUG("     Uniforms count        = %i", query_desc.uniforms_count);
+  NIKOLA_LOG_DEBUG("     Uniform buffers count = %i", query_desc.uniform_blocks_count);
   return id;
 }
 

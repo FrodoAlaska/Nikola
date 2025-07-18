@@ -27,6 +27,9 @@ const f32 CAMERA_MAX_DEGREES       = 89.0f;
 /// The maximum amount of zoom the camera can achieve.
 const f32 CAMERA_MAX_ZOOM          = 180.0f;
 
+/// The maximum amount of point lights a scene can have.
+const sizei POINT_LIGHTS_MAX       = 16;
+
 /// Consts
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -34,11 +37,10 @@ const f32 CAMERA_MAX_ZOOM          = 180.0f;
 /// RenderableType
 enum RenderableType {
   /// The currently supported renderable types to be used 
-  /// in conjunction with a `RenderCommand`.
+  /// with the `renderer_queue_command_*` functions.
 
   RENDERABLE_MESH = 0, 
   RENDERABLE_MODEL, 
-  RENDERABLE_DEBUG,
 
   // @TODO (Renderer): Add more renderable types...
 };
@@ -60,6 +62,17 @@ enum RenderPassID {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// RenderQueueType
+enum RenderQueueType {
+  RENDER_QUEUE_OPAQUE = 0,
+  RENDER_QUEUE_DEBUG,
+
+  RENDER_QUEUES_MAX = RENDER_QUEUE_DEBUG + 1,
+};
+/// RenderQueueType
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// Callbacks
 
 // Have to do this to fix underfined variable errors in the callback.
@@ -68,6 +81,7 @@ struct Camera;
 struct RenderPass;
 struct RenderPassDesc;
 struct FrameData;
+struct GeometryPrimitive;
 
 /// A function callback to move the camera every frame.
 using CameraMoveFn = void(*)(Camera& camera);
@@ -75,7 +89,7 @@ using CameraMoveFn = void(*)(Camera& camera);
 /// Render pass callbacks
 
 using RenderPassPrepareFn = void(*)(RenderPass* pass, const FrameData& data);
-using RenderPassSumbitFn  = void(*)(RenderPass* pass);
+using RenderPassSumbitFn  = void(*)(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue);
 
 /// Callbacks
 ///---------------------------------------------------------------------------------------------------------------------
@@ -144,6 +158,18 @@ struct Camera {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// GeometryPrimitive 
+struct GeometryPrimitive {
+  Mat4 transforms[RENDERER_MAX_INSTANCES]; 
+  Mesh* mesh; 
+  Material* material;
+
+  sizei instance_count = 1;
+};
+/// GeometryPrimitive 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// RendererDefaults 
 struct RendererDefaults {
   GfxTexture* texture        = nullptr;
@@ -157,57 +183,6 @@ struct RendererDefaults {
   GfxPipeline* screen_quad = nullptr;
 };
 /// RendererDefaults 
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// RenderCommand
-struct RenderCommand {
-  /// The type of resource this command will render. 
-  RenderableType type;
-
-  /// The object's transform.
-  Transform transform;
-
-  /// The resource ID of the renderable. 
-  ResourceID renderable_id = {};
-
-  /// The material to be used. 
-  ///
-  /// @NOTE: If this material is left to its default, 
-  /// the renderer will use the default material to render.
-  ResourceID material_id   = {};
-};
-/// RenderCommand
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// RenderInstanceCommand
-struct RenderInstanceCommand {
-  /// The type of resource this command will render. 
-  RenderableType type; 
-  
-  /// An array of transforms for each of the instances. 
-  ///
-  /// @NOTE: The number of elements in this array will 
-  /// be queried form `instance_count`.
-  Transform* transforms;
-
-  /// The resource ID of the renderable. 
-  ResourceID renderable_id = {};
-  
-  /// The material to be used. 
-  ///
-  /// @NOTE: If this material is left to its default, 
-  /// the renderer will use the default material to render.
-  ResourceID material_id   = {}; 
-
-  /// The number of instances to render. 
-  /// By default, this is set to `1`.
-  ///
-  /// @NOTE: The instance count cannot exceed `RENDERER_MAX_INSTANCES`.
-  sizei instance_count = 1;
-};
-/// RenderInstanceCommand
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -229,11 +204,17 @@ struct RenderPassDesc {
   /// The clear flags to be used every frame.
   u32 clear_flags;
 
+  // An associated render queue to be given upon the 
+  // call to `sumbit_func`. 
+  //
+  // @NOTE: This is set to `RENDER_QUEUE_OPAQUE` by default.
+  RenderQueueType queue_type = RENDER_QUEUE_OPAQUE;
+
   /// The number of render targets of the render pass. 
   DynamicArray<GfxTextureDesc> targets;
 
-  /// Some user data to be sent every execution of the 
-  /// `RenderPassFn` callback.
+  /// Some user data to be sent over with every execution of 
+  /// the callbacks.
   void* user_data = nullptr;
 };
 /// RenderPassDesc
@@ -249,6 +230,7 @@ struct RenderPass {
 
   RenderPassPrepareFn prepare_func; 
   RenderPassSumbitFn sumbit_func;
+  RenderQueueType queue_type;
 
   /// Framebuffer information.
 
@@ -288,8 +270,19 @@ struct RenderPass {
 ///---------------------------------------------------------------------------------------------------------------------
 /// DirectionalLight 
 struct DirectionalLight {
+  /// The direction vector of the directional light.
   Vec3 direction = Vec3(1.0f); 
+
+  /// The color of the directional light.
   Vec3 color     = Vec3(1.0f);
+  
+  DirectionalLight() : 
+    direction(Vec3(1.0f)), color(Vec3(1.0f))
+    {}
+
+  DirectionalLight(const Vec3& dir, const Vec3& col) : 
+    direction(dir), color(col)
+    {}
 };
 /// DirectionalLight 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -297,12 +290,59 @@ struct DirectionalLight {
 ///---------------------------------------------------------------------------------------------------------------------
 /// PointLight
 struct PointLight {
+  /// The position vector of the point light in world space.
   Vec3 position = Vec3(0.0f); 
+
+  /// The color of the point light.
   Vec3 color    = Vec3(1.0f);
 
-  f32 radius = 3.50f; 
+  /// The radius of a point light in radians.
+  float radius = 2.5f;
+  
+  PointLight() : 
+    position(Vec3(0.0f)), color(Vec3(1.0f)), radius(2.5f)
+    {}
+  
+  PointLight(const Vec3& pos) : 
+    position(pos), color(Vec3(1.0f)), radius(2.5f)
+    {}
+
+  PointLight(const Vec3& pos, const Vec3& col, const float radius) : 
+    position(pos), color(col), radius(radius)
+    {}
 };
 /// PointLight
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// SpotLight
+struct SpotLight {
+  /// The position of the spot light in world space.
+  Vec3 position; 
+
+  /// The direction of the spot light.
+  Vec3 direction;
+
+  /// The color of the spot light
+  Vec3 color;
+
+  /// The radius of the spot light in radians, 
+  /// or the "umbra" of the light.
+  float radius = 0.5f;
+
+  /// The outer radius of the spot light in radians.
+  /// or the "penumbra" of the light.
+  float outer_radius = 0.3f; 
+
+  SpotLight() : 
+    position(Vec3(0.0f)), direction(Vec3(0.0f)), color(Vec3(0.0f)), radius(0.5f), outer_radius(0.3f)
+    {}
+
+  SpotLight(const Vec3& pos, const Vec3& dir, const Vec3& col, const float radius) : 
+    position(pos), direction(dir), color(col), radius(radius)
+    {}
+};
+/// SpotLight
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -311,10 +351,11 @@ struct FrameData {
   Camera camera; 
   ResourceID skybox_id;
   
-  Vec3 ambient = Vec3(0.125f);
+  Vec3 ambient = Vec4(0.125f);
 
   DirectionalLight dir_light; 
   DynamicArray<PointLight> point_lights;
+  DynamicArray<SpotLight> spot_lights;
 };
 /// FrameData
 ///---------------------------------------------------------------------------------------------------------------------
@@ -401,19 +442,42 @@ NIKOLA_API void renderer_insert_pass(RenderPass* pass, const sizei index);
 /// last added render pass.
 NIKOLA_API RenderPass* renderer_peek_pass(const sizei index);
 
-/// Queue a rendering command using the given `command` as a specifier. 
-NIKOLA_API void renderer_queue_command(const RenderCommand& command);
-
-/// Queue an instanced rendering command using the given `command` as a specifier. 
-NIKOLA_API void renderer_queue_command(const RenderInstanceCommand& command);
-
-/// Flush/render the internal command queue of the renderer, using the given 
-/// `shader_context` as the main shader for rendering. 
+/// Queue `count` instanced rendering commands using the given `res_id` of type `type` 
+/// at `transforms` in world space, using `mat_id`.
 ///
-/// @NOTE: Internally, the renderer will call this function inside many of 
-/// its render passes. However, it can also be called explicitly by the client code 
-/// for any specific reason. The internal queue will not be discarded until the end of the frame.
-NIKOLA_API void renderer_flush_queue_command(ShaderContext* shader_context);
+/// @NOTE: The given `count` cannot exceed `RENDERER_MAX_INSTANCES`.
+/// 
+/// @NOTE: If `mat_id` is left untouched, the renderer will use the default material.
+NIKOLA_API void renderer_queue_command_instanced(const RenderableType& type,    
+                                                 const ResourceID& res_id, 
+                                                 const Mat4* transforms, 
+                                                 const sizei count, 
+                                                 const ResourceID& mat_id = {});
+
+/// Queue a rendering command using the given `res_id` of type `render_type` at `transform` 
+/// in world space, using `mat_id`.
+///
+/// @NOTE: If `mat_id` is left untouched, the renderer will use the default material.
+NIKOLA_API void renderer_queue_command(const RenderableType& type, 
+                                       const ResourceID& res_id, 
+                                       const Mat4& transform, 
+                                       const ResourceID& mat_id = {});
+
+/// Draw the given `geo` geometry into the scene. 
+///
+/// @NOTE: When using outside of a render pass, it can potentially not render, 
+/// or if it does render, it will not be shaded or influenced by any pass. 
+/// Only use this inside render passes or for debug purposes.
+NIKOLA_API void renderer_draw_geometry_primitive(const GeometryPrimitive& geo);
+
+/// Draw the given `skybox_id` skybox into the scene. 
+///
+/// @NOTE: This call should only be made inside render passes. 
+/// Any calls to this function outside render passes, is not 
+/// guaranteed to work.
+///
+/// Yes, I am a bad developer. Thank you.
+NIKOLA_API void renderer_draw_skybox(const ResourceID& skybox_id);
 
 /// Renderer functions
 ///---------------------------------------------------------------------------------------------------------------------

@@ -3,7 +3,7 @@
 #include "nikola/nikola_gfx.h"
 #include "nikola/nikola_resources.h"
 
-#include "render_shaders.h"
+#include "shaders/batch.glsl.h"
 
 //////////////////////////////////////////////////////////////////////////
 
