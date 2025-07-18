@@ -81,12 +81,16 @@ void shadow_pass_init(Window* window) {
 void shadow_pass_prepare(RenderPass* pass, const FrameData& data) {
   // Setup the light projection matrix
 
-  s_state.light_projection = mat4_ortho(-15, 15, -15, 15, 1.0f, 7.5f);
-  s_state.light_view       = mat4_look_at(Vec3(-4.0f, 10.0f, -1.0f), Vec3(0.0f), Vec3(0.0f, 1.0f, 0.0f));
+  // @TEMP: Only supports _one_ spot light? No. Needs to be better.
+
+  const SpotLight* light = &data.spot_lights[0];
+
+  s_state.light_view       = mat4_look_at(light->position, light->position + light->direction, Vec3(0.0f, 1.0f, 0.0f));
+  s_state.light_projection = mat4_perspective((data.camera.zoom * DEG2RAD), data.camera.aspect_ratio, 0.1f, 7.5f);
 
   // Set uniforms
  
-  shader_context_set_uniform(pass->shader_context, "u_light_space", (s_state.light_projection * s_state.light_view));
+  shader_context_set_uniform(pass->shader_context, "u_light_space", (data.camera.projection * s_state.light_view));
 }
 
 void shadow_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue) {

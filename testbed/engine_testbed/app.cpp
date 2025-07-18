@@ -90,7 +90,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Lights init
 
   app->frame_data.dir_light.direction = nikola::Vec3(1.0f, -1.0f, -1.0f);
-  app->frame_data.dir_light.color     = nikola::Vec3(0.5f, 0.3f, 0.0f);
+  app->frame_data.dir_light.color     = nikola::Vec3(0.0f);
 
   app->frame_data.ambient = nikola::Vec3(0.1f, 0.1f, 0.125f);
 
@@ -123,8 +123,8 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 
   // Update the camera
   nikola::camera_update(app->frame_data.camera);
-  app->frame_data.spot_lights[0].position  = app->frame_data.camera.position;
-  app->frame_data.spot_lights[0].direction = app->frame_data.camera.front;
+  // app->frame_data.spot_lights[0].position  = app->frame_data.camera.position;
+  // app->frame_data.spot_lights[0].direction = app->frame_data.camera.front;
 }
 
 void app_render(nikola::App* app) {

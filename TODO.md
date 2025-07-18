@@ -135,11 +135,12 @@
         - [] Have the batch renderer as an extra pass to the renderer instead of its own thing.
     - [] Add new rendering features/effects 
         - [x] Improve the Blinn-Phong lighting model by actually using specular maps and maybe fixing the material system a bit. 
-        - [] Cascaded shadow maps
+        - [x] Shadow maps
         - [] Normal/roughness mapping.
         - [] Gaussian blur
         - [] Bloom integration 
         - [] Debug rendering
+        - [] Improve shadow maps by supporting dynamically changing directional light bounding box.
     - [] Increase performance/improve workflow
         - [x] Change the instance data to become an instance uniform buffer that gets updated every frame. Each instance can aquire its data using `gl_InstanceID` instead of per-vertex instance data.
         - [] If performance is still an issue, make all of the scene's lights into a buffer and send it to the shader as a buffer update instead of uniforms.
@@ -155,9 +156,8 @@
         - [] Implement a way to load `nkpkg` files with a function called `resources_push_package`.
     - [] Fix 3D models loading. 
         - [] Add a parent and child relationship between meshes. Basically, every mesh should have a `local_position` which is set to `Vec3(0.0f)` by default, and it will be take into account when rendering.
-        - [] I think the renderer assumes the vertex data of the mesh so if a model has even an extra vertex data like color, the renderer messes everything up. Or limit all 3D models to a certain vertx data set. 
+        - [x] I think the renderer assumes the vertex data of the mesh so if a model has even an extra vertex data like color, the renderer messes everything up. Or limit all 3D models to a certain vertx data set. 
         - [x] Make sure that materials are loaded correctly using Assimp (colors and other uniforms).
-    - [] Remove `ShaderContext` and have the uniform caches in `GfxShader` instead?
     - [] Documentation
 - [] Particles v0.1 
     - [] CPU-based particle system, giving each particle a position, velocity, and color. Use instancing to render a particle batch.

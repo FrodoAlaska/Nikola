@@ -170,7 +170,7 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
         return (diffuse + specular) * u_dir_light.color;
       }
 
-      vec3 accumulate_spot_lights_color(const vec3 ambient, const vec3 diffuse_texel, const vec3 specular_texel, const int spots_max) {
+      vec3 accumulate_spot_lights_color(const vec3 diffuse_texel, const vec3 specular_texel, const int spots_max) {
         vec3 norm = normalize(fs_in.normal);
         
         vec3 result = vec3(0.0);
@@ -222,10 +222,10 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
         // Gather the light factors from all the light sources
      
         vec3 point_lights_factor = accumulate_point_lights_color(diffuse, specular, points_max);
-        vec3 spot_lights_factor  = accumulate_spot_lights_color(ambient, diffuse, specular, spots_max);
-        vec3 dir_light_factor    = (ambient + (1.0 - calculate_shadow())) * accumulate_dir_light_color(diffuse, specular);
+        vec3 spot_lights_factor  = accumulate_spot_lights_color(diffuse, specular, spots_max);
+        vec3 dir_light_factor    = accumulate_dir_light_color(diffuse, specular);
 
-        vec3 final_factor = (point_lights_factor + spot_lights_factor + dir_light_factor);
+        vec3 final_factor = (ambient + (1.0 - calculate_shadow())) * (point_lights_factor + spot_lights_factor + dir_light_factor);
 
         frag_color = vec4(final_factor, u_material.transparency);
       }

@@ -99,9 +99,9 @@ void camera_create(Camera* cam, const CameraDesc& desc) {
   cam->position = desc.position;
   cam->up       = vec3_normalize(vec3_cross(look_dir, right_axis));
   
-  cam->direction.x = nikola::cos(cam->yaw    * nikola::DEG2RAD)  * nikola::cos(cam->pitch * nikola::DEG2RAD);
-  cam->direction.y = nikola::sin((cam->pitch * nikola::DEG2RAD));
-  cam->direction.z = nikola::sin((cam->yaw   * nikola::DEG2RAD)) * nikola::cos(cam->pitch * nikola::DEG2RAD);
+  cam->direction.x = nikola::cos(cam->yaw    * DEG2RAD)  * nikola::cos(cam->pitch * DEG2RAD);
+  cam->direction.y = nikola::sin((cam->pitch * DEG2RAD));
+  cam->direction.z = nikola::sin((cam->yaw   * DEG2RAD)) * nikola::cos(cam->pitch * DEG2RAD);
   cam->front       = vec3_normalize(cam->direction);
 
   cam->view            = Mat4(1.0f);
@@ -114,7 +114,7 @@ void camera_create(Camera* cam, const CameraDesc& desc) {
 
 void camera_update(Camera& cam) {
   cam.view            = mat4_look_at(cam.position, cam.position + cam.front, cam.up);
-  cam.projection      = mat4_perspective((cam.zoom * nikola::DEG2RAD), cam.aspect_ratio, cam.near, cam.far);
+  cam.projection      = mat4_perspective((cam.zoom * DEG2RAD), cam.aspect_ratio, cam.near, cam.far);
   cam.view_projection = (cam.projection * cam.view);
 
   if(cam.move_fn && cam.is_active) {

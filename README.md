@@ -2,9 +2,12 @@
 
 Nikola is a cross-platform framework for window creation, input handling, audio playback, and rendering using OpenGL 4.5+, designed for your game development and prototyping needs. Inspired by classic game engines like Doom, Quake, and the Source Engine, it is lightweight yet robust and flexible. A game engine creation tool, if you will.
 
+---
 
 ![screenshot](https://github.com/FrodoAlaska/Nikola/blob/master/assets/screenshot_0.png) 
+![screenshot](https://github.com/FrodoAlaska/Nikola/blob/master/assets/screenshot_1.png) 
 
+---
 
 ## Dependencies
 
