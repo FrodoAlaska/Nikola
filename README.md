@@ -4,8 +4,8 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 
 ---
 
-![screenshot](https://github.com/FrodoAlaska/Nikola/blob/master/assets/screenshot_0.png) 
-![screenshot](https://github.com/FrodoAlaska/Nikola/blob/master/assets/screenshot_1.png) 
+![screenshot](https://github.com/FrodoAlaska/Nikola/blob/dev/assets/screenshot_0.png) 
+![screenshot](https://github.com/FrodoAlaska/Nikola/blob/dev/assets/screenshot_1.png) 
 
 ---
 
