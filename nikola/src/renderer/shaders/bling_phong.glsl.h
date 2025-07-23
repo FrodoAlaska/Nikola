@@ -45,22 +45,20 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
       
       void main() {
         vec4 model_space = u_model[gl_InstanceID] * vec4(aPos, 1.0);
-        mat3 model_m3    = mat3(u_model[gl_InstanceID]);
-
-        vs_out.tex_coords = aTexCoords;
+        mat3 model_m3    = transpose(inverse(mat3(u_model[gl_InstanceID])));
 
         vs_out.normal     = normalize(model_m3 * aNormal);
         vs_out.tangent    = normalize(model_m3 * aTangent);
         
         // @NOTE: Using the Gram-Schmidt process to re-othogonalize the tangent vector to make sure all vectors are perpendicular to each other
-        vec3 tangent = normalize(vs_out.tangent - dot(vs_out.tangent, vs_out.normal) * vs_out.normal); 
+        vs_out.tangent = normalize(vs_out.tangent - dot(vs_out.tangent, vs_out.normal) * vs_out.normal); 
         
-        vec3 bitangent    = cross(vs_out.normal, tangent);
-        vs_out.TBN        = mat3(vs_out.tangent, bitangent, vs_out.normal);
+        vec3 bitangent = cross(vs_out.normal, vs_out.tangent);
+        vs_out.TBN     = mat3(vs_out.tangent, bitangent, vs_out.normal);
 
         vs_out.camera_pos = u_camera_pos;
         vs_out.pixel_pos  = vec3(model_space);
-
+        vs_out.tex_coords = aTexCoords;
         vs_out.shadow_pos = u_light_space * vec4(aPos, 1.0);
 
         gl_Position = u_projection * u_view * model_space;

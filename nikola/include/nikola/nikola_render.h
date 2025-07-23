@@ -80,6 +80,7 @@ enum RenderQueueType {
 enum ParticleDistributionType {
   DISTRIBUTION_RANDOM = 0, 
   DISTRIBUTION_SQUARE,
+  DISTRIBUTION_CUBE,
 };
 /// ParticleDistributionType
 ///---------------------------------------------------------------------------------------------------------------------

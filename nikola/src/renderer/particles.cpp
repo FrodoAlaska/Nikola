@@ -59,13 +59,35 @@ static void apply_normal_distribution(ParticleEmitter* emitter, const ParticleEm
 }
 
 static void apply_square_distribution(ParticleEmitter* emitter, const ParticleEmitterDesc& desc) {
-  // Getting the top-left corner of the square
   Vec3 min = (desc.position - (desc.distribution_radius / 2.0f));
   Vec3 max = min + desc.distribution_radius;
+
+  min = vec3_normalize(min);
+  max = vec3_normalize(max);
 
   for(sizei i = 0; i < emitter->particles_count; i++) {
     Vec3 direction     = Vec3(random_f32(min.x, max.x), 
                               1.0f,
+                              random_f32(min.z, max.z));
+    emitter->forces[i] = desc.velocity * direction;
+
+    transform_translate(emitter->transforms[i], desc.position);
+    transform_scale(emitter->transforms[i], desc.scale);
+  }
+}
+
+static void apply_cube_distribution(ParticleEmitter* emitter, const ParticleEmitterDesc& desc) {
+  // @TODO (Particles): Looks more like the random distribution
+
+  Vec3 min = (desc.position - (desc.distribution_radius / 2.0f));
+  Vec3 max = min + desc.distribution_radius;
+
+  min = vec3_normalize(min);
+  max = vec3_normalize(max);
+
+  for(sizei i = 0; i < emitter->particles_count; i++) {
+    Vec3 direction     = Vec3(random_f32(min.x, max.x), 
+                              random_f32(min.y, max.y),
                               random_f32(min.z, max.z));
     emitter->forces[i] = desc.velocity * direction;
 
@@ -200,6 +222,9 @@ void particles_emit(const ParticleEmitterDesc& desc) {
       break;
     case DISTRIBUTION_SQUARE: 
       apply_square_distribution(emitter, desc);
+      break;
+    case DISTRIBUTION_CUBE: 
+      apply_cube_distribution(emitter, desc);
       break;
     default:
       break;

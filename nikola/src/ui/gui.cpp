@@ -521,7 +521,7 @@ void gui_edit_particle_emitter(const char* name, ParticleEmitterDesc* emitter_de
   ImGui::DragFloat("Distribution radius", &emitter_desc->distribution_radius, 0.1f);
   
   i32 current_dist = emitter_desc->distribution;
-  if(ImGui::Combo("Distributions", &current_dist, "Random\0Square\0\0")) {
+  if(ImGui::Combo("Distributions", &current_dist, "Random\0Square\0Cube\0\0")) {
     emitter_desc->distribution = (ParticleDistributionType)current_dist;
   }
 
