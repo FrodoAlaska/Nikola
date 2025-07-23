@@ -8,9 +8,12 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
       #version 460 core
 
       // Layouts
+      
       layout (location = 0) in vec3 aPos;
       layout (location = 1) in vec3 aNormal;
-      layout (location = 2) in vec2 aTexCoords;
+      layout (location = 2) in vec4 aColor;
+      layout (location = 3) in vec3 aTangent;
+      layout (location = 4) in vec2 aTexCoords;
 
       // Uniforms
 
@@ -30,6 +33,9 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
       out VS_OUT {
         vec2 tex_coords;
         vec3 normal;
+        vec3 tangent;
+
+        mat3 TBN;
         
         vec3 camera_pos;
         vec3 pixel_pos;
@@ -39,9 +45,19 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
       
       void main() {
         vec4 model_space = u_model[gl_InstanceID] * vec4(aPos, 1.0);
-      
+        mat3 model_m3    = mat3(u_model[gl_InstanceID]);
+
         vs_out.tex_coords = aTexCoords;
-        vs_out.normal     = mat3(transpose(inverse(u_model[gl_InstanceID]))) * aNormal;
+
+        vs_out.normal     = normalize(model_m3 * aNormal);
+        vs_out.tangent    = normalize(model_m3 * aTangent);
+        
+        // @NOTE: Using the Gram-Schmidt process to re-othogonalize the tangent vector to make sure all vectors are perpendicular to each other
+        vec3 tangent = normalize(vs_out.tangent - dot(vs_out.tangent, vs_out.normal) * vs_out.normal); 
+        
+        vec3 bitangent    = cross(vs_out.normal, tangent);
+        vs_out.TBN        = mat3(vs_out.tangent, bitangent, vs_out.normal);
+
         vs_out.camera_pos = u_camera_pos;
         vs_out.pixel_pos  = vec3(model_space);
 
@@ -59,6 +75,9 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
       in VS_OUT {
         vec2 tex_coords;
         vec3 normal;
+        vec3 tangent;
+
+        mat3 TBN;
         
         vec3 camera_pos;
         vec3 pixel_pos;
@@ -67,12 +86,11 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
       } fs_in;
    
       #define LIGHTS_MAX 16
+      #define PI         3.14159265359
   
       struct Material {
-        sampler2D diffuse_map;
-        sampler2D specular_map;
- 
         vec3 color;
+
         float shininess;
         float transparency;
       };
@@ -107,105 +125,32 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
       uniform vec3 u_ambient;
       
       uniform Material u_material;
-      uniform sampler2D u_shadow;
+     
+      layout (binding = 0) uniform sampler2D u_diffuse_map;
+      layout (binding = 1) uniform sampler2D u_specular_map;
+      layout (binding = 2) uniform sampler2D u_normal_map;
+      layout (binding = 3) uniform sampler2D u_shadow;
+    
+      vec3 view_dir; 
+      vec3 norm;
 
-      float calculate_shadow() {
-        float shadow_depth = textureProj(u_shadow, fs_in.shadow_pos.xyw).r;
+      vec3 calculate_normal();
+      vec3 calculate_diffuse(const vec3 diffuse_texel, const vec3 light_dir);
+      vec3 calculate_specular(const vec3 specular_texel, const vec3 light_dir);
+      float calculate_shadow();
 
-        return shadow_depth > fs_in.shadow_pos.z ? 0.0 : 0.8; 
-        // return textureProj(u_shadow, fs_in.shadow_pos);
-      }
-
-      vec3 accumulate_point_lights_color(const vec3 diffuse_texel, const vec3 specular_texel, const int points_max) {
-        vec3 norm     = normalize(fs_in.normal);
-        vec3 view_dir = normalize(fs_in.camera_pos - fs_in.pixel_pos);
-
-        vec3 point_lights_factor = vec3(0.0f);
-        for(int i = 0; i < points_max; i++) {
-
-         // Diffuse
-
-         vec3 light_dir = normalize(u_points[i].position - fs_in.pixel_pos);
-         float diff     = max(dot(norm, light_dir), 0.0);
-         vec3 diffuse   = diff * diffuse_texel;
-
-         // Specular
-
-         vec3 halfway_dir = normalize(light_dir + view_dir);
-         float spec       = pow(max(dot(norm, halfway_dir), 0.0), u_material.shininess);
-         vec3 specular    = spec * specular_texel;
-
-         // Apply attenuation
-
-         float distance = length(light_dir);
-        
-         float dist_sq   = distance * distance;
-         float radius_sq = u_points[i].radius * u_points[i].radius;
-         float rd_sq     = dist_sq + radius_sq;
-
-         // Thanks to Cem Yuksel for supplying this formula. It is _amazing_!
-         float atten = (2 / radius_sq) * (1 - (dist_sq / sqrt(dist_sq + radius_sq)));
-
-         point_lights_factor += ((diffuse + specular) * atten) * u_points[i].color;
-       }
-
-         return point_lights_factor;
-      }
-
-      vec3 accumulate_dir_light_color(const vec3 diffuse_texel, const vec3 specular_texel) {
-        // Diffuse
-
-        vec3 light_dir = normalize(-u_dir_light.direction);
-        vec3 norm      = normalize(fs_in.normal);
-        float diff     = max(dot(norm, light_dir), 0.0);
-        vec3 diffuse   = diff * diffuse_texel;
-
-        // Specular
-
-        vec3 view_dir    = normalize(fs_in.camera_pos - fs_in.pixel_pos);
-        vec3 halfway_dir = normalize(light_dir + view_dir);
-        float spec       = pow(max(dot(norm, halfway_dir), 0.0), u_material.shininess);
-        vec3 specular    = spec * specular_texel;
-
-        return (diffuse + specular) * u_dir_light.color;
-      }
-
-      vec3 accumulate_spot_lights_color(const vec3 diffuse_texel, const vec3 specular_texel, const int spots_max) {
-        vec3 norm = normalize(fs_in.normal);
-        
-        vec3 result = vec3(0.0);
-        for(int i = 0; i < spots_max; i++) {
-          vec3 light_dir = normalize(u_spots[i].position - fs_in.pixel_pos);
-
-          // Diffuse
-
-          float diff   = max(dot(norm, light_dir), 0.0);
-          vec3 diffuse = diff * diffuse_texel;
-
-          // Specular
-
-          vec3 view_dir    = normalize(fs_in.camera_pos - fs_in.pixel_pos);
-          vec3 halfway_dir = normalize(light_dir + view_dir);
-          float spec       = pow(max(dot(norm, halfway_dir), 0.0), u_material.shininess);
-          vec3 specular    = spec * specular_texel;
-          
-          float theta     = dot(light_dir, normalize(-u_spots[i].direction));
-          float epsilon   = u_spots[i].radius - u_spots[i].outer_radius;
-          float intensity = (theta - u_spots[i].outer_radius) / epsilon;
-          
-          intensity = clamp(intensity, 0.0, 1.0);
-          result += ((diffuse + specular) * intensity) * u_spots[i].color;
-        }
-
-        return result;
-      }
+      vec3 accumulate_point_lights_color(const vec3 diffuse_texel, const vec3 specular_texel, const int points_max);
+      vec3 accumulate_dir_light_color(const vec3 diffuse_texel, const vec3 specular_texel);
+      vec3 accumulate_spot_lights_color(const vec3 diffuse_texel, const vec3 specular_texel, const int spots_max);
  
       void main() {
-        vec3 diffuse  = texture(u_material.diffuse_map, fs_in.tex_coords).rgb * u_material.color;
-        // @TEMP
-        vec3 specular = texture(u_material.specular_map, fs_in.tex_coords).rgb * 0.0;
+        vec3 diffuse  = texture(u_diffuse_map, fs_in.tex_coords).rgb * u_material.color;
+        vec3 specular = texture(u_specular_map, fs_in.tex_coords).rgb;
         vec3 ambient  = u_ambient * diffuse;
-  
+ 
+        view_dir = normalize(fs_in.camera_pos - fs_in.pixel_pos);
+        norm     = calculate_normal(); 
+
         // Clamp the maximum number of lights
         // @TODO: This can be improved...
    
@@ -224,10 +169,100 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
         vec3 point_lights_factor = accumulate_point_lights_color(diffuse, specular, points_max);
         vec3 spot_lights_factor  = accumulate_spot_lights_color(diffuse, specular, spots_max);
         vec3 dir_light_factor    = accumulate_dir_light_color(diffuse, specular);
-
-        vec3 final_factor = (ambient + (1.0 - calculate_shadow())) * (point_lights_factor + spot_lights_factor + dir_light_factor);
+        
+        float shadow_factor = (1 - calculate_shadow());
+        vec3 final_factor   = shadow_factor * (point_lights_factor + spot_lights_factor + dir_light_factor);
 
         frag_color = vec4(final_factor, u_material.transparency);
+      }
+      
+      vec3 calculate_normal() {
+        vec3 normal_texel = texture(u_normal_map, fs_in.tex_coords).rgb;
+        normal_texel      = normal_texel * 2.0 - 1.0; // From [0, 1] to [-1, 1]
+        
+        return normalize(fs_in.TBN * normal_texel);
+      }
+
+      vec3 calculate_diffuse(const vec3 diffuse_texel, const vec3 light_dir) {
+         float diff = max(dot(norm, light_dir), 0.0);
+         return (diff * diffuse_texel);
+      }
+      
+      vec3 calculate_specular(const vec3 specular_texel, const vec3 light_dir) {
+         vec3 halfway_dir = normalize(light_dir + view_dir);
+         float spec       = pow(max(dot(norm, halfway_dir), 0.0), u_material.shininess);
+         return (spec * specular_texel);
+      }
+
+      float calculate_shadow() {
+        float shadow_depth = textureProj(u_shadow, fs_in.shadow_pos.xyw).r;
+        return shadow_depth > fs_in.shadow_pos.z ? 0.0 : 0.8; 
+
+        // return textureProj(u_shadow, fs_in.shadow_pos);
+      }
+
+      vec3 accumulate_point_lights_color(const vec3 diffuse_texel, const vec3 specular_texel, const int points_max) {
+        vec3 point_lights_factor = vec3(0.0f);
+        for(int i = 0; i < points_max; i++) {
+          vec3 light_dir = normalize(u_points[i].position - fs_in.pixel_pos);
+
+          // Diffuse
+          vec3 diffuse = calculate_diffuse(diffuse_texel, light_dir); 
+
+          // Specular
+          vec3 specular = calculate_specular(specular_texel, light_dir);
+
+          // Apply attenuation
+
+          float distance = length(light_dir);
+          
+          float dist_sq   = distance * distance;
+          float radius_sq = u_points[i].radius * u_points[i].radius;
+          float rd_sq     = dist_sq + radius_sq;
+
+          // Thanks to Cem Yuksel for supplying this formula. It is _amazing_!
+          float atten = (2 / radius_sq) * (1 - (dist_sq / sqrt(dist_sq + radius_sq)));
+
+          point_lights_factor += ((diffuse + specular) * atten) * u_points[i].color;
+       }
+
+         return point_lights_factor;
+      }
+
+      vec3 accumulate_dir_light_color(const vec3 diffuse_texel, const vec3 specular_texel) {
+        vec3 light_dir = normalize(-u_dir_light.direction);
+        
+        // Diffuse
+        vec3 diffuse = calculate_diffuse(diffuse_texel, light_dir); 
+
+        // Specular
+        vec3 specular = calculate_specular(specular_texel, light_dir);
+
+        return (diffuse + specular) * u_dir_light.color;
+      }
+
+      vec3 accumulate_spot_lights_color(const vec3 diffuse_texel, const vec3 specular_texel, const int spots_max) {
+        vec3 result = vec3(0.0);
+        for(int i = 0; i < spots_max; i++) {
+          vec3 light_dir = normalize(u_spots[i].position - fs_in.pixel_pos);
+
+          // Diffuse
+          vec3 diffuse = calculate_diffuse(diffuse_texel, light_dir);
+
+          // Specular
+          vec3 specular = calculate_specular(specular_texel, light_dir);
+         
+          // Calculate the spot light effect
+
+          float theta     = dot(light_dir, normalize(-u_spots[i].direction));
+          float epsilon   = u_spots[i].radius - u_spots[i].outer_radius;
+          float intensity = (theta - u_spots[i].outer_radius) / epsilon;
+          
+          intensity = clamp(intensity, 0.0, 1.0);
+          result   += ((diffuse + specular) * intensity) * u_spots[i].color;
+        }
+
+        return result;
       }
     )"
   };

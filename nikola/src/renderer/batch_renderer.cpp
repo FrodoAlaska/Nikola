@@ -274,8 +274,6 @@ void batch_renderer_init() {
     .texture        = s_batch.white_texture, 
   };
   s_batch.batches.push_back(default_batch);
-
-  NIKOLA_LOG_INFO("Successfully initialized the batch renderer");
 }
 
 void batch_renderer_shutdown() {
@@ -283,8 +281,6 @@ void batch_renderer_shutdown() {
   gfx_shader_destroy(s_batch.shader);
   
   s_batch.batches.clear();
-  
-  NIKOLA_LOG_INFO("Batch renderer was successfully shutdown");
 }
 
 void batch_renderer_begin() {

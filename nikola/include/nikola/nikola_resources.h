@@ -129,10 +129,15 @@ struct NBRMaterial {
   /// @NOTE: This index will be `-1` if there is no diffuse texture present
   i8 diffuse_index;
   
-  /// The diffuse index into the `textures` array in `NBRModel`.
+  /// The specular index into the `textures` array in `NBRModel`.
   ///
   /// @NOTE: This index will be `-1` if there is no specular texture present
   i8 specular_index;
+  
+  /// The normal index into the `textures` array in `NBRModel`.
+  ///
+  /// @NOTE: This index will be `-1` if there is no specular texture present
+  i8 normal_index;
 };
 /// NBRMaterial
 ///---------------------------------------------------------------------------------------------------------------------
@@ -367,8 +372,11 @@ enum GeometryType {
   /// A predefined skybox geometry shape
   GEOMETRY_SKYBOX, 
   
-  /// A predefined cube geometry shape
-  GEOMETRY_CIRCLE, 
+  /// A predefined sphere geometry shape
+  GEOMETRY_SPHERE, 
+  
+  /// A predefined billboard geometry shape
+  GEOMETRY_BILLBOARD, 
 };
 /// GeometryType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -428,6 +436,7 @@ struct Material {
 
   GfxTexture* diffuse_map  = nullptr;
   GfxTexture* specular_map = nullptr;
+  GfxTexture* normal_map   = nullptr;
  
   /// Useful surface-defining flags.
 
@@ -507,10 +516,11 @@ struct Font {
 struct MaterialDesc {
   ResourceID diffuse_id  = {};
   ResourceID specular_id = {};
+  ResourceID normal_id   = {};
 
   Vec3 color = Vec3(1.0f); 
 
-  f32 shininess    = 1.0f; 
+  f32 shininess    = 16.0f; 
   f32 transparency = 1.0f;
 
   bool depth_mask  = true;
@@ -639,6 +649,10 @@ NIKOLA_API ResourceID resources_push_texture(const ResourceGroupID& group_id,
                                              const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
                                              const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
                                              const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
+
+/// Allocate a new default `GfxTexture` of type `MaterialTextureType`,
+/// store it in `group_id`, and return a `ResourceID` to identify it.
+NIKOLA_API ResourceID resources_push_texture(const ResourceGroupID& group_id, const MaterialTextureType& type);
 
 /// Allocate a new `GfxCubemap` using `desc`, store it in `group_id`,
 /// and return a `ResourceID` to identify it.

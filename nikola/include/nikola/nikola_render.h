@@ -30,6 +30,9 @@ const f32 CAMERA_MAX_ZOOM          = 180.0f;
 /// The maximum amount of point lights a scene can have.
 const sizei POINT_LIGHTS_MAX       = 16;
 
+/// The maximum amount of particles tha can be emitted at a time.
+const sizei PARTICLES_MAX          = 256;
+
 /// Consts
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -41,8 +44,7 @@ enum RenderableType {
 
   RENDERABLE_MESH = 0, 
   RENDERABLE_MODEL, 
-
-  // @TODO (Renderer): Add more renderable types...
+  RENDERABLE_BILLBOARD, 
 };
 /// RenderableType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -55,8 +57,8 @@ enum RenderPassID {
 
   RENDER_PASS_SHADOW = 0, 
   RENDER_PASS_LIGHT,
+  RENDER_PASS_BILLBOARD,
   RENDER_PASS_HDR,
-  RENDER_PASS_BLOOM,
 };
 /// RenderPassID
 ///---------------------------------------------------------------------------------------------------------------------
@@ -65,11 +67,21 @@ enum RenderPassID {
 /// RenderQueueType
 enum RenderQueueType {
   RENDER_QUEUE_OPAQUE = 0,
+  RENDER_QUEUE_BILLBOARD,
   RENDER_QUEUE_DEBUG,
 
   RENDER_QUEUES_MAX = RENDER_QUEUE_DEBUG + 1,
 };
 /// RenderQueueType
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// ParticleDistributionType
+enum ParticleDistributionType {
+  DISTRIBUTION_RANDOM = 0, 
+  DISTRIBUTION_SQUARE,
+};
+/// ParticleDistributionType
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -95,76 +107,24 @@ using RenderPassSumbitFn  = void(*)(RenderPass* pass, const DynamicArray<Geometr
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// CameraDesc
-struct CameraDesc {
-  /// The initial position of the camera
-  Vec3 position    = Vec3(0.0f); 
-
-  /// The forward looking target of the camera. 
-  ///
-  /// @NOTE: This is set to `Vec3(-3.0f, 0.0f, 0.0f)` by default.
-  Vec3 target      = Vec3(-3.0f, 0.0f, 0.0f); 
-  
-  /// The up vector of the camera. 
-  ///
-  /// @NOTE: This is set to `Vec3(0.0f, 1.0f, 0.0f)` by default.
-  Vec3 up_axis     = Vec3(0.0f, 1.0f, 0.0f);
-
-  /// The aspect ratio of the created camera. 
-  /// This can be a completely different value from the 
-  /// default window aspect ratio if desired.
-  ///
-  /// @NOTE: This is set to `0.0f` by default.
-  f32 aspect_ratio = 0.0f;
-
-  /// The near distance of the camera. 
-  ///
-  /// @NOTE: This is set to `0.1f` by default.
-  f32 near         = 0.1f; 
-
-  /// The far distance of the camera. 
-  ///
-  /// @NOTE: This is set to `100.0f` by default.
-  f32 far          = 100.0f;
-
-  /// The function callback to move the camera 
-  ///
-  /// @NOTE: See `CameraMoveFn` for more details.
-  CameraMoveFn move_func;
-};
-/// CameraDesc
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// Camera 
-struct Camera {
-  f32 yaw, pitch;
-  f32 zoom, aspect_ratio;
-
-  f32 near        = 0.1f; 
-  f32 far         = 100.0f;
-  f32 sensitivity = 0.1f;
-  f32 exposure    = 1.0f; 
-
-  Vec3 position;
-  
-  Vec3 up, direction, front;
-  Mat4 view, projection, view_projection;
-
-  CameraMoveFn move_fn;
-  bool is_active;
-};
-/// Camera 
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
 /// GeometryPrimitive 
 struct GeometryPrimitive {
   Mat4 transforms[RENDERER_MAX_INSTANCES]; 
-  Mesh* mesh; 
+  GfxPipeline* pipeline; 
   Material* material;
 
   sizei instance_count = 1;
+
+  GeometryPrimitive() 
+    {}
+  
+  GeometryPrimitive(const Transform* trans, GfxPipeline* pipe, Material* material, const sizei count) 
+    :pipeline(pipe), material(material), instance_count(count) {
+      // @TODO (Renderer): This is awful. No.
+      for(sizei i = 0; i < count; i++) {
+        transforms[i] = trans[i].transform;
+      }
+  }
 };
 /// GeometryPrimitive 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -172,7 +132,9 @@ struct GeometryPrimitive {
 ///---------------------------------------------------------------------------------------------------------------------
 /// RendererDefaults 
 struct RendererDefaults {
-  GfxTexture* texture        = nullptr;
+  GfxTexture* texture          = nullptr;
+  GfxTexture* specular_texture = nullptr;
+  GfxTexture* normal_texture   = nullptr;
   
   GfxBuffer* matrices_buffer = nullptr;
   GfxBuffer* instance_buffer = nullptr;
@@ -261,10 +223,134 @@ struct RenderPass {
   
   /// State handling
 
-  bool is_active  = true;
   void* user_data = nullptr;
 };
 /// RenderPass
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// CameraDesc
+struct CameraDesc {
+  /// The initial position of the camera
+  Vec3 position    = Vec3(0.0f); 
+
+  /// The forward looking target of the camera. 
+  ///
+  /// @NOTE: This is set to `Vec3(-3.0f, 0.0f, 0.0f)` by default.
+  Vec3 target      = Vec3(-3.0f, 0.0f, 0.0f); 
+  
+  /// The up vector of the camera. 
+  ///
+  /// @NOTE: This is set to `Vec3(0.0f, 1.0f, 0.0f)` by default.
+  Vec3 up_axis     = Vec3(0.0f, 1.0f, 0.0f);
+
+  /// The aspect ratio of the created camera. 
+  /// This can be a completely different value from the 
+  /// default window aspect ratio if desired.
+  ///
+  /// @NOTE: This is set to `0.0f` by default.
+  f32 aspect_ratio = 0.0f;
+
+  /// The near distance of the camera. 
+  ///
+  /// @NOTE: This is set to `0.1f` by default.
+  f32 near         = 0.1f; 
+
+  /// The far distance of the camera. 
+  ///
+  /// @NOTE: This is set to `100.0f` by default.
+  f32 far          = 100.0f;
+
+  /// The function callback to move the camera 
+  ///
+  /// @NOTE: See `CameraMoveFn` for more details.
+  CameraMoveFn move_func;
+};
+/// CameraDesc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Camera 
+struct Camera {
+  /// Camera's floats
+
+  f32 yaw, pitch;
+  f32 zoom, aspect_ratio;
+
+  f32 near        = 0.1f; 
+  f32 far         = 100.0f;
+  f32 sensitivity = 0.1f;
+  f32 exposure    = 1.0f; 
+
+  /// The camera's vectors
+
+  Vec3 position;
+  Vec3 up, direction, front;
+
+  /// The camera's matrices
+  Mat4 view, projection, view_projection;
+
+  /// Some state to keep
+
+  CameraMoveFn move_fn;
+  bool is_active;
+};
+/// Camera 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// ParticleEmitterDesc
+struct ParticleEmitterDesc {
+  /// The starting position of the particles.
+  Vec3 position; 
+
+  /// The velocity of each particle that will be applied 
+  /// in the update loop. 
+  Vec3 velocity;
+
+  /// The unit scale of each particle in the system. 
+  ///
+  /// @NOTE: The default scale is set to `Vec3(0.2f, 0.2f, 0.2f)`.
+  Vec3 scale                            = Vec3(0.2f);
+
+  /// The color of each particle in the system.
+  ///
+  /// @NOTE: The default color is set to `Vec4(1.0f, 1.0f, 1.0f, 1.0f)`.
+  Vec4 color                            = Vec4(1.0f);
+
+  /// The maximum amount of time a particle can 
+  /// live for after being activated.
+  ///
+  /// @NOTE: The default lifetime is set to `2.5f`.
+  f32 lifetime                          = 2.5f;
+
+  /// The gravity contributor of each particle in the system.
+  ///
+  /// @NOTE: The default gravity is set to `-9.81f`.
+  f32 gravity_factor                    = -9.81f;
+
+  /// Defines how the particles will be distributed 
+  /// when emitted. 
+  ///
+  /// @NOTE: The default distribution is set to `DISTRIBUTION_RANDOM`.
+  ParticleDistributionType distribution = DISTRIBUTION_RANDOM;
+
+  /// The area or radius of the distribution being applied. 
+  /// The radius will act differently depending on the specific distribution. 
+  ///
+  /// For example, for the `DISTRIBUTION_RANDOM` type, the radius will 
+  /// be the maxium value of the random function. While the negation of 
+  /// the radius will be the minimum value of the random function.
+  ///
+  /// @NOTE: The default distribution radius is set to `1.0f`.
+  f32 distribution_radius               = 1.0f;
+
+  /// The amount of particles to emit. 
+  ///
+  /// @NOTE: This variable CANNOT exceed `PARTICLES_CPU_MAX`.
+  sizei count                           = 0; 
+};
+/// ParticleEmitterDesc
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -328,18 +414,18 @@ struct SpotLight {
 
   /// The radius of the spot light in radians, 
   /// or the "umbra" of the light.
-  float radius = 0.5f;
+  float radius;
 
   /// The outer radius of the spot light in radians.
   /// or the "penumbra" of the light.
-  float outer_radius = 0.3f; 
+  float outer_radius; 
 
   SpotLight() : 
-    position(Vec3(0.0f)), direction(Vec3(0.0f)), color(Vec3(0.0f)), radius(0.5f), outer_radius(0.3f)
+    position(Vec3(0.0f)), direction(Vec3(1.0f)), color(Vec3(1.0f)), radius(0.3f), outer_radius(0.5f)
     {}
 
-  SpotLight(const Vec3& pos, const Vec3& dir, const Vec3& col, const float radius) : 
-    position(pos), direction(dir), color(col), radius(radius)
+  SpotLight(const Vec3& pos, const Vec3& dir, const Vec3& col, const float radius, const float outer_radius) : 
+    position(pos), direction(dir), color(col), radius(radius), outer_radius(outer_radius)
     {}
 };
 /// SpotLight
@@ -367,24 +453,6 @@ struct Rect {
   Vec2 position;
 };
 /// Rect
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// Camera functions
-
-/// A function to mimick a free-form camera movement.
-NIKOLA_API void camera_free_move_func(Camera& camera);
-
-/// A function to mimick a first-person shooter camera movement.
-NIKOLA_API void camera_fps_move_func(Camera& camera);
-
-/// Fill the information in `cam` using the given `CameraDesc`.
-NIKOLA_API void camera_create(Camera* cam, const CameraDesc& desc);
-
-/// Update the internal matrices of `cam` and call the associated `CameraMoveFn`. 
-NIKOLA_API void camera_update(Camera& cam);
-
-/// Camera functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -450,7 +518,7 @@ NIKOLA_API RenderPass* renderer_peek_pass(const sizei index);
 /// @NOTE: If `mat_id` is left untouched, the renderer will use the default material.
 NIKOLA_API void renderer_queue_command_instanced(const RenderableType& type,    
                                                  const ResourceID& res_id, 
-                                                 const Mat4* transforms, 
+                                                 const Transform* transforms, 
                                                  const sizei count, 
                                                  const ResourceID& mat_id = {});
 
@@ -460,7 +528,7 @@ NIKOLA_API void renderer_queue_command_instanced(const RenderableType& type,
 /// @NOTE: If `mat_id` is left untouched, the renderer will use the default material.
 NIKOLA_API void renderer_queue_command(const RenderableType& type, 
                                        const ResourceID& res_id, 
-                                       const Mat4& transform, 
+                                       const Transform& transform, 
                                        const ResourceID& mat_id = {});
 
 /// Draw the given `geo` geometry into the scene. 
@@ -526,6 +594,39 @@ NIKOLA_API void batch_render_codepoint(Font* font, const char codepoint, const V
 NIKOLA_API void batch_render_fps(Font* font, const Vec2& position, const f32 size, const Vec4& color);
 
 /// Batch renderer functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Camera functions
+
+/// A function to mimick a free-form camera movement.
+NIKOLA_API void camera_free_move_func(Camera& camera);
+
+/// A function to mimick a first-person shooter camera movement.
+NIKOLA_API void camera_fps_move_func(Camera& camera);
+
+/// Fill the information in `cam` using the given `CameraDesc`.
+NIKOLA_API void camera_create(Camera* cam, const CameraDesc& desc);
+
+/// Update the internal matrices of `cam` and call the associated `CameraMoveFn`. 
+NIKOLA_API void camera_update(Camera& cam);
+
+/// Camera functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Particles functions
+
+/// Initialize the particle system. 
+NIKOLA_API void particles_init();
+
+/// A physics update of each particle in the system. 
+NIKOLA_API void particles_update(const f64 delta_time); 
+
+/// Emit particles using the information given by `desc`.
+NIKOLA_API void particles_emit(const ParticleEmitterDesc& desc);
+
+/// Particles functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 /// *** Renderer ***

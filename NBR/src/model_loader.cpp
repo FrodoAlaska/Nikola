@@ -35,7 +35,7 @@ static bool is_valid_extension(const nikola::FilePath& ext) {
 
 static void load_node_mesh(aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
   // Set a default vertex type (for now at least)
-  nbr_mesh->vertex_type = (nikola::u8)nikola::VERTEX_TYPE_PNUV;
+  nbr_mesh->vertex_type = (nikola::u8)nikola::VERTEX_TYPE_PNCTUV;
 
   nikola::DynamicArray<nikola::f32> vertices;
   vertices.reserve(mesh->mNumVertices);
@@ -43,15 +43,16 @@ static void load_node_mesh(aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
   // Go through all of the vertices of the given `mesh` and 
   // convert them to the appropriate vertex type. 
   for(nikola::sizei i = 0; i < mesh->mNumVertices; i++) {
-    // Getting the positions
+    // Adding the position
+    
     nikola::f32 pos_x = mesh->mVertices[i].x;
     nikola::f32 pos_y = mesh->mVertices[i].y;
     nikola::f32 pos_z = mesh->mVertices[i].z;
 
-    // Adding the position
     vertices.push_back(pos_x); vertices.push_back(pos_y); vertices.push_back(pos_z);
+    
+    // Adding the normal 
 
-    // Getting the normals
     nikola::f32 normal_x = 0.0f;
     nikola::f32 normal_y = 0.0f;
     nikola::f32 normal_z = 0.0f;
@@ -62,10 +63,40 @@ static void load_node_mesh(aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
       normal_z = mesh->mNormals[i].z;
     } 
    
-    // Adding the normal 
     vertices.push_back(normal_x); vertices.push_back(normal_y); vertices.push_back(normal_z);
 
-    // Getting the texture coordinates
+    // Adding vertex colors 
+
+    nikola::f32 color_r = 1.0f;
+    nikola::f32 color_g = 1.0f;
+    nikola::f32 color_b = 1.0f;
+    nikola::f32 color_a = 1.0f;
+
+    if(mesh->HasVertexColors(0)) {
+      color_r = mesh->mColors[0][i].r;
+      color_g = mesh->mColors[0][i].g;
+      color_b = mesh->mColors[0][i].b;
+      color_a = mesh->mColors[0][i].a;
+    }
+    
+    vertices.push_back(color_r); vertices.push_back(color_g); vertices.push_back(color_b); vertices.push_back(color_a);
+
+    // Adding tangents 
+
+    nikola::f32 tan_x = 0.0f;
+    nikola::f32 tan_y = 0.0f;
+    nikola::f32 tan_z = 0.0f;
+
+    if(mesh->HasTangentsAndBitangents()) {
+      tan_x = mesh->mTangents[i].x;
+      tan_y = mesh->mTangents[i].y;
+      tan_z = mesh->mTangents[i].z;
+    }
+
+    vertices.push_back(tan_x); vertices.push_back(tan_y); vertices.push_back(tan_z);
+
+    // Adding texture coordinates
+    
     nikola::f32 coord_u = 0.0f; 
     nikola::f32 coord_v = 0.0f; 
 
@@ -74,7 +105,6 @@ static void load_node_mesh(aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
       coord_v = mesh->mTextureCoords[0][i].y;
     } 
    
-    // Adding the texture coordinates
     vertices.push_back(coord_u); vertices.push_back(coord_v);
   }
 
@@ -95,12 +125,14 @@ static void load_node_mesh(aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
   nikola::sizei bytes_size;
 
   // Allocate a new vertices array for the mesh
+  
   nbr_mesh->vertices_count = vertices.size(); 
   bytes_size               = sizeof(nikola::f32) * nbr_mesh->vertices_count;
   nbr_mesh->vertices       = (nikola::f32*)nikola::memory_allocate(bytes_size);
   nikola::memory_copy(nbr_mesh->vertices, vertices.data(), bytes_size);
   
   // Allocate a new indices array for the mesh
+  
   nbr_mesh->indices_count = indices.size();
   bytes_size              = sizeof(nikola::u32) * nbr_mesh->indices_count;
   nbr_mesh->indices       = (nikola::u32*)nikola::memory_allocate(bytes_size);
@@ -110,6 +142,7 @@ static void load_node_mesh(aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
 static void load_scene_meshes(const aiScene* scene, ObjData* data, aiNode* node) {
   // Starting at the root node, we will recursively go down 
   // the scene tree and process each mesh to add it to the model. 
+  
   for(nikola::sizei i = 0; i < node->mNumMeshes; i++) {
     aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 
@@ -138,7 +171,7 @@ static void load_material_texture(aiMaterial* material, aiTextureType type, ObjD
     image_loader_load_texture(&texture, nikola::filepath_append(data->parent_dir, str.C_Str()));
     data->textures.push_back(texture);
 
-    *index += 1;
+    *index += (nikola::i8)data->textures.size();
   }
 }
 
@@ -149,33 +182,33 @@ static void load_scene_materials(const aiScene* scene, ObjData* data) {
   for(nikola::sizei i = 0; i < scene->mNumMaterials; i++) {
     aiMaterial* material = scene->mMaterials[i];
     nikola::NBRMaterial nbr_material; 
+ 
+    // Convert the colors
   
-    // Get the ambient color
     aiColor3D ambient;
     material->Get(AI_MATKEY_COLOR_AMBIENT, ambient);
     
-    // Get the diffuse color
     aiColor3D diffuse;
     material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
     
-    // Get the specular color
     aiColor3D specular;
     material->Get(AI_MATKEY_COLOR_SPECULAR, specular);
- 
-    // Convert the colors
+    
     nbr_material.ambient[0]  = ambient.r;  nbr_material.ambient[1]  = ambient.g;  nbr_material.ambient[2]  = ambient.b;
     nbr_material.diffuse[0]  = diffuse.r;  nbr_material.diffuse[1]  = diffuse.g;  nbr_material.diffuse[2]  = diffuse.b;
     nbr_material.specular[0] = specular.r; nbr_material.specular[1] = specular.g; nbr_material.specular[2] = specular.b;
 
-    // Set the default values for the texture indices
+    // Load textures of each kind
+    
     nbr_material.diffuse_index  = -1; 
     nbr_material.specular_index = -1; 
+    nbr_material.normal_index   = -1; 
 
-    // Load the texture types and set the appropriate indices.
     load_material_texture(material, aiTextureType_DIFFUSE, data, &nbr_material.diffuse_index); 
     load_material_texture(material, aiTextureType_SPECULAR, data, &nbr_material.specular_index); 
+    load_material_texture(material, aiTextureType_NORMALS, data, &nbr_material.normal_index); 
 
-    // Add a new material
+    // New material!
     data->materials.push_back(nbr_material); 
   }
 }
@@ -195,24 +228,37 @@ bool model_loader_load(nikola::NBRModel* model, const nikola::FilePath& path) {
   } 
 
   // Load Assimp file
+  
   Assimp::Importer imp; 
-  const aiScene* scene = imp.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals);
+  int flags = (aiProcess_Triangulate          | 
+               aiProcess_FlipUVs              | 
+               aiProcess_CalcTangentSpace     |
+               aiProcess_GenNormals           | 
+               aiProcess_SplitLargeMeshes     |
+               aiProcess_ImproveCacheLocality | 
+               aiProcess_OptimizeMeshes       | 
+               aiProcess_OptimizeGraph); 
+
+  const aiScene* scene = imp.ReadFile(path, flags);
   if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
     NIKOLA_LOG_ERROR("Could not load Model at %s", imp.GetErrorString());
     return false;
   }
 
   // Loading everything into `ObjData`
+  
   ObjData data; 
   data.parent_dir = nikola::filepath_parent_path(path); // Usually, `path` will refer to the 3D model file directly so we need its immediate parent
 
   // Meshes init 
+  
   load_scene_meshes(scene, &data, scene->mRootNode);
   model->meshes_count  = data.meshes.size();
   model->meshes        = (nikola::NBRMesh*)nikola::memory_allocate(sizeof(nikola::NBRMesh) * model->meshes_count);
   nikola::memory_copy(model->meshes, data.meshes.data(), data.meshes.size() * sizeof(nikola::NBRMesh));
   
   // Materials init
+  
   load_scene_materials(scene, &data);  
   model->materials_count = data.materials.size();
   model->materials       = (nikola::NBRMaterial*)nikola::memory_allocate(sizeof(nikola::NBRMaterial) * model->materials_count);

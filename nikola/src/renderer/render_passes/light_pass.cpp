@@ -60,6 +60,7 @@ void light_pass_init(Window* window) {
 
     .type   = GFX_TEXTURE_DEPTH_TARGET, 
     .format = GFX_TEXTURE_FORMAT_DEPTH16, 
+    .filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST,
   };
   pass_desc.targets.push_back(target_desc);
 
@@ -77,7 +78,7 @@ void light_pass_prepare(RenderPass* pass, const FrameData& data) {
   Mat4 light_space = shadow_pass_get_light_space(pass->previous);
  
   // Turning the light space view into a texture coordinate
-  Mat4 shadow_space = light_space * mat4_translate(Vec3(0.5f - 0.0025f)) * mat4_scale(Vec3(0.5f));
+  Mat4 shadow_space = light_space * mat4_translate(Vec3(0.5f)) * mat4_scale(Vec3(0.5f));
   shader_context_set_uniform(pass->shader_context, "u_light_space", shadow_space);
 
   // Set the lighting uniforms
@@ -106,6 +107,7 @@ void light_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& 
 
   for(auto& geo : queue) {
     // Setup uniforms
+    
     shader_context_set_uniform(pass->shader_context, "u_material", geo.material);
 
     // Use the required resources
@@ -113,7 +115,8 @@ void light_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& 
     GfxTexture* textures[] = {
       geo.material->diffuse_map,
       geo.material->specular_map,
-
+      geo.material->normal_map,
+      
       pass->previous->outputs[0], // Should be the shadow pass's result
     };
 
@@ -121,7 +124,7 @@ void light_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& 
       .shader = pass->shader_context->shader,
 
       .textures       = textures, 
-      .textures_count = 3,
+      .textures_count = 4,
     };
     gfx_context_use_bindings(pass->gfx, bind_desc);
 
@@ -131,7 +134,8 @@ void light_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& 
   // Setting the output textures
 
   pass->outputs[0]    = pass->framebuffer_desc.color_attachments[0];
-  pass->outputs_count = 1;
+  pass->outputs[1]    = pass->framebuffer_desc.depth_attachment;
+  pass->outputs_count = 2;
 }
 
 /// Light pass functions

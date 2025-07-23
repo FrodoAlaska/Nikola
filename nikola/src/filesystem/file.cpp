@@ -211,6 +211,7 @@ void file_write_bytes(File& file, const NBRMaterial& material) {
  
   file_write_bytes(file, &material.diffuse_index, sizeof(i8)); 
   file_write_bytes(file, &material.specular_index, sizeof(i8)); 
+  file_write_bytes(file, &material.normal_index, sizeof(i8)); 
 }
 
 void file_write_bytes(File& file, const NBRMesh& mesh) {
@@ -619,6 +620,7 @@ void file_read_bytes(File& file, NBRMaterial* out_material) {
  
   file_read_bytes(file, &out_material->diffuse_index, sizeof(i8)); 
   file_read_bytes(file, &out_material->specular_index, sizeof(i8)); 
+  file_read_bytes(file, &out_material->normal_index, sizeof(i8)); 
 }
 
 void file_read_bytes(File& file, NBRMesh* out_mesh) {

@@ -56,17 +56,23 @@ void hdr_pass_prepare(RenderPass* pass, const FrameData& data) {
 }
 
 void hdr_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue) {
+  // Using resources
+
   GfxBindingDesc bind_desc = {
     .shader = pass->shader_context->shader, 
-
-    .textures       = &pass->previous->outputs[0], 
+  
+    .textures       = &pass->previous->outputs[0],
     .textures_count = 1,
   };
   gfx_context_use_bindings(pass->gfx, bind_desc);
 
+  // Rendering the scene
+ 
   gfx_context_use_pipeline(pass->gfx, renderer_get_defaults().screen_quad);
   gfx_context_draw(pass->gfx, 0);
-  
+ 
+  // Setting outputs
+
   pass->outputs[0]    = pass->framebuffer_desc.color_attachments[0];
   pass->outputs_count = 1;
 }

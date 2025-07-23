@@ -1025,7 +1025,7 @@ struct GfxTextureDesc {
 
   /// The addressing mode of the texture.
   ///
-  /// @NOTE: The default wrap mode is set to `GFX_TEXTURE_FILTER_MIN_MAG_LINEAR`.
+  /// @NOTE: The default wrap mode is set to `GFX_TEXTURE_WRAP_REPEAT`.
   GfxTextureWrap wrap_mode    = GFX_TEXTURE_WRAP_REPEAT;
 
   /// The access mode of the texture.

@@ -58,23 +58,16 @@ static Renderer s_renderer{};
 /// Private functions
 
 static void init_defaults() {
-  // Default texture init
+  // Default textures init
   
-  u32 pixels = 0xffffffff; 
-  GfxTextureDesc texture_desc = {
-    .width     = 1, 
-    .height    = 1, 
-    .depth     = 0, 
-    .mips      = 1, 
-    .type      = GFX_TEXTURE_2D,
-    .format    = GFX_TEXTURE_FORMAT_RGBA8, 
-    .filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-    .wrap_mode = GFX_TEXTURE_WRAP_MIRROR, 
-    .data      = &pixels,
-  };
-
-  ResourceID default_texture_id = resources_push_texture(RESOURCE_CACHE_ID, texture_desc);
+  ResourceID default_texture_id = resources_push_texture(RESOURCE_CACHE_ID, MATERIAL_TEXTURE_DIFFUSE);
   s_renderer.defaults.texture   = resources_get_texture(default_texture_id);
+
+  ResourceID specular_default_texture_id = resources_push_texture(RESOURCE_CACHE_ID, MATERIAL_TEXTURE_SPECULAR);
+  s_renderer.defaults.specular_texture   = resources_get_texture(specular_default_texture_id);
+ 
+  ResourceID normal_default_texture_id = resources_push_texture(RESOURCE_CACHE_ID, MATERIAL_TEXTURE_NORMAL);
+  s_renderer.defaults.normal_texture   = resources_get_texture(normal_default_texture_id);
 
   // Matrices buffer init
   
@@ -88,7 +81,9 @@ static void init_defaults() {
 
   // Material init
   MaterialDesc mat_desc = {
-    .diffuse_id = default_texture_id,
+    .diffuse_id  = default_texture_id, 
+    .specular_id = specular_default_texture_id, 
+    .normal_id   = normal_default_texture_id,
   };
   s_renderer.defaults.material = resources_get_material(resources_push_material(RESOURCE_CACHE_ID, mat_desc));
 
@@ -161,22 +156,20 @@ static void init_pipeline() {
   s_renderer.defaults.screen_quad = gfx_pipeline_create(s_renderer.context, pipe_desc);
 }
 
-static void queue_model(Model* model, GeometryPrimitive& geo) {
+static void queue_model(Model* model, Material* material, const Transform* transforms, const sizei count) {
   for(sizei i = 0; i < model->meshes.size(); i++) {
     Mesh* mesh    = model->meshes[i];
     Material* mat = model->materials[model->material_indices[i]];
 
     // Let the main given material "influence" the model's material 
 
-    mat->shininess    = geo.material->shininess;
-    mat->transparency = geo.material->transparency;
-    mat->depth_mask   = geo.material->depth_mask;
+    mat->shininess    = material->shininess;
+    mat->transparency = material->transparency;
+    mat->depth_mask   = material->depth_mask;
 
     // @TODO(Renderer): Have a transform parent-child relationship
 
-    geo.mesh     = mesh;
-    geo.material = mat;
-    s_renderer.queues[RENDER_QUEUE_OPAQUE].push_back(geo);
+    s_renderer.queues[RENDER_QUEUE_OPAQUE].emplace_back(transforms, mesh->pipe, mat, count);
   }  
 }
 
@@ -202,20 +195,26 @@ void renderer_init(Window* window) {
   s_renderer.passes_pool.reserve(4);
 
   // Defaults init
+  
   init_defaults();
-
-  // Pipeline init
   init_pipeline();
 
   // Defaults render passes init
+  
   shadow_pass_init(window);
   light_pass_init(window);
+  billboard_pass_init(window);
   hdr_pass_init(window);
+
+  // Batch renderer init
+  batch_renderer_init();
 
   NIKOLA_LOG_INFO("Successfully initialized the renderer context");
 }
 
 void renderer_shutdown() {
+  batch_renderer_shutdown();
+  
   for(auto& pass : s_renderer.passes_pool) {
     gfx_framebuffer_destroy(pass.framebuffer);
   }
@@ -228,12 +227,6 @@ void renderer_shutdown() {
 }
 
 void renderer_begin(FrameData& data) {
-  // Clear the queues for the new frame
-  
-  for(sizei i = 0; i < RENDER_QUEUES_MAX; i++) {
-    s_renderer.queues[i].clear();
-  }
-
   GfxBuffer* matrix_buffer = s_renderer.defaults.matrices_buffer;
   s_renderer.frame_data    = &data;
    
@@ -294,6 +287,12 @@ void renderer_end() {
   
   gfx_context_use_pipeline(s_renderer.context, s_renderer.defaults.screen_quad);
   gfx_context_draw(s_renderer.context, 0);
+  
+  // Clear the queues for the new frame
+  
+  for(sizei i = 0; i < RENDER_QUEUES_MAX; i++) {
+    s_renderer.queues[i].clear();
+  }
 }
 
 GfxContext* renderer_get_context() {
@@ -449,7 +448,7 @@ RenderPass* renderer_peek_pass(const sizei index) {
 
 void renderer_queue_command_instanced(const RenderableType& type,    
                                       const ResourceID& res_id, 
-                                      const Mat4* transforms, 
+                                      const Transform* transforms, 
                                       const sizei count, 
                                       const ResourceID& mat_id) {
   Material* material = s_renderer.defaults.material;
@@ -457,23 +456,21 @@ void renderer_queue_command_instanced(const RenderableType& type,
     material = resources_get_material(mat_id);
   }
 
-  GeometryPrimitive geo = {
-    .material       = material,
-    .instance_count = count,
-  };
-
-  // @TEMP: Just terrible.
-  for(sizei i = 0; i < count; i++) {
-    geo.transforms[i] = transforms[i];
-  }
-
   switch(type) {
     case RENDERABLE_MESH:
-      geo.mesh = resources_get_mesh(res_id); 
-      s_renderer.queues[RENDER_QUEUE_OPAQUE].push_back(geo);
+      s_renderer.queues[RENDER_QUEUE_OPAQUE].emplace_back(transforms, 
+                                                          resources_get_mesh(res_id)->pipe, 
+                                                          material, 
+                                                          count);
       break;
     case RENDERABLE_MODEL:
-      queue_model(resources_get_model(res_id), geo); 
+      queue_model(resources_get_model(res_id), material, transforms, count); 
+      break;
+    case RENDERABLE_BILLBOARD:
+      s_renderer.queues[RENDER_QUEUE_BILLBOARD].emplace_back(transforms, 
+                                                             resources_get_mesh(res_id)->pipe, 
+                                                             material, 
+                                                             count);
       break;
     default:
       NIKOLA_LOG_ERROR("Invalid or unsupported render command given... skiping");
@@ -483,7 +480,7 @@ void renderer_queue_command_instanced(const RenderableType& type,
 
 void renderer_queue_command(const RenderableType& type, 
                             const ResourceID& res_id, 
-                            const Mat4& transform, 
+                            const Transform& transform, 
                             const ResourceID& mat_id) {
   renderer_queue_command_instanced(type, res_id, &transform, 1, mat_id);
 }
@@ -497,14 +494,16 @@ void renderer_draw_geometry_primitive(const GeometryPrimitive& geo) {
 
   // Set pipeline-related flags from the material
 
-  geo.mesh->pipe_desc.depth_mask      = geo.material->depth_mask;
-  geo.mesh->pipe_desc.stencil_ref     = geo.material->stencil_ref;
-  geo.mesh->pipe_desc.instance_buffer = s_renderer.defaults.instance_buffer;
-  gfx_pipeline_update(geo.mesh->pipe, geo.mesh->pipe_desc);
+  GfxPipelineDesc pipe_desc = gfx_pipeline_get_desc(geo.pipeline);
+  pipe_desc.depth_mask      = geo.material->depth_mask;
+  pipe_desc.stencil_ref     = geo.material->stencil_ref;
+  pipe_desc.instance_buffer = s_renderer.defaults.instance_buffer;
+  
+  gfx_pipeline_update(geo.pipeline, pipe_desc);
 
   // Draw the mesh
   
-  gfx_context_use_pipeline(s_renderer.context, geo.mesh->pipe);
+  gfx_context_use_pipeline(s_renderer.context, geo.pipeline);
 
   if(geo.instance_count > 1) {
     gfx_context_draw_instanced(s_renderer.context, 0, geo.instance_count);

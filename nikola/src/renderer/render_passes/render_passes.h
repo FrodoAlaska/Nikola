@@ -44,6 +44,18 @@ void hdr_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& qu
 /// HDR pass functions
 ///---------------------------------------------------------------------------------------------------------------------
 
+///---------------------------------------------------------------------------------------------------------------------
+/// Billboard pass functions
+
+void billboard_pass_init(Window* window);
+
+void billboard_pass_prepare(RenderPass* pass, const FrameData& data);
+
+void billboard_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue);
+
+/// Billboard pass functions
+///---------------------------------------------------------------------------------------------------------------------
+
 } // End of nikola
 
 //////////////////////////////////////////////////////////////////////////

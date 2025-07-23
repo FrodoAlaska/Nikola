@@ -64,11 +64,11 @@ void engine_init(const AppDesc& desc) {
   renderer_init(s_engine.window);
   s_engine.gfx_context = renderer_get_context();
 
-  // Batch renderer init
-  batch_renderer_init();
-
   // Physics world init
   physics_world_init(Vec3(0.0f, -9.81f, 0.0f), 1 / 60.0f);
+
+  // Particles init
+  particles_init();
 
   // Check for any command line arguments
   Args cli_args; 
@@ -88,22 +88,20 @@ void engine_init(const AppDesc& desc) {
 
 void engine_run() {
   while(window_is_open(s_engine.window)) {
-    // Physics step
+    // Update 
+    
     physics_world_step(); 
-
-    // App update
     CHECK_VALID_CALLBACK(s_engine.app_desc.update_fn, s_engine.app, niclock_get_delta_time());
+    particles_update(niclock_get_delta_time());
 
-    // App render
+    // Render
+    
     CHECK_VALID_CALLBACK(s_engine.app_desc.render_fn, s_engine.app);
-
-    // App render GUI 
     CHECK_VALID_CALLBACK(s_engine.app_desc.render_gui_fn, s_engine.app);
 
-    // Present to the backbuffer
-    gfx_context_present(s_engine.gfx_context); 
+    // Present
 
-    // Poll for window events
+    gfx_context_present(s_engine.gfx_context); 
     window_poll_events(s_engine.window);
   }
 }
@@ -112,7 +110,6 @@ void engine_shutdown() {
   CHECK_VALID_CALLBACK(s_engine.app_desc.shutdown_fn, s_engine.app);
 
   physics_world_shutdown();
-  batch_renderer_shutdown();
   renderer_shutdown();
   resource_manager_shutdown();
   audio_device_shutdown();

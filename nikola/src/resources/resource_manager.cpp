@@ -160,8 +160,10 @@ static const char* geo_type_str(const GeometryType type) {
       return "GEOMETRY_PLANE";
     case GEOMETRY_SKYBOX:
       return "GEOMETRY_SKYBOX";
-    case GEOMETRY_CIRCLE:
-      return "GEOMETRY_CIRCLE";
+    case GEOMETRY_SPHERE:
+      return "GEOMETRY_SPHERE";
+    case GEOMETRY_BILLBOARD:
+      return "GEOMETRY_BILLBOARD";
     default:
       return "INVALID GEOMETRY TYPE";
   }
@@ -527,6 +529,56 @@ ResourceID resources_push_texture(const ResourceGroupID& group_id,
   return id;
 }
 
+ResourceID resources_push_texture(const ResourceGroupID& group_id, const MaterialTextureType& type) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
+
+  GfxTextureDesc tex_desc = {
+    .width  = 16, 
+    .height = 16,
+    .depth  = 0, 
+    .mips   = 1, 
+
+    .type      = GFX_TEXTURE_2D,
+    .format    = GFX_TEXTURE_FORMAT_RGBA8, 
+    .filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
+    .wrap_mode = GFX_TEXTURE_WRAP_MIRROR, 
+  };
+
+  u8 pixels[1024]; // width * height * channels
+
+  switch(type) {
+    case MATERIAL_TEXTURE_DIFFUSE: 
+      memory_set(pixels, 0xff, sizeof(pixels));
+      break;
+    case MATERIAL_TEXTURE_SPECULAR: 
+      memory_set(pixels, 0, sizeof(pixels));
+      break;
+    case MATERIAL_TEXTURE_NORMAL: {
+      // Initializing the R and G channels to 0 
+      // and the B and A pixels to 1. That way, 
+      // normal textures look towards the camera 
+      // with complete transparency.
+      
+      for(u64 i = 0; i < 16; i++) {
+        for(u64 j = 0; j < 16; j++) {
+          u64 index = (i * 16) + j;
+          u64 pixel = index * 4; // Index * channels
+
+          pixels[pixel + 0] = 0;
+          pixels[pixel + 1] = 0;
+          pixels[pixel + 2] = 255;
+          pixels[pixel + 3] = 255;
+        }
+      }
+    } break;
+  }
+
+  tex_desc.data = &pixels;
+
+  return resources_push_texture(group_id, tex_desc);
+}
+
 ResourceID resources_push_cubemap(const ResourceGroupID& group_id, const GfxCubemapDesc& cubemap_desc) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
@@ -811,7 +863,8 @@ ResourceID resources_push_material(const ResourceGroupID& group_id, const Materi
   Material* material = new Material{};
   
   material->diffuse_map  = renderer_get_defaults().texture;
-  material->specular_map = renderer_get_defaults().texture;
+  material->specular_map = renderer_get_defaults().specular_texture;
+  material->normal_map   = renderer_get_defaults().normal_texture;
   
   material->color        = desc.color;
   material->shininess    = desc.shininess;
@@ -830,6 +883,11 @@ ResourceID resources_push_material(const ResourceGroupID& group_id, const Materi
   if(RESOURCE_IS_VALID(desc.specular_id)) {
     material->specular_map = resources_get_texture(desc.specular_id);
     material->map_flags   |= MATERIAL_TEXTURE_SPECULAR;
+  }
+  
+  if(RESOURCE_IS_VALID(desc.normal_id)) {
+    material->normal_map = resources_get_texture(desc.normal_id);
+    material->map_flags |= MATERIAL_TEXTURE_NORMAL;
   }
 
   // Create material
@@ -940,10 +998,12 @@ ResourceID resources_push_model(const ResourceGroupID& group_id, const FilePath&
     
     i8 diffuse_index  = nbr_model.materials[i].diffuse_index;
     i8 specular_index = nbr_model.materials[i].specular_index;
+    i8 normal_index   = nbr_model.materials[i].normal_index;
 
     MaterialDesc mat_desc = {
       .diffuse_id  = diffuse_index != -1 ? texture_ids[diffuse_index] : ResourceID{}, 
       .specular_id = specular_index != -1 ? texture_ids[specular_index] : ResourceID{},
+      .normal_id   = normal_index != -1 ? texture_ids[normal_index] : ResourceID{},
 
       .color = color,
     };

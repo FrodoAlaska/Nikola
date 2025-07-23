@@ -505,6 +505,34 @@ void gui_edit_collider(const char* name, Collider* collider) {
   ImGui::PopID(); 
 }
 
+void gui_edit_particle_emitter(const char* name, ParticleEmitterDesc* emitter_desc) {
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+ 
+  ImGui::DragFloat3("Position", &emitter_desc->position[0], 0.1f);
+  ImGui::DragFloat3("Velocity", &emitter_desc->velocity[0], 1.0f);
+
+  ImGui::DragFloat3("Scale", &emitter_desc->scale[0], 0.1f, 0.0f, 256.0f);
+  ImGui::DragFloat4("Color", &emitter_desc->color[0], 0.1f, 0.0f, 12.0f);
+  
+  ImGui::DragFloat("Lifetime", &emitter_desc->lifetime, 0.1f, 0.0f, 512.0f);
+  ImGui::DragFloat("Gravity", &emitter_desc->gravity_factor, 0.1f);
+  
+  ImGui::DragFloat("Distribution radius", &emitter_desc->distribution_radius, 0.1f);
+  
+  i32 current_dist = emitter_desc->distribution;
+  if(ImGui::Combo("Distributions", &current_dist, "Random\0Square\0\0")) {
+    emitter_desc->distribution = (ParticleDistributionType)current_dist;
+  }
+
+  i32 count = (i32)emitter_desc->count;
+  if(ImGui::SliderInt("Count", &count, 1, (i32)(PARTICLES_MAX - 1))) {
+    emitter_desc->count = (sizei)count;
+  }
+  
+  ImGui::PopID(); 
+}
+
 /// Editor functions
 ///---------------------------------------------------------------------------------------------------------------------
 

@@ -17,6 +17,8 @@ const sizei vertex_type_size(const VertexType type) {
       return sizeof(Vertex3D_PCUV);
     case VERTEX_TYPE_PNCUV:
       return sizeof(Vertex3D_PNCUV);
+    case VERTEX_TYPE_PNCTUV:
+      return sizeof(Vertex3D_PNCTUV);
     default:
       return 0;
   }
@@ -29,6 +31,8 @@ const u8 vertex_type_components(const VertexType type) {
       return 3;
     case VERTEX_TYPE_PNCUV:
       return 4;
+    case VERTEX_TYPE_PNCTUV:
+      return 5;
     default:
       return 0;
   }
@@ -41,7 +45,9 @@ const char* vertex_type_str(const VertexType type) {
     case VERTEX_TYPE_PCUV:
       return "VERTEX_TYPE_PCUV";
     case VERTEX_TYPE_PNCUV:
-      return "VERTEX_TYPE_PCUV";
+      return "VERTEX_TYPE_PNCUV";
+    case VERTEX_TYPE_PNCTUV:
+      return "VERTEX_TYPE_PNCTUV";
     default:
       return "VERTEX_INVALID";
   }
@@ -67,6 +73,14 @@ void vertex_type_layout(const VertexType type, GfxVertexLayout* out_layout) {
       out_layout->attributes[2]    = GFX_LAYOUT_FLOAT4;
       out_layout->attributes[3]    = GFX_LAYOUT_FLOAT2;
       out_layout->attributes_count = 4;
+      break;
+    case VERTEX_TYPE_PNCTUV: 
+      out_layout->attributes[0]    = GFX_LAYOUT_FLOAT3;
+      out_layout->attributes[1]    = GFX_LAYOUT_FLOAT3;
+      out_layout->attributes[2]    = GFX_LAYOUT_FLOAT4;
+      out_layout->attributes[3]    = GFX_LAYOUT_FLOAT3;
+      out_layout->attributes[4]    = GFX_LAYOUT_FLOAT2;
+      out_layout->attributes_count = vertex_type_components(VERTEX_TYPE_PNCTUV);
       break;
   }
 }

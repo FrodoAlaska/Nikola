@@ -70,7 +70,7 @@ void timer_update(Timer& timer) {
     // There's no reason to deactivate the timer if it needs 
     // to run again. Otherwise, the timer is just a one shot 
     // timer and should be deactivated.
-    timer.is_active = !timer.is_one_shot ? true : false;
+    timer.is_active = !timer.is_one_shot;
   }
   else {
     timer.has_runout = false;

@@ -128,42 +128,28 @@
     - [x] Instead of having the `gfx_pipeline_use` function, we can move that to a context-specific function called `gfx_context_use_pipeline`.
     - [x] Documentation
 - [] Renderer v0.6 
-    - [] Improve draw calls and render passes
+    - [x] Improve draw calls and render passes
         - [x] Fix the render commands
         - [x] Improve the render pass system to be more versitile. It's very "stiff" right now.
         - [x] Improve the current render passes and test with client-side render passes.
-        - [] Have the batch renderer as an extra pass to the renderer instead of its own thing.
     - [] Add new rendering features/effects 
         - [x] Improve the Blinn-Phong lighting model by actually using specular maps and maybe fixing the material system a bit. 
         - [x] Shadow maps
-        - [] Normal/roughness mapping.
-        - [] Gaussian blur
-        - [] Bloom integration 
-        - [] Debug rendering
-        - [] Improve shadow maps by supporting dynamically changing directional light bounding box.
+        - [x] Normal/roughness mapping.
+        - [] Improve shadow maps by supporting dynamically-sized directional light bounding box based on the view frustrum.
     - [] Increase performance/improve workflow
         - [x] Change the instance data to become an instance uniform buffer that gets updated every frame. Each instance can aquire its data using `gl_InstanceID` instead of per-vertex instance data.
-        - [] If performance is still an issue, make all of the scene's lights into a buffer and send it to the shader as a buffer update instead of uniforms.
         - [x] Look into making the renderer "instanced" rather than rendering everything as is.
-        - [] Improve lighting using clustered rendering. Or, if it's too difficult, you can limit the amount of point lights a scene can have.
+        - [] If performance is still an issue, make all of the scene's lights into a buffer and send it to the shader as a buffer update instead of uniforms.
+        - [] Look into multi-threading the renderer
     - [] Documentation
-- [] Resource Manager v0.5
-    - [x] Instead of using an abstracted `NBR` layer over everything, write extra `file_write_bytes` functions for the various resources, which will write a _compressed_ version of the resources, and load them as well.
-    - [x] Let the material be created using a `MaterialDesc` structure for more effecient material usage. 
-    - [] Improve packaging/distribution  
-        - [] Fix `RESOURCE_CACHE_ID` somehow? The fact that it has a different path is annoying.
-        - [] Improve the NBR tool to have a "packging" option that compiles all of the resources into one "blob" called `nkpkg`.
-        - [] Implement a way to load `nkpkg` files with a function called `resources_push_package`.
-    - [] Fix 3D models loading. 
-        - [] Add a parent and child relationship between meshes. Basically, every mesh should have a `local_position` which is set to `Vec3(0.0f)` by default, and it will be take into account when rendering.
-        - [x] I think the renderer assumes the vertex data of the mesh so if a model has even an extra vertex data like color, the renderer messes everything up. Or limit all 3D models to a certain vertx data set. 
-        - [x] Make sure that materials are loaded correctly using Assimp (colors and other uniforms).
-    - [] Documentation
-- [] Particles v0.1 
-    - [] CPU-based particle system, giving each particle a position, velocity, and color. Use instancing to render a particle batch.
-    - [] GPU-based particle system, using compute shaders.
-    - [] Test both with either fluid simulation or sand simulation.
-    - [] Documentation
+- [x] Particles v0.1 
+    - [x] CPU-based particle system, giving each particle a position, velocity, and color. Use instancing to render a particle batch.
+    - [x] Fix that lifetime bug.
+    - [x] Add it to the GUI
+    - [x] Better distribution of particles with more user control over the "shape" of the distribution.
+    - [x] Documentation
+- [] 3D Animations v0.1
 - [] Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers
     - [x] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application.
@@ -172,26 +158,36 @@
     - [] Improve resource loading time by adding asynchronous resource loading.
     - [] Also look into custom memory pools/memory arenas since they can increase performance.
     - [] Documentation
-- [] 3D Animations v0.1
+- [] Resource Manager v0.5
+    - [x] Instead of using an abstracted `NBR` layer over everything, write extra `file_write_bytes` functions for the various resources, which will write a _compressed_ version of the resources, and load them as well.
+    - [x] Let the material be created using a `MaterialDesc` structure for more effecient material usage. 
+    - [x] Fix 3D models loading. 
+        - [x] I think the renderer assumes the vertex data of the mesh so if a model has even an extra vertex data like color, the renderer messes everything up. Or limit all 3D models to a certain vertx data set. 
+        - [x] Make sure that materials are loaded correctly using Assimp (colors and other uniforms).
+    - [] Improve packaging/distribution  
+        - [] Improve the NBR tool to have a "packging" option that compiles all of the resources into one "blob" called `nkpkg`.
+        - [] Implement a way to load `nkpkg` files with a function called `resources_push_package`.
+    - [] Documentation
+- [] Physics v0.3
+    - [] Deleting bodies has some problems since the world delets bodies by keeping a "world index" inside the internal body data structure, which then it uses to 
+         get the correct position (as an iterator) in the vector to then delete. However, that index is sometimes _way_ higher than the actual size of the array of bodies. Is keeping a collection for bodies in the physics world 
+         with a physics library really that necessary?
+    - [] Listen, just remove the physics library. It's really not all that useful. It bring more pain and suffering than joy. I can do a better one with my hands tied behind my back whilst singing Katyusha. 
+    - [] Implement mouse to screen and mouse to world for editing levels easier
 - [] Renderer v0.7 
+    - [] Improve lighting using clustered rendering.
     - [] Decal rendering 
     - [] Terrain rendering and procedural generation (terrain generation using `stb_perlin` and loading from heightmap)
-    - [] Screen-Space effects (Screen-Space Reflections, Screen-Space Ambient Occlussion, etc)
+    - [] SSAO
+    - [] Gaussian blur
+    - [] Bloom integration 
     - [] Documentation
-
-## Showcases
-
-- Showing the gradual change with each render pass in a simple scene.
-- Particles showcase, using instancing. A dark corridor with absolutely no or little natural light. The player can shoot flares that emit a very bright red color, emanating the corridor.  
-- Compute shaders with the planet blowing up?
+- [] Particles v0.2 
+    - [] GPU-based particle system, using compute shaders.
+    - [] Documentation
 
 ## BUGS:
 - (Dist): Improve the `NikolaProjectTemplate` by adding a template shader.
-- (Physics): Deleting bodies has some problems since the world delets bodies by keeping a "world index" inside the internal body data structure, which then it uses to 
-get the correct position (as an iterator) in the vector to then delete. However, that index is sometimes _way_ higher than the actual size of the array of bodies. Is keeping a collection for bodies in the physics world 
-with a physics library really that necessary?
-- (Physics): Listen, just remove the physics library. It's really not all that useful. It bring more pain and suffering than joy. I can do a better one with my hands tied behind my back whilst singing Katyusha. 
-
 - Check all of the `TODO`, `FIX`, and `TEMP` in the codebase.
 
 ## FUTURE PLANS: 

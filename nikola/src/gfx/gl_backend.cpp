@@ -70,9 +70,9 @@ struct GfxFramebuffer {
   u32 clear_flags;
   u32 id;
 
-  u32 color_textures[FRAMEBUFFER_ATTACHMENTS_MAX];
-  u32 depth_texture   = 0; 
-  u32 stencil_texture = 0;
+  u32 color_textures[FRAMEBUFFER_ATTACHMENTS_MAX] = {GL_NONE, GL_NONE, GL_NONE, GL_NONE};
+  u32 depth_texture   = GL_NONE; 
+  u32 stencil_texture = GL_NONE;
 };
 /// GfxFramebuffer
 ///---------------------------------------------------------------------------------------------------------------------
@@ -883,6 +883,10 @@ static void set_gfx_states(GfxContext* gfx) {
 
 static u32 get_gl_clear_flags(const u32 flags) {
   u32 gl_flags = 0;
+  
+  if(IS_BIT_SET(flags, GFX_CLEAR_FLAGS_NONE)) {
+    return 0;
+  }
 
   if(IS_BIT_SET(flags, GFX_CLEAR_FLAGS_COLOR_BUFFER)) {
     gl_flags |= GL_COLOR_BUFFER_BIT;    
@@ -1226,11 +1230,6 @@ void gfx_context_set_target(GfxContext* gfx, GfxFramebuffer* framebuffer) {
   if(framebuffer) {
     gfx->current_clear_flags = framebuffer->clear_flags;
     gfx->current_target      = framebuffer->id; 
-
-    // Set the number render targets to draw to
-    glNamedFramebufferDrawBuffers(framebuffer->id,  
-                                  framebuffer->desc.attachments_count, 
-                                  framebuffer->color_textures);
   }
 }
 
@@ -1442,6 +1441,10 @@ GfxFramebuffer* gfx_framebuffer_create(GfxContext* gfx, const GfxFramebufferDesc
     buff->stencil_texture = GL_STENCIL_ATTACHMENT;
   }
 
+  glNamedFramebufferDrawBuffers(buff->id,  
+                                buff->desc.attachments_count, 
+                                buff->color_textures);
+
   if(glCheckNamedFramebufferStatus(buff->id, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
     NIKOLA_LOG_WARN("GL-ERROR: Framebuffer %i is incomplete", buff->id);
   }
@@ -1499,7 +1502,7 @@ void gfx_framebuffer_update(GfxFramebuffer* framebuffer, const GfxFramebufferDes
                               GL_COLOR_ATTACHMENT0 + i, 
                               desc.color_attachments[i]->id, 
                               0);
-    framebuffer->color_textures[i] = desc.color_attachments[i]->id;
+    framebuffer->color_textures[i] = GL_COLOR_ATTACHMENT0 + i;
   }
 
   // Attach the depth attachments (if it exists)
@@ -1513,7 +1516,7 @@ void gfx_framebuffer_update(GfxFramebuffer* framebuffer, const GfxFramebufferDes
                                    depth_type, 
                                    GL_RENDERBUFFER, 
                                    desc.depth_attachment->id);
-    framebuffer->depth_texture = desc.depth_attachment->id;
+    framebuffer->depth_texture = depth_type;
   }
   
   // Attach the stencil attachments (if it exists)
@@ -1522,8 +1525,12 @@ void gfx_framebuffer_update(GfxFramebuffer* framebuffer, const GfxFramebufferDes
                                    GL_STENCIL_ATTACHMENT, 
                                    GL_RENDERBUFFER, 
                                    desc.stencil_attachment->id);
-    framebuffer->stencil_texture = desc.stencil_attachment->id;
+    framebuffer->stencil_texture = GL_STENCIL_ATTACHMENT;
   }
+
+  glNamedFramebufferDrawBuffers(framebuffer->id,  
+                                framebuffer->desc.attachments_count, 
+                                framebuffer->color_textures);
 
   if(glCheckNamedFramebufferStatus(framebuffer->id, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
     NIKOLA_LOG_WARN("GL-ERROR: Framebuffer %i is incomplete", framebuffer->id);
@@ -1931,13 +1938,6 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc, cons
   // Creating the texutre based on its type
   texture->id = create_gl_texture(desc.type);
 
-  // Setting the pixel store alignment
-  set_texture_pixel_align(desc.format);
-
-  // Filling the texture with the data based on its type
-  update_gl_texture_storage(texture, in_format);
-  update_gl_texture_pixels(texture, gl_format, gl_pixel_type);
-
   // Setting texture parameters
   
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
@@ -1949,6 +1949,18 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc, cons
 
   glTextureParameteri(texture->id, GL_TEXTURE_COMPARE_MODE, compare_func);
   glTextureParameteri(texture->id, GL_TEXTURE_COMPARE_FUNC, get_gl_compare_func(desc.compare_func));
+
+  // @TODO (GL-BACKEND): Make this configurable 
+
+  f32 border_color[] = {1.0f, 1.0f, 1.0f, 1.0f};
+  glTextureParameterfv(texture->id, GL_TEXTURE_BORDER_COLOR, border_color);
+
+  // Setting the pixel store alignment
+  set_texture_pixel_align(desc.format);
+
+  // Filling the texture with the data based on its type
+  update_gl_texture_storage(texture, in_format);
+  update_gl_texture_pixels(texture, gl_format, gl_pixel_type);
 
   // Generating some mipmaps
   glGenerateTextureMipmap(texture->id);

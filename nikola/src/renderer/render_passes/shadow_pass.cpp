@@ -67,7 +67,7 @@ void shadow_pass_init(Window* window) {
     .format = GFX_TEXTURE_FORMAT_DEPTH16, 
     .filter = GFX_TEXTURE_FILTER_MIN_MAG_LINEAR,
 
-    .wrap_mode    = GFX_TEXTURE_WRAP_REPEAT,
+    .wrap_mode    = GFX_TEXTURE_WRAP_CLAMP,
     .compare_func = GFX_COMPARE_GREATER,
   };
   pass_desc.targets.push_back(target_desc);
@@ -81,16 +81,15 @@ void shadow_pass_init(Window* window) {
 void shadow_pass_prepare(RenderPass* pass, const FrameData& data) {
   // Setup the light projection matrix
 
-  // @TEMP: Only supports _one_ spot light? No. Needs to be better.
+  // @TODO (Shadow): Only supports directional light? Do better... or not. It actually looks fine.
 
-  const SpotLight* light = &data.spot_lights[0];
-
-  s_state.light_view       = mat4_look_at(light->position, light->position + light->direction, Vec3(0.0f, 1.0f, 0.0f));
-  s_state.light_projection = mat4_perspective((data.camera.zoom * DEG2RAD), data.camera.aspect_ratio, 0.1f, 7.5f);
+  s_state.light_projection = mat4_ortho(-15.0f, 15.0f, -15.0f, 15.0f, 1.0f, 7.5f);
+  // s_state.light_view       = mat4_look_at(data.camera.position, data.camera.position + data.dir_light.direction, Vec3(0.0f, 1.0f, 0.0f));
+  s_state.light_view       = mat4_look_at(Vec3(-2.0f, 4.0f, -1.0f), Vec3(0.0f), Vec3(0.0f, 1.0f, 0.0f));
 
   // Set uniforms
  
-  shader_context_set_uniform(pass->shader_context, "u_light_space", (data.camera.projection * s_state.light_view));
+  shader_context_set_uniform(pass->shader_context, "u_light_space", (s_state.light_projection * s_state.light_view));
 }
 
 void shadow_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue) {

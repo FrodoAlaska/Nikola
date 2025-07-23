@@ -13,7 +13,7 @@ struct nikola::App {
   nikola::ResourceID mesh_id, building_id;
   nikola::ResourceID font_id, material_id;
 
-  nikola::Transform transforms[5];
+  nikola::Transform transforms[2];
 
   bool has_editor = false;
 };
@@ -35,14 +35,14 @@ static void init_resources(nikola::App* app) {
   app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
 
   // Model init
-  app->building_id = nikola::resources_push_model(app->res_group_id, "models/cottage_obj.nbr");
+  app->building_id = nikola::resources_push_model(app->res_group_id, "models/bridge.nbr");
 
   // Font init
   app->font_id = nikola::resources_push_font(app->res_group_id, "fonts/bit5x3.nbr");
 
   // Material init
   nikola::MaterialDesc mat_desc = {
-    .diffuse_id  = nikola::resources_push_texture(app->res_group_id, "textures/paviment.nbr"),
+    .diffuse_id = nikola::resources_push_texture(app->res_group_id, "textures/paviment.nbr"),
   };
   app->material_id = nikola::resources_push_material(app->res_group_id, mat_desc);
 }
@@ -73,7 +73,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
     .move_func    = nikola::camera_free_move_func,
   };
   nikola::camera_create(&app->frame_data.camera, cam_desc);
-  app->frame_data.camera.exposure = 1.2f;
+  app->frame_data.camera.exposure = 1.0f;
 
   // Resoruces init
   init_resources(app);
@@ -81,20 +81,18 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Transform init
   
   nikola::transform_translate(app->transforms[0], nikola::Vec3(5.0f, 0.05f, 5.0f));
-  nikola::transform_scale(app->transforms[0], nikola::Vec3(128.0f, 0.1f, 128.0f));
+  nikola::transform_scale(app->transforms[0], nikola::Vec3(64.0f, 0.1f, 64.0f));
   
-  nikola::transform_translate(app->transforms[1], nikola::Vec3(5.0f, 0.0f, 5.0f));
+  nikola::transform_translate(app->transforms[1], nikola::Vec3(5.0f, 0.2f, 70.0f));
   nikola::transform_scale(app->transforms[1], nikola::Vec3(1.0f));
-  // nikola::transform_rotate(app->transforms[1], nikola::Vec3(-90.0f * nikola::DEG2RAD, 0.0f, 0.0f));
+  nikola::transform_rotate(app->transforms[1], nikola::Vec3(-90.0f * nikola::DEG2RAD, 0.0f, 0.0f));
 
   // Lights init
 
-  app->frame_data.dir_light.direction = nikola::Vec3(1.0f, -1.0f, -1.0f);
-  app->frame_data.dir_light.color     = nikola::Vec3(0.0f);
+  app->frame_data.dir_light.direction = nikola::Vec3(1.0f, -1.0f, 1.0f);
+  app->frame_data.dir_light.color     = nikola::Vec3(1.0f);
 
-  app->frame_data.ambient = nikola::Vec3(0.1f, 0.1f, 0.125f);
-
-  app->frame_data.spot_lights.push_back(nikola::SpotLight(app->frame_data.camera.position, app->frame_data.camera.front, nikola::Vec3(1.0f), 0.1f));
+  app->frame_data.ambient = nikola::Vec3(0.0f);
 
   return app;
 }
@@ -105,6 +103,8 @@ void app_shutdown(nikola::App* app) {
 
   delete app;
 }
+
+static bool has_sun = false;
 
 void app_update(nikola::App* app, const nikola::f64 delta_time) {
   // Quit the application when the specified exit key is pressed
@@ -121,10 +121,21 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     nikola::input_cursor_show(app->has_editor);
   }
 
+  if(nikola::input_key_pressed(nikola::KEY_P)) {
+    has_sun = !has_sun;
+  }
+
+  if(has_sun) {
+    app->frame_data.dir_light.direction.x = nikola::lerp(app->frame_data.dir_light.direction.x, -1.0f, (float)delta_time * 0.08);
+    app->frame_data.dir_light.direction.z = nikola::lerp(app->frame_data.dir_light.direction.z, -1.0f, (float)delta_time * 0.08);
+  }
+  else {
+    app->frame_data.dir_light.direction.x = nikola::lerp(app->frame_data.dir_light.direction.x, 1.0f, (float)delta_time * 0.08);
+    app->frame_data.dir_light.direction.z = nikola::lerp(app->frame_data.dir_light.direction.z, 1.0f, (float)delta_time * 0.08);
+  }
+
   // Update the camera
   nikola::camera_update(app->frame_data.camera);
-  // app->frame_data.spot_lights[0].position  = app->frame_data.camera.position;
-  // app->frame_data.spot_lights[0].direction = app->frame_data.camera.front;
 }
 
 void app_render(nikola::App* app) {
@@ -133,15 +144,16 @@ void app_render(nikola::App* app) {
 
   // Render the objects
   
-  nikola::renderer_queue_command(nikola::RENDERABLE_MESH, app->mesh_id, app->transforms[0].transform, app->material_id);
-  nikola::renderer_queue_command(nikola::RENDERABLE_MODEL, app->building_id, app->transforms[1].transform);
+  nikola::renderer_queue_command(nikola::RENDERABLE_MESH, app->mesh_id, app->transforms[0], app->material_id);
+  nikola::renderer_queue_command(nikola::RENDERABLE_MODEL, app->building_id, app->transforms[1]);
 
   nikola::renderer_end();
   
   // Render 2D 
-  nikola::batch_renderer_begin();
-  nikola::batch_render_fps(nikola::resources_get_font(app->font_id), nikola::Vec2(10.0f, 32.0f), 32.0f, nikola::Vec4(1.0f)); 
-  nikola::batch_renderer_end();
+  
+  // nikola::batch_renderer_begin();
+  // nikola::batch_render_fps(nikola::resources_get_font(app->font_id), nikola::Vec2(10.0f, 32.0f), 32.0f, nikola::Vec4(1.0f)); 
+  // nikola::batch_renderer_end();
 }
 
 void app_render_gui(nikola::App* app) {
@@ -155,10 +167,15 @@ void app_render_gui(nikola::App* app) {
   
   nikola::gui_begin_panel("Scene");
  
-  // Transforms
-  if(ImGui::CollapsingHeader("Transforms")) {
-    nikola::gui_edit_transform("Mesh Transform", &app->transforms[0]);
-    nikola::gui_edit_transform("Model Transform", &app->transforms[1]);
+  // Entities
+  if(ImGui::CollapsingHeader("Entities")) {
+    nikola::gui_edit_transform("Mesh", &app->transforms[0]);
+    nikola::gui_edit_transform("Model", &app->transforms[1]);
+  }
+
+  // Resources
+  if(ImGui::CollapsingHeader("Resources")) {
+    nikola::gui_edit_material("Material", nikola::resources_get_material(app->material_id));
   }
   
   // Lights
@@ -195,13 +212,6 @@ void app_render_gui(nikola::App* app) {
   if(ImGui::CollapsingHeader("Camera")) {
     nikola::gui_edit_camera("Editor Camera", &app->frame_data.camera); 
     ImGui::DragFloat3("Ambient", &app->frame_data.ambient[0], 0.1f, 0.0f, 1.0f);
-  }
-
-  // Renderer
-  if(ImGui::CollapsingHeader("Renderer")) {
-    // @TODO
-    // nikola::RenderPass* hdr_pass = nikola::renderer_peek_pass(1);
-    // ImGui::Checkbox("HDR active", &hdr_pass->is_active);
   }
 
   nikola::gui_end_panel();

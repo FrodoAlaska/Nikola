@@ -42,14 +42,17 @@ const f64 FLOAT_MAX = 3.40282e+38F;
 ///---------------------------------------------------------------------------------------------------------------------
 /// VertexType 
 enum VertexType {
-  /// A vertex with a position, a normal, and a U/V coordinate.
+  /// A vertex with position, normal color, and U/V coordinate components.
   VERTEX_TYPE_PNUV, 
   
-  /// A vertex with a position, a color, and a U/V coordinate.
+  /// A vertex with position, color, and U/V coordinate components.
   VERTEX_TYPE_PCUV, 
   
-  /// A vertex with a position, a normal, a color, and a U/V coordinate.
+  /// A vertex with position, normal, color, and U/V coordinate components.
   VERTEX_TYPE_PNCUV, 
+  
+  /// A vertex with position, normal, color, tangent, and U/V coordinate components.
+  VERTEX_TYPE_PNCTUV, 
 };
 /// VertexType 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -172,6 +175,18 @@ struct Vertex3D_PNCUV {
   Vec2 texture_coords;
 };
 /// Vertex3D_PNCUV (Position, Normal, Color (r, g, b, a), U/V texture coords)
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Vertex3D_PNCTUV (Position, Normal, Color (r, g, b, a), Tangent (x, y ,z), U/V texture coords)
+struct Vertex3D_PNCTUV {
+  Vec3 position;
+  Vec3 normal;
+  Vec4 color;
+  Vec3 tangent;
+  Vec2 texture_coords;
+};
+/// Vertex3D_PNCTUV (Position, Normal, Color (r, g, b, a), U/V texture coords)
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
