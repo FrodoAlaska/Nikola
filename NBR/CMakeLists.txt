@@ -19,7 +19,7 @@ set(ASSIMP_BUILD_GLTF_IMPORTER            ON)
 # ASSIMP
 FetchContent_Declare(
   assimp 
-  URL https://github.com/assimp/assimp/archive/refs/tags/v5.4.3.zip
+  URL https://github.com/assimp/assimp/archive/refs/tags/v6.0.2.zip
 )
 
 FetchContent_MakeAvailable(assimp)
@@ -66,6 +66,7 @@ set(NBR_SOURCES
   ${NBR_SRC_DIR}/image_loader.cpp
   ${NBR_SRC_DIR}/shader_loader.cpp
   ${NBR_SRC_DIR}/model_loader.cpp
+  ${NBR_SRC_DIR}/animation_loader.cpp
   ${NBR_SRC_DIR}/font_loader.cpp
   ${NBR_SRC_DIR}/audio_loader.cpp
 )
@@ -74,6 +75,9 @@ set(NBR_SOURCES
 ### Library Sources ###
 ############################################################
 set(LIBS_SOURCES 
+  # cgltf
+  ${NBR_LIBS_DIR}/cgltf/cgltf.cpp
+
   # stb
   ${NBR_LIBS_DIR}/stb/stb_image.cpp
   ${NBR_LIBS_DIR}/stb/stb_truetype.cpp

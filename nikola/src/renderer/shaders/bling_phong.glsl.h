@@ -11,9 +11,10 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
       
       layout (location = 0) in vec3 aPos;
       layout (location = 1) in vec3 aNormal;
-      layout (location = 2) in vec4 aColor;
-      layout (location = 3) in vec3 aTangent;
-      layout (location = 4) in vec2 aTexCoords;
+      layout (location = 2) in vec3 aTangent;
+      layout (location = 3) in vec4 aJointId;
+      layout (location = 4) in vec4 aJointWeight;
+      layout (location = 5) in vec2 aTexCoords;
 
       // Uniforms
 
@@ -25,6 +26,10 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
  
       layout(std140, binding = 1) uniform InstanceBuffer {
         mat4 u_model[1024];
+      };
+      
+      layout(std140, binding = 3) uniform AnimationBuffer {
+        mat4 u_skinning_palette[512]; // @TODO: Probably not the best count to have here
       };
 
       uniform mat4 u_light_space;
@@ -44,13 +49,30 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
       } vs_out;
       
       void main() {
-        vec4 model_space = u_model[gl_InstanceID] * vec4(aPos, 1.0);
-        mat3 model_m3    = transpose(inverse(mat3(u_model[gl_InstanceID])));
-
-        vs_out.normal     = normalize(model_m3 * aNormal);
-        vs_out.tangent    = normalize(model_m3 * aTangent);
+        // Applying the skinning of the animation 
+       
+        vec4 vertex_pos = vec4(0.0);
+        for(int i = 0; i < 4; i++) {
+          if(aJointId[i] == -1.0) { // The parent joint of the skeleton... skip
+            continue;
+          }
+          // @TEMP
+          else if(aJointId[i] == -2.0) { // This geometry is not supposed to be animated... break
+            vertex_pos = vec4(aPos, 1.0); 
+            break;
+          }
+          
+          vertex_pos += (u_skinning_palette[int(aJointId[i])] * vec4(aPos, 1.0)) * aJointWeight[i];
+        }
         
-        // @NOTE: Using the Gram-Schmidt process to re-othogonalize the tangent vector to make sure all vectors are perpendicular to each other
+        vec4 model_space = u_model[gl_InstanceID] * vertex_pos;
+
+        mat3 model_m3  = transpose(inverse(mat3(u_model[gl_InstanceID])));
+        vs_out.normal  = normalize(model_m3 * aNormal);
+        vs_out.tangent = normalize(model_m3 * aTangent);
+        
+        // @NOTE: Using the Gram-Schmidt process to re-othogonalize the tangent vector to make 
+        // sure all vectors are perpendicular to each other
         vs_out.tangent = normalize(vs_out.tangent - dot(vs_out.tangent, vs_out.normal) * vs_out.normal); 
         
         vec3 bitangent = cross(vs_out.normal, vs_out.tangent);
@@ -195,8 +217,6 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
       float calculate_shadow() {
         float shadow_depth = textureProj(u_shadow, fs_in.shadow_pos.xyw).r;
         return shadow_depth > fs_in.shadow_pos.z ? 0.0 : 0.8; 
-
-        // return textureProj(u_shadow, fs_in.shadow_pos);
       }
 
       vec3 accumulate_point_lights_color(const vec3 diffuse_texel, const vec3 specular_texel, const int points_max) {

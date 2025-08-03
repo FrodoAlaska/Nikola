@@ -45,6 +45,8 @@ static bool check_arg(const char* arg, const nikola::String& opt, const nikola::
 static nikola::ResourceType get_resource_type(const char* type) {
   nikola::String str_type = type;
 
+  // @TEMP: Yuck!
+
   if(str_type == "TEXTURE" || str_type == "texture") {
     return nikola::RESOURCE_TYPE_TEXTURE;
   }
@@ -57,6 +59,15 @@ static nikola::ResourceType get_resource_type(const char* type) {
   else if(str_type == "MODEL" || str_type == "model") {
     return nikola::RESOURCE_TYPE_MODEL;
   }
+  else if(str_type == "ANIMATION" || str_type == "animation") {
+    return nikola::RESOURCE_TYPE_ANIMATION;
+  }
+  else if(str_type == "FONT" || str_type == "font") {
+    return nikola::RESOURCE_TYPE_FONT;
+  }
+  else if(str_type == "AUDIO" || str_type == "audio") {
+    return nikola::RESOURCE_TYPE_AUDIO_BUFFER;
+  }
   
   NIKOLA_LOG_ERROR("Invalid resource type given \'%s\'", type);
   return (nikola::ResourceType)-1;
@@ -66,7 +77,7 @@ static bool lex_args(int argc, char** argv, nbr::ListContext* list) {
   nikola::FilePath path     = "DI"; 
   nikola::i32 resource_type = -1;
 
-  for(int i = 1; i < argc; i++) {
+  for(int i = 1; i < 6; i++) {
     if(check_arg(argv[i], ARG_PARENT_DIR)) {
       list->parent_dir = argv[++i]; 
     }
@@ -123,11 +134,13 @@ int main(int argc, char** argv) {
   }
   
   // Setting default values
+ 
   nbr::ListContext list; 
   list.parent_dir = nikola::filesystem_current_path();
   list.bin_dir    = list.parent_dir;
 
   // Extract the command line arguments
+  
   if (!lex_args(argc, argv, &list)) {
     return -1;
   }

@@ -23,6 +23,10 @@ const Quat quat_lerp(const Quat& start, const Quat& end, const f32 amount) {
   return glm::lerp(start, end, amount);
 }
 
+const Quat quat_slerp(const Quat& start, const Quat& end, const f32 amount) {
+  return glm::slerp(start, end, amount);
+}
+
 const Quat quat_set_mat3(const Mat3& mat) {
   return glm::quat_cast(mat);
 }

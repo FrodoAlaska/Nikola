@@ -254,6 +254,43 @@ void file_write_bytes(File& file, const NBRModel& model) {
   }
 }
 
+void file_write_bytes(File& file, const NBRAnimation& anim) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+
+  // Write the resource's information
+
+  // Write the joints
+
+  file_write_bytes(file, &anim.joints_count, sizeof(anim.joints_count)); 
+  for(sizei i = 0; i < anim.joints_count; i++) {
+    // Write the parent index 
+    file_write_bytes(file, &anim.joints[i].parent_index, sizeof(anim.joints[i].parent_index)); 
+
+    // Write the inverse bind matrix
+    file_write_bytes(file, &anim.joints[i].inverse_bind_pose, sizeof(anim.joints[i].inverse_bind_pose)); 
+
+    // Write the positions
+
+    file_write_bytes(file, &anim.joints[i].positions_count, sizeof(anim.joints[i].positions_count)); 
+    file_write_bytes(file, anim.joints[i].position_samples, sizeof(f32) * anim.joints[i].positions_count); 
+    
+    // Write the rotations
+
+    file_write_bytes(file, &anim.joints[i].rotations_count, sizeof(anim.joints[i].rotations_count)); 
+    file_write_bytes(file, anim.joints[i].rotation_samples, sizeof(f32) * anim.joints[i].rotations_count); 
+    
+    // Write the scales
+
+    file_write_bytes(file, &anim.joints[i].scales_count, sizeof(anim.joints[i].scales_count)); 
+    file_write_bytes(file, anim.joints[i].scale_samples, sizeof(f32) * anim.joints[i].scales_count); 
+  } 
+
+  // Write time info
+
+  file_write_bytes(file, &anim.duration, sizeof(anim.duration)); 
+  file_write_bytes(file, &anim.frame_rate, sizeof(anim.frame_rate)); 
+}
+
 void file_write_bytes(File& file, const NBRFont& font) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
   
@@ -667,6 +704,50 @@ void file_read_bytes(File& file, NBRModel* out_model) {
   for(sizei i = 0; i < out_model->textures_count; i++) {
     file_read_bytes(file, &out_model->textures[i]);
   }
+}
+
+void file_read_bytes(File& file, NBRAnimation* out_anim) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  NIKOLA_ASSERT(out_anim, "Invalid NBRAnimation type given to file_read_bytes");
+
+  // Read the joints
+
+  file_read_bytes(file, &out_anim->joints_count, sizeof(out_anim->joints_count)); 
+  out_anim->joints = (NBRJoint*)memory_allocate(sizeof(NBRJoint) * out_anim->joints_count);
+
+  for(sizei i = 0; i < out_anim->joints_count; i++) {
+    // Read the parent index 
+    file_read_bytes(file, &out_anim->joints[i].parent_index, sizeof(out_anim->joints[i].parent_index)); 
+
+    // Read the inverse bind matrix
+    file_read_bytes(file, &out_anim->joints[i].inverse_bind_pose, sizeof(out_anim->joints[i].inverse_bind_pose)); 
+
+    // Read the positions
+
+    file_read_bytes(file, &out_anim->joints[i].positions_count, sizeof(out_anim->joints[i].positions_count)); 
+    out_anim->joints[i].position_samples = (f32*)memory_allocate(sizeof(f32) * out_anim->joints[i].positions_count); 
+    
+    file_read_bytes(file, out_anim->joints[i].position_samples, sizeof(f32) * out_anim->joints[i].positions_count); 
+    
+    // Read the rotations
+
+    file_read_bytes(file, &out_anim->joints[i].rotations_count, sizeof(out_anim->joints[i].rotations_count)); 
+    out_anim->joints[i].rotation_samples = (f32*)memory_allocate(sizeof(f32) * out_anim->joints[i].rotations_count); 
+    
+    file_read_bytes(file, out_anim->joints[i].rotation_samples, sizeof(f32) * out_anim->joints[i].rotations_count); 
+    
+    // Read the scales
+
+    file_read_bytes(file, &out_anim->joints[i].scales_count, sizeof(out_anim->joints[i].scales_count)); 
+    out_anim->joints[i].scale_samples = (f32*)memory_allocate(sizeof(f32) * out_anim->joints[i].scales_count); 
+    
+    file_read_bytes(file, out_anim->joints[i].scale_samples, sizeof(f32) * out_anim->joints[i].scales_count); 
+  } 
+
+  // Read time info
+
+  file_read_bytes(file, &out_anim->duration, sizeof(out_anim->duration)); 
+  file_read_bytes(file, &out_anim->frame_rate, sizeof(out_anim->frame_rate)); 
 }
 
 void file_read_bytes(File& file, NBRFont* out_font) {

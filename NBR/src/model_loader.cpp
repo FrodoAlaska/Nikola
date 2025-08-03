@@ -35,19 +35,20 @@ static bool is_valid_extension(const nikola::FilePath& ext) {
 
 static void load_node_mesh(aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
   // Set a default vertex type (for now at least)
-  nbr_mesh->vertex_type = (nikola::u8)nikola::VERTEX_TYPE_PNCTUV;
+  nbr_mesh->vertex_type = (nikola::u8)nikola::VERTEX_TYPE_PNTIWUV;
 
   nikola::DynamicArray<nikola::f32> vertices;
   vertices.reserve(mesh->mNumVertices);
 
   // Go through all of the vertices of the given `mesh` and 
   // convert them to the appropriate vertex type. 
-  for(nikola::sizei i = 0; i < mesh->mNumVertices; i++) {
+
+  for(nikola::sizei iv = 0; iv < mesh->mNumVertices; iv++) {
     // Adding the position
     
-    nikola::f32 pos_x = mesh->mVertices[i].x;
-    nikola::f32 pos_y = mesh->mVertices[i].y;
-    nikola::f32 pos_z = mesh->mVertices[i].z;
+    nikola::f32 pos_x = mesh->mVertices[iv].x;
+    nikola::f32 pos_y = mesh->mVertices[iv].y;
+    nikola::f32 pos_z = mesh->mVertices[iv].z;
 
     vertices.push_back(pos_x); vertices.push_back(pos_y); vertices.push_back(pos_z);
     
@@ -58,28 +59,12 @@ static void load_node_mesh(aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
     nikola::f32 normal_z = 0.0f;
     
     if(mesh->HasNormals()) {
-      normal_x = mesh->mNormals[i].x;
-      normal_y = mesh->mNormals[i].y;
-      normal_z = mesh->mNormals[i].z;
+      normal_x = mesh->mNormals[iv].x;
+      normal_y = mesh->mNormals[iv].y;
+      normal_z = mesh->mNormals[iv].z;
     } 
    
     vertices.push_back(normal_x); vertices.push_back(normal_y); vertices.push_back(normal_z);
-
-    // Adding vertex colors 
-
-    nikola::f32 color_r = 1.0f;
-    nikola::f32 color_g = 1.0f;
-    nikola::f32 color_b = 1.0f;
-    nikola::f32 color_a = 1.0f;
-
-    if(mesh->HasVertexColors(0)) {
-      color_r = mesh->mColors[0][i].r;
-      color_g = mesh->mColors[0][i].g;
-      color_b = mesh->mColors[0][i].b;
-      color_a = mesh->mColors[0][i].a;
-    }
-    
-    vertices.push_back(color_r); vertices.push_back(color_g); vertices.push_back(color_b); vertices.push_back(color_a);
 
     // Adding tangents 
 
@@ -88,12 +73,40 @@ static void load_node_mesh(aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
     nikola::f32 tan_z = 0.0f;
 
     if(mesh->HasTangentsAndBitangents()) {
-      tan_x = mesh->mTangents[i].x;
-      tan_y = mesh->mTangents[i].y;
-      tan_z = mesh->mTangents[i].z;
+      tan_x = mesh->mTangents[iv].x;
+      tan_y = mesh->mTangents[iv].y;
+      tan_z = mesh->mTangents[iv].z;
     }
 
     vertices.push_back(tan_x); vertices.push_back(tan_y); vertices.push_back(tan_z);
+    
+    // Adding joints data
+
+    nikola::sizei bone_count = 0;
+    nikola::Vec4 ids(-2.0f); // If the values are still -2 after the the loop below, it means this particular mesh does not have bones...
+    nikola::Vec4 weights(0.0f);
+
+    if(mesh->HasBones()) {
+      ids = nikola::Vec4(-1.0f);
+
+      for(nikola::u32 ib = 0; ib < mesh->mNumBones; ib++) {
+        for(nikola::u32 iw = 0; iw < mesh->mBones[ib]->mNumWeights; iw++) {
+          // We only care about the bone influencing _this_ vertex
+          if(mesh->mBones[ib]->mWeights[iw].mVertexId != iv) {
+            continue; 
+          }
+
+          // Another bone added to the pile!
+
+          ids[bone_count]     = ib;
+          weights[bone_count] = iw;
+          bone_count++;
+        }
+      }
+    }
+
+    vertices.push_back(ids.x);     vertices.push_back(ids.y);     vertices.push_back(ids.z);     vertices.push_back(ids.w);
+    vertices.push_back(weights.x); vertices.push_back(weights.y); vertices.push_back(weights.z); vertices.push_back(weights.w);
 
     // Adding texture coordinates
     
@@ -101,8 +114,8 @@ static void load_node_mesh(aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
     nikola::f32 coord_v = 0.0f; 
 
     if(mesh->mTextureCoords[0]) {
-      coord_u = mesh->mTextureCoords[0][i].x;
-      coord_v = mesh->mTextureCoords[0][i].y;
+      coord_u = mesh->mTextureCoords[0][iv].x;
+      coord_v = mesh->mTextureCoords[0][iv].y;
     } 
    
     vertices.push_back(coord_u); vertices.push_back(coord_v);
@@ -115,6 +128,7 @@ static void load_node_mesh(aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
   indices.reserve(mesh->mNumFaces);
 
   // Go through all of the faces to retrieve the indices
+  
   for(nikola::sizei i = 0; i < mesh->mNumFaces; i++) {
     aiFace* face = &mesh->mFaces[i];
 
@@ -122,6 +136,7 @@ static void load_node_mesh(aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
       indices.push_back((nikola::u32)face->mIndices[j]);
     }
   } 
+  
   nikola::sizei bytes_size;
 
   // Allocate a new vertices array for the mesh
@@ -129,6 +144,7 @@ static void load_node_mesh(aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
   nbr_mesh->vertices_count = vertices.size(); 
   bytes_size               = sizeof(nikola::f32) * nbr_mesh->vertices_count;
   nbr_mesh->vertices       = (nikola::f32*)nikola::memory_allocate(bytes_size);
+  
   nikola::memory_copy(nbr_mesh->vertices, vertices.data(), bytes_size);
   
   // Allocate a new indices array for the mesh
@@ -136,6 +152,7 @@ static void load_node_mesh(aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
   nbr_mesh->indices_count = indices.size();
   bytes_size              = sizeof(nikola::u32) * nbr_mesh->indices_count;
   nbr_mesh->indices       = (nikola::u32*)nikola::memory_allocate(bytes_size);
+  
   nikola::memory_copy(nbr_mesh->indices, indices.data(), bytes_size);
 }
 
@@ -229,19 +246,25 @@ bool model_loader_load(nikola::NBRModel* model, const nikola::FilePath& path) {
 
   // Load Assimp file
   
+  int flags = (aiProcess_Triangulate           | 
+               aiProcess_FlipUVs               | 
+               aiProcess_CalcTangentSpace      |
+               aiProcess_GenNormals            | 
+               aiProcess_SplitLargeMeshes      |
+               aiProcess_ImproveCacheLocality  | 
+               aiProcess_JoinIdenticalVertices |
+               aiProcess_OptimizeMeshes        | 
+               aiProcess_OptimizeGraph         |
+               aiProcess_LimitBoneWeights      | 
+               aiProcess_GlobalScale); 
+
   Assimp::Importer imp; 
-  int flags = (aiProcess_Triangulate          | 
-               aiProcess_FlipUVs              | 
-               aiProcess_CalcTangentSpace     |
-               aiProcess_GenNormals           | 
-               aiProcess_SplitLargeMeshes     |
-               aiProcess_ImproveCacheLocality | 
-               aiProcess_OptimizeMeshes       | 
-               aiProcess_OptimizeGraph); 
+  imp.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, 1.0f);
+  imp.SetPropertyInteger(AI_CONFIG_PP_LBW_MAX_WEIGHTS, nikola::NBR_JOINT_WEIGHTS_MAX);
 
   const aiScene* scene = imp.ReadFile(path, flags);
   if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-    NIKOLA_LOG_ERROR("Could not load Model at %s", imp.GetErrorString());
+    NIKOLA_LOG_ERROR("Could not load Model at \'%s\' - %s", path.c_str(), imp.GetErrorString());
     return false;
   }
 
@@ -256,7 +279,7 @@ bool model_loader_load(nikola::NBRModel* model, const nikola::FilePath& path) {
   model->meshes_count  = data.meshes.size();
   model->meshes        = (nikola::NBRMesh*)nikola::memory_allocate(sizeof(nikola::NBRMesh) * model->meshes_count);
   nikola::memory_copy(model->meshes, data.meshes.data(), data.meshes.size() * sizeof(nikola::NBRMesh));
-  
+
   // Materials init
   
   load_scene_materials(scene, &data);  

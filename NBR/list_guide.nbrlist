@@ -15,8 +15,9 @@
 #   - CUBEMAP 
 #   - SHADER 
 #   - MODEL 
-#   - AUDIO 
+#   - ANIMATION 
 #   - FONT
+#   - AUDIO 
 #
 # And yes, you can also use the lower case version of all of these.
 #

@@ -27,6 +27,7 @@ struct ResourceGroup {
   DynamicArray<ShaderContext*> shader_contexts;
   DynamicArray<Skybox*> skyboxes;
   DynamicArray<Model*> models;
+  DynamicArray<Animation*> animations;
   DynamicArray<Font*> fonts;
 
   HashMap<String, ResourceID> named_ids;
@@ -373,9 +374,7 @@ void resource_manager_init() {
 }
 
 void resource_manager_shutdown() {
-  // Get rid of any cache group
   resources_destroy_group(RESOURCE_CACHE_ID);
-  
   NIKOLA_LOG_INFO("Successfully shutdown the resource manager");
 }
 
@@ -388,8 +387,8 @@ u16 resources_create_group(const String& name, const FilePath& parent_dir) {
   };
 
   // Create the parent directory if it doesn't exist
-  if(!nikola::filesystem_exists(parent_dir)) {
-    nikola::filesystem_create_directory(parent_dir);
+  if(!filesystem_exists(parent_dir)) {
+    filesystem_create_directory(parent_dir);
   }
 
   // Add a file watcher to the parent directory
@@ -414,6 +413,7 @@ void resources_clear_group(const ResourceGroupID& group_id) {
   group->shader_contexts.clear();
   group->skyboxes.clear();
   group->models.clear();
+  group->animations.clear();
   group->fonts.clear();
   
   NIKOLA_LOG_INFO("Resource group \'%s\' was successfully cleared", group->name.c_str());
@@ -428,6 +428,7 @@ void resources_destroy_group(const ResourceGroupID& group_id) {
   ResourceGroup* group = &s_manager.groups[group_id];
 
   // Destroy compound resources
+  
   DESTROY_COMP_RESOURCE_MAP(group, meshes);
   DESTROY_COMP_RESOURCE_MAP(group, materials);
   DESTROY_COMP_RESOURCE_MAP(group, shader_contexts);
@@ -435,7 +436,21 @@ void resources_destroy_group(const ResourceGroupID& group_id) {
   DESTROY_COMP_RESOURCE_MAP(group, models);
   DESTROY_COMP_RESOURCE_MAP(group, fonts);
 
+  // @TODO: No. 
+  for(auto& anim : group->animations) {
+    for(auto& joint : anim->joints) {
+      joint->position_samples.clear();
+      joint->rotation_samples.clear();
+      joint->scale_samples.clear();
+
+      delete joint;
+    }
+
+    delete anim;
+  }
+
   // Destroy core resources
+  
   DESTROY_CORE_RESOURCE_MAP(group, buffers, gfx_buffer_destroy);
   DESTROY_CORE_RESOURCE_MAP(group, textures, gfx_texture_destroy);
   DESTROY_CORE_RESOURCE_MAP(group, cubemaps, gfx_cubemap_destroy);
@@ -1057,6 +1072,127 @@ ResourceID resources_push_model(const ResourceGroupID& group_id, const FilePath&
   return id;
 }
 
+ResourceID resources_push_animation(const ResourceGroupID& group_id, const FilePath& nbr_path, const ResourceID& model_id) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
+  
+  // Load the NBR file
+  
+  NBRHeader header;
+  File file;
+  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
+    return ResourceID{};
+  }
+  
+  // Make sure it is the correct resource type
+  NIKOLA_ASSERT((header.resource_type == RESOURCE_TYPE_ANIMATION), "Expected RESOURCE_TYPE_ANIMATION");
+
+  // Allocate the animation
+  Animation* anim = new Animation{};
+
+  // Load the NBRAnimation
+
+  NBRAnimation nbr_anim{};
+  file_read_bytes(file, &nbr_anim);
+
+  // Convert the NBR format into a valid animation
+ 
+  anim->joints.reserve(nbr_anim.joints_count);
+
+  for(u16 i = 0; i < nbr_anim.joints_count; i++) {
+    Joint* joint = new Joint{};
+
+    // Convert the positions
+
+    joint->position_samples.reserve(nbr_anim.joints[i].positions_count);
+    for(u16 ip = 0; ip < nbr_anim.joints[i].positions_count; ip += 4) {
+      VectorAnimSample sample;
+
+      sample.value.x = nbr_anim.joints[i].position_samples[ip + 0];
+      sample.value.y = nbr_anim.joints[i].position_samples[ip + 1];
+      sample.value.z = nbr_anim.joints[i].position_samples[ip + 2];
+      sample.time    = nbr_anim.joints[i].position_samples[ip + 3];
+
+      joint->position_samples.push_back(sample);
+    }
+    
+    // Convert the rotations
+
+    joint->rotation_samples.reserve(nbr_anim.joints[i].rotations_count);
+    for(u16 ir = 0; ir < nbr_anim.joints[i].rotations_count; ir += 5) {
+      QuatAnimSample sample;
+
+      sample.value.x = nbr_anim.joints[i].rotation_samples[ir + 0];
+      sample.value.y = nbr_anim.joints[i].rotation_samples[ir + 1];
+      sample.value.z = nbr_anim.joints[i].rotation_samples[ir + 2];
+      sample.value.w = nbr_anim.joints[i].rotation_samples[ir + 3];
+      sample.time    = nbr_anim.joints[i].rotation_samples[ir + 4];
+
+      joint->rotation_samples.push_back(sample);
+    }
+    
+    // Convert the scales
+
+    joint->scale_samples.reserve(nbr_anim.joints[i].scales_count);
+    for(u16 is = 0; is < nbr_anim.joints[i].scales_count; is += 4) {
+      VectorAnimSample sample;
+
+      sample.value.x = nbr_anim.joints[i].scale_samples[is + 0];
+      sample.value.y = nbr_anim.joints[i].scale_samples[is + 1];
+      sample.value.z = nbr_anim.joints[i].scale_samples[is + 2];
+      sample.time    = nbr_anim.joints[i].scale_samples[is + 3];
+
+      joint->scale_samples.push_back(sample);
+    }
+
+    // Conver other joint information
+
+    joint->parent_index = (i32)nbr_anim.joints[i].parent_index;
+
+    f32* matrix = &nbr_anim.joints[i].inverse_bind_pose[0];
+
+    joint->inverse_bind_pose = Mat4(matrix[0],  matrix[1],  matrix[2],  matrix[3],
+                                    matrix[4],  matrix[5],  matrix[6],  matrix[7], 
+                                    matrix[8],  matrix[9],  matrix[10], matrix[11],  
+                                    matrix[12], matrix[13], matrix[14], matrix[15]); 
+
+    anim->joints.push_back(joint);
+  }
+
+  anim->skinned_model = resources_get_model(model_id); 
+  anim->duration      = nbr_anim.duration;
+  anim->frame_rate    = nbr_anim.duration;
+
+  // New animation added!
+  
+  ResourceID id;
+  PUSH_RESOURCE(group, animations, anim, RESOURCE_TYPE_ANIMATION, id);
+
+  // Freeing NBR data
+  
+  for(nikola::sizei i = 0; i < nbr_anim.joints_count; i++) {
+    memory_free(nbr_anim.joints[i].position_samples);
+    memory_free(nbr_anim.joints[i].rotation_samples);
+    memory_free(nbr_anim.joints[i].scale_samples);
+  } 
+
+  memory_free(nbr_anim.joints);
+  file_close(file); 
+
+  // Add the resource to the named resources
+  
+  FilePath filename_without_ext = filepath_filename(nbr_path);
+  filepath_set_extension(filename_without_ext, "");
+  group->named_ids[filename_without_ext] = id;
+
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed animation:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Joints     = %i", nbr_anim.joints_count);
+  NIKOLA_LOG_DEBUG("     Duration   = %f", nbr_anim.duration);
+  NIKOLA_LOG_DEBUG("     Frame rate = %f", nbr_anim.frame_rate);
+  NIKOLA_LOG_DEBUG("     Path       = %s", nbr_path.c_str());
+  return id;
+}
+
 ResourceID resources_push_font(const ResourceGroupID& group_id, const FilePath& nbr_path) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
@@ -1226,7 +1362,7 @@ ResourceID resources_push_audio_buffer(const ResourceGroupID& group_id, const Fi
   return id;
 }
 
-void resources_push_dir(const ResourceGroupID& group_id, const FilePath& dir) {
+void resources_push_dir(const ResourceGroupID& group_id, const FilePath& dir, const bool async) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
  
@@ -1290,6 +1426,11 @@ Skybox* resources_get_skybox(const ResourceID& id) {
 Model* resources_get_model(const ResourceID& id) {
   ResourceGroup* group = &s_manager.groups[id.group];
   return get_resource(id, group->models, RESOURCE_TYPE_MODEL);
+}
+
+Animation* resources_get_animation(const ResourceID& id) {
+  ResourceGroup* group = &s_manager.groups[id.group];
+  return get_resource(id, group->animations, RESOURCE_TYPE_ANIMATION);
 }
 
 Font* resources_get_font(const ResourceID& id) {

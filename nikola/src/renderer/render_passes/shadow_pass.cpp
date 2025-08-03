@@ -81,11 +81,10 @@ void shadow_pass_init(Window* window) {
 void shadow_pass_prepare(RenderPass* pass, const FrameData& data) {
   // Setup the light projection matrix
 
-  // @TODO (Shadow): Only supports directional light? Do better... or not. It actually looks fine.
+  // @TODO (Shadow): Only supports directional light? Do better...
 
-  s_state.light_projection = mat4_ortho(-15.0f, 15.0f, -15.0f, 15.0f, 1.0f, 7.5f);
-  // s_state.light_view       = mat4_look_at(data.camera.position, data.camera.position + data.dir_light.direction, Vec3(0.0f, 1.0f, 0.0f));
-  s_state.light_view       = mat4_look_at(Vec3(-2.0f, 4.0f, -1.0f), Vec3(0.0f), Vec3(0.0f, 1.0f, 0.0f));
+  s_state.light_projection = mat4_ortho(-140.0f, 140.0f, -140.0f, 140.0f, -10.0f, 20.0f);
+  s_state.light_view       = mat4_look_at(data.dir_light.direction, Vec3(0.0f), Vec3(0.0f, 1.0f, 0.0f));
 
   // Set uniforms
  

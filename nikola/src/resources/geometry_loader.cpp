@@ -8,7 +8,7 @@ namespace nikola { // Start of nikola
 /// ----------------------------------------------------------------------
 /// Private functions  
 
-static void generate_normals(Vertex3D_PNCTUV* vertices, const u32 indices_count, const u32* indices) {
+static void generate_normals(Vertex3D_PNTIWUV* vertices, const u32 indices_count, const u32* indices) {
   for(u32 i = 0; i < indices_count; i += 3) {
     u32 idx0 = indices[i + 0];
     u32 idx1 = indices[i + 1];
@@ -25,7 +25,7 @@ static void generate_normals(Vertex3D_PNCTUV* vertices, const u32 indices_count,
   }
 }
 
-static void generate_tangents(Vertex3D_PNCTUV* vertices, const u32 indices_count, const u32* indices) {
+static void generate_tangents(Vertex3D_PNTIWUV* vertices, const u32 indices_count, const u32* indices) {
   // Credits to Travis Vroman for this code. 
   // https://github.com/travisvroman/kohi/blob/main/kohi.core/src/math/geometry.c
 
@@ -102,7 +102,7 @@ static void create_cube_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pi
 
   // Vertices init
   
-  Vertex3D_PNCTUV vertices[24];
+  Vertex3D_PNTIWUV vertices[24];
   
   // Position, Color
 
@@ -112,11 +112,6 @@ static void create_cube_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pi
   vertices[1].position = Vec3( 1.0f, -1.0f, -1.0f);
   vertices[2].position = Vec3( 1.0f,  1.0f, -1.0f);
   vertices[3].position = Vec3(-1.0f,  1.0f, -1.0f);
-  
-  vertices[0].color = Vec4(1.0f);
-  vertices[1].color = Vec4(1.0f);
-  vertices[2].color = Vec4(1.0f);
-  vertices[3].color = Vec4(1.0f);
   
   vertices[0].texture_coords = Vec2(0.0f, 0.0f);
   vertices[1].texture_coords = Vec2(1.0f, 0.0f);
@@ -130,11 +125,6 @@ static void create_cube_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pi
   vertices[6].position = Vec3( 1.0f,  1.0f,  1.0f);
   vertices[7].position = Vec3(-1.0f,  1.0f,  1.0f);
   
-  vertices[4].color = Vec4(1.0f);
-  vertices[5].color = Vec4(1.0f);
-  vertices[6].color = Vec4(1.0f);
-  vertices[7].color = Vec4(1.0f);
-  
   vertices[4].texture_coords = Vec2(0.0f, 0.0f);
   vertices[5].texture_coords = Vec2(1.0f, 0.0f);
   vertices[6].texture_coords = Vec2(1.0f, 1.0f);
@@ -146,11 +136,6 @@ static void create_cube_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pi
   vertices[9].position  = Vec3(-1.0f,  1.0f, -1.0f);
   vertices[10].position = Vec3(-1.0f, -1.0f, -1.0f);
   vertices[11].position = Vec3(-1.0f, -1.0f,  1.0f);
-  
-  vertices[8].color  = Vec4(1.0f);
-  vertices[9].color  = Vec4(1.0f);
-  vertices[10].color = Vec4(1.0f);
-  vertices[11].color = Vec4(1.0f);
   
   vertices[8].texture_coords  = Vec2(1.0f, 0.0f);
   vertices[9].texture_coords  = Vec2(1.0f, 1.0f);
@@ -164,11 +149,6 @@ static void create_cube_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pi
   vertices[14].position = Vec3(1.0f, -1.0f, -1.0f);
   vertices[15].position = Vec3(1.0f, -1.0f,  1.0f);
   
-  vertices[12].color = Vec4(1.0f);
-  vertices[13].color = Vec4(1.0f);
-  vertices[14].color = Vec4(1.0f);
-  vertices[15].color = Vec4(1.0f);
-  
   vertices[12].texture_coords = Vec2(1.0f, 0.0f);
   vertices[13].texture_coords = Vec2(1.0f, 1.0f);
   vertices[14].texture_coords = Vec2(0.0f, 1.0f);
@@ -181,11 +161,6 @@ static void create_cube_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pi
   vertices[18].position = Vec3( 1.0f, -1.0f,  1.0f);
   vertices[19].position = Vec3(-1.0f, -1.0f,  1.0f);
   
-  vertices[16].color = Vec4(1.0f);
-  vertices[17].color = Vec4(1.0f);
-  vertices[18].color = Vec4(1.0f);
-  vertices[19].color = Vec4(1.0f);
-  
   vertices[16].texture_coords = Vec2(0.0f, 1.0f);
   vertices[17].texture_coords = Vec2(1.0f, 1.0f);
   vertices[18].texture_coords = Vec2(1.0f, 0.0f);
@@ -197,11 +172,6 @@ static void create_cube_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pi
   vertices[21].position = Vec3( 1.0f,  1.0f, -1.0f);
   vertices[22].position = Vec3( 1.0f,  1.0f,  1.0f);
   vertices[23].position = Vec3(-1.0f,  1.0f,  1.0f);
-  
-  vertices[20].color = Vec4(1.0f);
-  vertices[21].color = Vec4(1.0f);
-  vertices[22].color = Vec4(1.0f);
-  vertices[23].color = Vec4(1.0f);
   
   vertices[20].texture_coords = Vec2(0.0f, 1.0f);
   vertices[21].texture_coords = Vec2(1.0f, 1.0f);
@@ -236,7 +206,7 @@ static void create_cube_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pi
   pipe_desc->indices_count = 36;  
 
   // Layout init
-  vertex_type_layout(VERTEX_TYPE_PNCTUV, &pipe_desc->layouts[0]);
+  vertex_type_layout(VERTEX_TYPE_PNTIWUV, &pipe_desc->layouts[0]);
 
   // Draw mode init
   pipe_desc->draw_mode = GFX_DRAW_MODE_TRIANGLE;

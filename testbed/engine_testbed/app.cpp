@@ -10,10 +10,11 @@ struct nikola::App {
   nikola::FrameData frame_data;
 
   nikola::ResourceGroupID res_group_id;
-  nikola::ResourceID mesh_id, building_id;
+  nikola::ResourceID mesh_id, building_id, model_id, animation_id;
   nikola::ResourceID font_id, material_id;
 
-  nikola::Transform transforms[2];
+  nikola::Animator animator;
+  nikola::Transform transforms[3];
 
   bool has_editor = false;
 };
@@ -32,15 +33,24 @@ static void init_resources(nikola::App* app) {
   app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group_id, "cubemaps/accurate_night.nbr");
 
   // Mesh init
+  
   app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
 
   // Model init
-  app->building_id = nikola::resources_push_model(app->res_group_id, "models/bridge.nbr");
+ 
+  // nikola::resources_push_dir(app->res_group_id, "models/");
+
+  // app->model_id    = nikola::resources_push_model(app->res_group_id, "models/zombie_idle.nbr");
+  app->building_id = nikola::resources_push_model(app->res_group_id, "models/medieval_bridge.nbr");
+
+  // Animations init
+  // app->animation_id = nikola::resources_push_animation(app->res_group_id, "animations/zombie_idle.nbr", app->model_id);
 
   // Font init
   app->font_id = nikola::resources_push_font(app->res_group_id, "fonts/bit5x3.nbr");
 
   // Material init
+  
   nikola::MaterialDesc mat_desc = {
     .diffuse_id = nikola::resources_push_texture(app->res_group_id, "textures/paviment.nbr"),
     .normal_id  = nikola::resources_push_texture(app->res_group_id, "textures/paviment_normal.nbr"),
@@ -67,8 +77,8 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // Camera init
   nikola::CameraDesc cam_desc = {
-    .position     = nikola::Vec3(-40.0f, 2.5f, -18.0f),
-    .target       = nikola::Vec3(-3.0f, 2.5f, 0.0f),
+    .position     = nikola::Vec3(-40.0f, 7.0f, 28.0f),
+    .target       = nikola::Vec3(-3.0f, 7.0f, 0.0f),
     .up_axis      = nikola::Vec3(0.0f, 1.0f, 0.0f),
     .aspect_ratio = nikola::window_get_aspect_ratio(app->window),
     .move_func    = nikola::camera_free_move_func,
@@ -79,6 +89,9 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Resoruces init
   init_resources(app);
 
+  // Animators init 
+  // nikola::animator_create(&app->animator, app->animation_id); 
+
   // Transform init
   
   nikola::transform_translate(app->transforms[0], nikola::Vec3(5.0f, 0.05f, 5.0f));
@@ -87,6 +100,9 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::transform_translate(app->transforms[1], nikola::Vec3(5.0f, 0.2f, 70.0f));
   nikola::transform_scale(app->transforms[1], nikola::Vec3(1.0f));
   nikola::transform_rotate(app->transforms[1], nikola::Vec3(-90.0f * nikola::DEG2RAD, 0.0f, 0.0f));
+  
+  nikola::transform_translate(app->transforms[2], nikola::Vec3(5.5f, 10.5f, 30.0f));
+  nikola::transform_scale(app->transforms[2], nikola::Vec3(2.5f));
 
   // Lights init
 
@@ -105,8 +121,6 @@ void app_shutdown(nikola::App* app) {
   delete app;
 }
 
-static bool has_sun = false;
-
 void app_update(nikola::App* app, const nikola::f64 delta_time) {
   // Quit the application when the specified exit key is pressed
   if(nikola::input_key_pressed(nikola::KEY_ESCAPE)) {
@@ -122,18 +136,8 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     nikola::input_cursor_show(app->has_editor);
   }
 
-  if(nikola::input_key_pressed(nikola::KEY_P)) {
-    has_sun = !has_sun;
-  }
-
-  if(has_sun) {
-    app->frame_data.dir_light.direction.x = nikola::lerp(app->frame_data.dir_light.direction.x, -1.0f, (float)delta_time * 0.08);
-    app->frame_data.dir_light.direction.z = nikola::lerp(app->frame_data.dir_light.direction.z, -1.0f, (float)delta_time * 0.08);
-  }
-  else {
-    app->frame_data.dir_light.direction.x = nikola::lerp(app->frame_data.dir_light.direction.x, 1.0f, (float)delta_time * 0.08);
-    app->frame_data.dir_light.direction.z = nikola::lerp(app->frame_data.dir_light.direction.z, 1.0f, (float)delta_time * 0.08);
-  }
+  // Update the animator
+  // nikola::animator_animate(app->animator, (nikola::f32)delta_time);
 
   // Update the camera
   nikola::camera_update(app->frame_data.camera);
@@ -145,8 +149,9 @@ void app_render(nikola::App* app) {
 
   // Render the objects
   
-  nikola::renderer_queue_command(nikola::RENDERABLE_MESH, app->mesh_id, app->transforms[0], app->material_id);
-  nikola::renderer_queue_command(nikola::RENDERABLE_MODEL, app->building_id, app->transforms[1]);
+  nikola::renderer_queue_mesh(app->mesh_id, app->transforms[0], app->material_id);
+  nikola::renderer_queue_model(app->building_id, app->transforms[1]);
+  // nikola::renderer_queue_animation(app->animation_id, app->transforms[2]);
 
   nikola::renderer_end();
   
@@ -171,7 +176,8 @@ void app_render_gui(nikola::App* app) {
   // Entities
   if(ImGui::CollapsingHeader("Entities")) {
     nikola::gui_edit_transform("Mesh", &app->transforms[0]);
-    nikola::gui_edit_transform("Model", &app->transforms[1]);
+    nikola::gui_edit_transform("Bridge", &app->transforms[1]);
+    nikola::gui_edit_transform("Other", &app->transforms[2]);
   }
 
   // Resources

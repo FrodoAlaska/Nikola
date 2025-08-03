@@ -55,6 +55,10 @@ const f32 pow(const f32 x, const f32 y) {
   return glm::pow(x, y);
 }
 
+const f32 fmod(const f32 x, const f32 y) {
+  return glm::mod(x, y);
+}
+
 const f32 min_float(const f32 x, const f32 y) {
   return glm::min(x, y);
 }

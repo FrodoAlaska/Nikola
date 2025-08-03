@@ -47,6 +47,7 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/renderer/renderer.cpp
   ${NIKOLA_SRC_DIR}/renderer/batch_renderer.cpp
   ${NIKOLA_SRC_DIR}/renderer/particles.cpp
+  ${NIKOLA_SRC_DIR}/renderer/animator.cpp
 
   ${NIKOLA_SRC_DIR}/renderer/render_passes/light_pass.cpp
   ${NIKOLA_SRC_DIR}/renderer/render_passes/shadow_pass.cpp

@@ -155,11 +155,11 @@ void particles_update(const f64 delta_time) {
     // Send out a render command for the emitter 
     // @TEMP (Particles)
 
-    renderer_queue_command_instanced(RENDERABLE_BILLBOARD,  
-                                     s_manager.shape_id, 
-                                     emitter->transforms, 
-                                     emitter->particles_count, 
-                                     s_manager.material_id);
+    
+    renderer_queue_billboard_instanced(s_manager.shape_id, 
+                                       emitter->transforms, 
+                                       emitter->particles_count, 
+                                       s_manager.material_id);
 
     // Manage lifetimes
   

@@ -31,6 +31,10 @@ void light_pass_init(Window* window) {
   shader_context_set_uniform_buffer(resources_get_shader_context(pass_desc.shader_context_id), 
                                     SHADER_INSTANCE_BUFFER_INDEX, 
                                     (GfxBuffer*)renderer_get_defaults().instance_buffer);
+  
+  shader_context_set_uniform_buffer(resources_get_shader_context(pass_desc.shader_context_id), 
+                                    SHADER_ANIMATION_BUFFER_INDEX, 
+                                    (GfxBuffer*)renderer_get_defaults().animation_buffer);
 
   // Frame size and flags init
 

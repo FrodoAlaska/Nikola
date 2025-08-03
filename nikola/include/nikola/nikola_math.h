@@ -53,6 +53,9 @@ enum VertexType {
   
   /// A vertex with position, normal, color, tangent, and U/V coordinate components.
   VERTEX_TYPE_PNCTUV, 
+  
+  /// A vertex with position, normal, tangent, joint ids, joint weights, and U/V coordinate components.
+  VERTEX_TYPE_PNTIWUV, 
 };
 /// VertexType 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -138,9 +141,10 @@ typedef glm::quat Quat;
 ///---------------------------------------------------------------------------------------------------------------------
 /// Transform
 struct Transform {
-  Vec3 position  = Vec3(0.0f); 
-  Vec3 scale     = Vec3(1.0f);
-  Quat rotation  = Quat(0.0f, 0.0f, 0.0f, 0.0f);
+  Vec3 position = Vec3(0.0f); 
+  Vec3 scale    = Vec3(1.0f);
+  Quat rotation = Quat(0.0f, 0.0f, 0.0f, 0.0f);
+  
   Mat4 transform = Mat4(1.0f);
 };
 /// Transform
@@ -190,6 +194,48 @@ struct Vertex3D_PNCTUV {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// Vertex3D_PNTIWUV (Position, Normal, Joint IDS, Joint Weights, U/V texture coords)
+struct Vertex3D_PNTIWUV {
+  Vec3 position; 
+  Vec3 normal;
+  Vec3 tangent;
+
+  Vec4 joint_ids     = Vec4(-2.0f); 
+  Vec4 joint_weights = Vec4(0.0f); 
+  
+  Vec2 texture_coords;
+};
+/// Vertex3D_PNTIWUV (Position, Normal, Joint IDS, Joint Weights, U/V texture coords)
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// ScalarAnimSample
+struct ScalarAnimSample {
+  f32 value; 
+  f32 time;
+};
+/// ScalarAnimSample
+///---------------------------------------------------------------------------------------------------------------------
+  
+///---------------------------------------------------------------------------------------------------------------------
+/// VectorAnimSample
+struct VectorAnimSample {
+    Vec3 value; 
+    f32 time;
+};
+/// VectorAnimSample
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// QuatAnimSample
+struct QuatAnimSample {
+  Quat value; 
+  f32 time;
+};
+/// QuatAnimSample
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// Math common functions
 
 /// Clamp the float `value` between `min` and `max`
@@ -224,6 +270,9 @@ NIKOLA_API const f32 abs(const f32 x);
 
 /// Returns `x` raised to the power of y
 NIKOLA_API const f32 pow(const f32 x, const f32 y);
+
+/// Returns `x - y * floor(x / y)`.
+NIKOLA_API const f32 fmod(const f32 x, const f32 y);
 
 /// Returns the lesser value between `x` and `y`
 NIKOLA_API const f32 min_float(const f32 x, const f32 y);
@@ -477,6 +526,9 @@ NIKOLA_API const Quat quat_normalize(const Quat& q);
 
 /// Returns the linearly interpolated quaternion from `start` to `end` by `amount`.
 NIKOLA_API const Quat quat_lerp(const Quat& start, const Quat& end, const f32 amount);
+
+/// Returns the smooth linearly interpolated quaternion from `start` to `end` by `amount`.
+NIKOLA_API const Quat quat_slerp(const Quat& start, const Quat& end, const f32 amount);
 
 /// Sets and returns the rotation of a quaternion using the given 3x3 `mat`.
 NIKOLA_API const Quat quat_set_mat3(const Mat3& mat);

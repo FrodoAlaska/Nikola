@@ -100,13 +100,23 @@ static void init_defaults() {
 
   // Instance buffer init
   
-  GfxBufferDesc inst_buff_desc = {
+  buff_desc = {
     .data  = nullptr,
     .size  = sizeof(Mat4) * RENDERER_MAX_INSTANCES,
     .type  = GFX_BUFFER_UNIFORM, 
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
-  s_renderer.defaults.instance_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, inst_buff_desc));
+  s_renderer.defaults.instance_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
+
+  // Animation buffer init
+  
+  buff_desc = {
+    .data  = nullptr,
+    .size  = sizeof(Mat4) * JOINTS_MAX,
+    .type  = GFX_BUFFER_UNIFORM, 
+    .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
+  };
+  s_renderer.defaults.animation_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
 }
 
 static void init_pipeline() {
@@ -154,23 +164,6 @@ static void init_pipeline() {
 
   // Pipeline init
   s_renderer.defaults.screen_quad = gfx_pipeline_create(s_renderer.context, pipe_desc);
-}
-
-static void queue_model(Model* model, Material* material, const Transform* transforms, const sizei count) {
-  for(sizei i = 0; i < model->meshes.size(); i++) {
-    Mesh* mesh    = model->meshes[i];
-    Material* mat = model->materials[model->material_indices[i]];
-
-    // Let the main given material "influence" the model's material 
-
-    mat->shininess    = material->shininess;
-    mat->transparency = material->transparency;
-    mat->depth_mask   = material->depth_mask;
-
-    // @TODO(Renderer): Have a transform parent-child relationship
-
-    s_renderer.queues[RENDER_QUEUE_OPAQUE].emplace_back(transforms, mesh->pipe, mat, count);
-  }  
 }
 
 /// Private functions
@@ -446,43 +439,124 @@ RenderPass* renderer_peek_pass(const sizei index) {
   return &s_renderer.passes_pool[index];
 }
 
-void renderer_queue_command_instanced(const RenderableType& type,    
-                                      const ResourceID& res_id, 
-                                      const Transform* transforms, 
-                                      const sizei count, 
-                                      const ResourceID& mat_id) {
+void renderer_queue_mesh_instanced(const ResourceID& res_id, 
+                                   const Transform* transforms, 
+                                   const sizei count, 
+                                   const ResourceID& mat_id) {
   Material* material = s_renderer.defaults.material;
   if(RESOURCE_IS_VALID(mat_id)) {
     material = resources_get_material(mat_id);
   }
 
-  switch(type) {
-    case RENDERABLE_MESH:
-      s_renderer.queues[RENDER_QUEUE_OPAQUE].emplace_back(transforms, 
-                                                          resources_get_mesh(res_id)->pipe, 
-                                                          material, 
-                                                          count);
-      break;
-    case RENDERABLE_MODEL:
-      queue_model(resources_get_model(res_id), material, transforms, count); 
-      break;
-    case RENDERABLE_BILLBOARD:
-      s_renderer.queues[RENDER_QUEUE_BILLBOARD].emplace_back(transforms, 
-                                                             resources_get_mesh(res_id)->pipe, 
-                                                             material, 
-                                                             count);
-      break;
-    default:
-      NIKOLA_LOG_ERROR("Invalid or unsupported render command given... skiping");
-      break;
-  }
+  s_renderer.queues[RENDER_QUEUE_OPAQUE].emplace_back(transforms, resources_get_mesh(res_id)->pipe, material, count);
 }
 
-void renderer_queue_command(const RenderableType& type, 
-                            const ResourceID& res_id, 
-                            const Transform& transform, 
-                            const ResourceID& mat_id) {
-  renderer_queue_command_instanced(type, res_id, &transform, 1, mat_id);
+void renderer_queue_model_instanced(const ResourceID& res_id, 
+                                    const Transform* transforms, 
+                                    const sizei count, 
+                                    const ResourceID& mat_id) {
+  Material* material = s_renderer.defaults.material;
+  if(RESOURCE_IS_VALID(mat_id)) {
+    material = resources_get_material(mat_id);
+  }
+
+  Model* model = resources_get_model(res_id);
+  for(sizei i = 0; i < model->meshes.size(); i++) {
+    Mesh* mesh    = model->meshes[i];
+    Material* mat = model->materials[model->material_indices[i]];
+
+    // Let the main given material "influence" the model's material 
+
+    mat->shininess    = material->shininess;
+    mat->transparency = material->transparency;
+    mat->depth_mask   = material->depth_mask;
+
+    // @TODO(Renderer): Have a transform parent-child relationship
+
+    s_renderer.queues[RENDER_QUEUE_OPAQUE].emplace_back(transforms, mesh->pipe, mat, count);
+  }  
+}
+
+void renderer_queue_animation_instanced(const ResourceID& res_id, 
+                                        const Transform* transforms, 
+                                        const sizei count, 
+                                        const ResourceID& mat_id) {
+  Material* material = s_renderer.defaults.material;
+  if(RESOURCE_IS_VALID(mat_id)) {
+    material = resources_get_material(mat_id);
+  }
+
+  // Queue the animation
+
+  Mat4 skinning_palette[JOINTS_MAX];
+
+  Animation* anim = resources_get_animation(res_id);
+  for(sizei i = 0; i < anim->joints.size(); i++) {
+    Joint* joint = anim->joints[i];
+
+    Mat4 parent_transform = Mat4(1.0f);
+    if(joint->parent_index != -1) {
+      parent_transform = anim->joints[joint->parent_index]->current_transform.transform;
+    }
+
+    Mat4 global_transform = parent_transform * joint->current_transform.transform;
+    skinning_palette[i]   = global_transform * joint->inverse_bind_pose;
+  }
+
+  // Queue the skinning model
+
+  for(sizei i = 0; i < anim->skinned_model->meshes.size(); i++) {
+    Mesh* mesh    = anim->skinned_model->meshes[i];
+    Material* mat = anim->skinned_model->materials[anim->skinned_model->material_indices[i]];
+
+    // Let the main given material "influence" the model's material 
+
+    mat->shininess    = material->shininess;
+    mat->transparency = material->transparency;
+    mat->depth_mask   = material->depth_mask;
+
+    // @TODO(Renderer): Have a transform parent-child relationship
+
+    s_renderer.queues[RENDER_QUEUE_OPAQUE].emplace_back(transforms, mesh->pipe, mat, count);
+  }  
+
+  // @TEMP: Update the animation buffer
+  
+  gfx_buffer_upload_data(s_renderer.defaults.animation_buffer,
+                         0, 
+                         sizeof(Mat4) * anim->joints.size(), 
+                         skinning_palette);
+}
+
+void renderer_queue_billboard_instanced(const ResourceID& res_id, 
+                                        const Transform* transforms, 
+                                        const sizei count, 
+                                        const ResourceID& mat_id) {
+  Material* material = s_renderer.defaults.material;
+  if(RESOURCE_IS_VALID(mat_id)) {
+    material = resources_get_material(mat_id);
+  }
+
+  s_renderer.queues[RENDER_QUEUE_BILLBOARD].emplace_back(transforms, 
+                                                         resources_get_mesh(res_id)->pipe, 
+                                                         material, 
+                                                         count);
+}
+
+void renderer_queue_mesh(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id) {
+  renderer_queue_mesh_instanced(res_id, &transform, 1, mat_id);
+}
+
+void renderer_queue_model(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id) {
+  renderer_queue_model_instanced(res_id, &transform, 1, mat_id);
+}
+
+void renderer_queue_animation(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id) {
+  renderer_queue_animation_instanced(res_id, &transform, 1, mat_id);
+}
+
+void renderer_queue_billboard(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id) {
+  renderer_queue_billboard_instanced(res_id, &transform, 1, mat_id);
 }
 
 void renderer_draw_geometry_primitive(const GeometryPrimitive& geo) {

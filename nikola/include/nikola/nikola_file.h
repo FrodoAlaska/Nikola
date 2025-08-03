@@ -29,6 +29,7 @@ struct NBRShader;
 struct NBRMaterial;
 struct NBRMesh;
 struct NBRModel;
+struct NBRAnimation;
 struct NBRGlyph;
 struct NBRFont;
 struct NBRAudio;
@@ -113,7 +114,7 @@ using FileWatchFunc = void(*)(const FileStatus status, const FilePath& path, voi
 ///---------------------------------------------------------------------------------------------------------------------
 /// Filesystem functions
 
-/// Iterate through the given `dir`, calling `iter_func` for each entry and passing `user_data`.
+/// Iterate through the given `dir`, calling `iter_func` for each entry and passing `user_data`. 
 NIKOLA_API void filesystem_directory_iterate(const FilePath& dir, const FileIterateFunc& iter_func, const void* user_data = nullptr);
 
 /// Recursively iterate through the given `dir`, calling `iter_func` for each entry and passing `user_data`.
@@ -321,6 +322,7 @@ NIKOLA_API void file_write_bytes(File& file, const NBRShader& shader);
 NIKOLA_API void file_write_bytes(File& file, const NBRMaterial& material);
 NIKOLA_API void file_write_bytes(File& file, const NBRMesh& mesh);
 NIKOLA_API void file_write_bytes(File& file, const NBRModel& model);
+NIKOLA_API void file_write_bytes(File& file, const NBRAnimation& anim);
 NIKOLA_API void file_write_bytes(File& file, const NBRFont& font);
 NIKOLA_API void file_write_bytes(File& file, const NBRAudio& audio);
 
@@ -385,6 +387,7 @@ NIKOLA_API void file_read_bytes(File& file, String* str);
 /// memory after calling these functions.
 ///
 /// @NOTE: These functions will raise an error if `file` is not opened.
+
 NIKOLA_API void file_read_bytes(File& file, NBRHeader* out_header);
 NIKOLA_API void file_read_bytes(File& file, NBRTexture* out_texture);
 NIKOLA_API void file_read_bytes(File& file, NBRCubemap* out_cubemap);
@@ -392,6 +395,7 @@ NIKOLA_API void file_read_bytes(File& file, NBRShader* out_shader);
 NIKOLA_API void file_read_bytes(File& file, NBRMaterial* out_material);
 NIKOLA_API void file_read_bytes(File& file, NBRMesh* out_mesh);
 NIKOLA_API void file_read_bytes(File& file, NBRModel* out_model);
+NIKOLA_API void file_read_bytes(File& file, NBRAnimation* out_anim);
 NIKOLA_API void file_read_bytes(File& file, NBRFont* out_font);
 NIKOLA_API void file_read_bytes(File& file, NBRAudio* out_audio);
 

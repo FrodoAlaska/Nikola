@@ -70,6 +70,9 @@ static nikola::ResourceType get_type_from_section(const nikola::String& section)
   else if(section == "MODEL" || section == "model") {
     return nikola::RESOURCE_TYPE_MODEL;
   }
+  else if(section == "ANIMATION" || section == "animation") {
+    return nikola::RESOURCE_TYPE_ANIMATION;
+  }
   else if(section == "FONT" || section == "font") {
     return nikola::RESOURCE_TYPE_FONT;
   }

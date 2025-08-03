@@ -127,6 +127,19 @@
     - [x] Have a specific type called `GfxBindingDesc` to use per draw call. This can be associated with the function `gfx_context_use_bindings`.
     - [x] Instead of having the `gfx_pipeline_use` function, we can move that to a context-specific function called `gfx_context_use_pipeline`.
     - [x] Documentation
+- [x] Resource Manager v0.5
+    - [x] Instead of using an abstracted `NBR` layer over everything, write extra `file_write_bytes` functions for the various resources, which will write a _compressed_ version of the resources, and load them as well.
+    - [x] Let the material be created using a `MaterialDesc` structure for more effecient material usage. 
+    - [x] Fix 3D models loading. 
+        - [x] I think the renderer assumes the vertex data of the mesh so if a model has even an extra vertex data like color, the renderer messes everything up. Or limit all 3D models to a certain vertx data set. 
+        - [x] Make sure that materials are loaded correctly using Assimp (colors and other uniforms).
+    - [x] Documentation
+- [x] Particles v0.1 
+    - [x] CPU-based particle system, giving each particle a position, velocity, and color. Use instancing to render a particle batch.
+    - [x] Fix that lifetime bug.
+    - [x] Add it to the GUI
+    - [x] Better distribution of particles with more user control over the "shape" of the distribution.
+    - [x] Documentation
 - [] Renderer v0.6 
     - [x] Improve draw calls and render passes
         - [x] Fix the render commands
@@ -140,33 +153,28 @@
     - [] Increase performance/improve workflow
         - [x] Change the instance data to become an instance uniform buffer that gets updated every frame. Each instance can aquire its data using `gl_InstanceID` instead of per-vertex instance data.
         - [x] Look into making the renderer "instanced" rather than rendering everything as is.
+        - [] Instancing in the renderer needs another look. It works but it's awful.
         - [] If performance is still an issue, make all of the scene's lights into a buffer and send it to the shader as a buffer update instead of uniforms.
         - [] Look into multi-threading the renderer
-    - [] Documentation
-- [x] Particles v0.1 
-    - [x] CPU-based particle system, giving each particle a position, velocity, and color. Use instancing to render a particle batch.
-    - [x] Fix that lifetime bug.
-    - [x] Add it to the GUI
-    - [x] Better distribution of particles with more user control over the "shape" of the distribution.
     - [x] Documentation
 - [] 3D Animations v0.1
-- [] Performance Craze 0.1 
-    - [x] Implement both performance timers and normal timers
-    - [x] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application.
-    - [] Create an abstraction layer over threads, mutexes, aotmics, and all things multi-threading. 
-    - [] Create a simple job system 
-    - [] Improve resource loading time by adding asynchronous resource loading.
-    - [] Also look into custom memory pools/memory arenas since they can increase performance.
+    - [x] Load animations from Assimp into the equivalent `NBR` resource.
+    - [x] Load the `NBR` animation resource into the engine, creating an `Animator` component in the process to control the animation 
+    - [] Use the new animation resource and find out a way to render it and shade it properly.
     - [] Documentation
-- [] Resource Manager v0.5
-    - [x] Instead of using an abstracted `NBR` layer over everything, write extra `file_write_bytes` functions for the various resources, which will write a _compressed_ version of the resources, and load them as well.
-    - [x] Let the material be created using a `MaterialDesc` structure for more effecient material usage. 
-    - [x] Fix 3D models loading. 
-        - [x] I think the renderer assumes the vertex data of the mesh so if a model has even an extra vertex data like color, the renderer messes everything up. Or limit all 3D models to a certain vertx data set. 
-        - [x] Make sure that materials are loaded correctly using Assimp (colors and other uniforms).
-    - [] Improve packaging/distribution  
-        - [] Improve the NBR tool to have a "packging" option that compiles all of the resources into one "blob" called `nkpkg`.
-        - [] Implement a way to load `nkpkg` files with a function called `resources_push_package`.
+- [] Resource Manager v0.6
+    - [] We really need to find a better way to interface between the `NBR` resources and the regular resoruces. Do we really need them? 
+    - [] Go to the `resource_manager.cpp` file and take a look at the _whole_ source file. There's a lot to fix there. 
+- [] Performance Craze 0.1 
+    - [x] Implement both performance timers and normal timers.
+    - [] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application. Use Tracy for that.
+    - [] Create a simple job system 
+    - [] Look into mesh optimizer to both reduce the memory every mesh allocates and the runtime cost of each mesh.
+    - [] Improve resource loading time by adding asynchronous resource loading. Add an async option to `resources_push_dir`
+    - [] Also look into custom memory pools/memory arenas since they can increase performance and memory coherency.
+    - [] Documentation
+- [] Particles v0.2 
+    - [] GPU-based particle system, using compute shaders.
     - [] Documentation
 - [] Physics v0.3
     - [] Deleting bodies has some problems since the world delets bodies by keeping a "world index" inside the internal body data structure, which then it uses to 
@@ -181,9 +189,6 @@
     - [] SSAO
     - [] Gaussian blur
     - [] Bloom integration 
-    - [] Documentation
-- [] Particles v0.2 
-    - [] GPU-based particle system, using compute shaders.
     - [] Documentation
 
 ## BUGS:

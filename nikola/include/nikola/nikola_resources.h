@@ -23,7 +23,7 @@ struct SpotLight;
 /// A value present at the top of each `.nbr` file to denote 
 /// a valid `.nbr` file. 
 ///
-/// @NOTE: The value is the summed average of the ASCII hex codes of `n`, `b`, and `r`.
+/// @NOTE: The value is the average of the ASCII hex codes of `n`, `b`, and `r`.
 const u8 NBR_VALID_IDENTIFIER     = 107;
 
 /// The currently valid major version of any `.nbr` file
@@ -31,6 +31,9 @@ const i16 NBR_VALID_MAJOR_VERSION = 0;
 
 /// The currently valid minor version of any `.nbr` file
 const i16 NBR_VALID_MINOR_VERSION = 3;
+
+/// The maximum number of weights a joint can have in an NBR file. 
+const u8 NBR_JOINT_WEIGHTS_MAX    = 4;
 
 /// NBR consts
 ///---------------------------------------------------------------------------------------------------------------------
@@ -193,6 +196,73 @@ struct NBRModel {
 };
 /// NBRModel 
 ///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// NBRJoint
+struct NBRJoint {
+  /// The index of this joint's parent that can be 
+  /// queried later by the renderer. 
+  ///
+  /// @NOTE: If this is the root joint, the parent index 
+  /// will be `-1`.
+  i16 parent_index = -1; 
+
+  /// A 4x4 matrix defining the inverse bind pose of this 
+  /// joint that transforms to the joint's local coordinates.
+  f32 inverse_bind_pose[16];
+
+  /// An array of interleaved position samples of `positions_count` 
+  /// where the first three values of each entry 
+  /// are the X, Y, and Z position values and the last 
+  /// component is the timestamp. 
+  /// 
+  /// [x, y, z, ts][x, y, z, ts][x, y, z, ts]...
+  
+  u16 positions_count;
+  f32* position_samples;
+
+  // An array of interleaved rotation samples of `rotations_count` 
+  // where the first four values of each entry 
+  // are the X, Y, Z, and W quaternion rotation values and the last 
+  // component is the timestamp. 
+  //
+  // [x, y, z, w, ts][x, y, z, w, ts][x, y, z, w, ts]...
+  
+  u16 rotations_count;
+  f32* rotation_samples;
+
+  // An array of interleaved scale samples of `scales_count` 
+  // where the first three values of each entry 
+  // are the X, Y, and Z, scale values and the last 
+  // component is the timestamp. 
+  //
+  // [x, y, z, ts][x, y, z, ts][x, y, z, ts]...
+  
+  u16 scales_count;
+  f32* scale_samples;
+};
+/// NBRJoint
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// NBRAnimation
+struct NBRAnimation {
+  /// An array of joints with `joints_count` elements. 
+
+  u16 joints_count;
+  NBRJoint* joints;
+
+  /// The total duration of the animation in frames. 
+  f32 duration; 
+
+  /// The total frame rate of each tick of the animation. 
+  /// The duration value of the animation can be divided by 
+  /// the frame rate to get the total duration of the animation  
+  /// in seconds.
+  f32 frame_rate;
+};
+/// NBRAnimation
+///---------------------------------------------------------------------------------------------------------------------
   
 ///---------------------------------------------------------------------------------------------------------------------
 /// NBRGlyph
@@ -283,22 +353,22 @@ struct NBRAudio {
 /// Resources consts
 
 /// A value to indicate an invalid resource group.
-const u16 RESOURCE_GROUP_INVALID         = ((u16)-1);
+const u16 RESOURCE_GROUP_INVALID          = ((u16)-1);
 
 /// The ID of the group associated with the resource cache.
-const u16 RESOURCE_CACHE_ID              = 0;
+const u16 RESOURCE_CACHE_ID               = 0;
 
 /// The index of the matrices uniform buffer within all shaders.
-const sizei SHADER_MATRICES_BUFFER_INDEX = 0;
+const sizei SHADER_MATRICES_BUFFER_INDEX  = 0;
 
 /// The index of the instance uniform buffer within all shaders.
-const sizei SHADER_INSTANCE_BUFFER_INDEX = 1;
+const sizei SHADER_INSTANCE_BUFFER_INDEX  = 1;
 
 /// The index of the light uniform buffer within all shaders.
-const sizei SHADER_LIGHT_BUFFER_INDEX    = 2;
+const sizei SHADER_LIGHT_BUFFER_INDEX     = 2;
 
-/// The maximum amount of preset uniforms. 
-const u32 MATERIAL_UNIFORMS_MAX          = 4;
+/// The index of the animation uniform buffer within all shaders.
+const sizei SHADER_ANIMATION_BUFFER_INDEX = 3;
 
 /// Resources consts
 ///---------------------------------------------------------------------------------------------------------------------
@@ -347,6 +417,9 @@ enum ResourceType {
   
   /// A flag to denote a `Model` resource.
   RESOURCE_TYPE_MODEL,
+  
+  /// A flag to denote an `Animation` resource.
+  RESOURCE_TYPE_ANIMATION,
   
   /// A flag to denote a `Font` resource.
   RESOURCE_TYPE_FONT,
@@ -420,9 +493,14 @@ struct ResourceID {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Mesh 
 struct Mesh {
+  /// The graphics buffers of the mesh. 
+
   GfxBuffer* vertex_buffer = nullptr; 
   GfxBuffer* index_buffer  = nullptr;
 
+  /// The graphics pipeline object and its 
+  /// description
+  
   GfxPipeline* pipe         = nullptr;
   GfxPipelineDesc pipe_desc = {};
 };
@@ -460,7 +538,12 @@ struct Material {
 ///---------------------------------------------------------------------------------------------------------------------
 /// ShaderContext
 struct ShaderContext {
+  /// The underlying shader pointer of the context.
   GfxShader* shader = nullptr; 
+
+  /// A cache of uniforms where the key is the name of 
+  /// the uniform in the shader and the value is the 
+  /// uniform's location in the shader.
   HashMap<String, i32> uniforms_cache;
 };
 /// ShaderContext
@@ -469,7 +552,11 @@ struct ShaderContext {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Skybox
 struct Skybox {
-  GfxCubemap* cubemap       = nullptr;
+  /// The underlying cubemap pointer of the skybox
+  GfxCubemap* cubemap = nullptr;
+  
+  /// The graphics pipeline object and its 
+  /// description
   
   GfxPipelineDesc pipe_desc = {};
   GfxPipeline* pipe         = nullptr;
@@ -480,11 +567,74 @@ struct Skybox {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Model 
 struct Model {
+  /// All of the raw meshes of the model.
   DynamicArray<Mesh*> meshes;
+
+  /// All of the materials of the model.
   DynamicArray<Material*> materials;
+
+  /// An array of indices to be used with 
+  /// the `materials` array. Each index 
+  /// associates a mesh with its own material. 
+  /// Some meshes may (and will) share the same materials. 
   DynamicArray<u8> material_indices;
 };
 /// Model 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Joint 
+struct Joint {
+  /// The parent index to refer to the joint's parent. 
+  ///
+  /// @NOTE: If the joint is the root of the skeleton, 
+  /// the parent index will be `-1`.
+  i32 parent_index = -1; 
+
+  /// The inverse bind pose matrix of the joint to 
+  /// transform the joint to its local coordinates 
+  /// (sometimes known as "bone space").
+  Mat4 inverse_bind_pose;
+
+  /// A collection of arrays of the transform samples of the mesh
+
+  DynamicArray<VectorAnimSample> position_samples;
+  DynamicArray<QuatAnimSample> rotation_samples;
+  DynamicArray<VectorAnimSample> scale_samples;
+
+  /// An index for each of the samples array 
+  /// referring to the current sample being processed.
+
+  sizei current_position_sample = 0;
+  sizei current_rotation_sample = 0;
+  sizei current_scale_sample    = 0;
+
+  /// The current calculated transform of the joint. 
+  /// This trasform will later be taken and transformed 
+  /// into bone space and then sent to the shader.
+  Transform current_transform;
+};
+/// Joint 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Animation
+struct Animation {
+  /// A list of all the available joints of the animation.
+  DynamicArray<Joint*> joints; 
+
+  /// The skinned model that will be used for the animation.
+  Model* skinned_model; 
+
+  /// Timeing information of the animation 
+  ///
+  /// @NOTE: Refer to `NBRAnimation` for more information 
+  /// about each of the values.
+  
+  f32 duration   = 0.0f; 
+  f32 frame_rate = 0.0f;
+};
+/// Animation
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -580,33 +730,6 @@ NIKOLA_API void shader_context_set_uniform_buffer(ShaderContext* ctx, const size
 NIKOLA_API void geometry_loader_load(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc, const GeometryType type);
 
 /// Geometry functions
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// NBR importer functions
-
-/// Convert the `nbr` texture into a `GfxTextureDesc`.
-NIKOLA_API void nbr_import_texture(NBRTexture* nbr, GfxTextureDesc* desc);
-
-/// Convert the `nbr` cubemap into a `GfxCubemapDesc`.
-NIKOLA_API void nbr_import_cubemap(NBRCubemap* nbr, GfxCubemapDesc* desc);
-
-/// Convert the `nbr` shader into a `GfxShaderDesc`.
-NIKOLA_API void nbr_import_shader(NBRShader* nbr, GfxShaderDesc* desc);
-
-/// Convert the `nbr` mesh into a `Mesh`, using the `group_id`.
-NIKOLA_API void nbr_import_mesh(NBRMesh* nbr, const ResourceGroupID& group_id, Mesh* mesh);
-
-/// Convert the `nbr` model into a `Model`, using the `group_id`.
-NIKOLA_API void nbr_import_model(NBRModel* nbr, const ResourceGroupID&, Model* model);
-
-/// Convert the `nbr` font into a `Font`, using the `group_id`.
-NIKOLA_API void nbr_import_font(NBRFont* nbr, const ResourceGroupID& group_id, Font* font);
-
-/// Convert the `nbr` audio into an `AudioBuffer`, using the `group_id`.
-NIKOLA_API void nbr_import_audio(NBRAudio* nbr, const ResourceGroupID& group_id, AudioBufferDesc* desc);
-
-/// NBR importer functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -716,6 +839,10 @@ NIKOLA_API ResourceID resources_push_skybox(const ResourceGroupID& group_id, con
 /// store it in `group_id`, and return a `ResourceID` to identify it.
 NIKOLA_API ResourceID resources_push_model(const ResourceGroupID& group_id, const FilePath& nbr_path);
 
+/// Allocate a new `Animation` using the `NBRAnimation` retrieved from the `nbr_path` and 
+/// the `model_id` as its skinned model, store it in `group_id`, and return a `ResourceID` to identify it.
+NIKOLA_API ResourceID resources_push_animation(const ResourceGroupID& group_id, const FilePath& nbr_path, const ResourceID& model_id);
+
 /// Allocate a new `Font` using the `NBRFont` retrieved from the `nbr_path`, 
 /// store it in `group_id`, and return a `ResourceID` to identify it.
 NIKOLA_API ResourceID resources_push_font(const ResourceGroupID& group_id, const FilePath& nbr_path);
@@ -731,10 +858,13 @@ NIKOLA_API ResourceID resources_push_audio_buffer(const ResourceGroupID& group_i
 /// Retrieve all of the valid resources from `dir` and store the resulting entries in an
 /// internal list (where the key is the file name of the resource and the value is its ID) 
 /// while ensuring that each entry is pushed into `group_id` with an ID. The IDs can be retrieved 
-/// later using the function `resources_get_id`.
+/// later using the function `resources_get_id`. 
+///
+/// If the given `async` flag is set to `true`, the function will initiate a series of threads 
+/// to retrieve each resource.
 ///
 /// @NOTE: The given `dir` is prepended with the `parent_dir` given when `group_id` was created.
-NIKOLA_API void resources_push_dir(const ResourceGroupID& group_id, const FilePath& dir);
+NIKOLA_API void resources_push_dir(const ResourceGroupID& group_id, const FilePath& dir, const bool async = false);
 
 /// Search and retrieve the ID of the resource `filename` in `group_id`. 
 /// If `filename` was not found in `group_id`, a default `ResourceID` will be returned. 
@@ -784,6 +914,11 @@ NIKOLA_API Skybox* resources_get_skybox(const ResourceID& id);
 ///
 /// @NOTE: This function will assert if `id` is not found in `id.group`.
 NIKOLA_API Model* resources_get_model(const ResourceID& id);
+
+/// Retrieve `Animation` identified by `id` in `id.group`. 
+///
+/// @NOTE: This function will assert if `id` is not found in `id.group`.
+NIKOLA_API Animation* resources_get_animation(const ResourceID& id);
 
 /// Retrieve `Font` identified by `id` in `id.group`. 
 ///

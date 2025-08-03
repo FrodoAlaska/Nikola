@@ -27,6 +27,7 @@ static bool check_section_dirs(const ListSection& section) {
   //
   // We check here if the function returns true (meaning, the directories did not exist and need to be created) 
   // and give the user a warning just to inform them. Comlpex, I know. Sorry about that.
+  
   if(nikola::filesystem_create_directories(section.out_dir)) {
     NIKOLA_LOG_WARN("Invalid section output directory \'%s\'. Creating new directories.", section.out_dir.c_str());
   }
@@ -35,10 +36,7 @@ static bool check_section_dirs(const ListSection& section) {
 }
 
 static bool open_nbr_file(const nikola::FilePath& save_path, const nikola::FilePath& in_path, nikola::File* file, const nikola::ResourceType& type) {
-  nikola::FilePath path = nikola::filepath_append(save_path, nikola::filepath_filename(in_path));
-  nikola::filepath_set_extension(path, "nbr");
-  
-  if(!nikola::file_open(file, path, (int)(nikola::FILE_OPEN_WRITE | nikola::FILE_OPEN_BINARY))) {
+  if(!nikola::file_open(file, save_path, (int)(nikola::FILE_OPEN_WRITE | nikola::FILE_OPEN_BINARY))) {
     return false;
   }
 
@@ -60,6 +58,9 @@ static bool convert_texture(const nikola::FilePath& in_path, const nikola::FileP
   // Save the texture
 
   nikola::File file;
+  nikola::FilePath path = nikola::filepath_append(save_path, nikola::filepath_filename(in_path));
+  nikola::filepath_set_extension(path, "nbr");
+  
   if(!open_nbr_file(save_path, in_path, &file, nikola::RESOURCE_TYPE_TEXTURE)) {
     return false;
   }
@@ -68,7 +69,7 @@ static bool convert_texture(const nikola::FilePath& in_path, const nikola::FileP
   // Unload the image data
   image_loader_unload_texture(texture);
  
-  NIKOLA_LOG_INFO("[NBR]: Converted texture \'%s\' to \'%s\'...", in_path.c_str(), save_path.c_str());
+  NIKOLA_LOG_INFO("[NBR]: Converted texture \'%s\' to \'%s\'...", in_path.c_str(), path.c_str());
   nikola::file_close(file);
   
   return true;
@@ -83,7 +84,10 @@ static bool convert_cubemap(const nikola::FilePath& in_path, const nikola::FileP
   // Save the cubemap
 
   nikola::File file;
-  if(!open_nbr_file(save_path, in_path, &file, nikola::RESOURCE_TYPE_CUBEMAP)) {
+  nikola::FilePath path = nikola::filepath_append(save_path, nikola::filepath_filename(in_path));
+  nikola::filepath_set_extension(path, "nbr");
+  
+  if(!open_nbr_file(path, in_path, &file, nikola::RESOURCE_TYPE_CUBEMAP)) {
     return false;
   }
   nikola::file_write_bytes(file, cubemap);
@@ -91,7 +95,7 @@ static bool convert_cubemap(const nikola::FilePath& in_path, const nikola::FileP
   // Unload the image
   image_loader_unload_cubemap(cubemap);
   
-  NIKOLA_LOG_INFO("[NBR]: Converted cubemap \'%s\' to \'%s\'...", in_path.c_str(), save_path.c_str());
+  NIKOLA_LOG_INFO("[NBR]: Converted cubemap \'%s\' to \'%s\'...", in_path.c_str(), path.c_str());
   nikola::file_close(file);
   
   return true;
@@ -106,7 +110,10 @@ static bool convert_shader(const nikola::FilePath& in_path, const nikola::FilePa
   // Save the shader
 
   nikola::File file;
-  if(!open_nbr_file(save_path, in_path, &file, nikola::RESOURCE_TYPE_SHADER)) {
+  nikola::FilePath path = nikola::filepath_append(save_path, nikola::filepath_filename(in_path));
+  nikola::filepath_set_extension(path, "nbr");
+  
+  if(!open_nbr_file(path, in_path, &file, nikola::RESOURCE_TYPE_SHADER)) {
     return false;
   }
   nikola::file_write_bytes(file, shader);
@@ -114,7 +121,7 @@ static bool convert_shader(const nikola::FilePath& in_path, const nikola::FilePa
   // Unload the shader
   shader_loader_unload(shader);
   
-  NIKOLA_LOG_INFO("[NBR]: Converted shader \'%s\' to \'%s\'...", in_path.c_str(), save_path.c_str());
+  NIKOLA_LOG_INFO("[NBR]: Converted shader \'%s\' to \'%s\'...", in_path.c_str(), path.c_str());
   nikola::file_close(file);
   
   return true;
@@ -129,7 +136,11 @@ static bool convert_model(const nikola::FilePath& in_path, const nikola::FilePat
   // Save the model
   
   nikola::File file;
-  if(!open_nbr_file(save_path, in_path, &file, nikola::RESOURCE_TYPE_MODEL)) {
+  nikola::FilePath path = nikola::filepath_append(save_path, 
+                                                  nikola::filepath_filename(nikola::filepath_parent_path(in_path)));
+  nikola::filepath_set_extension(path, "nbr");
+  
+  if(!open_nbr_file(path, in_path, &file, nikola::RESOURCE_TYPE_MODEL)) {
     return false;
   }
   nikola::file_write_bytes(file, model);
@@ -137,7 +148,33 @@ static bool convert_model(const nikola::FilePath& in_path, const nikola::FilePat
   // Unload the model
   model_loader_unload(model);
   
-  NIKOLA_LOG_INFO("[NBR]: Converted model \'%s\' to \'%s\'...", in_path.c_str(), save_path.c_str());
+  NIKOLA_LOG_INFO("[NBR]: Converted model \'%s\' to \'%s\'...", in_path.c_str(), path.c_str());
+  nikola::file_close(file);
+  
+  return true;
+}
+
+static bool convert_animation(const nikola::FilePath& in_path, const nikola::FilePath& save_path) {
+  nikola::NBRAnimation anim; 
+  if(!animation_loader_load(&anim, in_path)) {
+    return false;
+  }
+
+  // Save the animation
+  
+  nikola::File file;
+  nikola::FilePath path = nikola::filepath_append(save_path, nikola::filepath_filename(in_path));
+  nikola::filepath_set_extension(path, "nbr");
+  
+  if(!open_nbr_file(path, in_path, &file, nikola::RESOURCE_TYPE_ANIMATION)) {
+    return false;
+  }
+  nikola::file_write_bytes(file, anim);
+
+  // Unload the animation
+  animation_loader_unload(anim);
+  
+  NIKOLA_LOG_INFO("[NBR]: Converted animation \'%s\' to \'%s\'...", in_path.c_str(), path.c_str());
   nikola::file_close(file);
   
   return true;
@@ -152,7 +189,10 @@ static bool convert_font(const nikola::FilePath& in_path, const nikola::FilePath
   // Save the font
   
   nikola::File file;
-  if(!open_nbr_file(save_path, in_path, &file, nikola::RESOURCE_TYPE_FONT)) {
+  nikola::FilePath path = nikola::filepath_append(save_path, nikola::filepath_filename(in_path));
+  nikola::filepath_set_extension(path, "nbr");
+  
+  if(!open_nbr_file(path, in_path, &file, nikola::RESOURCE_TYPE_FONT)) {
     return false;
   }
   nikola::file_write_bytes(file, font);
@@ -160,7 +200,7 @@ static bool convert_font(const nikola::FilePath& in_path, const nikola::FilePath
   // Unload the font
   font_loader_unload(font);
   
-  NIKOLA_LOG_INFO("[NBR]: Converted font \'%s\' to \'%s\'...", in_path.c_str(), save_path.c_str());
+  NIKOLA_LOG_INFO("[NBR]: Converted font \'%s\' to \'%s\'...", in_path.c_str(), path.c_str());
   nikola::file_close(file);
   
   return true;
@@ -175,7 +215,10 @@ static bool convert_audio(const nikola::FilePath& in_path, const nikola::FilePat
   // Save the audio buffer
   
   nikola::File file;
-  if(!open_nbr_file(save_path, in_path, &file, nikola::RESOURCE_TYPE_AUDIO_BUFFER)) {
+  nikola::FilePath path = nikola::filepath_append(save_path, nikola::filepath_filename(in_path));
+  nikola::filepath_set_extension(path, "nbr");
+  
+  if(!open_nbr_file(path, in_path, &file, nikola::RESOURCE_TYPE_AUDIO_BUFFER)) {
     return false;
   }
   nikola::file_write_bytes(file, audio);
@@ -183,7 +226,7 @@ static bool convert_audio(const nikola::FilePath& in_path, const nikola::FilePat
   // Unload the audio buffer
   audio_loader_unload(audio);
   
-  NIKOLA_LOG_INFO("[NBR]: Converted audio \'%s\' to \'%s\'...", in_path.c_str(), save_path.c_str());
+  NIKOLA_LOG_INFO("[NBR]: Converted audio \'%s\' to \'%s\'...", in_path.c_str(), path.c_str());
   nikola::file_close(file);
   
   return true;
@@ -203,11 +246,17 @@ static void convert_by_type(ListSection* section, const nikola::FilePath& path) 
     case nikola::RESOURCE_TYPE_MODEL:
       convert_model(path, section->out_dir);
       break;
+    case nikola::RESOURCE_TYPE_ANIMATION:
+      convert_animation(path, section->out_dir);
+      break;
     case nikola::RESOURCE_TYPE_FONT:
       convert_font(path, section->out_dir);
       break;
     case nikola::RESOURCE_TYPE_AUDIO_BUFFER:
       convert_audio(path, section->out_dir);
+      break;
+    default:
+      NIKOLA_LOG_ERROR("An unsupported resource type found!");
       break;
   }
 }

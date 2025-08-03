@@ -33,6 +33,9 @@ const sizei POINT_LIGHTS_MAX       = 16;
 /// The maximum amount of particles tha can be emitted at a time.
 const sizei PARTICLES_MAX          = 256;
 
+/// The maximum amount of joints that can processed.
+const sizei JOINTS_MAX             = 512;
+
 /// Consts
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -44,6 +47,7 @@ enum RenderableType {
 
   RENDERABLE_MESH = 0, 
   RENDERABLE_MODEL, 
+  RENDERABLE_ANIMATION, 
   RENDERABLE_BILLBOARD, 
 };
 /// RenderableType
@@ -111,10 +115,12 @@ using RenderPassSumbitFn  = void(*)(RenderPass* pass, const DynamicArray<Geometr
 /// GeometryPrimitive 
 struct GeometryPrimitive {
   Mat4 transforms[RENDERER_MAX_INSTANCES]; 
+  sizei instance_count = 1;
+  
   GfxPipeline* pipeline; 
   Material* material;
 
-  sizei instance_count = 1;
+  Animation* animation;
 
   GeometryPrimitive() 
     {}
@@ -137,8 +143,9 @@ struct RendererDefaults {
   GfxTexture* specular_texture = nullptr;
   GfxTexture* normal_texture   = nullptr;
   
-  GfxBuffer* matrices_buffer = nullptr;
-  GfxBuffer* instance_buffer = nullptr;
+  GfxBuffer* matrices_buffer  = nullptr;
+  GfxBuffer* instance_buffer  = nullptr;
+  GfxBuffer* animation_buffer = nullptr;
   
   Material* material = nullptr;
   Mesh* cube_mesh    = nullptr;
@@ -355,6 +362,18 @@ struct ParticleEmitterDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// Animator
+struct Animator {
+  Animation* animation; 
+
+  f32 current_time  = 0.0f;
+  bool is_looping   = true;
+  bool is_animating = true;
+};
+/// Animator
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// DirectionalLight 
 struct DirectionalLight {
   /// The direction vector of the directional light.
@@ -511,30 +530,46 @@ NIKOLA_API void renderer_insert_pass(RenderPass* pass, const sizei index);
 /// last added render pass.
 NIKOLA_API RenderPass* renderer_peek_pass(const sizei index);
 
-/// Queue `count` instanced rendering commands using the given `res_id` of type `type` 
-/// at `transforms` in world space, using `mat_id`.
+/// A series of functions to queue `count` instanced rendering commands
+/// using the given `res_id` of type `type` at `transforms` in world space, using `mat_id`.
 ///
 /// @NOTE: The given `count` cannot exceed `RENDERER_MAX_INSTANCES`.
 /// 
 /// @NOTE: If `mat_id` is left untouched, the renderer will use the default material.
-NIKOLA_API void renderer_queue_command_instanced(const RenderableType& type,    
-                                                 const ResourceID& res_id, 
-                                                 const Transform* transforms, 
-                                                 const sizei count, 
-                                                 const ResourceID& mat_id = {});
 
-/// Queue a rendering command using the given `res_id` of type `render_type` at `transform` 
-/// in world space, using `mat_id`.
+NIKOLA_API void renderer_queue_mesh_instanced(const ResourceID& res_id, 
+                                              const Transform* transforms, 
+                                              const sizei count, 
+                                              const ResourceID& mat_id = {});
+
+NIKOLA_API void renderer_queue_model_instanced(const ResourceID& res_id, 
+                                               const Transform* transforms, 
+                                               const sizei count, 
+                                               const ResourceID& mat_id = {});
+
+NIKOLA_API void renderer_queue_animation_instanced(const ResourceID& res_id, 
+                                                   const Transform* transforms, 
+                                                   const sizei count, 
+                                                   const ResourceID& mat_id = {});
+
+NIKOLA_API void renderer_queue_billboard_instanced(const ResourceID& res_id, 
+                                                   const Transform* transforms, 
+                                                   const sizei count, 
+                                                   const ResourceID& mat_id = {});
+
+/// A series of functions that queue a rendering command, using the given `res_id`
+/// at `transform` in world space, using `mat_id`.
 ///
 /// @NOTE: If `mat_id` is left untouched, the renderer will use the default material.
-NIKOLA_API void renderer_queue_command(const RenderableType& type, 
-                                       const ResourceID& res_id, 
-                                       const Transform& transform, 
-                                       const ResourceID& mat_id = {});
+
+NIKOLA_API void renderer_queue_mesh(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id = {});
+NIKOLA_API void renderer_queue_model(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id = {});
+NIKOLA_API void renderer_queue_animation(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id = {});
+NIKOLA_API void renderer_queue_billboard(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id = {});
 
 /// Draw the given `geo` geometry into the scene. 
 ///
-/// @NOTE: When using outside of a render pass, it can potentially not render, 
+/// @NOTE: When using this function outside of a render pass, it can potentially not render, 
 /// or if it does render, it will not be shaded or influenced by any pass. 
 /// Only use this inside render passes or for debug purposes.
 NIKOLA_API void renderer_draw_geometry_primitive(const GeometryPrimitive& geo);
@@ -628,6 +663,16 @@ NIKOLA_API void particles_update(const f64 delta_time);
 NIKOLA_API void particles_emit(const ParticleEmitterDesc& desc);
 
 /// Particles functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Animator functions
+
+NIKOLA_API void animator_create(Animator* animator, const ResourceID& animation);
+
+NIKOLA_API void animator_animate(Animator& animator, const f32& dt);
+
+/// Animator functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 /// *** Renderer ***
