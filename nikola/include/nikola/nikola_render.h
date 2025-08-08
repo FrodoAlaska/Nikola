@@ -33,9 +33,6 @@ const sizei POINT_LIGHTS_MAX       = 16;
 /// The maximum amount of particles tha can be emitted at a time.
 const sizei PARTICLES_MAX          = 256;
 
-/// The maximum amount of joints that can processed.
-const sizei JOINTS_MAX             = 512;
-
 /// Consts
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -364,7 +361,7 @@ struct ParticleEmitterDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Animator
 struct Animator {
-  Animation* animation; 
+  ResourceID animation_id; 
 
   f32 current_time  = 0.0f;
   bool is_looping   = true;
@@ -671,6 +668,8 @@ NIKOLA_API void particles_emit(const ParticleEmitterDesc& desc);
 NIKOLA_API void animator_create(Animator* animator, const ResourceID& animation);
 
 NIKOLA_API void animator_animate(Animator& animator, const f32& dt);
+
+NIKOLA_API void animator_set_animation(Animator& animator, const ResourceID& animation);
 
 /// Animator functions
 ///---------------------------------------------------------------------------------------------------------------------

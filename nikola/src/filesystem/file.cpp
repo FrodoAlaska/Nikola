@@ -205,9 +205,8 @@ void file_write_bytes(File& file, const NBRMaterial& material) {
   
   // Write the resource's information
   
-  file_write_bytes(file, material.ambient, sizeof(f32) * 3); 
   file_write_bytes(file, material.diffuse, sizeof(f32) * 3); 
-  file_write_bytes(file, material.specular, sizeof(f32) * 3); 
+  file_write_bytes(file, &material.shininess, sizeof(f32)); 
  
   file_write_bytes(file, &material.diffuse_index, sizeof(i8)); 
   file_write_bytes(file, &material.specular_index, sizeof(i8)); 
@@ -219,7 +218,7 @@ void file_write_bytes(File& file, const NBRMesh& mesh) {
   
   // Write the resource's information
   
-  file_write_bytes(file, &mesh.vertex_type, sizeof(u8));
+  file_write_bytes(file, &mesh.vertex_component_bits, sizeof(u8));
 
   file_write_bytes(file, &mesh.vertices_count, sizeof(u32));
   file_write_bytes(file, mesh.vertices, sizeof(f32) * mesh.vertices_count);
@@ -263,26 +262,28 @@ void file_write_bytes(File& file, const NBRAnimation& anim) {
 
   file_write_bytes(file, &anim.joints_count, sizeof(anim.joints_count)); 
   for(sizei i = 0; i < anim.joints_count; i++) {
+    NBRJoint* joint = &anim.joints[i];
+
     // Write the parent index 
-    file_write_bytes(file, &anim.joints[i].parent_index, sizeof(anim.joints[i].parent_index)); 
+    file_write_bytes(file, &joint->parent_index, sizeof(joint->parent_index)); 
 
     // Write the inverse bind matrix
-    file_write_bytes(file, &anim.joints[i].inverse_bind_pose, sizeof(anim.joints[i].inverse_bind_pose)); 
+    file_write_bytes(file, &joint->inverse_bind_pose, sizeof(joint->inverse_bind_pose)); 
 
     // Write the positions
 
-    file_write_bytes(file, &anim.joints[i].positions_count, sizeof(anim.joints[i].positions_count)); 
-    file_write_bytes(file, anim.joints[i].position_samples, sizeof(f32) * anim.joints[i].positions_count); 
+    file_write_bytes(file, &joint->positions_count, sizeof(joint->positions_count)); 
+    file_write_bytes(file, joint->position_samples, sizeof(f32) * joint->positions_count); 
     
     // Write the rotations
 
-    file_write_bytes(file, &anim.joints[i].rotations_count, sizeof(anim.joints[i].rotations_count)); 
-    file_write_bytes(file, anim.joints[i].rotation_samples, sizeof(f32) * anim.joints[i].rotations_count); 
+    file_write_bytes(file, &joint->rotations_count, sizeof(joint->rotations_count)); 
+    file_write_bytes(file, joint->rotation_samples, sizeof(f32) * joint->rotations_count); 
     
     // Write the scales
 
-    file_write_bytes(file, &anim.joints[i].scales_count, sizeof(anim.joints[i].scales_count)); 
-    file_write_bytes(file, anim.joints[i].scale_samples, sizeof(f32) * anim.joints[i].scales_count); 
+    file_write_bytes(file, &joint->scales_count, sizeof(joint->scales_count)); 
+    file_write_bytes(file, joint->scale_samples, sizeof(f32) * joint->scales_count); 
   } 
 
   // Write time info
@@ -651,9 +652,8 @@ void file_read_bytes(File& file, NBRMaterial* out_material) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
   NIKOLA_ASSERT(out_material, "Invalid NBRMaterial type given to file_read_bytes");
   
-  file_read_bytes(file, out_material->ambient, sizeof(f32) * 3); 
   file_read_bytes(file, out_material->diffuse, sizeof(f32) * 3); 
-  file_read_bytes(file, out_material->specular, sizeof(f32) * 3); 
+  file_write_bytes(file, &out_material->shininess, sizeof(f32)); 
  
   file_read_bytes(file, &out_material->diffuse_index, sizeof(i8)); 
   file_read_bytes(file, &out_material->specular_index, sizeof(i8)); 
@@ -664,7 +664,7 @@ void file_read_bytes(File& file, NBRMesh* out_mesh) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
   NIKOLA_ASSERT(out_mesh, "Invalid NBRMesh type given to file_read_bytes");
   
-  file_read_bytes(file, &out_mesh->vertex_type, sizeof(u8));
+  file_read_bytes(file, &out_mesh->vertex_component_bits, sizeof(u8));
 
   file_read_bytes(file, &out_mesh->vertices_count, sizeof(u32));
   out_mesh->vertices = (f32*)memory_allocate(sizeof(f32) * out_mesh->vertices_count); 
@@ -716,32 +716,34 @@ void file_read_bytes(File& file, NBRAnimation* out_anim) {
   out_anim->joints = (NBRJoint*)memory_allocate(sizeof(NBRJoint) * out_anim->joints_count);
 
   for(sizei i = 0; i < out_anim->joints_count; i++) {
+    NBRJoint* joint = &out_anim->joints[i];
+
     // Read the parent index 
-    file_read_bytes(file, &out_anim->joints[i].parent_index, sizeof(out_anim->joints[i].parent_index)); 
+    file_read_bytes(file, &joint->parent_index, sizeof(joint->parent_index)); 
 
     // Read the inverse bind matrix
-    file_read_bytes(file, &out_anim->joints[i].inverse_bind_pose, sizeof(out_anim->joints[i].inverse_bind_pose)); 
+    file_read_bytes(file, &joint->inverse_bind_pose, sizeof(joint->inverse_bind_pose)); 
 
     // Read the positions
 
-    file_read_bytes(file, &out_anim->joints[i].positions_count, sizeof(out_anim->joints[i].positions_count)); 
-    out_anim->joints[i].position_samples = (f32*)memory_allocate(sizeof(f32) * out_anim->joints[i].positions_count); 
+    file_read_bytes(file, &joint->positions_count, sizeof(joint->positions_count)); 
+    joint->position_samples = (f32*)memory_allocate(sizeof(f32) * joint->positions_count); 
     
-    file_read_bytes(file, out_anim->joints[i].position_samples, sizeof(f32) * out_anim->joints[i].positions_count); 
+    file_read_bytes(file, joint->position_samples, sizeof(f32) * joint->positions_count); 
     
     // Read the rotations
 
-    file_read_bytes(file, &out_anim->joints[i].rotations_count, sizeof(out_anim->joints[i].rotations_count)); 
-    out_anim->joints[i].rotation_samples = (f32*)memory_allocate(sizeof(f32) * out_anim->joints[i].rotations_count); 
+    file_read_bytes(file, &joint->rotations_count, sizeof(joint->rotations_count)); 
+    joint->rotation_samples = (f32*)memory_allocate(sizeof(f32) * joint->rotations_count); 
     
-    file_read_bytes(file, out_anim->joints[i].rotation_samples, sizeof(f32) * out_anim->joints[i].rotations_count); 
+    file_read_bytes(file, joint->rotation_samples, sizeof(f32) * joint->rotations_count); 
     
     // Read the scales
 
-    file_read_bytes(file, &out_anim->joints[i].scales_count, sizeof(out_anim->joints[i].scales_count)); 
-    out_anim->joints[i].scale_samples = (f32*)memory_allocate(sizeof(f32) * out_anim->joints[i].scales_count); 
+    file_read_bytes(file, &joint->scales_count, sizeof(joint->scales_count)); 
+    joint->scale_samples = (f32*)memory_allocate(sizeof(f32) * joint->scales_count); 
     
-    file_read_bytes(file, out_anim->joints[i].scale_samples, sizeof(f32) * out_anim->joints[i].scales_count); 
+    file_read_bytes(file, joint->scale_samples, sizeof(f32) * joint->scales_count); 
   } 
 
   // Read time info

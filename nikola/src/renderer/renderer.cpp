@@ -485,29 +485,21 @@ void renderer_queue_animation_instanced(const ResourceID& res_id,
   if(RESOURCE_IS_VALID(mat_id)) {
     material = resources_get_material(mat_id);
   }
-
-  // Queue the animation
-
-  Mat4 skinning_palette[JOINTS_MAX];
-
+  
   Animation* anim = resources_get_animation(res_id);
+
+  // Applying the inverse bind pose to each transform in the palette
+
   for(sizei i = 0; i < anim->joints.size(); i++) {
-    Joint* joint = anim->joints[i];
-
-    Mat4 parent_transform = Mat4(1.0f);
-    if(joint->parent_index != -1) {
-      parent_transform = anim->joints[joint->parent_index]->current_transform.transform;
-    }
-
-    Mat4 global_transform = parent_transform * joint->current_transform.transform;
-    skinning_palette[i]   = global_transform * joint->inverse_bind_pose;
+    anim->skinning_palette[i] *= anim->joints[i]->inverse_bind_pose;
   }
 
   // Queue the skinning model
 
+  Model* model = anim->skinned_model;
   for(sizei i = 0; i < anim->skinned_model->meshes.size(); i++) {
-    Mesh* mesh    = anim->skinned_model->meshes[i];
-    Material* mat = anim->skinned_model->materials[anim->skinned_model->material_indices[i]];
+    Mesh* mesh    = model->meshes[i];
+    Material* mat = model->materials[model->material_indices[i]];
 
     // Let the main given material "influence" the model's material 
 
@@ -525,8 +517,8 @@ void renderer_queue_animation_instanced(const ResourceID& res_id,
   gfx_buffer_upload_data(s_renderer.defaults.animation_buffer,
                          0, 
                          sizeof(Mat4) * anim->joints.size(), 
-                         skinning_palette);
-}
+                         anim->skinning_palette);
+} 
 
 void renderer_queue_billboard_instanced(const ResourceID& res_id, 
                                         const Transform* transforms, 

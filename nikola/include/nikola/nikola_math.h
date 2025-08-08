@@ -9,9 +9,6 @@
 
 namespace nikola { // Start of nikola
 
-// Forward declaration to help with compilation time.
-struct GfxVertexLayout;
-
 /// ----------------------------------------------------------------------
 /// *** Math ***
 
@@ -40,24 +37,27 @@ const f64 FLOAT_MAX = 3.40282e+38F;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// VertexType 
-enum VertexType {
-  /// A vertex with position, normal color, and U/V coordinate components.
-  VERTEX_TYPE_PNUV, 
+/// VertexComponentType 
+enum VertexComponentType {
+  /// A bit for the position component of a vertex.
+  VERTEX_COMPONENT_POSITION       = 0x02,
   
-  /// A vertex with position, color, and U/V coordinate components.
-  VERTEX_TYPE_PCUV, 
+  /// A bit for the normal component of a vertex.
+  VERTEX_COMPONENT_NORMAL         = 0x04,
   
-  /// A vertex with position, normal, color, and U/V coordinate components.
-  VERTEX_TYPE_PNCUV, 
+  /// A bit for the tangent component of a vertex.
+  VERTEX_COMPONENT_TANGENT        = 0x08,
   
-  /// A vertex with position, normal, color, tangent, and U/V coordinate components.
-  VERTEX_TYPE_PNCTUV, 
+  /// A bit for the texture coordinate component of a vertex.
+  VERTEX_COMPONENT_TEXTURE_COORDS = 0x16,
   
-  /// A vertex with position, normal, tangent, joint ids, joint weights, and U/V coordinate components.
-  VERTEX_TYPE_PNTIWUV, 
+  /// A bit for the joint index component of a vertex.
+  VERTEX_COMPONENT_JOINT_ID       = 0x32,
+  
+  /// A bit for the joint weight component of a vertex.
+  VERTEX_COMPONENT_JOINT_WEIGHT   = 0x64,
 };
-/// VertexType 
+/// VertexComponentType 
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -151,51 +151,8 @@ struct Transform {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// Vertex3D_PNUV (Position, Normal, U/V texture coords)
-struct Vertex3D_PNUV {
-  Vec3 position;
-  Vec3 normal;
-  Vec2 texture_coords;
-};
-/// Vertex3D_PNUV (Position, Normal, U/V texture coords)
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// Vertex3D_PCUV (Position, Color, U/V texture coords)
-struct Vertex3D_PCUV {
-  Vec3 position;
-  Vec4 color;
-  Vec2 texture_coords;
-};
-/// Vertex3D_PCUV (Position, Color, U/V texture coords)
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// Vertex3D_PNCUV (Position, Normal, Color (r, g, b, a), U/V texture coords)
-struct Vertex3D_PNCUV {
-  Vec3 position;
-  Vec3 normal;
-  Vec4 color;
-  Vec2 texture_coords;
-};
-/// Vertex3D_PNCUV (Position, Normal, Color (r, g, b, a), U/V texture coords)
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// Vertex3D_PNCTUV (Position, Normal, Color (r, g, b, a), Tangent (x, y ,z), U/V texture coords)
-struct Vertex3D_PNCTUV {
-  Vec3 position;
-  Vec3 normal;
-  Vec4 color;
-  Vec3 tangent;
-  Vec2 texture_coords;
-};
-/// Vertex3D_PNCTUV (Position, Normal, Color (r, g, b, a), U/V texture coords)
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// Vertex3D_PNTIWUV (Position, Normal, Joint IDS, Joint Weights, U/V texture coords)
-struct Vertex3D_PNTIWUV {
+/// Vertex3D
+struct Vertex3D {
   Vec3 position; 
   Vec3 normal;
   Vec3 tangent;
@@ -205,7 +162,7 @@ struct Vertex3D_PNTIWUV {
   
   Vec2 texture_coords;
 };
-/// Vertex3D_PNTIWUV (Position, Normal, Joint IDS, Joint Weights, U/V texture coords)
+/// Vertex3D
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -573,25 +530,31 @@ NIKOLA_API void transform_rotate(Transform& trans, const Vec3& axis, const f32 a
 /// Scale the given `trans` by `scale`
 NIKOLA_API void transform_scale(Transform& trans, const Vec3& scale);
 
+/// Lerp between the two given transforms `trans_a` and `trans_b` by the given `delta` value.
+NIKOLA_API void transform_lerp(Transform& trans_a, const Transform& trans_b, const f32 delta);
+
+/// Lerp the components of the given transform `trans` to `position`, `rotation`, 
+/// and `scale` by the given `delta` value.
+NIKOLA_API void transform_lerp(Transform& trans, 
+                               const Vec3& position, 
+                               const Quat& rotation, 
+                               const Vec3& scale,
+                               const f32 delta);
+
+/// Lerp the position component of the given transform `trans` to `position` by the given `delta` value.
+NIKOLA_API void transform_lerp_position(Transform& trans, const Vec3& position, const f32 delta);
+
+/// Use the spherical linear interpolation method to interpolate the roation component 
+/// of `trans` to `rotation` by `delta`.
+NIKOLA_API void transform_slerp_rotation(Transform& trans, const Quat& rotation, const f32 delta);
+
+/// Lerp the rotation component of the given transform `trans` to `axis` and `angle` by the given `delta` value.
+NIKOLA_API void transform_lerp_rotation(Transform& trans, const Vec3& axis, const f32 angle, const f32 delta);
+
+/// Lerp the scale component of the given transform `trans` to `scale` by the given `delta` value.
+NIKOLA_API void transform_lerp_scale(Transform& trans, const Vec3& scale, const f32 delta);
+
 /// Transform functions
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// Vertex functions
-
-/// Return the size in bytes of the vertex with `type`.
-NIKOLA_API const sizei vertex_type_size(const VertexType type); 
-
-/// Return the number of components in the vertex with `type`.
-NIKOLA_API const u8 vertex_type_components(const VertexType type); 
-
-/// Convert and return a string representation of the vertex with `type`.
-NIKOLA_API const char* vertex_type_str(const VertexType type); 
-
-/// Apply a layout of the vertex with `type`, returning the filled `layout.
-NIKOLA_API void vertex_type_layout(const VertexType type, GfxVertexLayout* out_layout); 
-
-/// Vertex functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 /// *** Math ***

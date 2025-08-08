@@ -160,11 +160,15 @@
 - [] 3D Animations v0.1
     - [x] Load animations from Assimp into the equivalent `NBR` resource.
     - [x] Load the `NBR` animation resource into the engine, creating an `Animator` component in the process to control the animation 
-    - [] Use the new animation resource and find out a way to render it and shade it properly.
+    - [x] Use the new animation resource and find out a way to render it and shade it properly.
+    - [x] Try to have a good system for switching between animations
+    - [] Add the animator to the GUI
     - [] Documentation
 - [] Resource Manager v0.6
     - [] We really need to find a better way to interface between the `NBR` resources and the regular resoruces. Do we really need them? 
     - [] Go to the `resource_manager.cpp` file and take a look at the _whole_ source file. There's a lot to fix there. 
+    - [] Rethink 3D models a bit. Couldn't we just have a `resources_push_model` function, but instead of creating a `Model` struct we just create bunch of meshes with materials, transforms, mesh children and construct 
+    the model out that information. It's probably going to require a bit of rework and rethinking, but it will benefit us when adding scene graphs and it will also simplify the renderer's job by a ton. Think, test, and implement. 
 - [] Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers.
     - [] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application. Use Tracy for that.
@@ -182,6 +186,12 @@
          with a physics library really that necessary?
     - [] Listen, just remove the physics library. It's really not all that useful. It bring more pain and suffering than joy. I can do a better one with my hands tied behind my back whilst singing Katyusha. 
     - [] Implement mouse to screen and mouse to world for editing levels easier
+- [] Data Structures 0.1 
+    - [] Create your own string library 
+    - [] Dynamic array 
+    - [] Custom allocaters 
+    - [] Ring buffers
+    - [] Hash map
 - [] Renderer v0.7 
     - [] Improve lighting using clustered rendering.
     - [] Decal rendering 

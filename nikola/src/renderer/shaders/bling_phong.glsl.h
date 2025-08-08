@@ -29,7 +29,7 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
       };
       
       layout(std140, binding = 3) uniform AnimationBuffer {
-        mat4 u_skinning_palette[512]; // @TODO: Probably not the best count to have here
+        mat4 u_skinning_palette[128]; // @TODO: Probably not the best count to have here
       };
 
       uniform mat4 u_light_space;
@@ -52,6 +52,7 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
         // Applying the skinning of the animation 
        
         vec4 vertex_pos = vec4(0.0);
+        
         for(int i = 0; i < 4; i++) {
           if(aJointId[i] == -1.0) { // The parent joint of the skeleton... skip
             continue;
@@ -61,8 +62,9 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
             vertex_pos = vec4(aPos, 1.0); 
             break;
           }
-          
-          vertex_pos += (u_skinning_palette[int(aJointId[i])] * vec4(aPos, 1.0)) * aJointWeight[i];
+         
+          int index   = int(aJointId[i]);
+          vertex_pos += (u_skinning_palette[index] * vec4(aPos, 1.0)) * aJointWeight[i];
         }
         
         vec4 model_space = u_model[gl_InstanceID] * vertex_pos;

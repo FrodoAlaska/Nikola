@@ -66,6 +66,7 @@ set(NBR_SOURCES
   ${NBR_SRC_DIR}/image_loader.cpp
   ${NBR_SRC_DIR}/shader_loader.cpp
   ${NBR_SRC_DIR}/model_loader.cpp
+  ${NBR_SRC_DIR}/gltf_animation_loader.cpp
   ${NBR_SRC_DIR}/animation_loader.cpp
   ${NBR_SRC_DIR}/font_loader.cpp
   ${NBR_SRC_DIR}/audio_loader.cpp

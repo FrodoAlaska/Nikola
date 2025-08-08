@@ -13,80 +13,92 @@ static const f32 get_scale_factor(const f32 last_time, const f32 next_time, cons
   f32 mid_way_len = anim_time - last_time; 
   f32 frame_diff  = next_time - last_time;
 
-  return mid_way_len / frame_diff;
+  f32 scale_factor = mid_way_len / frame_diff;
+
+  return clamp_float(scale_factor, 0.0f, 1.0f);
 }
 
 static void animate_joint(const f32& current_time, Joint* joint) {
   // Find the next position
 
-  VectorAnimSample next_position = joint->position_samples[joint->current_position_sample];
-  sizei next_position_sample     = joint->current_position_sample;
+  sizei next_position_sample = joint->current_position_sample;
 
-  for(sizei i = joint->current_position_sample; i < joint->position_samples.size(); i++) {
+  for(sizei i = 0; i < joint->position_samples.size(); i++) {
     if(joint->position_samples[i].time > current_time) {
-      next_position         = joint->position_samples[i];
       next_position_sample = i; 
-
       break;
     }
   }
 
   // Find the next rotation
 
-  QuatAnimSample next_rotation = joint->rotation_samples[joint->current_rotation_sample];
-  sizei next_rotation_sample   = joint->current_rotation_sample;
+  sizei next_rotation_sample = joint->current_rotation_sample;
 
-  for(sizei i = joint->current_rotation_sample; i < joint->rotation_samples.size(); i++) {
+  for(sizei i = 0; i < joint->rotation_samples.size(); i++) {
     if(joint->rotation_samples[i].time > current_time) {
-      next_rotation        = joint->rotation_samples[i];
       next_rotation_sample = i; 
-
       break;
     }
   }
 
   // Find the next scale
 
-  VectorAnimSample next_scale = joint->scale_samples[joint->current_scale_sample];
-  sizei next_scale_sample     = joint->current_scale_sample;
+  sizei next_scale_sample = joint->current_scale_sample;
 
-  for(sizei i = joint->current_scale_sample; i < joint->scale_samples.size(); i++) {
+  for(sizei i = 0; i < joint->scale_samples.size(); i++) {
     if(joint->scale_samples[i].time > current_time) {
-      next_scale        = joint->scale_samples[i];
       next_scale_sample = i; 
-
       break;
     }
   }
 
-  // Interpolate between the two samples
+  // Interpolate between two position samples (if there is a change)
 
-  if(joint->position_samples.size() > 1) {
-    f32 pos_delta = get_scale_factor(joint->position_samples[joint->current_position_sample].time, next_position.time, current_time);
-    Vec3 lerp_pos = vec3_lerp(joint->position_samples[joint->current_position_sample].value, next_position.value, pos_delta);
-    
-    transform_translate(joint->current_transform, lerp_pos);
+  Vec3 next_position = joint->position_samples[next_position_sample].value;
+
+  if(next_position_sample != joint->current_position_sample) {
+    VectorAnimSample previous_sample = joint->position_samples[joint->current_position_sample]; 
+    VectorAnimSample next_sample     = joint->position_samples[next_position_sample]; 
+
+    f32 delta     = get_scale_factor(previous_sample.time, next_sample.time, current_time);
+    next_position = vec3_lerp(previous_sample.value, next_sample.value, delta);
+
+    joint->current_position_sample = next_position_sample;
   }
 
-  if(joint->rotation_samples.size() > 1) {
-    f32 rot_delta = get_scale_factor(joint->rotation_samples[joint->current_rotation_sample].time, next_rotation.time, current_time);
-    Quat lerp_rot = quat_slerp(joint->rotation_samples[joint->current_rotation_sample].value, next_rotation.value, rot_delta);
-    
-    transform_rotate(joint->current_transform, lerp_rot);
-  }
+  transform_translate(joint->current_transform, next_position);
   
-  if(joint->scale_samples.size() > 1) {
-    f32 scale_delta = get_scale_factor(joint->scale_samples[joint->current_scale_sample].time, next_scale.time, current_time);
-    Vec3 lerp_scale = vec3_lerp(joint->scale_samples[joint->current_scale_sample].value, next_scale.value, scale_delta);
-    
-    transform_scale(joint->current_transform, lerp_scale);
+  // Interpolate between two rotation samples (if there is a change)
+
+  Quat next_rotation = joint->rotation_samples[next_rotation_sample].value;
+
+  if(next_rotation_sample != joint->current_rotation_sample) {
+    QuatAnimSample previous_sample = joint->rotation_samples[joint->current_rotation_sample]; 
+    QuatAnimSample next_sample     = joint->rotation_samples[next_rotation_sample]; 
+
+    f32 delta     = get_scale_factor(previous_sample.time, next_sample.time, current_time);
+    next_rotation = quat_normalize(quat_slerp(previous_sample.value, next_sample.value, delta));
+
+    joint->current_rotation_sample = next_rotation_sample;
   }
+    
+  transform_rotate(joint->current_transform, next_rotation);
+  
+  // Interpolate between two scale samples (if there is a change)
 
-  // Set the indices for next frame 
+  Vec3 next_scale = joint->scale_samples[next_scale_sample].value;
 
-  joint->current_position_sample = next_position_sample;
-  joint->current_rotation_sample = next_rotation_sample;
-  joint->current_scale_sample    = next_scale_sample;
+  if(next_scale_sample != joint->current_scale_sample) {
+    VectorAnimSample previous_sample = joint->scale_samples[joint->current_scale_sample]; 
+    VectorAnimSample next_sample     = joint->scale_samples[next_scale_sample]; 
+
+    f32 delta  = get_scale_factor(previous_sample.time, next_sample.time, current_time);
+    next_scale = vec3_lerp(previous_sample.value, next_sample.value, delta);
+
+    joint->current_scale_sample = next_scale_sample;
+  }
+    
+  transform_scale(joint->current_transform, next_scale);
 }
 
 /// Private functions
@@ -96,10 +108,10 @@ static void animate_joint(const f32& current_time, Joint* joint) {
 /// Animator functions
 
 void animator_create(Animator* animator, const ResourceID& animation) {
-  animator->animation = resources_get_animation(animation);
+  animator->animation_id = animation;
 
   animator->current_time = 0.0f;
-  animator->is_looping   = false;
+  animator->is_looping   = true;
   animator->is_animating = true;
 }
 
@@ -107,20 +119,38 @@ void animator_animate(Animator& animator, const f32& dt) {
   if(!animator.is_animating) {
     return;
   }
+
+  Animation* animation = resources_get_animation(animator.animation_id); // For easier visualization
+
+  // Timing calculations. Making sure it resets when it needs to, and etc...
    
-  animator.current_time += (animator.animation->frame_rate * dt);
-  if((animator.current_time >= animator.animation->duration) && !animator.is_looping) {
+  animator.current_time += (animation->frame_rate * dt);
+  if((animator.current_time >= animation->duration) && !animator.is_looping) {
     animator.is_animating = false; 
     animator.current_time = 0.0f;
 
     return;
   }
-  animator.current_time = fmod(animator.current_time, animator.animation->duration);
+  animator.current_time = fmod(animator.current_time, animation->duration);
+ 
+  // Animating each joint, building a parent-child array of transforms
 
-  for(sizei i = 0; i < animator.animation->joints.size(); i++) {
-    Joint* joint = animator.animation->joints[i];
+  for(sizei i = 0; i < animation->joints.size(); i++) {
+    Joint* joint = animation->joints[i];
     animate_joint(animator.current_time, joint); 
+
+    Mat4 parent_transform = Mat4(1.0f);
+    if(joint->parent_index != -1) {
+      parent_transform = animation->skinning_palette[joint->parent_index];
+    }
+
+    animation->skinning_palette[i] = (parent_transform * joint->current_transform.transform);
   }
+}
+
+void animator_set_animation(Animator& animator, const ResourceID& animation) {
+  animator.animation_id = animation;
+  animator.current_time = 0.0f; 
 }
 
 /// Animator functions

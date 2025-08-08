@@ -8,7 +8,7 @@ namespace nikola { // Start of nikola
 /// ----------------------------------------------------------------------
 /// Private functions  
 
-static void generate_normals(Vertex3D_PNTIWUV* vertices, const u32 indices_count, const u32* indices) {
+static void generate_normals(Vertex3D* vertices, const u32 indices_count, const u32* indices) {
   for(u32 i = 0; i < indices_count; i += 3) {
     u32 idx0 = indices[i + 0];
     u32 idx1 = indices[i + 1];
@@ -25,7 +25,7 @@ static void generate_normals(Vertex3D_PNTIWUV* vertices, const u32 indices_count
   }
 }
 
-static void generate_tangents(Vertex3D_PNTIWUV* vertices, const u32 indices_count, const u32* indices) {
+static void generate_tangents(Vertex3D* vertices, const u32 indices_count, const u32* indices) {
   // Credits to Travis Vroman for this code. 
   // https://github.com/travisvroman/kohi/blob/main/kohi.core/src/math/geometry.c
 
@@ -102,7 +102,7 @@ static void create_cube_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pi
 
   // Vertices init
   
-  Vertex3D_PNTIWUV vertices[24];
+  Vertex3D vertices[24];
   
   // Position, Color
 
@@ -206,7 +206,14 @@ static void create_cube_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pi
   pipe_desc->indices_count = 36;  
 
   // Layout init
-  vertex_type_layout(VERTEX_TYPE_PNTIWUV, &pipe_desc->layouts[0]);
+  
+  pipe_desc->layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT3;
+  pipe_desc->layouts[0].attributes[1]    = GFX_LAYOUT_FLOAT3;
+  pipe_desc->layouts[0].attributes[2]    = GFX_LAYOUT_FLOAT3;
+  pipe_desc->layouts[0].attributes[3]    = GFX_LAYOUT_FLOAT4;
+  pipe_desc->layouts[0].attributes[4]    = GFX_LAYOUT_FLOAT4;
+  pipe_desc->layouts[0].attributes[5]    = GFX_LAYOUT_FLOAT2;
+  pipe_desc->layouts[0].attributes_count = 6;
 
   // Draw mode init
   pipe_desc->draw_mode = GFX_DRAW_MODE_TRIANGLE;
@@ -270,6 +277,7 @@ static void create_skybox_geo(const ResourceGroupID& group_id, GfxPipelineDesc* 
   pipe_desc->vertices_count = 36;
 
   // Layout init
+  
   pipe_desc->layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT3;
   pipe_desc->layouts[0].attributes_count = 1;
 
@@ -288,22 +296,13 @@ static void create_sphere_geo(const ResourceGroupID& group_id, GfxPipelineDesc* 
 static void create_billboard_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc) {
   // Vertex buffer init
   
-  Vertex3D_PNUV vertices[4];
-
-  vertices[0].position = Vec3(-1.0f,  1.0f, 0.0f);
-  vertices[1].position = Vec3(-1.0f, -1.0f, 0.0f);
-  vertices[2].position = Vec3( 1.0f, -1.0f, 0.0f);
-  vertices[3].position = Vec3( 1.0f,  1.0f, 0.0f);
-  
-  vertices[0].texture_coords = Vec2(0.0f, 1.0f);
-  vertices[1].texture_coords = Vec2(0.0f, 0.0f);
-  vertices[2].texture_coords = Vec2(1.0f, 0.0f);
-  vertices[3].texture_coords = Vec2(1.0f, 1.0f);
-  
-  vertices[0].normal = Vec3(0.0f, 0.0f, 1.0f);
-  vertices[1].normal = Vec3(0.0f, 0.0f, 1.0f);
-  vertices[2].normal = Vec3(0.0f, 0.0f, 1.0f);
-  vertices[3].normal = Vec3(0.0f, 0.0f, 1.0f);
+  f32 vertices[] {
+    // Position          Normal             Texture coords
+    -1.0f,  1.0f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 1.0f,
+    -1.0f, -1.0f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f,
+     1.0f, -1.0f, 0.0f,  0.0f, 0.0f, 1.0f,  1.0f, 0.0f,
+     1.0f,  1.0f, 0.0f,  0.0f, 0.0f, 1.0f,  1.0f, 1.0f,
+  };
   
   GfxBufferDesc buff_desc = {
     .data  = (void*)vertices,
@@ -331,7 +330,11 @@ static void create_billboard_geo(const ResourceGroupID& group_id, GfxPipelineDes
   pipe_desc->indices_count = 6;  
 
   // Layout init
-  vertex_type_layout(VERTEX_TYPE_PNUV, &pipe_desc->layouts[0]);
+  
+  pipe_desc->layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT3;
+  pipe_desc->layouts[0].attributes[1]    = GFX_LAYOUT_FLOAT3;
+  pipe_desc->layouts[0].attributes[2]    = GFX_LAYOUT_FLOAT2;
+  pipe_desc->layouts[0].attributes_count = 3;
 
   // Draw mode init
   pipe_desc->draw_mode = GFX_DRAW_MODE_TRIANGLE;

@@ -822,7 +822,19 @@ ResourceID resources_push_mesh(const ResourceGroupID& group_id, NBRMesh& nbr_mes
   mesh->pipe_desc.indices_count  = nbr_mesh.indices_count;  
   mesh->pipe_desc.draw_mode      = GFX_DRAW_MODE_TRIANGLE;
 
-  vertex_type_layout((VertexType)nbr_mesh.vertex_type, &mesh->pipe_desc.layouts[0]);
+  // @TODO (Resource manager): Add some post-processing to the mesh in case 
+  // it does not include tangents, normals, or what have you.
+  // Layout init
+  
+  mesh->pipe_desc.layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT3;
+  mesh->pipe_desc.layouts[0].attributes[1]    = GFX_LAYOUT_FLOAT3;
+  mesh->pipe_desc.layouts[0].attributes[2]    = GFX_LAYOUT_FLOAT3;
+  mesh->pipe_desc.layouts[0].attributes[3]    = GFX_LAYOUT_FLOAT4;
+  mesh->pipe_desc.layouts[0].attributes[4]    = GFX_LAYOUT_FLOAT4;
+  mesh->pipe_desc.layouts[0].attributes[5]    = GFX_LAYOUT_FLOAT2;
+  mesh->pipe_desc.layouts[0].attributes_count = 6;
+  
+  // Create the mesh's pipeline
   mesh->pipe = gfx_pipeline_create(renderer_get_context(), mesh->pipe_desc);
 
   // Create the mesh
@@ -835,9 +847,8 @@ ResourceID resources_push_mesh(const ResourceGroupID& group_id, NBRMesh& nbr_mes
   // New mesh added!
   
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed mesh:", group->name.c_str());
-  NIKOLA_LOG_DEBUG("     Vertex type   = %s", vertex_type_str((VertexType)nbr_mesh.vertex_type));
-  NIKOLA_LOG_DEBUG("     Vertices      = %zu", mesh->pipe_desc.vertices_count);
-  NIKOLA_LOG_DEBUG("     Indices       = %zu", mesh->pipe_desc.indices_count);
+  NIKOLA_LOG_DEBUG("     Vertices = %zu", mesh->pipe_desc.vertices_count);
+  NIKOLA_LOG_DEBUG("     Indices  = %zu", mesh->pipe_desc.indices_count);
   return id;
 }
 
@@ -1007,20 +1018,23 @@ ResourceID resources_push_model(const ResourceGroupID& group_id, const FilePath&
   // Convert the material 
   
   for(sizei i = 0; i < nbr_model.materials_count; i++) {
-    Vec3 color        = Vec3(nbr_model.materials[i].diffuse[0], 
-                             nbr_model.materials[i].diffuse[1], 
-                             nbr_model.materials[i].diffuse[2]);
+    NBRMaterial* nbr_mat = &nbr_model.materials[i];
+
+    Vec3 color = Vec3(nbr_mat->diffuse[0], 
+                      nbr_mat->diffuse[1], 
+                      nbr_mat->diffuse[2]);
     
-    i8 diffuse_index  = nbr_model.materials[i].diffuse_index;
-    i8 specular_index = nbr_model.materials[i].specular_index;
-    i8 normal_index   = nbr_model.materials[i].normal_index;
+    i8 diffuse_index  = nbr_mat->diffuse_index;
+    i8 specular_index = nbr_mat->specular_index;
+    i8 normal_index   = nbr_mat->normal_index;
 
     MaterialDesc mat_desc = {
-      .diffuse_id  = diffuse_index != -1 ? texture_ids[diffuse_index] : ResourceID{}, 
+      .diffuse_id  = diffuse_index  != -1 ? texture_ids[diffuse_index]  : ResourceID{}, 
       .specular_id = specular_index != -1 ? texture_ids[specular_index] : ResourceID{},
-      .normal_id   = normal_index != -1 ? texture_ids[normal_index] : ResourceID{},
+      .normal_id   = normal_index   != -1 ? texture_ids[normal_index]   : ResourceID{},
 
-      .color = color,
+      .color     = color,
+      .shininess = nbr_mat->shininess, 
     };
     ResourceID mat_id = resources_push_material(group_id, mat_desc);
 
@@ -1098,70 +1112,74 @@ ResourceID resources_push_animation(const ResourceGroupID& group_id, const FileP
   // Convert the NBR format into a valid animation
  
   anim->joints.reserve(nbr_anim.joints_count);
-
   for(u16 i = 0; i < nbr_anim.joints_count; i++) {
-    Joint* joint = new Joint{};
+    Joint* joint        = new Joint{};
+    NBRJoint* nbr_joint = &nbr_anim.joints[i];
 
     // Convert the positions
 
-    joint->position_samples.reserve(nbr_anim.joints[i].positions_count);
-    for(u16 ip = 0; ip < nbr_anim.joints[i].positions_count; ip += 4) {
+    joint->position_samples.reserve(nbr_joint->positions_count);
+    for(u16 ip = 0; ip < nbr_joint->positions_count; ip += 4) {
       VectorAnimSample sample;
 
-      sample.value.x = nbr_anim.joints[i].position_samples[ip + 0];
-      sample.value.y = nbr_anim.joints[i].position_samples[ip + 1];
-      sample.value.z = nbr_anim.joints[i].position_samples[ip + 2];
-      sample.time    = nbr_anim.joints[i].position_samples[ip + 3];
+      sample.value.x = nbr_joint->position_samples[ip + 0];
+      sample.value.y = nbr_joint->position_samples[ip + 1];
+      sample.value.z = nbr_joint->position_samples[ip + 2];
+      sample.time    = nbr_joint->position_samples[ip + 3];
 
       joint->position_samples.push_back(sample);
     }
     
     // Convert the rotations
 
-    joint->rotation_samples.reserve(nbr_anim.joints[i].rotations_count);
-    for(u16 ir = 0; ir < nbr_anim.joints[i].rotations_count; ir += 5) {
+    joint->rotation_samples.reserve(nbr_joint->rotations_count);
+    for(u16 ir = 0; ir < nbr_joint->rotations_count; ir += 5) {
       QuatAnimSample sample;
 
-      sample.value.x = nbr_anim.joints[i].rotation_samples[ir + 0];
-      sample.value.y = nbr_anim.joints[i].rotation_samples[ir + 1];
-      sample.value.z = nbr_anim.joints[i].rotation_samples[ir + 2];
-      sample.value.w = nbr_anim.joints[i].rotation_samples[ir + 3];
-      sample.time    = nbr_anim.joints[i].rotation_samples[ir + 4];
+      sample.value.x = nbr_joint->rotation_samples[ir + 0];
+      sample.value.y = nbr_joint->rotation_samples[ir + 1];
+      sample.value.z = nbr_joint->rotation_samples[ir + 2];
+      sample.value.w = nbr_joint->rotation_samples[ir + 3];
+      sample.time    = nbr_joint->rotation_samples[ir + 4];
 
       joint->rotation_samples.push_back(sample);
     }
     
     // Convert the scales
 
-    joint->scale_samples.reserve(nbr_anim.joints[i].scales_count);
-    for(u16 is = 0; is < nbr_anim.joints[i].scales_count; is += 4) {
+    joint->scale_samples.reserve(nbr_joint->scales_count);
+    for(u16 is = 0; is < nbr_joint->scales_count; is += 4) {
       VectorAnimSample sample;
 
-      sample.value.x = nbr_anim.joints[i].scale_samples[is + 0];
-      sample.value.y = nbr_anim.joints[i].scale_samples[is + 1];
-      sample.value.z = nbr_anim.joints[i].scale_samples[is + 2];
-      sample.time    = nbr_anim.joints[i].scale_samples[is + 3];
+      sample.value.x = nbr_joint->scale_samples[is + 0];
+      sample.value.y = nbr_joint->scale_samples[is + 1];
+      sample.value.z = nbr_joint->scale_samples[is + 2];
+      sample.time    = nbr_joint->scale_samples[is + 3];
 
       joint->scale_samples.push_back(sample);
     }
 
     // Conver other joint information
 
-    joint->parent_index = (i32)nbr_anim.joints[i].parent_index;
+    joint->parent_index = (i32)nbr_joint->parent_index;
 
-    f32* matrix = &nbr_anim.joints[i].inverse_bind_pose[0];
+    f32* matrix = &nbr_joint->inverse_bind_pose[0];
 
-    joint->inverse_bind_pose = Mat4(matrix[0],  matrix[1],  matrix[2],  matrix[3],
-                                    matrix[4],  matrix[5],  matrix[6],  matrix[7], 
-                                    matrix[8],  matrix[9],  matrix[10], matrix[11],  
-                                    matrix[12], matrix[13], matrix[14], matrix[15]); 
+    joint->inverse_bind_pose = Mat4(matrix[0], matrix[4], matrix[8],  0.0f,
+                                    matrix[1], matrix[5], matrix[9],  0.0f,
+                                    matrix[2], matrix[6], matrix[10], 0.0f,
+                                    matrix[3], matrix[7], matrix[11], 1.0f);
 
+    // Default initializing the skinning matrix of the joint (IMPORTANT!)
+    anim->skinning_palette[i] = Mat4(1.0f);
+
+    // Welcome, Mr. Joint!
     anim->joints.push_back(joint);
   }
 
   anim->skinned_model = resources_get_model(model_id); 
   anim->duration      = nbr_anim.duration;
-  anim->frame_rate    = nbr_anim.duration;
+  anim->frame_rate    = nbr_anim.frame_rate;
 
   // New animation added!
   

@@ -163,7 +163,8 @@ static bool convert_animation(const nikola::FilePath& in_path, const nikola::Fil
   // Save the animation
   
   nikola::File file;
-  nikola::FilePath path = nikola::filepath_append(save_path, nikola::filepath_filename(in_path));
+  nikola::FilePath path = nikola::filepath_append(save_path, 
+                                                  nikola::filepath_filename(nikola::filepath_parent_path(in_path)));
   nikola::filepath_set_extension(path, "nbr");
   
   if(!open_nbr_file(path, in_path, &file, nikola::RESOURCE_TYPE_ANIMATION)) {

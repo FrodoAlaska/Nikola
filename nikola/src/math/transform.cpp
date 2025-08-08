@@ -10,11 +10,13 @@ namespace nikola { // Start of nikola
 
 /// ----------------------------------------------------------------------
 /// Private functions
+
 static void update_transform(Transform& trans) {
   trans.transform = mat4_translate(trans.position) *
                     quat_to_mat4(trans.rotation)   *
                     mat4_scale(trans.scale);
 }
+
 /// Private functions
 /// ----------------------------------------------------------------------
 
@@ -41,6 +43,46 @@ void transform_rotate(Transform& trans, const Vec3& axis, const f32 angle) {
 
 void transform_scale(Transform& trans, const Vec3& scale) {
   trans.scale = scale; 
+  update_transform(trans);
+}
+
+void transform_lerp(Transform& trans_a, const Transform& trans_b, const f32 delta) {
+  trans_a.position = vec3_lerp(trans_a.position, trans_b.position, delta);
+  trans_a.rotation = quat_slerp(trans_a.rotation, trans_b.rotation, delta);
+  trans_a.scale    = vec3_lerp(trans_a.scale, trans_b.scale, delta);
+
+  update_transform(trans_a);
+}
+
+void transform_lerp(Transform& trans, 
+                    const Vec3& position, 
+                    const Quat& rotation, 
+                    const Vec3& scale,
+                    const f32 delta) {
+  trans.position = vec3_lerp(trans.position, position, delta);
+  trans.rotation = quat_normalize(quat_slerp(trans.rotation, rotation, delta));
+  trans.scale    = vec3_lerp(trans.scale, scale, delta);
+
+  update_transform(trans);
+}
+
+void transform_lerp_position(Transform& trans, const Vec3& position, const f32 delta) {
+  trans.position = vec3_lerp(trans.position, position, delta);
+  update_transform(trans);
+}
+
+void transform_slerp_rotation(Transform& trans, const Quat& rotation, const f32 delta) {
+  trans.rotation = quat_normalize(quat_slerp(trans.rotation, rotation, delta));
+  update_transform(trans);
+}
+
+void transform_lerp_rotation(Transform& trans, const Vec3& axis, const f32 angle, const f32 delta) {
+  trans.rotation = quat_angle_axis(axis, angle);
+  transform_slerp_rotation(trans, trans.rotation, delta);
+}
+
+void transform_lerp_scale(Transform& trans, const Vec3& scale, const f32 delta) {
+  trans.scale = vec3_lerp(trans.scale, scale, delta);
   update_transform(trans);
 }
 

@@ -118,14 +118,11 @@ struct NBRShader {
 ///---------------------------------------------------------------------------------------------------------------------
 /// NBRMaterial
 struct NBRMaterial {
-  /// An RGB value array of the ambient color.
-  f32 ambient[3];
-  
   /// An RGB value array of the diffuse color.
   f32 diffuse[3];
   
-  /// An RGB value array of the specular color.
-  f32 specular[3];
+  /// A floating-point value indicating the shininess of this material.
+  f32 shininess;
 
   /// The diffuse index into the `textures` array in `NBRModel`.
   ///
@@ -148,9 +145,9 @@ struct NBRMaterial {
 ///---------------------------------------------------------------------------------------------------------------------
 /// NBRMesh 
 struct NBRMesh {
-  /// A value from the `VertexType` enum to denote the 
-  /// stride of `vertices`.
-  u8 vertex_type; 
+  /// A bitfield from the `VertexComponentType` enum 
+  /// that determines the exact components found in `vertices`. 
+  u8 vertex_component_bits; 
 
   /// The total number of vertices in `vertices`.
   u32 vertices_count; 
@@ -207,9 +204,9 @@ struct NBRJoint {
   /// will be `-1`.
   i16 parent_index = -1; 
 
-  /// A 4x4 matrix defining the inverse bind pose of this 
+  /// A 4x3 matrix defining the inverse bind pose of this 
   /// joint that transforms to the joint's local coordinates.
-  f32 inverse_bind_pose[16];
+  f32 inverse_bind_pose[12];
 
   /// An array of interleaved position samples of `positions_count` 
   /// where the first three values of each entry 
@@ -369,6 +366,9 @@ const sizei SHADER_LIGHT_BUFFER_INDEX     = 2;
 
 /// The index of the animation uniform buffer within all shaders.
 const sizei SHADER_ANIMATION_BUFFER_INDEX = 3;
+
+/// The maximum amount of joints that can processed.
+const sizei JOINTS_MAX             = 256;
 
 /// Resources consts
 ///---------------------------------------------------------------------------------------------------------------------
@@ -626,13 +626,20 @@ struct Animation {
   /// The skinned model that will be used for the animation.
   Model* skinned_model; 
 
-  /// Timeing information of the animation 
+  /// Timing-related information of the animation 
   ///
   /// @NOTE: Refer to `NBRAnimation` for more information 
   /// about each of the values.
   
   f32 duration   = 0.0f; 
   f32 frame_rate = 0.0f;
+
+  /// The final output matrix of the animation with all 
+  /// of the parent/child transformations applied as well as the 
+  /// inverse bind matrix of each joint. 
+  /// 
+  /// This is essentially ready to be sent to the shader.
+  Mat4 skinning_palette[JOINTS_MAX];
 };
 /// Animation
 ///---------------------------------------------------------------------------------------------------------------------
