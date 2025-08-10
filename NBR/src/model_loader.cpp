@@ -260,7 +260,7 @@ bool model_loader_load(nikola::NBRModel* model, const nikola::FilePath& path) {
                aiProcess_GlobalScale); 
 
   Assimp::Importer imp; 
-  imp.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, 0.1f);
+  imp.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, nikola::NBR_MODEL_IMPORT_SCALE);
   imp.SetPropertyInteger(AI_CONFIG_PP_LBW_MAX_WEIGHTS, nikola::NBR_JOINT_WEIGHTS_MAX);
 
   const aiScene* scene = imp.ReadFile(path, flags);

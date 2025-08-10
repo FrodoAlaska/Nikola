@@ -15,9 +15,7 @@ namespace nbr { // Start of nbr
 struct NodeData {
   nikola::String name;
   nikola::String parent_name = "INVALID";
-
-  nikola::i32 parent_index = -1;
-  nikola::i32 index        = 0;
+  nikola::i32 index          = 0;
 
   aiMatrix4x4 inverse_bind_pose;
   aiMatrix4x4 transform;
@@ -113,20 +111,21 @@ static void push_node_from_bone(AnimData* data, aiBone* bone) {
   data->node_map[node_data.name] = node_data;
 }
 
-static void load_bone_map(AnimData* data, aiNode* node) {
-  for(nikola::u32 i = 0; i < node->mNumMeshes; i++) {
-    aiMesh* mesh = data->ai_scene->mMeshes[node->mMeshes[i]];
+static void load_bone_map(AnimData* data) {
+  for(nikola::u32 i = 0; i < data->ai_scene->mNumMeshes; i++) {
+    aiMesh* mesh = data->ai_scene->mMeshes[i];
     
     for(nikola::u32 j = 0; j < mesh->mNumBones; j++) {
       aiBone* bone = mesh->mBones[j];
 
       nikola::String node_name   = bone->mNode->mName.C_Str();
       nikola::String parent_name = bone->mNode->mParent->mName.C_Str();
+      
       if(data->node_map.find(node_name) != data->node_map.end()) { // Node is already in the map
         continue;
       } 
       
-      if(data->node_map.find(parent_name) == data->node_map.end()) {
+      if(data->node_map.find(parent_name) == data->node_map.end()) { // We need to find and add the parent first before child 
         aiBone* parent_bone = data->ai_scene->findBone(bone->mNode->mParent->mName);
 
         if(parent_bone) {
@@ -136,10 +135,6 @@ static void load_bone_map(AnimData* data, aiNode* node) {
 
       push_node_from_bone(data, bone);
     }
-  }
-
-  for(nikola::u32 i = 0; i < node->mNumChildren; i++) {
-    load_bone_map(data, node->mChildren[i]);
   }
 }
 
@@ -222,7 +217,7 @@ static void load_scale_channels(nikola::NBRJoint* joint, aiVectorKey* keys, cons
 }
 
 static void load_joints(AnimData* data) {
-  data->joints.resize(data->node_map.size());
+  data->joints.reserve(data->node_map.size());
 
   for(nikola::sizei i = 0; i < data->node_indices.size(); i++) {
     NodeData* node_data    = &data->node_map[data->node_indices[i]];
@@ -258,10 +253,11 @@ static void load_joints(AnimData* data) {
       joint.parent_index = (nikola::i16)data->node_map[node_data->parent_name].index;
     }
 
+    // NIKOLA_LOG_TRACE("%s (%i) - %s (%i)", node_data->name.c_str(), node_data->index, node_data->parent_name.c_str(), joint.parent_index);
     decompose_ai_matrix(&joint, node_data->inverse_bind_pose);
 
     // Welcome, Mr. Joint!
-    data->joints[i] = joint;
+    data->joints.push_back(joint);
   }
 }
 
@@ -293,7 +289,7 @@ bool animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& p
                aiProcess_OptimizeMeshes); 
 
   Assimp::Importer imp; 
-  imp.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, 0.1f);
+  imp.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, nikola::NBR_MODEL_IMPORT_SCALE);
   imp.SetPropertyInteger(AI_CONFIG_PP_LBW_MAX_WEIGHTS, nikola::NBR_JOINT_WEIGHTS_MAX);
 
   const aiScene* scene = imp.ReadFile(path, flags);
@@ -307,7 +303,7 @@ bool animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& p
   AnimData* data  = new AnimData{};
   data->ai_scene  = scene;
  
-  load_bone_map(data, data->ai_scene->mRootNode);
+  load_bone_map(data);
   load_pose_map(data);
 
   // Load the joints 
@@ -322,11 +318,6 @@ bool animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& p
 
   anim->duration   = data->duration; 
   anim->frame_rate = data->frame_rate;
-
-  NIKOLA_LOG_TRACE("Animation loaded:");
-  NIKOLA_LOG_TRACE("  Joints count = %zu", data->joints.size());
-  NIKOLA_LOG_TRACE("  Duration     = %f", data->duration);
-  NIKOLA_LOG_TRACE("  Frame rate   = %f", data->frame_rate);
 
   data->node_map.clear();
   // delete data; @TEMP: Causes a segfault. Fuck it. Let it leak...

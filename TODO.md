@@ -1,111 +1,4 @@
-# Road To A Game 
-- [x] Filesystem
-- [x] GUI v0.1
-- [x] Renderer v0.1
-    - [x] Create a 2D batch renderer that can handle basic shapes and textures.
-    - [x] A way to have default renderer resources (like the matrices buffer and a white texture).
-    - [x] Support for diffuse and specular maps.
-    - [x] Some of the textures on models get loaded weirdly
-    - [x] Need to find a better way to send default uniforms with materials.
-- [x] Resource Manager v0.3
-    - [x] A better way to refer to the resources
-    - [x] Find a way to list all of the required resources for an application
-    - [x] Resource groups
-    - [x] File watcher system using C++'s std::filesystem
-    - [x] Completely remove any pointer to resources. Just refer to resoruces with their IDs
-    - [x] Implement `nbr_import` functions that will convert NBR resource formats into engine resource formats.
-    - [x] Reload resources on the fly
-    - [x] Documentation
-- [x] NBR v0.2 
-    - [x] Have the `nbrlist` file be a list of all the resoruces required by a game. The tool will read said NBRList file and convert all of them to the `.nbr*` format.
-    - [x] Be able to rename an output file 
-    - [x] Have the ability to go through a directory and convert cubemaps 
-    - [x] If the `--resource-type` flag is omitted, let the tool "guess" which resource is being converted. Perhaps get rid of the glag all together? 
-    - [x] Implement a job system or, rather, multi-threading for the tool to make conversions faster, especially for resources like 3D models.
-    - [x] Improve the README
-- [x] Build System Improvement v0.2 
-    - [x] Improve the CMake situation
-    - [x] Better header names
-    - [x] Test and improve the build scripts for Linux
-- [x] Render Passes v0.2. 
-    - [x] Multiple render passes
-    - [x] Some meshes draw the specular texture even though they don't need it? Perhaps find a better way to use textures?
-    - [x] A more pipelined post-processing system.
-- [x] Resource Rendering v0.1
-    - [x] Create a `ShaderContext` structure to encapsulate shader functionality.
-    - [x] Seperate the shader and the materials from each other. The materials should only be a description of the physical properties of any renderable type. 
-    - [x] Add the `ShaderContext` as a new resource type.
-    - [x] Incorporate `ShaderContext` into rendering
-    - [x] Improve the rendering of 3D models (perhaps each mesh is a specific render command?) 
-    - [x] Make render passes be associated with a specific `ShaderContext` instead of a `Material`.
-    - [x] The model loader cannot load models that posses no textures
-- [x] Renderer v0.3 
-    - [x] Refine the render command system
-    - [x] Improve render pass system
-    - [x] Documentation
-- [x] Lighting v0.1 
-    - [x] Implement lighting data structures that can be represented in a scene 
-    - [x] Decide on whether the lighting calculation/pipeline should be part of the engine or the application 
-    - [x] Perhaps add a `FrameData` structure that will have all the available lights as well as the scene camera per frame (obviously).
-- [x] GFX v1.0 
-    - [x] Let every reasource have a `_use` function
-    - [x] Refactor the `GfxPipeline` 
-    - [x] Improve framebuffers (`gfx_framebuffer_copy(src, dest, pos, size)`, incorporate `glDrawBuffers`)
-    - [x] Test
-    - [x] A better way to set the framebuffer or the "render target".
-    - [x] Improve resource updating functions
-    - [x] Documentation
-- [x] Renderer v0.4 
-    - [x] HDR pipeline 
-    - [x] Improve lighting structures
-- [x] GUI/Editor v0.2
-    - [x] Add more serializable engine-specific types
-    - [x] Semi-scene serializer
-    - [x] Include more engine-specific types that can be edited, including resources.
-    - [x] Add a "render gui" callback to the applications.
-    - [x] Documentation (for `nikola_ui.h` and `nikola_file.h`)
-- [x] 2D Renderer v0.2
-    - [x] Decide whether to keep the 2D renderer seperate or part of the 3D renderer 
-    - [x] Basic 2D shapes like, lines, triangles, quads, circles, and textured quads.
-- [x] Fonts v0.1 
-    - [x] Convert font formats into the internal `nbrfont` format. 
-    - [x] Add fonts to the resource manager 
-    - [x] Don't forget to add `glPixelStori` somewhere 
-    - [x] Font rendering
-    - [x] Documentation (`batch_renderer`, `nbr_font`, `font resources`).
-- [x] Audio v0.1 
-    - [x] Lay out what you actually want the audio system to be and what it does. 
-    - [x] Decide on an audio backend. OpenAL-soft, SoLoud, and Miniaudio are the options.
-    - [x] A way to create an audio buffer that could be played with the context 
-    - [x] Create an audio backend with a context 
-    - [x] Create the NBR version of the audio resource. 
-    - [x] Add it to the resource manager
-    - [x] Try to load, convert, and manage the new audio buffer with the NBR tool.
-    - [x] Add one listener and manage it by the user
-    - [x] Improved source and listener management. Perhaps have an audio system?
-    - [x] Add the new types to the GUI
-    - [x] Documentation
-- [x] Annoying Bugs To Fix 
-    - [x] The wonderful and useful `resoruces_push_dir` function doesn't work and seg faults for some reason. Please fix.
-    - [x] Actually, the whole filewatcher system might be _extremely_ slow. At least that's what I saw in the data. Remove it? Find an alternative? Make it faster? I don't know.
-    - [x] The NBR tool needs to create a certain directory if it doesn't exist, so I don't have to do it on my own.
-    - [x] Resources like `ShaderContext`, `Skybox`, and others that take in other resources as arguments, should be given a path as well.
-    - [x] Make resources be less dependent on `ResourceID`. The ID should be given when the resources are pushed, but not to be used _in place_ of resources.
-    - [x] Fix the way the `Transform` type is edited through the GUI
-    - [x] Add OGG support in the NBR tool
-- [x] Collision Detection
-    - [x] Add AABB VS. AABB collision detection 
-    - [x] Add raycasting 
-    - [x] Add AABB VS. Ray collision detection
-    - [x] Add Spheres and their associated collision detection functions
-- [x] Physics v0.1
-    - [x] Create a physics world, physics body, and what have you
-    - [x] Add collision callbacks and debug render capabilities for the colliders
-    - [x] Integrate the physics layer into the engine proper.
-    - [x] Ray testing 
-    - [x] Add the newly-added physics types to be edited by the GUI 
-    - [x] Test the physics logic by making some testbeds.
-    - [x] Documentation
+# Update 0.2
 - [x] UI v0.1
     - [x] Text UI elements 
     - [x] Text animation system
@@ -157,15 +50,13 @@
         - [] If performance is still an issue, make all of the scene's lights into a buffer and send it to the shader as a buffer update instead of uniforms.
         - [] Look into multi-threading the renderer
     - [x] Documentation
-- [] 3D Animations v0.1
+- [x] 3D Animations v0.1
     - [x] Load animations from Assimp into the equivalent `NBR` resource.
     - [x] Load the `NBR` animation resource into the engine, creating an `Animator` component in the process to control the animation 
     - [x] Use the new animation resource and find out a way to render it and shade it properly.
     - [x] Try to have a good system for switching between animations
-    - [] Add the animator to the GUI
-    - [] Documentation
+    - [x] Documentation
 - [] Resource Manager v0.6
-    - [] We really need to find a better way to interface between the `NBR` resources and the regular resoruces. Do we really need them? 
     - [] Go to the `resource_manager.cpp` file and take a look at the _whole_ source file. There's a lot to fix there. 
     - [] Rethink 3D models a bit. Couldn't we just have a `resources_push_model` function, but instead of creating a `Model` struct we just create bunch of meshes with materials, transforms, mesh children and construct 
     the model out that information. It's probably going to require a bit of rework and rethinking, but it will benefit us when adding scene graphs and it will also simplify the renderer's job by a ton. Think, test, and implement. 
@@ -180,12 +71,18 @@
 - [] Particles v0.2 
     - [] GPU-based particle system, using compute shaders.
     - [] Documentation
+- [] Animations v0.2 
+    - [] Add the animator to the GUI
+    - [] Add an animation controller to easily transition between animations 
+    - [] Documentation
 - [] Physics v0.3
     - [] Deleting bodies has some problems since the world delets bodies by keeping a "world index" inside the internal body data structure, which then it uses to 
          get the correct position (as an iterator) in the vector to then delete. However, that index is sometimes _way_ higher than the actual size of the array of bodies. Is keeping a collection for bodies in the physics world 
          with a physics library really that necessary?
-    - [] Listen, just remove the physics library. It's really not all that useful. It bring more pain and suffering than joy. I can do a better one with my hands tied behind my back whilst singing Katyusha. 
+    - [] Listen, just remove the physics library. It's really not all that useful. It brings more pain and suffering than joy. I can do a better one with my hands tied behind my back whilst singing Katyusha. 
     - [] Implement mouse to screen and mouse to world for editing levels easier
+
+## Update 0.3
 - [] Data Structures 0.1 
     - [] Create your own string library 
     - [] Dynamic array 
@@ -193,16 +90,15 @@
     - [] Ring buffers
     - [] Hash map
 - [] Renderer v0.7 
-    - [] Improve lighting using clustered rendering.
+    - [] Improve lighting performance using clustered rendering.
     - [] Decal rendering 
     - [] Terrain rendering and procedural generation (terrain generation using `stb_perlin` and loading from heightmap)
-    - [] SSAO
     - [] Gaussian blur
     - [] Bloom integration 
     - [] Documentation
 
 ## BUGS:
-- (Dist): Improve the `NikolaProjectTemplate` by adding a template shader.
+- (Dist): Improve the `NikolaProjectTemplate` by adding a template shader. And you know what? Just improve the whole template.
 - Check all of the `TODO`, `FIX`, and `TEMP` in the codebase.
 
 ## FUTURE PLANS: 

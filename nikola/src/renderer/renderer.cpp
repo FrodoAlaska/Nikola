@@ -488,12 +488,6 @@ void renderer_queue_animation_instanced(const ResourceID& res_id,
   
   Animation* anim = resources_get_animation(res_id);
 
-  // Applying the inverse bind pose to each transform in the palette
-
-  for(sizei i = 0; i < anim->joints.size(); i++) {
-    anim->skinning_palette[i] *= anim->joints[i]->inverse_bind_pose;
-  }
-
   // Queue the skinning model
 
   Model* model = anim->skinned_model;

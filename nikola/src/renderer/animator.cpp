@@ -54,51 +54,39 @@ static void animate_joint(const f32& current_time, Joint* joint) {
 
   // Interpolate between two position samples (if there is a change)
 
-  Vec3 next_position = joint->position_samples[next_position_sample].value;
-
   if(next_position_sample != joint->current_position_sample) {
     VectorAnimSample previous_sample = joint->position_samples[joint->current_position_sample]; 
     VectorAnimSample next_sample     = joint->position_samples[next_position_sample]; 
 
-    f32 delta     = get_scale_factor(previous_sample.time, next_sample.time, current_time);
-    next_position = vec3_lerp(previous_sample.value, next_sample.value, delta);
+    f32 delta = get_scale_factor(previous_sample.time, next_sample.time, current_time);
 
+    transform_lerp_position(joint->current_transform, next_sample.value, delta);
     joint->current_position_sample = next_position_sample;
   }
-
-  transform_translate(joint->current_transform, next_position);
   
   // Interpolate between two rotation samples (if there is a change)
-
-  Quat next_rotation = joint->rotation_samples[next_rotation_sample].value;
 
   if(next_rotation_sample != joint->current_rotation_sample) {
     QuatAnimSample previous_sample = joint->rotation_samples[joint->current_rotation_sample]; 
     QuatAnimSample next_sample     = joint->rotation_samples[next_rotation_sample]; 
 
-    f32 delta     = get_scale_factor(previous_sample.time, next_sample.time, current_time);
-    next_rotation = quat_normalize(quat_slerp(previous_sample.value, next_sample.value, delta));
+    f32 delta = get_scale_factor(previous_sample.time, next_sample.time, current_time);
 
+    transform_slerp_rotation(joint->current_transform, next_sample.value, delta);
     joint->current_rotation_sample = next_rotation_sample;
   }
-    
-  transform_rotate(joint->current_transform, next_rotation);
   
   // Interpolate between two scale samples (if there is a change)
-
-  Vec3 next_scale = joint->scale_samples[next_scale_sample].value;
 
   if(next_scale_sample != joint->current_scale_sample) {
     VectorAnimSample previous_sample = joint->scale_samples[joint->current_scale_sample]; 
     VectorAnimSample next_sample     = joint->scale_samples[next_scale_sample]; 
 
-    f32 delta  = get_scale_factor(previous_sample.time, next_sample.time, current_time);
-    next_scale = vec3_lerp(previous_sample.value, next_sample.value, delta);
+    f32 delta = get_scale_factor(previous_sample.time, next_sample.time, current_time);
 
+    transform_lerp_scale(joint->current_transform, next_sample.value, delta);
     joint->current_scale_sample = next_scale_sample;
   }
-    
-  transform_scale(joint->current_transform, next_scale);
 }
 
 /// Private functions
@@ -145,6 +133,12 @@ void animator_animate(Animator& animator, const f32& dt) {
     }
 
     animation->skinning_palette[i] = (parent_transform * joint->current_transform.transform);
+  }
+
+  // Applying the inverse bind pose to each transform in the palette
+
+  for(sizei i = 0; i < animation->joints.size(); i++) {
+    animation->skinning_palette[i] *= animation->joints[i]->inverse_bind_pose;
   }
 }
 

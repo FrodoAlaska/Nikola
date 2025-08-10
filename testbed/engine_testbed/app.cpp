@@ -41,13 +41,13 @@ static void init_resources(nikola::App* app) {
  
   // nikola::resources_push_dir(app->res_group_id, "models/");
 
-  app->model_id    = nikola::resources_push_model(app->res_group_id, "models/zombie_idle.nbr");
+  app->model_id    = nikola::resources_push_model(app->res_group_id, "models/knight_melee.nbr");
   app->building_id = nikola::resources_push_model(app->res_group_id, "models/medieval_bridge.nbr");
 
   // Animations init
   
   app->walk_animation_id = nikola::resources_push_animation(app->res_group_id, "animations/zombie_walk.nbr", app->model_id);
-  app->idle_animation_id = nikola::resources_push_animation(app->res_group_id, "animations/zombie_idle.nbr", app->model_id);
+  app->idle_animation_id = nikola::resources_push_animation(app->res_group_id, "animations/knight_melee.nbr", app->model_id);
 
   // Material init
   
@@ -71,7 +71,6 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // Window init
   app->window = window;
-  nikola::window_set_fullscreen(window, false);
 
   // Editor init
   nikola::gui_init(window);
@@ -103,8 +102,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::transform_rotate(app->transforms[1], nikola::Vec3(-90.0f * nikola::DEG2RAD, 0.0f, 0.0f));
   
   nikola::transform_translate(app->transforms[2], nikola::Vec3(5.5f, 10.5f, 30.0f));
-  nikola::transform_scale(app->transforms[2], nikola::Vec3(0.5f));
-  nikola::transform_rotate(app->transforms[2], nikola::Vec3(90.0f * nikola::DEG2RAD, 0.0f, 0.0f));
+  nikola::transform_scale(app->transforms[2], nikola::Vec3(1.0f));
 
   // Lights init
 
@@ -138,17 +136,12 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     nikola::input_cursor_show(app->has_editor);
   }
 
+  if(nikola::input_key_pressed(nikola::KEY_SPACE)) {
+    app->animator.is_animating = !app->animator.is_animating;
+  }
+
   // Update the animator
   nikola::animator_animate(app->animator, (nikola::f32)delta_time);
-
-  // Switching animations
-  
-  if(nikola::input_key_pressed(nikola::KEY_Q)) {
-    nikola::animator_set_animation(app->animator, app->idle_animation_id);
-  }
-  else if(nikola::input_key_pressed(nikola::KEY_E)) {
-    nikola::animator_set_animation(app->animator, app->walk_animation_id);
-  }
 
   // Update the camera
   nikola::camera_update(app->frame_data.camera);

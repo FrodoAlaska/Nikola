@@ -66,7 +66,6 @@ set(NBR_SOURCES
   ${NBR_SRC_DIR}/image_loader.cpp
   ${NBR_SRC_DIR}/shader_loader.cpp
   ${NBR_SRC_DIR}/model_loader.cpp
-  ${NBR_SRC_DIR}/gltf_animation_loader.cpp
   ${NBR_SRC_DIR}/animation_loader.cpp
   ${NBR_SRC_DIR}/font_loader.cpp
   ${NBR_SRC_DIR}/audio_loader.cpp
@@ -76,9 +75,6 @@ set(NBR_SOURCES
 ### Library Sources ###
 ############################################################
 set(LIBS_SOURCES 
-  # cgltf
-  ${NBR_LIBS_DIR}/cgltf/cgltf.cpp
-
   # stb
   ${NBR_LIBS_DIR}/stb/stb_image.cpp
   ${NBR_LIBS_DIR}/stb/stb_truetype.cpp

@@ -361,10 +361,18 @@ struct ParticleEmitterDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Animator
 struct Animator {
+  /// The animation associated with this animator.
   ResourceID animation_id; 
 
+  /// The current ticking time of the animation.
   f32 current_time  = 0.0f;
+
+  /// Determines whether the animation should loop or not.
   bool is_looping   = true;
+
+  /// When this flag is set to `true`, the animation will 
+  /// go through its samples and play. Otherwise, the animation 
+  /// will be paused.
   bool is_animating = true;
 };
 /// Animator
@@ -665,10 +673,14 @@ NIKOLA_API void particles_emit(const ParticleEmitterDesc& desc);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Animator functions
 
+/// Create an animator component using the given `animation`.
 NIKOLA_API void animator_create(Animator* animator, const ResourceID& animation);
 
+/// Start the animation process of the given `animator`, using the given `dt` as 
+/// a delta time for progressing through the animation.
 NIKOLA_API void animator_animate(Animator& animator, const f32& dt);
 
+/// Set the current animation of `animator` to the given `animation`.
 NIKOLA_API void animator_set_animation(Animator& animator, const ResourceID& animation);
 
 /// Animator functions

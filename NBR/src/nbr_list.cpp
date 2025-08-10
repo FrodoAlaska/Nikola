@@ -37,6 +37,7 @@ static bool check_section_dirs(const ListSection& section) {
 
 static bool open_nbr_file(const nikola::FilePath& save_path, const nikola::FilePath& in_path, nikola::File* file, const nikola::ResourceType& type) {
   if(!nikola::file_open(file, save_path, (int)(nikola::FILE_OPEN_WRITE | nikola::FILE_OPEN_BINARY))) {
+    NIKOLA_LOG_ERROR("Failed to open NBR file at '\%s\'", save_path.c_str());
     return false;
   }
 
@@ -61,7 +62,7 @@ static bool convert_texture(const nikola::FilePath& in_path, const nikola::FileP
   nikola::FilePath path = nikola::filepath_append(save_path, nikola::filepath_filename(in_path));
   nikola::filepath_set_extension(path, "nbr");
   
-  if(!open_nbr_file(save_path, in_path, &file, nikola::RESOURCE_TYPE_TEXTURE)) {
+  if(!open_nbr_file(path, in_path, &file, nikola::RESOURCE_TYPE_TEXTURE)) {
     return false;
   }
   nikola::file_write_bytes(file, texture);
@@ -274,6 +275,7 @@ static void load_resources(ListSection* section) {
   }
 
   // Convert all the resource paths
+  
   for(auto& res : section->resources) {
     if(nikola::filepath_is_dir(res)) {
       nikola::filesystem_directory_iterate(res, iterate_resources, section);
@@ -292,12 +294,14 @@ static void load_resources(ListSection* section) {
 
 void list_context_create(const nikola::FilePath& path, ListContext* list) {
   // Lex
+  
   nikola::DynamicArray<ListToken> tokens;
   if(!list_lexer_init(path, &tokens)) {
     return;
   }
 
   // Parse
+  
   if(!list_parser_init(tokens, list)) {
     return;
   }
@@ -325,8 +329,9 @@ void list_context_convert_all(ListContext* list) {
   // @TODO (Threads): Substitute this for a thread pool/job queue 
   nikola::DynamicArray<std::thread> threads;
   
+  // Convert all the resource paths
+  
   for(auto& section : list->sections) {
-    // Convert all the resource paths
     threads.push_back(std::thread(load_resources, &section));
   }
   

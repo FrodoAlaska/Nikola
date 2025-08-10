@@ -46,8 +46,6 @@ void model_loader_unload(nikola::NBRModel& model);
 /// ----------------------------------------------------------------------
 /// Animation loader functions
 
-bool gltf_animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& path); 
-
 bool animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& path); 
 
 void animation_loader_unload(nikola::NBRAnimation& anim); 

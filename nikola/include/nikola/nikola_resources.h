@@ -35,6 +35,11 @@ const i16 NBR_VALID_MINOR_VERSION = 3;
 /// The maximum number of weights a joint can have in an NBR file. 
 const u8 NBR_JOINT_WEIGHTS_MAX    = 4;
 
+/// Some 3D models have their own unit of scales when being imported. 
+/// In order to unify all the models, we apply this multiplier to the models 
+/// before improting to the final NBR format.
+const f32 NBR_MODEL_IMPORT_SCALE  = 0.1f;
+
 /// NBR consts
 ///---------------------------------------------------------------------------------------------------------------------
 
