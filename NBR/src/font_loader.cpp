@@ -63,6 +63,7 @@ static void load_glyphs_data(nikola::HashMap<char, nikola::NBRGlyph>* font_glyph
     }
 
     // Pixels of the specific codepoint, offset, and size 
+    
     nikola::i32 width, height, offset_x, offset_y; 
     glyph.pixels = stbtt_GetGlyphBitmap(info, 
                                         0,
@@ -79,6 +80,7 @@ static void load_glyphs_data(nikola::HashMap<char, nikola::NBRGlyph>* font_glyph
     glyph.offset_y = offset_y;
 
     // Get the bounding box of the glyph
+    
     nikola::i32 left, top, right, bottom; 
     stbtt_GetGlyphBitmapBox(info, 
                             glyph_index, 

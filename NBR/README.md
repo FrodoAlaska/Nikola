@@ -24,7 +24,17 @@ Below you will find all the resource formats that can be converted into the `.nb
 - *Models*: 
     - OBJ 
     - FBX 
-    - GLTF 
+    - GLTF
+    - GLB
+
+- *Audio*: 
+    - MP3 
+    - WAV 
+    - OGG
+
+- *Animations*: 
+    - GLB 
+    - GLTF
 
 As for shaders, the only format the tool supports is the `.glsl` format. This file is actually just a combination of the two vertex and fragment shaders. Each type of shader is separated by the `#version` preprocessor. The file is read, scans through the contents, looks for the `#version` declarative and splits accordingly. 
 
