@@ -1419,6 +1419,7 @@ GfxFramebuffer* gfx_framebuffer_create(GfxContext* gfx, const GfxFramebufferDesc
   }
 
   // Attach the depth attachments (if it exists)
+  
   if(desc.depth_attachment) {
     GLenum depth_type = GL_DEPTH_ATTACHMENT; 
     if(desc.depth_attachment->desc.type == GFX_TEXTURE_DEPTH_STENCIL_TARGET) {
@@ -1433,6 +1434,7 @@ GfxFramebuffer* gfx_framebuffer_create(GfxContext* gfx, const GfxFramebufferDesc
   }
   
   // Attach the stencil attachments (if it exists)
+  
   if(desc.stencil_attachment) {
     glNamedFramebufferRenderbuffer(buff->id, 
                                    GL_STENCIL_ATTACHMENT, 
@@ -1506,6 +1508,7 @@ void gfx_framebuffer_update(GfxFramebuffer* framebuffer, const GfxFramebufferDes
   }
 
   // Attach the depth attachments (if it exists)
+  
   if(desc.depth_attachment) {
     GLenum depth_type = GL_DEPTH_ATTACHMENT; 
     if(desc.depth_attachment->desc.type == GFX_TEXTURE_DEPTH_STENCIL_TARGET) {
@@ -1520,6 +1523,7 @@ void gfx_framebuffer_update(GfxFramebuffer* framebuffer, const GfxFramebufferDes
   }
   
   // Attach the stencil attachments (if it exists)
+  
   if(desc.stencil_attachment) {
     glNamedFramebufferRenderbuffer(framebuffer->id, 
                                    GL_STENCIL_ATTACHMENT, 

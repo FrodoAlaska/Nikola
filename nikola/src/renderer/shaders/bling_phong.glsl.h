@@ -192,7 +192,7 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
         vec3 spot_lights_factor  = accumulate_spot_lights_color(diffuse, specular, spots_max);
         vec3 dir_light_factor    = accumulate_dir_light_color(diffuse, specular);
         
-        float shadow_factor = (1 - calculate_shadow());
+        vec3 shadow_factor = (u_ambient + (1 - calculate_shadow()));
         vec3 final_factor   = shadow_factor * (point_lights_factor + spot_lights_factor + dir_light_factor);
 
         frag_color = vec4(final_factor, u_material.transparency);
@@ -200,7 +200,7 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
       
       vec3 calculate_normal() {
         vec3 normal_texel = texture(u_normal_map, fs_in.tex_coords).rgb;
-        normal_texel      = normal_texel * 2.0 - 1.0; // From [0, 1] to [-1, 1]
+        normal_texel      = 2.0 * normal_texel - 1.0; // From [0, 1] to [-1, 1]
         
         return normalize(fs_in.TBN * normal_texel);
       }
@@ -217,8 +217,11 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
       }
 
       float calculate_shadow() {
-        float shadow_depth = textureProj(u_shadow, fs_in.shadow_pos.xyw).r;
-        return shadow_depth > fs_in.shadow_pos.z ? 0.0 : 0.8; 
+        vec3 proj_coords = fs_in.shadow_pos.xyz / fs_in.shadow_pos.w; 
+        proj_coords      = proj_coords * 0.5 + 0.5; 
+
+        float shadow_depth = texture(u_shadow, proj_coords.xy).r;
+        return proj_coords.z > shadow_depth ? 0.8 : 0.0; 
       }
 
       vec3 accumulate_point_lights_color(const vec3 diffuse_texel, const vec3 specular_texel, const int points_max) {

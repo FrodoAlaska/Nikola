@@ -19,7 +19,8 @@ set(TESTBED_INCLUDES
 set(TESTBED_TYPE 
   # "compute_testbed"
   # "particles_testbed"
-  "engine_testbed"
+  # "engine_testbed"
+  "animation_testbed"
   # "scene_example"
   # "font_testbed"
   # "audio_testbed"

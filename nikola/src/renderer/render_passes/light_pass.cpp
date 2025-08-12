@@ -77,11 +77,13 @@ void light_pass_init(Window* window) {
 void light_pass_prepare(RenderPass* pass, const FrameData& data) {
   ShaderContext* ctx = pass->shader_context;
 
-  // Set globals
+  // @TODO (Renderer): We need to put all of per-scene data into a  buffer 
+  // and send it over instead of setting each value indivisually
 
-  Mat4 light_space = shadow_pass_get_light_space(pass->previous);
- 
   // Turning the light space view into a texture coordinate
+  
+  Mat4 light_space = shadow_pass_get_light_space(pass->previous);
+  
   Mat4 shadow_space = light_space * mat4_translate(Vec3(0.5f)) * mat4_scale(Vec3(0.5f));
   shader_context_set_uniform(pass->shader_context, "u_light_space", shadow_space);
 
@@ -138,7 +140,7 @@ void light_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& 
   // Setting the output textures
 
   pass->outputs[0]    = pass->framebuffer_desc.color_attachments[0];
-  pass->outputs[1]    = pass->framebuffer_desc.depth_attachment;
+  pass->outputs[1]    = pass->previous->outputs[0],
   pass->outputs_count = 2;
 }
 

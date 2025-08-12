@@ -503,15 +503,8 @@ void renderer_queue_animation_instanced(const ResourceID& res_id,
 
     // @TODO(Renderer): Have a transform parent-child relationship
 
-    s_renderer.queues[RENDER_QUEUE_OPAQUE].emplace_back(transforms, mesh->pipe, mat, count);
+    s_renderer.queues[RENDER_QUEUE_OPAQUE].emplace_back(transforms, mesh->pipe, mat, count, anim);
   }  
-
-  // @TEMP: Update the animation buffer
-  
-  gfx_buffer_upload_data(s_renderer.defaults.animation_buffer,
-                         0, 
-                         sizeof(Mat4) * anim->joints.size(), 
-                         anim->skinning_palette);
 } 
 
 void renderer_queue_billboard_instanced(const ResourceID& res_id, 
@@ -546,7 +539,17 @@ void renderer_queue_billboard(const ResourceID& res_id, const Transform& transfo
 }
 
 void renderer_draw_geometry_primitive(const GeometryPrimitive& geo) {
+  // Update the animation buffer if the primitive has animations
+ 
+  if(geo.animation) {
+    gfx_buffer_upload_data(s_renderer.defaults.animation_buffer,
+                           0, 
+                           sizeof(Mat4) * geo.animation->joints.size(), 
+                           geo.animation->skinning_palette);
+  }
+  
   // Update the instance buffer
+  
   gfx_buffer_upload_data(s_renderer.defaults.instance_buffer,
                          0, 
                          sizeof(Mat4) * geo.instance_count, 

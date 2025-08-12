@@ -122,8 +122,8 @@ struct GeometryPrimitive {
   GeometryPrimitive() 
     {}
   
-  GeometryPrimitive(const Transform* trans, GfxPipeline* pipe, Material* material, const sizei count) 
-    :pipeline(pipe), material(material), instance_count(count) {
+  GeometryPrimitive(const Transform* trans, GfxPipeline* pipe, Material* material, const sizei count, Animation* anim = nullptr) 
+    :pipeline(pipe), material(material), instance_count(count), animation(anim) {
       // @TODO (Renderer): This is awful. No.
       for(sizei i = 0; i < count; i++) {
         transforms[i] = trans[i].transform;
@@ -651,6 +651,10 @@ NIKOLA_API void camera_create(Camera* cam, const CameraDesc& desc);
 
 /// Update the internal matrices of `cam` and call the associated `CameraMoveFn`. 
 NIKOLA_API void camera_update(Camera& cam);
+
+/// Calculate the camera's 8 frutrum corners in world space, writing the results 
+/// back into the given `out_corners` array with 8 elements. 
+NIKOLA_API void camera_calculate_frustrum_corners(const Camera& cam, Vec3* corners);
 
 /// Camera functions
 ///---------------------------------------------------------------------------------------------------------------------

@@ -52,19 +52,20 @@
     - [] Increase performance/improve workflow
         - [x] Change the instance data to become an instance uniform buffer that gets updated every frame. Each instance can aquire its data using `gl_InstanceID` instead of per-vertex instance data.
         - [x] Look into making the renderer "instanced" rather than rendering everything as is.
-        - [] Instancing in the renderer needs another look. It works but it's awful.
         - [] If performance is still an issue, make all of the scene's lights into a buffer and send it to the shader as a buffer update instead of uniforms.
         - [] Look into multi-threading the renderer
     - [x] Documentation
 - [] Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers.
-    - [] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application. Use Tracy for that.
     - [] Create a simple job system 
+    - [] A thread layer
+    - [] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application. Use Tracy for that.
     - [] Documentation
 - [] Resource Manager v0.6
     - [] Go to the `resource_manager.cpp` file and take a look at the _whole_ source file. There's a lot to fix there. 
     - [] Rethink 3D models a bit. Couldn't we just have a `resources_push_model` function, but instead of creating a `Model` struct we just create bunch of meshes with materials, transforms, mesh children and construct 
     the model out that information. It's probably going to require a bit of rework and rethinking, but it will benefit us when adding scene graphs and it will also simplify the renderer's job by a ton. Think, test, and implement. 
+    - [] Proper resource reloading
     - [] Add an async option to `resources_push_dir` in order to asynchronously load resources using the job system.
 - [] GUI v0.3
     - [] Replace the current ImGui version with the docking branch for a _way_ better GUI 
@@ -92,6 +93,7 @@
     - [] Ring buffers
     - [] Hash map
 - [] Renderer v0.7 
+    - [] Look into GPU rendering with indirect drawing.
     - [] Improve lighting performance using clustered rendering.
     - [] Decal rendering 
     - [] Terrain rendering and procedural generation (terrain generation using `stb_perlin` and loading from heightmap)

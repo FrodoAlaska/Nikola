@@ -67,8 +67,7 @@ void shadow_pass_init(Window* window) {
     .format = GFX_TEXTURE_FORMAT_DEPTH16, 
     .filter = GFX_TEXTURE_FILTER_MIN_MAG_LINEAR,
 
-    .wrap_mode    = GFX_TEXTURE_WRAP_CLAMP,
-    .compare_func = GFX_COMPARE_GREATER,
+    .wrap_mode = GFX_TEXTURE_WRAP_CLAMP,
   };
   pass_desc.targets.push_back(target_desc);
 
@@ -81,13 +80,39 @@ void shadow_pass_init(Window* window) {
 void shadow_pass_prepare(RenderPass* pass, const FrameData& data) {
   // Setup the light projection matrix
 
-  // @TODO (Shadow): Only supports directional light? Do better...
+  // @TODO (Renderer): Shadows just do not work _at all_.
 
-  s_state.light_projection = mat4_ortho(-140.0f, 140.0f, -140.0f, 140.0f, -10.0f, 20.0f);
-  s_state.light_view       = mat4_look_at(data.dir_light.direction, Vec3(0.0f), Vec3(0.0f, 1.0f, 0.0f));
+  // Get the center of the frustrum by averaging the 
+  // frustrum's corners.
 
-  // Set uniforms
- 
+  Vec3 corners[8];
+  camera_calculate_frustrum_corners(data.camera, &corners[0]);
+
+  Vec3 center = Vec3(0.0f);
+  for(sizei i = 0; i < 8; i++) {
+    center += corners[i]; 
+  }
+  center /= 8.0f;
+
+  // Calculate the light's view matrix for use later 
+  s_state.light_view = mat4_look_at(center + data.dir_light.direction, center, Vec3(0.0f, 1.0f, 0.0f));
+
+  // Calculate the extents of the frustrum
+
+  Vec3 min = Vec3(FLOAT_MAX);
+  Vec3 max = Vec3(FLOAT_MIN);
+
+  for(sizei i = 0; i < 8; i++) {
+    Vec3 center_light_space = Vec3(s_state.light_view * Vec4(corners[i], 1.0f));
+
+    min = vec3_min(min, center_light_space);
+    max = vec3_max(max, center_light_space);
+  }
+
+  // Calculate the projection and view matrices and 
+  // send the final result to the shader.
+
+  s_state.light_projection = mat4_ortho(min.x, max.x, min.y, max.y, min.z, max.z);
   shader_context_set_uniform(pass->shader_context, "u_light_space", (s_state.light_projection * s_state.light_view));
 }
 

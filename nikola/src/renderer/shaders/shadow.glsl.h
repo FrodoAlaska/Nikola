@@ -31,9 +31,8 @@ inline nikola::GfxShaderDesc generate_shadow_shader() {
   
     .pixel_source = R"(
       #version 460 core
-      
+
       void main() {
-        // Does nothing. Just for the depth buffer...
       }
     )",
   };

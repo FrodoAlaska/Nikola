@@ -1,6 +1,7 @@
 #include "nikola/nikola_render.h"
 #include "nikola/nikola_gfx.h"
 #include "nikola/nikola_input.h"
+#include "nikola/nikola_event.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -8,8 +9,27 @@ namespace nikola { // Start of nikola
 
 /// ----------------------------------------------------------------------
 /// Camera consts
+
 const f32 CAMERA_SPEED = 20.0f;
+
 /// Camera consts
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// Callbacks
+
+static bool window_resize_callback(const Event& event, const void* dispatcher, const void* listener) {
+  if(event.type != EVENT_WINDOW_RESIZED) {
+    return false;
+  }
+
+  Camera* cam       = (Camera*)listener;
+  cam->aspect_ratio = (f32)(event.window_new_width / event.window_new_height);
+
+  return true;
+}
+
+/// Callbacks
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -110,6 +130,8 @@ void camera_create(Camera* cam, const CameraDesc& desc) {
 
   cam->move_fn   = desc.move_func;
   cam->is_active = true;
+
+  event_listen(EVENT_WINDOW_RESIZED, window_resize_callback, cam);
 }
 
 void camera_update(Camera& cam) {
@@ -125,6 +147,68 @@ void camera_update(Camera& cam) {
   cam.direction.y = nikola::sin(cam.pitch * DEG2RAD);
   cam.direction.z = nikola::sin(cam.yaw   * DEG2RAD) * nikola::cos(cam.pitch * DEG2RAD);
   cam.front       = vec3_normalize(cam.direction);
+}
+
+void camera_calculate_frustrum_corners(const Camera& cam, Vec3* out_corners) {
+  // Mat4 inv = mat4_inverse(cam.view_projection);
+  //
+  // for(sizei x = 0; x < 2; x++) {
+  //   for(sizei y = 0; y < 2; y++) {
+  //     for(sizei z = 0; z < 2; z++) {
+  //       Vec4 point = Vec4(2.0f * x - 1.0f, 
+  //                         2.0f * y - 1.0f, 
+  //                         2.0f * z - 1.0f, 
+  //                         1.0f);
+  //      
+  //       Vec4 corner = inv * point;
+  //
+  //       sizei flat_index        = x + 2 * (y + 2 * z);
+  //       out_corners[flat_index] = Vec3(corner / corner.w);
+  //     }
+  //   }
+  // }
+
+  
+  f32 tan_fov    = nikola::tan(cam.zoom * DEG2RAD);
+  Vec3 cam_right = vec3_cross(cam.front, cam.up);
+
+  // Calculating the bounds of the frustrum
+
+  f32 far_width  = tan_fov * cam.far;
+  f32 far_height = far_width / cam.aspect_ratio;
+
+  f32 near_width  = tan_fov * cam.near;
+  f32 near_height = near_width / cam.aspect_ratio;
+
+  // Calculating the center of both the near and far planes
+
+  Vec3 far_center  = cam.position + (cam.front * cam.far);
+  Vec3 near_center = cam.position + (cam.front * cam.near);
+
+  // Calculating each far point in both the near and far planes
+
+  Vec3 far_top   = far_center + cam.up    * far_height; 
+  Vec3 far_right = far_center + cam_right * far_width;
+
+  Vec3 near_top   = near_center + cam.up    * near_height; 
+  Vec3 near_right = near_center + cam_right * near_width;
+
+  // Filling the given `corners` array with the new calculated values
+  
+  // Far plane
+
+  out_corners[0] = far_center + far_top - far_right; // Bottom left
+  out_corners[1] = far_center + far_top - far_right; // Top left
+  out_corners[2] = far_center + far_top + far_right; // Top right
+  out_corners[3] = far_center - far_top + far_right; // Bottom right
+
+  // Near plane
+
+  out_corners[4] = near_center - near_top - near_right; // Bottom left
+  out_corners[5] = near_center + near_top - near_right; // Top left
+  out_corners[6] = near_center + near_top + near_right; // Top right
+  out_corners[7] = near_center - near_top + near_right; // Bottom right
+ 
 }
 
 /// Camera functions

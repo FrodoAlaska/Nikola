@@ -8,12 +8,15 @@
 struct nikola::App {
   nikola::Window* window;
   nikola::FrameData frame_data;
-
   nikola::ResourceGroupID res_group_id;
-  nikola::ResourceID mesh_id;
-  nikola::ResourceID mesh_material, ground_material;
 
-  nikola::Transform transforms[2];
+  nikola::ResourceID mesh_id, material_id;
+
+  nikola::ResourceID model1, model2;
+  nikola::ResourceID animation1, animation2;
+  
+  nikola::Animator animator1, animator2;
+  nikola::Transform transforms[3];
 
   bool has_editor = false;
 };
@@ -34,18 +37,21 @@ static void init_resources(nikola::App* app) {
   // Meshes init
   app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
 
+  // Models init
+  app->model1 = nikola::resources_push_model(app->res_group_id, "models/zombie_idle.nbr");
+
+  // Animations init
+
+  app->animation1 = nikola::resources_push_animation(app->res_group_id, "animations/zombie_idle.nbr", app->model1);
+  app->animation2 = nikola::resources_push_animation(app->res_group_id, "animations/zombie_walk.nbr", app->model1);
+
   // Materials init
   
   nikola::MaterialDesc mat_desc = {
     .diffuse_id = nikola::resources_push_texture(app->res_group_id, "textures/paviment.nbr"),
     .normal_id  = nikola::resources_push_texture(app->res_group_id, "textures/paviment_normal.nbr"),
   };
-  app->ground_material = nikola::resources_push_material(app->res_group_id, mat_desc);
-  
-  mat_desc = {
-    .diffuse_id = nikola::resources_push_texture(app->res_group_id, "textures/opengl.nbr"),
-  };
-  app->mesh_material = nikola::resources_push_material(app->res_group_id, mat_desc);
+  app->material_id = nikola::resources_push_material(app->res_group_id, mat_desc);
 }
 
 /// Private functions 
@@ -79,20 +85,37 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Resoruces init
   init_resources(app);
 
+  // Animators init
+
+  nikola::animator_create(&app->animator1, app->animation1);
+  nikola::animator_create(&app->animator2, app->animation2);
+
   // Transform init
   
   nikola::transform_translate(app->transforms[0], nikola::Vec3(5.0f, 0.05f, 5.0f));
   nikola::transform_scale(app->transforms[0], nikola::Vec3(16.0f, 1.0f, 16.0f));
   
-  nikola::transform_translate(app->transforms[1], nikola::Vec3(10.0f, 5.0f, 10.0f));
-  nikola::transform_scale(app->transforms[1], nikola::Vec3(1.0f));
+  nikola::transform_translate(app->transforms[1], nikola::Vec3(10.0f, 1.0f, 10.0f));
+  nikola::transform_rotate(app->transforms[1], nikola::Vec3(1.0f, 0.0f, 0.0f), 90.0f * nikola::DEG2RAD);
+  nikola::transform_scale(app->transforms[1], nikola::Vec3(0.3f));
+  
+  nikola::transform_translate(app->transforms[2], nikola::Vec3(20.0f, 1.0f, 10.0f));
+  nikola::transform_rotate(app->transforms[2], nikola::Vec3(1.0f, 0.0f, 0.0f), 90.0f * nikola::DEG2RAD);
+  nikola::transform_scale(app->transforms[2], nikola::Vec3(0.3f));
 
   // Lights init
 
-  app->frame_data.dir_light.direction = nikola::Vec3(1.0f, -1.0f, 1.0f);
-  app->frame_data.dir_light.color     = nikola::Vec3(1.0f);
+  app->frame_data.dir_light.direction = nikola::Vec3(0.0f);
+  app->frame_data.dir_light.color     = nikola::Vec3(0.0f);
 
-  app->frame_data.ambient = nikola::Vec3(0.0125f);
+  nikola::SpotLight spot_light(app->frame_data.camera.position, 
+                               app->frame_data.camera.front, 
+                               nikola::Vec3(1.0f), 
+                               0.0f, 
+                               1.0f);
+  app->frame_data.spot_lights.push_back(spot_light);
+
+  app->frame_data.ambient = nikola::Vec3(0.0f);
 
   return app;
 }
@@ -119,7 +142,17 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     nikola::input_cursor_show(app->has_editor);
   }
 
+  // Animators update
+
+  nikola::animator_animate(app->animator1, (nikola::f32)delta_time);
+
   // Update the camera
+  
+  nikola::SpotLight* spot_light = &app->frame_data.spot_lights[0]; 
+
+  spot_light->position  = app->frame_data.camera.position;
+  spot_light->direction = app->frame_data.camera.front;
+  
   nikola::camera_update(app->frame_data.camera);
 }
 
@@ -129,8 +162,8 @@ void app_render(nikola::App* app) {
 
   // Render the objects
   
-  nikola::renderer_queue_mesh(app->mesh_id, app->transforms[0], app->ground_material);
-  nikola::renderer_queue_mesh(app->mesh_id, app->transforms[1], app->mesh_material);
+  nikola::renderer_queue_mesh(app->mesh_id, app->transforms[0], app->material_id);
+  nikola::renderer_queue_animation(app->animator1.animation_id, app->transforms[1]);
 
   nikola::renderer_end();
   
@@ -154,12 +187,8 @@ void app_render_gui(nikola::App* app) {
   // Entities
   if(ImGui::CollapsingHeader("Entities")) {
     nikola::gui_edit_transform("Ground", &app->transforms[0]);
-    nikola::gui_edit_transform("Box", &app->transforms[1]);
-  }
-
-  // Resources
-  if(ImGui::CollapsingHeader("Resources")) {
-    nikola::gui_edit_material("Material", nikola::resources_get_material(app->mesh_material));
+    nikola::gui_edit_transform("Model 1", &app->transforms[1]);
+    nikola::gui_edit_transform("Model 2", &app->transforms[2]);
   }
   
   // Lights

@@ -197,11 +197,11 @@ void gui_edit_transform(const char* name, Transform* transform) {
  
   // SRT translation
   // -------------------------------------------------------------------
-  if(ImGui::DragFloat3("Position", &transform->position[0], 0.01f)) {
+  if(ImGui::DragFloat3("Position", &transform->position[0], 0.1f)) {
     transform_translate(*transform, transform->position);
   }
 
-  if(ImGui::DragFloat3("Scale", &transform->scale[0], 0.01f)) {
+  if(ImGui::DragFloat3("Scale", &transform->scale[0], 0.1f)) {
     transform_scale(*transform, Vec3(transform->scale));
   }
 
@@ -241,7 +241,7 @@ void gui_edit_directional_light(const char* name, DirectionalLight* dir_light) {
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
   
-  ImGui::DragFloat3("Direction", &dir_light->direction[0], 0.01f, -1.0f, 1.0f);
+  ImGui::DragFloat3("Direction", &dir_light->direction[0], 0.1f);
   ImGui::DragFloat3("Color", &dir_light->color[0], 0.01f, 0.0f);
 
   ImGui::PopID(); 
