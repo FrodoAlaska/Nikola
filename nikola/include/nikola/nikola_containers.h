@@ -11,16 +11,22 @@ namespace nikola { // Start of nikola
 
 /// @TODO (Containers): Create your own data structures, you lazy bastard.
 
-/// An ASCII string
 using String       = std::string;
 
-/// A dynamically-sized array
 template<typename T>
 using DynamicArray = std::vector<T>;
 
-/// A key-value pair hash map
 template<typename K, typename V> 
 using HashMap      = std::unordered_map<K, V>;
+
+template<typename T> 
+using Queue        = std::queue<T>;
+
+template<typename T> 
+using Stack        = std::stack<T>;
+
+template<typename T> 
+using Deque        = std::deque<T>;
 
 /// *** Typedefs ***
 /// ----------------------------------------------------------------------

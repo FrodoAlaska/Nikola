@@ -73,9 +73,8 @@ static nikola::ResourceType get_resource_type(const char* type) {
   return (nikola::ResourceType)-1;
 }
 
-static bool lex_args(int argc, char** argv, nbr::ListContext* list) {
-  nikola::FilePath path     = "DI"; 
-  nikola::i32 resource_type = -1;
+static bool lex_args(int argc, char** argv, nbr::ListContext* list, nikola::i32* res_type) {
+  nikola::FilePath path = "DI"; 
 
   for(int i = 1; i < 6; i++) {
     if(check_arg(argv[i], ARG_PARENT_DIR)) {
@@ -85,7 +84,7 @@ static bool lex_args(int argc, char** argv, nbr::ListContext* list) {
       list->bin_dir = argv[++i]; 
     }
     else if(check_arg(argv[i], ARG_RESOURCE_TYPE)) {
-      resource_type = (nikola::i32)get_resource_type(argv[++i]);
+      *res_type = (nikola::i32)get_resource_type(argv[++i]);
     }
     else if(check_arg(argv[i], ARG_HELP)) {
       show_help();
@@ -104,20 +103,6 @@ static bool lex_args(int argc, char** argv, nbr::ListContext* list) {
 
   // Create the context
   nbr::list_context_create(path, list);
-
-  nikola::PerfTimer timer;
-
-  // Convert the resources
-  if(resource_type == -1) {
-    NIKOLA_PERF_TIMER_BEGIN(timer);
-    nbr::list_context_convert_all(list); 
-    NIKOLA_PERF_TIMER_END(timer, "nbr::list_context_convert_all");
-  } 
-  else {
-    NIKOLA_PERF_TIMER_BEGIN(timer);
-    nbr::list_context_convert_by_type(list, (nikola::ResourceType)resource_type); 
-    NIKOLA_PERF_TIMER_END(timer, "nbr::list_context_convert_by_type");
-  }
   
   return true;
 }
@@ -129,9 +114,12 @@ static bool lex_args(int argc, char** argv, nbr::ListContext* list) {
 /// Main function
 int main(int argc, char** argv) {
   if(argc <= 1) {
-    show_help();
-    return -1;
+   show_help();
+   return -1;
   }
+
+  // Job manager init (this is usually done by the engine, but oh well)
+  nikola::job_manager_init(32); 
   
   // Setting default values
  
@@ -140,11 +128,30 @@ int main(int argc, char** argv) {
   list.bin_dir    = list.parent_dir;
 
   // Extract the command line arguments
-  
-  if (!lex_args(argc, argv, &list)) {
+ 
+  nikola::i32 resource_type = -1;
+  if (!lex_args(argc, argv, &list, &resource_type)) {
     return -1;
   }
- 
+
+  // Actually convert the resources (if all goes well)
+
+  nikola::PerfTimer timer;
+  const char* func_name = "nbr::list_context_convert_all";
+  NIKOLA_PERF_TIMER_BEGIN(timer);
+
+  // Convert the resources
+  if(resource_type == -1) {
+    nbr::list_context_convert_all(&list); 
+  } 
+  else {
+    nbr::list_context_convert_by_type(&list, (nikola::ResourceType)resource_type); 
+    func_name = "nbr::list_context_convert_by_type";
+  }
+
+  nikola::job_manager_shutdown();
+  NIKOLA_PERF_TIMER_END(timer, func_name);
+  
   return 0;
 }
 /// Main function

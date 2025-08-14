@@ -41,6 +41,10 @@ void engine_init(const AppDesc& desc) {
 
   // Library init 
   NIKOLA_ASSERT(init(), "Failed to initialize Nikola");
+
+  // Job manager init
+  // @TEMP (Threads): Ignore the input parameter for now. It's not important...
+  job_manager_init(256);
  
   // Window init 
   s_engine.window = window_open(desc.window_title.c_str(), desc.window_width, desc.window_height, desc.window_flags);
@@ -115,6 +119,7 @@ void engine_shutdown() {
   audio_device_shutdown();
 
   window_close(s_engine.window);
+  job_manager_shutdown();
   shutdown();
   
   NIKOLA_LOG_INFO("Appication \'%s\' was successfully shutdown", s_engine.app_desc.window_title.c_str());

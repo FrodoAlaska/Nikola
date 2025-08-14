@@ -8,6 +8,10 @@
 #include <unordered_map>
 #include <random>
 #include <thread>
+#include <mutex>
+#include <queue>
+#include <stack>
+#include <deque>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>

@@ -13,5 +13,6 @@
 #include <nikola/nikola_render.h>
 #include <nikola/nikola_resources.h>
 #include <nikola/nikola_timer.h>
+#include <nikola/nikola_thread.h>
 #include <nikola/nikola_ui.h>
 #include <nikola/nikola_physics.h>

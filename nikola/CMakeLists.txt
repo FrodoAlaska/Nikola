@@ -41,6 +41,9 @@ set(NIKOLA_SOURCES
   # Timer 
   ${NIKOLA_SRC_DIR}/time/timer_utils.cpp
   
+  # Threads 
+  ${NIKOLA_SRC_DIR}/threads/job_manager.cpp
+  
   # Renderer 
   ${NIKOLA_SRC_DIR}/renderer/camera.cpp
   ${NIKOLA_SRC_DIR}/renderer/renderer.cpp

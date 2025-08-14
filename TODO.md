@@ -53,16 +53,16 @@
         - [x] Change the instance data to become an instance uniform buffer that gets updated every frame. Each instance can aquire its data using `gl_InstanceID` instead of per-vertex instance data.
         - [x] Look into making the renderer "instanced" rather than rendering everything as is.
         - [] If performance is still an issue, make all of the scene's lights into a buffer and send it to the shader as a buffer update instead of uniforms.
-        - [] Look into multi-threading the renderer
     - [x] Documentation
 - [] Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers.
-    - [] Create a simple job system 
-    - [] A thread layer
-    - [] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application. Use Tracy for that.
+    - [x] Create a simple job system 
+    - [x] Test the new job system with the NBR conversion tool. 
+    - [] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application. Use `Tracy` for that.
+    - [] Look into multi-threading the renderer
     - [] Documentation
 - [] Resource Manager v0.6
-    - [] Go to the `resource_manager.cpp` file and take a look at the _whole_ source file. There's a lot to fix there. 
+    - [] Seperate the `resources_push_*` functions into `resources_create_*` and `resources_load_*`. One would allocate and generate the ID and the other would actually load the resource.
     - [] Rethink 3D models a bit. Couldn't we just have a `resources_push_model` function, but instead of creating a `Model` struct we just create bunch of meshes with materials, transforms, mesh children and construct 
     the model out that information. It's probably going to require a bit of rework and rethinking, but it will benefit us when adding scene graphs and it will also simplify the renderer's job by a ton. Think, test, and implement. 
     - [] Proper resource reloading
