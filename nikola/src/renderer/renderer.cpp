@@ -137,7 +137,7 @@ static void init_pipeline() {
     .type  = GFX_BUFFER_VERTEX, 
     .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
   };
-  pipe_desc.vertex_buffer  = gfx_buffer_create(s_renderer.context, vert_desc);
+  pipe_desc.vertex_buffer  = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, vert_desc));
   pipe_desc.vertices_count = 4;
  
   // Index buffer init
@@ -151,7 +151,7 @@ static void init_pipeline() {
     .type  = GFX_BUFFER_INDEX, 
     .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
   };
-  pipe_desc.index_buffer  = gfx_buffer_create(s_renderer.context, index_desc);
+  pipe_desc.index_buffer  = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, index_desc));
   pipe_desc.indices_count = 6;
 
   // Layout init

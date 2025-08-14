@@ -1040,10 +1040,16 @@ struct GfxTextureDesc {
   ///
   /// @NOTE: By default, this is set to `GFX_COMPARE_ALWAYS`.
   GfxCompareFunc compare_func = GFX_COMPARE_ALWAYS;
-  
+ 
+  /// If the `wrap_mode` member is set to `GFX_TEXTURE_WRAP_BORDER_COLOR`, 
+  /// this member, will decide said border color. 
+  ///
+  /// @NOTE: By default, this value is set to `{1.0f, 1.0f, 1.0f, 1.0f}`. 
+  f32 border_color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+
   /// The pixels that will be sent to the GPU.
-  void* data = nullptr;
-};
+  void* data          = nullptr;
+}; 
 /// GfxTextureDesc
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -1321,10 +1327,16 @@ NIKOLA_API void gfx_framebuffer_update(GfxFramebuffer* framebuffer, const GfxFra
 ///---------------------------------------------------------------------------------------------------------------------
 /// Buffer functions 
 
-/// Allocate using the `alloc_fn` callback and return a `GfxBuffer` object, using the information in `desc`. 
+/// Allocate using the `alloc_fn` callback and return a `GfxBuffer` object.
 ///
 /// @NOTE: The `alloc_fn` uses the default memory allocater.
-NIKOLA_API GfxBuffer* gfx_buffer_create(GfxContext* gfx, const GfxBufferDesc& desc, const AllocateMemoryFn& alloc_fn = memory_allocate);
+NIKOLA_API GfxBuffer* gfx_buffer_create(GfxContext* gfx, const AllocateMemoryFn& alloc_fn = memory_allocate);
+
+/// Load data into the given `buffer` object, usin the information provided in `desc`.
+///
+/// If the function fails for whatever reason, `false` will be returned. Otherwise, 
+/// the function will return `true`.
+NIKOLA_API const bool gfx_buffer_load(GfxBuffer* buffer, const GfxBufferDesc& desc);
 
 /// Free/reclaim any memory taken by `buff` using the `free_fn` callback.
 ///
@@ -1348,10 +1360,16 @@ NIKOLA_API void gfx_buffer_upload_data(GfxBuffer* buff, const sizei offset, cons
 ///---------------------------------------------------------------------------------------------------------------------
 /// Shader functions 
 
-/// Allocate using the `alloc_fn` callback and return a `GfxShader` object, using the information in `desc`. 
+/// Allocate using the `alloc_fn` callback and return a `GfxShader` object.
 ///
 /// @NOTE: The `alloc_fn` uses the default memory allocater.
-NIKOLA_API GfxShader* gfx_shader_create(GfxContext* gfx, const GfxShaderDesc& desc, const AllocateMemoryFn& alloc_fn = memory_allocate);
+NIKOLA_API GfxShader* gfx_shader_create(GfxContext* gfx, const AllocateMemoryFn& alloc_fn = memory_allocate);
+
+/// Load data into the given `shader` object, usin the information provided in `desc`.
+///
+/// If the function fails for whatever reason, `false` will be returned. Otherwise, 
+/// the function will return `true`.
+NIKOLA_API const bool gfx_shader_load(GfxShader* shader, const GfxShaderDesc& desc);
 
 /// Free/reclaim any memory taken by `shader` using the `free_fn` callback.
 ///
@@ -1397,10 +1415,16 @@ NIKOLA_API void gfx_shader_upload_uniform(GfxShader* shader, const i32 location,
 ///---------------------------------------------------------------------------------------------------------------------
 /// Texture functions 
 
-/// Allocate using the `alloc_fn` callback and return a `GfxTexture` object, using the information in `desc`. 
+/// Allocate using the `alloc_fn` callback and return a `GfxTexture` object of type `tex_type`.
 ///
 /// @NOTE: The `alloc_fn` uses the default memory allocater.
-NIKOLA_API GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc, const AllocateMemoryFn& alloc_fn = memory_allocate);
+NIKOLA_API GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureType tex_type, const AllocateMemoryFn& alloc_fn = memory_allocate);
+
+/// Load data into the given `texture` object, usin the information provided in `desc`.
+///
+/// If the function fails for whatever reason, `false` will be returned. Otherwise, 
+/// the function will return `true`.
+NIKOLA_API const bool gfx_texture_load(GfxTexture* texture, const GfxTextureDesc& desc);
 
 /// Free/reclaim any memory taken by `texture` using the `free_fn` callback.
 ///
@@ -1430,10 +1454,16 @@ NIKOLA_API void gfx_texture_upload_data(GfxTexture* texture,
 ///---------------------------------------------------------------------------------------------------------------------
 /// Cubemap functions 
 
-/// Allocate using the `alloc_fn` callback and return a `GfxCubemap` object, using the information in `desc`. 
+/// Allocate using the `alloc_fn` callback and return a `GfxCubemap` object.
 ///
 /// @NOTE: The `alloc_fn` uses the default memory allocater.
-NIKOLA_API GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc& desc, const AllocateMemoryFn& alloc_fn = memory_allocate);
+NIKOLA_API GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const AllocateMemoryFn& alloc_fn = memory_allocate);
+
+/// Load data into the given `cubemap` object, usin the information provided in `desc`.
+///
+/// If the function fails for whatever reason, `false` will be returned. Otherwise, 
+/// the function will return `true`.
+NIKOLA_API const bool gfx_cubemap_load(GfxCubemap* cubemap, const GfxCubemapDesc& desc);
 
 /// Free/reclaim any memory taken by `cubemap` using the `free_fn` callback.
 ///

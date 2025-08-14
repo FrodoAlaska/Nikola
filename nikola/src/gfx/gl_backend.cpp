@@ -1547,21 +1547,27 @@ void gfx_framebuffer_update(GfxFramebuffer* framebuffer, const GfxFramebufferDes
 ///---------------------------------------------------------------------------------------------------------------------
 /// Buffer functions 
 
-GfxBuffer* gfx_buffer_create(GfxContext* gfx, const GfxBufferDesc& desc, const AllocateMemoryFn& alloc_fn) {
+GfxBuffer* gfx_buffer_create(GfxContext* gfx, const AllocateMemoryFn& alloc_fn) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
 
   GfxBuffer* buff = (GfxBuffer*)alloc_fn(sizeof(GfxBuffer));
   
-  buff->desc          = desc;
-  buff->gfx           = gfx; 
-  buff->gl_buff_type  = get_buffer_type(desc.type);
-  buff->gl_buff_usage = get_buffer_usage(desc.usage);
+  buff->desc = {};
+  buff->gfx  = gfx; 
 
   glCreateBuffers(1, &buff->id);
-  glNamedBufferData(buff->id, desc.size, desc.data, buff->gl_buff_usage);
-  
-  buff->desc = desc;
   return buff;
+}
+
+const bool gfx_buffer_load(GfxBuffer* buffer, const GfxBufferDesc& desc) {
+  NIKOLA_ASSERT(buffer, "Trying to load data into an invalid resource");
+  
+  buffer->desc          = desc;
+  buffer->gl_buff_type  = get_buffer_type(desc.type);
+  buffer->gl_buff_usage = get_buffer_usage(desc.usage);
+  
+  glNamedBufferData(buffer->id, desc.size, desc.data, buffer->gl_buff_usage);
+  return true;
 }
 
 void gfx_buffer_destroy(GfxBuffer* buff, const FreeMemoryFn& free_fn) {
@@ -1600,14 +1606,22 @@ void gfx_buffer_upload_data(GfxBuffer* buff, const sizei offset, const sizei siz
 ///---------------------------------------------------------------------------------------------------------------------
 /// Shader functions 
 
-GfxShader* gfx_shader_create(GfxContext* gfx, const GfxShaderDesc& desc, const AllocateMemoryFn& alloc_fn) {
+GfxShader* gfx_shader_create(GfxContext* gfx, const AllocateMemoryFn& alloc_fn) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
 
   GfxShader* shader = (GfxShader*)alloc_fn(sizeof(GfxShader));
 
+  shader->desc = {};
   shader->gfx  = gfx;
-  shader->desc = desc;
   shader->id   = glCreateProgram();
+
+  return shader;
+}
+
+const bool gfx_shader_load(GfxShader* shader, const GfxShaderDesc& desc) {
+  NIKOLA_ASSERT(shader, "Trying to load data into an invalid resource");
+  
+  shader->desc = desc;
 
   // Create the compute shader if the source exists. 
   // Do not continue if this is true, since compute 
@@ -1615,7 +1629,7 @@ GfxShader* gfx_shader_create(GfxContext* gfx, const GfxShaderDesc& desc, const A
 
   if(desc.compute_source) {
     i32 compute_src_len = strlen(shader->desc.compute_source);
-    shader->compute_id   = glCreateShader(GL_COMPUTE_SHADER);
+    shader->compute_id  = glCreateShader(GL_COMPUTE_SHADER);
 
     glShaderSource(shader->compute_id, 1, &shader->desc.compute_source, &compute_src_len); 
     glCompileShader(shader->compute_id);
@@ -1627,7 +1641,7 @@ GfxShader* gfx_shader_create(GfxContext* gfx, const GfxShaderDesc& desc, const A
     glLinkProgram(shader->id);
     check_shader_linker_error(shader);
 
-    return shader;
+    return true;
   }
 
   // Necessary asserts
@@ -1659,20 +1673,22 @@ GfxShader* gfx_shader_create(GfxContext* gfx, const GfxShaderDesc& desc, const A
   
   glLinkProgram(shader->id);
   check_shader_linker_error(shader);
-
-  return shader;
+  
+  return true;
 }
 
 void gfx_shader_destroy(GfxShader* shader, const FreeMemoryFn& free_fn) {
   if(!shader) {
     return;
   }
-  
+
   glDeleteProgram(shader->id);
   free_fn(shader);
 }
 
 GfxShaderDesc& gfx_shader_get_source(GfxShader* shader) {
+  NIKOLA_ASSERT(shader, "Invalid GfxShader struct passed to gfx_shader_get_source");
+  
   return shader->desc;
 }
 
@@ -1920,44 +1936,50 @@ void gfx_shader_upload_uniform(GfxShader* shader, const i32 location, const GfxL
 ///---------------------------------------------------------------------------------------------------------------------
 /// Texture functions 
 
-GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc, const AllocateMemoryFn& alloc_fn) {
+GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureType tex_type, const AllocateMemoryFn& alloc_fn) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
 
   GfxTexture* texture = (GfxTexture*)alloc_fn(sizeof(GfxTexture));
- 
-  texture->desc = desc;
-  texture->gfx  = gfx;
+
+  texture->desc.type = tex_type; 
+  texture->desc      = {};
+  texture->gfx       = gfx;
   
-  // Getting the appropriate GL pixel format
+  // Creating the texutre based on its type
+  texture->id = create_gl_texture(tex_type);
+
+  return texture;
+}
+
+const bool gfx_texture_load(GfxTexture* texture, const GfxTextureDesc& desc) {
+  NIKOLA_ASSERT(texture, "Trying to load data into an invalid resource");
+
+  texture->desc = desc;
+
+  // Convert the GFX types into valid GL ones.
+
   GLenum in_format, gl_format, gl_pixel_type;
   get_texture_gl_format(desc.format, &in_format, &gl_format, &gl_pixel_type);
 
-  // Getting the appropriate GL addressing modes
   GLenum gl_wrap_format = get_texture_gl_wrap(desc.wrap_mode);
   
-  // Getting the appropriate GL filters
   GLenum min_filter, mag_filter;
   get_texture_gl_filter(desc.filter, &min_filter, &mag_filter); 
-  
-  // Creating the texutre based on its type
-  texture->id = create_gl_texture(desc.type);
 
   // Setting texture parameters
   
-  glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
-  glTextureParameteri(texture->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
   glTextureParameteri(texture->id, GL_TEXTURE_MIN_FILTER, min_filter);
   glTextureParameteri(texture->id, GL_TEXTURE_MAG_FILTER, mag_filter);
+  glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
+  glTextureParameteri(texture->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
+  glTextureParameteri(texture->id, GL_TEXTURE_WRAP_R, gl_wrap_format);
 
   GLint compare_func = (gl_format == GL_DEPTH_COMPONENT) ? GL_COMPARE_REF_TO_TEXTURE : GL_NONE;
 
   glTextureParameteri(texture->id, GL_TEXTURE_COMPARE_MODE, compare_func);
   glTextureParameteri(texture->id, GL_TEXTURE_COMPARE_FUNC, get_gl_compare_func(desc.compare_func));
 
-  // @TODO (GL-BACKEND): Make this configurable 
-
-  f32 border_color[] = {1.0f, 1.0f, 1.0f, 1.0f};
-  glTextureParameterfv(texture->id, GL_TEXTURE_BORDER_COLOR, border_color);
+  glTextureParameterfv(texture->id, GL_TEXTURE_BORDER_COLOR, desc.border_color);
 
   // Setting the pixel store alignment
   set_texture_pixel_align(desc.format);
@@ -1968,8 +1990,8 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureDesc& desc, cons
 
   // Generating some mipmaps
   glGenerateTextureMipmap(texture->id);
-
-  return texture;
+ 
+  return true;
 }
 
 void gfx_texture_destroy(GfxTexture* texture, const FreeMemoryFn& free_fn) {
@@ -2055,37 +2077,45 @@ void gfx_texture_upload_data(GfxTexture* texture,
 ///---------------------------------------------------------------------------------------------------------------------
 /// Cubemap functions 
 
-GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc& desc, const AllocateMemoryFn& alloc_fn) {
+GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const AllocateMemoryFn& alloc_fn) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
 
   GfxCubemap* cubemap = (GfxCubemap*)alloc_fn(sizeof(GfxCubemap));
 
+  cubemap->desc = {};
   cubemap->gfx  = gfx;
+
+  glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &cubemap->id);
+  return cubemap;
+}
+
+const bool gfx_cubemap_load(GfxCubemap* cubemap, const GfxCubemapDesc& desc) {
+  NIKOLA_ASSERT(cubemap, "Trying to load data into an invalid resource");
+ 
   cubemap->desc = desc;
-  
-  // Getting the appropriate GL pixel format
+
+  // Convert the GFX types into valid GL ones.
+
   GLenum in_format, gl_format, gl_pixel_type;
   get_texture_gl_format(desc.format, &in_format, &gl_format, &gl_pixel_type);
 
-  // Getting the appropriate GL addressing modes
   GLenum gl_wrap_format = get_texture_gl_wrap(desc.wrap_mode);
   
-  // Getting the appropriate GL filters
   GLenum min_filter, mag_filter;
   get_texture_gl_filter(desc.filter, &min_filter, &mag_filter); 
-
-  glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &cubemap->id);
   
   // Setting some parameters
+  
   glTextureParameteri(cubemap->id, GL_TEXTURE_MIN_FILTER, min_filter);
   glTextureParameteri(cubemap->id, GL_TEXTURE_MAG_FILTER, mag_filter);
   glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
   glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
   glTextureParameteri(cubemap->id, GL_TEXTURE_WRAP_R, gl_wrap_format);
-    
+   
   glTextureStorage2D(cubemap->id, desc.mips, in_format, desc.width, desc.height);
 
   // Set the texture for each face in the cubemap
+  
   for(sizei i = 0; i < desc.faces_count; i++) {
     glTextureSubImage3D(cubemap->id,                 // Texture
                         0,                           // Levels
@@ -2095,8 +2125,8 @@ GfxCubemap* gfx_cubemap_create(GfxContext* gfx, const GfxCubemapDesc& desc, cons
                         gl_pixel_type,               // Type
                         desc.data[i]);               // Pixels
   }
-
-  return cubemap;
+  
+  return true;
 }
 
 void gfx_cubemap_destroy(GfxCubemap* cubemap, const FreeMemoryFn& free_fn) {

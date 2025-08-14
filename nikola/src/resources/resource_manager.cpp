@@ -466,8 +466,11 @@ ResourceID resources_push_buffer(const ResourceGroupID& group_id, const GfxBuffe
   ResourceGroup* group = &s_manager.groups[group_id];
 
   // Create the buffer
+ 
+  GfxBuffer* buffer = gfx_buffer_create(renderer_get_context());
+  gfx_buffer_load(buffer, buff_desc); 
+
   ResourceID id; 
-  GfxBuffer* buffer = gfx_buffer_create(renderer_get_context(), buff_desc);
   PUSH_RESOURCE(group, buffers, buffer, RESOURCE_TYPE_BUFFER, id);
 
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed buffer:", group->name.c_str());
@@ -480,9 +483,12 @@ ResourceID resources_push_texture(const ResourceGroupID& group_id, const GfxText
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
-  // Create the texture
+  // Create and push the texture
+  
+  GfxTexture* texture = gfx_texture_create(renderer_get_context(), desc.type);
+  gfx_texture_load(texture, desc);
+
   ResourceID id; 
-  GfxTexture* texture = gfx_texture_create(renderer_get_context(), desc);
   PUSH_RESOURCE(group, textures, texture, RESOURCE_TYPE_TEXTURE, id);
 
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed texture:", group->name.c_str());
@@ -598,9 +604,12 @@ ResourceID resources_push_cubemap(const ResourceGroupID& group_id, const GfxCube
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
-  // Create the cubemap
+  // Create and push the cubemap
+  
+  GfxCubemap* cubemap = gfx_cubemap_create(renderer_get_context());
+  gfx_cubemap_load(cubemap, cubemap_desc); 
+
   ResourceID id; 
-  GfxCubemap* cubemap = gfx_cubemap_create(renderer_get_context(), cubemap_desc);
   PUSH_RESOURCE(group, cubemaps, cubemap, RESOURCE_TYPE_CUBEMAP, id);
   
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed cubemap:", group->name.c_str());
@@ -671,9 +680,12 @@ ResourceID resources_push_shader(const ResourceGroupID& group_id, const GfxShade
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
-  // Create the shader
+  // Create and push the shader
+  
+  GfxShader* shader = gfx_shader_create(renderer_get_context());
+  gfx_shader_load(shader, shader_desc); 
+
   ResourceID id; 
-  GfxShader* shader = gfx_shader_create(renderer_get_context(), shader_desc);
   PUSH_RESOURCE(group, shaders, shader, RESOURCE_TYPE_SHADER, id);
 
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed shader:", group->name.c_str());

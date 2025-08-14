@@ -59,18 +59,22 @@
     - [x] Create a simple job system 
     - [x] Test the new job system with the NBR conversion tool. 
     - [] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application. Use `Tracy` for that.
-    - [] Look into multi-threading the renderer
     - [] Documentation
+- [x] GFX v1.2
+    - [x] Separate the `gfx_*_create` functions for resources into `gfx_*_create` and `gfx_*_load`.  
+    - [x] Documentation
 - [] Resource Manager v0.6
-    - [] Seperate the `resources_push_*` functions into `resources_create_*` and `resources_load_*`. One would allocate and generate the ID and the other would actually load the resource.
+    - [] Separate the `resources_push_*` functions into `resources_create_*` and `resources_load_*`. One would allocate and generate the ID and the other would actually load the resource.
     - [] Rethink 3D models a bit. Couldn't we just have a `resources_push_model` function, but instead of creating a `Model` struct we just create bunch of meshes with materials, transforms, mesh children and construct 
     the model out that information. It's probably going to require a bit of rework and rethinking, but it will benefit us when adding scene graphs and it will also simplify the renderer's job by a ton. Think, test, and implement. 
     - [] Proper resource reloading
     - [] Add an async option to `resources_push_dir` in order to asynchronously load resources using the job system.
+    - [] Documentation
 - [] GUI v0.3
     - [] Replace the current ImGui version with the docking branch for a _way_ better GUI 
     - [] Add animation for the audio samples? 
     - [] Texture viewer?
+    - [] Documentation
 - [] Particles v0.2 
     - [] GPU-based particle system, using compute shaders.
     - [] Documentation

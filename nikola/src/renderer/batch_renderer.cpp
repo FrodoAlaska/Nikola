@@ -80,25 +80,11 @@ static BatchRenderer s_batch;
 /// Private functions
 
 static void init_defaults() {
-  u32 pixels = 0xffffffff;
-  GfxTextureDesc desc = {
-    .width     = 1, 
-    .height    = 1, 
-    .depth     = 0, 
-    .mips      = 1,
-    .type      = GFX_TEXTURE_2D, 
-    .format    = GFX_TEXTURE_FORMAT_RGBA8, 
-    .filter    = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-    .wrap_mode = GFX_TEXTURE_WRAP_CLAMP,
-    .data      = &pixels,
-  };
-
-  // Create the texture and add it to the cache
-  s_batch.white_texture                         = gfx_texture_create(s_batch.context, desc); 
+  s_batch.white_texture                         = renderer_get_defaults().texture;
   s_batch.textures_cache[s_batch.white_texture] = 0;
   
   // Default shader init
-  s_batch.shader = gfx_shader_create(s_batch.context, generate_batch_quad_shader());
+  s_batch.shader = resources_get_shader(resources_push_shader(RESOURCE_CACHE_ID, generate_batch_quad_shader()));
 }
 
 static void init_pipeline() {
@@ -109,7 +95,7 @@ static void init_pipeline() {
     .type  = GFX_BUFFER_VERTEX, 
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
-  s_batch.pipe_desc.vertex_buffer  = gfx_buffer_create(s_batch.context, vert_desc);
+  s_batch.pipe_desc.vertex_buffer  = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, vert_desc));
   s_batch.pipe_desc.vertices_count = 0;
 
   // Layout init
@@ -278,7 +264,6 @@ void batch_renderer_init() {
 
 void batch_renderer_shutdown() {
   gfx_pipeline_destroy(s_batch.pipeline);
-  gfx_shader_destroy(s_batch.shader);
   
   s_batch.batches.clear();
 }
