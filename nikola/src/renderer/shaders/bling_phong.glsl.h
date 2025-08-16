@@ -83,7 +83,7 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
         vs_out.camera_pos = u_camera_pos;
         vs_out.pixel_pos  = vec3(model_space);
         vs_out.tex_coords = aTexCoords;
-        vs_out.shadow_pos = u_light_space * vec4(aPos, 1.0);
+        // vs_out.shadow_pos = u_light_space * vec4(aPos, 1.0);
 
         gl_Position = u_projection * u_view * model_space;
       }
@@ -119,52 +119,78 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
 
       struct DirectionalLight {
         vec3 direction;
+        float __padding1;
+
         vec3 color;
+        float __padding2;
       };
 
       struct PointLight {
         vec3 position;
+        float __padding1;
+
         vec3 color;
+        float __padding2;
 
         float radius;
       };
       
       struct SpotLight {
         vec3 position;
+        float __padding1;
+
         vec3 direction;
+        float __padding2;
+        
         vec3 color;
+        float __padding3;
 
         float radius;
         float outer_radius;
       };
 
-      uniform DirectionalLight u_dir_light; 
-      uniform PointLight u_points[LIGHTS_MAX]; 
-      uniform SpotLight u_spots[LIGHTS_MAX]; 
-      
-      uniform int u_points_count; 
-      uniform int u_spots_count; 
-      uniform vec3 u_ambient;
-      
+      // Buffers
+
+      layout(std430, binding = 2) buffer LightsBuffer {
+        DirectionalLight u_dir_light;
+        PointLight u_points[LIGHTS_MAX];
+        SpotLight u_spots[LIGHTS_MAX]; 
+
+        vec3 u_ambient;
+        int u_points_count, u_spots_count;
+      };
+
+      // Uniforms
+
       uniform Material u_material;
-     
+      
+      // Textures
+
       layout (binding = 0) uniform sampler2D u_diffuse_map;
       layout (binding = 1) uniform sampler2D u_specular_map;
       layout (binding = 2) uniform sampler2D u_normal_map;
       layout (binding = 3) uniform sampler2D u_shadow;
-    
+   
+      // Private variables
+
       vec3 view_dir; 
       vec3 norm;
 
+      // Stages 
+      
       vec3 calculate_normal();
       vec3 calculate_diffuse(const vec3 diffuse_texel, const vec3 light_dir);
       vec3 calculate_specular(const vec3 specular_texel, const vec3 light_dir);
       float calculate_shadow();
 
+      // Lights
+
       vec3 accumulate_point_lights_color(const vec3 diffuse_texel, const vec3 specular_texel, const int points_max);
       vec3 accumulate_dir_light_color(const vec3 diffuse_texel, const vec3 specular_texel);
       vec3 accumulate_spot_lights_color(const vec3 diffuse_texel, const vec3 specular_texel, const int spots_max);
- 
+
+      // Main
+
       void main() {
         vec3 diffuse  = texture(u_diffuse_map, fs_in.tex_coords).rgb * u_material.color;
         vec3 specular = texture(u_specular_map, fs_in.tex_coords).rgb;
@@ -192,8 +218,8 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
         vec3 spot_lights_factor  = accumulate_spot_lights_color(diffuse, specular, spots_max);
         vec3 dir_light_factor    = accumulate_dir_light_color(diffuse, specular);
         
-        vec3 shadow_factor = (u_ambient + (1 - calculate_shadow()));
-        vec3 final_factor   = shadow_factor * (point_lights_factor + spot_lights_factor + dir_light_factor);
+        // vec3 shadow_factor = (u_ambient + (1 - calculate_shadow()));
+        vec3 final_factor   = u_ambient * (point_lights_factor + spot_lights_factor + dir_light_factor);
 
         frag_color = vec4(final_factor, u_material.transparency);
       }

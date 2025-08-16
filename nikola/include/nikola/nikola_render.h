@@ -142,6 +142,7 @@ struct RendererDefaults {
   
   GfxBuffer* matrices_buffer  = nullptr;
   GfxBuffer* instance_buffer  = nullptr;
+  GfxBuffer* lights_buffer    = nullptr;
   GfxBuffer* animation_buffer = nullptr;
   
   Material* material = nullptr;

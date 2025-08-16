@@ -39,20 +39,18 @@
     - [x] Use the new animation resource and find out a way to render it and shade it properly.
     - [x] Try to have a good system for switching between animations
     - [x] Documentation
-- [] Renderer v0.6 
+- [x] Renderer v0.6 
     - [x] Improve draw calls and render passes
         - [x] Fix the render commands
         - [x] Improve the render pass system to be more versitile. It's very "stiff" right now.
         - [x] Improve the current render passes and test with client-side render passes.
-    - [] Add new rendering features/effects 
+    - [x] Add new rendering features/effects 
         - [x] Improve the Blinn-Phong lighting model by actually using specular maps and maybe fixing the material system a bit. 
-        - [x] Shadow maps
         - [x] Normal/roughness mapping.
-        - [] Improve shadow maps by supporting dynamically-sized directional light bounding box based on the view frustrum.
-    - [] Increase performance/improve workflow
+    - [x] Increase performance/improve workflow
         - [x] Change the instance data to become an instance uniform buffer that gets updated every frame. Each instance can aquire its data using `gl_InstanceID` instead of per-vertex instance data.
         - [x] Look into making the renderer "instanced" rather than rendering everything as is.
-        - [] If performance is still an issue, make all of the scene's lights into a buffer and send it to the shader as a buffer update instead of uniforms.
+        - [x] If performance is still an issue, make all of the scene's lights into a buffer and send it to the shader as a buffer update instead of uniforms.
     - [x] Documentation
 - [x] Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers.
@@ -64,13 +62,12 @@
     - [x] Documentation
 - [x] Resource Manager v0.6
     - [x] Separate the `resources_push_*` functions into `resources_create_*` and `resources_load_*`. One would allocate and generate the ID and the other would actually load the resource.
-- [] Particles v0.2 
-    - [] GPU-based particle system, using compute shaders.
-    - [] Documentation
 - [] GUI v0.3
     - [] Replace the current ImGui version with the docking branch for a _way_ better GUI 
-    - [] Add animation for the audio samples? 
-    - [] Texture viewer?
+    - [] Try to improve the "runtime experience" as much as possible with ImGui.
+    - [] Documentation
+- [] Particles v0.2 
+    - [] GPU-based particle system, using compute shaders.
     - [] Documentation
 - [] Animations v0.2 
     - [] Add the animator to the GUI
@@ -88,6 +85,8 @@
     - [] Create your own string library 
     - [] Dynamic array 
     - [] Custom memory allocaters
+    - [] Singly-linked and doubly-linked lists
+    - [] Stacks and queues
     - [] Ring buffers
     - [] Hash map
 - [] Renderer v0.7 
@@ -102,6 +101,8 @@
     - [] A better job system using fibers
 
 ## BUGS:
+- (Animations): Animations are fucked. Fix. Parenting problem? Don't know. Fix.
+- (Renderer): Shadows. They're turned off right now. Fix everything about em. Fuck em. Fix em. Marry em?
 - (Dist): Improve the `NikolaProjectTemplate` by adding a template shader. And you know what? Just improve the whole template.
 - Check all of the `TODO`, `FIX`, and `TEMP` in the codebase.
 

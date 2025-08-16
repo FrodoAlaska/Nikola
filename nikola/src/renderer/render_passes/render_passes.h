@@ -7,6 +7,68 @@
 namespace nikola { // Start of nikola
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// DirectionalLightInterface
+struct DirectionalLightInterface {
+  Vec3 direction;
+  f32 __padding1;
+
+  Vec3 color;
+  f32 __padding2;
+};
+/// DirectionalLightInterface
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// PointLightInterface
+struct PointLightInterface {
+  Vec3 position;
+  f32 __padding1;
+
+  Vec3 color;
+  f32 __padding2;
+
+  f32 radius;
+  Vec3 __padding3;
+};
+/// PointLightInterface
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// SpotLightInterface
+struct SpotLightInterface {
+  Vec3 position;
+  f32 __padding1;
+
+  Vec3 direction;
+  f32 __padding2;
+
+  Vec3 color;
+  f32 __padding3;
+
+  f32 radius;
+  f32 outer_radius;
+  Vec2 _padding4;
+};
+/// SpotLightInterface
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// LightBuffer
+struct LightBuffer {
+  DirectionalLightInterface dir_light; 
+  PointLightInterface point_lights[POINT_LIGHTS_MAX]; 
+  SpotLightInterface spot_lights[POINT_LIGHTS_MAX];
+
+  // Others
+
+  Vec3 ambient_color;
+
+  int point_lights_count, spot_lights_count;
+};
+/// LightBuffer
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// Shadow pass functions
 
 void shadow_pass_init(Window* window);

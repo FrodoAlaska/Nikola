@@ -80,6 +80,7 @@ static void init_defaults() {
   s_renderer.defaults.matrices_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
 
   // Material init
+  
   MaterialDesc mat_desc = {
     .diffuse_id  = default_texture_id, 
     .specular_id = specular_default_texture_id, 
@@ -108,6 +109,16 @@ static void init_defaults() {
   };
   s_renderer.defaults.instance_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
 
+  // Lights buffer init
+  
+  buff_desc = {
+    .data  = nullptr,
+    .size  = sizeof(LightBuffer),
+    .type  = GFX_BUFFER_SHADER_STORAGE, 
+    .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
+  };
+  s_renderer.defaults.lights_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
+
   // Animation buffer init
   
   buff_desc = {
@@ -131,6 +142,7 @@ static void init_pipeline() {
   };
 
   // Vertex buffer init 
+  
   GfxBufferDesc vert_desc = {
     .data  = vertices,
     .size  = sizeof(vertices),
@@ -141,6 +153,7 @@ static void init_pipeline() {
   pipe_desc.vertices_count = 4;
  
   // Index buffer init
+  
   u32 indices[] = {
     0, 1, 2, 
     2, 3, 0,
@@ -155,6 +168,7 @@ static void init_pipeline() {
   pipe_desc.indices_count = 6;
 
   // Layout init
+  
   pipe_desc.layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT2;
   pipe_desc.layouts[0].attributes[1]    = GFX_LAYOUT_FLOAT2;
   pipe_desc.layouts[0].attributes_count = 2;
@@ -194,7 +208,7 @@ void renderer_init(Window* window) {
 
   // Defaults render passes init
   
-  shadow_pass_init(window);
+  // @TODO (Renderer): shadow_pass_init(window);
   light_pass_init(window);
   billboard_pass_init(window);
   hdr_pass_init(window);

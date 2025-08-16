@@ -33,6 +33,10 @@ void light_pass_init(Window* window) {
                                     (GfxBuffer*)renderer_get_defaults().instance_buffer);
   
   shader_context_set_uniform_buffer(resources_get_shader_context(pass_desc.shader_context_id), 
+                                    SHADER_LIGHT_BUFFER_INDEX, 
+                                    (GfxBuffer*)renderer_get_defaults().lights_buffer);
+  
+  shader_context_set_uniform_buffer(resources_get_shader_context(pass_desc.shader_context_id), 
                                     SHADER_ANIMATION_BUFFER_INDEX, 
                                     (GfxBuffer*)renderer_get_defaults().animation_buffer);
 
@@ -77,30 +81,66 @@ void light_pass_init(Window* window) {
 void light_pass_prepare(RenderPass* pass, const FrameData& data) {
   ShaderContext* ctx = pass->shader_context;
 
+  //
+  // @TODO (Renderer): Turning the light space view into a texture coordinate
+  // Mat4 light_space = shadow_pass_get_light_space(pass->previous);
+  // 
+  // Mat4 shadow_space = light_space * mat4_translate(Vec3(0.5f)) * mat4_scale(Vec3(0.5f));
+  // shader_context_set_uniform(pass->shader_context, "u_light_space", shadow_space);
+  //
+  
   // @TODO (Renderer): We need to put all of per-scene data into a  buffer 
   // and send it over instead of setting each value indivisually
 
-  // Turning the light space view into a texture coordinate
-  
-  Mat4 light_space = shadow_pass_get_light_space(pass->previous);
-  
-  Mat4 shadow_space = light_space * mat4_translate(Vec3(0.5f)) * mat4_scale(Vec3(0.5f));
-  shader_context_set_uniform(pass->shader_context, "u_light_space", shadow_space);
+  // Set the light uniforms
 
-  // Set the lighting uniforms
- 
-  shader_context_set_uniform(pass->shader_context, "u_dir_light", data.dir_light);
-  shader_context_set_uniform(pass->shader_context, "u_ambient", data.ambient);
-  
-  shader_context_set_uniform(pass->shader_context, "u_points_count", (i32)data.point_lights.size());
+  LightBuffer light_buffer = {
+    .ambient_color = data.ambient,
+
+    .point_lights_count = (i32)data.point_lights.size(),
+    .spot_lights_count  = (i32)data.spot_lights.size(),
+  };
+
+  // Directional light
+
+  light_buffer.dir_light = {
+    .direction = data.dir_light.direction, 
+    .color     = data.dir_light.color, 
+  };
+
+  // Point lights
+
   for(sizei i = 0; i < data.point_lights.size(); i++) {
-    shader_context_set_uniform(pass->shader_context, ("u_points[" + std::to_string(i) + "]"), data.point_lights[i]);
+    PointLightInterface light = {
+      .position = data.point_lights[i].position, 
+      .color    = data.point_lights[i].color,
+      .radius   = data.point_lights[i].radius,
+    };
+
+    light_buffer.point_lights[i] = light;
   }
-  
-  shader_context_set_uniform(pass->shader_context, "u_spots_count", (i32)data.spot_lights.size());
+
+  // Spot lights
+
   for(sizei i = 0; i < data.spot_lights.size(); i++) {
-    shader_context_set_uniform(pass->shader_context, ("u_spots[" + std::to_string(i) + "]"), data.spot_lights[i]);
+    SpotLightInterface light = {
+      .position  = data.spot_lights[i].position, 
+      .direction = data.spot_lights[i].direction, 
+      .color     = data.spot_lights[i].color,
+
+      .radius       = data.spot_lights[i].radius,
+      .outer_radius = data.spot_lights[i].outer_radius,
+    };
+
+    light_buffer.spot_lights[i] = light;
   }
+
+  // Updating the buffer
+
+  gfx_buffer_upload_data(renderer_get_defaults().lights_buffer, 
+                         0, 
+                         sizeof(LightBuffer), 
+                         &light_buffer); 
 
   // Render the skybox
   // @TEMP
@@ -122,15 +162,13 @@ void light_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& 
       geo.material->diffuse_map,
       geo.material->specular_map,
       geo.material->normal_map,
-      
-      pass->previous->outputs[0], // Should be the shadow pass's result
     };
 
     GfxBindingDesc bind_desc = {
       .shader = pass->shader_context->shader,
 
       .textures       = textures, 
-      .textures_count = 4,
+      .textures_count = 3,
     };
     gfx_context_use_bindings(pass->gfx, bind_desc);
 
@@ -140,8 +178,7 @@ void light_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& 
   // Setting the output textures
 
   pass->outputs[0]    = pass->framebuffer_desc.color_attachments[0];
-  pass->outputs[1]    = pass->previous->outputs[0],
-  pass->outputs_count = 2;
+  pass->outputs_count = 1;
 }
 
 /// Light pass functions
