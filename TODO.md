@@ -76,6 +76,7 @@
     - [] Add an animation controller to easily transition between animations 
     - [] Documentation
 - [] Physics v0.3
+    - [] A debug pass? After the HDR pass?
     - [] Deleting bodies has some problems since the world delets bodies by keeping a "world index" inside the internal body data structure, which then it uses to 
          get the correct position (as an iterator) in the vector to then delete. However, that index is sometimes _way_ higher than the actual size of the array of bodies. Is keeping a collection for bodies in the physics world 
          with a physics library really that necessary?

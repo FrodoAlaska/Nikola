@@ -142,7 +142,9 @@ void light_pass_prepare(RenderPass* pass, const FrameData& data) {
   // Render the skybox
   // @TEMP
 
-  renderer_draw_skybox(data.skybox_id);
+  if(RESOURCE_IS_VALID(data.skybox_id)) {
+    renderer_draw_skybox(data.skybox_id);
+  }
 }
 
 void light_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue) {
