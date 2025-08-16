@@ -434,6 +434,9 @@ enum ResourceType {
   
   /// A flag to denote a `AudioBuffer` resource.
   RESOURCE_TYPE_AUDIO_BUFFER,
+
+  /// The maximum number of resource types in this enum.
+  RESOURCE_TYPES_MAX,
 };
 /// ResourceType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -774,16 +777,7 @@ NIKOLA_API ResourceID resources_push_texture(const ResourceGroupID& group_id, co
 
 /// Allocate a new `GfxTexture` using the texture retrieved from the `nbr_path`, 
 /// store it in `group_id`, and return a `ResourceID` to identify it.
-///
-/// Default values: 
-///   - `format` = `GFX_TEXTURE_FORMAT_RGBA8`.
-///   - `filter` = `GFX_TEXTURE_FILTER_MIN_MAG_NEAREST`.
-///   - `wrap`   = `GFX_TEXTURE_WRAP_CLAMP`.
-NIKOLA_API ResourceID resources_push_texture(const ResourceGroupID& group_id, 
-                                             const FilePath& nbr_path,
-                                             const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
-                                             const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-                                             const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
+NIKOLA_API ResourceID resources_push_texture(const ResourceGroupID& group_id, const FilePath& nbr_path);
 
 /// Allocate a new default `GfxTexture` of type `MaterialTextureType`,
 /// store it in `group_id`, and return a `ResourceID` to identify it.
@@ -796,17 +790,8 @@ NIKOLA_API ResourceID resources_push_cubemap(const ResourceGroupID& group_id, co
 /// Allocate a new `GfxCubemap` using the cubemap retrieved from the `nbr_path`, 
 /// store it in `group_id`, and return a `ResourceID` to identify it.
 ///
-/// Default values: 
-///   - `format` = `GFX_TEXTURE_FORMAT_RGBA8`.
-///   - `filter` = `GFX_TEXTURE_FILTER_MIN_MAG_NEAREST`.
-///   - `wrap`   = `GFX_TEXTURE_WRAP_CLAMP`.
-///
 /// @NOTE: The number of faces of the cubemap will be determined inside the NBR file.
-NIKOLA_API ResourceID resources_push_cubemap(const ResourceGroupID& group_id, 
-                                             const FilePath& nbr_path,
-                                             const GfxTextureFormat format = GFX_TEXTURE_FORMAT_RGBA8, 
-                                             const GfxTextureFilter filter = GFX_TEXTURE_FILTER_MIN_MAG_NEAREST, 
-                                             const GfxTextureWrap wrap     = GFX_TEXTURE_WRAP_CLAMP);
+NIKOLA_API ResourceID resources_push_cubemap(const ResourceGroupID& group_id, const FilePath& nbr_path);
 
 /// Allocate a new `GfxShader` using `shader_desc`, store it in `group_id`, and return a `ResourceID` 
 /// to identify it.
@@ -851,9 +836,9 @@ NIKOLA_API ResourceID resources_push_skybox(const ResourceGroupID& group_id, con
 /// store it in `group_id`, and return a `ResourceID` to identify it.
 NIKOLA_API ResourceID resources_push_model(const ResourceGroupID& group_id, const FilePath& nbr_path);
 
-/// Allocate a new `Animation` using the `NBRAnimation` retrieved from the `nbr_path` and 
-/// the `model_id` as its skinned model, store it in `group_id`, and return a `ResourceID` to identify it.
-NIKOLA_API ResourceID resources_push_animation(const ResourceGroupID& group_id, const FilePath& nbr_path, const ResourceID& model_id);
+/// Allocate a new `Animation` using the `NBRAnimation` retrieved from the `nbr_path`, and 
+//  store it in `group_id`, and return a `ResourceID` to identify it.
+NIKOLA_API ResourceID resources_push_animation(const ResourceGroupID& group_id, const FilePath& nbr_path);
 
 /// Allocate a new `Font` using the `NBRFont` retrieved from the `nbr_path`, 
 /// store it in `group_id`, and return a `ResourceID` to identify it.

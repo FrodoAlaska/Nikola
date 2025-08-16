@@ -1972,7 +1972,6 @@ const bool gfx_texture_load(GfxTexture* texture, const GfxTextureDesc& desc) {
   glTextureParameteri(texture->id, GL_TEXTURE_MAG_FILTER, mag_filter);
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
   glTextureParameteri(texture->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
-  glTextureParameteri(texture->id, GL_TEXTURE_WRAP_R, gl_wrap_format);
 
   GLint compare_func = (gl_format == GL_DEPTH_COMPONENT) ? GL_COMPARE_REF_TO_TEXTURE : GL_NONE;
 
@@ -1985,6 +1984,7 @@ const bool gfx_texture_load(GfxTexture* texture, const GfxTextureDesc& desc) {
   set_texture_pixel_align(desc.format);
 
   // Filling the texture with the data based on its type
+  
   update_gl_texture_storage(texture, in_format);
   update_gl_texture_pixels(texture, gl_format, gl_pixel_type);
 

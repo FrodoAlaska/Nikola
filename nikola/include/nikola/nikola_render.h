@@ -553,6 +553,7 @@ NIKOLA_API void renderer_queue_model_instanced(const ResourceID& res_id,
                                                const ResourceID& mat_id = {});
 
 NIKOLA_API void renderer_queue_animation_instanced(const ResourceID& res_id, 
+                                                   const ResourceID& model_id,
                                                    const Transform* transforms, 
                                                    const sizei count, 
                                                    const ResourceID& mat_id = {});
@@ -567,10 +568,22 @@ NIKOLA_API void renderer_queue_billboard_instanced(const ResourceID& res_id,
 ///
 /// @NOTE: If `mat_id` is left untouched, the renderer will use the default material.
 
-NIKOLA_API void renderer_queue_mesh(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id = {});
-NIKOLA_API void renderer_queue_model(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id = {});
-NIKOLA_API void renderer_queue_animation(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id = {});
-NIKOLA_API void renderer_queue_billboard(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id = {});
+NIKOLA_API void renderer_queue_mesh(const ResourceID& res_id, 
+                                    const Transform& transform, 
+                                    const ResourceID& mat_id = {});
+
+NIKOLA_API void renderer_queue_model(const ResourceID& res_id, 
+                                     const Transform& transform, 
+                                     const ResourceID& mat_id = {});
+
+NIKOLA_API void renderer_queue_animation(const ResourceID& res_id, 
+                                         const ResourceID& model_id,
+                                         const Transform& transform, 
+                                         const ResourceID& mat_id = {});
+
+NIKOLA_API void renderer_queue_billboard(const ResourceID& res_id, 
+                                         const Transform& transform, 
+                                         const ResourceID& mat_id = {});
 
 /// Draw the given `geo` geometry into the scene. 
 ///

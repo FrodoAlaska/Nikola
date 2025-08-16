@@ -12,6 +12,7 @@
 #include <queue>
 #include <stack>
 #include <deque>
+#include <functional>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>

@@ -54,29 +54,23 @@
         - [x] Look into making the renderer "instanced" rather than rendering everything as is.
         - [] If performance is still an issue, make all of the scene's lights into a buffer and send it to the shader as a buffer update instead of uniforms.
     - [x] Documentation
-- [] Performance Craze 0.1 
+- [x] Performance Craze 0.1 
     - [x] Implement both performance timers and normal timers.
     - [x] Create a simple job system 
     - [x] Test the new job system with the NBR conversion tool. 
-    - [] Run some tests through an instrumentation tool of some kind to know _truly_ what is slowing down the application. Use `Tracy` for that.
-    - [] Documentation
+    - [x] Documentation
 - [x] GFX v1.2
     - [x] Separate the `gfx_*_create` functions for resources into `gfx_*_create` and `gfx_*_load`.  
     - [x] Documentation
-- [] Resource Manager v0.6
-    - [] Separate the `resources_push_*` functions into `resources_create_*` and `resources_load_*`. One would allocate and generate the ID and the other would actually load the resource.
-    - [] Rethink 3D models a bit. Couldn't we just have a `resources_push_model` function, but instead of creating a `Model` struct we just create bunch of meshes with materials, transforms, mesh children and construct 
-    the model out that information. It's probably going to require a bit of rework and rethinking, but it will benefit us when adding scene graphs and it will also simplify the renderer's job by a ton. Think, test, and implement. 
-    - [] Proper resource reloading
-    - [] Add an async option to `resources_push_dir` in order to asynchronously load resources using the job system.
+- [x] Resource Manager v0.6
+    - [x] Separate the `resources_push_*` functions into `resources_create_*` and `resources_load_*`. One would allocate and generate the ID and the other would actually load the resource.
+- [] Particles v0.2 
+    - [] GPU-based particle system, using compute shaders.
     - [] Documentation
 - [] GUI v0.3
     - [] Replace the current ImGui version with the docking branch for a _way_ better GUI 
     - [] Add animation for the audio samples? 
     - [] Texture viewer?
-    - [] Documentation
-- [] Particles v0.2 
-    - [] GPU-based particle system, using compute shaders.
     - [] Documentation
 - [] Animations v0.2 
     - [] Add the animator to the GUI
@@ -104,6 +98,8 @@
     - [] Gaussian blur
     - [] Bloom integration 
     - [] Documentation
+- [] Threading v0.1 
+    - [] A better job system using fibers
 
 ## BUGS:
 - (Dist): Improve the `NikolaProjectTemplate` by adding a template shader. And you know what? Just improve the whole template.

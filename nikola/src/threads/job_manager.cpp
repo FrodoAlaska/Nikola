@@ -28,15 +28,16 @@ static JobManager s_jobs;
 /// Private functions
 
 static const bool dequeue_job(JobDesc* out_desc) {
+  std::unique_lock<std::mutex> lock(s_jobs.execute_lock);
   if(s_jobs.queues.empty()) {
     return false;
+    lock.unlock();
   }
-
-  std::lock_guard<std::mutex> lock(s_jobs.execute_lock);
   
   *out_desc = s_jobs.queues.front();
   s_jobs.queues.pop();
 
+  lock.unlock();
   return true;
 }
 
@@ -62,7 +63,9 @@ static void job_callback() {
     }
 
     // Execute the job and remove it from the queue
-    job.entry_func(job.params, job.params_size);
+    if(job.entry_func) {
+      job.entry_func(job.params, job.params_size);
+    }
   }
 }
 

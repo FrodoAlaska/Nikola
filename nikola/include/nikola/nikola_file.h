@@ -96,13 +96,13 @@ using File = std::fstream;
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// FileIterateFunc callback
-using FileIterateFunc = void(*)(const FilePath& base_dir, const FilePath& current_path, void* user_data);
+using FileIterateFunc = std::function<void(const FilePath& base_dir, const FilePath& current_path, void* user_data)>;
 /// FileIterateFunc callback
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// FileWatchFunc
-using FileWatchFunc = void(*)(const FileStatus status, const FilePath& path, void* user_data);
+using FileWatchFunc = std::function<void(const FileStatus status, const FilePath& path, void* user_data)>;
 /// FileWatchFunc
 ///---------------------------------------------------------------------------------------------------------------------
 

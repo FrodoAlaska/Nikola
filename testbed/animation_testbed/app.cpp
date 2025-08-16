@@ -42,8 +42,8 @@ static void init_resources(nikola::App* app) {
 
   // Animations init
 
-  app->animation1 = nikola::resources_push_animation(app->res_group_id, "animations/zombie_idle.nbr", app->model1);
-  app->animation2 = nikola::resources_push_animation(app->res_group_id, "animations/zombie_walk.nbr", app->model1);
+  app->animation1 = nikola::resources_push_animation(app->res_group_id, "animations/zombie_idle.nbr");
+  app->animation2 = nikola::resources_push_animation(app->res_group_id, "animations/zombie_walk.nbr");
 
   // Materials init
   
@@ -163,7 +163,7 @@ void app_render(nikola::App* app) {
   // Render the objects
   
   nikola::renderer_queue_mesh(app->mesh_id, app->transforms[0], app->material_id);
-  nikola::renderer_queue_animation(app->animator1.animation_id, app->transforms[1]);
+  nikola::renderer_queue_animation(app->animator1.animation_id, app->model1, app->transforms[1]);
 
   nikola::renderer_end();
   

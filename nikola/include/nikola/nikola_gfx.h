@@ -1068,10 +1068,14 @@ struct GfxCubemapDesc {
   GfxTextureFormat format;
 
   /// The filter to be used on the cubemap when magnified or minified.
-  GfxTextureFilter filter;
+  ///
+  /// @NOTE: The default filter is set to `GFX_TEXTURE_FILTER_MIN_MAG_LINEAR`.
+  GfxTextureFilter filter  = GFX_TEXTURE_FILTER_MIN_MAG_LINEAR;
 
   /// The addressing mode of the cubemap.
-  GfxTextureWrap wrap_mode;
+  ///
+  /// @NOTE: The default wrap mode is set to `GFX_TEXTURE_WRAP_REPEAT`.
+  GfxTextureWrap wrap_mode = GFX_TEXTURE_WRAP_REPEAT;
   
   /// An array of pixels (up to `CUBEMAP_FACES_MAX`) of each face of the cubemap.
   void* data[CUBEMAP_FACES_MAX]; 

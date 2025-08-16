@@ -354,7 +354,7 @@ void list_context_convert_all(ListContext* list) {
     nikola::JobDesc job = {
       .entry_func = convert_by_type, 
 
-      .params       = (void*)&entry, 
+      .params      = (void*)&entry, 
       .params_size = sizeof(ConvertEntry),
     };
 

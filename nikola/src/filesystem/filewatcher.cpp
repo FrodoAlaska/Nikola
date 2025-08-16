@@ -7,6 +7,8 @@
 
 namespace nikola {
 
+// @TODO (Filesystem): This doesn't work, because fuck me...
+
 ///---------------------------------------------------------------------------------------------------------------------
 /// Private functions
 
@@ -33,7 +35,7 @@ static FileStatus get_nikola_status(const filewatch::Event event) {
 void filewatcher_add_file(const FilePath& path, const FileWatchFunc& callback, const void* user_data) {
   filewatch::FileWatch<FilePath> watcher(
     path, 
-    [&](const FilePath& watched_path, const filewatch::Event event) {
+    [=](const FilePath& watched_path, const filewatch::Event event) {
       callback(get_nikola_status(event), watched_path, (void*)user_data);
     }
   ); 
@@ -42,7 +44,7 @@ void filewatcher_add_file(const FilePath& path, const FileWatchFunc& callback, c
 void filewatcher_add_dir(const FilePath& dir, const FileWatchFunc& callback, const void* user_data) {
   filewatch::FileWatch<FilePath> watcher(
     dir, 
-    [&](const FilePath& watched_path, const filewatch::Event event) {
+    [=](const FilePath& watched_path, const filewatch::Event event) {
       callback(get_nikola_status(event), watched_path, (void*)user_data);
     }
   ); 

@@ -477,7 +477,8 @@ void renderer_queue_model_instanced(const ResourceID& res_id,
   }  
 }
 
-void renderer_queue_animation_instanced(const ResourceID& res_id, 
+void renderer_queue_animation_instanced(const ResourceID& res_id,
+                                        const ResourceID& model_id,
                                         const Transform* transforms, 
                                         const sizei count, 
                                         const ResourceID& mat_id) {
@@ -490,8 +491,8 @@ void renderer_queue_animation_instanced(const ResourceID& res_id,
 
   // Queue the skinning model
 
-  Model* model = anim->skinned_model;
-  for(sizei i = 0; i < anim->skinned_model->meshes.size(); i++) {
+  Model* model = resources_get_model(model_id);
+  for(sizei i = 0; i < model->meshes.size(); i++) {
     Mesh* mesh    = model->meshes[i];
     Material* mat = model->materials[model->material_indices[i]];
 
@@ -530,8 +531,11 @@ void renderer_queue_model(const ResourceID& res_id, const Transform& transform, 
   renderer_queue_model_instanced(res_id, &transform, 1, mat_id);
 }
 
-void renderer_queue_animation(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id) {
-  renderer_queue_animation_instanced(res_id, &transform, 1, mat_id);
+void renderer_queue_animation(const ResourceID& res_id, 
+                              const ResourceID& model_id,
+                              const Transform& transform, 
+                              const ResourceID& mat_id) {
+  renderer_queue_animation_instanced(res_id, model_id, &transform, 1, mat_id);
 }
 
 void renderer_queue_billboard(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id) {
