@@ -68,8 +68,9 @@ include(cmake/utils.cmake)
 ### Project Options ###
 ############################################################
 option(NIKOLA_BUILD_SHARED  "Build Nikola as a shared library" OFF)
-option(NIKOLA_BUILD_TESTBED "Build the testbeds with Nikola" ON)
-option(NIKOLA_BUILD_NBR     "Build the NBR tool with Nikola" ON)
+option(NIKOLA_BUILD_TESTBED "Build the testbeds with Nikola"   ON)
+option(NIKOLA_BUILD_NBR     "Build the NBR tool with Nikola"   ON)
+option(NIKOLA_DISTRIBUTE    "Enable the distribution build"    OFF)
 
 # Set it to shared
 if(NIKOLA_BUILD_SHARED)
@@ -78,6 +79,10 @@ if(NIKOLA_BUILD_SHARED)
 else()
   set(NIKOLA_BUILD_TYPE STATIC)
   set(BUILD_SHARED_LIBS OFF)
+endif()
+
+if(NIKOLA_DISTRIBUTE)
+  add_definitions("-DNIKOLA_BUILD_DISTRIBUTION")
 endif()
 ############################################################
 

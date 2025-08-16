@@ -1,4 +1,5 @@
 # Update 0.2
+
 - [x] UI v0.1
     - [x] Text UI elements 
     - [x] Text animation system
@@ -82,6 +83,7 @@
     - [] Implement mouse to screen and mouse to world for editing levels easier
 
 ## Update 0.3
+
 - [] Data Structures 0.1 
     - [] Create your own string library 
     - [] Dynamic array 
@@ -92,20 +94,25 @@
     - [] Hash map
 - [] Renderer v0.7 
     - [] Look into GPU rendering with indirect drawing.
-    - [] Improve lighting performance using clustered rendering.
-    - [] Decal rendering 
-    - [] Terrain rendering and procedural generation (terrain generation using `stb_perlin` and loading from heightmap)
     - [] Gaussian blur
     - [] Bloom integration 
+    - [] Decal rendering 
+    - [] Terrain rendering and procedural generation (terrain generation using `stb_perlin` and loading from heightmap)
+    - [] Improve lighting performance using clustered rendering (if needed).
     - [] Documentation
 - [] Threading v0.1 
     - [] A better job system using fibers
 
 ## BUGS:
-- (Animations): Animations are fucked. Fix. Parenting problem? Don't know. Fix.
-- (Renderer): Shadows. They're turned off right now. Fix everything about em. Fuck em. Fix em. Marry em?
-- (Dist): Improve the `NikolaProjectTemplate` by adding a template shader. And you know what? Just improve the whole template.
-- Check all of the `TODO`, `FIX`, and `TEMP` in the codebase.
+- (Window & Renderer): When resizing the window or changing the fullscreen state, the renderer really does not hold up. I'm guessing it's because of the render passes? They need to update their own frame sizes when the window resizes? 
+Maybe find a better way to do this.
 
-## FUTURE PLANS: 
-- NUSL: Nikola Uniform Shading Language or shader-generating materials
+- (GUI): We need to find out a way to disable the cursor when editing sliders. Or, perhaps, have entities move with the mouse. You know, like _actual_ environment editing.
+
+- (Animations): Animations are fucked. Fix. Parenting problem? Don't know. Fix.
+
+- (Renderer): Shadows. They're turned off right now. Fix everything about em. Fuck em. Fix em. Marry em?
+
+- (Dist): Improve the `NikolaProjectTemplate` by adding a template shader. And you know what? Just improve the whole template.
+
+- Check all of the `TODO`, `FIX`, and `TEMP` in the codebase.

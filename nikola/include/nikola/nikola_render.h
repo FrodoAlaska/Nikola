@@ -497,17 +497,20 @@ NIKOLA_API void renderer_begin(FrameData& data);
 /// Start the render passes chain, flushing the given `RenderQueue` in the process. 
 NIKOLA_API void renderer_end();
 
+/// Set renderer's clear color to the given `clear_color`.
+NIKOLA_API void renderer_set_clear_color(const Vec4& clear_color);
+
 /// Retrieve the internal `GfxContext` of the global renderer.
 NIKOLA_API GfxContext* renderer_get_context();
 
 /// Retrieve the internal default values of the renderer.
 NIKOLA_API const RendererDefaults& renderer_get_defaults();
 
-/// Set renderer's clear color to the given `clear_color`.
-NIKOLA_API void renderer_set_clear_color(const Vec4& clear_color);
+/// Retrieve the renderer's current viewport size
+NIKOLA_API IVec2 renderer_get_viewport_size();
 
-/// Return the renderer's current clear color.
-NIKOLA_API Vec4& renderer_get_clear_color();
+/// Retrieve the renderer's current clear color.
+NIKOLA_API Vec4 renderer_get_clear_color();
 
 /// Create a new render pass using the information from `desc`, returning back a
 /// pointer to the newly added render pass. 

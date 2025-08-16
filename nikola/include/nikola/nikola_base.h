@@ -299,7 +299,10 @@ NIKOLA_API void logger_log(const LogLevel lvl, const char* msg, ...);
 /// ---------------------------------------------------------------------
 /// *** Asserts ***
 
-#define NIKOLA_ASSERTS_ENABLED // @TEMP (Base): Maybe would be a better idea to have a "Debug" assert and a "Release" assert instead of just one.
+// Only enable asserts outside of distribution builds
+#ifndef NIKOLA_BUILD_DISTRIBUTION
+  #define NIKOLA_ASSERTS_ENABLED 
+#endif
 
 #ifdef NIKOLA_ASSERTS_ENABLED
 

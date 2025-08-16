@@ -27,6 +27,7 @@ struct MatrixUniformBuffer {
 struct Renderer {
   // Context data
 
+  Window* window;
   GfxContext* context = nullptr;
   Vec4 clear_color;
 
@@ -188,7 +189,9 @@ static void init_pipeline() {
 
 void renderer_init(Window* window) {
   // Context init 
-  
+ 
+  s_renderer.window = window;
+
   GfxContextDesc gfx_desc = {
     .window       = window,
     .states       = GFX_STATE_DEPTH | GFX_STATE_STENCIL | GFX_STATE_BLEND | GFX_STATE_MSAA,
@@ -302,6 +305,10 @@ void renderer_end() {
   }
 }
 
+void renderer_set_clear_color(const Vec4& clear_color) {
+  s_renderer.clear_color = clear_color;
+}
+
 GfxContext* renderer_get_context() {
   return s_renderer.context;
 }
@@ -310,11 +317,14 @@ const RendererDefaults& renderer_get_defaults() {
   return s_renderer.defaults;
 }
 
-void renderer_set_clear_color(const Vec4& clear_color) {
-  s_renderer.clear_color = clear_color;
+IVec2 renderer_get_viewport_size() {
+  IVec2 size; 
+  window_get_size(s_renderer.window, &size.x, &size.y);
+
+  return size;
 }
 
-Vec4& renderer_get_clear_color() {
+Vec4 renderer_get_clear_color() {
   return s_renderer.clear_color;
 }
 
