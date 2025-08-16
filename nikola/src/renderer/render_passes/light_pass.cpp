@@ -88,9 +88,6 @@ void light_pass_prepare(RenderPass* pass, const FrameData& data) {
   // Mat4 shadow_space = light_space * mat4_translate(Vec3(0.5f)) * mat4_scale(Vec3(0.5f));
   // shader_context_set_uniform(pass->shader_context, "u_light_space", shadow_space);
   //
-  
-  // @TODO (Renderer): We need to put all of per-scene data into a  buffer 
-  // and send it over instead of setting each value indivisually
 
   // Set the light uniforms
 

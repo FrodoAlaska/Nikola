@@ -19,12 +19,20 @@ const f32 CAMERA_SPEED = 20.0f;
 /// Callbacks
 
 static bool window_resize_callback(const Event& event, const void* dispatcher, const void* listener) {
-  if(event.type != EVENT_WINDOW_RESIZED) {
-    return false;
+  Vec2 new_size = Vec2(0.0f);
+
+  switch(event.type) {
+    case EVENT_WINDOW_FRAMEBUFFER_RESIZED:
+      new_size = Vec2(event.window_framebuffer_width, event.window_framebuffer_width);
+      break;
+    case EVENT_WINDOW_RESIZED:
+    case EVENT_WINDOW_FULLSCREEN:
+      new_size = Vec2(event.window_new_width, event.window_new_height);
+      break;
   }
 
   Camera* cam       = (Camera*)listener;
-  cam->aspect_ratio = (f32)(event.window_new_width / event.window_new_height);
+  cam->aspect_ratio = (f32)(new_size.x / new_size.y);
 
   return true;
 }
@@ -132,6 +140,8 @@ void camera_create(Camera* cam, const CameraDesc& desc) {
   cam->is_active = true;
 
   event_listen(EVENT_WINDOW_RESIZED, window_resize_callback, cam);
+  event_listen(EVENT_WINDOW_FULLSCREEN, window_resize_callback, cam);
+  event_listen(EVENT_WINDOW_FRAMEBUFFER_RESIZED, window_resize_callback, cam);
 }
 
 void camera_update(Camera& cam) {

@@ -166,11 +166,12 @@ void app_render_gui(nikola::App* app) {
   }
 
   nikola::gui_begin();
-  
+
   nikola::gui_debug_info();
+  nikola::gui_window_info();
   
   nikola::gui_begin_panel("Scene");
- 
+
   // Entities
   if(ImGui::CollapsingHeader("Entities")) {
     nikola::gui_edit_transform("Ground", &app->transforms[0]);

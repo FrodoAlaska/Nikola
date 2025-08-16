@@ -358,11 +358,14 @@ NIKOLA_API void gui_end_panel();
 /// Returns `true` if the GUI is currently focused or capturing the mouse. 
 NIKOLA_API const bool gui_is_focused();
 
-/// Draw a preset panel with all of the debug information.
-NIKOLA_API void gui_debug_info();
-
 /// Draw a preset panel with all of the renderer information.
 NIKOLA_API void gui_renderer_info();
+
+/// Draw a preset panel with all of the window information.
+NIKOLA_API void gui_window_info();
+
+/// Draw a preset panel with all of the debug information.
+NIKOLA_API void gui_debug_info();
 
 /// Add a color wheel identified by `name` to edit the given `color`.
 NIKOLA_API void gui_edit_color(const char* name, Vec4& color);

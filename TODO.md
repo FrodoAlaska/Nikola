@@ -63,7 +63,9 @@
 - [x] Resource Manager v0.6
     - [x] Separate the `resources_push_*` functions into `resources_create_*` and `resources_load_*`. One would allocate and generate the ID and the other would actually load the resource.
 - [] GUI v0.3
-    - [] Replace the current ImGui version with the docking branch for a _way_ better GUI 
+    - [x] Replace the current ImGui version with the docking branch for a _way_ better GUI 
+    - [x] Add a debug panel specifically for the window 
+    - [] Disable the mouse when we're editing sliders
     - [] Try to improve the "runtime experience" as much as possible with ImGui.
     - [] Documentation
 - [] Particles v0.2 

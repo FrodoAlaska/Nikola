@@ -24,7 +24,9 @@ namespace nikola { // Start of nikola
 ///---------------------------------------------------------------------------------------------------------------------
 /// GUIState
 struct GUIState {
-  Window* window = nullptr; 
+  Window* window          = nullptr; 
+  GLFWwindow* glfw_window = nullptr;
+  
   ImGuiIO io_config;
  
   Vec4 render_clear_color = Vec4(1.0f);
@@ -37,7 +39,8 @@ struct GUIState {
   sizei allocations_count = 0; 
   sizei allocation_bytes  = 0;
 
-  HashMap<const char*, Vec3> rotations;
+  HashMap<String, Vec3> rotations;
+
 };
 
 static GUIState s_gui;
@@ -49,27 +52,36 @@ static GUIState s_gui;
 
 bool gui_init(Window* window) {
   // Setting default values for the GUI
-  s_gui = GUIState{};
+  
+  s_gui        = GUIState{};
   s_gui.window = window;
 
   // Set up ImGui context
+  
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
-  s_gui.io_config = ImGui::GetIO();
+  ImGuiIO& io = ImGui::GetIO();
 
   // Setting context flags
-  s_gui.io_config.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+  
+  io.ConfigFlags = ImGuiConfigFlags_NavEnableKeyboard |
+                   ImGuiConfigFlags_DockingEnable     |
+                   ImGuiConfigFlags_ViewportsEnable;
 
   // Dark mode WOOOOOOOAH! 
   ImGui::StyleColorsDark();
 
   // Setting up the glfw backend
-  if(!ImGui_ImplGlfw_InitForOpenGL((GLFWwindow*)window_get_handle(window), true)) {
+ 
+  s_gui.glfw_window = (GLFWwindow*)window_get_handle(window);
+
+  if(!ImGui_ImplGlfw_InitForOpenGL(s_gui.glfw_window, true)) {
     NIKOLA_LOG_ERROR("Failed to initialize GLFW for ImGui");
     return false;
   }
   
   // Setting up the opengl backend
+  
   if(!ImGui_ImplOpenGL3_Init("#version 460 core")) {
     NIKOLA_LOG_ERROR("Failed to initialize OpenGL for ImGui");
     return false;
@@ -93,6 +105,12 @@ void gui_begin() {
 void gui_end() {
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+  // For the viewports features
+
+  ImGui::UpdatePlatformWindows();
+  ImGui::RenderPlatformWindowsDefault();
+  window_set_current_context(s_gui.window);
 }
 
 bool gui_begin_panel(const char* name) {
@@ -108,8 +126,8 @@ const bool gui_is_focused() {
 }
 
 void gui_renderer_info() {
-  if(!ImGui::Begin("Renderer Info")) {
-    ImGui::End();
+  if(!gui_begin_panel("Renderer Info")) {
+    gui_end_panel();
     return;
   }
 
@@ -123,16 +141,58 @@ void gui_renderer_info() {
   ImGui::SeparatorText("##xx");
  
   // Clear color
+  
   ImGui::ColorPicker4("Clear color", &s_gui.render_clear_color[0], ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
   renderer_set_clear_color(s_gui.render_clear_color);
   // -------------------------------------------------------------------
 
-  ImGui::End();
+  gui_end_panel();
+}
+
+void gui_window_info() {
+  if(!gui_begin_panel("Window")) {
+    gui_end_panel();
+    return;
+  }
+ 
+  // Title
+ 
+  String window_title = window_get_title(s_gui.window);
+  if(ImGui::InputText("Title", &window_title)) {
+    window_set_title(s_gui.window, window_title.c_str());
+  }
+ 
+  // Size 
+  
+  IVec2 window_size;
+  window_get_size(s_gui.window, &window_size.x, &window_size.y);
+
+  if(ImGui::SliderInt2("Size", &window_size[0], 0, 1920)) {
+    window_set_size(s_gui.window, window_size.x, window_size.y);
+  }
+
+  // Position 
+  
+  IVec2 window_pos;
+  window_get_position(s_gui.window, &window_pos.x, &window_pos.y);
+
+  if(ImGui::SliderInt2("Position", &window_pos[0], 0, 1920)) {
+    window_set_position(s_gui.window, window_pos.x, window_pos.y);
+  }
+
+  // Fullscreen 
+
+  bool is_fullscreen = window_is_fullscreen(s_gui.window);
+  if(ImGui::Checkbox("Fullscreen", &is_fullscreen)) {
+    window_set_fullscreen(s_gui.window, is_fullscreen);
+  }
+
+  gui_end_panel();
 }
 
 void gui_debug_info() {
-  if(!ImGui::Begin("Debug Info")) {
-    ImGui::End();
+  if(!gui_begin_panel("Debug Info")) {
+    gui_end_panel();
     return;
   }
 
@@ -155,15 +215,6 @@ void gui_debug_info() {
   } 
   // -------------------------------
 
-  // Window
-  // -------------------------------
-  if(ImGui::CollapsingHeader("Window")) {
-    window_get_size(s_gui.window, &s_gui.window_size.x, &s_gui.window_size.y);
-
-    ImGui::Text("Size: %s", vec2_to_string(s_gui.window_size).c_str());
-  } 
-  // -------------------------------
-
   // Memory
   // -------------------------------
   if(ImGui::CollapsingHeader("Memory")) {
@@ -175,7 +226,7 @@ void gui_debug_info() {
   } 
   // -------------------------------
 
-  ImGui::End();
+  gui_end_panel();
 }
 
 void gui_edit_color(const char* name, Vec4& color) {

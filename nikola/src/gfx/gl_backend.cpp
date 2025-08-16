@@ -150,13 +150,17 @@ struct GfxPipeline {
 /// Callbacks 
 
 static bool framebuffer_resize(const Event& event, const void* disp, const void* list) {
-  if(event.type != EVENT_WINDOW_FRAMEBUFFER_RESIZED) {
-    return false;
+  switch(event.type) {
+    case EVENT_WINDOW_FRAMEBUFFER_RESIZED:
+      glViewport(0, 0, event.window_framebuffer_width, event.window_framebuffer_height);
+      return true;
+    case EVENT_WINDOW_RESIZED:
+    case EVENT_WINDOW_FULLSCREEN:
+      glViewport(0, 0, event.window_new_width, event.window_new_height);
+      return true;
+    default:
+      return false;
   }
-
- glViewport(0, 0, event.window_framebuffer_width, event.window_framebuffer_height);
-
-  return true;
 }
 
 /// Callbacks 
@@ -1134,6 +1138,8 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
 
   // Listening to events 
   event_listen(EVENT_WINDOW_FRAMEBUFFER_RESIZED, framebuffer_resize);
+  event_listen(EVENT_WINDOW_RESIZED, framebuffer_resize);
+  event_listen(EVENT_WINDOW_FULLSCREEN, framebuffer_resize);
 
   // Getting some OpenGL information
   

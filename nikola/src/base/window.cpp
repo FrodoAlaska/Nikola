@@ -494,10 +494,15 @@ void window_set_fullscreen(Window* window, const bool fullscreen) {
   }
   
   // Firing an event for the internal systems
-  event_dispatch(Event {
-    .type                 = EVENT_WINDOW_FULLSCREEN, 
+  
+  Event event = {
+    .type = EVENT_WINDOW_FULLSCREEN, 
+    
+    .window_new_width     = video_mode->width, 
+    .window_new_height    = video_mode->height,
     .window_is_fullscreen = fullscreen,
-  }, window);
+  };
+  event_dispatch(event, window);
 }
 
 void window_set_show(Window* window, const bool show) {
