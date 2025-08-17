@@ -131,6 +131,7 @@ int main(int argc, char** argv) {
  
   nikola::i32 resource_type = -1;
   if (!lex_args(argc, argv, &list, &resource_type)) {
+    nikola::job_manager_shutdown();
     return -1;
   }
 
