@@ -65,8 +65,7 @@ bool gui_init(Window* window) {
   // Setting context flags
   
   io.ConfigFlags = ImGuiConfigFlags_NavEnableKeyboard |
-                   ImGuiConfigFlags_DockingEnable     |
-                   ImGuiConfigFlags_ViewportsEnable;
+                   ImGuiConfigFlags_DockingEnable;
 
   // Dark mode WOOOOOOOAH! 
   ImGui::StyleColorsDark();
@@ -105,12 +104,6 @@ void gui_begin() {
 void gui_end() {
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-  // For the viewports features
-
-  ImGui::UpdatePlatformWindows();
-  ImGui::RenderPlatformWindowsDefault();
-  window_set_current_context(s_gui.window);
 }
 
 bool gui_begin_panel(const char* name) {

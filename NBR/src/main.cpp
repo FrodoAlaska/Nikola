@@ -114,15 +114,15 @@ static bool lex_args(int argc, char** argv, nbr::ListContext* list, nikola::i32*
 /// Main function
 int main(int argc, char** argv) {
   if(argc <= 1) {
-   show_help();
-   return -1;
+    show_help();
+    return -1;
   }
 
   // Job manager init (this is usually done by the engine, but oh well)
   nikola::job_manager_init(32); 
   
   // Setting default values
- 
+
   nbr::ListContext list; 
   list.parent_dir = nikola::filesystem_current_path();
   list.bin_dir    = list.parent_dir;

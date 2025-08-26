@@ -500,8 +500,12 @@ NIKOLA_API void ui_layout_push_text(UILayout& layout,
                                     const Vec4& color, 
                                     const Vec2& layout_padding = Vec2(0.0f));
 
-/// Push a new button entry to `layout`, using `str`, `size`, `color`, `outline_color`, and `text_color`.
+/// Push a new button entry to `layout`, using `str`, `size`, `color`, `outline_color`, `text_color`, and `bind_id`.
 /// Use `layout_padding` for extra padding between this element and the next.
+///
+/// @NOTE: When the `bind_id` is left as the default value (which is `-1`), the layout will assign 
+/// it to the element's index in the layout's array. Otherwise, the UI element will have the given 
+/// `bind_id`.
 ///
 /// @NOTE: The outline thickness as well as the internal button padding can be set 
 /// using the internal `buttons_outline_thickness` and `buttons_padding` in `UILayout`.
@@ -511,18 +515,28 @@ NIKOLA_API void ui_layout_push_button(UILayout& layout,
                                       const Vec4& color, 
                                       const Vec4& outline_color, 
                                       const Vec4& text_color, 
+                                      const i32 bind_id          = -1,
                                       const Vec2& layout_padding = Vec2(0.0f));
 
-/// Push a new checkbox entry to `layout`, using `size`, `color`, and `outline_color`.
+/// Push a new checkbox entry to `layout`, using `size`, `color`, `outline_color`, and `bind_id`.
 /// Use `layout_padding` for extra padding between this element and the next.
+///
+/// @NOTE: When the `bind_id` is left as the default value (which is `-1`), the layout will assign 
+/// it to the element's index in the layout's array. Otherwise, the UI element will have the given 
+/// `bind_id`.
 NIKOLA_API void ui_layout_push_checkbox(UILayout& layout, 
                                         const f32 size, 
                                         const Vec4& color, 
                                         const Vec4& outline_color, 
+                                        const i32 bind_id          = -1,
                                         const Vec2& layout_padding = Vec2(0.0f));
 
-/// Push a new slider entry to `layout`, using `value`, `min`, `max`, `step`, `color`, and `notch_color`.
+/// Push a new slider entry to `layout`, using `value`, `min`, `max`, `step`, `color`, `notch_color`, and `bind_id`.
 /// Use `layout_padding` for extra padding between this element and the next.
+///
+/// @NOTE: When the `bind_id` is left as the default value (which is `-1`), the layout will assign 
+/// it to the element's index in the layout's array. Otherwise, the UI element will have the given 
+/// `bind_id`.
 NIKOLA_API void ui_layout_push_slider(UILayout& layout, 
                                       f32* value,
                                       const f32 min, 
@@ -530,6 +544,7 @@ NIKOLA_API void ui_layout_push_slider(UILayout& layout,
                                       const f32 step,
                                       const Vec4& color, 
                                       const Vec4& notch_color    = Vec4(0.5f, 0.5f, 0.5f, 1.0f), 
+                                      const i32 bind_id          = -1,
                                       const Vec2& layout_padding = Vec2(0.0f));
 
 /// Render all of the active UI elements in the given `layout`.

@@ -1,6 +1,6 @@
 # Update 0.2
 
-- [x] UI v0.1
+- [x] UI
     - [x] Text UI elements 
     - [x] Text animation system
     - [x] Button UI elements
@@ -8,7 +8,7 @@
     - [x] Checkbox UI elements 
     - [x] Slider UI elements
     - [x] Documentation
-- [x] GFX v1.1 
+- [x] GFX
     - [x] Add instancing
     - [x] Test instancing
     - [x] Improve shader workflow (using `glGetProgramiv` to get various information about the shader)
@@ -21,26 +21,26 @@
     - [x] Have a specific type called `GfxBindingDesc` to use per draw call. This can be associated with the function `gfx_context_use_bindings`.
     - [x] Instead of having the `gfx_pipeline_use` function, we can move that to a context-specific function called `gfx_context_use_pipeline`.
     - [x] Documentation
-- [x] Resource Manager v0.5
+- [x] Resource Manager
     - [x] Instead of using an abstracted `NBR` layer over everything, write extra `file_write_bytes` functions for the various resources, which will write a _compressed_ version of the resources, and load them as well.
     - [x] Let the material be created using a `MaterialDesc` structure for more effecient material usage. 
     - [x] Fix 3D models loading. 
         - [x] I think the renderer assumes the vertex data of the mesh so if a model has even an extra vertex data like color, the renderer messes everything up. Or limit all 3D models to a certain vertx data set. 
         - [x] Make sure that materials are loaded correctly using Assimp (colors and other uniforms).
     - [x] Documentation
-- [x] Particles v0.1 
+- [x] Particles
     - [x] CPU-based particle system, giving each particle a position, velocity, and color. Use instancing to render a particle batch.
     - [x] Fix that lifetime bug.
     - [x] Add it to the GUI
     - [x] Better distribution of particles with more user control over the "shape" of the distribution.
     - [x] Documentation
-- [x] 3D Animations v0.1
+- [x] 3D Animations
     - [x] Load animations from Assimp into the equivalent `NBR` resource.
     - [x] Load the `NBR` animation resource into the engine, creating an `Animator` component in the process to control the animation 
     - [x] Use the new animation resource and find out a way to render it and shade it properly.
     - [x] Try to have a good system for switching between animations
     - [x] Documentation
-- [x] Renderer v0.6 
+- [x] Renderer
     - [x] Improve draw calls and render passes
         - [x] Fix the render commands
         - [x] Improve the render pass system to be more versitile. It's very "stiff" right now.
@@ -53,29 +53,39 @@
         - [x] Look into making the renderer "instanced" rather than rendering everything as is.
         - [x] If performance is still an issue, make all of the scene's lights into a buffer and send it to the shader as a buffer update instead of uniforms.
     - [x] Documentation
-- [x] Performance Craze 0.1 
+- [x] Performance Craze
     - [x] Implement both performance timers and normal timers.
     - [x] Create a simple job system 
     - [x] Test the new job system with the NBR conversion tool. 
     - [x] Documentation
-- [x] GFX v1.2
+- [x] GFX
     - [x] Separate the `gfx_*_create` functions for resources into `gfx_*_create` and `gfx_*_load`.  
     - [x] Documentation
-- [x] Resource Manager v0.6
+- [x] Resource Manager
     - [x] Separate the `resources_push_*` functions into `resources_create_*` and `resources_load_*`. One would allocate and generate the ID and the other would actually load the resource.
-- [x] GUI v0.3
+- [x] GUI
     - [x] Replace the current ImGui version with the docking branch for a _way_ better GUI 
     - [x] Add a debug panel specifically for the window 
     - [x] Disable the mouse when we're editing sliders
     - [x] Documentation
-- [] Particles v0.2 
+
+# Update 0.3
+
+- [] UI 
+    - [] Implement somekind of UI progress bar for health, loading, etc... 
+    - [] Have a `UIImage` that will just be a regular texture, but it will conform to a UI layout. Basically, it can be used for backgrounds, icons, etc...
+- [] Particles
     - [] GPU-based particle system, using compute shaders.
     - [] Documentation
-- [] Animations v0.2 
+- [] Animations
+    - [] Fix animations 
     - [] Add the animator to the GUI
     - [] Add an animation controller to easily transition between animations 
     - [] Documentation
-- [] Physics v0.3
+- [] Scenes 
+    - [] Think about scenes and how to manage them. Perhaps we can implement just a simple `EntityManager` instead of a scene. It gets annoying having to create managers on the gameplay side.
+    - [] Perhaps just a simple `struct` with a list of all the possible components? Materials, audio sources, animators, and so on. 
+- [] Physics
     - [] A debug pass? After the HDR pass?
     - [] Deleting bodies has some problems since the world delets bodies by keeping a "world index" inside the internal body data structure, which then it uses to 
          get the correct position (as an iterator) in the vector to then delete. However, that index is sometimes _way_ higher than the actual size of the array of bodies. Is keeping a collection for bodies in the physics world 
@@ -83,9 +93,9 @@
     - [] Listen, just remove the physics library. It's really not all that useful. It brings more pain and suffering than joy. I can do a better one with my hands tied behind my back whilst singing Katyusha. 
     - [] Implement mouse to screen and mouse to world for editing levels easier
 
-## Update 0.3
+## Update 0.4
 
-- [] Data Structures 0.1 
+- [] Data Structures
     - [] Create your own string library 
     - [] Dynamic array 
     - [] Custom memory allocaters
@@ -93,7 +103,7 @@
     - [] Stacks and queues
     - [] Ring buffers
     - [] Hash map
-- [] Renderer v0.7 
+- [] Renderer
     - [] Look into GPU rendering with indirect drawing.
     - [] Gaussian blur
     - [] Bloom integration 
@@ -101,7 +111,7 @@
     - [] Terrain rendering and procedural generation (terrain generation using `stb_perlin` and loading from heightmap)
     - [] Improve lighting performance using clustered rendering (if needed).
     - [] Documentation
-- [] Threading v0.1 
+- [] Threading
     - [] A better job system using fibers
 
 ## BUGS:

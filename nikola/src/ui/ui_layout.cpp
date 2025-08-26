@@ -75,6 +75,7 @@ void ui_layout_push_button(UILayout& layout,
                            const Vec4& color, 
                            const Vec4& outline_color, 
                            const Vec4& text_color, 
+                           const i32 bind_id,
                            const Vec2& layout_padding) {
   // Create the button
 
@@ -88,7 +89,7 @@ void ui_layout_push_button(UILayout& layout,
     .font_size = size,
     .anchor    = layout.current_anchor,
     
-    .bind_id = (u32)(layout.buttons.size() - 1),
+    .bind_id = (bind_id == -1) ? (u32)(layout.buttons.size() - 1) : bind_id,
 
     .offset  = layout.current_offset + layout_padding,
     .padding = layout.buttons_padding,
@@ -109,6 +110,7 @@ void ui_layout_push_checkbox(UILayout& layout,
                              const f32 size, 
                              const Vec4& color, 
                              const Vec4& outline_color, 
+                             const i32 bind_id,
                              const Vec2& layout_padding) {
   // Create the checkbox
 
@@ -121,7 +123,7 @@ void ui_layout_push_checkbox(UILayout& layout,
     .anchor = layout.current_anchor,
     .offset = layout.current_offset + layout_padding, 
     
-    .bind_id = (u32)(layout.checkboxes.size() - 1),
+    .bind_id = (bind_id == -1) ? (u32)(layout.checkboxes.size() - 1) : bind_id,
 
     .color         = color,
     .outline_color = outline_color,
@@ -139,6 +141,7 @@ void ui_layout_push_slider(UILayout& layout,
                            const f32 step,
                            const Vec4& color, 
                            const Vec4& notch_color, 
+                           const i32 bind_id,
                            const Vec2& layout_padding) {
   // Create the slider
 
@@ -154,7 +157,7 @@ void ui_layout_push_slider(UILayout& layout,
     .max   = max,
     .step  = step,
 
-    .bind_id = (u32)(layout.sliders.size() - 1),
+    .bind_id = (bind_id == -1) ? (u32)(layout.sliders.size() - 1) : bind_id,
 
     .color       = color,
     .notch_color = notch_color,

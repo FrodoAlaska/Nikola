@@ -164,7 +164,7 @@ static bool convert_model(const ConvertEntry& entry) {
   
   nikola::File file;
   nikola::FilePath path = nikola::filepath_append(entry.out_path, 
-                                                  nikola::filepath_parent_path(nikola::filepath_stem(entry.in_path)));
+                                                  nikola::filepath_stem(nikola::filepath_parent_path(entry.in_path)));
   if(!open_nbr_file(path, &file, entry.res_type)) {
     return false;
   }
@@ -189,7 +189,7 @@ static bool convert_animation(const ConvertEntry& entry) {
   
   nikola::File file;
   nikola::FilePath path = nikola::filepath_append(entry.out_path, 
-                                                  nikola::filepath_parent_path(nikola::filepath_stem(entry.in_path)));
+                                                  nikola::filepath_stem(nikola::filepath_parent_path(entry.in_path)));
   if(!open_nbr_file(path, &file, entry.res_type)) {
     return false;
   }

@@ -67,23 +67,19 @@ void transform_lerp(Transform& trans,
 }
 
 void transform_lerp_position(Transform& trans, const Vec3& position, const f32 delta) {
-  trans.position = vec3_lerp(trans.position, position, delta);
-  update_transform(trans);
+  transform_translate(trans, vec3_lerp(trans.position, position, delta));
 }
 
 void transform_slerp_rotation(Transform& trans, const Quat& rotation, const f32 delta) {
-  trans.rotation = quat_normalize(quat_slerp(trans.rotation, rotation, delta));
-  update_transform(trans);
+  transform_rotate(trans, quat_slerp(trans.rotation, rotation, delta));
 }
 
 void transform_lerp_rotation(Transform& trans, const Vec3& axis, const f32 angle, const f32 delta) {
-  trans.rotation = quat_angle_axis(axis, angle);
-  transform_slerp_rotation(trans, trans.rotation, delta);
+  transform_slerp_rotation(trans, quat_angle_axis(axis, angle), delta);
 }
 
 void transform_lerp_scale(Transform& trans, const Vec3& scale, const f32 delta) {
-  trans.scale = vec3_lerp(trans.scale, scale, delta);
-  update_transform(trans);
+  transform_scale(trans, vec3_lerp(trans.scale, scale, delta));
 }
 
 /// Transform functions
