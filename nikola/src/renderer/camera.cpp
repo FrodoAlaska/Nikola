@@ -29,6 +29,8 @@ static bool window_resize_callback(const Event& event, const void* dispatcher, c
     case EVENT_WINDOW_FULLSCREEN:
       new_size = Vec2(event.window_new_width, event.window_new_height);
       break;
+    default:
+      return true;
   }
 
   Camera* cam       = (Camera*)listener;

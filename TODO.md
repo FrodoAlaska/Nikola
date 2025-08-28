@@ -72,9 +72,9 @@
 # Update 0.3 (Performance, Animation, And QOL Improvements)
 
 - [] UI 
-    - [] Have a `UIImage` that will just be a regular texture, but it will conform to a UI layout. Basically, it can be used for backgrounds, icons, etc...
-    - [] Implement somekind of UI progress bar for health, loading, etc... 
-    - [] There is a problem that arises when there is more than one slider in a `UILayout`
+    - [x] Have a `UIImage` that will just be a regular texture, but it will conform to a UI layout. 
+    - [x] There is a problem that arises when there is more than one slider in a `UILayout`
+    - [] Implement some kind of UI progress bar for health, loading, etc... 
     - [] Documentation
 - [] Particles
     - [] GPU-based particle system, using compute shaders.

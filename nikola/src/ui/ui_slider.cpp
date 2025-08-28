@@ -18,14 +18,14 @@ static bool on_mouse_move(const nikola::Event& event, const void* dispatcher, co
 
   UISlider* slider = (UISlider*)listener;
   if(slider->is_hovering && input_action_down("ui-click")) {
+    Vec2 diff       = vec2_normalize(Vec2(event.mouse_pos_x, event.mouse_pos_y) - slider->old_mouse_position);
+    *slider->value += (diff.x > 0.0f) ? slider->step : -slider->step;
+    
     Event slider_event = {
       .type   = EVENT_UI_SLIDER_CHANGED, 
       .slider = slider, 
     };
     event_dispatch(slider_event);
- 
-    Vec2 diff = vec2_normalize(Vec2(event.mouse_pos_x, event.mouse_pos_y) - slider->old_mouse_position);
-    *slider->value += (diff.x > 0.0f) ? slider->step : -slider->step;
   }
 
   slider->old_mouse_position = Vec2(event.mouse_pos_x, event.mouse_pos_y);

@@ -133,16 +133,6 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   
   nikola::ui_layout_end(app->ui_layout);
 
-  // UI slider init
-  // nikola::UISliderDesc slider_desc = {
-  //   .anchor = nikola::UI_ANCHOR_BOTTOM_LEFT,
-  //
-  //   .value = &test_value,
-  //   .min   = 0.0f, 
-  //   .max   = 1.0f,
-  // };
-  // nikola::ui_slider_create(&app->ui_slider, app->window, slider_desc);
-
   return app;
 }
 
@@ -181,6 +171,7 @@ void app_render(nikola::App* app) {
   nikola::batch_renderer_begin();
 
   // nikola::ui_text_apply_animation(app->ui_layout.texts[0], nikola::UI_TEXT_ANIMATION_FADE_IN, 0.4f);
+  // nikola::ui_slider_render(app->ui_slider); 
   nikola::ui_layout_render(app->ui_layout);
 
   nikola::batch_renderer_end();

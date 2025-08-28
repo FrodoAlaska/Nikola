@@ -30,6 +30,14 @@ void ui_layout_create(UILayout* layout, Window* window, const ResourceID& font_i
   layout->buttons_padding           = Vec2(40.0f, 10.0f);
 
   layout->is_active = true;
+
+  // Reserve some space for the UI elements
+
+  layout->texts.reserve(8);
+  layout->buttons.reserve(8);
+  layout->checkboxes.reserve(8);
+  layout->images.reserve(8);
+  layout->sliders.reserve(8);
 }
 
 void ui_layout_begin(UILayout& layout, const UIAnchor anchor, const Vec2& offset) {
