@@ -142,6 +142,22 @@ struct UISlider {
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// UIImage
+struct UIImage {
+  UIAnchor anchor; 
+  Vec2 position, size, offset; 
+
+  GfxTexture* texture = nullptr; 
+  Window* window_ref  = nullptr;
+
+  Vec4 tint = Vec4(1.0f); 
+
+  bool is_active;
+};
+/// UIImage
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// UILayout
 struct UILayout {
  ResourceID font_id; 
@@ -151,6 +167,7 @@ struct UILayout {
  DynamicArray<UIButton> buttons;
  DynamicArray<UICheckbox> checkboxes;
  DynamicArray<UISlider> sliders;
+ DynamicArray<UIImage> images;
 
  UIAnchor current_anchor;
  Vec2 extra_offset;
@@ -285,7 +302,7 @@ struct UICheckboxDesc {
 /// ----------------------------------------------------------------------
 /// UISliderDesc
 struct UISliderDesc {
-  /// The anchor point of the checkbox.
+  /// The anchor point of the slider.
   UIAnchor anchor; 
   
   /// The extra offset to be applied to the slider.
@@ -328,6 +345,32 @@ struct UISliderDesc {
   Vec4 notch_color = Vec4(0.5f, 0.5f, 0.5f, 1.0f);
 };
 /// UISliderDesc
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// UIImageDesc
+struct UIImageDesc {
+  /// The resource ID of the texture to be used.
+  ResourceID texture_id;
+
+  /// The size of the image to be used when rendering 
+  /// the texture.
+  Vec2 size;
+
+  /// The anchor point of the image.
+  UIAnchor anchor; 
+  
+  /// The extra offset to be applied to the image.
+  ///
+  /// @NOTE: This is set to `Vec2(0.0f, 0.0f)` by default.
+  Vec2 offset = Vec2(0.0f);
+
+  /// The tint of the image UI element.
+  ///
+  /// @NOTE: This is set to `Vec4(1.0f, 1.0f, 1.0f, 1.0f)` by default.
+  Vec4 tint   = Vec4(1.0f);
+};
+/// UIImageDesc
 /// ----------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -449,7 +492,7 @@ NIKOLA_API void ui_button_render(UIButton& button);
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// UICheckbox
+/// UICheckbox functions
 
 /// Initialize the UI `checkbox` element, using the given `window` and the information in `desc`.
 NIKOLA_API void ui_checkbox_create(UICheckbox* checkbox, Window* window, const UICheckboxDesc& desc);
@@ -460,11 +503,11 @@ NIKOLA_API void ui_checkbox_set_anchor(UICheckbox& checkbox, const UIAnchor& anc
 /// Render the given `checkbox` UI element.
 NIKOLA_API void ui_checkbox_render(UICheckbox& checkbox);
 
-/// UICheckbox
+/// UICheckbox functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// UISlider
+/// UISlider functions
 
 /// Initialize the UI `slider` element, using the given `window` and the information in `desc`.
 NIKOLA_API void ui_slider_create(UISlider* slider, Window* window, const UISliderDesc& desc);
@@ -475,7 +518,25 @@ NIKOLA_API void ui_slider_set_anchor(UISlider& slider, const UIAnchor& anchor);
 /// Render the given `slider` UI element.
 NIKOLA_API void ui_slider_render(UISlider& slider);
 
-/// UISlider
+/// UISlider functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UIImage functions
+
+/// Initialize the UI `image` element, using the given `window` and the information in `desc`.
+NIKOLA_API void ui_image_create(UIImage* image, Window* window, const UIImageDesc& desc);
+
+/// Set the position of `image` based on the anchor point `anchor`.
+NIKOLA_API void ui_image_set_anchor(UIImage& image, const UIAnchor& anchor);
+
+/// Set the texture of `image` based to the given `texture_id`.
+NIKOLA_API void ui_image_set_texture(UIImage& image, const ResourceID& texture_id);
+
+/// Render the given `image` UI element.
+NIKOLA_API void ui_image_render(UIImage& image);
+
+/// UIImage functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -546,6 +607,14 @@ NIKOLA_API void ui_layout_push_slider(UILayout& layout,
                                       const Vec4& notch_color    = Vec4(0.5f, 0.5f, 0.5f, 1.0f), 
                                       const i32 bind_id          = -1,
                                       const Vec2& layout_padding = Vec2(0.0f));
+
+/// Push a new image entry to `layout`, using the given `texture_id`, `size`, and `tint`.
+/// Use `layout_padding` for extra padding between this element and the next.
+NIKOLA_API void ui_layout_push_image(UILayout& layout, 
+                                     const ResourceID& texture_id, 
+                                     const Vec2& size, 
+                                     const Vec4& tint           = Vec4(1.0f), 
+                                     const Vec2& layout_padding = Vec2(0.0f));
 
 /// Render all of the active UI elements in the given `layout`.
 NIKOLA_API void ui_layout_render(const UILayout& layout);

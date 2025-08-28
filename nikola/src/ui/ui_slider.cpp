@@ -12,8 +12,8 @@ namespace nikola { // Start of nikola
 /// Callbacks
 
 static bool on_mouse_move(const nikola::Event& event, const void* dispatcher, const void* listener) {
-  if(event.type != EVENT_MOUSE_MOVED) {
-    return false;
+  if(!listener) {
+    return true;
   }
 
   UISlider* slider = (UISlider*)listener;

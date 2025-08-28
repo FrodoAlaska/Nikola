@@ -42,7 +42,7 @@ static void init_resources(nikola::App* app) {
 
   // Animations init
 
-  app->animation1 = nikola::resources_push_animation(app->res_group_id, "animations/zombie_idle.nbr");
+  app->animation1 = nikola::resources_push_animation(app->res_group_id, "animations/ancient_soldier.nbr");
   app->animation2 = nikola::resources_push_animation(app->res_group_id, "animations/zombie_walk.nbr");
 
   // Materials init

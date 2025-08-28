@@ -69,31 +69,37 @@
     - [x] Disable the mouse when we're editing sliders
     - [x] Documentation
 
-# Update 0.3
+# Update 0.3 (Performance, Animation, And QOL Improvements)
 
 - [] UI 
-    - [] Implement somekind of UI progress bar for health, loading, etc... 
     - [] Have a `UIImage` that will just be a regular texture, but it will conform to a UI layout. Basically, it can be used for backgrounds, icons, etc...
+    - [] Implement somekind of UI progress bar for health, loading, etc... 
+    - [] There is a problem that arises when there is more than one slider in a `UILayout`
+    - [] Documentation
 - [] Particles
     - [] GPU-based particle system, using compute shaders.
     - [] Documentation
 - [] Animations
-    - [] Fix animations 
+    - [] Fix the parenting problem and test with multiple animations 
+    - [] Jobify with the animator by perhaps making the calculation of the joints' tranform in a `parallel_for`
+    - [] Test with instancing?
     - [] Add the animator to the GUI
     - [] Add an animation controller to easily transition between animations 
     - [] Documentation
-- [] Scenes 
-    - [] Think about scenes and how to manage them. Perhaps we can implement just a simple `EntityManager` instead of a scene. It gets annoying having to create managers on the gameplay side.
-    - [] Perhaps just a simple `struct` with a list of all the possible components? Materials, audio sources, animators, and so on. 
 - [] Physics
     - [] A debug pass? After the HDR pass?
+    - [] Implement mouse to screen and mouse to world for editing levels easier
     - [] Deleting bodies has some problems since the world delets bodies by keeping a "world index" inside the internal body data structure, which then it uses to 
          get the correct position (as an iterator) in the vector to then delete. However, that index is sometimes _way_ higher than the actual size of the array of bodies. Is keeping a collection for bodies in the physics world 
          with a physics library really that necessary?
     - [] Listen, just remove the physics library. It's really not all that useful. It brings more pain and suffering than joy. I can do a better one with my hands tied behind my back whilst singing Katyusha. 
-    - [] Implement mouse to screen and mouse to world for editing levels easier
+- [] Scenes 
+    - [] Think about scenes and how to manage them. Perhaps we can implement just a simple `EntityManager` instead of a scene. It gets annoying having to create managers on the gameplay side.
+    - [] Perhaps just a simple `struct` with a list of all the possible components? Materials, audio sources, animators, and so on. 
+    - [] inl-based config file? Instead of making a binary one every fucking time?
+    - [] Audio mixer with master volume and whatnot? Please?
 
-## Update 0.4
+## Update 0.4 (Graphics Improvements)
 
 - [] Data Structures
     - [] Create your own string library 
@@ -104,6 +110,7 @@
     - [] Ring buffers
     - [] Hash map
 - [] Renderer
+    - [] PBR? Now? Please? Shit looks bad, man...
     - [] Look into GPU rendering with indirect drawing.
     - [] Gaussian blur
     - [] Bloom integration 
@@ -123,7 +130,5 @@ Maybe find a better way to do this.
 - (Animations): Animations are fucked. Fix. Parenting problem? Don't know. Fix.
 
 - (Renderer): Shadows. They're turned off right now. Fix everything about em. Fuck em. Fix em. Marry em?
-
-- (Dist): Improve the `NikolaProjectTemplate` by adding a template shader. And you know what? Just improve the whole template.
 
 - Check all of the `TODO`, `FIX`, and `TEMP` in the codebase.

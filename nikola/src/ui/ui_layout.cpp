@@ -168,6 +168,29 @@ void ui_layout_push_slider(UILayout& layout,
   layout.current_offset += layout.extra_offset;
 }
 
+void ui_layout_push_image(UILayout& layout, 
+                          const ResourceID& texture_id, 
+                          const Vec2& size, 
+                          const Vec4& tint, 
+                          const Vec2& layout_padding) {
+  // Create the image
+
+  layout.images.push_back(UIImage{});
+  UIImage* image = &layout.images[layout.images.size() - 1];
+
+  UIImageDesc desc = {
+    .texture_id = texture_id, 
+    .size       = size, 
+    .anchor     = layout.current_anchor, 
+    .offset     = layout.current_offset + layout_padding, 
+    .tint       = tint,
+  };
+  ui_image_create(image, layout.window_ref, desc);
+
+  // Add the extra offset for the next UI element
+  layout.current_offset += layout.extra_offset;
+}
+
 void ui_layout_render(const UILayout& layout) {
   if(!layout.is_active) {
     return;
@@ -191,6 +214,11 @@ void ui_layout_render(const UILayout& layout) {
   // Render the sliders
   for(auto& slider : layout.sliders) {
     ui_slider_render((UISlider&)slider);
+  }
+  
+  // Render the images
+  for(auto& image : layout.images) {
+    ui_image_render((UIImage&)image);
   }
 }
 

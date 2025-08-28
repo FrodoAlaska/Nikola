@@ -51,11 +51,14 @@ static bool on_button_event(const nikola::Event& event, const void* dispatcher, 
 
 static void init_resources(nikola::App* app) {
   // Resource storage init 
+  
   nikola::FilePath res_path = nikola::filepath_append(nikola::filesystem_current_path(), "res");
   app->res_group_id = nikola::resources_create_group("app_res", res_path);
 
   // Resoruces init
+  
   app->font_id = nikola::resources_push_font(app->res_group_id, "fonts/IosevkaNerdFont-Bold.nbr");
+  nikola::resources_push_texture(app->res_group_id, "textures/frodo.nbr");
 }
 
 /// Private functions 
@@ -69,7 +72,7 @@ static float test_value = 0.0f;
 nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // App init
   nikola::App* app = new nikola::App{};
-  nikola::renderer_set_clear_color(nikola::Vec4(0.1f, 0.1f, 0.1f, 1.0f));
+  nikola::renderer_set_clear_color(nikola::Vec4(0.8f, 0.1f, 0.1f, 1.0f));
 
   // Window init
   app->window = window;
@@ -98,8 +101,14 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // UI layout init
   nikola::ui_layout_create(&app->ui_layout, app->window, app->font_id);
   
-  nikola::ui_layout_begin(app->ui_layout, nikola::UI_ANCHOR_TOP_CENTER);
+  nikola::ui_layout_begin(app->ui_layout, nikola::UI_ANCHOR_TOP_CENTER, nikola::Vec2(0.0f, 128.0f));
+  
   nikola::ui_layout_push_text(app->ui_layout, "Hello, Nikola", 80.0f, nikola::Vec4(1.0f));
+  nikola::ui_layout_push_image(app->ui_layout, 
+                               nikola::resources_get_id(app->res_group_id, "frodo"), 
+                               nikola::Vec2(128.0f),
+                               nikola::Vec4(0.0f, 1.0f, 0.0f, 1.0f));
+  
   nikola::ui_layout_end(app->ui_layout);
  
   nikola::Vec4 color(1.0f);
@@ -109,26 +118,30 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::ui_layout_begin(app->ui_layout, nikola::UI_ANCHOR_CENTER, nikola::Vec2(0.0f, 65.0f));
   
   nikola::ui_layout_push_button(app->ui_layout, "Play", 40.0f, color, outline_color, text_color);
-  // nikola::ui_layout_push_button(app->ui_layout, "Settings", 40.0f, color, outline_color, text_color);
-  // nikola::ui_layout_push_button(app->ui_layout, "Quit", 40.0f, color, outline_color, text_color);
+  nikola::ui_layout_push_button(app->ui_layout, "Settings", 40.0f, color, outline_color, text_color);
+  nikola::ui_layout_push_button(app->ui_layout, "Quit", 40.0f, color, outline_color, text_color);
   
   nikola::ui_layout_push_checkbox(app->ui_layout, 32.0f, color, outline_color);
   nikola::ui_layout_push_slider(app->ui_layout, 
                                 &app->ui_layout.texts[0].color.a, 
                                 0.0f, 1.0f, 0.01f, 
                                 color);
+  nikola::ui_layout_push_slider(app->ui_layout, 
+                                &test_value, 
+                                0.0f, 1.0f, 0.1f, 
+                                color);
   
   nikola::ui_layout_end(app->ui_layout);
 
   // UI slider init
-  nikola::UISliderDesc slider_desc = {
-    .anchor = nikola::UI_ANCHOR_BOTTOM_LEFT,
-
-    .value = &test_value,
-    .min   = 0.0f, 
-    .max   = 1.0f,
-  };
-  nikola::ui_slider_create(&app->ui_slider, app->window, slider_desc);
+  // nikola::UISliderDesc slider_desc = {
+  //   .anchor = nikola::UI_ANCHOR_BOTTOM_LEFT,
+  //
+  //   .value = &test_value,
+  //   .min   = 0.0f, 
+  //   .max   = 1.0f,
+  // };
+  // nikola::ui_slider_create(&app->ui_slider, app->window, slider_desc);
 
   return app;
 }
@@ -166,8 +179,6 @@ void app_render(nikola::App* app) {
   
   // Render 2D 
   nikola::batch_renderer_begin();
-
-  nikola::ui_slider_render(app->ui_slider);
 
   // nikola::ui_text_apply_animation(app->ui_layout.texts[0], nikola::UI_TEXT_ANIMATION_FADE_IN, 0.4f);
   nikola::ui_layout_render(app->ui_layout);

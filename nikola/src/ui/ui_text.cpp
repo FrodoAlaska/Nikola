@@ -67,9 +67,6 @@ static void apply_animation_ballon(UIText& text, const i32 dir, const f32 durati
   ui_text_set_anchor(text, text.anchor);
 }
 
-static void apply_animation_slide(UIText& text, const i32 dir, const f32 duration) {
-}
-
 /// Private functions
 ///---------------------------------------------------------------------------------------------------------------------
 
