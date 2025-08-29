@@ -69,16 +69,12 @@
     - [x] Disable the mouse when we're editing sliders
     - [x] Documentation
 
-# Update 0.3 (Performance, Animation, And QOL Improvements)
+# Update 0.3 (Performance, animation, scenes, and QOL improvements)
 
-- [] UI 
+- [x] UI 
     - [x] Have a `UIImage` that will just be a regular texture, but it will conform to a UI layout. 
     - [x] There is a problem that arises when there is more than one slider in a `UILayout`
-    - [] Implement some kind of UI progress bar for health, loading, etc... 
-    - [] Documentation
-- [] Particles
-    - [] GPU-based particle system, using compute shaders.
-    - [] Documentation
+    - [x] Documentation
 - [] Animations
     - [] Fix the parenting problem and test with multiple animations 
     - [] Jobify with the animator by perhaps making the calculation of the joints' tranform in a `parallel_for`
@@ -86,29 +82,17 @@
     - [] Add the animator to the GUI
     - [] Add an animation controller to easily transition between animations 
     - [] Documentation
-- [] Physics
-    - [] A debug pass? After the HDR pass?
-    - [] Implement mouse to screen and mouse to world for editing levels easier
-    - [] Deleting bodies has some problems since the world delets bodies by keeping a "world index" inside the internal body data structure, which then it uses to 
-         get the correct position (as an iterator) in the vector to then delete. However, that index is sometimes _way_ higher than the actual size of the array of bodies. Is keeping a collection for bodies in the physics world 
-         with a physics library really that necessary?
-    - [] Listen, just remove the physics library. It's really not all that useful. It brings more pain and suffering than joy. I can do a better one with my hands tied behind my back whilst singing Katyusha. 
+- [] Particles
+    - [] GPU-based particle system, using compute shaders.
+    - [] Documentation
 - [] Scenes 
     - [] Think about scenes and how to manage them. Perhaps we can implement just a simple `EntityManager` instead of a scene. It gets annoying having to create managers on the gameplay side.
     - [] Perhaps just a simple `struct` with a list of all the possible components? Materials, audio sources, animators, and so on. 
     - [] inl-based config file? Instead of making a binary one every fucking time?
     - [] Audio mixer with master volume and whatnot? Please?
 
-## Update 0.4 (Graphics Improvements)
+## Update 0.4 (Graphics and physics improvements)
 
-- [] Data Structures
-    - [] Create your own string library 
-    - [] Dynamic array 
-    - [] Custom memory allocaters
-    - [] Singly-linked and doubly-linked lists
-    - [] Stacks and queues
-    - [] Ring buffers
-    - [] Hash map
 - [] Renderer
     - [] PBR? Now? Please? Shit looks bad, man...
     - [] Look into GPU rendering with indirect drawing.
@@ -118,6 +102,24 @@
     - [] Terrain rendering and procedural generation (terrain generation using `stb_perlin` and loading from heightmap)
     - [] Improve lighting performance using clustered rendering (if needed).
     - [] Documentation
+- [] Physics
+    - [] A debug pass? After the HDR pass?
+    - [] Implement mouse to screen and mouse to world for editing levels easier
+    - [] Deleting bodies has some problems since the world delets bodies by keeping a "world index" inside the internal body data structure, which then it uses to 
+         get the correct position (as an iterator) in the vector to then delete. However, that index is sometimes _way_ higher than the actual size of the array of bodies. Is keeping a collection for bodies in the physics world 
+         with a physics library really that necessary?
+    - [] Listen, just remove the physics library. It's really not all that useful. It brings more pain and suffering than joy. I can do a better one with my hands tied behind my back whilst singing Katyusha. 
+
+## Update 0.4.5 (Tiny performance improvements and data structures)
+
+- [] Data Structures
+    - [] Create your own string library 
+    - [] Dynamic array 
+    - [] Custom memory allocaters
+    - [] Singly-linked and doubly-linked lists
+    - [] Stacks and queues
+    - [] Ring buffers
+    - [] Hash map
 - [] Threading
     - [] A better job system using fibers
 
