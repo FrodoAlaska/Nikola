@@ -12,10 +12,10 @@ struct nikola::App {
 
   nikola::ResourceID mesh_id, material_id;
 
-  nikola::ResourceID model1, model2;
-  nikola::ResourceID animation1, animation2;
+  nikola::ResourceID model;
+  nikola::ResourceID animation;
   
-  nikola::Animator animator1, animator2;
+  nikola::Animator animator;
   nikola::Transform transforms[3];
 
   bool has_editor = false;
@@ -38,12 +38,10 @@ static void init_resources(nikola::App* app) {
   app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
 
   // Models init
-  app->model1 = nikola::resources_push_model(app->res_group_id, "models/zombie_idle.nbr");
+  app->model = nikola::resources_push_model(app->res_group_id, "models/zombie_idle.nbr");
 
   // Animations init
-
-  app->animation1 = nikola::resources_push_animation(app->res_group_id, "animations/ancient_soldier.nbr");
-  app->animation2 = nikola::resources_push_animation(app->res_group_id, "animations/zombie_walk.nbr");
+  app->animation = nikola::resources_push_animation(app->res_group_id, "animations/zombie_idle.nbr");
 
   // Materials init
   
@@ -86,9 +84,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   init_resources(app);
 
   // Animators init
-
-  nikola::animator_create(&app->animator1, app->animation1);
-  nikola::animator_create(&app->animator2, app->animation2);
+  nikola::animator_create(&app->animator, app->animation);
 
   // Transform init
   
@@ -136,8 +132,7 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
   }
 
   // Animators update
-
-  nikola::animator_animate(app->animator1, (nikola::f32)delta_time);
+  nikola::animator_animate(app->animator, (nikola::f32)delta_time);
 
   // Update the camera
   nikola::camera_update(app->frame_data.camera);
@@ -150,7 +145,7 @@ void app_render(nikola::App* app) {
   // Render the objects
   
   nikola::renderer_queue_mesh(app->mesh_id, app->transforms[0], app->material_id);
-  nikola::renderer_queue_animation(app->animator1.animation_id, app->model1, app->transforms[1]);
+  nikola::renderer_queue_animation(app->animator.animation_id, app->model, app->transforms[1]);
 
   nikola::renderer_end();
   

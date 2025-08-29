@@ -40,8 +40,6 @@ struct ResourceGroup {
 /// ResourceManager 
 struct ResourceManager {
   HashMap<ResourceGroupID, ResourceGroup> groups;
-  
-  std::mutex mutexes[RESOURCE_TYPES_MAX];
 
   JobEntryFunc buffer_load_job;
   JobEntryFunc texture_load_job;
@@ -569,14 +567,10 @@ ResourceID resources_push_buffer(const ResourceGroupID& group_id, const GfxBuffe
 
   // Create the buffer
 
-  std::unique_lock<std::mutex> lock(s_manager.mutexes[RESOURCE_TYPE_BUFFER]);
-
   GfxBuffer* buffer = gfx_buffer_create(renderer_get_context());
 
   ResourceID id; 
   PUSH_RESOURCE(group, buffers, buffer, RESOURCE_TYPE_BUFFER, id);
-  
-  lock.unlock();
 
   // Load the buffer's data
   gfx_buffer_load(buffer, buff_desc);
@@ -1178,19 +1172,29 @@ ResourceID resources_push_animation(const ResourceGroupID& group_id, const FileP
       joint->scale_samples.push_back(sample);
     }
 
-    // Conver other joint information
+    // Convert other joint information
 
     joint->parent_index = (i32)nbr_joint->parent_index;
-
-    f32* matrix = &nbr_joint->inverse_bind_pose[0];
+    f32* matrix         = &nbr_joint->inverse_bind_pose[0];
 
     joint->inverse_bind_pose = Mat4(matrix[0], matrix[4], matrix[8],  0.0f,
                                     matrix[1], matrix[5], matrix[9],  0.0f,
                                     matrix[2], matrix[6], matrix[10], 0.0f,
                                     matrix[3], matrix[7], matrix[11], 1.0f);
 
+    // Transforming the joint with the default values
+
+    transform_translate(joint->current_transform, joint->position_samples[0].value);
+    transform_rotate(joint->current_transform, joint->rotation_samples[0].value);
+    transform_scale(joint->current_transform, joint->scale_samples[0].value);
+
     // Default initializing the skinning matrix of the joint (IMPORTANT!)
-    anim->skinning_palette[i] = Mat4(1.0f);
+    
+    Mat4 parent_transform = Mat4(1.0f);
+    if(joint->parent_index != -1) {
+      parent_transform = anim->skinning_palette[joint->parent_index];
+    }
+    anim->skinning_palette[i] = parent_transform * joint->current_transform.transform;
 
     // Welcome, Mr. Joint!
     anim->joints.push_back(joint);

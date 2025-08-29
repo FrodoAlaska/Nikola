@@ -129,8 +129,6 @@ Maybe find a better way to do this.
 
 - (GUI): We need to find out a way to disable the cursor when editing sliders. Or, perhaps, have entities move with the mouse. You know, like _actual_ environment editing.
 
-- (Animations): Animations are fucked. Fix. Parenting problem? Don't know. Fix.
-
 - (Renderer): Shadows. They're turned off right now. Fix everything about em. Fuck em. Fix em. Marry em?
 
 - Check all of the `TODO`, `FIX`, and `TEMP` in the codebase.
