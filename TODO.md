@@ -78,7 +78,7 @@
 - [] Animations
     - [x] Currently, not all animations that are imported work 
     - [x] I believe that the animation loader works with just GLTF for now, so try to make it work with Collada as well
-    - [] Add the animator to the GUI
+    - [x] Add the animator to the GUI
     - [] Jobify with the animator by perhaps making the calculation of the joints' tranform in a `parallel_for`
     - [] Test with instancing?
 - [] Scenes 

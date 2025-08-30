@@ -367,6 +367,17 @@ struct Animator {
 
   /// The current ticking time of the animation.
   f32 current_time  = 0.0f;
+ 
+  /// Indicates the start point in frames 
+  /// of the animation.
+  f32 start_point   = 0.0f;
+
+  /// Indicates the end point in frames 
+  /// of the animation.
+  ///
+  /// @NOTE: This is usually set to whatever the `duration` 
+  /// member of the `animation_id` is.
+  f32 end_point     = 0.0f;
 
   /// Determines whether the animation should loop or not.
   bool is_looping   = true;
@@ -375,6 +386,10 @@ struct Animator {
   /// go through its samples and play. Otherwise, the animation 
   /// will be paused.
   bool is_animating = true;
+
+  /// Determines whether the animation should be 
+  /// played in reverse or not.
+  bool is_reversed  = false;
 };
 /// Animator
 ///---------------------------------------------------------------------------------------------------------------------

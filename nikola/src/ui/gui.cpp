@@ -577,6 +577,21 @@ void gui_edit_particle_emitter(const char* name, ParticleEmitterDesc* emitter_de
   ImGui::PopID(); 
 }
 
+void gui_edit_animator(const char* name, Animator* animator) {
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+
+  ImGui::DragFloat("Start point", &animator->start_point, 0.1f, 0.0f, animator->end_point);
+  ImGui::DragFloat("End point", &animator->end_point, 0.1f, 0.0f);
+  ImGui::DragFloat("Current point", &animator->current_time, 1.0f, animator->start_point, animator->end_point);
+
+  ImGui::Checkbox("Looping", &animator->is_looping);
+  ImGui::Checkbox("Playing", &animator->is_animating);
+  ImGui::Checkbox("Reversed", &animator->is_reversed);
+  
+  ImGui::PopID(); 
+}
+
 /// Editor functions
 ///---------------------------------------------------------------------------------------------------------------------
 

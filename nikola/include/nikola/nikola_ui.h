@@ -449,6 +449,9 @@ NIKOLA_API void gui_edit_collider(const char* name, Collider* collider);
 /// Add a particles section identified by `name` to edit the given `emitter_desc`.
 NIKOLA_API void gui_edit_particle_emitter(const char* name, ParticleEmitterDesc* emitter_desc);
 
+/// Add an animator section identified by `name` to edit the given `animator`.
+NIKOLA_API void gui_edit_animator(const char* name, Animator* animator);
+
 /// GUI functions
 ///---------------------------------------------------------------------------------------------------------------------
 

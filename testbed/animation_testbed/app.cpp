@@ -38,10 +38,10 @@ static void init_resources(nikola::App* app) {
   app->mesh_id = nikola::resources_push_model(app->res_group_id, "models/medieval_bridge.nbr");
 
   // Models init
-  app->model = nikola::resources_push_model(app->res_group_id, "models/angry_alien.nbr");
+  app->model = nikola::resources_push_model(app->res_group_id, "models/dancing_knight.nbr");
 
   // Animations init
-  app->animation = nikola::resources_push_animation(app->res_group_id, "animations/angry_alien.nbr");
+  app->animation = nikola::resources_push_animation(app->res_group_id, "animations/dancing_knight.nbr");
 
   // Materials init
   
@@ -92,9 +92,9 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::transform_rotate(app->transforms[0], nikola::Vec3(1.0f, 0.0f, 0.0f), -90.0f * nikola::DEG2RAD);
   nikola::transform_scale(app->transforms[0], nikola::Vec3(10.0f));
   
-  nikola::transform_translate(app->transforms[1], nikola::Vec3(10.0f, 1.0f, 10.0f));
+  nikola::transform_translate(app->transforms[1], nikola::Vec3(10.0f, 11.0f, -21.4f));
   // nikola::transform_rotate(app->transforms[1], nikola::Vec3(1.0f, 0.0f, 0.0f), 90.0f * nikola::DEG2RAD);
-  nikola::transform_scale(app->transforms[1], nikola::Vec3(1.0f));
+  nikola::transform_scale(app->transforms[1], nikola::Vec3(0.8f));
 
   // Lights init
 
@@ -165,12 +165,16 @@ void app_render_gui(nikola::App* app) {
   nikola::gui_begin_panel("Scene");
 
   // Entities
+  
   if(ImGui::CollapsingHeader("Entities")) {
     nikola::gui_edit_transform("Ground", &app->transforms[0]);
+
     nikola::gui_edit_transform("Model 1", &app->transforms[1]);
+    nikola::gui_edit_animator("Animator 1", &app->animator);
   }
   
   // Lights
+  
   if(ImGui::CollapsingHeader("Lights")) {
     nikola::gui_edit_directional_light("Directional", &app->frame_data.dir_light);
 

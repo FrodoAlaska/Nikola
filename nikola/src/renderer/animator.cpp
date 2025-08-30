@@ -99,6 +99,8 @@ void animator_create(Animator* animator, const ResourceID& animation) {
   animator->animation_id = animation;
 
   animator->current_time = 0.0f;
+  animator->end_point    = resources_get_animation(animation)->duration;
+  
   animator->is_looping   = true;
   animator->is_animating = true;
 }
@@ -111,11 +113,13 @@ void animator_animate(Animator& animator, const f32& dt) {
   Animation* animation = resources_get_animation(animator.animation_id); // For easier visualization
 
   // Timing calculations. Making sure it resets when it needs to, and etc...
-   
-  animator.current_time += (animation->frame_rate * dt);
-  if((animator.current_time >= animation->duration) && !animator.is_looping) {
+ 
+  nikola::i32 direction  = animator.is_reversed ? -1 : 1;
+  animator.current_time += (animation->frame_rate * dt) * direction;
+  
+  if((animator.current_time >= animator.end_point) && !animator.is_looping) {
     animator.is_animating = false; 
-    animator.current_time = 0.0f;
+    animator.current_time = animator.start_point;
 
     return;
   }
@@ -144,7 +148,8 @@ void animator_animate(Animator& animator, const f32& dt) {
 
 void animator_set_animation(Animator& animator, const ResourceID& animation) {
   animator.animation_id = animation;
-  animator.current_time = 0.0f; 
+  animator.current_time = animator.start_point; 
+  animator.end_point    = resources_get_animation(animation)->duration;
 }
 
 /// Animator functions
