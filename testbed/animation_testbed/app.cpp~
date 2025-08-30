@@ -32,16 +32,16 @@ static void init_resources(nikola::App* app) {
   app->res_group_id = nikola::resources_create_group("app_res", res_path);
 
   // Skybox init
-  app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group_id, "cubemaps/gloomy.nbr");
+  app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group_id, "cubemaps/accurate_night.nbr");
 
   // Meshes init
   app->mesh_id = nikola::resources_push_model(app->res_group_id, "models/medieval_bridge.nbr");
 
   // Models init
-  app->model = nikola::resources_push_model(app->res_group_id, "models/angry_alien.nbr");
+  app->model = nikola::resources_push_model(app->res_group_id, "models/zombie_idle.nbr");
 
   // Animations init
-  app->animation = nikola::resources_push_animation(app->res_group_id, "animations/angry_alien.nbr");
+  app->animation = nikola::resources_push_animation(app->res_group_id, "animations/zombie_walk.nbr");
 
   // Materials init
   

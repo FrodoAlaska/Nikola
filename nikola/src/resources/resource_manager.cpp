@@ -1186,15 +1186,10 @@ ResourceID resources_push_animation(const ResourceGroupID& group_id, const FileP
 
     transform_translate(joint->current_transform, joint->position_samples[0].value);
     transform_rotate(joint->current_transform, joint->rotation_samples[0].value);
-    transform_scale(joint->current_transform, joint->scale_samples[0].value);
+    transform_scale(joint->current_transform, joint->scale_samples[0].value); // @TEMP (Animation)
 
     // Default initializing the skinning matrix of the joint (IMPORTANT!)
-    
-    Mat4 parent_transform = Mat4(1.0f);
-    if(joint->parent_index != -1) {
-      parent_transform = anim->skinning_palette[joint->parent_index];
-    }
-    anim->skinning_palette[i] = parent_transform * joint->current_transform.transform;
+    anim->skinning_palette[i] = joint->current_transform.transform;
 
     // Welcome, Mr. Joint!
     anim->joints.push_back(joint);

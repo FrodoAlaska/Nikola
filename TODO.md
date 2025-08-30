@@ -76,20 +76,19 @@
     - [x] There is a problem that arises when there is more than one slider in a `UILayout`
     - [x] Documentation
 - [] Animations
-    - [] Fix the parenting problem and test with multiple animations 
+    - [x] Currently, not all animations that are imported work 
+    - [x] I believe that the animation loader works with just GLTF for now, so try to make it work with Collada as well
+    - [] Add the animator to the GUI
     - [] Jobify with the animator by perhaps making the calculation of the joints' tranform in a `parallel_for`
     - [] Test with instancing?
-    - [] Add the animator to the GUI
-    - [] Add an animation controller to easily transition between animations 
-    - [] Documentation
-- [] Particles
-    - [] GPU-based particle system, using compute shaders.
-    - [] Documentation
 - [] Scenes 
     - [] Think about scenes and how to manage them. Perhaps we can implement just a simple `EntityManager` instead of a scene. It gets annoying having to create managers on the gameplay side.
     - [] Perhaps just a simple `struct` with a list of all the possible components? Materials, audio sources, animators, and so on. 
     - [] inl-based config file? Instead of making a binary one every fucking time?
     - [] Audio mixer with master volume and whatnot? Please?
+- [] Particles
+    - [] GPU-based particle system, using compute shaders.
+    - [] Documentation
 
 ## Update 0.4 (Graphics and physics improvements)
 
@@ -101,6 +100,11 @@
     - [] Decal rendering 
     - [] Terrain rendering and procedural generation (terrain generation using `stb_perlin` and loading from heightmap)
     - [] Improve lighting performance using clustered rendering (if needed).
+    - [] Documentation
+- [] Animations 
+    - [] Fix animations that have child nodes
+    - [] Add the animator to the GUI
+    - [] Add an animation controller to easily transition between animations 
     - [] Documentation
 - [] Physics
     - [] A debug pass? After the HDR pass?

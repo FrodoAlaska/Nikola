@@ -55,7 +55,8 @@ struct AnimData {
 
 static bool is_valid_extension(const nikola::FilePath& ext) {
   return ext == ".gltf" || 
-         ext == ".glb";
+         ext == ".glb"  || 
+         ext == ".dae";
 }
 
 static void decompose_ai_matrix(nikola::NBRJoint* joint, const aiMatrix4x4& mat) {
@@ -91,8 +92,7 @@ static void strip_junk_from_name(nikola::String* name) {
   // By the way, for reference, the name can look something like this "mixamorig:RightHand_$AssimpFbx$_Rotation".
 
   nikola::sizei unique_sign = name->find_first_of('$');
-
-  *name = name->substr(0, unique_sign - 1);
+  *name                     = name->substr(0, unique_sign - 1);
 }
 
 static void push_node_from_bone(AnimData* data, aiBone* bone) {
@@ -103,12 +103,35 @@ static void push_node_from_bone(AnimData* data, aiBone* bone) {
   strip_junk_from_name(&node_data.name);
   strip_junk_from_name(&node_data.parent_name);
 
+  if(data->node_map.find(node_data.name) != data->node_map.end()) { // Node is already in the map
+    return;
+  } 
+
   node_data.index             = (nikola::i32)data->node_map.size();
   node_data.inverse_bind_pose = bone->mOffsetMatrix;
   node_data.transform         = bone->mNode->mTransformation; 
 
   data->node_indices.push_back(node_data.name);
   data->node_map[node_data.name] = node_data;
+}
+
+static void push_parent_node(AnimData* data, aiBone* bone) {
+  // Recursively go through all the parents until you hit a 
+  // parent joint that is already in the map. This way, 
+  // we can make sure that the sequential order is kept 
+  // for the runtime. Parents _MUST_ come before children 
+  // in the array. 
+
+  aiBone* parent_bone = nullptr;
+  if(data->node_map.find(bone->mNode->mParent->mName.C_Str()) == data->node_map.end()) {
+    parent_bone = data->ai_scene->findBone(bone->mNode->mParent->mName);
+  }
+
+  if(parent_bone) {
+    push_parent_node(data, parent_bone);
+  }
+
+  push_node_from_bone(data, bone);
 }
 
 static void load_bone_map(AnimData* data) {
@@ -120,19 +143,8 @@ static void load_bone_map(AnimData* data) {
 
       nikola::String node_name   = bone->mNode->mName.C_Str();
       nikola::String parent_name = bone->mNode->mParent->mName.C_Str();
-      
-      if(data->node_map.find(node_name) != data->node_map.end()) { // Node is already in the map
-        continue;
-      } 
-      
-      if(data->node_map.find(parent_name) == data->node_map.end()) { // We need to find and add the parent first before child 
-        aiBone* parent_bone = data->ai_scene->findBone(bone->mNode->mParent->mName);
-
-        if(parent_bone) {
-          push_node_from_bone(data, parent_bone);
-        }
-      } 
-
+    
+      push_parent_node(data, bone);
       push_node_from_bone(data, bone);
     }
   }
@@ -240,6 +252,7 @@ static void load_joints(AnimData* data) {
       position.mTime = 0.0f;
       rotation.mTime = 0.0f;
       scale.mTime    = 0.0f;
+      scale.mValue   = aiVector3D(1.0f, 1.0f, 1.0f);
 
       load_position_channels(&joint, &position, 1);
       load_rotation_channels(&joint, &rotation, 1);
@@ -273,7 +286,7 @@ bool animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& p
   nikola::FilePath ext = nikola::filepath_extension(path);
 
   if(!is_valid_extension(ext)) {
-    NIKOLA_LOG_ERROR("Unsupported animation format found at \'%s\'. The supported formats are: GLTF, GLB", ext.c_str());
+    NIKOLA_LOG_ERROR("Unsupported animation format found at \'%s\'. The supported formats are: GLTF, GLB", path.c_str());
     return false;
   } 
 
@@ -318,7 +331,7 @@ bool animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& p
 
   anim->duration   = data->duration; 
   anim->frame_rate = data->frame_rate;
-
+ 
   data->node_map.clear();
   // delete data; @TEMP: Causes a segfault. Fuck it. Let it leak...
   

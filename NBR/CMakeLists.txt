@@ -4,6 +4,7 @@ project(nbr)
 ### Dependencies ###
 ############################################################
 # Setting some options for ASSIMP
+
 set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF)
 set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF)
 set(ASSIMP_BUILD_SAMPLES                  OFF)
@@ -11,10 +12,12 @@ set(ASSIMP_BUILD_TESTS                    OFF)
 set(ASSIMP_BUILD_ASSIMP_VIEW              OFF)
 set(ASSIMP_BUILD_ASSIMP_TOOLS             OFF)
 set(ASSIMP_NO_EXPORT                      OFF)
+set(ASSIMP_INSTALL                        OFF)
 
 set(ASSIMP_BUILD_OBJ_IMPORTER             ON)
 set(ASSIMP_BUILD_FBX_IMPORTER             ON)
 set(ASSIMP_BUILD_GLTF_IMPORTER            ON)
+set(ASSIMP_BUILD_COLLADA_IMPORTER         ON)
 
 # ASSIMP
 FetchContent_Declare(

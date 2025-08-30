@@ -17,6 +17,9 @@ struct ObjData {
   nikola::DynamicArray<nikola::NBRMaterial> materials;
   nikola::DynamicArray<nikola::NBRTexture> textures;
 
+  nikola::HashMap<nikola::String, nikola::sizei> bone_map;
+  nikola::sizei bone_count = 0; 
+
   nikola::FilePath parent_dir;
 
   nikola::NBRTexture default_texture;
@@ -31,10 +34,45 @@ static bool is_valid_extension(const nikola::FilePath& ext) {
   return ext == ".obj"  || 
          ext == ".fbx"  || 
          ext == ".gltf" || 
-         ext == ".glb";
+         ext == ".glb"  || 
+         ext == ".dae";
 }
 
-static void load_node_mesh(aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
+static void get_bone_parent(ObjData* data, const aiScene* ai_scene, aiBone* bone) {
+  nikola::String parent_name = bone->mNode->mParent->mName.C_Str();
+  aiBone* parent_bone        = nullptr; 
+
+  if(data->bone_map.find(parent_name) == data->bone_map.end()) {
+    parent_bone = ai_scene->findBone(bone->mNode->mParent->mName);
+  }
+
+  if(parent_bone) {
+    get_bone_parent(data, ai_scene, parent_bone);
+  }
+
+  nikola::String bone_name  = bone->mNode->mName.C_Str();
+  data->bone_map[bone_name] = data->bone_map.size(); 
+}
+
+static void load_bone_map(ObjData* data, const aiScene* ai_scene) {
+  for(nikola::u32 i = 0; i < ai_scene->mNumMeshes; i++) {
+    aiMesh* mesh = ai_scene->mMeshes[i];
+    
+    for(nikola::u32 j = 0; j < mesh->mNumBones; j++) {
+      aiBone* bone        = mesh->mBones[j];
+      nikola::String name = bone->mNode->mName.C_Str();
+  
+      if(data->bone_map.find(name) != data->bone_map.end()) {
+        continue;
+      }
+  
+      get_bone_parent(data, ai_scene, bone);
+      data->bone_map[name] = data->bone_map.size() - 1;
+    }
+  }
+}
+
+static void load_node_mesh(ObjData* data, aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
   // Set the components that should exist in the model
   
   nbr_mesh->vertex_component_bits = (nikola::u8)nikola::VERTEX_COMPONENT_POSITION | 
@@ -98,7 +136,7 @@ static void load_node_mesh(aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
 
           // Another bone added to the pile!
 
-          ids[vec_index]     = ib;
+          ids[vec_index]     = data->bone_map[bone->mNode->mName.C_Str()];
           weights[vec_index] = weight->mWeight;
           vec_index++;
         }
@@ -167,7 +205,7 @@ static void load_scene_meshes(const aiScene* scene, ObjData* data, aiNode* node)
 
     // Convert an `aiMesh` into our `NBRMesh`
     nikola::NBRMesh nbr_mesh; 
-    load_node_mesh(mesh, &nbr_mesh);
+    load_node_mesh(data, mesh, &nbr_mesh);
 
     // Add the new mesh for later
     data->meshes.push_back(nbr_mesh);
@@ -186,10 +224,13 @@ static void load_material_texture(aiMaterial* material, aiTextureType type, ObjD
     material->GetTexture(type, i, &str);
 
     // Convert into our `NBRTexture`
+   
     nikola::NBRTexture texture;
-    image_loader_load_texture(&texture, nikola::filepath_append(data->parent_dir, str.C_Str()));
-    data->textures.push_back(texture);
+    if(!image_loader_load_texture(&texture, nikola::filepath_append(data->parent_dir, str.C_Str()))) {
+      continue;
+    }
 
+    data->textures.push_back(texture);
     *index += (nikola::i8)data->textures.size();
   }
 }
@@ -257,6 +298,7 @@ bool model_loader_load(nikola::NBRModel* model, const nikola::FilePath& path) {
                aiProcess_OptimizeMeshes        | 
                aiProcess_OptimizeGraph         |
                aiProcess_LimitBoneWeights      | 
+               aiProcess_PopulateArmatureData  |
                aiProcess_GlobalScale); 
 
   Assimp::Importer imp; 
@@ -274,8 +316,11 @@ bool model_loader_load(nikola::NBRModel* model, const nikola::FilePath& path) {
   ObjData data; 
   data.parent_dir = nikola::filepath_parent_path(path); // Usually, `path` will refer to the 3D model file directly so we need its immediate parent
 
+  // Load the bone map 
+  load_bone_map(&data, scene);
+
   // Meshes init 
-  
+
   load_scene_meshes(scene, &data, scene->mRootNode);
   model->meshes_count  = data.meshes.size();
   model->meshes        = (nikola::NBRMesh*)nikola::memory_allocate(sizeof(nikola::NBRMesh) * model->meshes_count);
