@@ -6,6 +6,7 @@
 #include "nikola/nikola_audio.h"
 #include "nikola/nikola_physics.h"
 #include "nikola/nikola_input.h"
+#include "nikola/nikola_event.h"
 
 #include <GLFW/glfw3.h>
 
@@ -26,24 +27,64 @@ namespace nikola { // Start of nikola
 struct GUIState {
   Window* window          = nullptr; 
   GLFWwindow* glfw_window = nullptr;
-  
+
   ImGuiIO io_config;
- 
-  Vec4 render_clear_color = Vec4(1.0f);
-
-  f64 fps              = 0.0;
-  IVec2 window_size    = IVec2(0); 
-  Vec2 mouse_position  = Vec2(0.0f); 
-  Vec2 mouse_offset    = Vec2(0.0f); 
-
-  sizei allocations_count = 0; 
-  sizei allocation_bytes  = 0;
-
   HashMap<String, Vec3> rotations;
+
+  f32 big_step   = 0.01f; 
+  f32 small_step = 0.001f; 
+
+  bool is_active = false;
 };
 
 static GUIState s_gui;
 /// GUIState
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Callbacks
+
+static bool on_keyboard_action(const Event& event, const void* dispatcher, const void* listener) {
+  if(!s_gui.is_active) {
+    return true;
+  }
+
+  switch(event.type) {
+    case EVENT_KEY_PRESSED:
+      if(event.key_pressed == KEY_LEFT_SHIFT) {
+        s_gui.big_step   = 0.1f;
+        s_gui.small_step = 0.01f;
+      }
+      break;
+    case EVENT_KEY_RELEASED:
+      if(event.key_released == KEY_LEFT_SHIFT) {
+        s_gui.big_step   = 0.01f;
+        s_gui.small_step = 0.001f;
+      }
+      break;
+  }
+
+  return true; 
+}
+
+static bool on_mouse_action(const Event& event, const void* dispatcher, const void* listener) {
+  if(!s_gui.is_active) {
+    return true;
+  }
+
+  switch(event.type) {
+    case EVENT_MOUSE_BUTTON_PRESSED:
+      input_cursor_show(!(event.mouse_button_pressed == MOUSE_BUTTON_LEFT));
+      break;
+    case EVENT_MOUSE_BUTTON_RELEASED:
+      input_cursor_show((event.mouse_button_released == MOUSE_BUTTON_LEFT));
+      break;
+  }
+
+  return true; 
+}
+
+/// Callbacks
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -85,6 +126,14 @@ bool gui_init(Window* window) {
     return false;
   }
 
+  // Listen to events
+  
+  event_listen(EVENT_KEY_PRESSED, on_keyboard_action);
+  event_listen(EVENT_KEY_RELEASED, on_keyboard_action);
+  
+  event_listen(EVENT_MOUSE_BUTTON_PRESSED, on_mouse_action);
+  event_listen(EVENT_MOUSE_BUTTON_RELEASED, on_mouse_action);
+
   return true;
 }
 
@@ -113,8 +162,17 @@ void gui_end_panel() {
   ImGui::End();
 }
 
+void gui_toggle_active() {
+  s_gui.is_active = !s_gui.is_active;
+  input_cursor_show(s_gui.is_active);
+}
+
 const bool gui_is_focused() {
   return ImGui::GetIO().WantCaptureMouse;
+}
+
+const bool gui_is_active() {
+  return s_gui.is_active;
 }
 
 void gui_renderer_info() {
@@ -122,21 +180,15 @@ void gui_renderer_info() {
     gui_end_panel();
     return;
   }
-
-  // Stats
-  // -------------------------------------------------------------------
-  ImGui::SeparatorText("Stats");
-  // -------------------------------------------------------------------
- 
-  // Editables
-  // -------------------------------------------------------------------
-  ImGui::SeparatorText("##xx");
  
   // Clear color
-  
-  ImGui::ColorPicker4("Clear color", &s_gui.render_clear_color[0], ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
-  renderer_set_clear_color(s_gui.render_clear_color);
-  // -------------------------------------------------------------------
+ 
+  Vec4 clear_color = renderer_get_clear_color();
+  bool is_picked   = ImGui::ColorPicker4("Clear color", &clear_color[0], ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
+
+  if(is_picked) {
+    renderer_set_clear_color(clear_color);
+  }
 
   gui_end_panel();
 }
@@ -189,34 +241,30 @@ void gui_debug_info() {
   }
 
   // FPS 
-  // -------------------------------
+  
   if(ImGui::CollapsingHeader("Frames")) {
-    s_gui.fps = niclock_get_fps();
-    ImGui::Text("FPS: %f", s_gui.fps);
+    ImGui::Text("FPS: %.3lf", niclock_get_fps());
   } 
-  // -------------------------------
 
   // Mouse
-  // -------------------------------
+ 
   if(ImGui::CollapsingHeader("Mouse")) {
-    input_mouse_position(&s_gui.mouse_position.x, &s_gui.mouse_position.y);
-    input_mouse_offset(&s_gui.mouse_offset.x, &s_gui.mouse_offset.y);
+    Vec2 mouse_pos;
+    input_mouse_position(&mouse_pos.x, &mouse_pos.y);
+    
+    Vec2 mouse_offset;
+    input_mouse_offset(&mouse_offset.x, &mouse_offset.y);
 
-    ImGui::Text("Position: %s", vec2_to_string(s_gui.mouse_position).c_str());
-    ImGui::Text("Offset: %s", vec2_to_string(s_gui.mouse_offset).c_str());
+    ImGui::Text("Position: %s", vec2_to_string(mouse_pos).c_str());
+    ImGui::Text("Offset: %s", vec2_to_string(mouse_offset).c_str());
   } 
-  // -------------------------------
 
   // Memory
-  // -------------------------------
+ 
   if(ImGui::CollapsingHeader("Memory")) {
-    s_gui.allocations_count = memory_get_allocations_count();
-    s_gui.allocation_bytes  = memory_get_allocation_bytes();
-
-    ImGui::Text("Allocations: %zu", s_gui.allocations_count);
-    ImGui::Text("Bytes allocated: %zu", s_gui.allocation_bytes);
+    ImGui::Text("Allocations: %zu", memory_get_allocations_count());
+    ImGui::Text("Bytes allocated: %zu", memory_get_allocation_bytes());
   } 
-  // -------------------------------
 
   gui_end_panel();
 }
@@ -240,15 +288,15 @@ void gui_edit_transform(const char* name, Transform* transform) {
  
   // SRT translation
   // -------------------------------------------------------------------
-  if(ImGui::DragFloat3("Position", &transform->position[0], 0.1f)) {
+  if(ImGui::DragFloat3("Position", &transform->position[0], s_gui.big_step)) {
     transform_translate(*transform, transform->position);
   }
 
-  if(ImGui::DragFloat3("Scale", &transform->scale[0], 0.1f)) {
+  if(ImGui::DragFloat3("Scale", &transform->scale[0], s_gui.big_step)) {
     transform_scale(*transform, Vec3(transform->scale));
   }
 
-  if(ImGui::DragFloat3("Rotation", &s_gui.rotations[name][0], 0.1f)) {
+  if(ImGui::DragFloat3("Rotation", &s_gui.rotations[name][0], s_gui.big_step)) {
     Vec3 axis = vec3_normalize(s_gui.rotations[name]);
     transform_rotate(*transform, axis, s_gui.rotations[name].x);
   }
@@ -262,20 +310,20 @@ void gui_edit_camera(const char* name, Camera* camera) {
   ImGui::PushID(name); 
   
   // Information
-  // -------------------------------------------------------------------
+  
   ImGui::Text("Yaw: %f", camera->yaw);
   ImGui::Text("Pitch: %f", camera->pitch);
-  // -------------------------------------------------------------------
 
   // Editables
-  // -------------------------------------------------------------------
-  ImGui::DragFloat3("Postiion", &camera->position[0], 1.0f);  
+ 
+  ImGui::DragFloat3("Position", &camera->position[0], s_gui.big_step);  
+ 
   ImGui::SliderFloat("Zoom", &camera->zoom, CAMERA_MAX_ZOOM, 0.0f, "Zoom: %.3f");
-  ImGui::SliderFloat("Near", &camera->near, 0.1f, 1000.0f, "Near: %.3f");
-  ImGui::SliderFloat("Far", &camera->far, 0.1f, 1000.0f, "Far: %.3f");
+  ImGui::SliderFloat("Near", &camera->near, 0.0001f, 1000.0f, "Near: %.3f");
+  ImGui::SliderFloat("Far", &camera->far, 0.0001f, 1000.0f, "Far: %.3f");
+  
   ImGui::SliderFloat("Sensitivity", &camera->sensitivity, 0.0f, 1.0f, "Sensitivity: %.3f");
   ImGui::SliderFloat("Exposure", &camera->exposure, 0.0f, 10.0f, "Exposure: %.3f");
-  // -------------------------------------------------------------------
   
   ImGui::PopID(); 
 }
@@ -284,8 +332,8 @@ void gui_edit_directional_light(const char* name, DirectionalLight* dir_light) {
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
   
-  ImGui::DragFloat3("Direction", &dir_light->direction[0], 0.1f);
-  ImGui::DragFloat3("Color", &dir_light->color[0], 0.01f, 0.0f);
+  ImGui::DragFloat3("Direction", &dir_light->direction[0], s_gui.big_step);
+  ImGui::DragFloat3("Color", &dir_light->color[0], s_gui.small_step, 0.0f);
 
   ImGui::PopID(); 
 }
@@ -294,8 +342,8 @@ void gui_edit_point_light(const char* name, PointLight* point_light) {
   ImGui::SeparatorText(name);
   ImGui::PushID(name); 
 
-  ImGui::DragFloat3("Position", &point_light->position[0], 1.0f);
-  ImGui::DragFloat3("Color", &point_light->color[0], 0.01f, 0.0f);
+  ImGui::DragFloat3("Position", &point_light->position[0], s_gui.big_step);
+  ImGui::DragFloat3("Color", &point_light->color[0], s_gui.small_step, 0.0f);
   ImGui::SliderFloat("Radius", &point_light->radius, 0.001f, 20.0f);
 
   ImGui::PopID(); 
@@ -305,9 +353,10 @@ void gui_edit_spot_light(const char* name, SpotLight* spot_light) {
   ImGui::SeparatorText(name);
   ImGui::PushID(name); 
 
-  ImGui::DragFloat3("Position", &spot_light->position[0], 1.0f);
-  ImGui::DragFloat3("Direction", &spot_light->direction[0], 0.01f, -1.0f, 1.0f);
-  ImGui::DragFloat3("Color", &spot_light->color[0], 0.01f, 0.0f);
+  ImGui::DragFloat3("Position", &spot_light->position[0], s_gui.big_step);
+  ImGui::DragFloat3("Direction", &spot_light->direction[0], s_gui.small_step, -1.0f, 1.0f);
+  ImGui::DragFloat3("Color", &spot_light->color[0], s_gui.small_step, 0.0f);
+
   ImGui::SliderFloat("Radius", &spot_light->radius, 0.0f, 1.0f);
   ImGui::SliderFloat("Outer radius", &spot_light->outer_radius, 0.0f, 1.0f);
 
@@ -330,7 +379,7 @@ void gui_edit_frame(const char* name, FrameData* frame) {
     // Ambient
 
     ImGui::SeparatorText("Ambiance");
-    ImGui::DragFloat3("Color", &frame->ambient[0], 0.1f, 0.0f, 1.0f);
+    ImGui::DragFloat3("Color", &frame->ambient[0], s_gui.small_step, 0.0f, 1.0f);
     
     // Directional light
     nikola::gui_edit_directional_light("Directional", &frame->dir_light);
@@ -377,9 +426,9 @@ void gui_edit_material(const char* name, Material* material) {
   ImGui::ColorEdit3("Color", &material->color[0]);
   ImGui::ColorEdit4("Blend factor", &material->blend_factor[0]);
   
-  ImGui::DragFloat("Shininess", &material->shininess, 0.01f, 0.0f);
-  ImGui::DragFloat("Transparency", &material->transparency, 0.01f, 0.0f, 1.0f);
-  ImGui::DragInt("Stencil reference", &material->stencil_ref, 1.0f);
+  ImGui::DragFloat("Shininess", &material->shininess, s_gui.small_step, 0.0f);
+  ImGui::DragFloat("Transparency", &material->transparency, s_gui.small_step, 0.0f, 1.0f);
+  ImGui::DragInt("Stencil reference", &material->stencil_ref, s_gui.big_step);
   ImGui::Checkbox("Depth Mask", &material->depth_mask);
   
   ImGui::PopID(); 
@@ -390,23 +439,21 @@ void gui_edit_font(const char* name, Font* font, String* label) {
   ImGui::PushID(name); 
 
   // Font info 
-  // -------------------------------------------------------------------
+  
   if(ImGui::CollapsingHeader("Font Information")) {
     ImGui::SliderFloat("Ascent", &font->ascent, -1000, 1000);
     ImGui::SliderFloat("Descent", &font->descent, -1000, 1000);
     ImGui::SliderFloat("Line Gap", &font->line_gap, -1000, 1000);
   } 
-  // -------------------------------------------------------------------
  
   // Label info
-  // -------------------------------------------------------------------
+  
   if(ImGui::CollapsingHeader("Input Label")) {
     ImGui::InputTextMultiline("Label", label);
   } 
-  // -------------------------------------------------------------------
 
   // Glyphs Info
-  // -------------------------------------------------------------------
+  
   if(ImGui::CollapsingHeader("Glyphs")) {
     for(auto& ch : *label) {
       Glyph* glyph = &font->glyphs[ch]; 
@@ -429,7 +476,6 @@ void gui_edit_font(const char* name, Font* font, String* label) {
       ImGui::PopID();
     }
   }
-  // -------------------------------------------------------------------
   
   ImGui::PopID(); 
 }
@@ -441,7 +487,7 @@ void gui_edit_audio_source(const char* name, AudioSourceID& source) {
   AudioSourceDesc source_desc = audio_source_get_desc(source);
 
   // Source Info
-  // -------------------------------------------------------------------
+  
   // Volume
   if(ImGui::SliderFloat("Volume", &source_desc.volume, 0.0f, 1.0f)) {
     audio_source_set_volume(source, source_desc.volume);
@@ -453,17 +499,17 @@ void gui_edit_audio_source(const char* name, AudioSourceID& source) {
   }
 
   // Position
-  if(ImGui::DragFloat3("Position", &source_desc.position[0], 0.01f, -100.0f, 100.0f)) {
+  if(ImGui::DragFloat3("Position", &source_desc.position[0], s_gui.small_step, -100.0f, 100.0f)) {
     audio_source_set_position(source, source_desc.position);
   }
 
   // Velocity
-  if(ImGui::DragFloat3("Velocity", &source_desc.velocity[0], 0.01f, -1.0f, 1.0f)) {
+  if(ImGui::DragFloat3("Velocity", &source_desc.velocity[0], s_gui.small_step, -1.0f, 1.0f)) {
     audio_source_set_velocity(source, source_desc.velocity);
   }
   
   // Direction
-  if(ImGui::DragFloat3("Direction", &source_desc.direction[0], 0.01f, -1.0f, 1.0f)) {
+  if(ImGui::DragFloat3("Direction", &source_desc.direction[0], s_gui.small_step, -1.0f, 1.0f)) {
     audio_source_set_direction(source, source_desc.direction);
   }
   
@@ -474,10 +520,9 @@ void gui_edit_audio_source(const char* name, AudioSourceID& source) {
 
   // Queued buffers 
   ImGui::Text("Current queued buffers %zu", source_desc.buffers_count);
-  // -------------------------------------------------------------------
 
   // Command buttons
-  // -------------------------------------------------------------------
+  
   // Play button
   if(ImGui::Button("Play")) {
     audio_source_start(source);
@@ -506,7 +551,6 @@ void gui_edit_audio_source(const char* name, AudioSourceID& source) {
   } 
   
   ImGui::SameLine();
-  // -------------------------------------------------------------------
 
   ImGui::NewLine();
   ImGui::PopID(); 
@@ -524,12 +568,12 @@ void gui_edit_audio_listener(const char* name) {
   }
 
   // Position
-  if(ImGui::DragFloat3("Position", &listener.position[0], 0.01f, -1.0f, 1.0f)) {
+  if(ImGui::DragFloat3("Position", &listener.position[0], s_gui.small_step, -1.0f, 1.0f)) {
     audio_listener_set_position(listener.position);
   }
 
   // Velocity
-  if(ImGui::DragFloat3("Velocity", &listener.velocity[0], 0.01f, -1.0f, 1.0f)) {
+  if(ImGui::DragFloat3("Velocity", &listener.velocity[0], s_gui.small_step, -1.0f, 1.0f)) {
     audio_listener_set_velocity(listener.velocity);
   }
 
@@ -541,24 +585,28 @@ void gui_edit_physics_body(const char* name, PhysicsBody* body) {
   ImGui::PushID(name); 
   
   // Position
+  
   Vec3 position = physics_body_get_position(body);
-  if(ImGui::DragFloat3("Position", &position[0])) {
+  if(ImGui::DragFloat3("Position", &position[0], s_gui.big_step)) {
     physics_body_set_position(body, position);
   }
 
   // Linear velocity
+  
   Vec3 linear = physics_body_get_linear_velocity(body);
-  if(ImGui::DragFloat3("Linear velocity", &linear[0], 0.1f)) {
+  if(ImGui::DragFloat3("Linear velocity", &linear[0], s_gui.big_step)) {
     physics_body_set_linear_velocity(body, linear);
   }
   
   // Angular velocity
+  
   Vec3 angular = physics_body_get_angular_velocity(body);
-  if(ImGui::DragFloat3("Angular velocity", &angular[0], 0.1f)) {
+  if(ImGui::DragFloat3("Angular velocity", &angular[0], s_gui.big_step)) {
     physics_body_set_angular_velocity(body, angular);
   }
   
   // Awake
+  
   bool awake = physics_body_is_awake(body);
   if(ImGui::Checkbox("Awake", &awake)) {
     physics_body_set_awake(body, awake);
@@ -572,32 +620,37 @@ void gui_edit_collider(const char* name, Collider* collider) {
   ImGui::PushID(name); 
   
   // Extents
+  
   Vec3 extents = collider_get_extents(collider);
-  if(ImGui::DragFloat3("Extents", &extents[0])) {
+  if(ImGui::DragFloat3("Extents", &extents[0], s_gui.big_step)) {
     collider_set_extents(collider, extents);
   }
   
   // Local position
+  
   Vec3 local_pos = collider_get_local_transform(collider).position;
-  if(ImGui::DragFloat3("Local position", &local_pos[0])) {
+  if(ImGui::DragFloat3("Local position", &local_pos[0], s_gui.big_step)) {
     collider_set_local_position(collider, local_pos);
   }
   
   // Friction
+  
   f32 friction = collider_get_friction(collider);
-  if(ImGui::DragFloat("Friction", &friction)) {
+  if(ImGui::DragFloat("Friction", &friction, s_gui.big_step)) {
     collider_set_friction(collider, friction);
   }
   
   // Restitution
+  
   f32 restitution = collider_get_restitution(collider);
-  if(ImGui::DragFloat("Restitution", &restitution)) {
+  if(ImGui::DragFloat("Restitution", &restitution, s_gui.big_step)) {
     collider_set_restitution(collider, restitution);
   }
   
   // Density
+  
   f32 density = collider_get_density(collider);
-  if(ImGui::DragFloat("Density", &density)) {
+  if(ImGui::DragFloat("Density", &density, s_gui.big_step)) {
     collider_set_density(collider, density);
   }
   
@@ -608,16 +661,16 @@ void gui_edit_particle_emitter(const char* name, ParticleEmitterDesc* emitter_de
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
  
-  ImGui::DragFloat3("Position", &emitter_desc->position[0], 0.1f);
-  ImGui::DragFloat3("Velocity", &emitter_desc->velocity[0], 1.0f);
+  ImGui::DragFloat3("Position", &emitter_desc->position[0], s_gui.big_step);
+  ImGui::DragFloat3("Velocity", &emitter_desc->velocity[0], s_gui.big_step);
 
-  ImGui::DragFloat3("Scale", &emitter_desc->scale[0], 0.1f, 0.0f, 256.0f);
-  ImGui::DragFloat4("Color", &emitter_desc->color[0], 0.1f, 0.0f, 12.0f);
+  ImGui::DragFloat3("Scale", &emitter_desc->scale[0], s_gui.big_step, 0.0f, 256.0f);
+  ImGui::DragFloat4("Color", &emitter_desc->color[0], s_gui.big_step, 0.0f, 12.0f);
   
-  ImGui::DragFloat("Lifetime", &emitter_desc->lifetime, 0.1f, 0.0f, 512.0f);
-  ImGui::DragFloat("Gravity", &emitter_desc->gravity_factor, 0.1f);
+  ImGui::DragFloat("Lifetime", &emitter_desc->lifetime, s_gui.big_step, 0.0f, 512.0f);
+  ImGui::DragFloat("Gravity", &emitter_desc->gravity_factor, s_gui.big_step);
   
-  ImGui::DragFloat("Distribution radius", &emitter_desc->distribution_radius, 0.1f);
+  ImGui::DragFloat("Distribution radius", &emitter_desc->distribution_radius, s_gui.big_step);
   
   i32 current_dist = emitter_desc->distribution;
   if(ImGui::Combo("Distributions", &current_dist, "Random\0Square\0Cube\0\0")) {
@@ -636,8 +689,8 @@ void gui_edit_animator(const char* name, Animator* animator) {
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
 
-  ImGui::DragFloat("Start point", &animator->start_point, 0.1f, 0.0f, animator->end_point);
-  ImGui::DragFloat("End point", &animator->end_point, 0.1f, 0.0f);
+  ImGui::DragFloat("Start point", &animator->start_point, s_gui.big_step, 0.0f, animator->end_point);
+  ImGui::DragFloat("End point", &animator->end_point, s_gui.big_step, 0.0f);
   ImGui::DragFloat("Current point", &animator->current_time, 1.0f, animator->start_point, animator->end_point);
 
   ImGui::Checkbox("Looping", &animator->is_looping);

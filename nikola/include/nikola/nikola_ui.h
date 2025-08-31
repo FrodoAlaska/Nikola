@@ -398,6 +398,12 @@ NIKOLA_API bool gui_begin_panel(const char* name);
 /// End the panel with the latest `gui_begin_panel` call.
 NIKOLA_API void gui_end_panel();
 
+/// Toggle between an inactive and active GUI. 
+NIKOLA_API void gui_toggle_active();
+
+/// Returns `true` if the GUI is currently active. 
+NIKOLA_API const bool gui_is_active();
+
 /// Returns `true` if the GUI is currently focused or capturing the mouse. 
 NIKOLA_API const bool gui_is_focused();
 

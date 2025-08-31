@@ -69,7 +69,7 @@
     - [x] Disable the mouse when we're editing sliders
     - [x] Documentation
 
-# Update 0.3 (Performance, animation, scenes, and QOL improvements)
+# Update 0.3 (Performance, animation, and QOL improvements)
 
 - [x] UI 
     - [x] Have a `UIImage` that will just be a regular texture, but it will conform to a UI layout. 
@@ -81,13 +81,9 @@
     - [x] Add the animator to the GUI
     - [] Jobify with the animator by perhaps making the calculation of the joints' tranform in a `parallel_for`
     - [] Test with instancing?
-- [] GUI 
+- [x] GUI 
     - [x] Add the `FrameDesc` to the GUI
-    - [] Make the GUI have an increamental optional mode (when pressing `CTRL`, for example)
-    - [] Have more settings for the GUI on setup to customize the GUI more (no labels on windows, no scrolling, etc...)
-    - [] Fix rotations... once again
-    - [] Default camera and editor camera?
-    - [] Shift + mouse movements to move around the scene?
+    - [x] Make the GUI have an incremental optional mode (when pressing `SHIFT`, for example)
 - [] Particles
     - [] GPU-based particle system, using compute shaders.
     - [] Documentation
