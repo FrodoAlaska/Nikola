@@ -69,26 +69,21 @@
     - [x] Disable the mouse when we're editing sliders
     - [x] Documentation
 
-# Update 0.3 (Performance, animation, and QOL improvements)
+# Update 0.3 (Animation and QOL improvements)
 
 - [x] UI 
     - [x] Have a `UIImage` that will just be a regular texture, but it will conform to a UI layout. 
     - [x] There is a problem that arises when there is more than one slider in a `UILayout`
     - [x] Documentation
-- [] Animations
-    - [x] Currently, not all animations that are imported work 
-    - [x] I believe that the animation loader works with just GLTF for now, so try to make it work with Collada as well
-    - [x] Add the animator to the GUI
-    - [] Jobify with the animator by perhaps making the calculation of the joints' tranform in a `parallel_for`
-    - [] Test with instancing?
 - [x] GUI 
     - [x] Add the `FrameDesc` to the GUI
     - [x] Make the GUI have an incremental optional mode (when pressing `SHIFT`, for example)
-- [] Particles
-    - [] GPU-based particle system, using compute shaders.
-    - [] Documentation
+- [x] Animations
+    - [x] Currently, not all animations that are imported work 
+    - [x] I believe that the animation loader works with just GLTF for now, so try to make it work with Collada as well
+    - [x] Add the animator to the GUI
 
-## Update 0.4 (Graphics and physics improvements)
+## Update 0.4 (Renderer, performance, and particles)
 
 - [] Renderer
     - [] PBR? Now? Please? Shit looks bad, man...
@@ -99,18 +94,14 @@
     - [] Terrain rendering and procedural generation (terrain generation using `stb_perlin` and loading from heightmap)
     - [] Improve lighting performance using clustered rendering (if needed).
     - [] Documentation
+- [] Particles
+    - [] GPU-based particle system, using compute shaders.
+    - [] Documentation
 - [] Animations 
     - [] Fix animations that have child nodes
-    - [] Add the animator to the GUI
-    - [] Add an animation controller to easily transition between animations 
+    - [] Test animations with multiple instances 
+    - [] Jobify with the animator or just make it more performant
     - [] Documentation
-- [] Physics
-    - [] A debug pass? After the HDR pass?
-    - [] Implement mouse to screen and mouse to world for editing levels easier
-    - [] Deleting bodies has some problems since the world delets bodies by keeping a "world index" inside the internal body data structure, which then it uses to 
-         get the correct position (as an iterator) in the vector to then delete. However, that index is sometimes _way_ higher than the actual size of the array of bodies. Is keeping a collection for bodies in the physics world 
-         with a physics library really that necessary?
-    - [] Listen, just remove the physics library. It's really not all that useful. It brings more pain and suffering than joy. I can do a better one with my hands tied behind my back whilst singing Katyusha. 
 
 ## Update 0.4.5 (Tiny performance improvements and data structures)
 
@@ -125,11 +116,17 @@
 - [] Threading
     - [] A better job system using fibers
 
+## Update 0.5 (Physics stuff)
+
+- [] Physics
+    - [] A debug pass? After the HDR pass?
+    - [] Implement mouse to screen and mouse to world for editing levels easier
+    - [] Deleting bodies has some problems since the world delets bodies by keeping a "world index" inside the internal body data
+    - [] Listen, just remove the physics library. It's really not all that useful. It brings more pain than joy
+
 ## BUGS:
 - (Window & Renderer): When resizing the window or changing the fullscreen state, the renderer really does not hold up. I'm guessing it's because of the render passes? They need to update their own frame sizes when the window resizes? 
 Maybe find a better way to do this.
-
-- (GUI): We need to find out a way to disable the cursor when editing sliders. Or, perhaps, have entities move with the mouse. You know, like _actual_ environment editing.
 
 - (Renderer): Shadows. They're turned off right now. Fix everything about em. Fuck em. Fix em. Marry em?
 
