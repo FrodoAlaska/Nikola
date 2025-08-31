@@ -81,11 +81,13 @@
     - [x] Add the animator to the GUI
     - [] Jobify with the animator by perhaps making the calculation of the joints' tranform in a `parallel_for`
     - [] Test with instancing?
-- [] Scenes 
-    - [] Think about scenes and how to manage them. Perhaps we can implement just a simple `EntityManager` instead of a scene. It gets annoying having to create managers on the gameplay side.
-    - [] Perhaps just a simple `struct` with a list of all the possible components? Materials, audio sources, animators, and so on. 
-    - [] inl-based config file? Instead of making a binary one every fucking time?
-    - [] Audio mixer with master volume and whatnot? Please?
+- [] GUI 
+    - [x] Add the `FrameDesc` to the GUI
+    - [] Make the GUI have an increamental optional mode (when pressing `CTRL`, for example)
+    - [] Have more settings for the GUI on setup to customize the GUI more (no labels on windows, no scrolling, etc...)
+    - [] Fix rotations... once again
+    - [] Default camera and editor camera?
+    - [] Shift + mouse movements to move around the scene?
 - [] Particles
     - [] GPU-based particle system, using compute shaders.
     - [] Documentation

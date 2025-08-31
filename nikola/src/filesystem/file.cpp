@@ -440,6 +440,37 @@ void file_write_bytes(File& file, const SpotLight& light) {
   file_write_bytes(file, data, sizeof(data));
 }
 
+void file_write_bytes(File& file, const FrameData& frame) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+
+  // Camera
+  file_write_bytes(file, frame.camera);
+
+  // Ambient
+  file_write_bytes(file, &frame.ambient[0], sizeof(Vec3)); 
+
+  // Directional light
+  file_write_bytes(file, frame.dir_light);
+
+  // Point lights
+
+  u32 points_count = (u32)frame.point_lights.size();
+  file_write_bytes(file, &points_count, sizeof(u32));
+  
+  for(auto& light : frame.point_lights) {
+    file_write_bytes(file, light);
+  }
+
+  // Spot lights
+
+  u32 spots_count = (u32)frame.spot_lights.size();
+  file_write_bytes(file, &spots_count, sizeof(u32));
+  
+  for(auto& light : frame.spot_lights) {
+    file_write_bytes(file, light);
+  }
+}
+
 void file_write_bytes(File& file, const AudioSourceID& source) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
   
@@ -873,6 +904,39 @@ void file_read_bytes(File& file, SpotLight* light) {
 
   light->radius       = raw_data[9];
   light->outer_radius = raw_data[10];
+}
+
+void file_read_bytes(File& file, FrameData* frame) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+
+  // Camera
+  file_read_bytes(file, &frame->camera);
+
+  // Ambient
+  file_read_bytes(file, &frame->ambient[0], sizeof(Vec3)); 
+
+  // Directional light
+  file_read_bytes(file, &frame->dir_light);
+
+  // Point lights
+
+  u32 points_count = 0;
+  file_read_bytes(file, &points_count, sizeof(u32));
+  frame->point_lights.resize(points_count); 
+
+  for(auto& light : frame->point_lights) {
+    file_read_bytes(file, &light);
+  }
+
+  // Spot lights
+
+  u32 spots_count = 0;
+  file_read_bytes(file, &spots_count, sizeof(u32));
+  frame->spot_lights.resize(spots_count); 
+
+  for(auto& light : frame->spot_lights) {
+    file_read_bytes(file, &light);
+  }
 }
 
 void file_read_bytes(File& file, AudioSourceID& source) {

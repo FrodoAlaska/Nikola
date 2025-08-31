@@ -69,7 +69,8 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Editor init
   nikola::gui_init(window);
 
-  // Camera init
+  // Frame init
+  
   nikola::CameraDesc cam_desc = {
     .position     = nikola::Vec3(-40.0f, 7.0f, 28.0f),
     .target       = nikola::Vec3(-3.0f, 7.0f, 0.0f),
@@ -79,6 +80,18 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   };
   nikola::camera_create(&app->frame_data.camera, cam_desc);
   app->frame_data.camera.exposure = 1.0f;
+  
+  nikola::File file; 
+  nikola::i32 flags = (nikola::i32)(nikola::FILE_OPEN_READ | nikola::FILE_OPEN_BINARY);
+
+  if(nikola::file_open(&file, "scene_config.nkcfg", flags)) {
+    nikola::file_read_bytes(file, &app->frame_data);
+  }
+  else {
+    NIKOLA_LOG_ERROR("Failed to load file to path");
+  }
+
+  nikola::file_close(file);
 
   // Resoruces init
   init_resources(app);
@@ -95,13 +108,6 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::transform_translate(app->transforms[1], nikola::Vec3(10.0f, 11.0f, -21.4f));
   // nikola::transform_rotate(app->transforms[1], nikola::Vec3(1.0f, 0.0f, 0.0f), 90.0f * nikola::DEG2RAD);
   nikola::transform_scale(app->transforms[1], nikola::Vec3(0.8f));
-
-  // Lights init
-
-  app->frame_data.dir_light.direction = nikola::Vec3(1.0f, -1.0f, 1.0f);
-  app->frame_data.dir_light.color     = nikola::Vec3(1.0f);
-
-  app->frame_data.ambient = nikola::Vec3(1.0f);
 
   return app;
 }
@@ -172,42 +178,21 @@ void app_render_gui(nikola::App* app) {
     nikola::gui_edit_transform("Model 1", &app->transforms[1]);
     nikola::gui_edit_animator("Animator 1", &app->animator);
   }
-  
-  // Lights
-  
-  if(ImGui::CollapsingHeader("Lights")) {
-    nikola::gui_edit_directional_light("Directional", &app->frame_data.dir_light);
 
-    for(int i = 0; i < app->frame_data.point_lights.size(); i++) {
-      nikola::PointLight* light = &app->frame_data.point_lights[i];
-      nikola::String light_name = ("Point " + std::to_string(i));
+  // Frame
+  nikola::gui_edit_frame("Main scene", &app->frame_data);
 
-      nikola::gui_edit_point_light(light_name.c_str(), light);
-    }
-    
-    for(int i = 0; i < app->frame_data.spot_lights.size(); i++) {
-      nikola::SpotLight* light = &app->frame_data.spot_lights[i];
-      nikola::String light_name = ("Spot " + std::to_string(i));
+  if(ImGui::Button("Save frame")) {
+    nikola::File file; 
+    nikola::i32 flags = (nikola::i32)(nikola::FILE_OPEN_WRITE | nikola::FILE_OPEN_BINARY);
 
-      nikola::gui_edit_spot_light(light_name.c_str(), light);
+    if(!nikola::file_open(&file, "scene_config.nkcfg", flags)) {
+      NIKOLA_LOG_ERROR("Failed to save file to path");
+      return;
     }
- 
-    ImGui::Separator();
-    if(ImGui::Button("Add PointLight")) {
-      nikola::Vec3 point_pos = nikola::Vec3(10.0f, 5.0f, 10.0f);
-      app->frame_data.point_lights.push_back(nikola::PointLight(point_pos));
-    }
-    
-    if(ImGui::Button("Add SpotLight")) {
-      nikola::Vec3 spot_pos = nikola::Vec3(10.0f, 5.0f, 10.0f);
-      app->frame_data.spot_lights.push_back(nikola::SpotLight());
-    }
-  }
 
-  // Camera
-  if(ImGui::CollapsingHeader("Camera")) {
-    nikola::gui_edit_camera("Editor Camera", &app->frame_data.camera); 
-    ImGui::DragFloat3("Ambient", &app->frame_data.ambient[0], 0.1f, 0.0f, 1.0f);
+    nikola::file_write_bytes(file, app->frame_data);
+    nikola::file_close(file);
   }
 
   nikola::gui_end_panel();

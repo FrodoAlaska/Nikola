@@ -428,6 +428,9 @@ NIKOLA_API void gui_edit_point_light(const char* name, PointLight* point_light);
 /// Add a spot light section identified by `name` to edit the given `spot_light`.
 NIKOLA_API void gui_edit_spot_light(const char* name, SpotLight* spot_light);
 
+/// A convenience function that adds a frame section identified by `name` to edit the given `frame`.
+NIKOLA_API void gui_edit_frame(const char* name, FrameData* frame);
+
 /// Add a material section identified by `name` to edit the given `material`.
 NIKOLA_API void gui_edit_material(const char* name, Material* material);
 

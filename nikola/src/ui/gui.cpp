@@ -40,7 +40,6 @@ struct GUIState {
   sizei allocation_bytes  = 0;
 
   HashMap<String, Vec3> rotations;
-
 };
 
 static GUIState s_gui;
@@ -311,6 +310,62 @@ void gui_edit_spot_light(const char* name, SpotLight* spot_light) {
   ImGui::DragFloat3("Color", &spot_light->color[0], 0.01f, 0.0f);
   ImGui::SliderFloat("Radius", &spot_light->radius, 0.0f, 1.0f);
   ImGui::SliderFloat("Outer radius", &spot_light->outer_radius, 0.0f, 1.0f);
+
+  ImGui::PopID(); 
+}
+
+void gui_edit_frame(const char* name, FrameData* frame) {
+  ImGui::SeparatorText(name);
+  ImGui::PushID(name); 
+
+  // Camera
+  
+  if(ImGui::CollapsingHeader("Camera")) {
+    nikola::gui_edit_camera("Editor Camera", &frame->camera); 
+  }
+
+  // Lights
+  
+  if(ImGui::CollapsingHeader("Lights")) {
+    // Ambient
+
+    ImGui::SeparatorText("Ambiance");
+    ImGui::DragFloat3("Color", &frame->ambient[0], 0.1f, 0.0f, 1.0f);
+    
+    // Directional light
+    nikola::gui_edit_directional_light("Directional", &frame->dir_light);
+
+    // Point light
+
+    for(int i = 0; i < frame->point_lights.size(); i++) {
+      nikola::PointLight* light = &frame->point_lights[i];
+      nikola::String light_name = ("Point " + std::to_string(i));
+
+      nikola::gui_edit_point_light(light_name.c_str(), light);
+    }
+   
+    // Spot light
+
+    for(int i = 0; i < frame->spot_lights.size(); i++) {
+      nikola::SpotLight* light = &frame->spot_lights[i];
+      nikola::String light_name = ("Spot " + std::to_string(i));
+
+      nikola::gui_edit_spot_light(light_name.c_str(), light);
+    }
+
+    // Add buttons
+
+    ImGui::Separator();
+    if(ImGui::Button("Add PointLight")) {
+      nikola::Vec3 point_pos = nikola::Vec3(10.0f, 5.0f, 10.0f);
+      frame->point_lights.push_back(nikola::PointLight(point_pos));
+    }
+    
+    if(ImGui::Button("Add SpotLight")) {
+      nikola::Vec3 spot_pos = nikola::Vec3(10.0f, 5.0f, 10.0f);
+      frame->spot_lights.push_back(nikola::SpotLight());
+    }
+  }
 
   ImGui::PopID(); 
 }

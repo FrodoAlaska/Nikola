@@ -40,7 +40,7 @@ const sizei PARTICLES_MAX          = 256;
 /// RenderableType
 enum RenderableType {
   /// The currently supported renderable types to be used 
-  /// with the `renderer_queue_command_*` functions.
+  /// with the `renderer_queue_*` functions.
 
   RENDERABLE_MESH = 0, 
   RENDERABLE_MODEL, 

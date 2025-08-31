@@ -12,10 +12,12 @@
 namespace nikola { // Start of nikola
 
 // Forward declaration to help with compilation time.
+
 struct Camera; 
 struct DirectionalLight;
 struct PointLight;
 struct SpotLight;
+struct FrameData;
 
 struct PhysicsBody;
 struct PhysicsBodyDesc;
@@ -315,6 +317,7 @@ NIKOLA_API void file_write_bytes(File& file, const String& str);
 /// `NBR*` structures into `file`. 
 ///
 /// @NOTE: These functions will raise an error if `file` is not opened.
+
 NIKOLA_API void file_write_bytes(File& file, const NBRHeader& header);
 NIKOLA_API void file_write_bytes(File& file, const NBRTexture& texture);
 NIKOLA_API void file_write_bytes(File& file, const NBRCubemap& cubemap);
@@ -339,9 +342,15 @@ NIKOLA_API void file_write_bytes(File& file, const Camera& camera);
 /// Write the contents of different light types, `file`, into `file`.
 ///
 /// @NOTE: This function will raise an error if `file` is not opened.
+
 NIKOLA_API void file_write_bytes(File& file, const DirectionalLight& light);
 NIKOLA_API void file_write_bytes(File& file, const PointLight& light);
 NIKOLA_API void file_write_bytes(File& file, const SpotLight& light);
+
+/// Write the contents of the given `frame` into `file`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_write_bytes(File& file, const FrameData& frame);
 
 /// Write the contents of the given `source` into `file`.
 ///
@@ -415,6 +424,11 @@ NIKOLA_API void file_read_bytes(File& file, Camera* camera);
 NIKOLA_API void file_read_bytes(File& file, DirectionalLight* light);
 NIKOLA_API void file_read_bytes(File& file, PointLight* light);
 NIKOLA_API void file_read_bytes(File& file, SpotLight* light);
+
+/// Read a `FrameData` from `file` and save it into `frame`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_read_bytes(File& file, FrameData* frame);
 
 /// Read an `AudioSourceID` from `file` and save it into `source`.
 ///
