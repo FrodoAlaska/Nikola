@@ -7,7 +7,9 @@
 /// ----------------------------------------------------------------------
 /// Consts
 
-const int OPTIONS_MAX = 4;
+const nikola::sizei OPTIONS_MAX = 4;
+
+const nikola::i32 NBR_VERSION   = 4;  
 
 /// Consts
 /// ----------------------------------------------------------------------
@@ -15,12 +17,10 @@ const int OPTIONS_MAX = 4;
 /// ----------------------------------------------------------------------
 /// Macros
 
+#define ARG_VERSION       "--version", "-v"
 #define ARG_PARENT_DIR    "--parent-dir", "-pd"
-
 #define ARG_BIN_DIR       "--bin-dir", "-bd"
-
 #define ARG_RESOURCE_TYPE "--resource-type", "-rt"
-
 #define ARG_HELP          "--help", "-h"
 
 /// Macros
@@ -31,7 +31,8 @@ const int OPTIONS_MAX = 4;
 
 static void show_help() {
   NIKOLA_LOG_INFO("<-------> Welcome to NBR Converter <------->");
-  NIKOLA_LOG_INFO("Usage: nbr [--parent-dir, -pd] [--bin-dir, -bd], [--resource-type, -rt] <path/to/list.nbrlist>");
+  NIKOLA_LOG_INFO("Usage: nbr [--version -v] [--parent-dir, -pd] [--bin-dir, -bd], [--resource-type, -rt] <path/to/list.nbrlist>");
+  NIKOLA_LOG_INFO("   --version       = Get the current version of the NBR tool.");
   NIKOLA_LOG_INFO("   --parent-dir    = The directory where all the input resources live.");
   NIKOLA_LOG_INFO("   --bin-dir       = The directory where all the output resources will be placed.");
   NIKOLA_LOG_INFO("   --resource-type = Specify a certain resource type to convert. If omitted, resources of all types will be converted.");
@@ -77,7 +78,11 @@ static bool lex_args(int argc, char** argv, nbr::ListContext* list, nikola::i32*
   nikola::FilePath path = "DI"; 
 
   for(int i = 1; i < 6; i++) {
-    if(check_arg(argv[i], ARG_PARENT_DIR)) {
+    if(check_arg(argv[i], ARG_VERSION)) {
+      NIKOLA_LOG_ERROR("[NBR]: Version = %i", NBR_VERSION);
+      return false;
+    }
+    else if(check_arg(argv[i], ARG_PARENT_DIR)) {
       list->parent_dir = argv[++i]; 
     }
     else if(check_arg(argv[i], ARG_BIN_DIR)) {
