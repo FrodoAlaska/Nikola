@@ -162,25 +162,6 @@ void camera_update(Camera& cam) {
 }
 
 void camera_calculate_frustrum_corners(const Camera& cam, Vec3* out_corners) {
-  // Mat4 inv = mat4_inverse(cam.view_projection);
-  //
-  // for(sizei x = 0; x < 2; x++) {
-  //   for(sizei y = 0; y < 2; y++) {
-  //     for(sizei z = 0; z < 2; z++) {
-  //       Vec4 point = Vec4(2.0f * x - 1.0f, 
-  //                         2.0f * y - 1.0f, 
-  //                         2.0f * z - 1.0f, 
-  //                         1.0f);
-  //      
-  //       Vec4 corner = inv * point;
-  //
-  //       sizei flat_index        = x + 2 * (y + 2 * z);
-  //       out_corners[flat_index] = Vec3(corner / corner.w);
-  //     }
-  //   }
-  // }
-
-  
   f32 tan_fov    = nikola::tan(cam.zoom * DEG2RAD);
   Vec3 cam_right = vec3_cross(cam.front, cam.up);
 
@@ -221,6 +202,14 @@ void camera_calculate_frustrum_corners(const Camera& cam, Vec3* out_corners) {
   out_corners[6] = near_center + near_top + near_right; // Top right
   out_corners[7] = near_center - near_top + near_right; // Bottom right
  
+}
+
+void camera_follow(Camera& cam, const Vec3& target, const Vec3& offset) {
+  cam.position = target + offset;
+}
+
+void camera_follow_lerp(Camera& cam, const Vec3& target, const Vec3& offset, const f32 delta) {
+  cam.position = vec3_lerp(cam.position, target + offset, delta);
 }
 
 /// Camera functions

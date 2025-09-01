@@ -14,8 +14,6 @@ struct nikola::App {
   nikola::ResourceID mesh_material, ground_material;
 
   nikola::Transform transforms[2];
-
-  bool has_editor = false;
 };
 /// App
 /// ----------------------------------------------------------------------
@@ -66,15 +64,19 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::gui_init(window);
 
   // Camera init
+  
   nikola::CameraDesc cam_desc = {
-    .position     = nikola::Vec3(-40.0f, 7.0f, 28.0f),
-    .target       = nikola::Vec3(-3.0f, 7.0f, 0.0f),
+    .position     = nikola::Vec3(5.0f, 27.0f, -22.0f),
+    .target       = nikola::Vec3(-3.0f, 27.0f, 0.0f),
     .up_axis      = nikola::Vec3(0.0f, 1.0f, 0.0f),
     .aspect_ratio = nikola::window_get_aspect_ratio(app->window),
-    .move_func    = nikola::camera_free_move_func,
+    .move_func    = nullptr,//nikola::camera_free_move_func,
   };
   nikola::camera_create(&app->frame_data.camera, cam_desc);
+
   app->frame_data.camera.exposure = 1.0f;
+  app->frame_data.camera.yaw      = 90.0f;
+  app->frame_data.camera.pitch    = -47.0f;
 
   // Resoruces init
   init_resources(app);
@@ -92,7 +94,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   app->frame_data.dir_light.direction = nikola::Vec3(1.0f, -1.0f, 1.0f);
   app->frame_data.dir_light.color     = nikola::Vec3(1.0f);
 
-  app->frame_data.ambient = nikola::Vec3(0.0125f);
+  app->frame_data.ambient = nikola::Vec3(1.0f);
 
   return app;
 }
@@ -113,13 +115,29 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 
   // Disable/enable the GUI
   if(nikola::input_key_pressed(nikola::KEY_F1)) {
-    app->has_editor                  = !app->has_editor;
-    app->frame_data.camera.is_active = !app->has_editor;
-
-    nikola::input_cursor_show(app->has_editor);
+    nikola::gui_toggle_active();
+    app->frame_data.camera.is_active = !nikola::gui_is_active();
   }
 
+  if(nikola::input_key_down(nikola::KEY_W)) {
+    app->transforms[1].position.z += 10.0f * delta_time;
+  }
+  else if(nikola::input_key_down(nikola::KEY_S)) {
+    app->transforms[1].position.z -= 10.0f * delta_time;
+  }
+
+  if(nikola::input_key_down(nikola::KEY_A)) {
+    app->transforms[1].position.x += 10.0f * delta_time;
+  }
+  else if(nikola::input_key_down(nikola::KEY_D)) {
+    app->transforms[1].position.x -= 10.0f * delta_time;
+  }
+
+  nikola::transform_translate(app->transforms[1], app->transforms[1].position);
+
   // Update the camera
+ 
+  nikola::camera_follow_lerp(app->frame_data.camera, app->transforms[1].position, nikola::Vec3(-4.5f, 18.5f, -20.0f), delta_time * 1.5f);
   nikola::camera_update(app->frame_data.camera);
 }
 
@@ -141,7 +159,7 @@ void app_render(nikola::App* app) {
 }
 
 void app_render_gui(nikola::App* app) {
-  if(!app->has_editor) {
+  if(!nikola::gui_is_active()) {
     return;
   }
 
@@ -150,7 +168,10 @@ void app_render_gui(nikola::App* app) {
   nikola::gui_debug_info();
   
   nikola::gui_begin_panel("Scene");
- 
+  
+  // Frame
+  nikola::gui_edit_frame("Frame", &app->frame_data);
+
   // Entities
   if(ImGui::CollapsingHeader("Entities")) {
     nikola::gui_edit_transform("Ground", &app->transforms[0]);
@@ -160,42 +181,6 @@ void app_render_gui(nikola::App* app) {
   // Resources
   if(ImGui::CollapsingHeader("Resources")) {
     nikola::gui_edit_material("Material", nikola::resources_get_material(app->mesh_material));
-  }
-  
-  // Lights
-  if(ImGui::CollapsingHeader("Lights")) {
-    nikola::gui_edit_directional_light("Directional", &app->frame_data.dir_light);
-
-    for(int i = 0; i < app->frame_data.point_lights.size(); i++) {
-      nikola::PointLight* light = &app->frame_data.point_lights[i];
-      nikola::String light_name = ("Point " + std::to_string(i));
-
-      nikola::gui_edit_point_light(light_name.c_str(), light);
-    }
-    
-    for(int i = 0; i < app->frame_data.spot_lights.size(); i++) {
-      nikola::SpotLight* light = &app->frame_data.spot_lights[i];
-      nikola::String light_name = ("Spot " + std::to_string(i));
-
-      nikola::gui_edit_spot_light(light_name.c_str(), light);
-    }
- 
-    ImGui::Separator();
-    if(ImGui::Button("Add PointLight")) {
-      nikola::Vec3 point_pos = nikola::Vec3(10.0f, 5.0f, 10.0f);
-      app->frame_data.point_lights.push_back(nikola::PointLight(point_pos));
-    }
-    
-    if(ImGui::Button("Add SpotLight")) {
-      nikola::Vec3 spot_pos = nikola::Vec3(10.0f, 5.0f, 10.0f);
-      app->frame_data.spot_lights.push_back(nikola::SpotLight());
-    }
-  }
-
-  // Camera
-  if(ImGui::CollapsingHeader("Camera")) {
-    nikola::gui_edit_camera("Editor Camera", &app->frame_data.camera); 
-    ImGui::DragFloat3("Ambient", &app->frame_data.ambient[0], 0.1f, 0.0f, 1.0f);
   }
 
   nikola::gui_end_panel();

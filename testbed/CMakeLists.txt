@@ -19,9 +19,8 @@ set(TESTBED_INCLUDES
 set(TESTBED_TYPE 
   # "compute_testbed"
   # "particles_testbed"
-  # "engine_testbed"
-  "animation_testbed"
-  # "scene_example"
+  "engine_testbed"
+  # "animation_testbed"
   # "font_testbed"
   # "audio_testbed"
   # "physics_testbed"
@@ -34,10 +33,6 @@ set(TESTBED_TYPE
 set(TESTBED_SOURCES 
   ${TESTBED_SRC_DIR}/${TESTBED_TYPE}/main.cpp
   ${TESTBED_SRC_DIR}/${TESTBED_TYPE}/app.cpp
- 
-  # Scene example
-  # ${TESTBED_SRC_DIR}/scene_example/scenes/game_scene.cpp
-  # ${TESTBED_SRC_DIR}/scene_example/scenes/scene_manager.cpp
 )
 ############################################################
 

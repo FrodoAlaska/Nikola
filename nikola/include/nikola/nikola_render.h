@@ -688,6 +688,13 @@ NIKOLA_API void camera_update(Camera& cam);
 /// back into the given `out_corners` array with 8 elements. 
 NIKOLA_API void camera_calculate_frustrum_corners(const Camera& cam, Vec3* corners);
 
+/// Have the given `cam` follow the `target`, taking into account the given `offset`.
+NIKOLA_API void camera_follow(Camera& cam, const Vec3& target, const Vec3& offset);
+
+/// Using linear interpolation, have the given `cam` follow `target` by `delta`, taking
+/// into account the given `offset`.
+NIKOLA_API void camera_follow_lerp(Camera& cam, const Vec3& target, const Vec3& offset, const f32 delta);
+
 /// Camera functions
 ///---------------------------------------------------------------------------------------------------------------------
 
