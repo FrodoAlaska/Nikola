@@ -242,9 +242,8 @@ void gui_debug_info() {
 
   // FPS 
   
-  if(ImGui::CollapsingHeader("Frames")) {
-    ImGui::Text("FPS: %.3lf", niclock_get_fps());
-  } 
+  ImGui::Text("FPS: %.3lf", niclock_get_fps());
+  ImGui::Separator();
 
   // Mouse
  
@@ -258,6 +257,37 @@ void gui_debug_info() {
     ImGui::Text("Position: %s", vec2_to_string(mouse_pos).c_str());
     ImGui::Text("Offset: %s", vec2_to_string(mouse_offset).c_str());
   } 
+
+  // Gamepad
+
+  if(ImGui::CollapsingHeader("Gamepads")) {
+    for(sizei i = JOYSTICK_ID_0; i < JOYSTICK_ID_LAST; i++) {
+      JoystickID joy_id = (JoystickID)i;
+
+      if(!input_gamepad_connected(joy_id)) {
+        continue;
+      }
+
+      // Name 
+      
+      String name = ("Gamepad" + String(input_gamepad_get_name(joy_id)));
+      ImGui::SeparatorText(name.c_str());
+
+      // Axises values
+    
+      Vec2 left_axis; 
+      input_gamepad_axis_value(joy_id, GAMEPAD_AXIS_LEFT, &left_axis.x, &left_axis.y);
+      ImGui::Text("Left axis: X = %0.3f, Y = %0.3f", left_axis.x, left_axis.y);
+   
+      Vec2 right_axis; 
+      input_gamepad_axis_value(joy_id, GAMEPAD_AXIS_RIGHT, &right_axis.x, &right_axis.y);
+      ImGui::Text("Right axis: X = %0.3f, Y = %0.3f", right_axis.x, right_axis.y);
+   
+      Vec2 triggers; 
+      input_gamepad_axis_value(joy_id, GAMEPAD_AXIS_TRIGGER, &triggers.x, &triggers.y);
+      ImGui::Text("Trigger: Left = %0.3f, Right = %0.3f", triggers.x, triggers.y);
+    }
+  }
 
   // Memory
  

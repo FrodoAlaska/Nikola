@@ -11,28 +11,39 @@
     - [x] Currently, not all animations that are imported work 
     - [x] I believe that the animation loader works with just GLTF for now, so try to make it work with Collada as well
     - [x] Add the animator to the GUI
-- [] Particles
+- [] Resources 
+    - [] Have a few functions specifically for the `NBR*` types to save, load, and unload them.
+    - [] Improve the load times of the resource manager
+    - [] Finally implement the parent-child relationship between nodes in 3D models?
+- [] Renderer: Performance enhancement
+    - [] Improve instancing completely. It's currently awfully architected. Take into account the animations and so on.
+    - [] Collapse the `ShaderContext` and the `Material` into one?
+    - [] Improve the performance of the renderer by using the GPU to dispatch draw calls, using indirect buffers.
+    - [] Improve lighting performance using clustered rendering (This is optional if the performance is fine up until this point).
+    - [] Documentation
+- [] Animations 
+    - [] Test animations with multiple instances.
+    - [] Jobify with the animator or just make it more performant
+    - [] Documentation
+- [] GPU Particles
     - [] GPU-based particle system, using compute shaders.
     - [] Have a lot of options to edit the shape, distribution, and gravity. Perhaps save it in a file?
     - [] Documentation
-- [] Resources 
-    - [] Have a few functions specifically for the `NBR*` types to save, load, and unload them.
-    - [] Finally have implement the parent-child relationship between nodes in 3D models?
-    - [] Improve the load times of the resource manager
-- [] Renderer
+- [] Renderer: Beautify it
     - [] PBR? Now? Please? Shit looks bad, man...
-    - [] Look into GPU rendering with indirect drawing.
     - [] Gaussian blur
     - [] Bloom integration 
+    - [] Documentation
+- [] The Physics Question
+    - [] Should we make our own physics engine or should we move to something else for now like ReactPhysics3D or Bullet? Either way, definitely not qu3e
+    - [] Implement mouse to screen and mouse to world for editing levels easier
+- [] Threading
+    - [] A better job system using fibers
+- [] Renderer: Extra primitives 
+    - [] More shapes like planes, spheres, and so on.
+    - [] Add a debug pass that just copies its framebuffer like the billboard pass. It's fine because it's just for debug purposes
     - [] Decal rendering 
     - [] Terrain rendering and procedural generation (terrain generation using `stb_perlin` and loading from heightmap)
-    - [] Improve lighting performance using clustered rendering (if needed).
-    - [] Documentation
-- [] Animations 
-    - [] Fix animations that have child nodes
-    - [] Test animations with multiple instances 
-    - [] Jobify with the animator or just make it more performant
-    - [] Documentation
 - [] Data Structures
     - [] Create your own string library 
     - [] Dynamic array 
@@ -41,13 +52,6 @@
     - [] Stacks and queues
     - [] Ring buffers
     - [] Hash map
-- [] Threading
-    - [] A better job system using fibers
-- [] Physics
-    - [] A debug pass? After the HDR pass?
-    - [] Implement mouse to screen and mouse to world for editing levels easier
-    - [] Deleting bodies has some problems since the world delets bodies by keeping a "world index" inside the internal body data
-    - [] Listen, just remove the physics library. It's really not all that useful. It brings more pain than joy
 
 ## BUGS:
 - (Window & Renderer): When resizing the window or changing the fullscreen state, the renderer really does not hold up. I'm guessing it's because of the render passes? They need to update their own frame sizes when the window resizes? 
