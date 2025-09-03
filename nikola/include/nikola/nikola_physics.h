@@ -134,12 +134,18 @@ struct ColliderDesc {
 /// CollisionPoint
 struct CollisionPoint {
   /// Both of the bodies invloved in the collision.
+  
   PhysicsBody* body_a;
   PhysicsBody* body_b; 
 
   /// The exact colliders invloved in the collision.
+  
   Collider* coll_a;
   Collider* coll_b;
+
+  /// The user data that was passed in from the 
+  /// `OnCollisionFunc` callback. 
+  void* user_data = nullptr;
 };
 /// CollisionPoint
 ///---------------------------------------------------------------------------------------------------------------------
@@ -230,7 +236,10 @@ NIKOLA_API void physics_world_set_paused(const bool paused);
 NIKOLA_API void physics_world_set_iterations_count(const i32 iterations);
 
 /// Set collision callbacks both at the beginning of collision (`begin_func`) and at the end of collision (`end_func`).
-NIKOLA_API void physics_world_set_collision_callback(const OnCollisionFunc& begin_func, const OnCollisionFunc& end_func);
+/// On each function call within the physics world, the given `user_data` will be passed. 
+///
+/// @NOTE: By default, `user_data` is a `nullptr`.
+NIKOLA_API void physics_world_set_collision_callback(const OnCollisionFunc& begin_func, const OnCollisionFunc& end_func, void* user_data = nullptr);
 
 /// Shoot a raycast supplied by `ray` through the objects in the world and call `ray_func` 
 /// if any successful intersections occur.

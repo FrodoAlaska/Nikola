@@ -29,6 +29,14 @@ static q3BodyType body_type_to_q3body_type(const PhysicsBodyType type);
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// Forward declarations
+
+class ContanctListener;
+
+/// Forward declarations
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// PhysicsBody 
 struct PhysicsBody {
   u64 id;
@@ -60,7 +68,9 @@ struct Collider {
 ///---------------------------------------------------------------------------------------------------------------------
 /// PhysicsWorld
 struct PhysicsWorld {
-  q3Scene* scene = nullptr;
+  q3Scene* scene             = nullptr;
+  ContanctListener* listener = nullptr; 
+
   bool is_paused = false;
 
   OnCollisionFunc begin_func;
@@ -84,29 +94,37 @@ static PhysicsWorld s_world{};
 ///
 class ContanctListener : public q3ContactListener
 {
-	void BeginContact(const q3ContactConstraint *contact) {
-    CollisionPoint point = {
-      .body_a = ((PhysicsBody*)contact->bodyA->GetUserData()),
-      .body_b = ((PhysicsBody*)contact->bodyB->GetUserData()),
-    
-      .coll_a = ((Collider*)contact->A->GetUserdata()),
-      .coll_b = ((Collider*)contact->B->GetUserdata()),
-    };
+  public: 
+    void* user_data = nullptr;
 
-    s_world.begin_func(point);
-  }
+  public:
+    void BeginContact(const q3ContactConstraint *contact) {
+      CollisionPoint point = {
+        .body_a = ((PhysicsBody*)contact->bodyA->GetUserData()),
+        .body_b = ((PhysicsBody*)contact->bodyB->GetUserData()),
 
-	void EndContact(const q3ContactConstraint* contact) {
-    CollisionPoint point = {
-      .body_a = ((PhysicsBody*)contact->bodyA->GetUserData()),
-      .body_b = ((PhysicsBody*)contact->bodyB->GetUserData()),
-    
-      .coll_a = ((Collider*)contact->A->GetUserdata()),
-      .coll_b = ((Collider*)contact->B->GetUserdata()),
-    };
+        .coll_a = ((Collider*)contact->A->GetUserdata()),
+        .coll_b = ((Collider*)contact->B->GetUserdata()), 
 
-    s_world.end_func(point);
-  }
+        .user_data = user_data,
+      };
+
+      s_world.begin_func(point);
+    }
+
+    void EndContact(const q3ContactConstraint* contact) {
+      CollisionPoint point = {
+        .body_a = ((PhysicsBody*)contact->bodyA->GetUserData()),
+        .body_b = ((PhysicsBody*)contact->bodyB->GetUserData()),
+
+        .coll_a = ((Collider*)contact->A->GetUserdata()),
+        .coll_b = ((Collider*)contact->B->GetUserdata()),
+
+        .user_data = user_data,
+      };
+
+      s_world.end_func(point);
+    }
 };
 /// ContanctListener
 ///---------------------------------------------------------------------------------------------------------------------
@@ -127,7 +145,6 @@ class QueryCallback : public q3QueryCallback
       if(!box->Raycast(box->body->GetTransform(), &data)) {
         return false;
       }
-      
 
       Ray ray = {
         .position  = q3vec_to_vec(data.start),
@@ -234,7 +251,8 @@ void physics_world_init(const Vec3& gravity, const f32 timestep) {
 
   s_world.begin_func = on_collision_begin;
   s_world.end_func   = on_collision_end;
-  s_world.scene->SetContactListener(new ContanctListener);
+  s_world.listener   = new ContanctListener;
+  s_world.scene->SetContactListener(s_world.listener);
  
   s_world.bodies.reserve(16);
   s_world.colliders.reserve(16);
@@ -288,9 +306,11 @@ void physics_world_set_iterations_count(const i32 iterations) {
   s_world.scene->SetIterations(iterations); 
 }
 
-void physics_world_set_collision_callback(const OnCollisionFunc& begin_func, const OnCollisionFunc& end_func) {
+void physics_world_set_collision_callback(const OnCollisionFunc& begin_func, const OnCollisionFunc& end_func, void* user_data) {
   s_world.begin_func = !begin_func ? on_collision_begin : begin_func;
   s_world.end_func   = !end_func ? on_collision_end : end_func;
+
+  s_world.listener->user_data = user_data;
 }
 
 void physics_world_check_raycast(const Ray& ray, const OnRayIntersectionFunc& ray_func) {
