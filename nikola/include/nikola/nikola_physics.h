@@ -120,7 +120,7 @@ struct PhysicsBodyDesc {
 
   ColliderID collider_id;
 
-  f32 restitution    = 1.0f;
+  f32 restitution    = 0.1f;
   f32 friction       = 0.0f;
   f32 gravity_factor = 1.0f;
 

@@ -65,7 +65,7 @@ static void init_bodies(nikola::App* app) {
   // Cube init
 
   coll_desc = {
-    .half_size = nikola::Vec3(1.0f) / 2.0f,
+    .half_size = nikola::Vec3(3.0f) / 2.0f,
   };
   app->cube_collider = nikola::collider_create(coll_desc);
 
@@ -74,7 +74,7 @@ static void init_bodies(nikola::App* app) {
     .rotation = nikola::Quat(0.0f, 0.0f, 0.0f, 1.0f),
 
     .type   = nikola::PHYSICS_BODY_DYNAMIC, 
-    .layers = nikola::PHYSICS_OBJECT_LAYER_0,
+    .layers = nikola::PHYSICS_OBJECT_LAYER_1,
 
     .collider_id = app->cube_collider,
   };
@@ -102,7 +102,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Camera init
   
   nikola::CameraDesc cam_desc = {
-    .position     = nikola::Vec3(10.0f, 0.0f, 10.0f),
+    .position     = nikola::Vec3(-32.0f, 0.0f, 10.0f),
     .target       = nikola::Vec3(-3.0f, 0.0f, 0.0f),
     .up_axis      = nikola::Vec3(0.0f, 1.0f, 0.0f),
     .aspect_ratio = nikola::window_get_aspect_ratio(app->window),
@@ -118,7 +118,8 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // Lights init
   
-  app->frame_data.dir_light.direction = nikola::Vec3(1.0f, -1.0f, 1.0f);
+  app->frame_data.dir_light.direction = nikola::Vec3(-5.0f, -1.0f, 1.0f);
+  app->frame_data.dir_light.color     = nikola::Vec3(2.0f);
   app->frame_data.ambient             = nikola::Vec3(1.0f); 
 
   return app;
@@ -159,11 +160,11 @@ void app_render(nikola::App* app) {
 
   transform = nikola::physics_body_get_transform(app->floor_body);
   nikola::transform_scale(transform, nikola::Vec3(32.0f, 1.0f, 32.0f));
-  nikola::renderer_queue_mesh(app->mesh_id, transform);
+  nikola::renderer_queue_mesh(app->mesh_id, transform, app->material_id);
   
   transform = nikola::physics_body_get_transform(app->cube_body);
   nikola::transform_scale(transform, nikola::Vec3(1.0f));
-  nikola::renderer_queue_mesh(app->mesh_id, transform, app->material_id);
+  nikola::renderer_queue_mesh(app->mesh_id, transform);
 
   nikola::renderer_end();
   
