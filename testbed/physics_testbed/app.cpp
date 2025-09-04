@@ -2,56 +2,6 @@
 
 #include <nikola/nikola.h>
 #include <imgui/imgui.h>
-#include <q3.h>
-
-/// ----------------------------------------------------------------------
-/// CubeEntity
-struct CubeEntity {
-  nikola::PhysicsBody* body; 
-  nikola::Collider* collider; 
-  nikola::ResourceID cube_mesh;
-  nikola::Transform transform;
-
-  CubeEntity(const nikola::Vec3& pos, const nikola::ResourceID& cube_id) {
-    // Body init
-    nikola::PhysicsBodyDesc body_desc = {
-      .position = pos, 
-      .type     = nikola::PHYSICS_BODY_DYNAMIC,
-      .locked_axises = nikola::BVec3(true, false, true),
-    };
-    body = nikola::physics_body_create(body_desc);
-
-    // Collider init
-    nikola::ColliderDesc coll_desc = {
-      .position = nikola::Vec3(0.0f),
-      .extents  = nikola::Vec3(1.0f),
-    };
-    collider = nikola::physics_body_add_collider(body, coll_desc);
-
-    // Cube mesh init
-    cube_mesh = cube_id; 
-
-    // Transform init
-    transform = nikola::physics_body_get_transform(body);
-    nikola::transform_scale(transform, nikola::Vec3(1.0f));
-  }
-
-  void render() {
-    transform = nikola::physics_body_get_transform(body);
-    nikola::renderer_queue_mesh(cube_mesh, transform);
-  }
-
-  void render_gui(const nikola::String& name) {
-    nikola::gui_edit_physics_body((name + " body").c_str(), body);
-    nikola::gui_edit_collider((name + " collider").c_str(), collider);
-  }
-
-  void destroy() {
-    nikola::physics_body_destroy(body);
-  }
-};
-/// CubeEntity
-/// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
 /// App
@@ -62,32 +12,13 @@ struct nikola::App {
   nikola::ResourceGroupID res_group_id;
   nikola::ResourceID mesh_id, material_id;
 
-  nikola::PhysicsBody* plane_body;
-  nikola::Collider* plane_collider;
+  nikola::PhysicsBodyID floor_body; 
+  nikola::ColliderID floor_collider; 
 
-  nikola::DynamicArray<CubeEntity> cubes;
+  nikola::PhysicsBodyID cube_body;
+  nikola::ColliderID cube_collider;
 };
 /// App
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
-/// Callbacks
-
-static void on_collision_hit(const nikola::CollisionPoint& point) {
-  nikola::App* app = (nikola::App*)point.user_data;
-
-  app->frame_data.dir_light.color.r = nikola::random_f32(0.0f, 1.0f);
-}
-
-static void on_raycast_hit(const nikola::Ray& ray, const nikola::RayIntersection& info, const nikola::Collider* coll) {
-  nikola::PhysicsBody* body = nikola::collider_get_attached_body(coll);
-
-  if(info.has_intersected && nikola::input_button_pressed(nikola::MOUSE_BUTTON_LEFT)) {
-    nikola::physics_body_apply_force_at(body, ray.direction * 200.0f, info.point);
-  }
-}
-
-/// Callbacks
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -113,24 +44,41 @@ static void init_resources(nikola::App* app) {
 }
 
 static void init_bodies(nikola::App* app) {
-  // World init
-  nikola::physics_world_set_collision_callback(on_collision_hit, nullptr, app);
+  // Floor init
 
-  // Plane body init
-  
+  nikola::BoxColliderDesc coll_desc = {
+    .half_size = nikola::Vec3(32.0f, 1.0f, 32.0f) / 2.0f,
+  };
+  app->floor_collider = nikola::collider_create(coll_desc);
+
   nikola::PhysicsBodyDesc body_desc = {
-    .position = nikola::Vec3(10.0f, -5.0f, 10.0f), 
-    .type     = nikola::PHYSICS_BODY_STATIC, 
-  };
-  app->plane_body = nikola::physics_body_create(body_desc);
+    .position = nikola::Vec3(10.0f, -5.0f, 10.0f),
+    .rotation = nikola::Quat(0.0f, 0.0f, 0.0f, 1.0f),
 
-  // Plane collider init
-  
-  nikola::ColliderDesc coll_desc = {
-    .position = nikola::Vec3(0.0f),
-    .extents  = nikola::Vec3(64.0f, 1.0f, 64.0f), 
+    .type   = nikola::PHYSICS_BODY_STATIC, 
+    .layers = nikola::PHYSICS_OBJECT_LAYER_0,
+
+    .collider_id = app->floor_collider,
   };
-  app->plane_collider = nikola::physics_body_add_collider(app->plane_body, coll_desc);
+  app->floor_body = nikola::physics_world_create_and_add_body(body_desc, true);
+
+  // Cube init
+
+  coll_desc = {
+    .half_size = nikola::Vec3(1.0f) / 2.0f,
+  };
+  app->cube_collider = nikola::collider_create(coll_desc);
+
+  body_desc = {
+    .position = nikola::Vec3(10.0f, 5.0f, 10.0f),
+    .rotation = nikola::Quat(0.0f, 0.0f, 0.0f, 1.0f),
+
+    .type   = nikola::PHYSICS_BODY_DYNAMIC, 
+    .layers = nikola::PHYSICS_OBJECT_LAYER_0,
+
+    .collider_id = app->cube_collider,
+  };
+  app->cube_body = nikola::physics_world_create_and_add_body(body_desc, true);
 }
 
 /// Private functions 
@@ -165,22 +113,18 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Resoruces init
   init_resources(app);
 
+  // Bodies init
+  init_bodies(app);
+
   // Lights init
   
   app->frame_data.dir_light.direction = nikola::Vec3(1.0f, -1.0f, 1.0f);
   app->frame_data.ambient             = nikola::Vec3(1.0f); 
 
-  // Physics bodies init
-  init_bodies(app);
-
   return app;
 }
 
 void app_shutdown(nikola::App* app) {
-  for(auto& c : app->cubes) {
-    c.destroy();
-  }
-
   nikola::resources_destroy_group(app->res_group_id);
   nikola::gui_shutdown();
 
@@ -189,29 +133,18 @@ void app_shutdown(nikola::App* app) {
 
 void app_update(nikola::App* app, const nikola::f64 delta_time) {
   // Quit the application when the specified exit key is pressed
+  
   if(nikola::input_key_pressed(nikola::KEY_ESCAPE)) {
     nikola::event_dispatch(nikola::Event{.type = nikola::EVENT_APP_QUIT});
     return;
   }
 
   // Disable/enable the GUI
+  
   if(nikola::input_key_pressed(nikola::KEY_F1)) {
     nikola::gui_toggle_active();
     app->frame_data.camera.is_active = !nikola::gui_is_active();
-  
-    nikola::physics_world_set_paused(nikola::gui_is_active());
   }
-
-  if(nikola::input_key_pressed(nikola::KEY_S)) {
-    app->cubes.emplace_back(app->frame_data.camera.position, app->mesh_id);
-  }
-
-  // Raycast test
-  nikola::Ray ray = {
-    .position  = app->frame_data.camera.position, 
-    .direction = app->frame_data.camera.front,
-  };
-  nikola::physics_world_check_raycast(ray, on_raycast_hit);
 
   // Update the camera
   nikola::camera_update(app->frame_data.camera);
@@ -219,23 +152,23 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 
 void app_render(nikola::App* app) {
   // Render 3D 
+  
   nikola::renderer_begin(app->frame_data);
 
-  // Plane render
-  
-  nikola::Transform transform = nikola::physics_body_get_transform(app->plane_body);
-  nikola::transform_scale(transform, nikola::collider_get_extents(app->plane_collider));
-  nikola::renderer_queue_mesh(app->mesh_id, transform, app->material_id);
+  nikola::Transform transform;
 
-  // Cubes render
+  transform = nikola::physics_body_get_transform(app->floor_body);
+  nikola::transform_scale(transform, nikola::Vec3(32.0f, 1.0f, 32.0f));
+  nikola::renderer_queue_mesh(app->mesh_id, transform);
   
-  for(auto& cube : app->cubes) {
-    cube.render();
-  }
+  transform = nikola::physics_body_get_transform(app->cube_body);
+  nikola::transform_scale(transform, nikola::Vec3(1.0f));
+  nikola::renderer_queue_mesh(app->mesh_id, transform, app->material_id);
 
   nikola::renderer_end();
   
   // Render 2D 
+  
   nikola::batch_renderer_begin();
   
   nikola::i32 width, height; 
@@ -250,18 +183,9 @@ void app_render_gui(nikola::App* app) {
     return;
   }
 
-  // Begin GUI frame
   nikola::gui_begin();
   
-  // Entities 
-  
-  nikola::gui_begin_panel("Entities");
-  nikola::gui_edit_physics_body("Plane body", app->plane_body);
-  nikola::gui_edit_collider("Plane collider", app->plane_collider);
-
-  for(nikola::sizei i = 0; i < app->cubes.size(); i++) {
-    app->cubes[i].render_gui(("Cube " + std::to_string(i))); 
-  }
+  nikola::gui_begin_panel("Scene");
 
   // Frame 
   nikola::gui_edit_frame("Frame", &app->frame_data);
@@ -272,7 +196,6 @@ void app_render_gui(nikola::App* app) {
   nikola::gui_end_panel();
 
   nikola::gui_end();
-  // End GUI frame
 }
 
 /// App functions 

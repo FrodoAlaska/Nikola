@@ -520,60 +520,62 @@ void file_write_bytes(File& file, const PhysicsBody* body) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
   NIKOLA_ASSERT(body, "Cannot save an invalid PhysicsBody");
  
-  Vec3 position        = physics_body_get_position(body);
-  Vec4 rotation        = physics_body_get_rotation(body);
-  PhysicsBodyType type = physics_body_get_type(body);
-  bool is_awake        = physics_body_is_awake(body);
-
-  f32 f_data[] = {
-    position.x,   
-    position.y,   
-    position.z,   
-    
-    rotation.x,   
-    rotation.y,   
-    rotation.z,   
-    rotation.w,   
-  };
-
-  u16 u_data[] = {
-    (u16)type, 
-    (u16)is_awake,
-  };
-
-  file_write_bytes(file, f_data, sizeof(f_data));
-  file_write_bytes(file, u_data, sizeof(u_data));
+  // @TODO (Physics)
+  // Vec3 position        = physics_body_get_position(body);
+  // Vec4 rotation        = physics_body_get_rotation(body);
+  // PhysicsBodyType type = physics_body_get_type(body);
+  // bool is_awake        = physics_body_is_awake(body);
+  //
+  // f32 f_data[] = {
+  //   position.x,   
+  //   position.y,   
+  //   position.z,   
+  //   
+  //   rotation.x,   
+  //   rotation.y,   
+  //   rotation.z,   
+  //   rotation.w,   
+  // };
+  //
+  // u16 u_data[] = {
+  //   (u16)type, 
+  //   (u16)is_awake,
+  // };
+  //
+  // file_write_bytes(file, f_data, sizeof(f_data));
+  // file_write_bytes(file, u_data, sizeof(u_data));
 }
 
 void file_write_bytes(File& file, const Collider* collider) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
   NIKOLA_ASSERT(collider, "Cannot save an invalid Collider");
   
-  Vec3 offset  = collider_get_local_transform(collider).position;
-  Vec3 extents = collider_get_extents(collider);
-
-  f32 friction    = collider_get_friction(collider);
-  f32 restitution = collider_get_restitution(collider);
-  f32 density     = collider_get_density(collider);
-
-  i32 sensor = (i32)collider_get_sensor(collider);
-
-  f32 data[] = {
-    offset.x,
-    offset.y,
-    offset.z,
-    
-    extents.x,
-    extents.y,
-    extents.z,
-
-    friction, 
-    restitution, 
-    density,
-  };
-  
-  file_write_bytes(file, data, sizeof(data));
-  file_write_bytes(file, &sensor, sizeof(sensor));
+  // @TODO (Physics)
+  // Vec3 offset  = collider_get_local_transform(collider).position;
+  // Vec3 extents = collider_get_extents(collider);
+  //
+  // f32 friction    = collider_get_friction(collider);
+  // f32 restitution = collider_get_restitution(collider);
+  // f32 density     = collider_get_density(collider);
+  //
+  // i32 sensor = (i32)collider_get_sensor(collider);
+  //
+  // f32 data[] = {
+  //   offset.x,
+  //   offset.y,
+  //   offset.z,
+  //   
+  //   extents.x,
+  //   extents.y,
+  //   extents.z,
+  //
+  //   friction, 
+  //   restitution, 
+  //   density,
+  // };
+  // 
+  // file_write_bytes(file, data, sizeof(data));
+  // file_write_bytes(file, &sensor, sizeof(sensor));
 }
 
 void file_write_string(File& file, const String& string) {
@@ -985,35 +987,37 @@ void file_read_bytes(File& file, AudioListenerDesc* listener) {
 void file_read_bytes(File& file, PhysicsBodyDesc* body_desc) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
 
-  f32 f_data[7] ;
-  file_read_bytes(file, f_data, sizeof(f_data));
-
-  u16 u_data[2];
-  file_read_bytes(file, u_data, sizeof(u_data));
-
-  // Read the data into the desc
-  body_desc->position       = Vec3(f_data[0], f_data[1], f_data[2]);
-  body_desc->type           = (PhysicsBodyType)u_data[0];
-  body_desc->rotation_axis  = Vec3(f_data[3], f_data[4], f_data[5]);
-  body_desc->rotation_angle = f_data[6];
-  body_desc->is_awake       = (bool)u_data[1];
+  // @TODO (Physics)
+  // f32 f_data[7] ;
+  // file_read_bytes(file, f_data, sizeof(f_data));
+  //
+  // u16 u_data[2];
+  // file_read_bytes(file, u_data, sizeof(u_data));
+  //
+  // // Read the data into the desc
+  // body_desc->position       = Vec3(f_data[0], f_data[1], f_data[2]);
+  // body_desc->type           = (PhysicsBodyType)u_data[0];
+  // body_desc->rotation_axis  = Vec3(f_data[3], f_data[4], f_data[5]);
+  // body_desc->rotation_angle = f_data[6];
+  // body_desc->is_awake       = (bool)u_data[1];
 }
 
 void file_read_bytes(File& file, ColliderDesc* collider_desc) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
 
-  f32 data[9];
-  file_read_bytes(file, data, sizeof(data));
-
-  i32 sensor; 
-  file_read_bytes(file, &sensor, sizeof(sensor));
-
-  collider_desc->position    = Vec3(data[0], data[1], data[2]);
-  collider_desc->extents     = Vec3(data[3], data[4], data[5]);
-  collider_desc->friction    = data[6];
-  collider_desc->restitution = data[7];
-  collider_desc->density     = data[8];
-  collider_desc->is_sensor   = (bool)sensor;
+  // @TODO (Physics)
+  // f32 data[9];
+  // file_read_bytes(file, data, sizeof(data));
+  //
+  // i32 sensor; 
+  // file_read_bytes(file, &sensor, sizeof(sensor));
+  //
+  // collider_desc->position    = Vec3(data[0], data[1], data[2]);
+  // collider_desc->extents     = Vec3(data[3], data[4], data[5]);
+  // collider_desc->friction    = data[6];
+  // collider_desc->restitution = data[7];
+  // collider_desc->density     = data[8];
+  // collider_desc->is_sensor   = (bool)sensor;
 }
 
 void file_read_string(File& file, String* str) {

@@ -22,9 +22,15 @@ if(WIN32)
   
   ### Build Flags ### 
   ###############################
-  set(NIKOLA_BUILD_FLAGS
+  set(NIKOLA_DEBUG_BUILD_FLAGS
     "/W0"
   )
+  set(NIKOLA_RELEASE_BUILD_FLAGS
+    "/W0 -O3"
+  )
+
+  set(CMAKE_CXX_FLAGS_DEBUG   ${NIKOLA_DEBUG_BUILD_FLAGS})
+  set(CMAKE_CXX_FLAGS_RELEASE ${NIKOLA_RELEASE_BUILD_FLAGS})
   ###############################
 elseif(LINUX) 
   if(CMAKE_BUILD_TYPE STREQUAL "Debug") 

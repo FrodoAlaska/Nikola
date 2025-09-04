@@ -3,8 +3,27 @@
 #include "nikola/nikola_math.h"
 #include "nikola/nikola_containers.h"
 
-#include <q3.h>
-#include <dynamics/q3Contact.h>
+#include <Jolt/Jolt.h>
+
+#include <Jolt/RegisterTypes.h>
+
+#include <Jolt/Core/Factory.h>
+#include <Jolt/Core/TempAllocator.h>
+#include <Jolt/Core/JobSystemThreadPool.h>
+
+#include <Jolt/Physics/PhysicsSettings.h>
+#include <Jolt/Physics/PhysicsSystem.h>
+
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include <Jolt/Physics/Collision/BroadPhase/BroadPhaseLayer.h>
+#include <Jolt/Physics/Collision/BroadPhase/BroadPhaseLayerInterfaceTable.h>
+#include <Jolt/Physics/Collision/BroadPhase/ObjectVsBroadPhaseLayerFilterTable.h>
+#include <Jolt/Physics/Collision/ObjectLayerPairFilterTable.h>
+
+#include <Jolt/Physics/Body/BodyCreationSettings.h>
+#include <Jolt/Physics/Body/BodyActivationListener.h>
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -14,231 +33,129 @@ namespace nikola { // Start of nikola
 /// *** Physics ***
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// Private functions declarations
+/// NKBodyActivationListener  
+class NKBodyActivationListener : public JPH::BodyActivationListener
+{
+public:
+	void OnBodyActivated(const JPH::BodyID &inBodyID, JPH::uint64 inBodyUserData) override {
+	}
 
-static Vec3 q3vec_to_vec(const q3Vec3& vec);
-static Quat q3quaternion_to_quat(const q3Quaternion& quat);
-static Mat3 q3mat_to_mat(const q3Mat3& mat);
-static Transform q3transform_to_transform(const q3Transform& trans);
-static q3Vec3 vec_to_q3vec(const Vec3& vec);
-static q3Quaternion quat_to_q3quaternion(const Quat& quat);
-static q3Mat3 mat_to_q3mat(const Mat3& mat);
-static q3BodyType body_type_to_q3body_type(const PhysicsBodyType type);
-
-/// Private functions declarations
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// Forward declarations
-
-class ContanctListener;
-
-/// Forward declarations
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// PhysicsBody 
-struct PhysicsBody {
-  u64 id;
-  q3Body* body; 
-
-  PhysicsBodyType type;
-
-  void* user_data;
+	void OnBodyDeactivated(const JPH::BodyID &inBodyID, JPH::uint64 inBodyUserData) override {
+	}
 };
-/// PhysicsBody 
+/// NKBodyActivationListener  
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// Collider
-struct Collider {
-  sizei world_index;
-  
-  q3Box* box; 
-  PhysicsBody* body;
+/// NKContactListener  
+class NKContactListener : public JPH::ContactListener
+{
+public:
+	JPH::ValidateResult OnContactValidate(const JPH::Body& inBody1, 
+                                        const JPH::Body& inBody2, 
+                                        JPH::RVec3Arg inBaseOffset, 
+                                        const JPH::CollideShapeResult& inCollisionResult) override {
+		return JPH::ValidateResult::AcceptAllContactsForThisBodyPair;
+	}
 
-  Transform local; 
-  Vec3 extents; 
+	void OnContactAdded(const JPH::Body& inBody1, 
+                      const JPH::Body& inBody2, 
+                      const JPH::ContactManifold& inManifold, 
+                      JPH::ContactSettings& ioSettings) override {
+	}
 
-  void* user_data;
+	void OnContactPersisted(const JPH::Body& inBody1, 
+                          const JPH::Body& inBody2, 
+                          const JPH::ContactManifold& inManifold, 
+                          JPH::ContactSettings& ioSettings) override {
+	}
+
+	void OnContactRemoved(const JPH::SubShapeIDPair& inSubShapePair) override {
+	}
 };
-/// Collider
+/// NKContactListener  
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// PhysicsWorld
 struct PhysicsWorld {
-  q3Scene* scene             = nullptr;
-  ContanctListener* listener = nullptr; 
+  JPH::TempAllocatorImpl* temp_allocater;
+  JPH::JobSystemThreadPool* job_system;
+
+  JPH::BroadPhaseLayerInterfaceTable* bp_layer_table;
+  JPH::ObjectLayerPairFilterTable* obj_vs_obj_layer_table;
+  JPH::ObjectVsBroadPhaseLayerFilterTable* obj_vs_bp_layer_table;
+  JPH::PhysicsSystem physics_system;
+
+  NKBodyActivationListener activation_listener;
+  NKContactListener contact_listener;
+
+  JPH::BodyInterface* body_interface;
+
+  DynamicArray<JPH::Ref<JPH::Shape>> shapes; 
+  DynamicArray<JPH::BodyID> bodies;
+  Queue<JPH::BodyInterface::AddState> batches_queue;
 
   bool is_paused = false;
-
-  OnCollisionFunc begin_func;
-  OnCollisionFunc end_func; 
-  OnRayIntersectionFunc ray_func;
-
-  HashMap<u64, PhysicsBody*> bodies; 
-  DynamicArray<Collider*> colliders;
 };
 
-static PhysicsWorld s_world{};
+static PhysicsWorld* s_world;
 /// PhysicsWorld
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// ContanctListener
-///
-/// @NOTE (30/5/2025, Mohamed): SADLY, qu3e requires sub-classing this class for any information 
-/// on contacts between bodies and/or colliders. It is VERY out of place, but 
-/// what can you do?
-///
-class ContanctListener : public q3ContactListener
-{
-  public: 
-    void* user_data = nullptr;
-
-  public:
-    void BeginContact(const q3ContactConstraint *contact) {
-      CollisionPoint point = {
-        .body_a = ((PhysicsBody*)contact->bodyA->GetUserData()),
-        .body_b = ((PhysicsBody*)contact->bodyB->GetUserData()),
-
-        .coll_a = ((Collider*)contact->A->GetUserdata()),
-        .coll_b = ((Collider*)contact->B->GetUserdata()), 
-
-        .user_data = user_data,
-      };
-
-      s_world.begin_func(point);
-    }
-
-    void EndContact(const q3ContactConstraint* contact) {
-      CollisionPoint point = {
-        .body_a = ((PhysicsBody*)contact->bodyA->GetUserData()),
-        .body_b = ((PhysicsBody*)contact->bodyB->GetUserData()),
-
-        .coll_a = ((Collider*)contact->A->GetUserdata()),
-        .coll_b = ((Collider*)contact->B->GetUserdata()),
-
-        .user_data = user_data,
-      };
-
-      s_world.end_func(point);
-    }
-};
-/// ContanctListener
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// QueryCallback 
-class QueryCallback : public q3QueryCallback
-{
-  public:
-    q3RaycastData data;
-
-  public:
-    void Init(const q3RaycastData& raycast) {
-      data = raycast;
-    }
-
-    bool ReportShape( q3Box *box ) {
-      if(!box->Raycast(box->body->GetTransform(), &data)) {
-        return false;
-      }
-
-      Ray ray = {
-        .position  = q3vec_to_vec(data.start),
-        .direction = q3vec_to_vec(data.dir),
-      };
-
-      RayIntersection intersect = {
-        .point           = q3vec_to_vec(data.GetImpactPoint()),
-        .normal          = q3vec_to_vec(data.normal),
-        .time_of_impact  = data.toi,
-        .has_intersected = true,
-      };
-      
-      if(s_world.ray_func) {
-        Collider* coll = ((Collider*)box->GetUserdata());
-        s_world.ray_func(ray, intersect, coll);
-      }
-
-      return true;
-    }
-};
-/// QueryCallback 
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// Callbacks 
-
-static void on_collision_begin(const CollisionPoint& point) {
-  // @NOTE: Placeholder collision callback
-}
-
-static void on_collision_end(const CollisionPoint& point) {
-  // @NOTE: Placeholder collision callback
-}
-
-/// Callbacks 
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
 /// Private functions
 
-static Vec3 q3vec_to_vec(const q3Vec3& vec) {
-  return Vec3(vec.x, vec.y, vec.z);
+static inline Vec3 jph_vec3_to_vec3(const JPH::Vec3& vec) {
+  return Vec3(vec[0], vec[1], vec[2]);
 }
 
-static Quat q3quaternion_to_quat(const q3Quaternion& quat) {
-  return Quat(quat.w, quat.x, quat.y, quat.z);
+static inline Vec4 jph_vec4_to_vec4(const JPH::Vec4& vec) {
+  return Vec4(vec[0], vec[1], vec[2], vec[3]);
 }
 
-static Mat3 q3mat_to_mat(const q3Mat3& mat) {
-  Vec3 x = q3vec_to_vec(mat.ex);
-  Vec3 y = q3vec_to_vec(mat.ey);
-  Vec3 z = q3vec_to_vec(mat.ez);
-
-  return Mat3(x, y, z);
+static inline Quat jph_quat_to_quat(const JPH::Quat& quat) {
+  return Quat(quat.GetX(), quat.GetY(), quat.GetZ(), quat.GetW());
 }
 
-static Transform q3transform_to_transform(const q3Transform& trans) {
-  Vec3 pos = q3vec_to_vec(trans.position);
-  Mat3 rot = q3mat_to_mat(trans.rotation);
-
-  Transform transform; 
-  transform_translate(transform, pos);
-  transform_rotate(transform, quat_set_mat3(rot));
-
-  return transform;
-}
-
-static q3Vec3 vec_to_q3vec(const Vec3& vec) {
-  return q3Vec3(vec.x, vec.y, vec.z);
-}
-
-static q3Quaternion quat_to_q3quaternion(const Quat& quat) {
-  return q3Quaternion(quat.x, quat.y, quat.z, quat.w);
-}
-
-static q3Mat3 mat_to_q3mat(const Mat3& mat) {
-  q3Vec3 ex = vec_to_q3vec(mat[0]);
-  q3Vec3 ey = vec_to_q3vec(mat[1]);
-  q3Vec3 ez = vec_to_q3vec(mat[2]);
-
-  return q3Mat3(ex, ey, ez);
-}
-
-static q3BodyType body_type_to_q3body_type(const PhysicsBodyType type) {
+static inline PhysicsBodyType jph_body_type_to_body_type(const JPH::EMotionType type) {
   switch(type) {
-    case PHYSICS_BODY_STATIC:
-      return eStaticBody;
-    case PHYSICS_BODY_DYNAMIC:
-      return eDynamicBody;
-    case PHYSICS_BODY_KINEMATIC:
-      return eKinematicBody;
+    case JPH::EMotionType::Static:
+      return PHYSICS_BODY_STATIC;
+    case JPH::EMotionType::Dynamic:
+      return PHYSICS_BODY_DYNAMIC;
+    case JPH::EMotionType::Kinematic:
+      return PHYSICS_BODY_KINEMATIC;
   }
 }
+
+static inline JPH::Vec3 vec3_to_jph_vec3(const Vec3& vec) {
+  return JPH::Vec3(vec.x, vec.y, vec.z);
+}
+
+static inline JPH::Vec4 vec4_to_jph_vec4(const Vec4& vec) {
+  return JPH::Vec4(vec.x, vec.y, vec.z, vec.w);
+}
+
+static inline JPH::Quat quat_to_jph_quat(const Quat& quat) {
+  return JPH::Quat(quat.x, quat.y, quat.z, quat.w);
+}
+
+static inline JPH::EMotionType body_type_to_jph_body_type(const PhysicsBodyType type) {
+  switch(type) {
+    case PHYSICS_BODY_STATIC:
+      return JPH::EMotionType::Static;
+    case PHYSICS_BODY_DYNAMIC:
+      return JPH::EMotionType::Dynamic;
+    case PHYSICS_BODY_KINEMATIC:
+      return JPH::EMotionType::Kinematic;
+  }
+}
+
+static bool assert_impl(const char* expr, const char* msg, const char* file, JPH::uint line) {
+  logger_log_assert(expr, msg, file, line);
+  return true;
+};
 
 /// Private functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -246,444 +163,265 @@ static q3BodyType body_type_to_q3body_type(const PhysicsBodyType type) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Physics world functions
 
-void physics_world_init(const Vec3& gravity, const f32 timestep) {
-  s_world.scene = new q3Scene(timestep, vec_to_q3vec(gravity));
+void physics_world_init(const PhysicsWorldDesc& desc) {
+  // World init
+  s_world = new PhysicsWorld{};
 
-  s_world.begin_func = on_collision_begin;
-  s_world.end_func   = on_collision_end;
-  s_world.listener   = new ContanctListener;
-  s_world.scene->SetContactListener(s_world.listener);
+  // Jolt init
+  
+  JPH::RegisterDefaultAllocator();
+  JPH::Factory::sInstance = new JPH::Factory();
+  JPH::RegisterTypes();
+
+  // Assert and trace implementations 
+  JPH_IF_ENABLE_ASSERTS(JPH::AssertFailed = assert_impl;)
+
+  // Allocaters and job systems init
+
+  s_world->temp_allocater = new JPH::TempAllocatorImpl(desc.allocater_size);
+  s_world->job_system     = new JPH::JobSystemThreadPool(desc.max_jobs, desc.max_barriers, desc.max_threads);
+
+  // Broad phase layers init
+
+  s_world->bp_layer_table = new JPH::BroadPhaseLayerInterfaceTable(PHYSICS_OBJECT_LAYERS_MAX, 
+                                                                   PHYSICS_BROAD_PHASE_LAYERS_MAX); 
+
+  // Setting fiters that are available for both broad phase layers
+  
+  for(u32 i = PHYSICS_OBJECT_LAYER_0; i <= PHYSICS_OBJECT_LAYER_5; i++) {
+    s_world->bp_layer_table->MapObjectToBroadPhaseLayer((JPH::ObjectLayer)i, 
+                                                        (JPH::BroadPhaseLayer)PHYSICS_BROAD_PHASE_LAYER_STATIC);
+    s_world->bp_layer_table->MapObjectToBroadPhaseLayer((JPH::ObjectLayer)i, 
+                                                        (JPH::BroadPhaseLayer)PHYSICS_BROAD_PHASE_LAYER_DYNAMIC);
+  }
+  
+  // Setting fiters that are available for only the STATIC broad phase layer
  
-  s_world.bodies.reserve(16);
-  s_world.colliders.reserve(16);
+  for(u32 i = PHYSICS_OBJECT_LAYER_6; i <= PHYSICS_OBJECT_LAYER_7; i++) {
+    s_world->bp_layer_table->MapObjectToBroadPhaseLayer((JPH::ObjectLayer)i, 
+                                                        (JPH::BroadPhaseLayer)PHYSICS_BROAD_PHASE_LAYER_STATIC);
+  }
 
-  NIKOLA_LOG_INFO("The physics world was successfully initialized");
+  // Setting fiters that are available for only the DYNAMIC broad phase layer
+ 
+  for(u32 i = PHYSICS_OBJECT_LAYER_8; i <= PHYSICS_OBJECT_LAYER_9; i++) {
+    s_world->bp_layer_table->MapObjectToBroadPhaseLayer((JPH::ObjectLayer)i, 
+                                                        (JPH::BroadPhaseLayer)PHYSICS_BROAD_PHASE_LAYER_DYNAMIC);
+  }
+
+  // Object layers init
+  // @TEMP (Physics)
+  
+  s_world->obj_vs_obj_layer_table = new JPH::ObjectLayerPairFilterTable(PHYSICS_OBJECT_LAYERS_MAX);
+  s_world->obj_vs_obj_layer_table->EnableCollision((JPH::ObjectLayer)PHYSICS_OBJECT_LAYER_0, 
+                                                   (JPH::ObjectLayer)PHYSICS_OBJECT_LAYER_1);
+
+  // Object/Broad phase layers init
+  s_world->obj_vs_bp_layer_table = new JPH::ObjectVsBroadPhaseLayerFilterTable(*s_world->bp_layer_table, 
+                                                                               PHYSICS_BROAD_PHASE_LAYERS_MAX,   
+                                                                               *s_world->obj_vs_obj_layer_table, 
+                                                                               PHYSICS_OBJECT_LAYERS_MAX);
+
+  // Physics system init
+  
+  s_world->physics_system.Init(desc.max_bodies, 
+                              desc.max_mutexes,
+                              desc.max_body_pairs, 
+                              desc.max_contact_constraints, 
+                              *s_world->bp_layer_table, 
+                              *s_world->obj_vs_bp_layer_table, 
+                              *s_world->obj_vs_obj_layer_table);  
+  s_world->physics_system.SetGravity(vec3_to_jph_vec3(desc.gravity));
+
+  // Listeners init
+
+  s_world->physics_system.SetBodyActivationListener(&s_world->activation_listener);
+  s_world->physics_system.SetContactListener(&s_world->contact_listener);
+
+  // Body interface init
+  s_world->body_interface = &s_world->physics_system.GetBodyInterface();
 }
 
 void physics_world_shutdown() {
-  if(!s_world.scene) {
+  // Delete all the bodies in the world
+  
+  for(sizei i = 0; i < s_world->bodies.size(); i++) {
+    JPH::BodyID body = s_world->bodies[i];
+
+    s_world->body_interface->RemoveBody(body);
+    s_world->body_interface->DestroyBody(body);
+  }
+
+  s_world->bodies.clear();
+  s_world->shapes.clear();
+
+  // De-initialize Jolt
+
+  JPH::UnregisterTypes();
+
+  delete s_world->bp_layer_table;
+  delete s_world->obj_vs_obj_layer_table;
+  delete s_world->obj_vs_bp_layer_table;
+
+  delete JPH::Factory::sInstance;
+  delete s_world->job_system;
+  delete s_world->temp_allocater;
+  delete s_world;
+}
+ 
+void physics_world_step(const f32 delta_time, const i32 collision_steps) {
+  if(s_world->is_paused) {
     return;
+  }
+
+  s_world->physics_system.Update(delta_time, collision_steps, s_world->temp_allocater, s_world->job_system);
+}
+
+PhysicsBodyID physics_world_create_body(const PhysicsBodyDesc& desc) {
+  NIKOLA_ASSERT((desc.collider_id._id != COLLIDER_ID_INVALID), "Invalid collider ID given to body creation function");
+
+  // Create the body
+  
+  JPH::BodyCreationSettings body_settings(s_world->shapes[desc.collider_id._id].GetPtr(), 
+                                          vec3_to_jph_vec3(desc.position), 
+                                          quat_to_jph_quat(desc.rotation), 
+                                          body_type_to_jph_body_type(desc.type), 
+                                          (JPH::ObjectLayer)desc.layers);
+
+  body_settings.mRestitution   = desc.restitution;
+  body_settings.mFriction      = desc.friction;
+  body_settings.mGravityFactor = desc.gravity_factor;
+  body_settings.mIsSensor      = desc.is_sensor;  
+  body_settings.mUserData      = desc.user_data ? (*(JPH::uint64*)desc.user_data) : 0;
+
+  JPH::Body* body = s_world->body_interface->CreateBody(body_settings); 
+
+  // Add the body to our internal buffer
+  
+  s_world->bodies.push_back(body->GetID());
+  PhysicsBodyID body_id {
+    ._id = (u32)(s_world->bodies.size() - 1),
   };
 
-  // Shuting down the scene 
-  s_world.scene->Shutdown();
+  return body_id;
+}
+
+void physics_world_add_body(const PhysicsBodyID& body_id, const bool is_active) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
  
-  // Clearing all bodies
-  for(auto& [id, body] : s_world.bodies) {
-    delete body; 
-  }
-  s_world.bodies.clear();
-  
-  // Clearing all colliders
-  for(auto& collider : s_world.colliders) {
-    delete collider; 
-  }
-  s_world.colliders.clear();
-
-  // Bye bye, world
-  delete s_world.scene;
-  
-  NIKOLA_LOG_INFO("The physics world was successfully shutdown"); 
+  JPH::EActivation active = is_active ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
+  JPH::BodyID body        = s_world->bodies[body_id._id];
+  s_world->body_interface->AddBody(body, active);
 }
 
-void physics_world_step() {
-  if(s_world.is_paused) {
-    return;
-  }
+PhysicsBodyID physics_world_create_and_add_body(const PhysicsBodyDesc& desc, const bool is_active) {
+  PhysicsBodyID id = physics_world_create_body(desc);
+  physics_world_add_body(id, is_active);
 
-  s_world.scene->Step();
+  return id;
 }
 
-void physics_world_set_paused(const bool paused) {
-  s_world.is_paused = paused;
+void physics_world_prepare_bodies(PhysicsBodyID* bodies, const sizei bodies_count) {
+  JPH::BodyInterface::AddState batch = s_world->body_interface->AddBodiesPrepare(&s_world->bodies[bodies[0]._id], bodies_count);
+  s_world->batches_queue.push(batch);
+}
+
+void physics_world_finalize_bodies(PhysicsBodyID* bodies, const sizei bodies_count, const bool is_active) {
+  JPH::BodyInterface::AddState batch = s_world->batches_queue.front();
+  JPH::EActivation active            = is_active ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
+
+  s_world->body_interface->AddBodiesFinalize(&s_world->bodies[bodies[0]._id], bodies_count, batch, active);
+  s_world->batches_queue.pop();
+}
+
+void physics_world_abort_bodies(PhysicsBodyID* bodies, const sizei bodies_count) {
+  JPH::BodyInterface::AddState batch = s_world->batches_queue.front();
+  s_world->body_interface->AddBodiesAbort(&s_world->bodies[bodies[0]._id], bodies_count, batch);
+  
+  s_world->batches_queue.pop();
 }
 
 void physics_world_set_gravity(const Vec3& gravity) {
-  s_world.scene->SetGravity(vec_to_q3vec(gravity));
+  s_world->physics_system.SetGravity(vec3_to_jph_vec3(gravity));
 }
 
-void physics_world_set_iterations_count(const i32 iterations) {
-  s_world.scene->SetIterations(iterations); 
-}
-
-void physics_world_set_collision_callback(const OnCollisionFunc& begin_func, const OnCollisionFunc& end_func, void* user_data) {
-  s_world.begin_func = !begin_func ? on_collision_begin : begin_func;
-  s_world.end_func   = !end_func ? on_collision_end : end_func;
-
-  s_world.listener->user_data = user_data;
-}
-
-void physics_world_check_raycast(const Ray& ray, const OnRayIntersectionFunc& ray_func) {
-  s_world.ray_func = ray_func;
-
-  q3RaycastData data;
-  data.Set(vec_to_q3vec(ray.position), vec_to_q3vec(ray.direction), 10000.0f);
-
-  QueryCallback callback; 
-  callback.Init(data);
-
-  s_world.scene->RayCast(&callback, data);
-}
-
-Vec3 physics_world_get_gravity() {
-  return q3vec_to_vec(s_world.scene->GetGravity());
+void physics_world_toggle_paused() {
+  s_world->is_paused = !s_world->is_paused;
 }
 
 /// Physics world functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// PhysicsBody functions
+/// Physics body functions
 
-PhysicsBody* physics_body_create(const PhysicsBodyDesc& desc) {
-  // Allocate a new body
-  PhysicsBody* body = new PhysicsBody{};
+Transform physics_body_get_transform(const PhysicsBodyID& body_id) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
 
-  // q3Body init
-  q3BodyDef def; 
-  def.axis      = vec_to_q3vec(desc.rotation_axis);
-  def.angle     = desc.rotation_angle;
-  def.position  = vec_to_q3vec(desc.position);
- 
-  def.layers    = desc.layers;
-  def.bodyType  = body_type_to_q3body_type(desc.type);
-  def.awake     = desc.is_awake;
-  
-  def.userData  = body;
-  
-  def.lockAxisX = desc.locked_axises.x;
-	def.lockAxisY = desc.locked_axises.y;
-	def.lockAxisZ = desc.locked_axises.z;
+  Transform transform;
+  transform.position = jph_vec3_to_vec3(s_world->body_interface->GetCenterOfMassPosition(body));
+  transform.rotation = jph_quat_to_quat(s_world->body_interface->GetRotation(body));
 
-  // Physics body init
-  body->body      = s_world.scene->CreateBody(def);
-  body->user_data = desc.user_data;
-  body->type      = desc.type;
-  body->id        = random_u64();
-
-  // Add the body to the world
-  s_world.bodies[body->id] = body;
-
-  return body;
+  transform_apply(transform);
+  return transform;
 }
 
-void physics_body_destroy(PhysicsBody* body) {
-  if(!body) {
-    return;
-  }
-
-  s_world.scene->RemoveBody(body->body);
-  s_world.bodies.erase(body->id);
-
-  delete body;
-}
-
-Collider* physics_body_add_collider(PhysicsBody* body, const ColliderDesc& desc) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_add_collider");
-
-  // Allocate a new collider
-  Collider* coll = new Collider{};
-
-  // Transform init
-  q3Transform trans; 
-  q3Identity(trans);
-  trans.position = vec_to_q3vec(desc.position);
-
-  // Box definition init
-  q3BoxDef def;
-  def.Set(trans, vec_to_q3vec(desc.extents));
-  def.SetFriction(desc.friction);
-  def.SetRestitution(desc.restitution);
-  def.SetDensity(desc.density);
-  def.SetSensor(desc.is_sensor);
-
-  // Box init
-  const q3Box* box = body->body->AddBox(def);
-  box->SetUserdata(coll);
-
-  // Add the box
-  coll->box       = (q3Box*)box;
-  coll->body      = body; 
-  coll->local     = q3transform_to_transform(box->local);
-  coll->extents   = desc.extents;
-  coll->user_data = desc.user_data;
-  
-  // Add the collider to the world
-  coll->world_index = s_world.colliders.size();
-  s_world.colliders.push_back(coll);
-
-  return coll;
-}
-
-void physics_body_remove_collider(PhysicsBody* body, Collider* coll) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_remove_collider");
-  NIKOLA_ASSERT(coll, "Invalid collider given to physics_body_remove_collider");
-
-  body->body->RemoveBox(coll->box);
-  s_world.colliders.erase(s_world.colliders.begin() + coll->world_index);
-
-  delete coll;
-}
-
-void physics_body_apply_force(PhysicsBody* body, const Vec3& force) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_apply_force");
-  
-  body->body->ApplyLinearForce(vec_to_q3vec(force));
-}
-
-void physics_body_apply_force_at(PhysicsBody* body, const Vec3& force, const Vec3& point) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_apply_force_at");
-  
-  body->body->ApplyForceAtWorldPoint(vec_to_q3vec(force), vec_to_q3vec(point));
-}
-
-void physics_body_apply_impulse(PhysicsBody* body, const Vec3& impulse) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_apply_impulse");
-  
-  body->body->ApplyLinearImpulse(vec_to_q3vec(impulse));
-}
-
-void physics_body_apply_impulse_at(PhysicsBody* body, const Vec3& impulse, const Vec3& point) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_apply_impulse_at");
-  
-  body->body->ApplyLinearImpulseAtWorldPoint(vec_to_q3vec(impulse), vec_to_q3vec(point));
-}
-
-void physics_body_apply_torque(PhysicsBody* body, const Vec3& torque) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_apply_torque");
-  
-  body->body->ApplyTorque(vec_to_q3vec(torque));
-}
-
-void physics_body_set_position(PhysicsBody* body, const Vec3& pos) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_set_position");
-  
-  body->body->SetTransform(vec_to_q3vec(pos));
-}
-
-void physics_body_set_rotation(PhysicsBody* body, const Vec3& axis, const f32 angle) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_set_rotation");
-  
-  q3Vec3 pos = vec_to_q3vec(physics_body_get_transform(body).position);
-  body->body->SetTransform(pos, vec_to_q3vec(axis), angle);
-}
-
-void physics_body_set_linear_velocity(PhysicsBody* body, const Vec3& vel) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_set_linear_velocity");
-  
-  body->body->SetLinearVelocity(vec_to_q3vec(vel));
-}
-
-void physics_body_set_angular_velocity(PhysicsBody* body, const Vec3& vel) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_set_angular_velocity");
-  
-  body->body->SetAngularVelocity(vec_to_q3vec(vel));
-}
-
-void physics_body_set_awake(PhysicsBody* body, const bool awake) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_set_awake");
-  
-  if(awake) {
-    body->body->SetToAwake();
-  }
-  else {
-    body->body->SetToSleep();
-  }
-}
-
-void physics_body_set_layers(PhysicsBody* body, const i32 layers) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_set_awake");
-
-  body->body->SetLayers(layers);
-}
-
-PhysicsBodyType physics_body_get_type(const PhysicsBody* body) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_get_type");
-  
-  return body->type;
-}
-
-Vec3 physics_body_get_position(const PhysicsBody* body) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_get_position");
-  
-  return q3vec_to_vec(body->body->GetTransform().position);
-}
-
-Vec4 physics_body_get_rotation(const PhysicsBody* body) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_get_rotation");
-  
-  q3Quaternion quat_rot = body->body->GetQuaternion();
-
-  q3Vec3 axis; 
-  f32 angle; 
-  quat_rot.ToAxisAngle(&axis, &angle); 
-
-  return Vec4(q3vec_to_vec(axis), angle);
-}
-
-Quat physics_body_get_quaternion(const PhysicsBody* body) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_get_quaternion");
-  
-  return q3quaternion_to_quat(body->body->GetQuaternion());
-}
-
-Transform physics_body_get_transform(const PhysicsBody* body) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_get_transform");
-  
-  return q3transform_to_transform(body->body->GetTransform());
-}
-
-Vec3 physics_body_get_linear_velocity(const PhysicsBody* body) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_get_linear_velocity");
-  
-  return q3vec_to_vec(body->body->GetLinearVelocity());
-}
-
-Vec3 physics_body_get_angular_velocity(const PhysicsBody* body) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_get_angular_velocity");
-  
-  return q3vec_to_vec(body->body->GetAngularVelocity());
-}
-
-bool physics_body_is_awake(const PhysicsBody* body) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_is_awake");
-  
-  return body->body->IsAwake();
-}
-
-const i32 physics_body_get_layers(const PhysicsBody* body) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_is_awake");
-  
-  return body->body->GetLayers();
-}
-
-void* physics_body_get_user_data(const PhysicsBody* body) {
-  NIKOLA_ASSERT(body, "Invalid body given to physics_body_get_user_data");
-  
-  return body->user_data;
-}
-
-/// PhysicsBody functions
+/// Physics body functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// Collider functions
 
-RayIntersection collider_check_raycast(const Collider* coll, const Ray& ray) {
-  NIKOLA_ASSERT(coll, "Invalid collider given to collider_check_raycast");
-  
-  RayIntersection intersect = {};
-  q3Box* collider           = coll->box;
-  
-  // Set the Qu3e raycast
-  q3RaycastData raycast;
-  raycast.Set(vec_to_q3vec(ray.position), vec_to_q3vec(ray.direction), 10000.0f);
+ColliderID collider_create(const BoxColliderDesc& desc) {
+  JPH::BoxShapeSettings shape_settings(vec3_to_jph_vec3(desc.half_size));
+  JPH::Shape::ShapeResult result = shape_settings.Create();
 
-  // Check the intersection
-	intersect.has_intersected = collider->Raycast(collider->body->GetTransform(), &raycast);
-  
-  // No point to keep going if there is not intersection
-  if(!intersect.has_intersected) {
-    return intersect;
+  if(!result.IsValid()) {
+    NIKOLA_LOG_ERROR("Failed to create a box collider - %s", result.GetError().c_str());
+    return ColliderID{._id = COLLIDER_ID_INVALID};
   }
 
-  // Fill in some useful information
-  intersect.point          = q3vec_to_vec(raycast.GetImpactPoint());    
-  intersect.normal         = q3vec_to_vec(raycast.normal);
-  intersect.time_of_impact = raycast.toi;   
+  s_world->shapes.push_back(result.Get());
+  ColliderID coll_id = {
+    ._id = (u32)(s_world->shapes.size() - 1),
+  };
 
-  return intersect;
+  return coll_id;
 }
 
-void collider_set_extents(Collider* coll, const Vec3& extents) {
-  NIKOLA_ASSERT(coll, "Invalid collider given to collider_set_extents");
-  
-  coll->extents = extents;
-  coll->box->e  = vec_to_q3vec(extents);
+ColliderID collider_create(const SphereColliderDesc& desc) {
+  JPH::SphereShapeSettings shape_settings(desc.radius);
+  JPH::Shape::ShapeResult result = shape_settings.Create();
+
+  if(!result.IsValid()) {
+    NIKOLA_LOG_ERROR("Failed to create a sphere collider - %s", result.GetError().c_str());
+    return ColliderID{._id = COLLIDER_ID_INVALID};
+  }
+
+  s_world->shapes.push_back(result.Get());
+  ColliderID coll_id = {
+    ._id = (u32)(s_world->shapes.size() - 1),
+  };
+
+  return coll_id;
 }
 
-void collider_set_local_position(Collider* coll, const Vec3& local_pos) {
-  NIKOLA_ASSERT(coll, "Invalid collider given to collider_set_local_position");
-  
-  coll->box->local.position = vec_to_q3vec(local_pos);
-}
+ColliderID collider_create(const CapsuleColliderDesc& desc) {
+  JPH::CapsuleShapeSettings shape_settings(desc.half_height, desc.radius);
+  JPH::Shape::ShapeResult result = shape_settings.Create();
 
-void collider_set_friction(Collider* coll, const f32 friction) {
-  NIKOLA_ASSERT(coll, "Invalid collider given to collider_set_friction");
-  
-  coll->box->friction = friction;
-}
+  if(!result.IsValid()) {
+    NIKOLA_LOG_ERROR("Failed to create a capsule collider - %s", result.GetError().c_str());
+    return ColliderID{._id = COLLIDER_ID_INVALID};
+  }
 
-void collider_set_restitution(Collider* coll, const f32 restitution) {
-  NIKOLA_ASSERT(coll, "Invalid collider given to collider_set_restitution");
-  
-  coll->box->restitution = restitution;
-}
+  s_world->shapes.push_back(result.Get());
+  ColliderID coll_id = {
+    ._id = (u32)(s_world->shapes.size() - 1),
+  };
 
-void collider_set_density(Collider* coll, const f32 density) {
-  NIKOLA_ASSERT(coll, "Invalid collider given to collider_set_density");
-  
-  coll->box->density = density;
-}
-
-void collider_set_user_data(Collider* coll, const void* user_data) {
-  NIKOLA_ASSERT(coll, "Invalid collider given to collider_set_user_data");
-  
-  coll->user_data = (void*)user_data;
-}
-
-PhysicsBody* collider_get_attached_body(const Collider* coll) {
-  NIKOLA_ASSERT(coll, "Invalid collider given to collider_get_attached_body");
-  
-  return coll->body;
-}
-
-Vec3 collider_get_extents(const Collider* coll) {
-  NIKOLA_ASSERT(coll, "Invalid collider given to collider_get_extents");
-  
-  return coll->extents;
-}
-
-f32 collider_get_friction(const Collider* coll) {
-  NIKOLA_ASSERT(coll, "Invalid collider given to collider_get_friction");
-  
-  return coll->box->friction;
-}
-
-f32 collider_get_restitution(const Collider* coll) {
-  NIKOLA_ASSERT(coll, "Invalid collider given to collider_get_restitution");
-  
-  return coll->box->restitution;
-}
-
-f32 collider_get_density(const Collider* coll) {
-  NIKOLA_ASSERT(coll, "Invalid collider given to collider_get_density");
-  
-  return coll->box->density;
-}
-
-bool collider_get_sensor(const Collider* coll) {
-  NIKOLA_ASSERT(coll, "Invalid collider given to collider_get_sensor");
-  
-  return coll->box->sensor;
-}
-
-void* collider_get_user_data(const Collider* coll) {
-  NIKOLA_ASSERT(coll, "Invalid collider given to collider_get_user_data");
-  
-  return coll->user_data;
-}
-
-Transform collider_get_local_transform(const Collider* coll) {
-  NIKOLA_ASSERT(coll, "Invalid collider given to collider_get_local_transform");
-  
-  return q3transform_to_transform(coll->box->local);
-}
-
-Transform collider_get_world_transform(const Collider* coll) {
-  NIKOLA_ASSERT(coll, "Invalid collider given to collider_get_world_transform");
-  
-  return q3transform_to_transform(q3Mul(coll->box->body->GetTransform(), coll->box->local));
+  return coll_id;
 }
 
 /// Collider functions

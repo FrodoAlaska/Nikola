@@ -5,6 +5,12 @@ project(nikola)
 ############################################################
 include(FetchContent)
 
+if(WIN32)
+  if(USE_STATIC_MSVC_RUNTIME_LIBRARY)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  endif()
+endif()
+
 # GLFW
 FetchContent_Declare(
   glfw-3.4 
@@ -18,6 +24,7 @@ FetchContent_Declare(
 )
 
 # OpenAL-Soft
+
 set(ALSOFT_EXAMPLES OFF)
 set(LIBTYPE STATIC)
 
@@ -26,15 +33,14 @@ FetchContent_Declare(
   URL https://github.com/kcat/openal-soft/archive/refs/tags/latest.zip
 )
 
-# QU3E (CUBE)
-set(qu3e_build_demo OFF)
-
+# JoltPhysics
 FetchContent_Declare(
-  qu3e 
-  GIT_REPOSITORY https://github.com/RandyGaul/qu3e
+  jolt 
+  URL           https://github.com/jrouwe/JoltPhysics/archive/refs/tags/v5.3.0.zip
+  SOURCE_SUBDIR "Build"
 )
 
-FetchContent_MakeAvailable(glfw-3.4 glm OpenAL qu3e)
+FetchContent_MakeAvailable(glfw-3.4 glm OpenAL jolt)
 ############################################################
 
 ### Project Variables ###
@@ -51,13 +57,13 @@ set(NIKOLA_INCLUDES
   ${glfw-3.4_SOURCE_DIR}/include
   ${glm_SOURCE_DIR}
   ${OpenAL_SOURCE_DIR}/include
-  ${qu3e_SOURCE_DIR}/src
+  ${qu3e_SOURCE_DIR}/Jolt
 )
 
 set(NIKOLA_LIBRARIES 
   glfw 
   OpenAL
-  qu3e
+  Jolt
 )
 
 # This script includes a bunch of platform-specific variables 
@@ -68,11 +74,10 @@ include(cmake/utils.cmake)
 ### Project Options ###
 ############################################################
 option(NIKOLA_BUILD_SHARED  "Build Nikola as a shared library" OFF)
-option(NIKOLA_BUILD_TESTBED "Build the testbeds with Nikola"   ON)
+option(NIKOLA_BUILD_TESTBED "Build the testbeds with Nikola"   OFF)
 option(NIKOLA_BUILD_NBR     "Build the NBR tool with Nikola"   ON)
 option(NIKOLA_DISTRIBUTE    "Enable the distribution build"    OFF)
 
-# Set it to shared
 if(NIKOLA_BUILD_SHARED)
   set(NIKOLA_BUILD_TYPE SHARED)
   set(BUILD_SHARED_LIBS ON)

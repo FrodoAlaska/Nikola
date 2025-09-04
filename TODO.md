@@ -11,6 +11,19 @@
     - [x] Currently, not all animations that are imported work 
     - [x] I believe that the animation loader works with just GLTF for now, so try to make it work with Collada as well
     - [x] Add the animator to the GUI
+- [] The Physics Question
+    - [] Slowly integrate Jolt
+        - [x] Initialization, shutdown, and update of the physics world
+        - [] Fully integrate physics bodies 
+        - [] Integrate box, sphere, and capsule colliders for now 
+        - [] Add the various physics-related events to our event system
+        - [] Implement Jolt's character controller 
+        - [] Physics materials
+    - [] Add the bodies and colliders to the GUI 
+    - [] Save the physics components as binary files (read and write)
+    - [] Implement mouse to screen and mouse to world for editing levels easier
+    - [] Implement a debug pass
+    - [] Documentation
 - [] Resources 
     - [] Have a few functions specifically for the `NBR*` types to save, load, and unload them.
     - [] Improve the load times of the resource manager
@@ -34,11 +47,9 @@
     - [] Gaussian blur
     - [] Bloom integration 
     - [] Documentation
-- [] The Physics Question
-    - [] Should we make our own physics engine or should we move to something else for now like ReactPhysics3D or Bullet? Either way, definitely not qu3e
-    - [] Implement mouse to screen and mouse to world for editing levels easier
 - [] Threading
     - [] A better job system using fibers
+    - [] Thread pools
 - [] Renderer: Extra primitives 
     - [] More shapes like planes, spheres, and so on.
     - [] Add a debug pass that just copies its framebuffer like the billboard pass. It's fine because it's just for debug purposes

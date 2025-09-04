@@ -37,6 +37,21 @@ const f64 FLOAT_MAX = 3.40282e+38F;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// Macros
+
+/// Convert the given `x` to a value representing a Kibibyte.
+#define KiB(x) (x * 1024)
+
+/// Convert the given `x` to a value representing a Mebibyte.
+#define MiB(x) ((KiB(x)) * 1024)
+
+/// Convert the given `x` to a value representing a Gibibyte.
+#define GiB(x) ((MiB(x)) * 1024)
+
+/// Macros
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// VertexComponentType 
 enum VertexComponentType {
   /// A bit for the position component of a vertex.
@@ -511,6 +526,12 @@ NIKOLA_API const Vec3 quat_to_euler(const Quat& q);
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// Transform functions
+
+/// Apply the transformation given the position, rotation, and scale memebers of `trans`.
+/// 
+/// @NOTE: This is more performant method to edit transforms, sicne it will only update 
+/// the internal matrix once instead of three times.
+NIKOLA_API void transform_apply(Transform& trans);
 
 /// Translate the given `trans` by `pos`
 NIKOLA_API void transform_translate(Transform& trans, const Vec3& pos);

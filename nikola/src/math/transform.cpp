@@ -9,28 +9,22 @@ namespace nikola { // Start of nikola
 /// *** Math transform ***
 
 /// ----------------------------------------------------------------------
-/// Private functions
+/// Transform functions
 
-static void update_transform(Transform& trans) {
+void transform_apply(Transform& trans) {
   trans.transform = mat4_translate(trans.position) *
                     quat_to_mat4(trans.rotation)   *
                     mat4_scale(trans.scale);
 }
 
-/// Private functions
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
-/// Transform functions
-
 void transform_translate(Transform& trans, const Vec3& pos) {
   trans.position = pos; 
-  update_transform(trans);
+  transform_apply(trans);
 }
 
 void transform_rotate(Transform& trans, const Quat& rot) {
   trans.rotation = quat_normalize(rot); 
-  update_transform(trans);
+  transform_apply(trans);
 }
 
 void transform_rotate(Transform& trans, const Vec4& axis_angle) {
@@ -43,7 +37,7 @@ void transform_rotate(Transform& trans, const Vec3& axis, const f32 angle) {
 
 void transform_scale(Transform& trans, const Vec3& scale) {
   trans.scale = scale; 
-  update_transform(trans);
+  transform_apply(trans);
 }
 
 void transform_lerp(Transform& trans_a, const Transform& trans_b, const f32 delta) {
@@ -51,7 +45,7 @@ void transform_lerp(Transform& trans_a, const Transform& trans_b, const f32 delt
   trans_a.rotation = quat_slerp(trans_a.rotation, trans_b.rotation, delta);
   trans_a.scale    = vec3_lerp(trans_a.scale, trans_b.scale, delta);
 
-  update_transform(trans_a);
+  transform_apply(trans_a);
 }
 
 void transform_lerp(Transform& trans, 
@@ -63,7 +57,7 @@ void transform_lerp(Transform& trans,
   trans.rotation = quat_normalize(quat_slerp(trans.rotation, rotation, delta));
   trans.scale    = vec3_lerp(trans.scale, scale, delta);
 
-  update_transform(trans);
+  transform_apply(trans);
 }
 
 void transform_lerp_position(Transform& trans, const Vec3& position, const f32 delta) {

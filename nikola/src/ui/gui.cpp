@@ -614,33 +614,34 @@ void gui_edit_physics_body(const char* name, PhysicsBody* body) {
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
   
-  // Position
-  
-  Vec3 position = physics_body_get_position(body);
-  if(ImGui::DragFloat3("Position", &position[0], s_gui.big_step)) {
-    physics_body_set_position(body, position);
-  }
-
-  // Linear velocity
-  
-  Vec3 linear = physics_body_get_linear_velocity(body);
-  if(ImGui::DragFloat3("Linear velocity", &linear[0], s_gui.big_step)) {
-    physics_body_set_linear_velocity(body, linear);
-  }
-  
-  // Angular velocity
-  
-  Vec3 angular = physics_body_get_angular_velocity(body);
-  if(ImGui::DragFloat3("Angular velocity", &angular[0], s_gui.big_step)) {
-    physics_body_set_angular_velocity(body, angular);
-  }
-  
-  // Awake
-  
-  bool awake = physics_body_is_awake(body);
-  if(ImGui::Checkbox("Awake", &awake)) {
-    physics_body_set_awake(body, awake);
-  }
+  // @TODO (Physics)
+  // // Position
+  // 
+  // Vec3 position = physics_body_get_position(body);
+  // if(ImGui::DragFloat3("Position", &position[0], s_gui.big_step)) {
+  //   physics_body_set_position(body, position);
+  // }
+  //
+  // // Linear velocity
+  // 
+  // Vec3 linear = physics_body_get_linear_velocity(body);
+  // if(ImGui::DragFloat3("Linear velocity", &linear[0], s_gui.big_step)) {
+  //   physics_body_set_linear_velocity(body, linear);
+  // }
+  // 
+  // // Angular velocity
+  // 
+  // Vec3 angular = physics_body_get_angular_velocity(body);
+  // if(ImGui::DragFloat3("Angular velocity", &angular[0], s_gui.big_step)) {
+  //   physics_body_set_angular_velocity(body, angular);
+  // }
+  // 
+  // // Awake
+  // 
+  // bool awake = physics_body_is_awake(body);
+  // if(ImGui::Checkbox("Awake", &awake)) {
+  //   physics_body_set_awake(body, awake);
+  // }
 
   ImGui::PopID(); 
 }
@@ -648,41 +649,42 @@ void gui_edit_physics_body(const char* name, PhysicsBody* body) {
 void gui_edit_collider(const char* name, Collider* collider) {
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
-  
-  // Extents
-  
-  Vec3 extents = collider_get_extents(collider);
-  if(ImGui::DragFloat3("Extents", &extents[0], s_gui.big_step)) {
-    collider_set_extents(collider, extents);
-  }
-  
-  // Local position
-  
-  Vec3 local_pos = collider_get_local_transform(collider).position;
-  if(ImGui::DragFloat3("Local position", &local_pos[0], s_gui.big_step)) {
-    collider_set_local_position(collider, local_pos);
-  }
-  
-  // Friction
-  
-  f32 friction = collider_get_friction(collider);
-  if(ImGui::DragFloat("Friction", &friction, s_gui.big_step)) {
-    collider_set_friction(collider, friction);
-  }
-  
-  // Restitution
-  
-  f32 restitution = collider_get_restitution(collider);
-  if(ImGui::DragFloat("Restitution", &restitution, s_gui.big_step)) {
-    collider_set_restitution(collider, restitution);
-  }
-  
-  // Density
-  
-  f32 density = collider_get_density(collider);
-  if(ImGui::DragFloat("Density", &density, s_gui.big_step)) {
-    collider_set_density(collider, density);
-  }
+ 
+  // @TODO (Physics)
+  // // Extents
+  // 
+  // Vec3 extents = collider_get_extents(collider);
+  // if(ImGui::DragFloat3("Extents", &extents[0], s_gui.big_step)) {
+  //   collider_set_extents(collider, extents);
+  // }
+  // 
+  // // Local position
+  // 
+  // Vec3 local_pos = collider_get_local_transform(collider).position;
+  // if(ImGui::DragFloat3("Local position", &local_pos[0], s_gui.big_step)) {
+  //   collider_set_local_position(collider, local_pos);
+  // }
+  // 
+  // // Friction
+  // 
+  // f32 friction = collider_get_friction(collider);
+  // if(ImGui::DragFloat("Friction", &friction, s_gui.big_step)) {
+  //   collider_set_friction(collider, friction);
+  // }
+  // 
+  // // Restitution
+  // 
+  // f32 restitution = collider_get_restitution(collider);
+  // if(ImGui::DragFloat("Restitution", &restitution, s_gui.big_step)) {
+  //   collider_set_restitution(collider, restitution);
+  // }
+  // 
+  // // Density
+  // 
+  // f32 density = collider_get_density(collider);
+  // if(ImGui::DragFloat("Density", &density, s_gui.big_step)) {
+  //   collider_set_density(collider, density);
+  // }
   
   ImGui::PopID(); 
 }

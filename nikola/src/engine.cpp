@@ -29,6 +29,15 @@ static Engine s_engine;
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// Consts
+
+constexpr f32 PHYSICS_WORLD_DEFAULT_DELTA_TIME      = 0.0166666667f;
+constexpr i32 PHYSICS_WORLD_DEFAULT_COLLISION_STEPS = 2;
+
+/// Consts
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// Engine functions
 
 void engine_init(const AppDesc& desc) {
@@ -44,13 +53,16 @@ void engine_init(const AppDesc& desc) {
 
   // Job manager init
   // @TEMP (Threads): Ignore the input parameter for now. It's not important...
-  job_manager_init(256);
+  // @TODO (Threads)
+  // job_manager_init(256);
  
   // Window init 
+  
   s_engine.window = window_open(desc.window_title.c_str(), desc.window_width, desc.window_height, desc.window_flags);
   NIKOLA_ASSERT(s_engine.window, "Failed to open a window");
 
   // Useful input actions init
+  
   InputAction ui_click_action = {
     .key_bind     = KEY_ENTER, 
     .mouse_bind   = MOUSE_BUTTON_LEFT, 
@@ -69,12 +81,16 @@ void engine_init(const AppDesc& desc) {
   s_engine.gfx_context = renderer_get_context();
 
   // Physics world init
-  physics_world_init(Vec3(0.0f, -9.81f, 0.0f), 1 / 60.0f);
+
+  // @TEMP (Physics): Try to find a way to insert the needed object layers without annoyance
+  PhysicsWorldDesc world_desc{};
+  physics_world_init(world_desc);
 
   // Particles init
   particles_init();
 
   // Check for any command line arguments
+  
   Args cli_args; 
   for(u32 i = 0; i < desc.args_count; i++) {
     cli_args.push_back(desc.args_values[i]);
@@ -82,6 +98,7 @@ void engine_init(const AppDesc& desc) {
   NIKOLA_PERF_TIMER_END(timer, "engine_init");
 
   // App init 
+  
   NIKOLA_PERF_TIMER_BEGIN(timer);
   NIKOLA_ASSERT(s_engine.app_desc.init_fn, "Cannot start the engine with an invalid application initialization callback");
   s_engine.app = s_engine.app_desc.init_fn(cli_args, s_engine.window);
@@ -94,7 +111,7 @@ void engine_run() {
   while(window_is_open(s_engine.window)) {
     // Update 
     
-    physics_world_step(); 
+    physics_world_step(PHYSICS_WORLD_DEFAULT_DELTA_TIME, PHYSICS_WORLD_DEFAULT_COLLISION_STEPS); 
     CHECK_VALID_CALLBACK(s_engine.app_desc.update_fn, s_engine.app, niclock_get_delta_time());
     particles_update(niclock_get_delta_time());
 
