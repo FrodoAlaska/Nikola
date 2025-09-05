@@ -10,7 +10,8 @@ struct nikola::App {
   nikola::FrameData frame_data;
 
   nikola::ResourceGroupID res_group_id;
-  nikola::ResourceID mesh_id, material_id;
+  nikola::ResourceID mesh_id;
+  nikola::ResourceID materials[2];
 
   nikola::PhysicsBodyID floor_body; 
   nikola::ColliderID floor_collider; 
@@ -37,7 +38,12 @@ static void init_resources(nikola::App* app) {
   nikola::MaterialDesc mat = {
     .diffuse_id =  nikola::resources_push_texture(app->res_group_id, "textures/grass.nbr"),
   };
-  app->material_id = nikola::resources_push_material(app->res_group_id, mat);
+  app->materials[0] = nikola::resources_push_material(app->res_group_id, mat);
+ 
+  mat = {
+    .color = nikola::Vec3(1.0f, 1.0f, 0.0f),
+  };
+  app->materials[1] = nikola::resources_push_material(app->res_group_id, mat);
 
   // Mesh init
   app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
@@ -59,6 +65,7 @@ static void init_bodies(nikola::App* app) {
     .layers = nikola::PHYSICS_OBJECT_LAYER_0,
 
     .collider_id = app->floor_collider,
+    .user_data   = 0,
   };
   app->floor_body = nikola::physics_world_create_and_add_body(body_desc);
 
@@ -77,11 +84,39 @@ static void init_bodies(nikola::App* app) {
     .layers = nikola::PHYSICS_OBJECT_LAYER_1,
 
     .collider_id = app->cube_collider,
+    .user_data   = 1,
   };
   app->cube_body = nikola::physics_world_create_and_add_body(body_desc);
 }
 
 /// Private functions 
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// Callbacks
+
+static bool on_physics_event(const nikola::Event& event, const void* dispatcher, const void* listener) {
+  nikola::App* app = (nikola::App*)listener;
+
+  nikola::physics_world_set_safe_mode(false);
+
+  nikola::u64 user_data = nikola::physics_body_get_user_data(event.collision_data.body1_id);
+  nikola::Material* mat = nikola::resources_get_material(app->materials[user_data]);
+
+  switch(event.type) {
+    case nikola::EVENT_PHYSICS_CONTACT_ADDED:
+      mat->color = nikola::Vec3(1.0f, 0.0f, 0.0f);
+      break;
+    case nikola::EVENT_PHYSICS_CONTACT_REMOVED:
+      mat->color = nikola::Vec3(1.0f);
+      break;
+  }
+
+  nikola::physics_world_set_safe_mode(true);
+  return true;
+}
+
+/// Callbacks
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -122,6 +157,11 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   app->frame_data.dir_light.color     = nikola::Vec3(2.0f);
   app->frame_data.ambient             = nikola::Vec3(1.0f); 
 
+  // Listen to events
+  
+  nikola::event_listen(nikola::EVENT_PHYSICS_CONTACT_ADDED, on_physics_event, app);
+  nikola::event_listen(nikola::EVENT_PHYSICS_CONTACT_REMOVED, on_physics_event, app);
+
   return app;
 }
 
@@ -160,11 +200,11 @@ void app_render(nikola::App* app) {
 
   transform = nikola::physics_body_get_transform(app->floor_body);
   nikola::transform_scale(transform, nikola::Vec3(32.0f, 1.0f, 32.0f));
-  nikola::renderer_queue_mesh(app->mesh_id, transform, app->material_id);
+  nikola::renderer_queue_mesh(app->mesh_id, transform, app->materials[0]);
   
   transform = nikola::physics_body_get_transform(app->cube_body);
   nikola::transform_scale(transform, nikola::Vec3(1.0f));
-  nikola::renderer_queue_mesh(app->mesh_id, transform);
+  nikola::renderer_queue_mesh(app->mesh_id, transform, app->materials[1]);
 
   nikola::renderer_end();
   

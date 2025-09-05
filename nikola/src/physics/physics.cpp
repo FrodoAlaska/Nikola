@@ -2,6 +2,7 @@
 #include "nikola/nikola_base.h"
 #include "nikola/nikola_math.h"
 #include "nikola/nikola_containers.h"
+#include "nikola/nikola_event.h"
 
 #include <Jolt/Jolt.h>
 
@@ -34,14 +35,48 @@ namespace nikola { // Start of nikola
 /// *** Physics ***
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// Private functions declarations
+
+static inline Vec3 jph_vec3_to_vec3(const JPH::Vec3& vec);
+static inline Vec4 jph_vec4_to_vec4(const JPH::Vec4& vec);
+static inline Quat jph_quat_to_quat(const JPH::Quat& quat);
+static inline PhysicsBodyType jph_body_type_to_body_type(const JPH::EMotionType type);
+static inline JPH::Vec3 vec3_to_jph_vec3(const Vec3& vec);
+static inline JPH::Vec4 vec4_to_jph_vec4(const Vec4& vec);
+static inline JPH::Quat quat_to_jph_quat(const Quat& quat);
+static inline JPH::EMotionType body_type_to_jph_body_type(const PhysicsBodyType type);
+static bool assert_impl(const char* expr, const char* msg, const char* file, JPH::uint line);
+
+/// Private functions declarations
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// NKBodyActivationListener  
 class NKBodyActivationListener : public JPH::BodyActivationListener
 {
 public:
 	void OnBodyActivated(const JPH::BodyID &inBodyID, JPH::uint64 inBodyUserData) override {
+    PhysicsBodyID body_id = {
+      ._id = inBodyID.GetIndex(),
+    };
+    
+    Event event = {
+      .type    = EVENT_PHYSICS_BODY_ACTIVATED,
+      .body_id = body_id,
+    };
+    event_dispatch(event);
 	}
 
 	void OnBodyDeactivated(const JPH::BodyID &inBodyID, JPH::uint64 inBodyUserData) override {
+    PhysicsBodyID body_id = {
+      ._id = inBodyID.GetIndex(),
+    };
+    
+    Event event = {
+      .type    = EVENT_PHYSICS_BODY_DEACTIVATED,
+      .body_id = body_id,
+    };
+    event_dispatch(event);
 	}
 };
 /// NKBodyActivationListener  
@@ -63,15 +98,53 @@ public:
                       const JPH::Body& inBody2, 
                       const JPH::ContactManifold& inManifold, 
                       JPH::ContactSettings& ioSettings) override {
+    CollisionData data = {
+      .body1_id = inBody1.GetID().GetIndex(), 
+      .body2_id = inBody2.GetID().GetIndex(), 
+
+      .base_offset       = jph_vec3_to_vec3(inManifold.mBaseOffset), 
+      .normal            = jph_vec3_to_vec3(inManifold.mWorldSpaceNormal),
+      .penetration_depth = inManifold.mPenetrationDepth,
+    };
+
+    Event event = {
+      .type           = EVENT_PHYSICS_CONTACT_ADDED,
+      .collision_data = data,
+    };
+    event_dispatch(event);
 	}
 
 	void OnContactPersisted(const JPH::Body& inBody1, 
                           const JPH::Body& inBody2, 
                           const JPH::ContactManifold& inManifold, 
                           JPH::ContactSettings& ioSettings) override {
+    CollisionData data = {
+      .body1_id = inBody1.GetID().GetIndex(), 
+      .body2_id = inBody2.GetID().GetIndex(), 
+
+      .base_offset       = jph_vec3_to_vec3(inManifold.mBaseOffset), 
+      .normal            = jph_vec3_to_vec3(inManifold.mWorldSpaceNormal),
+      .penetration_depth = inManifold.mPenetrationDepth,
+    };
+
+    Event event = {
+      .type           = EVENT_PHYSICS_CONTACT_PERSISTED,
+      .collision_data = data,
+    };
+    event_dispatch(event);
 	}
 
 	void OnContactRemoved(const JPH::SubShapeIDPair& inSubShapePair) override {
+    CollisionData data = {
+      .body1_id = inSubShapePair.GetBody1ID().GetIndex(), 
+      .body2_id = inSubShapePair.GetBody2ID().GetIndex(), 
+    };
+
+    Event event = {
+      .type           = EVENT_PHYSICS_CONTACT_REMOVED,
+      .collision_data = data,
+    };
+    event_dispatch(event);
 	}
 };
 /// NKContactListener  
@@ -116,7 +189,7 @@ static inline Vec4 jph_vec4_to_vec4(const JPH::Vec4& vec) {
 }
 
 static inline Quat jph_quat_to_quat(const JPH::Quat& quat) {
-  return Quat(quat.GetX(), quat.GetY(), quat.GetZ(), quat.GetW());
+  return Quat(quat.GetW(), quat.GetX(), quat.GetY(), quat.GetZ());
 }
 
 static inline PhysicsBodyType jph_body_type_to_body_type(const JPH::EMotionType type) {
@@ -293,7 +366,7 @@ PhysicsBodyID physics_world_create_body(const PhysicsBodyDesc& desc) {
   body_settings.mFriction      = desc.friction;
   body_settings.mGravityFactor = desc.gravity_factor;
   body_settings.mIsSensor      = desc.is_sensor;  
-  body_settings.mUserData      = desc.user_data ? (*(JPH::uint64*)desc.user_data) : 0;
+  body_settings.mUserData      = desc.user_data;
 
   JPH::Body* body = s_world->body_interface->CreateBody(body_settings); 
 
@@ -301,7 +374,7 @@ PhysicsBodyID physics_world_create_body(const PhysicsBodyDesc& desc) {
   
   s_world->bodies.push_back(body->GetID());
   PhysicsBodyID body_id {
-    ._id = (u32)(s_world->bodies.size() - 1),
+    ._id = (body->GetID().GetIndex()),
   };
 
   return body_id;
@@ -352,6 +425,15 @@ const bool physics_world_abort_bodies(PhysicsBodyID* bodies, const sizei bodies_
   s_world->batches_queue.pop();
 
   return true;
+}
+
+void physics_world_set_safe_mode(const bool safe) {
+  if(safe) {
+    s_world->body_interface = &s_world->physics_system.GetBodyInterface();
+  }
+  else {
+    s_world->body_interface = &s_world->physics_system.GetBodyInterfaceNoLock();
+  }
 }
 
 void physics_world_set_gravity(const Vec3& gravity) {
@@ -439,12 +521,12 @@ void physics_body_set_active(PhysicsBodyID& body_id, const bool active) {
   }
 }
 
-void physics_body_set_user_data(PhysicsBodyID& body_id, const void* user_data) {
+void physics_body_set_user_data(PhysicsBodyID& body_id, const u64 user_data) {
   NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
   NIKOLA_ASSERT(user_data, "Passing invalid user data to body"); 
 
   JPH::BodyID body = s_world->bodies[body_id._id];
-  s_world->body_interface->SetUserData(body, *((JPH::uint64*)user_data));
+  s_world->body_interface->SetUserData(body, (JPH::uint64)user_data);
 }
 
 void physics_body_set_layer(PhysicsBodyID& body_id, const PhysicsObjectLayer layer) {
@@ -573,11 +655,11 @@ const bool physics_body_is_active(const PhysicsBodyID& body_id) {
   return s_world->body_interface->IsActive(body);
 }
 
-const void* physics_body_get_user_data(const PhysicsBodyID& body_id) {
+const u64 physics_body_get_user_data(const PhysicsBodyID& body_id) {
   NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
   JPH::BodyID body = s_world->bodies[body_id._id];
 
-  return (const void*)s_world->body_interface->GetUserData(body);
+  return (u64)s_world->body_interface->GetUserData(body);
 }
 
 const PhysicsObjectLayer physics_body_get_layer(const PhysicsBodyID& body_id) {

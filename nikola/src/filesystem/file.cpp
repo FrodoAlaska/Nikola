@@ -534,10 +534,10 @@ void file_write_bytes(File& file, const PhysicsBodyID& body) {
     position.y,   
     position.z,   
     
+    rotation.w,   
     rotation.x,   
     rotation.y,   
     rotation.z,   
-    rotation.w,   
 
     restitution, 
     friction, 

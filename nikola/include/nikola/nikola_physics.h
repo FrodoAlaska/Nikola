@@ -1,6 +1,5 @@
 #pragma once
 
-#include "nikola_base.h"
 #include "nikola_math.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -96,9 +95,31 @@ struct PhysicsBodyID {
 /// ColliderID
 struct ColliderID {
   ColliderType _type;
-  u32 _id;
+  u32 _id = COLLIDER_ID_INVALID;
 };
 /// ColliderID
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// CollisionData
+struct CollisionData {
+  PhysicsBodyID body1_id;
+  PhysicsBodyID body2_id; 
+
+  Vec3 base_offset      = Vec3(0.0f);
+  Vec3 normal           = Vec3(0.0f);
+  f32 penetration_depth = 0.0f;
+};
+/// CollisionData
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Ray
+struct Ray {
+  Vec3 origin; 
+  Vec3 direction;
+};
+/// Ray
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -135,8 +156,8 @@ struct PhysicsBodyDesc {
   f32 friction       = 0.0f;
   f32 gravity_factor = 1.0f;
 
-  void* user_data = nullptr;
-  bool is_sensor  = false;    
+  u64 user_data  = 0;
+  bool is_sensor = false;    
 };
 /// PhysicsBodyDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -187,6 +208,8 @@ NIKOLA_API const bool physics_world_finalize_bodies(PhysicsBodyID* bodies, const
 
 NIKOLA_API const bool physics_world_abort_bodies(PhysicsBodyID* bodies, const sizei bodies_count);
 
+NIKOLA_API void physics_world_set_safe_mode(const bool safe);
+
 NIKOLA_API void physics_world_set_gravity(const Vec3& gravity);
 
 NIKOLA_API Vec3 physics_world_get_gravity();
@@ -215,7 +238,7 @@ NIKOLA_API void physics_body_set_angular_velocity(PhysicsBodyID& body_id, const 
 
 NIKOLA_API void physics_body_set_active(PhysicsBodyID& body_id, const bool active);
 
-NIKOLA_API void physics_body_set_user_data(PhysicsBodyID& body_id, const void* user_data);
+NIKOLA_API void physics_body_set_user_data(PhysicsBodyID& body_id, const u64 user_data);
 
 NIKOLA_API void physics_body_set_layer(PhysicsBodyID& body_id, const PhysicsObjectLayer layer);
 
@@ -253,7 +276,7 @@ NIKOLA_API const Vec3 physics_body_get_angular_velocity(const PhysicsBodyID& bod
 
 NIKOLA_API const bool physics_body_is_active(const PhysicsBodyID& body_id);
 
-NIKOLA_API const void* physics_body_get_user_data(const PhysicsBodyID& body_id);
+NIKOLA_API const u64 physics_body_get_user_data(const PhysicsBodyID& body_id);
 
 NIKOLA_API const PhysicsObjectLayer physics_body_get_layer(const PhysicsBodyID& body_id);
 

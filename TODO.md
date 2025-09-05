@@ -15,8 +15,8 @@
     - [] Integrate Jolt
         - [x] Initialization, shutdown, and update of the physics world
         - [x] Fully integrate physics bodies 
-        - [] Integrate box, sphere, and capsule colliders for now 
-        - [] Add the various physics-related events to our event system
+        - [x] Integrate box, sphere, and capsule colliders for now 
+        - [x] Add the various physics-related events to our event system
         - [] Raycasts
         - [] Implement Jolt's character controller 
     - [] Add physics components to the GUI 

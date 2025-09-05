@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nikola_base.h"
+#include "nikola_physics.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -15,7 +16,6 @@ struct UICheckbox;
 struct UISlider;
 
 /// ---------------------------------------------------------------------
-
  
 /// ---------------------------------------------------------------------
 /// *** Event ***
@@ -71,7 +71,15 @@ enum EventType {
   EVENT_UI_SLIDER_CLICKED,
   EVENT_UI_SLIDER_CHANGED,
 
-  EVENTS_MAX = EVENT_UI_SLIDER_CHANGED + 1,
+  /// Physics events
+
+  EVENT_PHYSICS_BODY_ACTIVATED,
+  EVENT_PHYSICS_BODY_DEACTIVATED,
+  EVENT_PHYSICS_CONTACT_ADDED,
+  EVENT_PHYSICS_CONTACT_REMOVED,
+  EVENT_PHYSICS_CONTACT_PERSISTED,
+
+  EVENTS_MAX,
 };
 /// EventType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -125,13 +133,23 @@ struct Event {
   i32 joystick_id; 
 
   /// The button UI element given to this event. 
-  UIButton* button     = nullptr;
+  UIButton* button      = nullptr;
   
   /// The checkox UI element given to this event. 
-  UICheckbox* checkbox = nullptr;
+  UICheckbox* checkbox  = nullptr;
   
   /// The slider UI element given to this event. 
-  UISlider* slider     = nullptr;
+  UISlider* slider      = nullptr;
+
+  /// The physics body that was given to this event 
+  /// by either `EVENT_PHYSICS_BODY_ACTIVATED` or 
+  /// `EVENT_PHYSICS_BODY_DEACTIVATED`.
+  PhysicsBodyID body_id;
+
+  /// The collision data given to this event 
+  /// by either `EVENT_PHYSICS_CONTACT_ADDED`,
+  /// `EVENT_PHYSICS_CONTACT_REMOVED`, or `EVENT_PHYSICS_CONTACT_PERSISTED`
+  CollisionData collision_data;
 };
 /// Event
 ///---------------------------------------------------------------------------------------------------------------------
