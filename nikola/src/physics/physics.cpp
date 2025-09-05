@@ -24,6 +24,7 @@
 
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
+#include <Jolt/Physics/Body/BodyInterface.h>
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -326,19 +327,31 @@ void physics_world_prepare_bodies(PhysicsBodyID* bodies, const sizei bodies_coun
   s_world->batches_queue.push(batch);
 }
 
-void physics_world_finalize_bodies(PhysicsBodyID* bodies, const sizei bodies_count, const bool is_active) {
+const bool physics_world_finalize_bodies(PhysicsBodyID* bodies, const sizei bodies_count, const bool is_active) {
+  if(s_world->batches_queue.empty()) {
+    return false;
+  }
+
   JPH::BodyInterface::AddState batch = s_world->batches_queue.front();
   JPH::EActivation active            = is_active ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
 
   s_world->body_interface->AddBodiesFinalize(&s_world->bodies[bodies[0]._id], bodies_count, batch, active);
   s_world->batches_queue.pop();
+
+  return true;
 }
 
-void physics_world_abort_bodies(PhysicsBodyID* bodies, const sizei bodies_count) {
+const bool physics_world_abort_bodies(PhysicsBodyID* bodies, const sizei bodies_count) {
+  if(s_world->batches_queue.empty()) {
+    return false;
+  }
+
   JPH::BodyInterface::AddState batch = s_world->batches_queue.front();
+
   s_world->body_interface->AddBodiesAbort(&s_world->bodies[bodies[0]._id], bodies_count, batch);
-  
   s_world->batches_queue.pop();
+
+  return true;
 }
 
 void physics_world_set_gravity(const Vec3& gravity) {
@@ -354,6 +367,230 @@ void physics_world_toggle_paused() {
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// Physics body functions
+
+void physics_body_set_position(PhysicsBodyID& body_id, const Vec3 position) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+
+  s_world->body_interface->SetPosition(body, vec3_to_jph_vec3(position), JPH::EActivation::Activate);
+}
+
+void physics_body_set_rotation(PhysicsBodyID& body_id, const Quat rotation) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+  
+  s_world->body_interface->SetRotation(body, quat_to_jph_quat(rotation), JPH::EActivation::Activate);
+}
+
+void physics_body_set_rotation(PhysicsBodyID& body_id, const Vec3 axis, const f32 angle) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+ 
+  JPH::Quat rotation = quat_to_jph_quat(quat_angle_axis(axis, angle));
+  s_world->body_interface->SetRotation(body, rotation, JPH::EActivation::Activate);
+}
+
+void physics_body_set_linear_velocity(PhysicsBodyID& body_id, const Vec3 velocity) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+  
+  s_world->body_interface->SetLinearVelocity(body, vec3_to_jph_vec3(velocity));
+}
+
+void physics_body_set_angular_velocity(PhysicsBodyID& body_id, const Vec3 velocity) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+  
+  s_world->body_interface->SetAngularVelocity(body, vec3_to_jph_vec3(velocity));
+}
+
+void physics_body_set_active(PhysicsBodyID& body_id, const bool active) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+ 
+  if(active) {
+    s_world->body_interface->ActivateBody(body);
+  }
+  else {
+    s_world->body_interface->DeactivateBody(body);
+  }
+}
+
+void physics_body_set_user_data(PhysicsBodyID& body_id, const void* user_data) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  NIKOLA_ASSERT(user_data, "Passing invalid user data to body"); 
+
+  JPH::BodyID body = s_world->bodies[body_id._id];
+  s_world->body_interface->SetUserData(body, *((JPH::uint64*)user_data));
+}
+
+void physics_body_set_layer(PhysicsBodyID& body_id, const PhysicsObjectLayer layer) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+  
+  s_world->body_interface->SetObjectLayer(body, (JPH::ObjectLayer)layer);
+}
+
+void physics_body_set_restitution(PhysicsBodyID& body_id, const f32 restitution) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+  
+  s_world->body_interface->SetRestitution(body, restitution);
+}
+
+void physics_body_set_friction(PhysicsBodyID& body_id, const f32 friction) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+  
+  s_world->body_interface->SetFriction(body, friction);
+}
+
+void physics_body_set_gravity_factor(PhysicsBodyID& body_id, const f32 factor) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+  
+  s_world->body_interface->SetGravityFactor(body, factor);
+}
+
+void physics_body_set_type(PhysicsBodyID& body_id, const PhysicsBodyType type) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+  
+  s_world->body_interface->SetMotionType(body, body_type_to_jph_body_type(type), JPH::EActivation::Activate);
+}
+
+void physics_body_apply_linear_velocity(PhysicsBodyID& body_id, const Vec3 velocity) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+  
+  s_world->body_interface->AddLinearVelocity(body, vec3_to_jph_vec3(velocity));
+}
+
+void physics_body_apply_force(PhysicsBodyID& body_id, const Vec3 force) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+  
+  s_world->body_interface->AddForce(body, vec3_to_jph_vec3(force));
+}
+
+void physics_body_apply_force_at(PhysicsBodyID& body_id, const Vec3 force, const Vec3 point) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+  
+  s_world->body_interface->AddForce(body, vec3_to_jph_vec3(force), vec3_to_jph_vec3(point));
+}
+
+void physics_body_apply_torque(PhysicsBodyID& body_id, const Vec3 torque) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+  
+  s_world->body_interface->AddTorque(body, vec3_to_jph_vec3(torque));
+}
+
+void physics_body_apply_impulse(PhysicsBodyID& body_id, const Vec3 impulse) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+  
+  s_world->body_interface->AddImpulse(body, vec3_to_jph_vec3(impulse));
+}
+
+void physics_body_apply_impulse_at(PhysicsBodyID& body_id, const Vec3 impulse, const Vec3 point) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+  
+  s_world->body_interface->AddImpulse(body, vec3_to_jph_vec3(impulse), vec3_to_jph_vec3(point));
+}
+
+void physics_body_apply_angular_impulse(PhysicsBodyID& body_id, const Vec3 impulse) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+  
+  s_world->body_interface->AddAngularImpulse(body, vec3_to_jph_vec3(impulse));
+}
+
+const Vec3 physics_body_get_position(const PhysicsBodyID& body_id) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+
+  return jph_vec3_to_vec3(s_world->body_interface->GetPosition(body));
+}
+
+const Vec3 physics_body_get_com_position(const PhysicsBodyID& body_id) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+
+  return jph_vec3_to_vec3(s_world->body_interface->GetCenterOfMassPosition(body));
+}
+
+const Quat physics_body_get_rotation(const PhysicsBodyID& body_id) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+
+  return jph_quat_to_quat(s_world->body_interface->GetRotation(body));
+}
+
+const Vec3 physics_body_get_linear_velocity(const PhysicsBodyID& body_id) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+
+  return jph_vec3_to_vec3(s_world->body_interface->GetLinearVelocity(body));
+}
+
+const Vec3 physics_body_get_angular_velocity(const PhysicsBodyID& body_id) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+
+  return jph_vec3_to_vec3(s_world->body_interface->GetAngularVelocity(body));
+}
+
+const bool physics_body_is_active(const PhysicsBodyID& body_id) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+
+  return s_world->body_interface->IsActive(body);
+}
+
+const void* physics_body_get_user_data(const PhysicsBodyID& body_id) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+
+  return (const void*)s_world->body_interface->GetUserData(body);
+}
+
+const PhysicsObjectLayer physics_body_get_layer(const PhysicsBodyID& body_id) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+
+  return (PhysicsObjectLayer)s_world->body_interface->GetObjectLayer(body);
+}
+
+const f32 physics_body_get_restitution(const PhysicsBodyID& body_id) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+
+  return s_world->body_interface->GetRestitution(body);
+}
+
+const f32 physics_body_get_friction(const PhysicsBodyID& body_id) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+
+  return s_world->body_interface->GetFriction(body);
+}
+
+const f32 physics_body_get_gravity_factor(const PhysicsBodyID& body_id) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+
+  return s_world->body_interface->GetGravityFactor(body);
+}
+
+const PhysicsBodyType physics_body_get_type(const PhysicsBodyID& body_id) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+
+  return jph_body_type_to_body_type(s_world->body_interface->GetMotionType(body));
+}
 
 Transform physics_body_get_transform(const PhysicsBodyID& body_id) {
   NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");

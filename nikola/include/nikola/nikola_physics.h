@@ -172,9 +172,9 @@ NIKOLA_API PhysicsBodyID physics_world_create_and_add_body(const PhysicsBodyDesc
 
 NIKOLA_API void physics_world_prepare_bodies(PhysicsBodyID* bodies, const sizei bodies_count);
 
-NIKOLA_API void physics_world_finalize_bodies(PhysicsBodyID* bodies, const sizei bodies_count, const bool is_active);
+NIKOLA_API const bool physics_world_finalize_bodies(PhysicsBodyID* bodies, const sizei bodies_count, const bool is_active);
 
-NIKOLA_API void physics_world_abort_bodies(PhysicsBodyID* bodies, const sizei bodies_count);
+NIKOLA_API const bool physics_world_abort_bodies(PhysicsBodyID* bodies, const sizei bodies_count);
 
 NIKOLA_API void physics_world_set_gravity(const Vec3& gravity);
 
@@ -185,6 +185,68 @@ NIKOLA_API void physics_world_toggle_paused();
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// Physics body functions
+
+NIKOLA_API void physics_body_set_position(PhysicsBodyID& body_id, const Vec3 position);
+
+NIKOLA_API void physics_body_set_rotation(PhysicsBodyID& body_id, const Quat rotation);
+
+NIKOLA_API void physics_body_set_rotation(PhysicsBodyID& body_id, const Vec3 axis, const f32 angle);
+
+NIKOLA_API void physics_body_set_linear_velocity(PhysicsBodyID& body_id, const Vec3 velocity);
+
+NIKOLA_API void physics_body_set_angular_velocity(PhysicsBodyID& body_id, const Vec3 velocity);
+
+NIKOLA_API void physics_body_set_active(PhysicsBodyID& body_id, const bool active);
+
+NIKOLA_API void physics_body_set_user_data(PhysicsBodyID& body_id, const void* user_data);
+
+NIKOLA_API void physics_body_set_layer(PhysicsBodyID& body_id, const PhysicsObjectLayer layer);
+
+NIKOLA_API void physics_body_set_restitution(PhysicsBodyID& body_id, const f32 restitution);
+
+NIKOLA_API void physics_body_set_friction(PhysicsBodyID& body_id, const f32 friction);
+
+NIKOLA_API void physics_body_set_gravity_factor(PhysicsBodyID& body_id, const f32 factor);
+
+NIKOLA_API void physics_body_set_type(PhysicsBodyID& body_id, const PhysicsBodyType type);
+
+NIKOLA_API void physics_body_apply_linear_velocity(PhysicsBodyID& body_id, const Vec3 velocity);
+
+NIKOLA_API void physics_body_apply_force(PhysicsBodyID& body_id, const Vec3 force);
+
+NIKOLA_API void physics_body_apply_force_at(PhysicsBodyID& body_id, const Vec3 force, const Vec3 point);
+
+NIKOLA_API void physics_body_apply_torque(PhysicsBodyID& body_id, const Vec3 torque);
+
+NIKOLA_API void physics_body_apply_impulse(PhysicsBodyID& body_id, const Vec3 impulse);
+
+NIKOLA_API void physics_body_apply_impulse_at(PhysicsBodyID& body_id, const Vec3 impulse, const Vec3 point);
+
+NIKOLA_API void physics_body_apply_angular_impulse(PhysicsBodyID& body_id, const Vec3 impulse);
+
+NIKOLA_API const Vec3 physics_body_get_position(const PhysicsBodyID& body_id);
+
+NIKOLA_API const Vec3 physics_body_get_com_position(const PhysicsBodyID& body_id);
+
+NIKOLA_API const Quat physics_body_get_rotation(const PhysicsBodyID& body_id);
+
+NIKOLA_API const Vec3 physics_body_get_linear_velocity(const PhysicsBodyID& body_id);
+
+NIKOLA_API const Vec3 physics_body_get_angular_velocity(const PhysicsBodyID& body_id);
+
+NIKOLA_API const bool physics_body_is_active(const PhysicsBodyID& body_id);
+
+NIKOLA_API const void* physics_body_get_user_data(const PhysicsBodyID& body_id);
+
+NIKOLA_API const PhysicsObjectLayer physics_body_get_layer(const PhysicsBodyID& body_id);
+
+NIKOLA_API const f32 physics_body_get_restitution(const PhysicsBodyID& body_id);
+
+NIKOLA_API const f32 physics_body_get_friction(const PhysicsBodyID& body_id);
+
+NIKOLA_API const f32 physics_body_get_gravity_factor(const PhysicsBodyID& body_id);
+
+NIKOLA_API const PhysicsBodyType physics_body_get_type(const PhysicsBodyID& body_id);
 
 NIKOLA_API Transform physics_body_get_transform(const PhysicsBodyID& body_id);
 
