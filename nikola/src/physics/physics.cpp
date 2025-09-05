@@ -358,8 +358,16 @@ void physics_world_set_gravity(const Vec3& gravity) {
   s_world->physics_system.SetGravity(vec3_to_jph_vec3(gravity));
 }
 
+Vec3 physics_world_get_gravity() {
+  return jph_vec3_to_vec3(s_world->physics_system.GetGravity());
+}
+
 void physics_world_toggle_paused() {
   s_world->is_paused = !s_world->is_paused;
+}
+
+const bool physics_world_is_paused() {
+  return s_world->is_paused;
 }
 
 /// Physics world functions
@@ -368,26 +376,41 @@ void physics_world_toggle_paused() {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Physics body functions
 
-void physics_body_set_position(PhysicsBodyID& body_id, const Vec3 position) {
+void physics_body_set_position(PhysicsBodyID& body_id, const Vec3 position, const bool activate) {
   NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
   JPH::BodyID body = s_world->bodies[body_id._id];
 
-  s_world->body_interface->SetPosition(body, vec3_to_jph_vec3(position), JPH::EActivation::Activate);
+  JPH::EActivation active = activate ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
+  s_world->body_interface->SetPosition(body, vec3_to_jph_vec3(position), active);
 }
 
-void physics_body_set_rotation(PhysicsBodyID& body_id, const Quat rotation) {
+void physics_body_set_rotation(PhysicsBodyID& body_id, const Quat rotation, const bool activate) {
   NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
   JPH::BodyID body = s_world->bodies[body_id._id];
-  
-  s_world->body_interface->SetRotation(body, quat_to_jph_quat(rotation), JPH::EActivation::Activate);
+
+  JPH::EActivation active = activate ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
+  s_world->body_interface->SetRotation(body, quat_to_jph_quat(rotation), active);
 }
 
-void physics_body_set_rotation(PhysicsBodyID& body_id, const Vec3 axis, const f32 angle) {
+void physics_body_set_rotation(PhysicsBodyID& body_id, const Vec3 axis, const f32 angle, const bool activate) {
   NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
   JPH::BodyID body = s_world->bodies[body_id._id];
  
-  JPH::Quat rotation = quat_to_jph_quat(quat_angle_axis(axis, angle));
-  s_world->body_interface->SetRotation(body, rotation, JPH::EActivation::Activate);
+  JPH::EActivation active = activate ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
+  JPH::Quat rotation      = quat_to_jph_quat(quat_angle_axis(axis, angle));
+  
+  s_world->body_interface->SetRotation(body, rotation, active);
+}
+
+void physics_body_set_transform(PhysicsBodyID& body_id, const Transform& transform, const bool activate) {
+  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  JPH::BodyID body = s_world->bodies[body_id._id];
+ 
+  JPH::EActivation active = activate ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
+  JPH::Vec3 position      = vec3_to_jph_vec3(transform.position);
+  JPH::Quat rotation      = quat_to_jph_quat(transform.rotation);
+
+  s_world->body_interface->SetPositionAndRotation(body, position, rotation, active);
 }
 
 void physics_body_set_linear_velocity(PhysicsBodyID& body_id, const Vec3 velocity) {
@@ -470,7 +493,7 @@ void physics_body_apply_force(PhysicsBodyID& body_id, const Vec3 force) {
   NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
   JPH::BodyID body = s_world->bodies[body_id._id];
   
-  s_world->body_interface->AddForce(body, vec3_to_jph_vec3(force));
+  s_world->body_interface->AddForce(body, vec3_to_jph_vec3(force), JPH::EActivation::DontActivate);
 }
 
 void physics_body_apply_force_at(PhysicsBodyID& body_id, const Vec3 force, const Vec3 point) {
@@ -597,7 +620,7 @@ Transform physics_body_get_transform(const PhysicsBodyID& body_id) {
   JPH::BodyID body = s_world->bodies[body_id._id];
 
   Transform transform;
-  transform.position = jph_vec3_to_vec3(s_world->body_interface->GetCenterOfMassPosition(body));
+  transform.position = jph_vec3_to_vec3(s_world->body_interface->GetPosition(body));
   transform.rotation = jph_quat_to_quat(s_world->body_interface->GetRotation(body));
 
   transform_apply(transform);
@@ -621,7 +644,8 @@ ColliderID collider_create(const BoxColliderDesc& desc) {
 
   s_world->shapes.push_back(result.Get());
   ColliderID coll_id = {
-    ._id = (u32)(s_world->shapes.size() - 1),
+    ._type = COLLIDER_BOX,
+    ._id   = (u32)(s_world->shapes.size() - 1),
   };
 
   return coll_id;
@@ -638,7 +662,8 @@ ColliderID collider_create(const SphereColliderDesc& desc) {
 
   s_world->shapes.push_back(result.Get());
   ColliderID coll_id = {
-    ._id = (u32)(s_world->shapes.size() - 1),
+    ._type = COLLIDER_SPHERE,
+    ._id   = (u32)(s_world->shapes.size() - 1),
   };
 
   return coll_id;
@@ -655,7 +680,8 @@ ColliderID collider_create(const CapsuleColliderDesc& desc) {
 
   s_world->shapes.push_back(result.Get());
   ColliderID coll_id = {
-    ._id = (u32)(s_world->shapes.size() - 1),
+    ._type = COLLIDER_CAPSULE,
+    ._id   = (u32)(s_world->shapes.size() - 1),
   };
 
   return coll_id;

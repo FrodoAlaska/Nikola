@@ -19,9 +19,12 @@
         - [] Add the various physics-related events to our event system
         - [] Raycasts
         - [] Implement Jolt's character controller 
-        - [] Physics materials
-    - [] Add the bodies and colliders to the GUI 
-    - [] Save the physics components as binary files (read and write)
+    - [] Add physics components to the GUI 
+        - [x] Physics body 
+        - [] Colliders 
+    - [] Save the physics components 
+        - [x] Physics body 
+        - [] Colliders 
     - [] Implement mouse to screen and mouse to world for editing levels easier
     - [] Implement a debug pass
     - [] Documentation

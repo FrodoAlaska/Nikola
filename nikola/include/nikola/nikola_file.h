@@ -19,9 +19,9 @@ struct PointLight;
 struct SpotLight;
 struct FrameData;
 
-struct PhysicsBody;
+struct PhysicsBodyID;
 struct PhysicsBodyDesc;
-struct Collider;
+struct ColliderID;
 struct ColliderDesc;
 
 struct NBRHeader;
@@ -365,12 +365,12 @@ NIKOLA_API void file_write_bytes(File& file, const AudioListenerDesc& listener_d
 /// Write the contents of the given `body` into `file`.
 ///
 /// @NOTE: This function will raise an error if `file` is not opened.
-NIKOLA_API void file_write_bytes(File& file, const PhysicsBody* body);
+NIKOLA_API void file_write_bytes(File& file, const PhysicsBodyID& body);
 
 /// Write the contents of the given `collider` into `file`.
 ///
 /// @NOTE: This function will raise an error if `file` is not opened.
-NIKOLA_API void file_write_bytes(File& file, const Collider* collider);
+NIKOLA_API void file_write_bytes(File& file, const ColliderID& collider);
 
 /// Write the given `string` into `file` as a string representation.
 ///
@@ -396,7 +396,6 @@ NIKOLA_API void file_read_bytes(File& file, String* str);
 /// memory after calling these functions.
 ///
 /// @NOTE: These functions will raise an error if `file` is not opened.
-
 NIKOLA_API void file_read_bytes(File& file, NBRHeader* out_header);
 NIKOLA_API void file_read_bytes(File& file, NBRTexture* out_texture);
 NIKOLA_API void file_read_bytes(File& file, NBRCubemap* out_cubemap);

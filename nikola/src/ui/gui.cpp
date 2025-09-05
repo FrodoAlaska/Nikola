@@ -296,6 +296,24 @@ void gui_debug_info() {
     ImGui::Text("Bytes allocated: %zu", memory_get_allocation_bytes());
   } 
 
+  // Physics
+ 
+  if(ImGui::CollapsingHeader("Physics")) {
+    // Gravity 
+    
+    Vec3 gravity = physics_world_get_gravity();
+    if(ImGui::DragFloat3("Gravity", &gravity[0], s_gui.big_step)) {
+      physics_world_set_gravity(gravity);
+    }
+
+    // Paused
+    
+    bool paused = physics_world_is_paused();
+    if(ImGui::Checkbox("Paused", &paused)) {
+      physics_world_toggle_paused();
+    }
+  } 
+
   gui_end_panel();
 }
 
@@ -610,43 +628,90 @@ void gui_edit_audio_listener(const char* name) {
   ImGui::PopID(); 
 }
 
-void gui_edit_physics_body(const char* name, PhysicsBody* body) {
+void gui_edit_physics_body(const char* name, PhysicsBodyID& body) {
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
   
-  // @TODO (Physics)
-  // // Position
-  // 
-  // Vec3 position = physics_body_get_position(body);
-  // if(ImGui::DragFloat3("Position", &position[0], s_gui.big_step)) {
-  //   physics_body_set_position(body, position);
-  // }
-  //
-  // // Linear velocity
-  // 
-  // Vec3 linear = physics_body_get_linear_velocity(body);
-  // if(ImGui::DragFloat3("Linear velocity", &linear[0], s_gui.big_step)) {
-  //   physics_body_set_linear_velocity(body, linear);
-  // }
-  // 
-  // // Angular velocity
-  // 
-  // Vec3 angular = physics_body_get_angular_velocity(body);
-  // if(ImGui::DragFloat3("Angular velocity", &angular[0], s_gui.big_step)) {
-  //   physics_body_set_angular_velocity(body, angular);
-  // }
-  // 
-  // // Awake
-  // 
-  // bool awake = physics_body_is_awake(body);
-  // if(ImGui::Checkbox("Awake", &awake)) {
-  //   physics_body_set_awake(body, awake);
-  // }
+  // Position
+  {
+    Vec3 position = physics_body_get_position(body);
+    if(ImGui::DragFloat3("Position", &position[0], s_gui.big_step)) {
+      physics_body_set_position(body, position);
+    }
+  }
+
+  // Linear velocity
+  {
+    Vec3 linear = physics_body_get_linear_velocity(body);
+    if(ImGui::DragFloat3("Linear velocity", &linear[0], s_gui.big_step)) {
+      physics_body_set_linear_velocity(body, linear);
+    }
+  }
+
+  // Angular velocity
+  {
+    Vec3 angular = physics_body_get_angular_velocity(body);
+    if(ImGui::DragFloat3("Angular velocity", &angular[0], s_gui.big_step)) {
+      physics_body_set_angular_velocity(body, angular);
+    }
+  }
+
+  // Active
+  {
+    bool active = physics_body_is_active(body);
+    if(ImGui::Checkbox("Active", &active)) {
+      physics_body_set_active(body, active);
+    }
+  }
+
+  // Layer
+  {
+    i32 current_layer   = (i32)physics_body_get_layer(body);
+    const char* options = "Layer 0\0Layer 1\0Layer 2\0Layer 3\0Layer 4\0Layer 5\0Layer 6\0Layer 7\0 Layer 8\0Layer 9\0\0";
+
+    if(ImGui::Combo("Layer", &current_layer, options)) {
+      physics_body_set_layer(body, (PhysicsObjectLayer)current_layer);
+    }
+  }
+
+  // Body type
+  {
+    i32 current_type    = (i32)physics_body_get_type(body);
+    const char* options = "Static\0Dynamic\0Kinematic\0\0";
+
+    if(ImGui::Combo("Type", &current_type, options)) {
+      physics_body_set_type(body, (PhysicsBodyType)current_type);
+    }
+  }
+
+  // Restitution
+  {
+    f32 restitution = physics_body_get_restitution(body);
+    if(ImGui::DragFloat("Restitution", &restitution, s_gui.small_step, 0.0f, 1.0f)) {
+      physics_body_set_restitution(body, restitution);
+    }
+  }
+  
+  // Friction
+  {
+    f32 friction = physics_body_get_friction(body);
+    if(ImGui::DragFloat("Friction", &friction, s_gui.small_step, 0.0f, 1.0f)) {
+      physics_body_set_friction(body, friction);
+    }
+  }
+  
+  // Gravity factor
+  {
+    f32 factor = physics_body_get_gravity_factor(body);
+    if(ImGui::DragFloat("Gravity factor", &factor, s_gui.big_step)) {
+      physics_body_set_gravity_factor(body, factor);
+    }
+  }
 
   ImGui::PopID(); 
 }
 
-void gui_edit_collider(const char* name, Collider* collider) {
+void gui_edit_collider(const char* name, ColliderID& collider) {
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
  
@@ -663,20 +728,6 @@ void gui_edit_collider(const char* name, Collider* collider) {
   // Vec3 local_pos = collider_get_local_transform(collider).position;
   // if(ImGui::DragFloat3("Local position", &local_pos[0], s_gui.big_step)) {
   //   collider_set_local_position(collider, local_pos);
-  // }
-  // 
-  // // Friction
-  // 
-  // f32 friction = collider_get_friction(collider);
-  // if(ImGui::DragFloat("Friction", &friction, s_gui.big_step)) {
-  //   collider_set_friction(collider, friction);
-  // }
-  // 
-  // // Restitution
-  // 
-  // f32 restitution = collider_get_restitution(collider);
-  // if(ImGui::DragFloat("Restitution", &restitution, s_gui.big_step)) {
-  //   collider_set_restitution(collider, restitution);
   // }
   // 
   // // Density

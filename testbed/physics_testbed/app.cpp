@@ -60,7 +60,7 @@ static void init_bodies(nikola::App* app) {
 
     .collider_id = app->floor_collider,
   };
-  app->floor_body = nikola::physics_world_create_and_add_body(body_desc, true);
+  app->floor_body = nikola::physics_world_create_and_add_body(body_desc);
 
   // Cube init
 
@@ -78,7 +78,7 @@ static void init_bodies(nikola::App* app) {
 
     .collider_id = app->cube_collider,
   };
-  app->cube_body = nikola::physics_world_create_and_add_body(body_desc, true);
+  app->cube_body = nikola::physics_world_create_and_add_body(body_desc);
 }
 
 /// Private functions 
@@ -185,8 +185,13 @@ void app_render_gui(nikola::App* app) {
   }
 
   nikola::gui_begin();
-  
   nikola::gui_begin_panel("Scene");
+
+  // Bodies
+  if(ImGui::CollapsingHeader("Bodies")) {
+    nikola::gui_edit_physics_body("Floor", app->floor_body);
+    nikola::gui_edit_physics_body("Cube", app->cube_body);
+  }
 
   // Frame 
   nikola::gui_edit_frame("Frame", &app->frame_data);
@@ -195,7 +200,6 @@ void app_render_gui(nikola::App* app) {
   nikola::gui_debug_info();
   
   nikola::gui_end_panel();
-
   nikola::gui_end();
 }
 

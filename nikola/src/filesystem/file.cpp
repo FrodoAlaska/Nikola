@@ -516,39 +516,45 @@ void file_write_bytes(File& file, const AudioListenerDesc& listener_desc) {
   file_write_bytes(file, data, sizeof(data));
 }
 
-void file_write_bytes(File& file, const PhysicsBody* body) {
+void file_write_bytes(File& file, const PhysicsBodyID& body) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
-  NIKOLA_ASSERT(body, "Cannot save an invalid PhysicsBody");
  
-  // @TODO (Physics)
-  // Vec3 position        = physics_body_get_position(body);
-  // Vec4 rotation        = physics_body_get_rotation(body);
-  // PhysicsBodyType type = physics_body_get_type(body);
-  // bool is_awake        = physics_body_is_awake(body);
-  //
-  // f32 f_data[] = {
-  //   position.x,   
-  //   position.y,   
-  //   position.z,   
-  //   
-  //   rotation.x,   
-  //   rotation.y,   
-  //   rotation.z,   
-  //   rotation.w,   
-  // };
-  //
-  // u16 u_data[] = {
-  //   (u16)type, 
-  //   (u16)is_awake,
-  // };
-  //
-  // file_write_bytes(file, f_data, sizeof(f_data));
-  // file_write_bytes(file, u_data, sizeof(u_data));
+  Vec3 position = physics_body_get_position(body);
+  Quat rotation = physics_body_get_rotation(body);
+
+  f32 restitution    = physics_body_get_restitution(body);
+  f32 friction       = physics_body_get_friction(body);
+  f32 gravity_factor = physics_body_get_gravity_factor(body);
+  
+  PhysicsBodyType type     = physics_body_get_type(body);
+  PhysicsObjectLayer layer = physics_body_get_layer(body);
+
+  f32 f_data[] = {
+    position.x,   
+    position.y,   
+    position.z,   
+    
+    rotation.x,   
+    rotation.y,   
+    rotation.z,   
+    rotation.w,   
+
+    restitution, 
+    friction, 
+    gravity_factor,
+  };
+
+  u16 u_data[] = {
+    (u16)type, 
+    (u16)layer,
+  };
+
+  file_write_bytes(file, f_data, sizeof(f_data));
+  file_write_bytes(file, u_data, sizeof(u_data));
 }
 
-void file_write_bytes(File& file, const Collider* collider) {
+void file_write_bytes(File& file, const ColliderID& collider) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
-  NIKOLA_ASSERT(collider, "Cannot save an invalid Collider");
   
   // @TODO (Physics)
   // Vec3 offset  = collider_get_local_transform(collider).position;
@@ -987,19 +993,37 @@ void file_read_bytes(File& file, AudioListenerDesc* listener) {
 void file_read_bytes(File& file, PhysicsBodyDesc* body_desc) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
 
-  // @TODO (Physics)
-  // f32 f_data[7] ;
-  // file_read_bytes(file, f_data, sizeof(f_data));
-  //
-  // u16 u_data[2];
-  // file_read_bytes(file, u_data, sizeof(u_data));
-  //
-  // // Read the data into the desc
-  // body_desc->position       = Vec3(f_data[0], f_data[1], f_data[2]);
-  // body_desc->type           = (PhysicsBodyType)u_data[0];
-  // body_desc->rotation_axis  = Vec3(f_data[3], f_data[4], f_data[5]);
-  // body_desc->rotation_angle = f_data[6];
-  // body_desc->is_awake       = (bool)u_data[1];
+  // Read the data from the file
+
+  f32 f_data[10];
+  file_read_bytes(file, f_data, sizeof(f_data));
+
+  u16 u_data[2];
+  file_read_bytes(file, u_data, sizeof(u_data));
+
+  // Make sense of the data
+  
+  Vec3 position = Vec3(f_data[0], f_data[1], f_data[2]);
+  Quat rotation = Quat(f_data[3], f_data[4], f_data[5], f_data[6]);
+
+  f32 restitution    = f_data[7];
+  f32 friction       = f_data[8];
+  f32 gravity_factor = f_data[9];
+
+  PhysicsBodyType type     = (PhysicsBodyType)u_data[0];
+  PhysicsObjectLayer layer = (PhysicsObjectLayer)u_data[1];
+
+  // Fill in the body desc
+  
+  body_desc->position = position;
+  body_desc->rotation = rotation;
+  
+  body_desc->restitution    = restitution;
+  body_desc->friction       = friction;
+  body_desc->gravity_factor = gravity_factor;
+
+  body_desc->type   = type;
+  body_desc->layers = layer;
 }
 
 void file_read_bytes(File& file, ColliderDesc* collider_desc) {

@@ -75,6 +75,16 @@ enum PhysicsBodyType {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// ColliderType
+enum ColliderType {
+  COLLIDER_BOX = 0, 
+  COLLIDER_SPHERE, 
+  COLLIDER_CAPSULE,
+};
+/// ColliderType
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// PhysicsBodyID
 struct PhysicsBodyID {
   u32 _id;
@@ -85,6 +95,7 @@ struct PhysicsBodyID {
 ///---------------------------------------------------------------------------------------------------------------------
 /// ColliderID
 struct ColliderID {
+  ColliderType _type;
   u32 _id;
 };
 /// ColliderID
@@ -166,19 +177,23 @@ NIKOLA_API void physics_world_step(const f32 delta_time, const i32 collision_ste
 
 NIKOLA_API PhysicsBodyID physics_world_create_body(const PhysicsBodyDesc& desc);
 
-NIKOLA_API void physics_world_add_body(const PhysicsBodyID& body_id, const bool is_active);
+NIKOLA_API void physics_world_add_body(const PhysicsBodyID& body_id, const bool is_active = true);
 
-NIKOLA_API PhysicsBodyID physics_world_create_and_add_body(const PhysicsBodyDesc& desc, const bool is_active);
+NIKOLA_API PhysicsBodyID physics_world_create_and_add_body(const PhysicsBodyDesc& desc, const bool is_active = true);
 
 NIKOLA_API void physics_world_prepare_bodies(PhysicsBodyID* bodies, const sizei bodies_count);
 
-NIKOLA_API const bool physics_world_finalize_bodies(PhysicsBodyID* bodies, const sizei bodies_count, const bool is_active);
+NIKOLA_API const bool physics_world_finalize_bodies(PhysicsBodyID* bodies, const sizei bodies_count, const bool is_active = true);
 
 NIKOLA_API const bool physics_world_abort_bodies(PhysicsBodyID* bodies, const sizei bodies_count);
 
 NIKOLA_API void physics_world_set_gravity(const Vec3& gravity);
 
+NIKOLA_API Vec3 physics_world_get_gravity();
+
 NIKOLA_API void physics_world_toggle_paused();
+
+NIKOLA_API const bool physics_world_is_paused();
 
 /// Physics world functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -186,11 +201,13 @@ NIKOLA_API void physics_world_toggle_paused();
 ///---------------------------------------------------------------------------------------------------------------------
 /// Physics body functions
 
-NIKOLA_API void physics_body_set_position(PhysicsBodyID& body_id, const Vec3 position);
+NIKOLA_API void physics_body_set_position(PhysicsBodyID& body_id, const Vec3 position, const bool activate = true);
 
-NIKOLA_API void physics_body_set_rotation(PhysicsBodyID& body_id, const Quat rotation);
+NIKOLA_API void physics_body_set_rotation(PhysicsBodyID& body_id, const Quat rotation, const bool activate = true);
 
-NIKOLA_API void physics_body_set_rotation(PhysicsBodyID& body_id, const Vec3 axis, const f32 angle);
+NIKOLA_API void physics_body_set_rotation(PhysicsBodyID& body_id, const Vec3 axis, const f32 angle, const bool activate = true);
+
+NIKOLA_API void physics_body_set_transform(PhysicsBodyID& body_id, const Transform& transform, const bool activate = true);
 
 NIKOLA_API void physics_body_set_linear_velocity(PhysicsBodyID& body_id, const Vec3 velocity);
 
