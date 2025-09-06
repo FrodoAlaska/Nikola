@@ -114,12 +114,27 @@ struct CollisionData {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// Ray
-struct Ray {
-  Vec3 origin; 
-  Vec3 direction;
+/// RayCastDesc
+struct RayCastDesc {
+  Vec3 origin    = Vec3(0.0f); 
+  Vec3 direction = Vec3(0.0f);
+  f32 distance   = 1.0f;
+
+  PhysicsBroadPhaseLayer broad_phase_layer = PHYSICS_BROAD_PHASE_LAYER_DYNAMIC;
+  PhysicsObjectLayer object_layer          = PHYSICS_OBJECT_LAYER_0;
 };
-/// Ray
+/// RayCastDesc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// RayCastResult
+struct RayCastResult {
+  PhysicsBodyID body_id = {};
+  Vec3 point            = Vec3(0.0f);
+
+  bool has_hit = false;
+};
+/// RayCastResult
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -207,6 +222,8 @@ NIKOLA_API void physics_world_prepare_bodies(PhysicsBodyID* bodies, const sizei 
 NIKOLA_API const bool physics_world_finalize_bodies(PhysicsBodyID* bodies, const sizei bodies_count, const bool is_active = true);
 
 NIKOLA_API const bool physics_world_abort_bodies(PhysicsBodyID* bodies, const sizei bodies_count);
+
+NIKOLA_API const bool physics_world_cast_ray(const RayCastDesc& cast_desc);
 
 NIKOLA_API void physics_world_set_safe_mode(const bool safe);
 

@@ -116,6 +116,21 @@ static bool on_physics_event(const nikola::Event& event, const void* dispatcher,
   return true;
 }
 
+static bool on_raycast_event(const nikola::Event& event, const void* dispatcher, const void* listener) {
+  nikola::App* app = (nikola::App*)listener;
+
+  nikola::physics_world_set_safe_mode(false);
+
+  nikola::u64 user_data = nikola::physics_body_get_user_data(event.cast_result.body_id);
+  nikola::Material* mat = nikola::resources_get_material(app->materials[user_data]);
+
+  nikola::PhysicsBodyID body_id = event.cast_result.body_id;
+  nikola::physics_body_apply_force(body_id, app->frame_data.camera.front * 100.0f);
+  
+  nikola::physics_world_set_safe_mode(true);
+  return true;
+}
+
 /// Callbacks
 /// ----------------------------------------------------------------------
 
@@ -161,6 +176,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   
   nikola::event_listen(nikola::EVENT_PHYSICS_CONTACT_ADDED, on_physics_event, app);
   nikola::event_listen(nikola::EVENT_PHYSICS_CONTACT_REMOVED, on_physics_event, app);
+  nikola::event_listen(nikola::EVENT_PHYSICS_RAYCAST_HIT, on_raycast_event, app);
 
   return app;
 }
@@ -185,6 +201,19 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
   if(nikola::input_key_pressed(nikola::KEY_F1)) {
     nikola::gui_toggle_active();
     app->frame_data.camera.is_active = !nikola::gui_is_active();
+  }
+
+  if(nikola::input_key_pressed(nikola::KEY_SPACE)) {
+    // nikola::RayCastDesc ray = {
+    //   .origin    = app->frame_data.camera.position, 
+    //   .direction = app->frame_data.camera.front,
+    //   .distance  = 100000.0f, 
+    //
+    //   .object_layer = nikola::PHYSICS_OBJECT_LAYER_1,
+    // };
+    // nikola::physics_world_cast_ray(ray);
+  
+    nikola::physics_body_apply_force(app->cube_body, nikola::Vec3(0.0f, 1.0f, 0.0f) * 100.0f);
   }
 
   // Update the camera

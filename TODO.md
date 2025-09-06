@@ -17,7 +17,7 @@
         - [x] Fully integrate physics bodies 
         - [x] Integrate box, sphere, and capsule colliders for now 
         - [x] Add the various physics-related events to our event system
-        - [] Raycasts
+        - [x] Raycasts
         - [] Implement Jolt's character controller 
     - [] Add physics components to the GUI 
         - [x] Physics body 

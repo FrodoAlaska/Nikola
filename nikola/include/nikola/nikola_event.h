@@ -78,6 +78,7 @@ enum EventType {
   EVENT_PHYSICS_CONTACT_ADDED,
   EVENT_PHYSICS_CONTACT_REMOVED,
   EVENT_PHYSICS_CONTACT_PERSISTED,
+  EVENT_PHYSICS_RAYCAST_HIT,
 
   EVENTS_MAX,
 };
@@ -148,8 +149,12 @@ struct Event {
 
   /// The collision data given to this event 
   /// by either `EVENT_PHYSICS_CONTACT_ADDED`,
-  /// `EVENT_PHYSICS_CONTACT_REMOVED`, or `EVENT_PHYSICS_CONTACT_PERSISTED`
+  /// `EVENT_PHYSICS_CONTACT_REMOVED`, or `EVENT_PHYSICS_CONTACT_PERSISTED`.
   CollisionData collision_data;
+
+  /// The ray cast result given to this event 
+  /// by `EVENT_PHYSICS_RAYCAST_HIT`.
+  RayCastResult cast_result;
 };
 /// Event
 ///---------------------------------------------------------------------------------------------------------------------

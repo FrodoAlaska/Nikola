@@ -18,10 +18,15 @@
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+
 #include <Jolt/Physics/Collision/BroadPhase/BroadPhaseLayer.h>
 #include <Jolt/Physics/Collision/BroadPhase/BroadPhaseLayerInterfaceTable.h>
 #include <Jolt/Physics/Collision/BroadPhase/ObjectVsBroadPhaseLayerFilterTable.h>
 #include <Jolt/Physics/Collision/ObjectLayerPairFilterTable.h>
+
+#include <Jolt/Physics/Collision/RayCast.h>
+#include <Jolt/Physics/Collision/CastResult.h>
+#include <Jolt/Physics/Collision/CollisionCollectorImpl.h>
 
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
@@ -407,10 +412,12 @@ const bool physics_world_finalize_bodies(PhysicsBodyID* bodies, const sizei bodi
 
   JPH::BodyInterface::AddState batch = s_world->batches_queue.front();
   JPH::EActivation active            = is_active ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
+  s_world->bodies.resize(s_world->bodies.size() + bodies_count);
 
   s_world->body_interface->AddBodiesFinalize(&s_world->bodies[bodies[0]._id], bodies_count, batch, active);
   s_world->batches_queue.pop();
 
+  s_world->physics_system.OptimizeBroadPhase();
   return true;
 }
 
@@ -425,6 +432,48 @@ const bool physics_world_abort_bodies(PhysicsBodyID* bodies, const sizei bodies_
   s_world->batches_queue.pop();
 
   return true;
+}
+
+const bool physics_world_cast_ray(const RayCastDesc& cast_desc) {
+  const JPH::BroadPhaseQuery& broad_phase = s_world->physics_system.GetBroadPhaseQuery();
+  
+  // Cast the ray into the Jolt world
+
+  JPH::AllHitCollisionCollector<JPH::RayCastBodyCollector> collector; 
+  JPH::RayCast ray(vec3_to_jph_vec3(cast_desc.origin), vec3_to_jph_vec3(cast_desc.direction * cast_desc.distance));
+
+  broad_phase.CastRay(ray, 
+                      collector, 
+                      JPH::SpecifiedBroadPhaseLayerFilter((JPH::BroadPhaseLayer)cast_desc.broad_phase_layer), 
+                      JPH::SpecifiedObjectLayerFilter((JPH::ObjectLayer)cast_desc.object_layer));
+  
+  // Complete our ray cast and send out events for all the successful hits
+
+  for(sizei i = 0; i < collector.mHits.size(); i++) {
+    // Make sense of the ray cast data
+    
+    JPH::BroadPhaseCastResult* result = &collector.mHits[i];
+    
+    PhysicsBodyID body_id = {
+      ._id = result->mBodyID.GetIndex(),
+    };
+
+    RayCastResult ray_result = {
+      .body_id = body_id,
+      .point   = jph_vec3_to_vec3(ray.mOrigin - s_world->body_interface->GetCenterOfMassPosition(result->mBodyID)),
+      .has_hit = true,   
+    };
+
+    // Send out an event
+   
+    Event event {
+      .type        = EVENT_PHYSICS_RAYCAST_HIT,
+      .cast_result = ray_result,
+    };
+    event_dispatch(event);
+  }
+
+  return (collector.mHits.size() > 0);
 }
 
 void physics_world_set_safe_mode(const bool safe) {
