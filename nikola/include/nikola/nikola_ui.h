@@ -452,6 +452,9 @@ NIKOLA_API void gui_edit_audio_listener(const char* name);
 /// Add a physics body section identified by `name` to edit the given `body`.
 NIKOLA_API void gui_edit_physics_body(const char* name, PhysicsBodyID& body);
 
+/// Add a character body section identified by `name` to edit the given `character`.
+NIKOLA_API void gui_edit_character_body(const char* name, CharacterID& character);
+
 /// Add a collider section identified by `name` to edit the given `collider`.
 NIKOLA_API void gui_edit_collider(const char* name, ColliderID& collider);
 

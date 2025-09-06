@@ -675,6 +675,16 @@ void physics_body_set_type(PhysicsBodyID& body_id, const PhysicsBodyType type) {
   s_world->body_interface->SetMotionType(body, body_type_to_jph_body_type(type), JPH::EActivation::Activate);
 }
 
+void physics_body_set_collider(PhysicsBodyID& body_id, const ColliderID& collider_id, const bool activate) {
+  BODY_ID_CHECK(body_id);
+  COLLIDER_ID_CHECK(collider_id);
+  
+  JPH::BodyID body        = s_world->bodies[body_id._id];
+  JPH::EActivation active = activate ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
+
+  s_world->body_interface->SetShape(body, s_world->shapes[collider_id._id], true, active);
+}
+
 void physics_body_apply_linear_velocity(PhysicsBodyID& body_id, const Vec3 velocity) {
   BODY_ID_CHECK(body_id);
   
@@ -954,6 +964,14 @@ void character_body_set_slope_angle(CharacterID& char_id, const f32 max_slope_an
   character->SetMaxSlopeAngle(max_slope_angle);
 }
 
+void character_body_set_collider(CharacterID& char_id, const ColliderID& collider_id, const f32 max_penetration_depth) {
+  CHARACTER_ID_CHECK(char_id);
+  COLLIDER_ID_CHECK(collider_id); 
+
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  character->SetShape(s_world->shapes[collider_id._id], max_penetration_depth);
+}
+
 void character_body_activate(CharacterID& char_id) {
   CHARACTER_ID_CHECK(char_id);
   
@@ -1087,6 +1105,18 @@ const PhysicsBodyID character_body_get_ground_body(const CharacterID& char_id) {
   return PhysicsBodyID {
     ._id = character->GetGroundBodyID().GetIndex(),
   };
+}
+
+const bool character_body_cast_ray(const CharacterID& char_id, const RayCastDesc& cast_desc) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  JPH::TransformedShape trans_shape  = character->GetTransformedShape();
+ 
+  JPH::RayCast ray(vec3_to_jph_vec3(cast_desc.origin), vec3_to_jph_vec3(cast_desc.direction * cast_desc.distance));
+  JPH::RayCastResult ray_result; 
+
+  return trans_shape.CastRay(JPH::RRayCast(ray), ray_result);
 }
 
 /// Character body functions

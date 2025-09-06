@@ -711,6 +711,70 @@ void gui_edit_physics_body(const char* name, PhysicsBodyID& body) {
   ImGui::PopID(); 
 }
 
+void gui_edit_character_body(const char* name, CharacterID& character) {
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+  
+  // Position
+  {
+    Vec3 position = character_body_get_position(character);
+    if(ImGui::DragFloat3("Position", &position[0], s_gui.big_step)) {
+      character_body_set_position(character, position);
+    }
+  }
+
+  // Linear velocity
+  {
+    Vec3 linear = character_body_get_linear_velocity(character);
+    if(ImGui::DragFloat3("Linear velocity", &linear[0], s_gui.big_step)) {
+      character_body_set_linear_velocity(character, linear);
+    }
+  }
+
+  // Layer
+  {
+    i32 current_layer   = (i32)character_body_get_layer(character);
+    const char* options = "Layer 0\0Layer 1\0Layer 2\0Layer 3\0Layer 4\0Layer 5\0Layer 6\0Layer 7\0 Layer 8\0Layer 9\0\0";
+
+    if(ImGui::Combo("Layer", &current_layer, options)) {
+      character_body_set_layer(character, (PhysicsObjectLayer)current_layer);
+    }
+  }
+
+  // Slop angle
+  {
+    f32 slope_angle = character_body_get_slope_angle(character) * RAD2DEG;
+    if(ImGui::DragFloat("Slope angle (Degrees)", &slope_angle, s_gui.big_step)) {
+      character_body_set_slope_angle(character, slope_angle * DEG2RAD);
+    }
+  }
+
+  // Ground state
+  {
+    String state_string      = "On ground";
+    GroundState ground_state = character_body_query_ground_state(character);
+ 
+    switch(ground_state) {
+      case GROUND_STATE_ON_GROUND:
+        state_string = "On ground";
+        break;
+      case GROUND_STATE_ON_STEEP_GROUND:
+        state_string = "On steep ground";
+        break;
+      case GROUND_STATE_NOT_SUPPORTED:
+        state_string = "Not supported";
+        break;
+      case GROUND_STATE_IN_AIR:
+        state_string = "In air";
+        break;
+    }
+
+    ImGui::Text("Ground state: %s", state_string.c_str());
+  }
+
+  ImGui::PopID(); 
+}
+
 void gui_edit_collider(const char* name, ColliderID& collider) {
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 

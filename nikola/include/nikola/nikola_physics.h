@@ -308,6 +308,8 @@ NIKOLA_API void physics_body_set_gravity_factor(PhysicsBodyID& body_id, const f3
 
 NIKOLA_API void physics_body_set_type(PhysicsBodyID& body_id, const PhysicsBodyType type);
 
+NIKOLA_API void physics_body_set_collider(PhysicsBodyID& body_id, const ColliderID& collider_id, const bool activate = true);
+
 NIKOLA_API void physics_body_apply_linear_velocity(PhysicsBodyID& body_id, const Vec3 velocity);
 
 NIKOLA_API void physics_body_apply_force(PhysicsBodyID& body_id, const Vec3 force);
@@ -380,6 +382,8 @@ NIKOLA_API void character_body_set_layer(CharacterID& char_id, const PhysicsObje
 
 NIKOLA_API void character_body_set_slope_angle(CharacterID& char_id, const f32 max_slope_angle);
 
+NIKOLA_API void character_body_set_collider(CharacterID& char_id, const ColliderID& collider_id, const f32 max_penetration_depth);
+
 NIKOLA_API void character_body_activate(CharacterID& char_id);
 
 NIKOLA_API const Vec3 character_body_get_position(const CharacterID& char_id);
@@ -415,6 +419,8 @@ NIKOLA_API const Vec3 character_body_get_ground_normal(const CharacterID& char_i
 NIKOLA_API const Vec3 character_body_get_ground_velocity(const CharacterID& char_id);
 
 NIKOLA_API const PhysicsBodyID character_body_get_ground_body(const CharacterID& char_id);
+
+NIKOLA_API const bool character_body_cast_ray(const CharacterID& char_id, const RayCastDesc& cast_desc);
 
 /// Character body functions
 ///---------------------------------------------------------------------------------------------------------------------

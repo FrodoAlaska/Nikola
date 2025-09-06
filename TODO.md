@@ -12,7 +12,7 @@
     - [x] I believe that the animation loader works with just GLTF for now, so try to make it work with Collada as well
     - [x] Add the animator to the GUI
 - [] The Physics Question
-    - [] Integrate Jolt
+    - [x] Integrate Jolt types
         - [x] Initialization, shutdown, and update of the physics world
         - [x] Fully integrate physics bodies 
         - [x] Integrate box, sphere, and capsule colliders for now 
@@ -21,7 +21,7 @@
         - [x] Implement Jolt's character controller 
     - [] Add physics components to the GUI 
         - [x] Physics body 
-        - [] Character
+        - [x] Character
         - [] Colliders 
     - [] Save the physics components 
         - [x] Physics body 

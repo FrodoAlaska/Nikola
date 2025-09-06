@@ -270,7 +270,7 @@ void app_render_gui(nikola::App* app) {
   // Bodies
   if(ImGui::CollapsingHeader("Bodies")) {
     nikola::gui_edit_physics_body("Floor", app->floor_body);
-    nikola::gui_edit_character_body("Cube", app->cube_body);
+    // nikola::gui_edit_physics_body("Cube", app->cube_body);
   }
 
   // Frame 
