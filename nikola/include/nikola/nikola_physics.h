@@ -15,7 +15,7 @@ namespace nikola { // Start of nikola
 const u32 PHYSICS_DEFAULT_MAX_BODIES              = 24000;
 const u32 PHYSICS_DEFAULT_MAX_CONTACT_CONSTRAINTS = 10240;
 
-const u32 COLLIDER_ID_INVALID = 42560;
+const u32 PHYSICS_ID_INVALID = ((u32)-1);
 
 /// Consts 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -84,9 +84,20 @@ enum ColliderType {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// GroundState
+enum GroundState {
+  GROUND_STATE_ON_GROUND = 0, 
+  GROUND_STATE_ON_STEEP_GROUND, 
+  GROUND_STATE_NOT_SUPPORTED, 
+  GROUND_STATE_IN_AIR,
+};
+/// GroundState
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// PhysicsBodyID
 struct PhysicsBodyID {
-  u32 _id;
+  u32 _id = PHYSICS_ID_INVALID;
 };
 /// PhysicsBodyID
 ///---------------------------------------------------------------------------------------------------------------------
@@ -95,9 +106,17 @@ struct PhysicsBodyID {
 /// ColliderID
 struct ColliderID {
   ColliderType _type;
-  u32 _id = COLLIDER_ID_INVALID;
+  u32 _id = PHYSICS_ID_INVALID;
 };
 /// ColliderID
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// CharacterID
+struct CharacterID {
+  u32 _id = PHYSICS_ID_INVALID;
+};
+/// CharacterID
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -178,6 +197,26 @@ struct PhysicsBodyDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// CharacterBodyDesc
+struct CharacterBodyDesc {
+  Vec3 position;
+  Quat rotation;
+
+  PhysicsObjectLayer layer; 
+
+  f32 max_slope_angle = (50.0f * DEG2RAD);
+  f32 mass            = 80.0f;
+  f32 friction        = 0.5f;
+  f32 gravity_factor  = 1.0f;
+
+  Vec3 up_axis           = Vec3(0.0f, 1.0f, 0.0f);
+  ColliderID collider_id = {};
+  u64 user_data          = 0;
+};
+/// CharacterBodyDesc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// BoxColliderDesc
 struct BoxColliderDesc {
   Vec3 half_size; 
@@ -214,6 +253,8 @@ NIKOLA_API void physics_world_step(const f32 delta_time, const i32 collision_ste
 NIKOLA_API PhysicsBodyID physics_world_create_body(const PhysicsBodyDesc& desc);
 
 NIKOLA_API void physics_world_add_body(const PhysicsBodyID& body_id, const bool is_active = true);
+
+NIKOLA_API void physics_world_add_character(const CharacterID& char_id, const bool is_active = true);
 
 NIKOLA_API PhysicsBodyID physics_world_create_and_add_body(const PhysicsBodyDesc& desc, const bool is_active = true);
 
@@ -320,6 +361,62 @@ NIKOLA_API ColliderID collider_create(const SphereColliderDesc& desc);
 NIKOLA_API ColliderID collider_create(const CapsuleColliderDesc& desc);
 
 /// Collider functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Character body functions
+
+NIKOLA_API CharacterID character_body_create(const CharacterBodyDesc& desc);
+
+NIKOLA_API void character_body_set_position(CharacterID& char_id, const Vec3 position);
+
+NIKOLA_API void character_body_set_rotation(CharacterID& char_id, const Quat rotation);
+
+NIKOLA_API void character_body_set_rotation(CharacterID& char_id, const Vec3 axis, const f32 angle);
+
+NIKOLA_API void character_body_set_linear_velocity(CharacterID& char_id, const Vec3 velocity);
+
+NIKOLA_API void character_body_set_layer(CharacterID& char_id, const PhysicsObjectLayer layer);
+
+NIKOLA_API void character_body_set_slope_angle(CharacterID& char_id, const f32 max_slope_angle);
+
+NIKOLA_API void character_body_activate(CharacterID& char_id);
+
+NIKOLA_API const Vec3 character_body_get_position(const CharacterID& char_id);
+
+NIKOLA_API const Vec3 character_body_get_com_position(const CharacterID& char_id);
+
+NIKOLA_API const Quat character_body_get_rotation(const CharacterID& char_id);
+
+NIKOLA_API const Vec3 character_body_get_linear_velocity(const CharacterID& char_id);
+
+NIKOLA_API const PhysicsObjectLayer character_body_get_layer(const CharacterID& char_id);
+
+NIKOLA_API const f32 character_body_get_slope_angle(const CharacterID& char_id);
+
+NIKOLA_API Transform character_body_get_transform(const CharacterID& char_id);
+
+NIKOLA_API const PhysicsBodyID character_body_get_body(const CharacterID& char_id);
+
+NIKOLA_API GroundState character_body_query_ground_state(const CharacterID& char_id);
+
+NIKOLA_API void character_body_apply_linear_velocity(CharacterID& char_id, const Vec3 velocity);
+
+NIKOLA_API void character_body_apply_impulse(CharacterID& char_id, const Vec3 impulse);
+
+NIKOLA_API const bool character_body_is_supported(const CharacterID& char_id);
+
+NIKOLA_API const bool character_body_is_slope_too_steep(const CharacterID& char_id, const Vec3 surface_normal);
+
+NIKOLA_API const Vec3 character_body_get_ground_position(const CharacterID& char_id);
+
+NIKOLA_API const Vec3 character_body_get_ground_normal(const CharacterID& char_id);
+
+NIKOLA_API const Vec3 character_body_get_ground_velocity(const CharacterID& char_id);
+
+NIKOLA_API const PhysicsBodyID character_body_get_ground_body(const CharacterID& char_id);
+
+/// Character body functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 /// *** Physics ***

@@ -28,6 +28,9 @@
 #include <Jolt/Physics/Collision/CastResult.h>
 #include <Jolt/Physics/Collision/CollisionCollectorImpl.h>
 
+#include <Jolt/Physics/Character/Character.h>
+#include <Jolt/Physics/Character/CharacterBase.h>
+
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 #include <Jolt/Physics/Body/BodyInterface.h>
@@ -40,12 +43,23 @@ namespace nikola { // Start of nikola
 /// *** Physics ***
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// Defines
+
+#define BODY_ID_CHECK(id)      NIKOLA_ASSERT((id._id != PHYSICS_ID_INVALID), "Trying to access a physics body with an invalid ID")
+#define COLLIDER_ID_CHECK(id)  NIKOLA_ASSERT((id._id != PHYSICS_ID_INVALID), "Trying to access a collider with an invalid ID")
+#define CHARACTER_ID_CHECK(id) NIKOLA_ASSERT((id._id != PHYSICS_ID_INVALID), "Trying to access a character with an invalid ID")
+
+/// Defines
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// Private functions declarations
 
 static inline Vec3 jph_vec3_to_vec3(const JPH::Vec3& vec);
 static inline Vec4 jph_vec4_to_vec4(const JPH::Vec4& vec);
 static inline Quat jph_quat_to_quat(const JPH::Quat& quat);
 static inline PhysicsBodyType jph_body_type_to_body_type(const JPH::EMotionType type);
+static inline GroundState jph_ground_state_top_ground_state(const JPH::Character::EGroundState state);
 static inline JPH::Vec3 vec3_to_jph_vec3(const Vec3& vec);
 static inline JPH::Vec4 vec4_to_jph_vec4(const Vec4& vec);
 static inline JPH::Quat quat_to_jph_quat(const Quat& quat);
@@ -173,7 +187,11 @@ struct PhysicsWorld {
 
   DynamicArray<JPH::Ref<JPH::Shape>> shapes; 
   DynamicArray<JPH::BodyID> bodies;
+  DynamicArray<JPH::Ref<JPH::Character>> characters;
+
   Queue<JPH::BodyInterface::AddState> batches_queue;
+
+  f32 collision_tolerance = 0.05f;
 
   bool is_paused = false;
 };
@@ -205,6 +223,19 @@ static inline PhysicsBodyType jph_body_type_to_body_type(const JPH::EMotionType 
       return PHYSICS_BODY_DYNAMIC;
     case JPH::EMotionType::Kinematic:
       return PHYSICS_BODY_KINEMATIC;
+  }
+}
+
+static inline GroundState jph_ground_state_top_ground_state(const JPH::Character::EGroundState state) {
+  switch(state) {
+    case JPH::Character::EGroundState::OnGround:
+      return GROUND_STATE_ON_GROUND;
+    case JPH::Character::EGroundState::OnSteepGround:
+      return GROUND_STATE_ON_STEEP_GROUND;
+    case JPH::Character::EGroundState::NotSupported:
+      return GROUND_STATE_NOT_SUPPORTED;
+    case JPH::Character::EGroundState::InAir:
+      return GROUND_STATE_IN_AIR;
   }
 }
 
@@ -322,10 +353,27 @@ void physics_world_init(const PhysicsWorldDesc& desc) {
 }
 
 void physics_world_shutdown() {
+  // Delete all characters from the world
+ 
+  for(sizei i = 0; i < s_world->characters.size(); i++) {
+    JPH::Ref<JPH::Character> character = s_world->characters[i];
+
+    character->RemoveFromPhysicsSystem();
+
+    sizei body_index = character->GetBodyID().GetIndex();
+    s_world->bodies.erase(s_world->bodies.begin() + body_index);
+  }
+
+  s_world->characters.clear();
+  s_world->bodies.shrink_to_fit();
+
   // Delete all the bodies in the world
   
   for(sizei i = 0; i < s_world->bodies.size(); i++) {
     JPH::BodyID body = s_world->bodies[i];
+    if(body.IsInvalid()) {
+      continue;
+    }
 
     s_world->body_interface->RemoveBody(body);
     s_world->body_interface->DestroyBody(body);
@@ -353,11 +401,17 @@ void physics_world_step(const f32 delta_time, const i32 collision_steps) {
     return;
   }
 
+  // Update the world
   s_world->physics_system.Update(delta_time, collision_steps, s_world->temp_allocater, s_world->job_system);
+
+  // Post update for all the characters 
+  for(auto& character : s_world->characters) {
+    character->PostSimulation(s_world->collision_tolerance);
+  }
 }
 
 PhysicsBodyID physics_world_create_body(const PhysicsBodyDesc& desc) {
-  NIKOLA_ASSERT((desc.collider_id._id != COLLIDER_ID_INVALID), "Invalid collider ID given to body creation function");
+  COLLIDER_ID_CHECK(desc.collider_id);
 
   // Create the body
   
@@ -378,19 +432,27 @@ PhysicsBodyID physics_world_create_body(const PhysicsBodyDesc& desc) {
   // Add the body to our internal buffer
   
   s_world->bodies.push_back(body->GetID());
-  PhysicsBodyID body_id {
+  return PhysicsBodyID {
     ._id = (body->GetID().GetIndex()),
   };
-
-  return body_id;
 }
 
 void physics_world_add_body(const PhysicsBodyID& body_id, const bool is_active) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
- 
+  BODY_ID_CHECK(body_id);
+
   JPH::EActivation active = is_active ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
   JPH::BodyID body        = s_world->bodies[body_id._id];
   s_world->body_interface->AddBody(body, active);
+}
+
+void physics_world_add_character(const CharacterID& char_id, const bool is_active) {
+  CHARACTER_ID_CHECK(char_id);
+
+  JPH::Character* character = s_world->characters[char_id._id];
+  JPH::EActivation activate = is_active ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
+
+  character->AddToPhysicsSystem(activate);
+  s_world->bodies.push_back(character->GetBodyID());
 }
 
 PhysicsBodyID physics_world_create_and_add_body(const PhysicsBodyDesc& desc, const bool is_active) {
@@ -508,7 +570,7 @@ const bool physics_world_is_paused() {
 /// Physics body functions
 
 void physics_body_set_position(PhysicsBodyID& body_id, const Vec3 position, const bool activate) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
   JPH::BodyID body = s_world->bodies[body_id._id];
 
   JPH::EActivation active = activate ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
@@ -516,7 +578,7 @@ void physics_body_set_position(PhysicsBodyID& body_id, const Vec3 position, cons
 }
 
 void physics_body_set_rotation(PhysicsBodyID& body_id, const Quat rotation, const bool activate) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
   JPH::BodyID body = s_world->bodies[body_id._id];
 
   JPH::EActivation active = activate ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
@@ -524,7 +586,7 @@ void physics_body_set_rotation(PhysicsBodyID& body_id, const Quat rotation, cons
 }
 
 void physics_body_set_rotation(PhysicsBodyID& body_id, const Vec3 axis, const f32 angle, const bool activate) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
   JPH::BodyID body = s_world->bodies[body_id._id];
  
   JPH::EActivation active = activate ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
@@ -534,7 +596,7 @@ void physics_body_set_rotation(PhysicsBodyID& body_id, const Vec3 axis, const f3
 }
 
 void physics_body_set_transform(PhysicsBodyID& body_id, const Transform& transform, const bool activate) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
   JPH::BodyID body = s_world->bodies[body_id._id];
  
   JPH::EActivation active = activate ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
@@ -545,21 +607,21 @@ void physics_body_set_transform(PhysicsBodyID& body_id, const Transform& transfo
 }
 
 void physics_body_set_linear_velocity(PhysicsBodyID& body_id, const Vec3 velocity) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
   JPH::BodyID body = s_world->bodies[body_id._id];
   
   s_world->body_interface->SetLinearVelocity(body, vec3_to_jph_vec3(velocity));
 }
 
 void physics_body_set_angular_velocity(PhysicsBodyID& body_id, const Vec3 velocity) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
   JPH::BodyID body = s_world->bodies[body_id._id];
   
   s_world->body_interface->SetAngularVelocity(body, vec3_to_jph_vec3(velocity));
 }
 
 void physics_body_set_active(PhysicsBodyID& body_id, const bool active) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
   JPH::BodyID body = s_world->bodies[body_id._id];
  
   if(active) {
@@ -571,7 +633,7 @@ void physics_body_set_active(PhysicsBodyID& body_id, const bool active) {
 }
 
 void physics_body_set_user_data(PhysicsBodyID& body_id, const u64 user_data) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
   NIKOLA_ASSERT(user_data, "Passing invalid user data to body"); 
 
   JPH::BodyID body = s_world->bodies[body_id._id];
@@ -579,175 +641,175 @@ void physics_body_set_user_data(PhysicsBodyID& body_id, const u64 user_data) {
 }
 
 void physics_body_set_layer(PhysicsBodyID& body_id, const PhysicsObjectLayer layer) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
-  JPH::BodyID body = s_world->bodies[body_id._id];
+  BODY_ID_CHECK(body_id);
   
+  JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->SetObjectLayer(body, (JPH::ObjectLayer)layer);
 }
 
 void physics_body_set_restitution(PhysicsBodyID& body_id, const f32 restitution) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
-  JPH::BodyID body = s_world->bodies[body_id._id];
+  BODY_ID_CHECK(body_id);
   
+  JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->SetRestitution(body, restitution);
 }
 
 void physics_body_set_friction(PhysicsBodyID& body_id, const f32 friction) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
-  JPH::BodyID body = s_world->bodies[body_id._id];
+  BODY_ID_CHECK(body_id);
   
+  JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->SetFriction(body, friction);
 }
 
 void physics_body_set_gravity_factor(PhysicsBodyID& body_id, const f32 factor) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
-  JPH::BodyID body = s_world->bodies[body_id._id];
+  BODY_ID_CHECK(body_id);
   
+  JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->SetGravityFactor(body, factor);
 }
 
 void physics_body_set_type(PhysicsBodyID& body_id, const PhysicsBodyType type) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
-  JPH::BodyID body = s_world->bodies[body_id._id];
+  BODY_ID_CHECK(body_id);
   
+  JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->SetMotionType(body, body_type_to_jph_body_type(type), JPH::EActivation::Activate);
 }
 
 void physics_body_apply_linear_velocity(PhysicsBodyID& body_id, const Vec3 velocity) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
-  JPH::BodyID body = s_world->bodies[body_id._id];
+  BODY_ID_CHECK(body_id);
   
+  JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->AddLinearVelocity(body, vec3_to_jph_vec3(velocity));
 }
 
 void physics_body_apply_force(PhysicsBodyID& body_id, const Vec3 force) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
-  JPH::BodyID body = s_world->bodies[body_id._id];
+  BODY_ID_CHECK(body_id);
   
-  s_world->body_interface->AddForce(body, vec3_to_jph_vec3(force), JPH::EActivation::DontActivate);
+  JPH::BodyID body = s_world->bodies[body_id._id];
+  s_world->body_interface->AddForce(body, vec3_to_jph_vec3(force));
 }
 
 void physics_body_apply_force_at(PhysicsBodyID& body_id, const Vec3 force, const Vec3 point) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
-  JPH::BodyID body = s_world->bodies[body_id._id];
+  BODY_ID_CHECK(body_id);
   
+  JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->AddForce(body, vec3_to_jph_vec3(force), vec3_to_jph_vec3(point));
 }
 
 void physics_body_apply_torque(PhysicsBodyID& body_id, const Vec3 torque) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
-  JPH::BodyID body = s_world->bodies[body_id._id];
+  BODY_ID_CHECK(body_id);
   
+  JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->AddTorque(body, vec3_to_jph_vec3(torque));
 }
 
 void physics_body_apply_impulse(PhysicsBodyID& body_id, const Vec3 impulse) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
-  JPH::BodyID body = s_world->bodies[body_id._id];
+  BODY_ID_CHECK(body_id);
   
+  JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->AddImpulse(body, vec3_to_jph_vec3(impulse));
 }
 
 void physics_body_apply_impulse_at(PhysicsBodyID& body_id, const Vec3 impulse, const Vec3 point) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
-  JPH::BodyID body = s_world->bodies[body_id._id];
+  BODY_ID_CHECK(body_id);
   
+  JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->AddImpulse(body, vec3_to_jph_vec3(impulse), vec3_to_jph_vec3(point));
 }
 
 void physics_body_apply_angular_impulse(PhysicsBodyID& body_id, const Vec3 impulse) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
-  JPH::BodyID body = s_world->bodies[body_id._id];
+  BODY_ID_CHECK(body_id);
   
+  JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->AddAngularImpulse(body, vec3_to_jph_vec3(impulse));
 }
 
 const Vec3 physics_body_get_position(const PhysicsBodyID& body_id) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
+  
   JPH::BodyID body = s_world->bodies[body_id._id];
-
   return jph_vec3_to_vec3(s_world->body_interface->GetPosition(body));
 }
 
 const Vec3 physics_body_get_com_position(const PhysicsBodyID& body_id) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
+  
   JPH::BodyID body = s_world->bodies[body_id._id];
-
   return jph_vec3_to_vec3(s_world->body_interface->GetCenterOfMassPosition(body));
 }
 
 const Quat physics_body_get_rotation(const PhysicsBodyID& body_id) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
+  
   JPH::BodyID body = s_world->bodies[body_id._id];
-
   return jph_quat_to_quat(s_world->body_interface->GetRotation(body));
 }
 
 const Vec3 physics_body_get_linear_velocity(const PhysicsBodyID& body_id) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
+  
   JPH::BodyID body = s_world->bodies[body_id._id];
-
   return jph_vec3_to_vec3(s_world->body_interface->GetLinearVelocity(body));
 }
 
 const Vec3 physics_body_get_angular_velocity(const PhysicsBodyID& body_id) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
+  
   JPH::BodyID body = s_world->bodies[body_id._id];
-
   return jph_vec3_to_vec3(s_world->body_interface->GetAngularVelocity(body));
 }
 
 const bool physics_body_is_active(const PhysicsBodyID& body_id) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
+  
   JPH::BodyID body = s_world->bodies[body_id._id];
-
   return s_world->body_interface->IsActive(body);
 }
 
 const u64 physics_body_get_user_data(const PhysicsBodyID& body_id) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
+  
   JPH::BodyID body = s_world->bodies[body_id._id];
-
   return (u64)s_world->body_interface->GetUserData(body);
 }
 
 const PhysicsObjectLayer physics_body_get_layer(const PhysicsBodyID& body_id) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
+  
   JPH::BodyID body = s_world->bodies[body_id._id];
-
   return (PhysicsObjectLayer)s_world->body_interface->GetObjectLayer(body);
 }
 
 const f32 physics_body_get_restitution(const PhysicsBodyID& body_id) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
+  
   JPH::BodyID body = s_world->bodies[body_id._id];
-
   return s_world->body_interface->GetRestitution(body);
 }
 
 const f32 physics_body_get_friction(const PhysicsBodyID& body_id) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
+  
   JPH::BodyID body = s_world->bodies[body_id._id];
-
   return s_world->body_interface->GetFriction(body);
 }
 
 const f32 physics_body_get_gravity_factor(const PhysicsBodyID& body_id) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
+  
   JPH::BodyID body = s_world->bodies[body_id._id];
-
   return s_world->body_interface->GetGravityFactor(body);
 }
 
 const PhysicsBodyType physics_body_get_type(const PhysicsBodyID& body_id) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
+  
   JPH::BodyID body = s_world->bodies[body_id._id];
-
   return jph_body_type_to_body_type(s_world->body_interface->GetMotionType(body));
 }
 
 Transform physics_body_get_transform(const PhysicsBodyID& body_id) {
-  NIKOLA_ASSERT((body_id._id < s_world->bodies.size()), "Trying to access a physics body that is non-existent in the world");
+  BODY_ID_CHECK(body_id);
   JPH::BodyID body = s_world->bodies[body_id._id];
 
   Transform transform;
@@ -770,7 +832,7 @@ ColliderID collider_create(const BoxColliderDesc& desc) {
 
   if(!result.IsValid()) {
     NIKOLA_LOG_ERROR("Failed to create a box collider - %s", result.GetError().c_str());
-    return ColliderID{._id = COLLIDER_ID_INVALID};
+    return ColliderID{};
   }
 
   s_world->shapes.push_back(result.Get());
@@ -788,7 +850,7 @@ ColliderID collider_create(const SphereColliderDesc& desc) {
 
   if(!result.IsValid()) {
     NIKOLA_LOG_ERROR("Failed to create a sphere collider - %s", result.GetError().c_str());
-    return ColliderID{._id = COLLIDER_ID_INVALID};
+    return ColliderID{};
   }
 
   s_world->shapes.push_back(result.Get());
@@ -806,7 +868,7 @@ ColliderID collider_create(const CapsuleColliderDesc& desc) {
 
   if(!result.IsValid()) {
     NIKOLA_LOG_ERROR("Failed to create a capsule collider - %s", result.GetError().c_str());
-    return ColliderID{._id = COLLIDER_ID_INVALID};
+    return ColliderID{};
   }
 
   s_world->shapes.push_back(result.Get());
@@ -819,6 +881,215 @@ ColliderID collider_create(const CapsuleColliderDesc& desc) {
 }
 
 /// Collider functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Character body functions
+
+CharacterID character_body_create(const CharacterBodyDesc& desc) {
+  COLLIDER_ID_CHECK(desc.collider_id);
+
+  JPH::Ref<JPH::CharacterSettings> settings = new JPH::CharacterSettings();
+
+  settings->mLayer         = (JPH::ObjectLayer)desc.layer; 
+  settings->mMaxSlopeAngle = desc.max_slope_angle; 
+  settings->mMass          = desc.mass; 
+  settings->mFriction      = desc.friction; 
+  settings->mGravityFactor = desc.gravity_factor;
+
+  settings->mUp    = vec3_to_jph_vec3(desc.up_axis);
+  settings->mShape = s_world->shapes[desc.collider_id._id];
+
+  JPH::Ref<JPH::Character> character = new JPH::Character(settings, 
+                                                          vec3_to_jph_vec3(desc.position), 
+                                                          quat_to_jph_quat(desc.rotation), 
+                                                          desc.user_data, 
+                                                          &s_world->physics_system);
+  s_world->characters.push_back(character);
+
+  return CharacterID {
+    ._id = (u32)(s_world->characters.size() - 1),
+  };
+}
+
+void character_body_set_position(CharacterID& char_id, const Vec3 position) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  character->SetPosition(vec3_to_jph_vec3(position));
+}
+
+void character_body_set_rotation(CharacterID& char_id, const Quat rotation) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  character->SetRotation(quat_to_jph_quat(rotation));
+}
+
+void character_body_set_rotation(CharacterID& char_id, const Vec3 axis, const f32 angle) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  character->SetRotation(quat_to_jph_quat(quat_angle_axis(axis, angle)));
+}
+
+void character_body_set_linear_velocity(CharacterID& char_id, const Vec3 velocity) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  character->SetLinearVelocity(vec3_to_jph_vec3(velocity));
+}
+
+void character_body_set_layer(CharacterID& char_id, const PhysicsObjectLayer layer) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  character->SetLayer((JPH::ObjectLayer)layer);
+}
+
+void character_body_set_slope_angle(CharacterID& char_id, const f32 max_slope_angle) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  character->SetMaxSlopeAngle(max_slope_angle);
+}
+
+void character_body_activate(CharacterID& char_id) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  character->Activate();
+}
+
+const Vec3 character_body_get_position(const CharacterID& char_id) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  return jph_vec3_to_vec3(character->GetPosition());
+}
+
+const Vec3 character_body_get_com_position(const CharacterID& char_id) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  return jph_vec3_to_vec3(character->GetCenterOfMassPosition());
+}
+
+const Quat character_body_get_rotation(const CharacterID& char_id) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  return jph_quat_to_quat(character->GetRotation());
+}
+
+const Vec3 character_body_get_linear_velocity(const CharacterID& char_id) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  return jph_vec3_to_vec3(character->GetLinearVelocity());
+}
+
+const PhysicsObjectLayer character_body_get_layer(const CharacterID& char_id) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  return (PhysicsObjectLayer)character->GetLayer();
+}
+
+const f32 character_body_get_slope_angle(const CharacterID& char_id) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  return character->GetCosMaxSlopeAngle();
+}
+
+Transform character_body_get_transform(const CharacterID& char_id) {
+  CHARACTER_ID_CHECK(char_id);
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+
+  Transform transform;
+  transform.position = jph_vec3_to_vec3(character->GetCenterOfMassPosition());
+  transform.rotation = jph_quat_to_quat(character->GetRotation());
+
+  transform_apply(transform);
+  return transform;
+}
+
+const PhysicsBodyID character_body_get_body(const CharacterID& char_id) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  return PhysicsBodyID {
+    ._id = character->GetBodyID().GetIndex(),
+  };
+}
+
+GroundState character_body_query_ground_state(const CharacterID& char_id) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  return jph_ground_state_top_ground_state(character->GetGroundState());
+}
+
+void character_body_apply_linear_velocity(CharacterID& char_id, const Vec3 velocity) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  character->AddLinearVelocity(vec3_to_jph_vec3(velocity));
+}
+
+void character_body_apply_impulse(CharacterID& char_id, const Vec3 impulse) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  character->AddImpulse(vec3_to_jph_vec3(impulse));
+}
+
+const bool character_body_is_supported(const CharacterID& char_id) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  return character->IsSupported();
+}
+
+const bool character_body_is_slope_too_steep(const CharacterID& char_id, const Vec3 surface_normal) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  return character->IsSlopeTooSteep(vec3_to_jph_vec3(surface_normal));
+}
+
+const Vec3 character_body_get_ground_position(const CharacterID& char_id) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  return jph_vec3_to_vec3(character->GetGroundPosition());
+}
+
+const Vec3 character_body_get_ground_normal(const CharacterID& char_id) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  return jph_vec3_to_vec3(character->GetGroundNormal());
+}
+
+const Vec3 character_body_get_ground_velocity(const CharacterID& char_id) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  return jph_vec3_to_vec3(character->GetGroundVelocity());
+}
+
+const PhysicsBodyID character_body_get_ground_body(const CharacterID& char_id) {
+  CHARACTER_ID_CHECK(char_id);
+  
+  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+  return PhysicsBodyID {
+    ._id = character->GetGroundBodyID().GetIndex(),
+  };
+}
+
+/// Character body functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 /// *** Physics ***

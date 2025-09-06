@@ -18,9 +18,10 @@
         - [x] Integrate box, sphere, and capsule colliders for now 
         - [x] Add the various physics-related events to our event system
         - [x] Raycasts
-        - [] Implement Jolt's character controller 
+        - [x] Implement Jolt's character controller 
     - [] Add physics components to the GUI 
         - [x] Physics body 
+        - [] Character
         - [] Colliders 
     - [] Save the physics components 
         - [x] Physics body 

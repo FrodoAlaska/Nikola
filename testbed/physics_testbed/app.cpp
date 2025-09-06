@@ -16,7 +16,7 @@ struct nikola::App {
   nikola::PhysicsBodyID floor_body; 
   nikola::ColliderID floor_collider; 
 
-  nikola::PhysicsBodyID cube_body;
+  nikola::CharacterID cube_body;
   nikola::ColliderID cube_collider;
 };
 /// App
@@ -76,17 +76,18 @@ static void init_bodies(nikola::App* app) {
   };
   app->cube_collider = nikola::collider_create(coll_desc);
 
-  body_desc = {
+  nikola::CharacterBodyDesc char_desc = {
     .position = nikola::Vec3(10.0f, 5.0f, 10.0f),
     .rotation = nikola::Quat(0.0f, 0.0f, 0.0f, 1.0f),
 
-    .type   = nikola::PHYSICS_BODY_DYNAMIC, 
-    .layers = nikola::PHYSICS_OBJECT_LAYER_1,
-
+    .layer = nikola::PHYSICS_OBJECT_LAYER_1,
+    
     .collider_id = app->cube_collider,
     .user_data   = 1,
   };
-  app->cube_body = nikola::physics_world_create_and_add_body(body_desc);
+
+  app->cube_body = nikola::character_body_create(char_desc);
+  nikola::physics_world_add_character(app->cube_body);
 }
 
 /// Private functions 
@@ -203,18 +204,28 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     app->frame_data.camera.is_active = !nikola::gui_is_active();
   }
 
-  if(nikola::input_key_pressed(nikola::KEY_SPACE)) {
-    // nikola::RayCastDesc ray = {
-    //   .origin    = app->frame_data.camera.position, 
-    //   .direction = app->frame_data.camera.front,
-    //   .distance  = 100000.0f, 
-    //
-    //   .object_layer = nikola::PHYSICS_OBJECT_LAYER_1,
-    // };
-    // nikola::physics_world_cast_ray(ray);
-  
-    nikola::physics_body_apply_force(app->cube_body, nikola::Vec3(0.0f, 1.0f, 0.0f) * 100.0f);
+  nikola::Vec3 current_velocity = nikola::character_body_get_linear_velocity(app->cube_body);
+  nikola::Vec3 velocity         = nikola::Vec3(0.0f, current_velocity.y, 0.0f);
+
+  if(nikola::input_key_down(nikola::KEY_W)) {
+    velocity.x = 10.0f;
   }
+  else if(nikola::input_key_down(nikola::KEY_S)) {
+    velocity.x = -10.0f;
+  }
+  
+  if(nikola::input_key_down(nikola::KEY_D)) {
+    velocity.z = 10.0f;
+  }
+  else if(nikola::input_key_down(nikola::KEY_A)) {
+    velocity.z = -10.0f;
+  }
+
+  if(nikola::input_key_pressed(nikola::KEY_SPACE)) {
+    velocity.y = 5.0f;
+  }
+
+  nikola::character_body_set_linear_velocity(app->cube_body, velocity);
 
   // Update the camera
   nikola::camera_update(app->frame_data.camera);
@@ -231,7 +242,7 @@ void app_render(nikola::App* app) {
   nikola::transform_scale(transform, nikola::Vec3(32.0f, 1.0f, 32.0f));
   nikola::renderer_queue_mesh(app->mesh_id, transform, app->materials[0]);
   
-  transform = nikola::physics_body_get_transform(app->cube_body);
+  transform = nikola::character_body_get_transform(app->cube_body);
   nikola::transform_scale(transform, nikola::Vec3(1.0f));
   nikola::renderer_queue_mesh(app->mesh_id, transform, app->materials[1]);
 
@@ -259,7 +270,7 @@ void app_render_gui(nikola::App* app) {
   // Bodies
   if(ImGui::CollapsingHeader("Bodies")) {
     nikola::gui_edit_physics_body("Floor", app->floor_body);
-    nikola::gui_edit_physics_body("Cube", app->cube_body);
+    // nikola::gui_edit_physics_body("Cube", app->cube_body);
   }
 
   // Frame 

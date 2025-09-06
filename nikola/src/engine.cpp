@@ -111,8 +111,9 @@ void engine_run() {
   while(window_is_open(s_engine.window)) {
     // Update 
     
-    physics_world_step(PHYSICS_WORLD_DEFAULT_DELTA_TIME, PHYSICS_WORLD_DEFAULT_COLLISION_STEPS); 
     CHECK_VALID_CALLBACK(s_engine.app_desc.update_fn, s_engine.app, niclock_get_delta_time());
+    
+    physics_world_step(PHYSICS_WORLD_DEFAULT_DELTA_TIME, PHYSICS_WORLD_DEFAULT_COLLISION_STEPS); 
     particles_update(niclock_get_delta_time());
 
     // Render
