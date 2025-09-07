@@ -46,7 +46,9 @@ struct Renderer {
   
   FrameData* frame_data;
 
-  DynamicArray<RenderPass> passes_pool;
+  RenderPass passes_pool[RENDER_PASSES_MAX];
+  sizei passes_count = 0;
+
   RenderPass* head_pass = nullptr; 
   RenderPass* tail_pass = nullptr;
 
@@ -97,7 +99,7 @@ static void init_defaults() {
     .normal_id   = normal_default_texture_id,
     
     .color        = Vec3(1.0f, 0.0f, 1.0f),
-    .transparency = 0.2f,
+    .transparency = 0.5f,
     .depth_mask   = false,
 
   };
@@ -217,9 +219,6 @@ void renderer_init(Window* window) {
   s_renderer.context = gfx_context_init(gfx_desc);
   NIKOLA_ASSERT(s_renderer.context, "Failed to initialize the graphics context");
 
-  // Performance boost?
-  s_renderer.passes_pool.reserve(4);
-
   // Defaults init
   
   init_defaults();
@@ -227,7 +226,7 @@ void renderer_init(Window* window) {
 
   // Defaults render passes init
   
-  // @TODO (Renderer): shadow_pass_init(window);
+  shadow_pass_init(window);
   light_pass_init(window);
   billboard_pass_init(window);
   hdr_pass_init(window);
@@ -240,13 +239,20 @@ void renderer_init(Window* window) {
 }
 
 void renderer_shutdown() {
+  // Destroy passes
+  
   batch_renderer_shutdown();
   
-  for(auto& pass : s_renderer.passes_pool) {
-    gfx_framebuffer_destroy(pass.framebuffer);
-  }
-  s_renderer.passes_pool.clear();
+  for(sizei i = 0; i < s_renderer.passes_count; i++) { 
+    RenderPass* pass = &s_renderer.passes_pool[i];   
 
+    if(pass->framebuffer) {
+      gfx_framebuffer_destroy(pass->framebuffer);
+    }
+  }
+
+  // Destroy resources
+  
   gfx_pipeline_destroy(s_renderer.defaults.screen_quad);
   gfx_context_shutdown(s_renderer.context);
   
@@ -347,10 +353,8 @@ Vec4 renderer_get_clear_color() {
 
 RenderPass* renderer_create_pass(const RenderPassDesc& desc) {
   // Allocate the pass
-
-  s_renderer.passes_pool.push_back(RenderPass{});
-
-  RenderPass* pass = &s_renderer.passes_pool[s_renderer.passes_pool.size() - 1];
+  
+  RenderPass* pass = &s_renderer.passes_pool[s_renderer.passes_count++];
   pass->gfx        = s_renderer.context; 
 
   // Callbacks init
@@ -391,6 +395,7 @@ RenderPass* renderer_create_pass(const RenderPassDesc& desc) {
   // Retrieve the context
   pass->shader_context = resources_get_shader_context(desc.shader_context_id);
 
+  NIKOLA_LOG_TRACE("Created pass with ID %zu", s_renderer.passes_count - 1);
   return pass;
 }
 
@@ -404,6 +409,7 @@ void renderer_append_pass(RenderPass* pass) {
     s_renderer.head_pass->previous = nullptr;
     s_renderer.head_pass->next     = s_renderer.tail_pass;
 
+    NIKOLA_LOG_TRACE("Appended the head");
     return;
   }
 
@@ -416,6 +422,7 @@ void renderer_append_pass(RenderPass* pass) {
 
     s_renderer.head_pass->next = s_renderer.tail_pass;
 
+    NIKOLA_LOG_TRACE("Appended the tail");
     return;
   }
 
@@ -427,6 +434,8 @@ void renderer_append_pass(RenderPass* pass) {
   pass->next     = nullptr;
 
   s_renderer.tail_pass = pass;
+  
+  NIKOLA_LOG_TRACE("Appended pass to the chain");
 }
 
 void renderer_prepend_pass(RenderPass* pass) {
@@ -439,6 +448,7 @@ void renderer_prepend_pass(RenderPass* pass) {
     s_renderer.head_pass->previous = nullptr;
     s_renderer.head_pass->next     = s_renderer.tail_pass;
 
+    NIKOLA_LOG_TRACE("Prepended the head");
     return;
   }
 
@@ -450,21 +460,15 @@ void renderer_prepend_pass(RenderPass* pass) {
   pass->previous = nullptr;
 
   pass = s_renderer.head_pass;
+
+  NIKOLA_LOG_TRACE("Prepended pass to the chain");
 }
 
 void renderer_insert_pass(RenderPass* pass, const sizei index) {
   NIKOLA_ASSERT(pass, "Invalid RenderPass passed to renderer_insert_pass");
   NIKOLA_ASSERT(index > 0, "Out-of-bounds render pass insertion");
 
-  sizei counter       = 0;
-  RenderPass* current = s_renderer.head_pass; 
-
-  // Iterate until you find the index or we run out 
-  // of render passes.
-  while(counter < index || current) {
-    current = current->next;
-    counter++;
-  }
+  RenderPass* current = &s_renderer.passes_pool[index]; 
 
   // Do a cool insertion
 
@@ -473,10 +477,30 @@ void renderer_insert_pass(RenderPass* pass, const sizei index) {
 
   current->next  = pass;
   pass->previous = current;
+
+  NIKOLA_LOG_TRACE("Insterted pass at %zu", index);
+}
+
+void renderer_remove_pass(const sizei index) {
+  NIKOLA_ASSERT((index >= 0) && (index < RENDER_PASSES_MAX), "Out-of-bounds render pass removal");
+
+  RenderPass* pass = &s_renderer.passes_pool[index]; 
+
+  // Remove the pass from the chain
+
+  if(pass->previous) {
+    pass->previous->next = pass->next;
+  }
+
+  if(pass->next) {
+    pass->next->previous = pass->previous;
+  }
+
+  NIKOLA_LOG_TRACE("Removed pass at %zu", index);
 }
 
 RenderPass* renderer_peek_pass(const sizei index) {
-  NIKOLA_ASSERT((index >= 0) && (index < s_renderer.passes_pool.size()), "Out-of-bounds render pass peek");
+  NIKOLA_ASSERT((index >= 0) && (index < RENDER_PASSES_MAX), "Out-of-bounds render pass peek");
   return &s_renderer.passes_pool[index];
 }
 

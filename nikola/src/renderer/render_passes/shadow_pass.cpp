@@ -74,7 +74,7 @@ void shadow_pass_init(Window* window) {
   // Render pass init
   
   RenderPass* shadow_pass = renderer_create_pass(pass_desc);
-  renderer_append_pass(shadow_pass);
+  // @TODO (Renderer/Shadows): renderer_append_pass(shadow_pass);
 }
 
 void shadow_pass_prepare(RenderPass* pass, const FrameData& data) {

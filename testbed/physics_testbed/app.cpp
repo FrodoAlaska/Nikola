@@ -18,6 +18,8 @@ struct nikola::App {
 
   nikola::CharacterID cube_body;
   nikola::ColliderID cube_collider;
+
+  nikola::RenderPass* debug_pass = nullptr;
 };
 /// App
 /// ----------------------------------------------------------------------
@@ -179,6 +181,8 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::event_listen(nikola::EVENT_PHYSICS_CONTACT_REMOVED, on_physics_event, app);
   nikola::event_listen(nikola::EVENT_PHYSICS_RAYCAST_HIT, on_raycast_event, app);
 
+  app->debug_pass = nikola::renderer_peek_pass(nikola::RENDER_PASS_DEBUG);
+
   return app;
 }
 
@@ -202,7 +206,16 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
   if(nikola::input_key_pressed(nikola::KEY_F1)) {
     nikola::gui_toggle_active();
     app->frame_data.camera.is_active = !nikola::gui_is_active();
+
+    if(nikola::gui_is_active()) {
+      nikola::renderer_insert_pass(app->debug_pass, nikola::RENDER_PASS_BILLBOARD);
+    }
+    else {
+      nikola::renderer_remove_pass(nikola::RENDER_PASS_DEBUG);
+    }
   }
+
+  // Handle input
 
   nikola::Vec3 current_velocity = nikola::character_body_get_linear_velocity(app->cube_body);
   nikola::Vec3 velocity         = nikola::Vec3(0.0f, current_velocity.y, 0.0f);
@@ -245,6 +258,9 @@ void app_render(nikola::App* app) {
   transform = nikola::character_body_get_transform(app->cube_body);
   nikola::transform_scale(transform, nikola::Vec3(1.0f));
   nikola::renderer_queue_mesh(app->mesh_id, transform, app->materials[1]);
+ 
+  nikola::transform_scale(transform, nikola::Vec3(1.1f));
+  nikola::renderer_queue_debug_cube(transform);
 
   nikola::renderer_end();
   

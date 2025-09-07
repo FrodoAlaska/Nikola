@@ -23,7 +23,7 @@ inline nikola::GfxShaderDesc generate_debug_shader() {
       };
       
       void main() {
-        gl_Position = vec4(aPos, 1.0);
+        gl_Position = u_projection * u_view * u_model[gl_InstanceID] * vec4(aPos, 1.0);
       }
     )",
 

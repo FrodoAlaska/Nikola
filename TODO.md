@@ -29,8 +29,8 @@
     - [] Debug rendering 
         - [x] Create functions for generating debug shapes 
         - [x] Create and implement functions for queuing debug rendering commands 
-        - [] Create a debug render pass that consumes the debug rendering commands 
-        - [] Test with a few debug cubes 
+        - [x] Create a debug render pass that consumes the debug rendering commands 
+        - [x] Test with a few debug cubes 
         - [] Have the phyiscs world go through all of its colliders and render them through the new API 
         - [] Implement other debug shapes like spheres and capsules
     - [] Implement mouse to screen and mouse to world for editing levels easier

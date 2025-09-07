@@ -99,6 +99,11 @@ void debug_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& 
 
     renderer_draw_geometry_primitive(geo);
   }
+
+  // Setting the output textures
+
+  pass->outputs[0]    = pass->framebuffer_desc.color_attachments[0];
+  pass->outputs_count = 1;
 }
 
 /// Debug pass functions

@@ -61,6 +61,8 @@ enum RenderPassID {
   RENDER_PASS_BILLBOARD,
   RENDER_PASS_HDR,
   RENDER_PASS_DEBUG,
+  
+  RENDER_PASSES_MAX,
 };
 /// RenderPassID
 ///---------------------------------------------------------------------------------------------------------------------
@@ -546,6 +548,9 @@ NIKOLA_API void renderer_prepend_pass(RenderPass* pass);
 /// However, if the end of the pass chain is reached before the given `index`, 
 /// the renderer will simply `append` the new pass at the end of the chain.
 NIKOLA_API void renderer_insert_pass(RenderPass* pass, const sizei index);
+
+/// Remove the pass at the given `index` from the render pass chain.
+NIKOLA_API void renderer_remove_pass(const sizei index);
 
 /// Return a const reference to the render pass at `index`.
 ///
