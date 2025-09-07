@@ -276,6 +276,8 @@ NIKOLA_API void physics_world_toggle_paused();
 
 NIKOLA_API const bool physics_world_is_paused();
 
+NIKOLA_API void physics_world_draw();
+
 /// Physics world functions
 ///---------------------------------------------------------------------------------------------------------------------
 

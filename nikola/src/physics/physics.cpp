@@ -3,6 +3,7 @@
 #include "nikola/nikola_math.h"
 #include "nikola/nikola_containers.h"
 #include "nikola/nikola_event.h"
+#include "nikola/nikola_render.h"
 
 #include <Jolt/Jolt.h>
 
@@ -34,6 +35,8 @@
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 #include <Jolt/Physics/Body/BodyInterface.h>
+
+#include <Jolt/Geometry/AABox.h>
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -561,6 +564,23 @@ void physics_world_toggle_paused() {
 
 const bool physics_world_is_paused() {
   return s_world->is_paused;
+}
+
+void physics_world_draw() {
+  // @TODO (Physics/Debug): Maybe use instancing?
+
+  Transform transform;
+  
+  for(auto& body : s_world->bodies) {
+    JPH::RefConst<JPH::Shape> shape = s_world->body_interface->GetShape(body);
+    JPH::AABox shape_aabb           = shape->GetLocalBounds();
+    
+    transform.position = jph_vec3_to_vec3(s_world->body_interface->GetPosition(body));
+    transform.scale    = jph_vec3_to_vec3(shape_aabb.GetExtent());
+
+    transform_apply(transform);
+    renderer_queue_debug_cube(transform);
+  }
 }
 
 /// Physics world functions

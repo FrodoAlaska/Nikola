@@ -31,7 +31,7 @@
         - [x] Create and implement functions for queuing debug rendering commands 
         - [x] Create a debug render pass that consumes the debug rendering commands 
         - [x] Test with a few debug cubes 
-        - [] Have the phyiscs world go through all of its colliders and render them through the new API 
+        - [x] Have the phyiscs world go through all of its colliders and render them through the new API 
         - [] Implement other debug shapes like spheres and capsules
     - [] Implement mouse to screen and mouse to world for editing levels easier
     - [] Documentation
@@ -54,6 +54,7 @@
     - [] Have a lot of options to edit the shape, distribution, and gravity. Perhaps save it in a file?
     - [] Documentation
 - [] Renderer: Beautify it
+    - [] Smooth out the pass system a bit. Appending and referring to passes is a bit weird. Paas chain? Passes pool? WTH?
     - [] PBR? Now? Please? Shit looks bad, man...
     - [] Gaussian blur
     - [] Bloom integration 

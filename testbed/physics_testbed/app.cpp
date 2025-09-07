@@ -55,7 +55,7 @@ static void init_bodies(nikola::App* app) {
   // Floor init
 
   nikola::BoxColliderDesc coll_desc = {
-    .half_size = nikola::Vec3(32.0f, 1.0f, 32.0f) / 2.0f,
+    .half_size = nikola::Vec3(32.0f, 1.0f, 32.0f),
   };
   app->floor_collider = nikola::collider_create(coll_desc);
 
@@ -74,7 +74,7 @@ static void init_bodies(nikola::App* app) {
   // Cube init
 
   coll_desc = {
-    .half_size = nikola::Vec3(3.0f) / 2.0f,
+    .half_size = nikola::Vec3(1.0f),
   };
   app->cube_collider = nikola::collider_create(coll_desc);
 
@@ -206,8 +206,13 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
   if(nikola::input_key_pressed(nikola::KEY_F1)) {
     nikola::gui_toggle_active();
     app->frame_data.camera.is_active = !nikola::gui_is_active();
+  }
 
-    if(nikola::gui_is_active()) {
+  static bool is_debug = false;
+  if(nikola::input_key_pressed(nikola::KEY_F4)) {
+    is_debug = !is_debug;
+
+    if(is_debug) {
       nikola::renderer_insert_pass(app->debug_pass, nikola::RENDER_PASS_BILLBOARD);
     }
     else {
@@ -258,9 +263,8 @@ void app_render(nikola::App* app) {
   transform = nikola::character_body_get_transform(app->cube_body);
   nikola::transform_scale(transform, nikola::Vec3(1.0f));
   nikola::renderer_queue_mesh(app->mesh_id, transform, app->materials[1]);
- 
-  nikola::transform_scale(transform, nikola::Vec3(1.1f));
-  nikola::renderer_queue_debug_cube(transform);
+  
+  nikola::physics_world_draw();
 
   nikola::renderer_end();
   
