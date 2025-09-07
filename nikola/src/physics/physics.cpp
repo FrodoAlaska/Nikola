@@ -567,19 +567,41 @@ const bool physics_world_is_paused() {
 }
 
 void physics_world_draw() {
-  // @TODO (Physics/Debug): Maybe use instancing?
-
-  Transform transform;
+  // @TODO (Physics/Debug): More shapes...
   
+  DynamicArray<Transform> cubes;
+  cubes.reserve(s_world->bodies.size());
+ 
+  // Go through all of the bodies and render their shapes
+
   for(auto& body : s_world->bodies) {
     JPH::RefConst<JPH::Shape> shape = s_world->body_interface->GetShape(body);
     JPH::AABox shape_aabb           = shape->GetLocalBounds();
-    
+   
+    Transform transform;
     transform.position = jph_vec3_to_vec3(s_world->body_interface->GetPosition(body));
     transform.scale    = jph_vec3_to_vec3(shape_aabb.GetExtent());
 
     transform_apply(transform);
-    renderer_queue_debug_cube(transform);
+
+    // Push the shape to the appropriate array
+
+    ColliderType collider_type = (ColliderType)shape->GetUserData();
+    switch(collider_type) {
+      case COLLIDER_BOX:
+        cubes.push_back(transform);
+        break;
+      case COLLIDER_SPHERE:
+        break;
+      case COLLIDER_CAPSULE:
+        break;
+    }
+  }
+  
+  // Render cubes
+ 
+  if(!cubes.empty()) {
+    renderer_queue_debug_cube_instanced(cubes.data(), cubes.size());
   }
 }
 
@@ -866,6 +888,8 @@ ColliderID collider_create(const BoxColliderDesc& desc) {
   }
 
   s_world->shapes.push_back(result.Get());
+  result.Get()->SetUserData((JPH::uint64)COLLIDER_BOX);
+
   ColliderID coll_id = {
     ._type = COLLIDER_BOX,
     ._id   = (u32)(s_world->shapes.size() - 1),
@@ -884,6 +908,8 @@ ColliderID collider_create(const SphereColliderDesc& desc) {
   }
 
   s_world->shapes.push_back(result.Get());
+  result.Get()->SetUserData((JPH::uint64)COLLIDER_SPHERE);
+
   ColliderID coll_id = {
     ._type = COLLIDER_SPHERE,
     ._id   = (u32)(s_world->shapes.size() - 1),
@@ -902,6 +928,8 @@ ColliderID collider_create(const CapsuleColliderDesc& desc) {
   }
 
   s_world->shapes.push_back(result.Get());
+  result.Get()->SetUserData((JPH::uint64)COLLIDER_CAPSULE);
+
   ColliderID coll_id = {
     ._type = COLLIDER_CAPSULE,
     ._id   = (u32)(s_world->shapes.size() - 1),
