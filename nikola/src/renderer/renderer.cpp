@@ -2,7 +2,7 @@
 #include "nikola/nikola_base.h"
 #include "nikola/nikola_gfx.h"
 #include "nikola/nikola_math.h"
-#include "nikola/nikola_physics.h"
+#include "nikola/nikola_resources.h"
 
 #include "render_passes/render_passes.h"
 
@@ -37,6 +37,8 @@ struct Renderer {
   
   GfxShader* screen_space_shader;
   GfxShader* skybox_shader;
+
+  Mesh* geometries[GEOMETRY_TYPES_MAX];
 
   // Render data
 
@@ -80,7 +82,7 @@ static void init_defaults() {
   };
   s_renderer.defaults.matrices_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
 
-  // Material init
+  // Materials init
   
   MaterialDesc mat_desc = {
     .diffuse_id  = default_texture_id, 
@@ -88,9 +90,18 @@ static void init_defaults() {
     .normal_id   = normal_default_texture_id,
   };
   s_renderer.defaults.material = resources_get_material(resources_push_material(RESOURCE_CACHE_ID, mat_desc));
+  
+  mat_desc = {
+    .diffuse_id  = default_texture_id, 
+    .specular_id = specular_default_texture_id, 
+    .normal_id   = normal_default_texture_id,
+    
+    .color        = Vec3(1.0f, 0.0f, 1.0f),
+    .transparency = 0.2f,
+    .depth_mask   = false,
 
-  // Cube mesh init
-  s_renderer.defaults.cube_mesh = resources_get_mesh(resources_push_mesh(RESOURCE_CACHE_ID, GEOMETRY_CUBE));
+  };
+  s_renderer.defaults.debug_material = resources_get_material(resources_push_material(RESOURCE_CACHE_ID, mat_desc));
 
   // Shaders init
   
@@ -129,6 +140,11 @@ static void init_defaults() {
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
   s_renderer.defaults.animation_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
+
+  // Debug geometries init
+
+  // Cube 
+  s_renderer.geometries[GEOMETRY_DEBUG_CUBE] = resources_get_mesh(resources_push_mesh(RESOURCE_CACHE_ID, GEOMETRY_DEBUG_CUBE));
 }
 
 static void init_pipeline() {
@@ -215,6 +231,7 @@ void renderer_init(Window* window) {
   light_pass_init(window);
   billboard_pass_init(window);
   hdr_pass_init(window);
+  debug_pass_init(window);
 
   // Batch renderer init
   batch_renderer_init();
@@ -564,6 +581,26 @@ void renderer_queue_animation(const ResourceID& res_id,
 
 void renderer_queue_billboard(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id) {
   renderer_queue_billboard_instanced(res_id, &transform, 1, mat_id);
+}
+
+void renderer_queue_debug_cube_instanced(const Transform* transforms, const sizei count, const ResourceID& mat_id) {
+  // Getting the material
+  
+  Material* material = s_renderer.defaults.debug_material;
+  if(RESOURCE_IS_VALID(mat_id)) {
+    material = resources_get_material(mat_id);
+  }
+
+  // Queuing the rendering command
+  
+  s_renderer.queues[RENDER_QUEUE_DEBUG].emplace_back(transforms, 
+                                                     s_renderer.geometries[GEOMETRY_DEBUG_CUBE]->pipe, 
+                                                     material, 
+                                                     count);
+}
+
+void renderer_queue_debug_cube(const Transform& transform, const ResourceID& mat_id) {
+  renderer_queue_debug_cube_instanced(&transform, 1, mat_id);
 }
 
 void renderer_draw_geometry_primitive(const GeometryPrimitive& geo) {

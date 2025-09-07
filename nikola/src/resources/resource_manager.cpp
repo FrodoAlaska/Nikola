@@ -163,14 +163,12 @@ static const char* geo_type_str(const GeometryType type) {
   switch(type) {
     case GEOMETRY_CUBE:
       return "GEOMETRY_CUBE";
-    case GEOMETRY_PLANE:
-      return "GEOMETRY_PLANE";
     case GEOMETRY_SKYBOX:
       return "GEOMETRY_SKYBOX";
-    case GEOMETRY_SPHERE:
-      return "GEOMETRY_SPHERE";
     case GEOMETRY_BILLBOARD:
       return "GEOMETRY_BILLBOARD";
+    case GEOMETRY_DEBUG_CUBE:
+      return "GEOMETRY_DEBUG_CUBE";
     default:
       return "INVALID GEOMETRY TYPE";
   }

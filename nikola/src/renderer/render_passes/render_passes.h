@@ -95,6 +95,18 @@ void light_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& 
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// Billboard pass functions
+
+void billboard_pass_init(Window* window);
+
+void billboard_pass_prepare(RenderPass* pass, const FrameData& data);
+
+void billboard_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue);
+
+/// Billboard pass functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// HDR pass functions
 
 void hdr_pass_init(Window* window);
@@ -107,15 +119,15 @@ void hdr_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& qu
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// Billboard pass functions
+/// Debug pass functions
 
-void billboard_pass_init(Window* window);
+void debug_pass_init(Window* window);
 
-void billboard_pass_prepare(RenderPass* pass, const FrameData& data);
+void debug_pass_prepare(RenderPass* pass, const FrameData& data);
 
-void billboard_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue);
+void debug_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue);
 
-/// Billboard pass functions
+/// Debug pass functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 } // End of nikola

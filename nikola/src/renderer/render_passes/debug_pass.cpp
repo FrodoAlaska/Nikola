@@ -1,6 +1,6 @@
 #include "render_passes.h"
 
-#include "../shaders/billboard.glsl.h"
+#include "../shaders/debug.glsl.h"
 
 #include "nikola/nikola_render.h"
 
@@ -9,22 +9,22 @@
 namespace nikola { // Start of nikola
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// Billboard pass functions
+/// Debug pass functions
 
-void billboard_pass_init(Window* window) {
+void debug_pass_init(Window* window) {
   RenderPassDesc pass_desc = {}; 
 
   // Callbacks init
 
-  pass_desc.prepare_func = billboard_pass_prepare;
-  pass_desc.sumbit_func  = billboard_pass_sumbit;
+  pass_desc.prepare_func = debug_pass_prepare;
+  pass_desc.sumbit_func  = debug_pass_sumbit;
 
-  // Reosurce init
+  // Reosurces init
 
   pass_desc.res_group_id = RESOURCE_CACHE_ID;
 
-  ResourceID billboard_shader = resources_push_shader(RESOURCE_CACHE_ID, generate_billboard_shader());
-  pass_desc.shader_context_id = resources_push_shader_context(RESOURCE_CACHE_ID, billboard_shader);
+  ResourceID debug_shader     = resources_push_shader(RESOURCE_CACHE_ID, generate_debug_shader());
+  pass_desc.shader_context_id = resources_push_shader_context(RESOURCE_CACHE_ID, debug_shader);
 
   // Buffer injection
 
@@ -39,7 +39,7 @@ void billboard_pass_init(Window* window) {
 
   pass_desc.frame_size  = IVec2(width, height);
   pass_desc.clear_flags = (GFX_CLEAR_FLAGS_COLOR_BUFFER | GFX_CLEAR_FLAGS_DEPTH_BUFFER); 
-  pass_desc.queue_type  = RENDER_QUEUE_BILLBOARD;
+  pass_desc.queue_type  = RENDER_QUEUE_DEBUG;
 
   // Color attachment init
 
@@ -64,12 +64,10 @@ void billboard_pass_init(Window* window) {
   pass_desc.targets.push_back(target_desc);
 
   // Render pass init
-  
-  RenderPass* billboard_pass = renderer_create_pass(pass_desc);
-  renderer_append_pass(billboard_pass);
+  RenderPass* debug_pass = renderer_create_pass(pass_desc);
 }
 
-void billboard_pass_prepare(RenderPass* pass, const FrameData& data) {
+void debug_pass_prepare(RenderPass* pass, const FrameData& data) {
   // @TODO (Renderer): Absolutely not!!!!! 
   // NOOOOOOOOO!!!! DO NOT COPY THE FUCKING FRAMEBUFFERSSS!!!!!!
 
@@ -86,7 +84,7 @@ void billboard_pass_prepare(RenderPass* pass, const FrameData& data) {
                        pass->framebuffer_desc.clear_flags);
 }
 
-void billboard_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue) {
+void debug_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue) {
   for(auto& geo : queue) {
     // Settings uniforms
     
@@ -94,31 +92,18 @@ void billboard_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitiv
 
     // Using resources
  
-    GfxTexture* textures[] = {
-      geo.material->diffuse_map, 
-    };
-
     GfxBindingDesc bind_desc = {
       .shader = pass->shader_context->shader, 
-
-      .textures       = textures,
-      .textures_count = 1,
     };
     gfx_context_use_bindings(pass->gfx, bind_desc);
 
     renderer_draw_geometry_primitive(geo);
   }
-
-  // Setting the output textures
-
-  pass->outputs[0]    = pass->framebuffer_desc.color_attachments[0];
-  pass->outputs_count = 1;
 }
 
-/// Billboard pass functions
+/// Debug pass functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 } // End of nikola
 
 //////////////////////////////////////////////////////////////////////////
-

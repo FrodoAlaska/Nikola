@@ -285,14 +285,6 @@ static void create_skybox_geo(const ResourceGroupID& group_id, GfxPipelineDesc* 
   pipe_desc->draw_mode = GFX_DRAW_MODE_TRIANGLE;
 }
 
-static void create_plane_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc) {
-  // @TODO (Geometry): Create a plane geo
-}
-
-static void create_sphere_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc) {
-  // @TODO (Geometry): Create a sphere geo
-}
-
 static void create_billboard_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc) {
   // Vertex buffer init
   
@@ -340,6 +332,118 @@ static void create_billboard_geo(const ResourceGroupID& group_id, GfxPipelineDes
   pipe_desc->draw_mode = GFX_DRAW_MODE_TRIANGLE;
 }
 
+static void create_debug_cube_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc) {
+  // Vertices init
+  
+  Vec3 vertices[24] = {
+    // Back face
+
+    Vec3(-1.0f, -1.0f, -1.0f),
+    Vec3( 1.0f, -1.0f, -1.0f),
+    Vec3( 1.0f,  1.0f, -1.0f),
+    Vec3(-1.0f,  1.0f, -1.0f),
+
+    // Front face
+
+    Vec3(-1.0f, -1.0f,  1.0f),
+    Vec3( 1.0f, -1.0f,  1.0f),
+    Vec3( 1.0f,  1.0f,  1.0f),
+    Vec3(-1.0f,  1.0f,  1.0f),
+
+    // Left face
+
+    Vec3(-1.0f,  1.0f,  1.0f),
+    Vec3(-1.0f,  1.0f, -1.0f),
+    Vec3(-1.0f, -1.0f, -1.0f),
+    Vec3(-1.0f, -1.0f,  1.0f),
+
+    // Right face
+
+    Vec3(1.0f,  1.0f,  1.0f),
+    Vec3(1.0f,  1.0f, -1.0f),
+    Vec3(1.0f, -1.0f, -1.0f),
+    Vec3(1.0f, -1.0f,  1.0f),
+
+    // Top face
+
+    Vec3(-1.0f, -1.0f, -1.0f),
+    Vec3( 1.0f, -1.0f, -1.0f),
+    Vec3( 1.0f, -1.0f,  1.0f),
+    Vec3(-1.0f, -1.0f,  1.0f),
+
+    // Bottom face
+
+    Vec3(-1.0f,  1.0f, -1.0f),
+    Vec3( 1.0f,  1.0f, -1.0f),
+    Vec3( 1.0f,  1.0f,  1.0f),
+    Vec3(-1.0f,  1.0f,  1.0f),
+  };
+
+  // Indices init
+
+  u32 indices[] = {
+    // Back face 
+    
+    0, 1, 2, 
+    2, 3, 0, 
+
+    // Front face 
+    
+    4, 5, 6, 
+    6, 7, 4, 
+
+    // Left face 
+    
+    10, 9, 8, 
+    8, 11, 10, 
+
+    // Right face 
+    
+    14, 13, 12, 
+    12, 15, 14,
+
+    // Top face 
+    
+    16, 17, 18, 
+    18, 19, 16, 
+
+    // Bottom face 
+    
+    20, 21, 22, 
+    22, 23, 20, 
+  };
+
+  // Vertex buffer init
+  
+  GfxBufferDesc buff_desc = {
+    .data  = (void*)vertices,
+    .size  = sizeof(Vec3) * 24,
+    .type  = GFX_BUFFER_VERTEX, 
+    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
+  };
+  pipe_desc->vertex_buffer  = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
+  pipe_desc->vertices_count = 24;  
+
+  // Index buffer init
+  
+  buff_desc = {
+    .data  = (void*)indices,
+    .size  = sizeof(indices),
+    .type  = GFX_BUFFER_INDEX, 
+    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
+  };
+  pipe_desc->index_buffer  = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
+  pipe_desc->indices_count = 36;  
+
+  // Layout init
+  
+  pipe_desc->layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT3;
+  pipe_desc->layouts[0].attributes_count = 1;
+
+  // Draw mode init
+  pipe_desc->draw_mode = GFX_DRAW_MODE_TRIANGLE;
+}
+
 /// Private functions  
 /// ----------------------------------------------------------------------
 
@@ -351,17 +455,14 @@ void geometry_loader_load(const ResourceGroupID& group_id, GfxPipelineDesc* pipe
     case GEOMETRY_CUBE:
       create_cube_geo(group_id, pipe_desc);
       break;
-    case GEOMETRY_PLANE:
-      create_plane_geo(group_id, pipe_desc);
-      break;
     case GEOMETRY_SKYBOX:
       create_skybox_geo(group_id, pipe_desc);
       break;
-    case GEOMETRY_SPHERE:
-      create_sphere_geo(group_id, pipe_desc);
-      break;
     case GEOMETRY_BILLBOARD:
       create_billboard_geo(group_id, pipe_desc);
+      break;
+    case GEOMETRY_DEBUG_CUBE:
+      create_debug_cube_geo(group_id, pipe_desc);
       break;
     default:
       NIKOLA_LOG_ERROR("Invalid geometry shape given");

@@ -26,8 +26,14 @@
     - [] Save the physics components 
         - [x] Physics body 
         - [] Colliders 
+    - [] Debug rendering 
+        - [x] Create functions for generating debug shapes 
+        - [x] Create and implement functions for queuing debug rendering commands 
+        - [] Create a debug render pass that consumes the debug rendering commands 
+        - [] Test with a few debug cubes 
+        - [] Have the phyiscs world go through all of its colliders and render them through the new API 
+        - [] Implement other debug shapes like spheres and capsules
     - [] Implement mouse to screen and mouse to world for editing levels easier
-    - [] Implement a debug pass
     - [] Documentation
 - [] Resources 
     - [] Have a few functions specifically for the `NBR*` types to save, load, and unload them.
@@ -68,6 +74,16 @@
     - [] Stacks and queues
     - [] Ring buffers
     - [] Hash map
+
+```c++
+renderer_queue_debug_cube_instanced(position, scale, color, inst_count);
+renderer_queue_debug_sphere_instanced(position, radius, color, inst_count);
+renderer_queue_debug_capsule_instanced(position, radius, height, color, inst_count);
+
+renderer_queue_debug_cube(position, scale, color);
+renderer_queue_debug_sphere(position, radius, color);
+renderer_queue_debug_capsule(position, radius, height, color);
+```
 
 ## BUGS:
 - (Window & Renderer): When resizing the window or changing the fullscreen state, the renderer really does not hold up. I'm guessing it's because of the render passes? They need to update their own frame sizes when the window resizes? 

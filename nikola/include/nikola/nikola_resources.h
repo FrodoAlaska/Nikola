@@ -444,20 +444,20 @@ enum ResourceType {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GeometryType
 enum GeometryType {
-  /// A predefined cube geometry shape
+  /// A predefined cube geometry shape.
   GEOMETRY_CUBE, 
   
-  /// A predefined plane geometry shape
-  GEOMETRY_PLANE, 
-  
-  /// A predefined skybox geometry shape
+  /// A predefined skybox geometry shape.
   GEOMETRY_SKYBOX, 
   
-  /// A predefined sphere geometry shape
-  GEOMETRY_SPHERE, 
-  
-  /// A predefined billboard geometry shape
+  /// A predefined billboard geometry shape.
   GEOMETRY_BILLBOARD, 
+  
+  /// A much simpler cube shape for debug purposes.
+  GEOMETRY_DEBUG_CUBE,
+
+  /// The maximum number of geometry types. 
+  GEOMETRY_TYPES_MAX,
 };
 /// GeometryType
 ///---------------------------------------------------------------------------------------------------------------------
