@@ -567,10 +567,11 @@ const bool physics_world_is_paused() {
 }
 
 void physics_world_draw() {
-  // @TODO (Physics/Debug): More shapes...
-  
   DynamicArray<Transform> cubes;
   cubes.reserve(s_world->bodies.size());
+  
+  DynamicArray<Transform> spheres;
+  spheres.reserve(s_world->bodies.size());
  
   // Go through all of the bodies and render their shapes
 
@@ -592,8 +593,10 @@ void physics_world_draw() {
         cubes.push_back(transform);
         break;
       case COLLIDER_SPHERE:
+        spheres.push_back(transform);
         break;
       case COLLIDER_CAPSULE:
+        // @TODO (Physics/Debug): Capsules...
         break;
     }
   }
@@ -602,6 +605,12 @@ void physics_world_draw() {
  
   if(!cubes.empty()) {
     renderer_queue_debug_cube_instanced(cubes.data(), cubes.size());
+  }
+  
+  // Render spheres
+ 
+  if(!spheres.empty()) {
+    renderer_queue_debug_sphere_instanced(spheres.data(), spheres.size());
   }
 }
 

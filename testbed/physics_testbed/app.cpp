@@ -73,10 +73,10 @@ static void init_bodies(nikola::App* app) {
 
   // Cube init
 
-  coll_desc = {
-    .half_size = nikola::Vec3(1.0f),
+  nikola::SphereColliderDesc sphere_coll_desc = {
+    .radius = 2.0f,
   };
-  app->cube_collider = nikola::collider_create(coll_desc);
+  app->cube_collider = nikola::collider_create(sphere_coll_desc);
 
   nikola::CharacterBodyDesc char_desc = {
     .position = nikola::Vec3(10.0f, 5.0f, 10.0f),
@@ -264,13 +264,7 @@ void app_render(nikola::App* app) {
   nikola::transform_scale(transform, nikola::Vec3(1.0f));
   nikola::renderer_queue_mesh(app->mesh_id, transform, app->materials[1]);
   
-  // nikola::physics_world_draw();
-
-  transform.position += nikola::Vec3(0.0f, 10.0f, 0.0f);
-  transform.scale     = nikola::Vec3(1.0f);
-  nikola::transform_apply(transform);
-
-  nikola::renderer_queue_debug_sphere(transform);
+  nikola::physics_world_draw();
 
   nikola::renderer_end();
   

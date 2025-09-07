@@ -19,20 +19,18 @@
         - [x] Add the various physics-related events to our event system
         - [x] Raycasts
         - [x] Implement Jolt's character controller 
-    - [] Add physics components to the GUI 
+    - [x] Add physics components to the GUI 
         - [x] Physics body 
         - [x] Character
-        - [] Colliders 
-    - [] Save the physics components 
+    - [x] Save the physics components 
         - [x] Physics body 
-        - [] Colliders 
-    - [] Debug rendering 
+    - [x] Debug rendering 
         - [x] Create functions for generating debug shapes 
         - [x] Create and implement functions for queuing debug rendering commands 
         - [x] Create a debug render pass that consumes the debug rendering commands 
         - [x] Test with a few debug cubes 
         - [x] Have the phyiscs world go through all of its colliders and render them through the new API 
-        - [] Implement other debug shapes like spheres and capsules
+        - [x] Implement other debug shapes like spheres and capsules
     - [] Implement mouse to screen and mouse to world for editing levels easier
     - [] Documentation
 - [] Resources 
