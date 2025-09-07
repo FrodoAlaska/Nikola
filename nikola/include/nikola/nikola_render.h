@@ -565,6 +565,7 @@ NIKOLA_API RenderPass* renderer_peek_pass(const sizei index);
 /// @NOTE: The given `count` cannot exceed `RENDERER_MAX_INSTANCES`.
 /// 
 /// @NOTE: If `mat_id` is left untouched, the renderer will use the default material.
+
 NIKOLA_API void renderer_queue_mesh_instanced(const ResourceID& res_id, 
                                               const Transform* transforms, 
                                               const sizei count, 
@@ -590,6 +591,7 @@ NIKOLA_API void renderer_queue_billboard_instanced(const ResourceID& res_id,
 /// at `transform` in world space, using `mat_id`.
 ///
 /// @NOTE: If `mat_id` is left untouched, the renderer will use the default material.
+
 NIKOLA_API void renderer_queue_mesh(const ResourceID& res_id, 
                                     const Transform& transform, 
                                     const ResourceID& mat_id = {});
@@ -615,7 +617,14 @@ NIKOLA_API void renderer_queue_billboard(const ResourceID& res_id,
 /// @NOTE: The given `count` cannot exceed `RENDERER_MAX_INSTANCES`.
 /// 
 /// @NOTE: If `mat_id` is left untouched, the renderer will use the default debug material.
-NIKOLA_API void renderer_queue_debug_cube_instanced(const Transform* transforms, const sizei count, const ResourceID& mat_id = {});
+
+NIKOLA_API void renderer_queue_debug_cube_instanced(const Transform* transforms, 
+                                                    const sizei count, 
+                                                    const ResourceID& mat_id = {});
+
+NIKOLA_API void renderer_queue_debug_sphere_instanced(const Transform* transforms, 
+                                                      const sizei count, 
+                                                      const ResourceID& mat_id = {});
 
 /// A series of functions to queue a debug rendering commands
 /// using the given the `transform` and `mat_id`.
@@ -623,7 +632,9 @@ NIKOLA_API void renderer_queue_debug_cube_instanced(const Transform* transforms,
 /// debug render pass. 
 /// 
 /// @NOTE: If `mat_id` is left untouched, the renderer will use the default debug material.
+
 NIKOLA_API void renderer_queue_debug_cube(const Transform& transform, const ResourceID& mat_id = {});
+NIKOLA_API void renderer_queue_debug_sphere(const Transform& transform, const ResourceID& mat_id = {});
 
 /// Draw the given `geo` geometry into the scene. 
 ///

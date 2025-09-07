@@ -264,7 +264,13 @@ void app_render(nikola::App* app) {
   nikola::transform_scale(transform, nikola::Vec3(1.0f));
   nikola::renderer_queue_mesh(app->mesh_id, transform, app->materials[1]);
   
-  nikola::physics_world_draw();
+  // nikola::physics_world_draw();
+
+  transform.position += nikola::Vec3(0.0f, 10.0f, 0.0f);
+  transform.scale     = nikola::Vec3(1.0f);
+  nikola::transform_apply(transform);
+
+  nikola::renderer_queue_debug_sphere(transform);
 
   nikola::renderer_end();
   

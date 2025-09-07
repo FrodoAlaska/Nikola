@@ -455,6 +455,9 @@ enum GeometryType {
   
   /// A much simpler cube shape for debug purposes.
   GEOMETRY_DEBUG_CUBE,
+  
+  /// A much simpler sphere shape for debug purposes.
+  GEOMETRY_DEBUG_SPHERE,
 
   /// The maximum number of geometry types. 
   GEOMETRY_TYPES_MAX,

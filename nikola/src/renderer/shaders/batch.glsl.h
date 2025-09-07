@@ -60,7 +60,7 @@ inline nikola::GfxShaderDesc generate_batch_quad_shader() {
       }
 
       vec4 circle_shape() {
-        vec2 uv    = fs_in.tex_coords.xy * 2.0 - 1.0;
+        vec2 uv = fs_in.tex_coords.xy * 2.0 - 1.0;
 
         float dist = 1.0 - length(uv);
         if(dist < 0.0) {

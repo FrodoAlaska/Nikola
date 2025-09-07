@@ -145,8 +145,8 @@ static void init_defaults() {
 
   // Debug geometries init
 
-  // Cube 
-  s_renderer.geometries[GEOMETRY_DEBUG_CUBE] = resources_get_mesh(resources_push_mesh(RESOURCE_CACHE_ID, GEOMETRY_DEBUG_CUBE));
+  s_renderer.geometries[GEOMETRY_DEBUG_CUBE]   = resources_get_mesh(resources_push_mesh(RESOURCE_CACHE_ID, GEOMETRY_DEBUG_CUBE));
+  s_renderer.geometries[GEOMETRY_DEBUG_SPHERE] = resources_get_mesh(resources_push_mesh(RESOURCE_CACHE_ID, GEOMETRY_DEBUG_SPHERE));
 }
 
 static void init_pipeline() {
@@ -623,8 +623,28 @@ void renderer_queue_debug_cube_instanced(const Transform* transforms, const size
                                                      count);
 }
 
+void renderer_queue_debug_sphere_instanced(const Transform* transforms, const sizei count, const ResourceID& mat_id) {
+  // Getting the material
+  
+  Material* material = s_renderer.defaults.debug_material;
+  if(RESOURCE_IS_VALID(mat_id)) {
+    material = resources_get_material(mat_id);
+  }
+
+  // Queuing the rendering command
+  
+  s_renderer.queues[RENDER_QUEUE_DEBUG].emplace_back(transforms, 
+                                                     s_renderer.geometries[GEOMETRY_DEBUG_SPHERE]->pipe, 
+                                                     material, 
+                                                     count);
+}
+
 void renderer_queue_debug_cube(const Transform& transform, const ResourceID& mat_id) {
   renderer_queue_debug_cube_instanced(&transform, 1, mat_id);
+}
+
+void renderer_queue_debug_sphere(const Transform& transform, const ResourceID& mat_id) {
+  renderer_queue_debug_sphere_instanced(&transform, 1, mat_id);
 }
 
 void renderer_draw_geometry_primitive(const GeometryPrimitive& geo) {

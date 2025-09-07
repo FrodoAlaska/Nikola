@@ -40,9 +40,6 @@ struct ResourceGroup {
 /// ResourceManager 
 struct ResourceManager {
   HashMap<ResourceGroupID, ResourceGroup> groups;
-
-  JobEntryFunc buffer_load_job;
-  JobEntryFunc texture_load_job;
 };
 
 static ResourceManager s_manager;
@@ -169,6 +166,8 @@ static const char* geo_type_str(const GeometryType type) {
       return "GEOMETRY_BILLBOARD";
     case GEOMETRY_DEBUG_CUBE:
       return "GEOMETRY_DEBUG_CUBE";
+    case GEOMETRY_DEBUG_SPHERE:
+      return "GEOMETRY_DEBUG_SPHERE";
     default:
       return "INVALID GEOMETRY TYPE";
   }

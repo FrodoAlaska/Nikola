@@ -444,6 +444,101 @@ static void create_debug_cube_geo(const ResourceGroupID& group_id, GfxPipelineDe
   pipe_desc->draw_mode = GFX_DRAW_MODE_TRIANGLE;
 }
 
+static void create_debug_sphere_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc) {
+  ///
+  /// @NOTE (9/7/2025, Mohamed):
+  /// No, I'm not smart enough to figure this whole thing out. Like any other great programmer, 
+  /// I've stolen this solution from a much capable person. Please go visit their website because 
+  /// it's amazing. 
+  ///
+  /// Website: https://www.songho.ca/
+  /// Specific sphere example: https://www.songho.ca/opengl/gl_sphere.html
+  ///
+
+  u32 sector_count = 32;
+  u32 stack_count  = 32;
+
+  f32 sector_step = 2 * PI / sector_count;
+  f32 stack_step  = PI / stack_count;
+  f32 radius      = 1.0f;
+
+  // Vertices init
+  
+  DynamicArray<Vec3> vertices;
+  vertices.reserve(24);
+
+  for(u32 i = 0; i <= stack_count; i++) {
+    f32 stack_angle = ((PI / 2.0f) - (i * stack_step));
+
+    f32 xy = radius * nikola::cos(stack_angle);
+    f32 z  = radius * nikola::sin(stack_angle);
+
+    for(u32 j = 0; j <= sector_count; j++) {
+      f32 sector_angle = j * sector_step;
+      vertices.emplace_back(xy * nikola::cos(sector_angle), 
+                            xy * nikola::sin(sector_angle), 
+                            z);
+    }
+  }
+
+  // Indices init
+
+  u32 k1 = 0; 
+  u32 k2 = 0;
+
+  DynamicArray<u32> indices;
+  indices.reserve(32);
+
+  for(u32 i = 0; i < stack_count; i++) {
+    k1 = i * (sector_count + 1);
+    k2 = k1 + sector_count + 1;
+
+    for(u32 j = 0; j < sector_count; j++, k1++, k2++) {
+      if(i != 0) {
+        indices.push_back(k1);
+        indices.push_back(k2);
+        indices.push_back(k1 + 1);
+      }
+
+      if(i != (stack_count - 1)) {
+        indices.push_back(k1 + 1);
+        indices.push_back(k2);
+        indices.push_back(k2 + 1);
+      }
+    }
+  }
+
+  // Vertex buffer init
+  
+  GfxBufferDesc buff_desc = {
+    .data  = (void*)vertices.data(),
+    .size  = sizeof(Vec3) * vertices.size(),
+    .type  = GFX_BUFFER_VERTEX, 
+    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
+  };
+  pipe_desc->vertex_buffer  = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
+  pipe_desc->vertices_count = vertices.size();  
+
+  // Index buffer init
+  
+  buff_desc = {
+    .data  = (void*)indices.data(),
+    .size  = sizeof(u32) * indices.size(),
+    .type  = GFX_BUFFER_INDEX, 
+    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
+  };
+  pipe_desc->index_buffer  = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
+  pipe_desc->indices_count = indices.size();  
+
+  // Layout init
+  
+  pipe_desc->layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT3;
+  pipe_desc->layouts[0].attributes_count = 1;
+
+  // Draw mode init
+  pipe_desc->draw_mode = GFX_DRAW_MODE_TRIANGLE;
+}
+
 /// Private functions  
 /// ----------------------------------------------------------------------
 
@@ -463,6 +558,9 @@ void geometry_loader_load(const ResourceGroupID& group_id, GfxPipelineDesc* pipe
       break;
     case GEOMETRY_DEBUG_CUBE:
       create_debug_cube_geo(group_id, pipe_desc);
+      break;
+    case GEOMETRY_DEBUG_SPHERE:
+      create_debug_sphere_geo(group_id, pipe_desc);
       break;
     default:
       NIKOLA_LOG_ERROR("Invalid geometry shape given");
