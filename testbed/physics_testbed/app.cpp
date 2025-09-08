@@ -10,14 +10,14 @@ struct nikola::App {
   nikola::FrameData frame_data;
 
   nikola::ResourceGroupID res_group_id;
-  nikola::ResourceID mesh_id;
+  nikola::ResourceID mesh_id, cube_id;
   nikola::ResourceID materials[2];
 
   nikola::PhysicsBodyID floor_body; 
   nikola::ColliderID floor_collider; 
 
   nikola::CharacterID cube_body;
-  nikola::ColliderID cube_collider;
+  nikola::ColliderID cube_collider, sphere_collider;
 
   nikola::RenderPass* debug_pass = nullptr;
 };
@@ -47,8 +47,10 @@ static void init_resources(nikola::App* app) {
   };
   app->materials[1] = nikola::resources_push_material(app->res_group_id, mat);
 
-  // Mesh init
-  app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
+  // Meshes init
+  
+  app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_SPHERE);
+  app->cube_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
 }
 
 static void init_bodies(nikola::App* app) {
@@ -73,10 +75,15 @@ static void init_bodies(nikola::App* app) {
 
   // Cube init
 
-  nikola::SphereColliderDesc sphere_coll_desc = {
-    .radius = 2.0f,
+  coll_desc = {
+    .half_size = nikola::Vec3(1.0f),
   };
-  app->cube_collider = nikola::collider_create(sphere_coll_desc);
+  app->cube_collider = nikola::collider_create(coll_desc);
+
+  nikola::SphereColliderDesc sphere_coll_desc = {
+    .radius = 1.0f,
+  };
+  app->sphere_collider = nikola::collider_create(sphere_coll_desc);
 
   nikola::CharacterBodyDesc char_desc = {
     .position = nikola::Vec3(10.0f, 5.0f, 10.0f),
@@ -84,7 +91,7 @@ static void init_bodies(nikola::App* app) {
 
     .layer = nikola::PHYSICS_OBJECT_LAYER_1,
     
-    .collider_id = app->cube_collider,
+    .collider_id = app->sphere_collider,
     .user_data   = 1,
   };
 
@@ -224,7 +231,7 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 
   nikola::Vec3 current_velocity = nikola::character_body_get_linear_velocity(app->cube_body);
   nikola::Vec3 velocity         = nikola::Vec3(0.0f, current_velocity.y, 0.0f);
-
+  
   if(nikola::input_key_down(nikola::KEY_W)) {
     velocity.x = 10.0f;
   }
@@ -258,7 +265,7 @@ void app_render(nikola::App* app) {
 
   transform = nikola::physics_body_get_transform(app->floor_body);
   nikola::transform_scale(transform, nikola::Vec3(32.0f, 1.0f, 32.0f));
-  nikola::renderer_queue_mesh(app->mesh_id, transform, app->materials[0]);
+  nikola::renderer_queue_mesh(app->cube_id, transform, app->materials[0]);
   
   transform = nikola::character_body_get_transform(app->cube_body);
   nikola::transform_scale(transform, nikola::Vec3(1.0f));

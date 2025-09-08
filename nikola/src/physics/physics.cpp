@@ -19,6 +19,8 @@
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
+#include <Jolt/Physics/Collision/Shape/ScaledShape.h>
 
 #include <Jolt/Physics/Collision/BroadPhase/BroadPhaseLayer.h>
 #include <Jolt/Physics/Collision/BroadPhase/BroadPhaseLayerInterfaceTable.h>
@@ -418,7 +420,7 @@ PhysicsBodyID physics_world_create_body(const PhysicsBodyDesc& desc) {
 
   // Create the body
   
-  JPH::BodyCreationSettings body_settings(s_world->shapes[desc.collider_id._id].GetPtr(), 
+  JPH::BodyCreationSettings body_settings(s_world->shapes[desc.collider_id._id], 
                                           vec3_to_jph_vec3(desc.position), 
                                           quat_to_jph_quat(desc.rotation), 
                                           body_type_to_jph_body_type(desc.type), 
@@ -580,7 +582,7 @@ void physics_world_draw() {
     JPH::AABox shape_aabb           = shape->GetLocalBounds();
    
     Transform transform;
-    transform.position = jph_vec3_to_vec3(s_world->body_interface->GetPosition(body));
+    transform.position = jph_vec3_to_vec3(s_world->body_interface->GetCenterOfMassPosition(body));
     transform.scale    = jph_vec3_to_vec3(shape_aabb.GetExtent());
 
     transform_apply(transform);
@@ -945,6 +947,38 @@ ColliderID collider_create(const CapsuleColliderDesc& desc) {
   };
 
   return coll_id;
+}
+
+const bool collider_set_scale(ColliderID& collider_id, const Vec3 scale) {
+  COLLIDER_ID_CHECK(collider_id);
+
+  JPH::Ref<JPH::Shape> shape = s_world->shapes[collider_id._id];
+
+  JPH::ScaledShapeSettings shape_settings(shape, vec3_to_jph_vec3(scale));
+  JPH::Shape::ShapeResult result = shape_settings.Create();
+  
+  if(!result.IsValid()) {
+    return false;
+  }
+
+  shape = result.Get();
+  return true;
+}
+
+const bool collider_set_offset(ColliderID& collider_id, const Vec3 offset) {
+  COLLIDER_ID_CHECK(collider_id);
+
+  JPH::Ref<JPH::Shape> shape = s_world->shapes[collider_id._id];
+
+  JPH::RotatedTranslatedShapeSettings shape_settings(vec3_to_jph_vec3(offset), JPH::Quat::sIdentity(), shape);
+  JPH::Shape::ShapeResult result = shape_settings.Create();
+  
+  if(!result.IsValid()) {
+    return false;
+  }
+
+  shape = result.Get();
+  return true;
 }
 
 /// Collider functions

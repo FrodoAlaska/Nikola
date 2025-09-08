@@ -447,6 +447,9 @@ enum GeometryType {
   /// A predefined cube geometry shape.
   GEOMETRY_CUBE, 
   
+  /// A predefined sphere geometry shape.
+  GEOMETRY_SPHERE, 
+  
   /// A predefined skybox geometry shape.
   GEOMETRY_SKYBOX, 
   

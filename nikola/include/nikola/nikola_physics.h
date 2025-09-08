@@ -364,6 +364,10 @@ NIKOLA_API ColliderID collider_create(const SphereColliderDesc& desc);
 
 NIKOLA_API ColliderID collider_create(const CapsuleColliderDesc& desc);
 
+NIKOLA_API const bool collider_set_scale(ColliderID& collider_id, const Vec3 scale);
+
+NIKOLA_API const bool collider_set_offset(ColliderID& collider_id, const Vec3 offset);
+
 /// Collider functions
 ///---------------------------------------------------------------------------------------------------------------------
 

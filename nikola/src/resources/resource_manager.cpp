@@ -160,6 +160,8 @@ static const char* geo_type_str(const GeometryType type) {
   switch(type) {
     case GEOMETRY_CUBE:
       return "GEOMETRY_CUBE";
+    case GEOMETRY_SPHERE:
+      return "GEOMETRY_SPHERE";
     case GEOMETRY_SKYBOX:
       return "GEOMETRY_SKYBOX";
     case GEOMETRY_BILLBOARD:

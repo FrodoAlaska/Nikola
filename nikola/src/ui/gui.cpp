@@ -293,7 +293,7 @@ void gui_debug_info() {
  
   if(ImGui::CollapsingHeader("Memory")) {
     ImGui::Text("Allocations: %zu", memory_get_allocations_count());
-    ImGui::Text("Bytes allocated: %zu", memory_get_allocation_bytes());
+    ImGui::Text("Bytes allocated: %zuMiB", MiB(memory_get_allocation_bytes()));
   } 
 
   // Physics
