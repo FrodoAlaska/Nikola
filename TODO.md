@@ -31,7 +31,7 @@
         - [x] Test with a few debug cubes 
         - [x] Have the phyiscs world go through all of its colliders and render them through the new API 
         - [x] Implement other debug shapes like spheres and capsules
-    - [] Implement mouse to screen and mouse to world for editing levels easier
+    - [x] Implement mouse to screen and mouse to world for editing levels easier
     - [] Documentation
 - [] Resources 
     - [] Have a few functions specifically for the `NBR*` types to save, load, and unload them.

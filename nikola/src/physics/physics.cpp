@@ -525,9 +525,12 @@ const bool physics_world_cast_ray(const RayCastDesc& cast_desc) {
       ._id = result->mBodyID.GetIndex(),
     };
 
+    JPH::Vec3 hit_point = ray.mOrigin + result->mFraction * 
+                          (s_world->body_interface->GetCenterOfMassPosition(result->mBodyID) - ray.mOrigin);
+
     RayCastResult ray_result = {
       .body_id = body_id,
-      .point   = jph_vec3_to_vec3(ray.mOrigin - s_world->body_interface->GetCenterOfMassPosition(result->mBodyID)),
+      .point   = jph_vec3_to_vec3(hit_point),
       .has_hit = true,   
     };
 
@@ -947,38 +950,6 @@ ColliderID collider_create(const CapsuleColliderDesc& desc) {
   };
 
   return coll_id;
-}
-
-const bool collider_set_scale(ColliderID& collider_id, const Vec3 scale) {
-  COLLIDER_ID_CHECK(collider_id);
-
-  JPH::Ref<JPH::Shape> shape = s_world->shapes[collider_id._id];
-
-  JPH::ScaledShapeSettings shape_settings(shape, vec3_to_jph_vec3(scale));
-  JPH::Shape::ShapeResult result = shape_settings.Create();
-  
-  if(!result.IsValid()) {
-    return false;
-  }
-
-  shape = result.Get();
-  return true;
-}
-
-const bool collider_set_offset(ColliderID& collider_id, const Vec3 offset) {
-  COLLIDER_ID_CHECK(collider_id);
-
-  JPH::Ref<JPH::Shape> shape = s_world->shapes[collider_id._id];
-
-  JPH::RotatedTranslatedShapeSettings shape_settings(vec3_to_jph_vec3(offset), JPH::Quat::sIdentity(), shape);
-  JPH::Shape::ShapeResult result = shape_settings.Create();
-  
-  if(!result.IsValid()) {
-    return false;
-  }
-
-  shape = result.Get();
-  return true;
 }
 
 /// Collider functions

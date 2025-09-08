@@ -4,13 +4,11 @@
 #include "nikola_resources.h"
 #include "nikola_math.h"
 #include "nikola_containers.h"
+#include "nikola_physics.h"
 
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola
-
-// Forward declaration to help with compilation time.
-struct Collider;
 
 /// ----------------------------------------------------------------------
 /// *** Renderer ***
@@ -726,6 +724,15 @@ NIKOLA_API void camera_follow(Camera& cam, const Vec3& target, const Vec3& offse
 /// Using linear interpolation, have the given `cam` follow `target` by `delta`, taking
 /// into account the given `offset`.
 NIKOLA_API void camera_follow_lerp(Camera& cam, const Vec3& target, const Vec3& offset, const f32 delta);
+
+/// Using the given `cam`, convert the world space `position` to screen space coordinates 
+/// using the width and height of the given `window`.
+NIKOLA_API Vec2 camera_world_to_screen_space(const Camera& cam, const Vec3 position, const Window* window);
+
+/// Using the given `cam`, convert the screen space `position`,
+/// using the width and height of the given `window`, returning back a ray with the direction 
+/// and the origin in world space coordinates. 
+NIKOLA_API RayCastDesc camera_screen_to_world_space(const Camera& cam, const Vec2 position, const Window* window);
 
 /// Camera functions
 ///---------------------------------------------------------------------------------------------------------------------

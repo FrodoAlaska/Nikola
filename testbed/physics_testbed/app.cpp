@@ -131,11 +131,13 @@ static bool on_raycast_event(const nikola::Event& event, const void* dispatcher,
 
   nikola::physics_world_set_safe_mode(false);
 
-  nikola::u64 user_data = nikola::physics_body_get_user_data(event.cast_result.body_id);
-  nikola::Material* mat = nikola::resources_get_material(app->materials[user_data]);
-
+  nikola::u64 user_data         = nikola::physics_body_get_user_data(event.cast_result.body_id);
   nikola::PhysicsBodyID body_id = event.cast_result.body_id;
-  nikola::physics_body_apply_force(body_id, app->frame_data.camera.front * 100.0f);
+
+  nikola::Vec3 body_position = nikola::physics_body_get_position(body_id);
+  nikola::Vec3 hit_position  = event.cast_result.point;
+  
+  NIKOLA_LOG_TRACE("HERE %s", nikola::vec3_to_string(hit_position).c_str());
   
   nikola::physics_world_set_safe_mode(true);
   return true;
@@ -231,7 +233,7 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 
   nikola::Vec3 current_velocity = nikola::character_body_get_linear_velocity(app->cube_body);
   nikola::Vec3 velocity         = nikola::Vec3(0.0f, current_velocity.y, 0.0f);
-  
+
   if(nikola::input_key_down(nikola::KEY_W)) {
     velocity.x = 10.0f;
   }
@@ -248,6 +250,14 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 
   if(nikola::input_key_pressed(nikola::KEY_SPACE)) {
     velocity.y = 5.0f;
+  }
+
+  if(nikola::input_button_pressed(nikola::MOUSE_BUTTON_LEFT)) {
+    nikola::Vec2 mouse_pos;
+    nikola::input_mouse_position(&mouse_pos.x, &mouse_pos.y);
+
+    nikola::RayCastDesc ray = nikola::camera_screen_to_world_space(app->frame_data.camera, mouse_pos, app->window);
+    nikola::physics_world_cast_ray(ray);
   }
 
   nikola::character_body_set_linear_velocity(app->cube_body, velocity);

@@ -2,6 +2,7 @@
 #include "nikola/nikola_gfx.h"
 #include "nikola/nikola_input.h"
 #include "nikola/nikola_event.h"
+#include "nikola/nikola_physics.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -210,6 +211,53 @@ void camera_follow(Camera& cam, const Vec3& target, const Vec3& offset) {
 
 void camera_follow_lerp(Camera& cam, const Vec3& target, const Vec3& offset, const f32 delta) {
   cam.position = vec3_lerp(cam.position, target + offset, delta);
+}
+
+Vec2 camera_world_to_screen_space(const Camera& cam, const Vec3 position, const Window* window) {
+  // Get the window size
+  
+  IVec2 window_size; 
+  window_get_size(window, &window_size.x, &window_size.y);
+
+  // Transform the given position to NDC
+
+  Vec4 ndc_pos = Vec4(position, 1.0f);
+  ndc_pos      = cam.view_projection * ndc_pos;
+
+  // Transform the NDC position into screen space
+
+  Vec2 screen_space = Vec2(ndc_pos.x / ndc_pos.w, -ndc_pos.y / ndc_pos.w);
+  return (screen_space + 1.0f) / 2.0f * Vec2(window_size);
+}
+
+RayCastDesc camera_screen_to_world_space(const Camera& cam, const Vec2 position, const Window* window) {
+  // Get the window size
+  
+  IVec2 window_size; 
+  window_get_size(window, &window_size.x, &window_size.y);
+
+  // Converting the given position to NDC coords
+  
+  Vec2 ndc_coords = Vec2((position.x / window_size.x - 0.5f) * 2.0f, 
+                         (position.y / window_size.y - 0.5f) * 2.0f);
+
+  // "Unprojecting" the NDC coords and bringing it back to view space 
+  // to get the near and far planes.
+
+  Mat4 inv_proj   = mat4_inverse(cam.view_projection);
+  Vec4 near_point = inv_proj * Vec4(ndc_coords.x, ndc_coords.y, -1.0f, 1.0f);
+  Vec4 far_point  = inv_proj * Vec4(ndc_coords.x, ndc_coords.y, 0.0f, 1.0f);
+
+  near_point /= near_point.w;
+  far_point  /= far_point.w;
+
+  // Convert whatever is up there to a ray
+
+  return RayCastDesc {
+    .origin    = cam.position,
+    .direction = vec3_normalize(Vec3(far_point - near_point)),
+    .distance  = 1000000.0f,
+  };
 }
 
 /// Camera functions
