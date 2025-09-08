@@ -41,7 +41,7 @@
     - [] Improve instancing completely. It's currently awfully architected. Take into account the animations and so on.
     - [] Collapse the `ShaderContext` and the `Material` into one?
     - [] Improve the performance of the renderer by using the GPU to dispatch draw calls, using indirect buffers.
-    - [] Improve lighting performance using clustered rendering (This is optional if the performance is fine up until this point).
+    - [] Improve lighting performance using clustered rendering (This is optional if the performance is fine).
     - [] Documentation
 - [] Animations 
     - [] Test animations with multiple instances.
@@ -74,20 +74,13 @@
     - [] Ring buffers
     - [] Hash map
 
-```c++
-renderer_queue_debug_cube_instanced(position, scale, color, inst_count);
-renderer_queue_debug_sphere_instanced(position, radius, color, inst_count);
-renderer_queue_debug_capsule_instanced(position, radius, height, color, inst_count);
-
-renderer_queue_debug_cube(position, scale, color);
-renderer_queue_debug_sphere(position, radius, color);
-renderer_queue_debug_capsule(position, radius, height, color);
-```
-
 ## BUGS:
 - (Window & Renderer): When resizing the window or changing the fullscreen state, the renderer really does not hold up. I'm guessing it's because of the render passes? They need to update their own frame sizes when the window resizes? 
 Maybe find a better way to do this.
 
 - (Renderer): Shadows. They're turned off right now. Fix everything about em. Fuck em. Fix em. Marry em?
+
+- (Renderer): Capsules cannot be rendererd. Need to render those for debug purposes. 
+- (Renderer): Spheres are not so perfect. Fix that. 
 
 - Check all of the `TODO`, `FIX`, and `TEMP` in the codebase.
