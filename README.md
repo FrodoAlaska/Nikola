@@ -43,7 +43,6 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 
 Some missing features are not currently in the works (Long-term) while others are planned for the future (Short-term). Some other features may _never_ be implemented since it does not fit the current philosophy of the engine (Never).
 
-- 3D animations (*Long-term*)
 - Scripting (*Never*)
 
 ## Build Instructions
