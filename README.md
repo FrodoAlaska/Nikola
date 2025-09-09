@@ -17,7 +17,7 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 - [GLM](https://github.com/g-truc/glm)
 - [ImGui](https://github.com/ocornut/imgui)
 - [OpenAL-Soft](https://github.com/kcat/openal-soft)
-- [Qu3e](https://github.com/RandyGaul/qu3e)
+- [Jolt](https://github.com/jrouwe/JoltPhysics)
 
 ### NBR Tool Dependencies:
 - [stb](https://github.com/nothings/stb)
@@ -35,7 +35,7 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 - Integrated ImGui support, featuring an abstracted `editor` layer for editing engine-specific types through a GUI.  
 - A versitile lighting system using the Blinn-Phong shading model with built-in HDR support.
 - A fully-fledged audio system with both 2D audio and 3D spatialized audio, supporting multiple formats such as **MP3, WAV, and OGG**.
-- A simple but powerful physics system that supports collision detection, collision resolution, ray-casting, and rigid body dynamics.
+- A simple but powerful physics system, using the Jolt Physics Engine.
 - A robust and easy-to-use 2D game UI system with canvas anchoring, including widgets like buttons, sliders, checkboxes, and texts.
 - Simple 3D skeletal animation system, supporting both the **GLTF**, **GLB**, and **Collada** formats.
 

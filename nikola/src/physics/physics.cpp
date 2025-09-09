@@ -531,7 +531,6 @@ const bool physics_world_cast_ray(const RayCastDesc& cast_desc) {
     RayCastResult ray_result = {
       .body_id = body_id,
       .point   = jph_vec3_to_vec3(hit_point),
-      .has_hit = true,   
     };
 
     // Send out an event
@@ -625,7 +624,7 @@ void physics_world_draw() {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Physics body functions
 
-void physics_body_set_position(PhysicsBodyID& body_id, const Vec3 position, const bool activate) {
+void physics_body_set_position(const PhysicsBodyID& body_id, const Vec3 position, const bool activate) {
   BODY_ID_CHECK(body_id);
   JPH::BodyID body = s_world->bodies[body_id._id];
 
@@ -633,7 +632,7 @@ void physics_body_set_position(PhysicsBodyID& body_id, const Vec3 position, cons
   s_world->body_interface->SetPosition(body, vec3_to_jph_vec3(position), active);
 }
 
-void physics_body_set_rotation(PhysicsBodyID& body_id, const Quat rotation, const bool activate) {
+void physics_body_set_rotation(const PhysicsBodyID& body_id, const Quat rotation, const bool activate) {
   BODY_ID_CHECK(body_id);
   JPH::BodyID body = s_world->bodies[body_id._id];
 
@@ -641,7 +640,7 @@ void physics_body_set_rotation(PhysicsBodyID& body_id, const Quat rotation, cons
   s_world->body_interface->SetRotation(body, quat_to_jph_quat(rotation), active);
 }
 
-void physics_body_set_rotation(PhysicsBodyID& body_id, const Vec3 axis, const f32 angle, const bool activate) {
+void physics_body_set_rotation(const PhysicsBodyID& body_id, const Vec3 axis, const f32 angle, const bool activate) {
   BODY_ID_CHECK(body_id);
   JPH::BodyID body = s_world->bodies[body_id._id];
  
@@ -651,7 +650,7 @@ void physics_body_set_rotation(PhysicsBodyID& body_id, const Vec3 axis, const f3
   s_world->body_interface->SetRotation(body, rotation, active);
 }
 
-void physics_body_set_transform(PhysicsBodyID& body_id, const Transform& transform, const bool activate) {
+void physics_body_set_transform(const PhysicsBodyID& body_id, const Transform& transform, const bool activate) {
   BODY_ID_CHECK(body_id);
   JPH::BodyID body = s_world->bodies[body_id._id];
  
@@ -662,21 +661,21 @@ void physics_body_set_transform(PhysicsBodyID& body_id, const Transform& transfo
   s_world->body_interface->SetPositionAndRotation(body, position, rotation, active);
 }
 
-void physics_body_set_linear_velocity(PhysicsBodyID& body_id, const Vec3 velocity) {
+void physics_body_set_linear_velocity(const PhysicsBodyID& body_id, const Vec3 velocity) {
   BODY_ID_CHECK(body_id);
   JPH::BodyID body = s_world->bodies[body_id._id];
   
   s_world->body_interface->SetLinearVelocity(body, vec3_to_jph_vec3(velocity));
 }
 
-void physics_body_set_angular_velocity(PhysicsBodyID& body_id, const Vec3 velocity) {
+void physics_body_set_angular_velocity(const PhysicsBodyID& body_id, const Vec3 velocity) {
   BODY_ID_CHECK(body_id);
   JPH::BodyID body = s_world->bodies[body_id._id];
   
   s_world->body_interface->SetAngularVelocity(body, vec3_to_jph_vec3(velocity));
 }
 
-void physics_body_set_active(PhysicsBodyID& body_id, const bool active) {
+void physics_body_set_active(const PhysicsBodyID& body_id, const bool active) {
   BODY_ID_CHECK(body_id);
   JPH::BodyID body = s_world->bodies[body_id._id];
  
@@ -688,7 +687,7 @@ void physics_body_set_active(PhysicsBodyID& body_id, const bool active) {
   }
 }
 
-void physics_body_set_user_data(PhysicsBodyID& body_id, const u64 user_data) {
+void physics_body_set_user_data(const PhysicsBodyID& body_id, const u64 user_data) {
   BODY_ID_CHECK(body_id);
   NIKOLA_ASSERT(user_data, "Passing invalid user data to body"); 
 
@@ -696,42 +695,42 @@ void physics_body_set_user_data(PhysicsBodyID& body_id, const u64 user_data) {
   s_world->body_interface->SetUserData(body, (JPH::uint64)user_data);
 }
 
-void physics_body_set_layer(PhysicsBodyID& body_id, const PhysicsObjectLayer layer) {
+void physics_body_set_layer(const PhysicsBodyID& body_id, const PhysicsObjectLayer layer) {
   BODY_ID_CHECK(body_id);
   
   JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->SetObjectLayer(body, (JPH::ObjectLayer)layer);
 }
 
-void physics_body_set_restitution(PhysicsBodyID& body_id, const f32 restitution) {
+void physics_body_set_restitution(const PhysicsBodyID& body_id, const f32 restitution) {
   BODY_ID_CHECK(body_id);
   
   JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->SetRestitution(body, restitution);
 }
 
-void physics_body_set_friction(PhysicsBodyID& body_id, const f32 friction) {
+void physics_body_set_friction(const PhysicsBodyID& body_id, const f32 friction) {
   BODY_ID_CHECK(body_id);
   
   JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->SetFriction(body, friction);
 }
 
-void physics_body_set_gravity_factor(PhysicsBodyID& body_id, const f32 factor) {
+void physics_body_set_gravity_factor(const PhysicsBodyID& body_id, const f32 factor) {
   BODY_ID_CHECK(body_id);
   
   JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->SetGravityFactor(body, factor);
 }
 
-void physics_body_set_type(PhysicsBodyID& body_id, const PhysicsBodyType type) {
+void physics_body_set_type(const PhysicsBodyID& body_id, const PhysicsBodyType type) {
   BODY_ID_CHECK(body_id);
   
   JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->SetMotionType(body, body_type_to_jph_body_type(type), JPH::EActivation::Activate);
 }
 
-void physics_body_set_collider(PhysicsBodyID& body_id, const ColliderID& collider_id, const bool activate) {
+void physics_body_set_collider(const PhysicsBodyID& body_id, const ColliderID& collider_id, const bool activate) {
   BODY_ID_CHECK(body_id);
   COLLIDER_ID_CHECK(collider_id);
   
@@ -741,49 +740,49 @@ void physics_body_set_collider(PhysicsBodyID& body_id, const ColliderID& collide
   s_world->body_interface->SetShape(body, s_world->shapes[collider_id._id], true, active);
 }
 
-void physics_body_apply_linear_velocity(PhysicsBodyID& body_id, const Vec3 velocity) {
+void physics_body_apply_linear_velocity(const PhysicsBodyID& body_id, const Vec3 velocity) {
   BODY_ID_CHECK(body_id);
   
   JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->AddLinearVelocity(body, vec3_to_jph_vec3(velocity));
 }
 
-void physics_body_apply_force(PhysicsBodyID& body_id, const Vec3 force) {
+void physics_body_apply_force(const PhysicsBodyID& body_id, const Vec3 force) {
   BODY_ID_CHECK(body_id);
   
   JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->AddForce(body, vec3_to_jph_vec3(force));
 }
 
-void physics_body_apply_force_at(PhysicsBodyID& body_id, const Vec3 force, const Vec3 point) {
+void physics_body_apply_force_at(const PhysicsBodyID& body_id, const Vec3 force, const Vec3 point) {
   BODY_ID_CHECK(body_id);
   
   JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->AddForce(body, vec3_to_jph_vec3(force), vec3_to_jph_vec3(point));
 }
 
-void physics_body_apply_torque(PhysicsBodyID& body_id, const Vec3 torque) {
+void physics_body_apply_torque(const PhysicsBodyID& body_id, const Vec3 torque) {
   BODY_ID_CHECK(body_id);
   
   JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->AddTorque(body, vec3_to_jph_vec3(torque));
 }
 
-void physics_body_apply_impulse(PhysicsBodyID& body_id, const Vec3 impulse) {
+void physics_body_apply_impulse(const PhysicsBodyID& body_id, const Vec3 impulse) {
   BODY_ID_CHECK(body_id);
   
   JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->AddImpulse(body, vec3_to_jph_vec3(impulse));
 }
 
-void physics_body_apply_impulse_at(PhysicsBodyID& body_id, const Vec3 impulse, const Vec3 point) {
+void physics_body_apply_impulse_at(const PhysicsBodyID& body_id, const Vec3 impulse, const Vec3 point) {
   BODY_ID_CHECK(body_id);
   
   JPH::BodyID body = s_world->bodies[body_id._id];
   s_world->body_interface->AddImpulse(body, vec3_to_jph_vec3(impulse), vec3_to_jph_vec3(point));
 }
 
-void physics_body_apply_angular_impulse(PhysicsBodyID& body_id, const Vec3 impulse) {
+void physics_body_apply_angular_impulse(const PhysicsBodyID& body_id, const Vec3 impulse) {
   BODY_ID_CHECK(body_id);
   
   JPH::BodyID body = s_world->bodies[body_id._id];
@@ -984,49 +983,49 @@ CharacterID character_body_create(const CharacterBodyDesc& desc) {
   };
 }
 
-void character_body_set_position(CharacterID& char_id, const Vec3 position) {
+void character_body_set_position(const CharacterID& char_id, const Vec3 position) {
   CHARACTER_ID_CHECK(char_id);
   
   JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
   character->SetPosition(vec3_to_jph_vec3(position));
 }
 
-void character_body_set_rotation(CharacterID& char_id, const Quat rotation) {
+void character_body_set_rotation(const CharacterID& char_id, const Quat rotation) {
   CHARACTER_ID_CHECK(char_id);
   
   JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
   character->SetRotation(quat_to_jph_quat(rotation));
 }
 
-void character_body_set_rotation(CharacterID& char_id, const Vec3 axis, const f32 angle) {
+void character_body_set_rotation(const CharacterID& char_id, const Vec3 axis, const f32 angle) {
   CHARACTER_ID_CHECK(char_id);
   
   JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
   character->SetRotation(quat_to_jph_quat(quat_angle_axis(axis, angle)));
 }
 
-void character_body_set_linear_velocity(CharacterID& char_id, const Vec3 velocity) {
+void character_body_set_linear_velocity(const CharacterID& char_id, const Vec3 velocity) {
   CHARACTER_ID_CHECK(char_id);
   
   JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
   character->SetLinearVelocity(vec3_to_jph_vec3(velocity));
 }
 
-void character_body_set_layer(CharacterID& char_id, const PhysicsObjectLayer layer) {
+void character_body_set_layer(const CharacterID& char_id, const PhysicsObjectLayer layer) {
   CHARACTER_ID_CHECK(char_id);
   
   JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
   character->SetLayer((JPH::ObjectLayer)layer);
 }
 
-void character_body_set_slope_angle(CharacterID& char_id, const f32 max_slope_angle) {
+void character_body_set_slope_angle(const CharacterID& char_id, const f32 max_slope_angle) {
   CHARACTER_ID_CHECK(char_id);
   
   JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
   character->SetMaxSlopeAngle(max_slope_angle);
 }
 
-void character_body_set_collider(CharacterID& char_id, const ColliderID& collider_id, const f32 max_penetration_depth) {
+void character_body_set_collider(const CharacterID& char_id, const ColliderID& collider_id, const f32 max_penetration_depth) {
   CHARACTER_ID_CHECK(char_id);
   COLLIDER_ID_CHECK(collider_id); 
 
@@ -1034,7 +1033,7 @@ void character_body_set_collider(CharacterID& char_id, const ColliderID& collide
   character->SetShape(s_world->shapes[collider_id._id], max_penetration_depth);
 }
 
-void character_body_activate(CharacterID& char_id) {
+void character_body_activate(const CharacterID& char_id) {
   CHARACTER_ID_CHECK(char_id);
   
   JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
@@ -1111,14 +1110,14 @@ GroundState character_body_query_ground_state(const CharacterID& char_id) {
   return jph_ground_state_top_ground_state(character->GetGroundState());
 }
 
-void character_body_apply_linear_velocity(CharacterID& char_id, const Vec3 velocity) {
+void character_body_apply_linear_velocity(const CharacterID& char_id, const Vec3 velocity) {
   CHARACTER_ID_CHECK(char_id);
   
   JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
   character->AddLinearVelocity(vec3_to_jph_vec3(velocity));
 }
 
-void character_body_apply_impulse(CharacterID& char_id, const Vec3 impulse) {
+void character_body_apply_impulse(const CharacterID& char_id, const Vec3 impulse) {
   CHARACTER_ID_CHECK(char_id);
   
   JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];

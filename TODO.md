@@ -11,7 +11,7 @@
     - [x] Currently, not all animations that are imported work 
     - [x] I believe that the animation loader works with just GLTF for now, so try to make it work with Collada as well
     - [x] Add the animator to the GUI
-- [] The Physics Question
+- [x] The Physics Question
     - [x] Integrate Jolt types
         - [x] Initialization, shutdown, and update of the physics world
         - [x] Fully integrate physics bodies 
@@ -32,7 +32,7 @@
         - [x] Have the phyiscs world go through all of its colliders and render them through the new API 
         - [x] Implement other debug shapes like spheres and capsules
     - [x] Implement mouse to screen and mouse to world for editing levels easier
-    - [] Documentation
+    - [x] Documentation 
 - [] Resources 
     - [] Have a few functions specifically for the `NBR*` types to save, load, and unload them.
     - [] Improve the load times of the resource manager
