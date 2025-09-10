@@ -89,7 +89,7 @@ static void init_bodies(nikola::App* app) {
     .position = nikola::Vec3(10.0f, 5.0f, 10.0f),
     .rotation = nikola::Quat(0.0f, 0.0f, 0.0f, 1.0f),
 
-    .layer = nikola::PHYSICS_OBJECT_LAYER_1,
+    .layer = nikola::PHYSICS_OBJECT_LAYER_0,
     
     .collider_id = app->sphere_collider,
     .user_data   = 1,

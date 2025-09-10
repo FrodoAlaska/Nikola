@@ -82,8 +82,12 @@ void engine_init(const AppDesc& desc) {
 
   // Physics world init
 
-  // @TEMP (Physics): Try to find a way to insert the needed object layers without annoyance
   PhysicsWorldDesc world_desc{};
+  world_desc.layers_matrix[PHYSICS_OBJECT_LAYER_0][0] = PHYSICS_OBJECT_LAYER_0;
+  world_desc.layers_matrix[PHYSICS_OBJECT_LAYER_0][1] = PHYSICS_OBJECT_LAYER_1;
+  world_desc.layers_matrix[PHYSICS_OBJECT_LAYER_1][0] = PHYSICS_OBJECT_LAYER_1;
+  world_desc.layers_matrix[PHYSICS_OBJECT_LAYER_1][1] = PHYSICS_OBJECT_LAYER_0;
+
   physics_world_init(world_desc);
 
   // Particles init

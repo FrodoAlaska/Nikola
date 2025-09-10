@@ -55,10 +55,15 @@ enum PhysicsBroadPhaseLayer {
 ///---------------------------------------------------------------------------------------------------------------------
 /// PhysicsObjectLayer
 enum PhysicsObjectLayer {
+  /// This flag indicates a "none" layer, 
+  /// which can be used to disable collisions 
+  /// with certain layers in the layers matrix.
+  PHYSICS_OBJECT_LAYER_NONE = 0,
+  
   /// Physics layers for objects that collides with both 
   /// the STATIC and DYNAMIC broad phase layers.
   
-  PHYSICS_OBJECT_LAYER_0 = 0,
+  PHYSICS_OBJECT_LAYER_0,
   PHYSICS_OBJECT_LAYER_1,
   PHYSICS_OBJECT_LAYER_2,
   PHYSICS_OBJECT_LAYER_3,
@@ -233,6 +238,13 @@ struct RayCastResult {
 };
 /// RayCastResult
 ///---------------------------------------------------------------------------------------------------------------------
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// PhysicsLayersMatrix
+using PhysicsLayersMatrix = PhysicsObjectLayer[PHYSICS_OBJECT_LAYERS_MAX][PHYSICS_OBJECT_LAYERS_MAX];
+/// PhysicsLayersMatrix
+///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// PhysicsWorldDesc
@@ -279,6 +291,11 @@ struct PhysicsWorldDesc {
   ///
   /// @NOTE: By default, this value is set to `PHYSICS_DEFAULT_MAX_CONTACT_CONSTRAINTS`. 
   u32 max_contact_constraints = PHYSICS_DEFAULT_MAX_CONTACT_CONSTRAINTS;
+
+  /// A layer matrix determining the collision relationship each layer has with the each other. 
+  ///
+  /// @NOTE: By default, all entries in the matrix are set to `PHYSICS_OBJECT_LAYER_NONE`
+  PhysicsLayersMatrix layers_matrix; 
 
   /// The initial gravity of the simulation. 
   /// This value can later be changed using the 
@@ -492,6 +509,9 @@ NIKOLA_API void physics_world_set_safe_mode(const bool safe);
 
 /// Set the gravity of the physics world to the given `gravity`.
 NIKOLA_API void physics_world_set_gravity(const Vec3& gravity);
+
+/// Set the internal collision relationship between the layers.
+NIKOLA_API void physics_world_set_layers_matrix(PhysicsLayersMatrix matrix);
 
 /// Retrieve the current gravity value of the physics world.
 NIKOLA_API Vec3 physics_world_get_gravity();

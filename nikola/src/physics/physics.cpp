@@ -197,8 +197,7 @@ struct PhysicsWorld {
   Queue<JPH::BodyInterface::AddState> batches_queue;
 
   f32 collision_tolerance = 0.05f;
-
-  bool is_paused = false;
+  bool is_paused          = false;
 };
 
 static PhysicsWorld* s_world;
@@ -325,11 +324,20 @@ void physics_world_init(const PhysicsWorldDesc& desc) {
   }
 
   // Object layers init
-  // @TEMP (Physics)
   
   s_world->obj_vs_obj_layer_table = new JPH::ObjectLayerPairFilterTable(PHYSICS_OBJECT_LAYERS_MAX);
-  s_world->obj_vs_obj_layer_table->EnableCollision((JPH::ObjectLayer)PHYSICS_OBJECT_LAYER_0, 
-                                                   (JPH::ObjectLayer)PHYSICS_OBJECT_LAYER_1);
+  
+  for(u32 i = 1; i < PHYSICS_OBJECT_LAYERS_MAX; i++) {
+    for(u32 j = 0; j < PHYSICS_OBJECT_LAYERS_MAX; j++) {
+      PhysicsObjectLayer inner_layer = desc.layers_matrix[i][j];
+      if(inner_layer == PHYSICS_OBJECT_LAYER_NONE) {
+        continue;
+      }
+
+      s_world->obj_vs_obj_layer_table->EnableCollision((JPH::ObjectLayer)i, 
+                                                       (JPH::ObjectLayer)inner_layer);
+    }
+  }
 
   // Object/Broad phase layers init
   s_world->obj_vs_bp_layer_table = new JPH::ObjectVsBroadPhaseLayerFilterTable(*s_world->bp_layer_table, 
@@ -551,6 +559,20 @@ void physics_world_set_safe_mode(const bool safe) {
   }
   else {
     s_world->body_interface = &s_world->physics_system.GetBodyInterfaceNoLock();
+  }
+}
+
+void physics_world_set_layers_matrix(PhysicsLayersMatrix matrix) {
+  for(u32 i = 1; i < PHYSICS_OBJECT_LAYERS_MAX; i++) {
+    for(u32 j = 0; j < PHYSICS_OBJECT_LAYERS_MAX; j++) {
+      PhysicsObjectLayer inner_layer = matrix[i][j];
+      if(inner_layer == PHYSICS_OBJECT_LAYER_NONE) {
+        continue;
+      }
+
+      s_world->obj_vs_obj_layer_table->EnableCollision((JPH::ObjectLayer)i, 
+                                                       (JPH::ObjectLayer)inner_layer);
+    }
   }
 }
 

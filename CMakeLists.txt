@@ -57,7 +57,7 @@ set(NIKOLA_INCLUDES
   ${glfw-3.4_SOURCE_DIR}/include
   ${glm_SOURCE_DIR}
   ${OpenAL_SOURCE_DIR}/include
-  ${qu3e_SOURCE_DIR}/Jolt
+  ${jolt_SOURCE_DIR}/Jolt
 )
 
 set(NIKOLA_LIBRARIES 
