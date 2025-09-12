@@ -69,11 +69,11 @@ const Mat4 mat4_perspective(const f32 fov, const f32 aspect_ratio, const f32 nea
 }
 
 const Mat4 mat4_ortho(const f32 left, const f32 right, const f32 bottom, const f32 top) {
-  return glm::ortho(left, right, bottom, left);
+  return glm::ortho(left, right, bottom, top);
 }
 
 const Mat4 mat4_ortho(const f32 left, const f32 right, const f32 bottom, const f32 top, const f32 near, const f32 far) {
-  return glm::ortho(left, right, bottom, left, near, far);
+  return glm::ortho(left, right, bottom, top, near, far);
 }
 
 const Mat4 mat4_look_at(const Vec3& eye, const Vec3& center, const Vec3& up) {
