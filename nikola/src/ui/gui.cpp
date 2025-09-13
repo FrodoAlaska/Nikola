@@ -370,7 +370,7 @@ void gui_edit_camera(const char* name, Camera* camera) {
   ImGui::SliderFloat("Near", &camera->near, 0.0001f, 1000.0f, "Near: %.3f");
   ImGui::SliderFloat("Far", &camera->far, 0.0001f, 1000.0f, "Far: %.3f");
   
-  ImGui::SliderFloat("Sensitivity", &camera->sensitivity, "Sensitivity: %.3f");
+  ImGui::DragFloat("Sensitivity", &camera->sensitivity, s_gui.small_step);
   ImGui::SliderFloat("Exposure", &camera->exposure, 0.0f, 10.0f, "Exposure: %.3f");
   
   ImGui::PopID(); 
