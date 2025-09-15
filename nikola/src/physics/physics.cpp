@@ -374,11 +374,9 @@ void physics_world_shutdown() {
     character->RemoveFromPhysicsSystem();
 
     sizei body_index = character->GetBodyID().GetIndex();
-    s_world->bodies.erase(s_world->bodies.begin() + body_index);
+    s_world->bodies[body_index] = JPH::BodyID();
   }
-
   s_world->characters.clear();
-  s_world->bodies.shrink_to_fit();
 
   // Delete all the bodies in the world
   
