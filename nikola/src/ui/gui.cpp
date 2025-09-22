@@ -475,7 +475,9 @@ void gui_edit_material(const char* name, Material* material) {
   ImGui::ColorEdit3("Color", &material->color[0]);
   ImGui::ColorEdit4("Blend factor", &material->blend_factor[0]);
   
-  ImGui::DragFloat("Shininess", &material->shininess, s_gui.small_step, 0.0f);
+  ImGui::DragFloat("Roughness", &material->roughness, s_gui.small_step, 0.0f);
+  ImGui::DragFloat("Metallic", &material->metallic, s_gui.small_step, 0.0f);
+
   ImGui::DragFloat("Transparency", &material->transparency, s_gui.small_step, 0.0f, 1.0f);
   ImGui::DragInt("Stencil reference", &material->stencil_ref, s_gui.big_step);
   ImGui::Checkbox("Depth Mask", &material->depth_mask);

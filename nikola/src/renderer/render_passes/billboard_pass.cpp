@@ -95,7 +95,7 @@ void billboard_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitiv
     // Using resources
  
     GfxTexture* textures[] = {
-      geo.material->diffuse_map, 
+      geo.material->albedo_map, 
     };
 
     GfxBindingDesc bind_desc = {

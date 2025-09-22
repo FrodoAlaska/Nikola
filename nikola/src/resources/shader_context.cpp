@@ -99,7 +99,8 @@ void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, 
   NIKOLA_ASSERT(value, "Invalid Material given to shader_context_set_uniform");
 
   shader_context_set_uniform(ctx, (uniform_name + ".color"), value->color);
-  shader_context_set_uniform(ctx, (uniform_name + ".shininess"), value->shininess);
+  shader_context_set_uniform(ctx, (uniform_name + ".roughness"), value->roughness);
+  shader_context_set_uniform(ctx, (uniform_name + ".metallic"), value->metallic);
   shader_context_set_uniform(ctx, (uniform_name + ".transparency"), value->transparency);
 }
 

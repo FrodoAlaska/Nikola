@@ -137,9 +137,10 @@ struct GeometryPrimitive {
 ///---------------------------------------------------------------------------------------------------------------------
 /// RendererDefaults 
 struct RendererDefaults {
-  GfxTexture* texture          = nullptr;
-  GfxTexture* specular_texture = nullptr;
-  GfxTexture* normal_texture   = nullptr;
+  GfxTexture* albedo_texture    = nullptr;
+  GfxTexture* roughness_texture = nullptr;
+  GfxTexture* metallic_texture  = nullptr;
+  GfxTexture* normal_texture    = nullptr;
   
   GfxBuffer* matrices_buffer  = nullptr;
   GfxBuffer* instance_buffer  = nullptr;

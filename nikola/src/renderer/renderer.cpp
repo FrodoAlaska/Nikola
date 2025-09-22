@@ -65,14 +65,17 @@ static Renderer s_renderer{};
 static void init_defaults() {
   // Default textures init
   
-  ResourceID default_texture_id = resources_push_texture(RESOURCE_CACHE_ID, MATERIAL_TEXTURE_DIFFUSE);
-  s_renderer.defaults.texture   = resources_get_texture(default_texture_id);
+  ResourceID albedo_texture_id       = resources_push_texture(RESOURCE_CACHE_ID, MATERIAL_TEXTURE_ALBEDO);
+  s_renderer.defaults.albedo_texture = resources_get_texture(albedo_texture_id);
 
-  ResourceID specular_default_texture_id = resources_push_texture(RESOURCE_CACHE_ID, MATERIAL_TEXTURE_SPECULAR);
-  s_renderer.defaults.specular_texture   = resources_get_texture(specular_default_texture_id);
+  ResourceID roughness_texture_id       = resources_push_texture(RESOURCE_CACHE_ID, MATERIAL_TEXTURE_ROUGHNESS);
+  s_renderer.defaults.roughness_texture = resources_get_texture(roughness_texture_id);
+
+  ResourceID metallic_texture_id       = resources_push_texture(RESOURCE_CACHE_ID, MATERIAL_TEXTURE_METALLIC);
+  s_renderer.defaults.metallic_texture = resources_get_texture(metallic_texture_id);
  
-  ResourceID normal_default_texture_id = resources_push_texture(RESOURCE_CACHE_ID, MATERIAL_TEXTURE_NORMAL);
-  s_renderer.defaults.normal_texture   = resources_get_texture(normal_default_texture_id);
+  ResourceID normal_texture_id       = resources_push_texture(RESOURCE_CACHE_ID, MATERIAL_TEXTURE_NORMAL);
+  s_renderer.defaults.normal_texture = resources_get_texture(normal_texture_id);
 
   // Matrices buffer init
   
@@ -87,16 +90,18 @@ static void init_defaults() {
   // Materials init
   
   MaterialDesc mat_desc = {
-    .diffuse_id  = default_texture_id, 
-    .specular_id = specular_default_texture_id, 
-    .normal_id   = normal_default_texture_id,
+    .albedo_id    = albedo_texture_id, 
+    .roughness_id = roughness_texture_id,
+    .metallic_id  = metallic_texture_id, 
+    .normal_id    = normal_texture_id,
   };
   s_renderer.defaults.material = resources_get_material(resources_push_material(RESOURCE_CACHE_ID, mat_desc));
   
   mat_desc = {
-    .diffuse_id  = default_texture_id, 
-    .specular_id = specular_default_texture_id, 
-    .normal_id   = normal_default_texture_id,
+    .albedo_id    = albedo_texture_id, 
+    .roughness_id = roughness_texture_id,
+    .metallic_id  = metallic_texture_id, 
+    .normal_id    = normal_texture_id,
     
     .color        = Vec3(1.0f, 0.0f, 1.0f),
     .transparency = 0.5f,
@@ -532,7 +537,8 @@ void renderer_queue_model_instanced(const ResourceID& res_id,
 
     // Let the main given material "influence" the model's material 
 
-    mat->shininess    = material->shininess;
+    mat->roughness    = material->roughness;
+    mat->metallic     = material->metallic;
     mat->transparency = material->transparency;
     mat->depth_mask   = material->depth_mask;
 
@@ -563,7 +569,8 @@ void renderer_queue_animation_instanced(const ResourceID& res_id,
 
     // Let the main given material "influence" the model's material 
 
-    mat->shininess    = material->shininess;
+    mat->roughness    = material->roughness;
+    mat->metallic     = material->metallic;
     mat->transparency = material->transparency;
     mat->depth_mask   = material->depth_mask;
 

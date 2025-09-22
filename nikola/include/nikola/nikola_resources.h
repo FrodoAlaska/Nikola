@@ -30,7 +30,7 @@ const u8 NBR_VALID_IDENTIFIER     = 107;
 const i16 NBR_VALID_MAJOR_VERSION = 0;
 
 /// The currently valid minor version of any `.nbr` file
-const i16 NBR_VALID_MINOR_VERSION = 3;
+const i16 NBR_VALID_MINOR_VERSION = 4;
 
 /// The maximum number of weights a joint can have in an NBR file. 
 const u8 NBR_JOINT_WEIGHTS_MAX    = 4;
@@ -123,26 +123,34 @@ struct NBRShader {
 ///---------------------------------------------------------------------------------------------------------------------
 /// NBRMaterial
 struct NBRMaterial {
-  /// An RGB value array of the diffuse color.
-  f32 diffuse[3];
+  /// An RGB value array of the base color.
+  f32 color[3];
   
-  /// A floating-point value indicating the shininess of this material.
-  f32 shininess;
+  /// A floating-point value indicating the metallic factor of this material.
+  f32 metallic;
+  
+  /// A floating-point value indicating the roughness factor of this material.
+  f32 roughness;
 
-  /// The diffuse index into the `textures` array in `NBRModel`.
+  /// The albedo index into the `textures` array in `NBRModel`.
   ///
-  /// @NOTE: This index will be `-1` if there is no diffuse texture present
-  i8 diffuse_index;
+  /// @NOTE: This index will be `-1` if there is no albedo texture present.
+  i8 albedo_index    = -1;
   
-  /// The specular index into the `textures` array in `NBRModel`.
+  /// The metallic index into the `textures` array in `NBRModel`.
   ///
-  /// @NOTE: This index will be `-1` if there is no specular texture present
-  i8 specular_index;
+  /// @NOTE: This index will be `-1` if there is no metallic texture present.
+  i8 metallic_index  = -1;
+  
+  /// The roughness index into the `textures` array in `NBRModel`.
+  ///
+  /// @NOTE: This index will be `-1` if there is no roughness texture present.
+  i8 roughness_index = -1;
   
   /// The normal index into the `textures` array in `NBRModel`.
   ///
-  /// @NOTE: This index will be `-1` if there is no specular texture present
-  i8 normal_index;
+  /// @NOTE: This index will be `-1` if there is no specular texture present.
+  i8 normal_index    = -1;
 };
 /// NBRMaterial
 ///---------------------------------------------------------------------------------------------------------------------
@@ -471,14 +479,17 @@ enum GeometryType {
 ///---------------------------------------------------------------------------------------------------------------------
 /// MaterialTextureType
 enum MaterialTextureType {
-  /// Indicate the diffuse texture in a `Material`.
-  MATERIAL_TEXTURE_DIFFUSE  = 7 << 0,
+  /// Used to indicate an albedo texture in a `Material`.
+  MATERIAL_TEXTURE_ALBEDO    = 7 << 0,
   
-  /// Indicate the specular texture in a `Material`.
-  MATERIAL_TEXTURE_SPECULAR = 7 << 1,
+  /// Used to indicate a metallic texture in a `Material`.
+  MATERIAL_TEXTURE_METALLIC  = 7 << 1,
   
-  /// Indicate the normal texture in a `Material`.
-  MATERIAL_TEXTURE_NORMAL   = 7 << 2,
+  /// Used to indicate a roughness texture in a `Material`.
+  MATERIAL_TEXTURE_ROUGHNESS = 7 << 2,
+  
+  /// Used to indicate an albedo texture in a `Material`.
+  MATERIAL_TEXTURE_NORMAL    = 7 << 3,
 };
 /// MaterialTextureType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -526,14 +537,16 @@ struct Mesh {
 struct Material {
   /// Texture maps.
 
-  GfxTexture* diffuse_map  = nullptr;
-  GfxTexture* specular_map = nullptr;
-  GfxTexture* normal_map   = nullptr;
+  GfxTexture* albedo_map    = nullptr;
+  GfxTexture* metallic_map  = nullptr;
+  GfxTexture* roughness_map = nullptr;
+  GfxTexture* normal_map    = nullptr;
  
   /// Useful surface-defining flags.
 
   Vec3 color       = Vec3(1.0f);
-  f32 shininess    = 16.0f;
+  f32 roughness    = 1.0f;
+  f32 metallic     = 0.0f;
   f32 transparency = 1.0f;
  
   /// Pipeline-related flags 
@@ -685,13 +698,15 @@ struct Font {
 ///---------------------------------------------------------------------------------------------------------------------
 /// MaterialDesc
 struct MaterialDesc {
-  ResourceID diffuse_id  = {};
-  ResourceID specular_id = {};
-  ResourceID normal_id   = {};
+  ResourceID albedo_id    = {};
+  ResourceID roughness_id = {};
+  ResourceID metallic_id  = {};
+  ResourceID normal_id    = {};
 
   Vec3 color = Vec3(1.0f); 
 
-  f32 shininess    = 16.0f; 
+  f32 roughness    = 1.0f; 
+  f32 metallic     = 0.0f; 
   f32 transparency = 1.0f;
 
   bool depth_mask  = true;

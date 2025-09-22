@@ -205,11 +205,13 @@ void file_write_bytes(File& file, const NBRMaterial& material) {
   
   // Write the resource's information
   
-  file_write_bytes(file, material.diffuse, sizeof(f32) * 3); 
-  file_write_bytes(file, &material.shininess, sizeof(f32)); 
+  file_write_bytes(file, material.color, sizeof(f32) * 3); 
+  file_write_bytes(file, &material.metallic, sizeof(f32)); 
+  file_write_bytes(file, &material.roughness, sizeof(f32)); 
  
-  file_write_bytes(file, &material.diffuse_index, sizeof(i8)); 
-  file_write_bytes(file, &material.specular_index, sizeof(i8)); 
+  file_write_bytes(file, &material.albedo_index, sizeof(i8)); 
+  file_write_bytes(file, &material.metallic_index, sizeof(i8)); 
+  file_write_bytes(file, &material.roughness_index, sizeof(i8)); 
   file_write_bytes(file, &material.normal_index, sizeof(i8)); 
 }
 
@@ -692,11 +694,13 @@ void file_read_bytes(File& file, NBRMaterial* out_material) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
   NIKOLA_ASSERT(out_material, "Invalid NBRMaterial type given to file_read_bytes");
   
-  file_read_bytes(file, out_material->diffuse, sizeof(f32) * 3); 
-  file_write_bytes(file, &out_material->shininess, sizeof(f32)); 
+  file_read_bytes(file, out_material->color, sizeof(f32) * 3); 
+  file_write_bytes(file, &out_material->metallic, sizeof(f32)); 
+  file_write_bytes(file, &out_material->roughness, sizeof(f32)); 
  
-  file_read_bytes(file, &out_material->diffuse_index, sizeof(i8)); 
-  file_read_bytes(file, &out_material->specular_index, sizeof(i8)); 
+  file_read_bytes(file, &out_material->albedo_index, sizeof(i8)); 
+  file_read_bytes(file, &out_material->metallic_index, sizeof(i8)); 
+  file_read_bytes(file, &out_material->roughness_index, sizeof(i8)); 
   file_read_bytes(file, &out_material->normal_index, sizeof(i8)); 
 }
 

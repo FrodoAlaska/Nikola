@@ -159,8 +159,9 @@ void light_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& 
     // Use the required resources
 
     GfxTexture* textures[] = {
-      geo.material->diffuse_map,
-      geo.material->specular_map,
+      geo.material->albedo_map,
+      geo.material->roughness_map,
+      geo.material->metallic_map,
       geo.material->normal_map,
     };
 
@@ -168,7 +169,7 @@ void light_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& 
       .shader = pass->shader_context->shader,
 
       .textures       = textures, 
-      .textures_count = 3,
+      .textures_count = 4,
     };
     gfx_context_use_bindings(pass->gfx, bind_desc);
 

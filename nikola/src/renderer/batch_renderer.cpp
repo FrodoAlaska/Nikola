@@ -80,7 +80,7 @@ static BatchRenderer s_batch;
 /// Private functions
 
 static void init_defaults() {
-  s_batch.white_texture                         = renderer_get_defaults().texture;
+  s_batch.white_texture                         = renderer_get_defaults().albedo_texture;
   s_batch.textures_cache[s_batch.white_texture] = 0;
   
   // Default shader init

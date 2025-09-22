@@ -114,7 +114,7 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
         vec3 color;
 
         float roughness;
-        float metalness;
+        float metallic;
 
         float transparency;
       };
@@ -135,6 +135,7 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
         float __padding2;
 
         float radius;
+        float fall_off
       };
       
       struct SpotLight {
@@ -158,6 +159,7 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
         PointLight u_points[LIGHTS_MAX];
         SpotLight u_spots[LIGHTS_MAX]; 
 
+        vec3 u_ambient;
         int u_points_count, u_spots_count;
       };
 
@@ -168,9 +170,10 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
       // Textures
 
       layout (binding = 0) uniform sampler2D u_albedo_map;
-      layout (binding = 1) uniform sampler2D u_mettalic_roughness_map;
-      layout (binding = 2) uniform sampler2D u_normal_map;
-      layout (binding = 3) uniform sampler2D u_shadow;
+      layout (binding = 1) uniform sampler2D u_roughness_map;
+      layout (binding = 2) uniform sampler2D u_mettalic_map;
+      layout (binding = 3) uniform sampler2D u_normal_map;
+      layout (binding = 4) uniform sampler2D u_shadow;
    
       // Private variables
 

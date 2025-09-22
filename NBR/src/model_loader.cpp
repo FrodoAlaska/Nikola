@@ -241,30 +241,27 @@ static void load_scene_materials(const aiScene* scene, ObjData* data) {
   // Go through each material in the scene 
   for(nikola::sizei i = 0; i < scene->mNumMaterials; i++) {
     aiMaterial* material = scene->mMaterials[i];
-    nikola::NBRMaterial nbr_material; 
+    nikola::NBRMaterial nbr_material{}; 
  
     // Convert the colors
   
     aiColor3D diffuse;
     material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
     
-    nbr_material.diffuse[0] = diffuse.r;  
-    nbr_material.diffuse[1] = diffuse.g; 
-    nbr_material.diffuse[2] = diffuse.b;
+    nbr_material.color[0] = diffuse.r;  
+    nbr_material.color[1] = diffuse.g; 
+    nbr_material.color[2] = diffuse.b;
 
-    // Load the shininess value
+    // Load individual values
 
-    // @TODO
-    nbr_material.shininess = 0.0f;
+    material->Get(AI_MATKEY_METALLIC_FACTOR, nbr_material.metallic);
+    material->Get(AI_MATKEY_ROUGHNESS_FACTOR, nbr_material.roughness);
 
     // Load textures of each kind
-    
-    nbr_material.diffuse_index  = -1; 
-    nbr_material.specular_index = -1; 
-    nbr_material.normal_index   = -1; 
 
-    load_material_texture(material, aiTextureType_DIFFUSE, data, &nbr_material.diffuse_index); 
-    load_material_texture(material, aiTextureType_SPECULAR, data, &nbr_material.specular_index); 
+    load_material_texture(material, aiTextureType_BASE_COLOR, data, &nbr_material.albedo_index); 
+    load_material_texture(material, aiTextureType_METALNESS, data, &nbr_material.metallic_index); 
+    load_material_texture(material, aiTextureType_DIFFUSE_ROUGHNESS, data, &nbr_material.roughness_index); 
     load_material_texture(material, aiTextureType_NORMALS, data, &nbr_material.normal_index); 
 
     // New material!

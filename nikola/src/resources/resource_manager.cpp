@@ -636,10 +636,11 @@ ResourceID resources_push_texture(const ResourceGroupID& group_id, const Materia
   u8 pixels[1024]; // width * height * channels
 
   switch(type) {
-    case MATERIAL_TEXTURE_DIFFUSE: 
+    case MATERIAL_TEXTURE_ALBEDO: 
+    case MATERIAL_TEXTURE_ROUGHNESS: 
       memory_set(pixels, 0xff, sizeof(pixels));
       break;
-    case MATERIAL_TEXTURE_SPECULAR: 
+    case MATERIAL_TEXTURE_METALLIC: 
       memory_set(pixels, 0, sizeof(pixels));
       break;
     case MATERIAL_TEXTURE_NORMAL: {
@@ -905,12 +906,14 @@ ResourceID resources_push_material(const ResourceGroupID& group_id, const Materi
   // Allocate the material
   Material* material = new Material{};
   
-  material->diffuse_map  = renderer_get_defaults().texture;
-  material->specular_map = renderer_get_defaults().specular_texture;
-  material->normal_map   = renderer_get_defaults().normal_texture;
+  material->albedo_map    = renderer_get_defaults().albedo_texture;
+  material->roughness_map = renderer_get_defaults().roughness_texture;
+  material->metallic_map  = renderer_get_defaults().metallic_texture;
+  material->normal_map    = renderer_get_defaults().normal_texture;
   
   material->color        = desc.color;
-  material->shininess    = desc.shininess;
+  material->roughness    = desc.roughness;
+  material->metallic     = desc.metallic;
   material->transparency = desc.transparency;
 
   material->depth_mask  = desc.depth_mask;
@@ -918,14 +921,19 @@ ResourceID resources_push_material(const ResourceGroupID& group_id, const Materi
 
   // Textures init
   
-  if(RESOURCE_IS_VALID(desc.diffuse_id)) {
-    material->diffuse_map = resources_get_texture(desc.diffuse_id);
-    material->map_flags  |= MATERIAL_TEXTURE_DIFFUSE;
+  if(RESOURCE_IS_VALID(desc.albedo_id)) {
+    material->albedo_map  = resources_get_texture(desc.albedo_id);
+    material->map_flags  |= MATERIAL_TEXTURE_ALBEDO;
   }
   
-  if(RESOURCE_IS_VALID(desc.specular_id)) {
-    material->specular_map = resources_get_texture(desc.specular_id);
-    material->map_flags   |= MATERIAL_TEXTURE_SPECULAR;
+  if(RESOURCE_IS_VALID(desc.roughness_id)) {
+    material->roughness_map = resources_get_texture(desc.roughness_id);
+    material->map_flags    |= MATERIAL_TEXTURE_ROUGHNESS;
+  }
+  
+  if(RESOURCE_IS_VALID(desc.metallic_id)) {
+    material->metallic_map  = resources_get_texture(desc.metallic_id);
+    material->map_flags    |= MATERIAL_TEXTURE_METALLIC;
   }
   
   if(RESOURCE_IS_VALID(desc.normal_id)) {
@@ -940,7 +948,8 @@ ResourceID resources_push_material(const ResourceGroupID& group_id, const Materi
   // New material added
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed material:", group->name.c_str());
   NIKOLA_LOG_DEBUG("     Color        = \'%s\'", vec3_to_string(material->color).c_str());
-  NIKOLA_LOG_DEBUG("     Shininess    = \'%f\'", material->shininess);
+  NIKOLA_LOG_DEBUG("     Roughness    = \'%f\'", material->roughness);
+  NIKOLA_LOG_DEBUG("     Metallic     = \'%f\'", material->metallic);
   NIKOLA_LOG_DEBUG("     Transparency = \'%f\'", material->transparency);
   return id;
 }
@@ -1040,21 +1049,24 @@ ResourceID resources_push_model(const ResourceGroupID& group_id, const FilePath&
   for(sizei i = 0; i < nbr_model.materials_count; i++) {
     NBRMaterial* nbr_mat = &nbr_model.materials[i];
 
-    Vec3 color = Vec3(nbr_mat->diffuse[0], 
-                      nbr_mat->diffuse[1], 
-                      nbr_mat->diffuse[2]);
+    Vec3 color = Vec3(nbr_mat->color[0], 
+                      nbr_mat->color[1], 
+                      nbr_mat->color[2]);
     
-    i8 diffuse_index  = nbr_mat->diffuse_index;
-    i8 specular_index = nbr_mat->specular_index;
-    i8 normal_index   = nbr_mat->normal_index;
+    i8 albedo_index    = nbr_mat->albedo_index;
+    i8 roughness_index = nbr_mat->roughness_index;
+    i8 metallic_index  = nbr_mat->metallic_index;
+    i8 normal_index    = nbr_mat->normal_index;
 
     MaterialDesc mat_desc = {
-      .diffuse_id  = diffuse_index  != -1 ? texture_ids[diffuse_index]  : ResourceID{}, 
-      .specular_id = specular_index != -1 ? texture_ids[specular_index] : ResourceID{},
-      .normal_id   = normal_index   != -1 ? texture_ids[normal_index]   : ResourceID{},
+      .albedo_id    = albedo_index    != -1 ? texture_ids[albedo_index]    : ResourceID{}, 
+      .roughness_id = roughness_index != -1 ? texture_ids[roughness_index] : ResourceID{},
+      .metallic_id  = metallic_index  != -1 ? texture_ids[metallic_index]  : ResourceID{},
+      .normal_id    = normal_index    != -1 ? texture_ids[normal_index]    : ResourceID{},
 
       .color     = color,
-      .shininess = nbr_mat->shininess, 
+      .roughness = nbr_mat->roughness, 
+      .metallic  = nbr_mat->metallic, 
     };
     ResourceID mat_id = resources_push_material(group_id, mat_desc);
 

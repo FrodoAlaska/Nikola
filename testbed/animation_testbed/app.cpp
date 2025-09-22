@@ -44,7 +44,7 @@ static void init_resources(nikola::App* app) {
   // Materials init
   
   nikola::MaterialDesc mat_desc = {
-    .diffuse_id = nikola::resources_push_texture(app->res_group_id, "textures/paviment.nbr"),
+    .albedo_id  = nikola::resources_push_texture(app->res_group_id, "textures/paviment.nbr"),
     .normal_id  = nikola::resources_push_texture(app->res_group_id, "textures/paviment_normal.nbr"),
   };
   app->material_id = nikola::resources_push_material(app->res_group_id, mat_desc);
