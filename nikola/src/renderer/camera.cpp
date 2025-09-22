@@ -141,10 +141,6 @@ void camera_create(Camera* cam, const CameraDesc& desc) {
 
   cam->move_fn   = desc.move_func;
   cam->is_active = true;
-
-  event_listen(EVENT_WINDOW_RESIZED, window_resize_callback, cam);
-  event_listen(EVENT_WINDOW_FULLSCREEN, window_resize_callback, cam);
-  event_listen(EVENT_WINDOW_FRAMEBUFFER_RESIZED, window_resize_callback, cam);
 }
 
 void camera_update(Camera& cam) {

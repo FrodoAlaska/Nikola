@@ -28,15 +28,18 @@ inline nikola::GfxShaderDesc generate_hdr_shader() {
       in VS_OUT {
         vec2 tex_coords;
       } fs_in;
-      
+    
+      const float GAMMA = 2.0;
+
       layout(binding = 0) uniform sampler2D u_input;
-      
+     
       uniform float u_exposure;
       
       void main() {
         vec3 hdr_color = texture(u_input, fs_in.tex_coords).rgb;
         vec3 mapped    = vec3(1.0) - exp(-hdr_color * u_exposure);
-      
+     
+        mapped     = pow(mapped, vec3(1.0 / GAMMA));
         frag_color = vec4(mapped, 1.0);
       }
     )"

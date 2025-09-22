@@ -35,13 +35,16 @@ static void init_resources(nikola::App* app) {
   // Materials init
   
   nikola::MaterialDesc mat_desc = {
-    .diffuse_id = nikola::resources_push_texture(app->res_group_id, "textures/paviment.nbr"),
-    .normal_id  = nikola::resources_push_texture(app->res_group_id, "textures/paviment_normal.nbr"),
+    .albedo_id = nikola::resources_push_texture(app->res_group_id, "textures/paviment.nbr"),
+    .normal_id = nikola::resources_push_texture(app->res_group_id, "textures/paviment_normal.nbr"),
   };
   app->ground_material = nikola::resources_push_material(app->res_group_id, mat_desc);
   
   mat_desc = {
-    .diffuse_id = nikola::resources_push_texture(app->res_group_id, "textures/opengl.nbr"),
+    .albedo_id    = nikola::resources_push_texture(app->res_group_id, "textures/PaintedMetal_BaseColor.nbr"),
+    .roughness_id = nikola::resources_push_texture(app->res_group_id, "textures/PaintedMetal_Roughness.nbr"),
+    .metallic_id  = nikola::resources_push_texture(app->res_group_id, "textures/PaintedMetal_Metallic.nbr"),
+    .normal_id    = nikola::resources_push_texture(app->res_group_id, "textures/PaintedMetal_Normal.nbr"),
   };
   app->mesh_material = nikola::resources_push_material(app->res_group_id, mat_desc);
 }
@@ -66,17 +69,14 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Camera init
   
   nikola::CameraDesc cam_desc = {
-    .position     = nikola::Vec3(5.0f, 27.0f, -22.0f),
-    .target       = nikola::Vec3(-3.0f, 27.0f, 0.0f),
+    .position     = nikola::Vec3(10.0f, 0.0f, 10.0f),
+    .target       = nikola::Vec3(-3.0f, 0.0f, 0.0f),
     .up_axis      = nikola::Vec3(0.0f, 1.0f, 0.0f),
     .aspect_ratio = nikola::window_get_aspect_ratio(app->window),
-    .move_func    = nullptr,//nikola::camera_free_move_func,
+    .move_func    = nikola::camera_free_move_func,
   };
   nikola::camera_create(&app->frame_data.camera, cam_desc);
-
   app->frame_data.camera.exposure = 1.0f;
-  app->frame_data.camera.yaw      = 90.0f;
-  app->frame_data.camera.pitch    = -47.0f;
 
   // Resoruces init
   init_resources(app);
@@ -86,12 +86,12 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::transform_translate(app->transforms[0], nikola::Vec3(5.0f, 0.05f, 5.0f));
   nikola::transform_scale(app->transforms[0], nikola::Vec3(16.0f, 1.0f, 16.0f));
   
-  nikola::transform_translate(app->transforms[1], nikola::Vec3(10.0f, 5.0f, 10.0f));
+  nikola::transform_translate(app->transforms[1], nikola::Vec3(10.0f, 2.0f, 10.0f));
   nikola::transform_scale(app->transforms[1], nikola::Vec3(1.0f));
 
   // Lights init
 
-  app->frame_data.dir_light.direction = nikola::Vec3(1.0f, -1.0f, 1.0f);
+  app->frame_data.dir_light.direction = nikola::Vec3(-1.0f, 1.0f, -1.0f);
   app->frame_data.dir_light.color     = nikola::Vec3(1.0f);
 
   app->frame_data.ambient = nikola::Vec3(1.0f);
@@ -119,25 +119,7 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     app->frame_data.camera.is_active = !nikola::gui_is_active();
   }
 
-  if(nikola::input_key_down(nikola::KEY_W)) {
-    app->transforms[1].position.z += 10.0f * delta_time;
-  }
-  else if(nikola::input_key_down(nikola::KEY_S)) {
-    app->transforms[1].position.z -= 10.0f * delta_time;
-  }
-
-  if(nikola::input_key_down(nikola::KEY_A)) {
-    app->transforms[1].position.x += 10.0f * delta_time;
-  }
-  else if(nikola::input_key_down(nikola::KEY_D)) {
-    app->transforms[1].position.x -= 10.0f * delta_time;
-  }
-
-  nikola::transform_translate(app->transforms[1], app->transforms[1].position);
-
   // Update the camera
- 
-  nikola::camera_follow_lerp(app->frame_data.camera, app->transforms[1].position, nikola::Vec3(-4.5f, 18.5f, -20.0f), delta_time * 1.5f);
   nikola::camera_update(app->frame_data.camera);
 }
 
@@ -168,15 +150,15 @@ void app_render_gui(nikola::App* app) {
   nikola::gui_debug_info();
   
   nikola::gui_begin_panel("Scene");
-  
-  // Frame
-  nikola::gui_edit_frame("Frame", &app->frame_data);
 
   // Entities
   if(ImGui::CollapsingHeader("Entities")) {
     nikola::gui_edit_transform("Ground", &app->transforms[0]);
     nikola::gui_edit_transform("Box", &app->transforms[1]);
   }
+  
+  // Frame
+  nikola::gui_edit_frame("Frame", &app->frame_data);
 
   // Resources
   if(ImGui::CollapsingHeader("Resources")) {

@@ -35,7 +35,7 @@
     - [x] Documentation 
 - [] Renderer: Beautify it v1.0
     - [x] Better attenuation
-    - [] PBR pipeline
+    - [x] PBR pipeline
     - [] Image-based lighting (IBL)
     - [] Enviornment mapping 
     - [] Smooth out the pass system a bit. Appending and referring to passes is a bit weird. Paas chain? Passes pool? WTH?

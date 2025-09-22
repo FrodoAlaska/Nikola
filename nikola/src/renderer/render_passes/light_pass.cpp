@@ -1,6 +1,6 @@
 #include "render_passes.h"
 
-#include "../shaders/bling_phong.glsl.h"
+#include "../shaders/pbr_shading.glsl.h"
 
 #include "nikola/nikola_render.h"
 
@@ -23,8 +23,8 @@ void light_pass_init(Window* window) {
 
   pass_desc.res_group_id = RESOURCE_CACHE_ID;
 
-  ResourceID blinn_phong_shader = resources_push_shader(RESOURCE_CACHE_ID, generate_blinn_phong_shader());
-  pass_desc.shader_context_id   = resources_push_shader_context(RESOURCE_CACHE_ID, blinn_phong_shader);
+  ResourceID pbr_shader       = resources_push_shader(RESOURCE_CACHE_ID, generate_pbr_shader());
+  pass_desc.shader_context_id = resources_push_shader_context(RESOURCE_CACHE_ID, pbr_shader);
 
   // Buffer injection
 

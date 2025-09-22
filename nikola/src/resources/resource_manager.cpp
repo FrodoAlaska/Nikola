@@ -638,10 +638,8 @@ ResourceID resources_push_texture(const ResourceGroupID& group_id, const Materia
   switch(type) {
     case MATERIAL_TEXTURE_ALBEDO: 
     case MATERIAL_TEXTURE_ROUGHNESS: 
-      memory_set(pixels, 0xff, sizeof(pixels));
-      break;
     case MATERIAL_TEXTURE_METALLIC: 
-      memory_set(pixels, 0, sizeof(pixels));
+      memory_set(pixels, 0xff, sizeof(pixels));
       break;
     case MATERIAL_TEXTURE_NORMAL: {
       // Initializing the R and G channels to 0 
