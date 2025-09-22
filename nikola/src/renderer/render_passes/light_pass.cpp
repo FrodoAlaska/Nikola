@@ -112,6 +112,7 @@ void light_pass_prepare(RenderPass* pass, const FrameData& data) {
       .position = data.point_lights[i].position, 
       .color    = data.point_lights[i].color,
       .radius   = data.point_lights[i].radius,
+      .fall_off = data.point_lights[i].fall_off,
     };
 
     light_buffer.point_lights[i] = light;

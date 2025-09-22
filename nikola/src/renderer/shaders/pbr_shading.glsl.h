@@ -113,7 +113,9 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
       struct Material {
         vec3 color;
 
-        float shininess;
+        float roughness;
+        float metalness;
+
         float transparency;
       };
 
@@ -133,7 +135,6 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
         float __padding2;
 
         float radius;
-        float fall_off;
       };
       
       struct SpotLight {
@@ -157,7 +158,6 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
         PointLight u_points[LIGHTS_MAX];
         SpotLight u_spots[LIGHTS_MAX]; 
 
-        vec3 u_ambient;
         int u_points_count, u_spots_count;
       };
 
@@ -167,8 +167,8 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
       
       // Textures
 
-      layout (binding = 0) uniform sampler2D u_diffuse_map;
-      layout (binding = 1) uniform sampler2D u_specular_map;
+      layout (binding = 0) uniform sampler2D u_albedo_map;
+      layout (binding = 1) uniform sampler2D u_mettalic_roughness_map;
       layout (binding = 2) uniform sampler2D u_normal_map;
       layout (binding = 3) uniform sampler2D u_shadow;
    
@@ -177,9 +177,37 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
       vec3 view_dir; 
       vec3 norm;
 
+      // BRDF terms 
+
+      float normal_distribution(const vec3 normal, const vec3 halfway, const float roughness) {
+        float roughness_sq = (roughness * roughness);
+        float nh_dot       = max(dot(normal, halfway), 0.0);
+        float nh_dot_sq    = (nh_dot * nh_dot);
+        float denominator  = (nh_dot_sq * (roughness_sq - 1.0) + 1.0);
+        
+        return roughness_sq / (PI * denominator * denominator);
+      }
+
+      float geo_schlick_ggx(const float nv_dot, const float k) {
+        return (nv_dot / (nv_dot * (1.0 - k) + k));
+      }
+      
+      float shadowing_masking(const vec3 normal, const vec3 incoming_idr, const vec3 outgoing_dir, const float k) {
+        float nv_dot = max(dot(normal, outgoing_dir) 0.0); // Normal and view direction dot product
+        float nl_dot = max(dot(normal, incoming_idr) 0.0); // Normal and light direction dot product
+
+        return geo_schlick_ggx(nv_dot, k) * geo_schlick_ggx(nl_dot, k);
+      }
+
+      float fernel_schlick_reflectance(const float cos_theta, const vec3 surface_color, const float metalness) {
+        vec3 f0 = vec3(0.04);
+        f0      = mix(f0, surface_color, metalness); 
+
+        return (f0 + (1 - f0) * pow((1 - cos_theta), 5.0));
+      }
+
       // Stages 
-    
-      float attenuate(const float distance, const float radius, const float max_intensity, const float fall_off);
+     
       vec3 calculate_normal();
       vec3 calculate_diffuse(const vec3 diffuse_texel, const vec3 light_dir);
       vec3 calculate_specular(const vec3 specular_texel, const vec3 light_dir);
@@ -194,53 +222,6 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
       // Main
 
       void main() {
-        vec3 diffuse  = texture(u_diffuse_map, fs_in.tex_coords).rgb * u_material.color;
-        vec3 specular = texture(u_specular_map, fs_in.tex_coords).rgb;
-        vec3 ambient  = u_ambient * diffuse;
- 
-        view_dir = normalize(fs_in.camera_pos - fs_in.pixel_pos);
-        norm     = calculate_normal(); 
-
-        // Clamp the maximum number of lights
-        // @TODO: This can be improved...
-   
-        int points_max = u_points_count;
-        if(points_max > LIGHTS_MAX) {
-          points_max = LIGHTS_MAX;
-        }
-
-        int spots_max = u_spots_count;
-        if(spots_max > LIGHTS_MAX) {
-          spots_max = LIGHTS_MAX;
-        }
-    
-        // Gather the light factors from all the light sources
-     
-        vec3 point_lights_factor = accumulate_point_lights_color(diffuse, specular, points_max);
-        vec3 spot_lights_factor  = accumulate_spot_lights_color(diffuse, specular, spots_max);
-        vec3 dir_light_factor    = accumulate_dir_light_color(diffuse, specular);
-        
-        // vec3 shadow_factor = (u_ambient + (1 - calculate_shadow()));
-        vec3 final_factor   = u_ambient * (point_lights_factor + spot_lights_factor + dir_light_factor);
-
-        frag_color = vec4(final_factor, u_material.transparency);
-      }
-
-      float attenuate(const float distance, const float radius, const float max_intensity, const float fall_off) {
-        /// @NOTE: 
-        /// This attenuation function was taken from:
-        /// https://lisyarus.github.io/blog/posts/point-light-attenuation.html
-        /// 
-
-        float s = distance / radius;
-        if(s >= 1.0) {
-          return 0.0;
-        }
-
-        float s2_sq  = (s * s);
-        float inv_s2 = (1 - s2_sq);
-
-        return max_intensity * (inv_s2 * inv_s2) / (1 + fall_off * s);
       }
       
       vec3 calculate_normal() {
@@ -281,7 +262,15 @@ inline nikola::GfxShaderDesc generate_blinn_phong_shader() {
           vec3 specular = calculate_specular(specular_texel, light_dir);
 
           // Apply attenuation
-          float atten = attenuate(length(light_dir), u_points[i].radius, u_points[i].color.r, u_points[i].fall_off); 
+
+          float distance = length(light_dir);
+          
+          float dist_sq   = distance * distance;
+          float radius_sq = u_points[i].radius * u_points[i].radius;
+          float rd_sq     = dist_sq + radius_sq;
+
+          // Thanks to Cem Yuksel for supplying this formula. It is _amazing_!
+          float atten = (2 / radius_sq) * (1 - (dist_sq / sqrt(dist_sq + radius_sq)));
 
           point_lights_factor += ((diffuse + specular) * atten) * u_points[i].color;
        }

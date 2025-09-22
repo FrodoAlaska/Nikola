@@ -392,7 +392,8 @@ void gui_edit_point_light(const char* name, PointLight* point_light) {
 
   ImGui::DragFloat3("Position", &point_light->position[0], s_gui.big_step);
   ImGui::DragFloat3("Color", &point_light->color[0], s_gui.small_step, 0.0f);
-  ImGui::SliderFloat("Radius", &point_light->radius, 0.001f, 20.0f);
+  ImGui::DragFloat("Radius", &point_light->radius, s_gui.small_step, 0.0f);
+  ImGui::DragFloat("Fall off", &point_light->fall_off, s_gui.small_step, 0.0f);
 
   ImGui::PopID(); 
 }

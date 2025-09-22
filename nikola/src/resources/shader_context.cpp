@@ -110,6 +110,7 @@ void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, 
   shader_context_set_uniform(ctx, (uniform_name + ".position"), value.position);
   shader_context_set_uniform(ctx, (uniform_name + ".color"), value.color);
   shader_context_set_uniform(ctx, (uniform_name + ".radius"), value.radius);
+  shader_context_set_uniform(ctx, (uniform_name + ".fall_off"), value.fall_off);
 }
 
 void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const DirectionalLight& value) {

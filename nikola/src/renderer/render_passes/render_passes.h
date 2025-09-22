@@ -28,7 +28,8 @@ struct PointLightInterface {
   f32 __padding2;
 
   f32 radius;
-  Vec3 __padding3;
+  f32 fall_off;
+  Vec2 __padding3;
 };
 /// PointLightInterface
 ///---------------------------------------------------------------------------------------------------------------------
@@ -59,10 +60,7 @@ struct LightBuffer {
   PointLightInterface point_lights[POINT_LIGHTS_MAX]; 
   SpotLightInterface spot_lights[POINT_LIGHTS_MAX];
 
-  // Others
-
   Vec3 ambient_color;
-
   int point_lights_count, spot_lights_count;
 };
 /// LightBuffer

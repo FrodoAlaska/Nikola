@@ -78,17 +78,14 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   };
   nikola::camera_create(&app->frame_data.camera, cam_desc);
   app->frame_data.camera.exposure = 1.0f;
-  
+
   nikola::File file; 
-  nikola::i32 flags = (nikola::i32)(nikola::FILE_OPEN_READ | nikola::FILE_OPEN_BINARY);
-
-  if(nikola::file_open(&file, "scene_config.nkcfg", flags)) {
-    nikola::file_read_bytes(file, &app->frame_data);
+  nikola::i32 file_flags = (nikola::i32)(nikola::FILE_OPEN_READ | nikola::FILE_OPEN_BINARY);
+  if(!nikola::file_open(&file, "scene_config.nkcfg", file_flags)) {
+    NIKOLA_LOG_ERROR("Failed to load file from path");
   }
-  else {
-    NIKOLA_LOG_ERROR("Failed to load file to path");
-  }
-
+    
+  nikola::file_read_bytes(file, &app->frame_data);
   nikola::file_close(file);
 
   // Resoruces init
@@ -104,7 +101,6 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::transform_scale(app->transforms[0], nikola::Vec3(10.0f));
   
   nikola::transform_translate(app->transforms[1], nikola::Vec3(10.0f, 11.0f, -21.4f));
-  // nikola::transform_rotate(app->transforms[1], nikola::Vec3(1.0f, 0.0f, 0.0f), 90.0f * nikola::DEG2RAD);
   nikola::transform_scale(app->transforms[1], nikola::Vec3(0.8f));
 
   return app;

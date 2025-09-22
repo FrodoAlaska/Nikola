@@ -412,6 +412,7 @@ void file_write_bytes(File& file, const PointLight& light) {
     light.color.b,  
 
     light.radius,
+    light.fall_off,
   };
 
   file_write_bytes(file, data, sizeof(data));
@@ -884,12 +885,13 @@ void file_read_bytes(File& file, DirectionalLight* light) {
 void file_read_bytes(File& file, PointLight* light) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
  
-  f32 raw_data[7];
+  f32 raw_data[8];
   file_read_bytes(file, raw_data, sizeof(raw_data));
 
   light->position = Vec3(raw_data[0], raw_data[1], raw_data[2]);
   light->color    = Vec3(raw_data[3], raw_data[4], raw_data[5]);
   light->radius   = raw_data[6];
+  light->fall_off = raw_data[7];
 }
 
 void file_read_bytes(File& file, SpotLight* light) {

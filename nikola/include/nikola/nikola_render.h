@@ -425,7 +425,10 @@ struct PointLight {
 
   /// The radius of a point light in radians.
   float radius = 2.5f;
-  
+
+  /// The distance of the fall off
+  float fall_off = 1.0f; 
+
   PointLight() : 
     position(Vec3(0.0f)), color(Vec3(1.0f)), radius(2.5f)
     {}
