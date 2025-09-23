@@ -155,8 +155,14 @@ void file_write_bytes(File& file, const NBRTexture& texture) {
   file_write_bytes(file, &texture.height, sizeof(texture.height));
   
   file_write_bytes(file, &texture.channels, sizeof(texture.channels));
- 
-  sizei data_size = (texture.width * texture.height) * texture.channels;
+  file_write_bytes(file, &texture.format, sizeof(texture.format));
+
+  sizei pixel_size = 1; 
+  if(texture.format == GFX_TEXTURE_FORMAT_RGBA16F) {
+    pixel_size = 4;
+  }
+
+  sizei data_size = (texture.width * texture.height) * texture.channels * pixel_size;
   file_write_bytes(file, texture.pixels, data_size);
 }
 
@@ -169,10 +175,16 @@ void file_write_bytes(File& file, const NBRCubemap& cubemap) {
   file_write_bytes(file, &cubemap.height, sizeof(cubemap.height));
 
   file_write_bytes(file, &cubemap.channels, sizeof(cubemap.channels));
+  file_write_bytes(file, &cubemap.format, sizeof(cubemap.format));
 
   file_write_bytes(file, &cubemap.faces_count, sizeof(cubemap.faces_count));
+  
+  sizei pixel_size = 1; 
+  if(cubemap.format == GFX_TEXTURE_FORMAT_RGBA16F) {
+    pixel_size = 4;
+  }
 
-  sizei data_size = (cubemap.width * cubemap.height) * cubemap.channels;
+  sizei data_size = (cubemap.width * cubemap.height) * cubemap.channels * pixel_size;
   for(sizei i = 0; i < cubemap.faces_count; i++) {
     file_write_bytes(file, cubemap.pixels[i], data_size);
   }
@@ -630,8 +642,14 @@ void file_read_bytes(File& file, NBRTexture* out_texture) {
   file_read_bytes(file, &out_texture->height, sizeof(out_texture->height));  
   
   file_read_bytes(file, &out_texture->channels, sizeof(out_texture->channels));  
+  file_read_bytes(file, &out_texture->format, sizeof(out_texture->format));  
+  
+  sizei pixel_size = 1; 
+  if(out_texture->format == GFX_TEXTURE_FORMAT_RGBA16F) {
+    pixel_size = 4;
+  }
 
-  sizei data_size = (out_texture->width * out_texture->height) * out_texture->channels;
+  sizei data_size = (out_texture->width * out_texture->height) * out_texture->channels * pixel_size;
   out_texture->pixels = memory_allocate(data_size);
   file_read_bytes(file, out_texture->pixels, data_size);
 }
@@ -644,10 +662,16 @@ void file_read_bytes(File& file, NBRCubemap* out_cubemap) {
   file_read_bytes(file, &out_cubemap->height, sizeof(out_cubemap->height));  
 
   file_read_bytes(file, &out_cubemap->channels, sizeof(out_cubemap->channels));  
+  file_read_bytes(file, &out_cubemap->format, sizeof(out_cubemap->format));  
 
   file_read_bytes(file, &out_cubemap->faces_count, sizeof(out_cubemap->faces_count));  
+  
+  sizei pixel_size = 1; 
+  if(out_cubemap->format == GFX_TEXTURE_FORMAT_RGBA16F) {
+    pixel_size = 4;
+  }
 
-  sizei data_size = (out_cubemap->width * out_cubemap->height) * out_cubemap->channels;
+  sizei data_size = (out_cubemap->width * out_cubemap->height) * out_cubemap->channels * pixel_size;
   for(sizei i = 0; i < out_cubemap->faces_count; i++) {
     out_cubemap->pixels[i] = (u8*)memory_allocate(data_size);
     file_read_bytes(file, out_cubemap->pixels[i], data_size);

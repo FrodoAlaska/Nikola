@@ -37,8 +37,6 @@
     - [x] Better attenuation
     - [x] PBR pipeline
     - [] Image-based lighting (IBL)
-    - [] Enviornment mapping 
-    - [] Smooth out the pass system a bit. Appending and referring to passes is a bit weird. Paas chain? Passes pool? WTH?
     - [] Fix shadows 
     - [] Documentation
 - [] Resources 
@@ -51,6 +49,7 @@
         - We can also take it a step further and make it edit lights and their parameters.
     - [] Documentation
 - [] Renderer: Performance enhancement
+    - [] Smooth out the pass system a bit. Appending and referring to passes is a bit weird. Paas chain? Passes pool? WTH?
     - [] Improve instancing completely. It's currently awfully architected. Take into account the animations and so on.
     - [] Improve the performance of the renderer by using the GPU to dispatch draw calls, using indirect buffers.
     - [] Improve lighting performance using clustered rendering (This is optional if the performance is fine).
@@ -70,8 +69,8 @@
     - This one is just a thinking exersice. We don't want to add every rendering technique under the sun to "beautify" the engine's look. 
     - [] Gaussian blur
     - [] Bloom integration 
-    - [] Global illumination (GI) 
     - [] Emissive materials
+    - [] Global illumination (GI) 
 - [] Threading
     - [] A better job system using fibers
     - [] Thread pools

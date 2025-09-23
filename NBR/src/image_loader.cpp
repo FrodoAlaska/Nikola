@@ -33,7 +33,6 @@ static bool check_valid_extension(const nikola::FilePath& ext) {
 
 static void directory_iterate_func(const nikola::FilePath& base_dir, const nikola::FilePath& current_path, void* user_data) {
   nikola::NBRCubemap* cube = (nikola::NBRCubemap*)user_data;
-  nikola::i32 width, height; 
 
   // Check for the extension
   if(!check_valid_extension(nikola::filepath_extension(current_path))) {
@@ -41,9 +40,22 @@ static void directory_iterate_func(const nikola::FilePath& base_dir, const nikol
     return;
   }
 
-  // Check for errors
+  // Load the face
+
+  nikola::i32 width, height; 
   cube->faces_count++;
-  cube->pixels[cube->faces_count - 1] = stbi_load(current_path.c_str(), &width, &height, NULL, 4);
+  
+  if(stbi_is_hdr(current_path.c_str())) {
+    cube->format                        = (nikola::u8)nikola::GFX_TEXTURE_FORMAT_RGBA16F;
+    cube->pixels[cube->faces_count - 1] = stbi_loadf(current_path.c_str(), &width, &height, NULL, 4);
+  }
+  else {
+    cube->format                        = (nikola::u8)nikola::GFX_TEXTURE_FORMAT_RGBA8;
+    cube->pixels[cube->faces_count - 1] = stbi_load(current_path.c_str(), &width, &height, NULL, 4);
+  }
+  
+  // Check for errors
+  
   if(!cube->pixels[cube->faces_count - 1]) {
     NIKOLA_LOG_ERROR("Could not load cubemap face at %s", stbi_failure_reason());
     return;
@@ -66,7 +78,14 @@ bool image_loader_load_texture(nikola::NBRTexture* texture, const nikola::FilePa
   }
 
   nikola::i32 width, height; 
-  texture->pixels = stbi_load(path.c_str(), &width, &height, NULL, 4);
+  if(stbi_is_hdr(path.c_str())) {
+    texture->format = (nikola::u8)nikola::GFX_TEXTURE_FORMAT_RGBA16F;
+    texture->pixels = stbi_loadf(path.c_str(), &width, &height, NULL, 4);
+  }
+  else {
+    texture->format = (nikola::u8)nikola::GFX_TEXTURE_FORMAT_RGBA8;
+    texture->pixels = stbi_load(path.c_str(), &width, &height, NULL, 4);
+  }
 
   if(!texture->pixels) {
     NIKOLA_LOG_ERROR("Could not load texture at \'%s'\, %s", path.c_str(), stbi_failure_reason());
@@ -75,7 +94,7 @@ bool image_loader_load_texture(nikola::NBRTexture* texture, const nikola::FilePa
 
   texture->width    = width;
   texture->height   = height;
-  texture->channels = 4; // Sadly, sometimes the loader depicts the cubemap faces with 3 components instead of 4, so we have to force it.
+  texture->channels = 4; // Sadly, sometimes the loader depicts the texture with 3 components instead of 4, so we have to force it.
 
   return true;
 }

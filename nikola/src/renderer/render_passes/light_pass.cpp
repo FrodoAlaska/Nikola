@@ -9,6 +9,16 @@
 namespace nikola { // Start of nikola
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// LightPassState
+struct LightPassState {
+  ResourceID skybox_id = {};
+};
+
+static LightPassState s_state;
+/// LightPassState
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// Light pass functions
 
 void light_pass_init(Window* window) {
@@ -140,15 +150,16 @@ void light_pass_prepare(RenderPass* pass, const FrameData& data) {
                          sizeof(LightBuffer), 
                          &light_buffer); 
 
-  // Render the skybox
-  // @TEMP
-
-  if(RESOURCE_IS_VALID(data.skybox_id)) {
-    renderer_draw_skybox(data.skybox_id);
-  }
+  s_state.skybox_id = data.skybox_id;
 }
 
 void light_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue) {
+  // Render the skybox
+
+  if(RESOURCE_IS_VALID(s_state.skybox_id)) {
+    renderer_draw_skybox(s_state.skybox_id);
+  }
+
   // Render everything 
 
   for(auto& geo : queue) {

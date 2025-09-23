@@ -226,7 +226,7 @@ static bool load_texture_nbr(ResourceGroup* group, GfxTexture* texture, const Fi
   tex_desc.depth  = 0; 
   tex_desc.mips   = 1; 
   tex_desc.type   = GFX_TEXTURE_2D; 
-  tex_desc.format = GFX_TEXTURE_FORMAT_RGBA8; 
+  tex_desc.format = (GfxTextureFormat)nbr_texture.format; 
   tex_desc.data   = nbr_texture.pixels;
 
   // Load the texture's data
@@ -274,7 +274,7 @@ static bool load_cubemap_nbr(ResourceGroup* group, GfxCubemap* cubemap, const Fi
   cube_desc.width       = nbr_cubemap.width; 
   cube_desc.height      = nbr_cubemap.height; 
   cube_desc.mips        = 1; 
-  cube_desc.format      = GFX_TEXTURE_FORMAT_RGBA8; 
+  cube_desc.format      = (GfxTextureFormat)nbr_cubemap.format; 
   cube_desc.faces_count = nbr_cubemap.faces_count; 
 
   for(sizei i = 0; i < cube_desc.faces_count; i++) {

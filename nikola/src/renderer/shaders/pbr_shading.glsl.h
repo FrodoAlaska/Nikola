@@ -194,7 +194,6 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       layout (binding = 1) uniform sampler2D u_roughness_map;
       layout (binding = 2) uniform sampler2D u_mettalic_map;
       layout (binding = 3) uniform sampler2D u_normal_map;
-      layout (binding = 4) uniform sampler2D u_shadow;
    
       // BRDF terms 
 
@@ -253,14 +252,6 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       vec3 calculate_normal(const vec3 normal_texel) {
         vec3 mapped_normal = 2.0 * normal_texel - 1.0; // From [0, 1] to [-1, 1]
         return normalize(fs_in.TBN * mapped_normal);
-      }
-
-      float calculate_shadow() {
-        vec3 proj_coords = fs_in.shadow_pos.xyz / fs_in.shadow_pos.w; 
-        proj_coords      = proj_coords * 0.5 + 0.5; 
-
-        float shadow_depth = texture(u_shadow, proj_coords.xy).r;
-        return proj_coords.z > shadow_depth ? 0.8 : 0.0; 
       }
 
       // Lights
@@ -324,9 +315,9 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       void main() {
         // Sampling the many textures 
 
-        vec3 albedo_texel    = texture(u_albedo_map, fs_in.tex_coords).rgb * u_ambient;
-        vec3 roughness_texel = texture(u_roughness_map, fs_in.tex_coords).rgb * u_material.roughness;
-        vec3 metallic_texel  = texture(u_mettalic_map, fs_in.tex_coords).rgb * u_material.metallic;
+        vec3 albedo_texel    = texture(u_albedo_map, fs_in.tex_coords).rgb;
+        vec3 roughness_texel = texture(u_roughness_map, fs_in.tex_coords).ggg * u_material.roughness;
+        vec3 metallic_texel  = texture(u_mettalic_map, fs_in.tex_coords).bbb * u_material.metallic;
         vec3 normal_texel    = texture(u_normal_map, fs_in.tex_coords).rgb;
         
         // Preparing the BRDF stage
@@ -357,7 +348,9 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         }
 
         // Add it all together...
-        frag_color = vec4((dir_light_factor + point_lights_factor + spot_lights_factor), u_material.transparency);
+        
+        vec3 final_color = (dir_light_factor + point_lights_factor + spot_lights_factor);
+        frag_color       = vec4(final_color, u_material.transparency);
       }
     )"
   };

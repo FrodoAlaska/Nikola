@@ -70,6 +70,11 @@ struct NBRTexture {
   /// The number of channel components per pixel.
   i8 channels; 
 
+  /// The texture format of this texture. 
+  /// The value of this memeber can be compared to 
+  /// `GfxTextureFormat`. 
+  u8 format; 
+
   /// The raw pixel data.
   void* pixels = nullptr;
 };
@@ -84,6 +89,11 @@ struct NBRCubemap {
   
   /// The number of channel components per pixel.
   i8 channels; 
+
+  /// The texture format of this cubemap. 
+  /// The value of this memeber can be compared to 
+  /// `GfxTextureFormat`. 
+  u8 format; 
   
   /// The amount of faces in `pixels`.
   u8 faces_count;
@@ -91,7 +101,7 @@ struct NBRCubemap {
   /// An array of raw pixel data for each face.
   ///
   /// @NOTE: This array can only go to `CUBEMAP_FACES_MAX`;
-  u8* pixels[CUBEMAP_FACES_MAX];
+  void* pixels[CUBEMAP_FACES_MAX];
 };
 /// NBRCubemap
 ///---------------------------------------------------------------------------------------------------------------------

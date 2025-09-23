@@ -10,8 +10,8 @@ struct nikola::App {
   nikola::FrameData frame_data;
 
   nikola::ResourceGroupID res_group_id;
-  nikola::ResourceID mesh_id;
-  nikola::ResourceID mesh_material, ground_material;
+  nikola::ResourceID mesh_id, model_id;
+  nikola::ResourceID ground_material;
 
   nikola::Transform transforms[2];
 };
@@ -32,21 +32,18 @@ static void init_resources(nikola::App* app) {
   // Meshes init
   app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
 
+  // Models init
+  app->model_id = nikola::resources_push_model(app->res_group_id, "models/ps1.nbr"); 
+
   // Materials init
   
   nikola::MaterialDesc mat_desc = {
-    .albedo_id = nikola::resources_push_texture(app->res_group_id, "textures/paviment.nbr"),
-    .normal_id = nikola::resources_push_texture(app->res_group_id, "textures/paviment_normal.nbr"),
-  };
-  app->ground_material = nikola::resources_push_material(app->res_group_id, mat_desc);
-  
-  mat_desc = {
     .albedo_id    = nikola::resources_push_texture(app->res_group_id, "textures/PaintedMetal_BaseColor.nbr"),
     .roughness_id = nikola::resources_push_texture(app->res_group_id, "textures/PaintedMetal_Roughness.nbr"),
     .metallic_id  = nikola::resources_push_texture(app->res_group_id, "textures/PaintedMetal_Metallic.nbr"),
     .normal_id    = nikola::resources_push_texture(app->res_group_id, "textures/PaintedMetal_Normal.nbr"),
   };
-  app->mesh_material = nikola::resources_push_material(app->res_group_id, mat_desc);
+  app->ground_material = nikola::resources_push_material(app->res_group_id, mat_desc);
 }
 
 /// Private functions 
@@ -87,11 +84,12 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::transform_scale(app->transforms[0], nikola::Vec3(16.0f, 1.0f, 16.0f));
   
   nikola::transform_translate(app->transforms[1], nikola::Vec3(10.0f, 2.0f, 10.0f));
-  nikola::transform_scale(app->transforms[1], nikola::Vec3(1.0f));
+  nikola::transform_scale(app->transforms[1], nikola::Vec3(2.0f));
+  nikola::transform_rotate(app->transforms[1], nikola::Vec3(1.0f, 0.0f, 0.0f), -90.0f * nikola::DEG2RAD);
 
   // Lights init
 
-  app->frame_data.dir_light.direction = nikola::Vec3(-1.0f, 1.0f, -1.0f);
+  app->frame_data.dir_light.direction = nikola::Vec3(1.0f, -1.0f, -0.5f);
   app->frame_data.dir_light.color     = nikola::Vec3(1.0f);
 
   app->frame_data.ambient = nikola::Vec3(1.0f);
@@ -119,6 +117,22 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     app->frame_data.camera.is_active = !nikola::gui_is_active();
   }
 
+  static bool can_lerp = false;
+  if(nikola::input_key_pressed(nikola::KEY_SPACE)) {
+    can_lerp = !can_lerp;
+  }
+
+  if(can_lerp) {
+    app->frame_data.dir_light.direction = nikola::vec3_lerp(app->frame_data.dir_light.direction,  
+                                                            nikola::Vec3(-1.0f, 1.0f, 2.0f), 
+                                                            delta_time);
+  }
+  else {
+    app->frame_data.dir_light.direction = nikola::vec3_lerp(app->frame_data.dir_light.direction,  
+                                                            nikola::Vec3(1.0, -1.0f, -0.5f), 
+                                                            delta_time);
+  }
+
   // Update the camera
   nikola::camera_update(app->frame_data.camera);
 }
@@ -130,7 +144,7 @@ void app_render(nikola::App* app) {
   // Render the objects
   
   nikola::renderer_queue_mesh(app->mesh_id, app->transforms[0], app->ground_material);
-  nikola::renderer_queue_mesh(app->mesh_id, app->transforms[1], app->mesh_material);
+  nikola::renderer_queue_model(app->model_id, app->transforms[1]);
 
   nikola::renderer_end();
   
@@ -154,7 +168,7 @@ void app_render_gui(nikola::App* app) {
   // Entities
   if(ImGui::CollapsingHeader("Entities")) {
     nikola::gui_edit_transform("Ground", &app->transforms[0]);
-    nikola::gui_edit_transform("Box", &app->transforms[1]);
+    nikola::gui_edit_transform("Model", &app->transforms[1]);
   }
   
   // Frame
@@ -162,7 +176,7 @@ void app_render_gui(nikola::App* app) {
 
   // Resources
   if(ImGui::CollapsingHeader("Resources")) {
-    nikola::gui_edit_material("Material", nikola::resources_get_material(app->mesh_material));
+    nikola::gui_edit_material("Material", nikola::resources_get_material(app->ground_material));
   }
 
   nikola::gui_end_panel();

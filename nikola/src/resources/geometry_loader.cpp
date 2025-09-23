@@ -17,7 +17,7 @@ static void generate_normals(Vertex3D* vertices, const u32 indices_count, const 
     Vec3 edge1 = vertices[idx1].position - vertices[idx0].position;
     Vec3 edge2 = vertices[idx2].position - vertices[idx0].position;
 
-    Vec3 normal = vec3_normalize(vec3_cross(edge1, edge2));
+    Vec3 normal = vec3_normalize(vec3_cross(edge2, edge1));
 
     vertices[idx0].normal = normal;
     vertices[idx1].normal = normal;
