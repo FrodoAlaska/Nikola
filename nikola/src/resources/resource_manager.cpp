@@ -639,7 +639,10 @@ ResourceID resources_push_texture(const ResourceGroupID& group_id, const Materia
     case MATERIAL_TEXTURE_ALBEDO: 
     case MATERIAL_TEXTURE_ROUGHNESS: 
     case MATERIAL_TEXTURE_METALLIC: 
-      memory_set(pixels, 0xff, sizeof(pixels));
+      memory_set(pixels, 0xffffffff, sizeof(pixels));
+      break;
+    case MATERIAL_TEXTURE_EMISSIVE: 
+      memory_set(pixels, 0, sizeof(pixels));
       break;
     case MATERIAL_TEXTURE_NORMAL: {
       // Initializing the R and G channels to 0 
@@ -908,10 +911,12 @@ ResourceID resources_push_material(const ResourceGroupID& group_id, const Materi
   material->roughness_map = renderer_get_defaults().roughness_texture;
   material->metallic_map  = renderer_get_defaults().metallic_texture;
   material->normal_map    = renderer_get_defaults().normal_texture;
-  
+  material->emissive_map  = renderer_get_defaults().emissive_texture;
+
   material->color        = desc.color;
   material->roughness    = desc.roughness;
   material->metallic     = desc.metallic;
+  material->emissive     = desc.emissive;
   material->transparency = desc.transparency;
 
   material->depth_mask  = desc.depth_mask;
@@ -938,6 +943,11 @@ ResourceID resources_push_material(const ResourceGroupID& group_id, const Materi
     material->normal_map = resources_get_texture(desc.normal_id);
     material->map_flags |= MATERIAL_TEXTURE_NORMAL;
   }
+  
+  if(RESOURCE_IS_VALID(desc.emissive_id)) {
+    material->emissive_map = resources_get_texture(desc.emissive_id);
+    material->map_flags   |= MATERIAL_TEXTURE_EMISSIVE;
+  }
 
   // Create material
   ResourceID id;
@@ -948,6 +958,7 @@ ResourceID resources_push_material(const ResourceGroupID& group_id, const Materi
   NIKOLA_LOG_DEBUG("     Color        = \'%s\'", vec3_to_string(material->color).c_str());
   NIKOLA_LOG_DEBUG("     Roughness    = \'%f\'", material->roughness);
   NIKOLA_LOG_DEBUG("     Metallic     = \'%f\'", material->metallic);
+  NIKOLA_LOG_DEBUG("     Emissive     = \'%f\'", material->emissive);
   NIKOLA_LOG_DEBUG("     Transparency = \'%f\'", material->transparency);
   return id;
 }
@@ -1055,16 +1066,19 @@ ResourceID resources_push_model(const ResourceGroupID& group_id, const FilePath&
     i8 roughness_index = nbr_mat->roughness_index;
     i8 metallic_index  = nbr_mat->metallic_index;
     i8 normal_index    = nbr_mat->normal_index;
+    i8 emissive_index  = nbr_mat->emissive_index;
 
     MaterialDesc mat_desc = {
       .albedo_id    = albedo_index    != -1 ? texture_ids[albedo_index]    : ResourceID{}, 
       .roughness_id = roughness_index != -1 ? texture_ids[roughness_index] : ResourceID{},
       .metallic_id  = metallic_index  != -1 ? texture_ids[metallic_index]  : ResourceID{},
       .normal_id    = normal_index    != -1 ? texture_ids[normal_index]    : ResourceID{},
+      .emissive_id  = emissive_index  != -1 ? texture_ids[emissive_index]  : ResourceID{},
 
       .color     = color,
       .roughness = nbr_mat->roughness, 
       .metallic  = nbr_mat->metallic, 
+      .emissive  = nbr_mat->emissive,
     };
     ResourceID mat_id = resources_push_material(group_id, mat_desc);
 

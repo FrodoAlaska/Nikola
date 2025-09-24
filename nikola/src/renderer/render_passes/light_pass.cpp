@@ -174,13 +174,14 @@ void light_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& 
       geo.material->roughness_map,
       geo.material->metallic_map,
       geo.material->normal_map,
+      geo.material->emissive_map,
     };
 
     GfxBindingDesc bind_desc = {
       .shader = pass->shader_context->shader,
 
       .textures       = textures, 
-      .textures_count = 4,
+      .textures_count = 5,
     };
     gfx_context_use_bindings(pass->gfx, bind_desc);
 

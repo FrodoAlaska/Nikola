@@ -76,6 +76,9 @@ static void init_defaults() {
  
   ResourceID normal_texture_id       = resources_push_texture(RESOURCE_CACHE_ID, MATERIAL_TEXTURE_NORMAL);
   s_renderer.defaults.normal_texture = resources_get_texture(normal_texture_id);
+ 
+  ResourceID emissive_texture_id       = resources_push_texture(RESOURCE_CACHE_ID, MATERIAL_TEXTURE_EMISSIVE);
+  s_renderer.defaults.emissive_texture = resources_get_texture(emissive_texture_id);
 
   // Matrices buffer init
   
@@ -94,6 +97,7 @@ static void init_defaults() {
     .roughness_id = roughness_texture_id,
     .metallic_id  = metallic_texture_id, 
     .normal_id    = normal_texture_id,
+    .emissive_id  = emissive_texture_id,
   };
   s_renderer.defaults.material = resources_get_material(resources_push_material(RESOURCE_CACHE_ID, mat_desc));
   
@@ -102,6 +106,7 @@ static void init_defaults() {
     .roughness_id = roughness_texture_id,
     .metallic_id  = metallic_texture_id, 
     .normal_id    = normal_texture_id,
+    .emissive_id  = emissive_texture_id,
     
     .color        = Vec3(1.0f, 0.0f, 1.0f),
     .transparency = 0.5f,
@@ -537,8 +542,6 @@ void renderer_queue_model_instanced(const ResourceID& res_id,
 
     // Let the main given material "influence" the model's material 
 
-    mat->roughness    = material->roughness;
-    mat->metallic     = material->metallic;
     mat->transparency = material->transparency;
     mat->depth_mask   = material->depth_mask;
 
@@ -569,8 +572,6 @@ void renderer_queue_animation_instanced(const ResourceID& res_id,
 
     // Let the main given material "influence" the model's material 
 
-    mat->roughness    = material->roughness;
-    mat->metallic     = material->metallic;
     mat->transparency = material->transparency;
     mat->depth_mask   = material->depth_mask;
 

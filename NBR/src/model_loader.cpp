@@ -256,6 +256,7 @@ static void load_scene_materials(const aiScene* scene, ObjData* data) {
 
     material->Get(AI_MATKEY_METALLIC_FACTOR, nbr_material.metallic);
     material->Get(AI_MATKEY_ROUGHNESS_FACTOR, nbr_material.roughness);
+    material->Get(AI_MATKEY_EMISSIVE_INTENSITY, nbr_material.emissive);
 
     // Load textures of each kind
 
@@ -263,6 +264,14 @@ static void load_scene_materials(const aiScene* scene, ObjData* data) {
     load_material_texture(material, aiTextureType_METALNESS, data, &nbr_material.metallic_index); 
     load_material_texture(material, aiTextureType_DIFFUSE_ROUGHNESS, data, &nbr_material.roughness_index); 
     load_material_texture(material, aiTextureType_NORMALS, data, &nbr_material.normal_index); 
+    load_material_texture(material, aiTextureType_EMISSIVE, data, &nbr_material.emissive_index); 
+
+    // @TEMP: Temporary fix since `AI_MATKEY_EMISSIVE_INTENSITY` apparently 
+    // doesn't work. We're settings the emissive factor to `1.0f` if there 
+    // is an emissive texture at all.
+    if(nbr_material.emissive_index != -1) {
+      nbr_material.emissive = 1.0f;
+    }
 
     // New material!
     data->materials.push_back(nbr_material); 

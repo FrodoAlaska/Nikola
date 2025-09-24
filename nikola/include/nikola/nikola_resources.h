@@ -30,7 +30,7 @@ const u8 NBR_VALID_IDENTIFIER     = 107;
 const i16 NBR_VALID_MAJOR_VERSION = 0;
 
 /// The currently valid minor version of any `.nbr` file
-const i16 NBR_VALID_MINOR_VERSION = 4;
+const i16 NBR_VALID_MINOR_VERSION = 5;
 
 /// The maximum number of weights a joint can have in an NBR file. 
 const u8 NBR_JOINT_WEIGHTS_MAX    = 4;
@@ -137,10 +137,13 @@ struct NBRMaterial {
   f32 color[3];
   
   /// A floating-point value indicating the metallic factor of this material.
-  f32 metallic;
+  f32 metallic  = 0.0f;
   
   /// A floating-point value indicating the roughness factor of this material.
-  f32 roughness;
+  f32 roughness = 1.0f;
+  
+  /// A floating-point value indicating the emissive factor of this material.
+  f32 emissive  = 0.0f;
 
   /// The albedo index into the `textures` array in `NBRModel`.
   ///
@@ -159,8 +162,13 @@ struct NBRMaterial {
   
   /// The normal index into the `textures` array in `NBRModel`.
   ///
-  /// @NOTE: This index will be `-1` if there is no specular texture present.
+  /// @NOTE: This index will be `-1` if there is no normal texture present.
   i8 normal_index    = -1;
+  
+  /// The emissive index into the `textures` array in `NBRModel`.
+  ///
+  /// @NOTE: This index will be `-1` if there is no emissive texture present.
+  i8 emissive_index  = -1;
 };
 /// NBRMaterial
 ///---------------------------------------------------------------------------------------------------------------------
@@ -498,8 +506,11 @@ enum MaterialTextureType {
   /// Used to indicate a roughness texture in a `Material`.
   MATERIAL_TEXTURE_ROUGHNESS = 7 << 2,
   
-  /// Used to indicate an albedo texture in a `Material`.
+  /// Used to indicate an normal texture in a `Material`.
   MATERIAL_TEXTURE_NORMAL    = 7 << 3,
+  
+  /// Used to indicate an emissive texture in a `Material`.
+  MATERIAL_TEXTURE_EMISSIVE  = 7 << 4,
 };
 /// MaterialTextureType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -551,12 +562,14 @@ struct Material {
   GfxTexture* metallic_map  = nullptr;
   GfxTexture* roughness_map = nullptr;
   GfxTexture* normal_map    = nullptr;
+  GfxTexture* emissive_map  = nullptr;
  
   /// Useful surface-defining flags.
 
   Vec3 color       = Vec3(1.0f);
   f32 roughness    = 1.0f;
   f32 metallic     = 0.0f;
+  f32 emissive     = 0.0f;
   f32 transparency = 1.0f;
  
   /// Pipeline-related flags 
@@ -712,11 +725,13 @@ struct MaterialDesc {
   ResourceID roughness_id = {};
   ResourceID metallic_id  = {};
   ResourceID normal_id    = {};
+  ResourceID emissive_id  = {};
 
   Vec3 color = Vec3(1.0f); 
 
   f32 roughness    = 1.0f; 
   f32 metallic     = 0.0f; 
+  f32 emissive     = 0.0f; 
   f32 transparency = 1.0f;
 
   bool depth_mask  = true;

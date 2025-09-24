@@ -478,6 +478,7 @@ void gui_edit_material(const char* name, Material* material) {
   
   ImGui::DragFloat("Roughness", &material->roughness, s_gui.small_step, 0.0f);
   ImGui::DragFloat("Metallic", &material->metallic, s_gui.small_step, 0.0f);
+  ImGui::DragFloat("Emissive", &material->emissive, s_gui.small_step, 0.0f);
 
   ImGui::DragFloat("Transparency", &material->transparency, s_gui.small_step, 0.0f, 1.0f);
   ImGui::DragInt("Stencil reference", &material->stencil_ref, s_gui.big_step);

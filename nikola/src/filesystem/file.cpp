@@ -220,11 +220,13 @@ void file_write_bytes(File& file, const NBRMaterial& material) {
   file_write_bytes(file, material.color, sizeof(f32) * 3); 
   file_write_bytes(file, &material.metallic, sizeof(f32)); 
   file_write_bytes(file, &material.roughness, sizeof(f32)); 
+  file_write_bytes(file, &material.emissive, sizeof(f32)); 
  
   file_write_bytes(file, &material.albedo_index, sizeof(i8)); 
   file_write_bytes(file, &material.metallic_index, sizeof(i8)); 
   file_write_bytes(file, &material.roughness_index, sizeof(i8)); 
   file_write_bytes(file, &material.normal_index, sizeof(i8)); 
+  file_write_bytes(file, &material.emissive_index, sizeof(i8)); 
 }
 
 void file_write_bytes(File& file, const NBRMesh& mesh) {
@@ -719,13 +721,15 @@ void file_read_bytes(File& file, NBRMaterial* out_material) {
   NIKOLA_ASSERT(out_material, "Invalid NBRMaterial type given to file_read_bytes");
   
   file_read_bytes(file, out_material->color, sizeof(f32) * 3); 
-  file_write_bytes(file, &out_material->metallic, sizeof(f32)); 
-  file_write_bytes(file, &out_material->roughness, sizeof(f32)); 
+  file_read_bytes(file, &out_material->metallic, sizeof(f32)); 
+  file_read_bytes(file, &out_material->roughness, sizeof(f32)); 
+  file_read_bytes(file, &out_material->emissive, sizeof(f32)); 
  
   file_read_bytes(file, &out_material->albedo_index, sizeof(i8)); 
   file_read_bytes(file, &out_material->metallic_index, sizeof(i8)); 
   file_read_bytes(file, &out_material->roughness_index, sizeof(i8)); 
   file_read_bytes(file, &out_material->normal_index, sizeof(i8)); 
+  file_read_bytes(file, &out_material->emissive_index, sizeof(i8)); 
 }
 
 void file_read_bytes(File& file, NBRMesh* out_mesh) {

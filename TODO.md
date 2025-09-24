@@ -36,7 +36,7 @@
 - [] Renderer: Beautify it v1.0
     - [x] Better attenuation
     - [x] PBR pipeline
-    - [] Image-based lighting (IBL)
+    - [x] Emissive materials
     - [] Fix shadows 
     - [] Documentation
 - [] Resources 

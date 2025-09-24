@@ -101,6 +101,7 @@ void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, 
   shader_context_set_uniform(ctx, (uniform_name + ".color"), value->color);
   shader_context_set_uniform(ctx, (uniform_name + ".roughness"), value->roughness);
   shader_context_set_uniform(ctx, (uniform_name + ".metallic"), value->metallic);
+  shader_context_set_uniform(ctx, (uniform_name + ".emissive"), value->emissive);
   shader_context_set_uniform(ctx, (uniform_name + ".transparency"), value->transparency);
 }
 

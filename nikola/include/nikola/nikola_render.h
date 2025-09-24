@@ -141,6 +141,7 @@ struct RendererDefaults {
   GfxTexture* roughness_texture = nullptr;
   GfxTexture* metallic_texture  = nullptr;
   GfxTexture* normal_texture    = nullptr;
+  GfxTexture* emissive_texture  = nullptr;
   
   GfxBuffer* matrices_buffer  = nullptr;
   GfxBuffer* instance_buffer  = nullptr;

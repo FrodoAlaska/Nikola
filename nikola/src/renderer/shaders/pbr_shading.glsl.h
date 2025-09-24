@@ -115,6 +115,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
 
         float roughness;
         float metallic;
+        float emissive;
 
         float transparency;
       };
@@ -194,6 +195,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       layout (binding = 1) uniform sampler2D u_roughness_map;
       layout (binding = 2) uniform sampler2D u_mettalic_map;
       layout (binding = 3) uniform sampler2D u_normal_map;
+      layout (binding = 4) uniform sampler2D u_emissive_map;
    
       // BRDF terms 
 
@@ -328,6 +330,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         float roughness_texel = texture(u_roughness_map, fs_in.tex_coords).g * u_material.roughness;
         float metallic_texel  = texture(u_mettalic_map, fs_in.tex_coords).b * u_material.metallic;
         vec3 normal_texel     = texture(u_normal_map, fs_in.tex_coords).rgb;
+        vec3 emissive_texel   = texture(u_emissive_map, fs_in.tex_coords).rgb * u_material.emissive;
         
         // Preparing the BRDF stage
        
@@ -358,7 +361,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
 
         // Add it all together...
         
-        vec3 final_color = (dir_light_factor + point_lights_factor + spot_lights_factor);
+        vec3 final_color = emissive_texel + (dir_light_factor + point_lights_factor + spot_lights_factor);
         frag_color       = vec4(final_color, u_material.transparency);
       }
     )"
