@@ -70,15 +70,15 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         vec4 model_space = u_model[gl_InstanceID] * vertex_pos;
 
         mat3 model_m3  = transpose(inverse(mat3(u_model[gl_InstanceID])));
-        vs_out.normal  = normalize(model_m3 * aNormal);
         vs_out.tangent = normalize(model_m3 * aTangent);
+        vs_out.normal  = normalize(model_m3 * aNormal);
         
         // @NOTE: Using the Gram-Schmidt process to re-othogonalize the tangent vector to make 
         // sure all vectors are perpendicular to each other
         vs_out.tangent = normalize(vs_out.tangent - dot(vs_out.tangent, vs_out.normal) * vs_out.normal); 
         
-        vec3 bitangent = cross(vs_out.normal, vs_out.tangent);
-        vs_out.TBN     = mat3(vs_out.tangent, bitangent, vs_out.normal);
+        vec3 bitangent = normalize(cross(vs_out.normal, vs_out.tangent));
+        vs_out.TBN     = transpose(mat3(vs_out.tangent, bitangent, vs_out.normal));
 
         vs_out.camera_pos = u_camera_pos;
         vs_out.pixel_pos  = vec3(model_space);
@@ -197,10 +197,6 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
    
       // BRDF terms 
 
-      vec3 fersnel_schlick_reflectance(const float cos_theta, const vec3 f0) {
-        return f0 + (1 - f0) * pow(clamp((1 - cos_theta), 0.0, 1.0), 5.0);
-      }
-
       float normal_distribution(const vec3 normal, const vec3 halfway, const float roughness) {
         float roughness_sq  = (roughness * roughness);
         float roughness2_sq = (roughness_sq * roughness_sq);
@@ -212,11 +208,9 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         return roughness2_sq / (PI * denominator * denominator);
       }
 
-      float geo_schlick_ggx(const float nv_dot, const float roughness) {
-        float r = (roughness + 1.0);
-        float k = (r * r) / 8.0;
-
-        return (nv_dot / (nv_dot * (1.0 - k) + k));
+      float geo_schlick_ggx(const float nx_dot, const float roughness) {
+        float k = roughness / 2.0;
+        return (nx_dot / (nx_dot * (1.0 - k) + k));
       }
       
       float shadowing_masking(const vec3 normal, const vec3 view_dir, const vec3 light_dir, const float roughness) {
@@ -224,6 +218,10 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         float nl_dot = max(dot(normal, light_dir), 0.0);
 
         return geo_schlick_ggx(nv_dot, roughness) * geo_schlick_ggx(nl_dot, roughness);
+      }
+      
+      vec3 fersnel_schlick_reflectance(const float cos_theta, const vec3 f0) {
+        return f0 + (1 - f0) * pow(clamp((1.0 - cos_theta), 0.0, 1.0), 5.0);
       }
 
       // Stages 
@@ -234,9 +232,9 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         float nv_dot     = max(dot(desc.normal, desc.view_dir), 0.0);
         float nl_dot     = max(dot(desc.normal, desc.light_dir), 0.0);
 
-        vec3 f    = fersnel_schlick_reflectance(hv_dot, desc.f0); 
         float ndf = normal_distribution(desc.normal, halfway_dir, desc.roughness);
         float g   = shadowing_masking(desc.normal, desc.view_dir, desc.light_dir, desc.roughness);
+        vec3 f    = fersnel_schlick_reflectance(hv_dot, desc.f0); 
 
         vec3 numerator    = ndf * g * f;
         float denominator = 4 / (nv_dot * nl_dot) + 0.0001;
@@ -251,7 +249,18 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
 
       vec3 calculate_normal(const vec3 normal_texel) {
         vec3 mapped_normal = 2.0 * normal_texel - 1.0; // From [0, 1] to [-1, 1]
-        return normalize(fs_in.TBN * mapped_normal);
+
+        vec3 q1 = dFdx(fs_in.pixel_pos);
+        vec3 q2 = dFdy(fs_in.pixel_pos);
+        vec2 st1 = dFdx(fs_in.tex_coords);
+        vec2 st2 = dFdx(fs_in.tex_coords);
+
+        vec3 normal    = normalize(fs_in.normal);
+        vec3 tangent   = normalize(q1 * st2.t - q2 * st1.t); 
+        vec3 bitangent = -normalize(cross(normal, tangent)); 
+
+        mat3 TBN = mat3(tangent, bitangent, normal);
+        return normalize(TBN * mapped_normal);
       }
 
       // Lights
@@ -274,7 +283,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       }
 
       vec3 evaluate_directional_light(const DirectionalLight light, BRDFDesc brdf) {
-        brdf.light_dir = normalize(-light.direction);
+        brdf.light_dir = normalize(light.direction);
         brdf.radiance  = light.color;
 
         BRDFResult res = calculate_brdf(brdf);
@@ -315,22 +324,22 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       void main() {
         // Sampling the many textures 
 
-        vec3 albedo_texel    = texture(u_albedo_map, fs_in.tex_coords).rgb;
-        vec3 roughness_texel = texture(u_roughness_map, fs_in.tex_coords).ggg * u_material.roughness;
-        vec3 metallic_texel  = texture(u_mettalic_map, fs_in.tex_coords).bbb * u_material.metallic;
-        vec3 normal_texel    = texture(u_normal_map, fs_in.tex_coords).rgb;
+        vec3 albedo_texel     = texture(u_albedo_map, fs_in.tex_coords).rgb * u_ambient;
+        float roughness_texel = texture(u_roughness_map, fs_in.tex_coords).g * u_material.roughness;
+        float metallic_texel  = texture(u_mettalic_map, fs_in.tex_coords).b * u_material.metallic;
+        vec3 normal_texel     = texture(u_normal_map, fs_in.tex_coords).rgb;
         
         // Preparing the BRDF stage
        
         vec3 f0 = vec3(0.04); // @TODO (PBR): Change this to be more dynamic and/or user controlled.
-        f0      = mix(f0, albedo_texel, u_material.metallic); 
+        f0      = mix(f0, albedo_texel, metallic_texel); 
 
         BRDFDesc brdf; 
         brdf.f0           = f0; 
         brdf.normal       = calculate_normal(normal_texel);
         brdf.view_dir     = normalize(fs_in.camera_pos - fs_in.pixel_pos); 
-        brdf.roughness    = roughness_texel.r;
-        brdf.metallic     = metallic_texel.r;
+        brdf.roughness    = roughness_texel;
+        brdf.metallic     = metallic_texel;
         brdf.albedo_texel = albedo_texel;
 
         // Accumulate the many different lights 
