@@ -14,6 +14,7 @@ namespace nikola { // Start of nikola
 struct ShadowPassState {
   GfxBuffer* light_matrix_buffer = nullptr;
   Mat4 light_view, light_projection;
+  Mat4 light_view_proj;
 };
 
 static ShadowPassState s_state;
@@ -63,18 +64,18 @@ void shadow_pass_init(Window* window) {
     .width  = (u32)pass_desc.frame_size.x,
     .height = (u32)pass_desc.frame_size.x,
 
-    .type   = GFX_TEXTURE_DEPTH_TARGET, 
+    .type   = GFX_TEXTURE_2D, 
     .format = GFX_TEXTURE_FORMAT_DEPTH16, 
     .filter = GFX_TEXTURE_FILTER_MIN_MAG_LINEAR,
 
     .wrap_mode = GFX_TEXTURE_WRAP_CLAMP,
   };
   pass_desc.targets.push_back(target_desc);
-
+  
   // Render pass init
   
   RenderPass* shadow_pass = renderer_create_pass(pass_desc);
-  // @TODO (Renderer/Shadows): renderer_append_pass(shadow_pass);
+  renderer_append_pass(shadow_pass);
 }
 
 void shadow_pass_prepare(RenderPass* pass, const FrameData& data) {
@@ -113,7 +114,9 @@ void shadow_pass_prepare(RenderPass* pass, const FrameData& data) {
   // send the final result to the shader.
 
   s_state.light_projection = mat4_ortho(min.x, max.x, min.y, max.y, min.z, max.z);
-  shader_context_set_uniform(pass->shader_context, "u_light_space", (s_state.light_projection * s_state.light_view));
+  s_state.light_view_proj  = (s_state.light_projection * s_state.light_view);
+
+  shader_context_set_uniform(pass->shader_context, "u_light_space", s_state.light_view_proj);
 }
 
 void shadow_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue) {
@@ -137,7 +140,7 @@ void shadow_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>&
 }
 
 Mat4 shadow_pass_get_light_space(RenderPass* pass) {
-  return (s_state.light_projection * s_state.light_view);
+  return s_state.light_view_proj;
 }
 
 /// Shadow pass functions

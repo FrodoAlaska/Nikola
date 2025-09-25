@@ -83,7 +83,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         vs_out.camera_pos = u_camera_pos;
         vs_out.pixel_pos  = vec3(model_space);
         vs_out.tex_coords = aTexCoords;
-        // vs_out.shadow_pos = u_light_space * vec4(aPos, 1.0);
+        vs_out.shadow_pos = u_light_space * vec4(vs_out.pixel_pos, 1.0);
 
         gl_Position = u_projection * u_view * model_space;
       }
@@ -196,6 +196,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       layout (binding = 2) uniform sampler2D u_mettalic_map;
       layout (binding = 3) uniform sampler2D u_normal_map;
       layout (binding = 4) uniform sampler2D u_emissive_map;
+      layout (binding = 5) uniform sampler2D u_shadow_map;
    
       // BRDF terms 
 
@@ -255,7 +256,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         vec3 q1 = dFdx(fs_in.pixel_pos);
         vec3 q2 = dFdy(fs_in.pixel_pos);
         vec2 st1 = dFdx(fs_in.tex_coords);
-        vec2 st2 = dFdx(fs_in.tex_coords);
+        vec2 st2 = dFdy(fs_in.tex_coords);
 
         vec3 normal    = normalize(fs_in.normal);
         vec3 tangent   = normalize(q1 * st2.t - q2 * st1.t); 
@@ -264,6 +265,14 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         mat3 TBN = mat3(tangent, bitangent, normal);
         return normalize(TBN * mapped_normal);
       }
+
+      float calculate_shadow() {
+        vec3 proj_coords = fs_in.shadow_pos.xyz / fs_in.shadow_pos.w; 
+        proj_coords      = proj_coords * 0.5 + 0.5; 
+
+        float shadow_depth = texture(u_shadow_map, proj_coords.xy).r;
+        return proj_coords.z > shadow_depth ? 0.8 : 0.0; 
+      }  
 
       // Lights
       
@@ -361,7 +370,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
 
         // Add it all together...
         
-        vec3 final_color = emissive_texel + (dir_light_factor + point_lights_factor + spot_lights_factor);
+        vec3 final_color = vec3(1 - calculate_shadow());//emissive_texel + (dir_light_factor + point_lights_factor + spot_lights_factor);
         frag_color       = vec4(final_color, u_material.transparency);
       }
     )"

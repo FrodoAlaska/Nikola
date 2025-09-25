@@ -689,6 +689,20 @@ static GLenum get_texture_gl_access(const GfxTextureAccess access) {
   }
 }
 
+static GLenum get_attachment_type(const GfxTextureFormat format) {
+  switch(format) {
+    case GFX_TEXTURE_FORMAT_DEPTH16:
+    case GFX_TEXTURE_FORMAT_DEPTH24:
+    case GFX_TEXTURE_FORMAT_DEPTH32F:
+    case GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8:
+      return GL_DEPTH_ATTACHMENT;
+    case GFX_TEXTURE_FORMAT_STENCIL8:
+      return GL_STENCIL_ATTACHMENT;
+    default:
+      return GL_TEXTURE_2D;
+  }
+}
+
 static GfxUniformType get_shader_type(const GLenum gl_type) {
   switch(gl_type) {
     case GL_FLOAT: 
@@ -964,40 +978,6 @@ static void check_shader_linker_error(const GfxShader* shader) {
     glGetProgramInfoLog(shader->id, 512, nullptr, log_info);
     NIKOLA_LOG_WARN("SHADER-ERROR: %s", log_info);
   }
-}
-
-static GLenum create_gl_texture(const GfxTextureType type) {
-  u32 id = 0;
-
-  switch(type) {
-    case GFX_TEXTURE_1D:
-    case GFX_TEXTURE_IMAGE_1D:
-      glCreateTextures(GL_TEXTURE_1D, 1, &id);
-      break;
-    case GFX_TEXTURE_1D_ARRAY:
-      glCreateTextures(GL_TEXTURE_1D_ARRAY, 1, &id);
-      break;
-    case GFX_TEXTURE_2D:
-    case GFX_TEXTURE_IMAGE_2D:
-      glCreateTextures(GL_TEXTURE_2D, 1, &id);
-      break;
-    case GFX_TEXTURE_2D_ARRAY:
-      glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &id);
-      break;
-    case GFX_TEXTURE_3D:
-    case GFX_TEXTURE_IMAGE_3D:
-      glCreateTextures(GL_TEXTURE_3D, 1, &id);
-      break;
-    case GFX_TEXTURE_DEPTH_TARGET:
-    case GFX_TEXTURE_STENCIL_TARGET:
-    case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
-      glCreateRenderbuffers(1, &id);
-      break;
-    default:
-      break;
-  } 
-
-  return id;
 }
 
 static void set_texture_pixel_align(const GfxTextureFormat format) {
@@ -1427,31 +1407,58 @@ GfxFramebuffer* gfx_framebuffer_create(GfxContext* gfx, const GfxFramebufferDesc
   // Attach the depth attachments (if it exists)
   
   if(desc.depth_attachment) {
-    GLenum depth_type = GL_DEPTH_ATTACHMENT; 
-    if(desc.depth_attachment->desc.type == GFX_TEXTURE_DEPTH_STENCIL_TARGET) {
-      depth_type = GL_DEPTH_STENCIL_ATTACHMENT;
-    }
+    // The depth attachment can either be a regular texture 
+    // tha can be sampled from or a render buffer object for 
+    // write-only purposes.
+     
+    GLenum depth_type = get_attachment_type(desc.depth_attachment->desc.format); 
 
-    glNamedFramebufferRenderbuffer(buff->id, 
-                                   depth_type, 
-                                   GL_RENDERBUFFER, 
-                                   desc.depth_attachment->id);
+    if(glIsRenderbuffer(desc.depth_attachment->id)) {
+      glNamedFramebufferRenderbuffer(buff->id, 
+                                     depth_type, 
+                                     GL_RENDERBUFFER, 
+                                     desc.depth_attachment->id);
+    }
+    else {
+      glNamedFramebufferTexture(buff->id, 
+                                depth_type,
+                                desc.depth_attachment->id, 
+                                0);
+    }
+    
     buff->depth_texture = depth_type;
   }
   
   // Attach the stencil attachments (if it exists)
   
   if(desc.stencil_attachment) {
-    glNamedFramebufferRenderbuffer(buff->id, 
-                                   GL_STENCIL_ATTACHMENT, 
-                                   GL_RENDERBUFFER, 
-                                   desc.stencil_attachment->id);
+    // The stencil attachment can either be a regular texture 
+    // tha can be sampled from or a render buffer object for 
+    // write-only purposes.
+
+    if(glIsRenderbuffer(desc.stencil_attachment->id)) {
+      glNamedFramebufferRenderbuffer(buff->id, 
+                                     GL_STENCIL_ATTACHMENT, 
+                                     GL_RENDERBUFFER, 
+                                     desc.stencil_attachment->id);
+    }
+    else {
+      glNamedFramebufferTexture(buff->id, 
+                                GL_STENCIL_ATTACHMENT, 
+                                desc.stencil_attachment->id, 
+                                0);
+    }
+
     buff->stencil_texture = GL_STENCIL_ATTACHMENT;
   }
 
   glNamedFramebufferDrawBuffers(buff->id,  
                                 buff->desc.attachments_count, 
                                 buff->color_textures);
+ 
+  // @TEMP (GL-Backend)
+  glNamedFramebufferReadBuffer(buff->id,  
+                               buff->color_textures[0]);
 
   if(glCheckNamedFramebufferStatus(buff->id, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
     NIKOLA_LOG_WARN("GL-ERROR: Framebuffer %i is incomplete", buff->id);
@@ -1950,9 +1957,38 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureType tex_type, c
   texture->desc.type = tex_type; 
   texture->desc      = {};
   texture->gfx       = gfx;
+  texture->id        = 0;
   
   // Creating the texutre based on its type
-  texture->id = create_gl_texture(tex_type);
+  
+  switch(tex_type) {
+    case GFX_TEXTURE_1D:
+    case GFX_TEXTURE_IMAGE_1D:
+      glCreateTextures(GL_TEXTURE_1D, 1, &texture->id);
+      break;
+    case GFX_TEXTURE_1D_ARRAY:
+      glCreateTextures(GL_TEXTURE_1D_ARRAY, 1, &texture->id);
+      break;
+    case GFX_TEXTURE_2D:
+    case GFX_TEXTURE_IMAGE_2D:
+      glCreateTextures(GL_TEXTURE_2D, 1, &texture->id);
+      break;
+    case GFX_TEXTURE_2D_ARRAY:
+      glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &texture->id);
+      break;
+    case GFX_TEXTURE_3D:
+    case GFX_TEXTURE_IMAGE_3D:
+      glCreateTextures(GL_TEXTURE_3D, 1, &texture->id);
+      break;
+    case GFX_TEXTURE_DEPTH_TARGET:
+    case GFX_TEXTURE_STENCIL_TARGET:
+    case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
+      glCreateRenderbuffers(1, &texture->id);
+      break;
+    default:
+      NIKOLA_LOG_ERROR("Invalid texture type");
+      break;
+  } 
 
   return texture;
 }

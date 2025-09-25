@@ -91,13 +91,12 @@ void light_pass_init(Window* window) {
 void light_pass_prepare(RenderPass* pass, const FrameData& data) {
   ShaderContext* ctx = pass->shader_context;
 
-  //
-  // @TODO (Renderer): Turning the light space view into a texture coordinate
-  // Mat4 light_space = shadow_pass_get_light_space(pass->previous);
-  // 
-  // Mat4 shadow_space = light_space * mat4_translate(Vec3(0.5f)) * mat4_scale(Vec3(0.5f));
-  // shader_context_set_uniform(pass->shader_context, "u_light_space", shadow_space);
-  //
+  // Turning the light space view into a texture coordinate
+  
+  Mat4 light_space  = shadow_pass_get_light_space(pass->previous);
+  Mat4 shadow_space = light_space * mat4_translate(Vec3(0.5f)) * mat4_scale(Vec3(0.5f));
+  
+  shader_context_set_uniform(pass->shader_context, "u_light_space", shadow_space);
 
   // Set the light uniforms
 
@@ -175,13 +174,14 @@ void light_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& 
       geo.material->metallic_map,
       geo.material->normal_map,
       geo.material->emissive_map,
+      pass->previous->outputs[0],
     };
 
     GfxBindingDesc bind_desc = {
       .shader = pass->shader_context->shader,
 
       .textures       = textures, 
-      .textures_count = 5,
+      .textures_count = 6,
     };
     gfx_context_use_bindings(pass->gfx, bind_desc);
 

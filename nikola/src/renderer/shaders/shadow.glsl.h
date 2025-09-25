@@ -33,6 +33,7 @@ inline nikola::GfxShaderDesc generate_shadow_shader() {
       #version 460 core
 
       void main() {
+        // Nothing here...
       }
     )",
   };

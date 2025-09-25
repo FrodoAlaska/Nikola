@@ -38,7 +38,7 @@ static void init_resources(nikola::App* app) {
   // Materials init
  
   nikola::MaterialDesc mat = {
-    .diffuse_id =  nikola::resources_push_texture(app->res_group_id, "textures/grass.nbr"),
+    .albedo_id =  nikola::resources_push_texture(app->res_group_id, "textures/grass.nbr"),
   };
   app->materials[0] = nikola::resources_push_material(app->res_group_id, mat);
  
@@ -57,7 +57,7 @@ static void init_bodies(nikola::App* app) {
   // Floor init
 
   nikola::BoxColliderDesc coll_desc = {
-    .half_size = nikola::Vec3(32.0f, 1.0f, 32.0f),
+    .half_size = nikola::Vec3(32.0f, 0.1f, 32.0f),
   };
   app->floor_collider = nikola::collider_create(coll_desc);
 
@@ -137,8 +137,6 @@ static bool on_raycast_event(const nikola::Event& event, const void* dispatcher,
   nikola::Vec3 body_position = nikola::physics_body_get_position(body_id);
   nikola::Vec3 hit_position  = event.cast_result.point;
   
-  NIKOLA_LOG_TRACE("HERE %s", nikola::vec3_to_string(hit_position).c_str());
-  
   nikola::physics_world_set_safe_mode(true);
   return true;
 }
@@ -180,7 +178,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // Lights init
   
-  app->frame_data.dir_light.direction = nikola::Vec3(-5.0f, -1.0f, 1.0f);
+  app->frame_data.dir_light.direction = nikola::Vec3(-5.0f, 1.0f, 1.0f);
   app->frame_data.dir_light.color     = nikola::Vec3(2.0f);
   app->frame_data.ambient             = nikola::Vec3(1.0f); 
 
@@ -274,12 +272,12 @@ void app_render(nikola::App* app) {
   nikola::Transform transform;
 
   transform = nikola::physics_body_get_transform(app->floor_body);
-  nikola::transform_scale(transform, nikola::Vec3(32.0f, 1.0f, 32.0f));
+  nikola::transform_scale(transform, nikola::Vec3(32.0f, 0.1f, 32.0f));
   nikola::renderer_queue_mesh(app->cube_id, transform, app->materials[0]);
   
   transform = nikola::character_body_get_transform(app->cube_body);
   nikola::transform_scale(transform, nikola::Vec3(1.0f));
-  nikola::renderer_queue_mesh(app->mesh_id, transform, app->materials[1]);
+  nikola::renderer_queue_mesh(app->cube_id, transform, app->materials[1]);
   
   nikola::physics_world_draw();
 

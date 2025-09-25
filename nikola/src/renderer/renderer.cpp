@@ -381,12 +381,14 @@ RenderPass* renderer_create_pass(const RenderPassDesc& desc) {
     ResourceID tex_id   = resources_push_texture(desc.res_group_id, target);
     GfxTexture* texture = resources_get_texture(tex_id);
 
-    switch(target.type) {
-      case GFX_TEXTURE_DEPTH_TARGET:
-      case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
+    switch(target.format) {
+      case GFX_TEXTURE_FORMAT_DEPTH16:
+      case GFX_TEXTURE_FORMAT_DEPTH24:
+      case GFX_TEXTURE_FORMAT_DEPTH32F:
+      case GFX_TEXTURE_FORMAT_DEPTH_STENCIL_24_8:
         pass->framebuffer_desc.depth_attachment = texture;
         break;
-      case GFX_TEXTURE_STENCIL_TARGET:
+      case GFX_TEXTURE_FORMAT_STENCIL8:
         pass->framebuffer_desc.stencil_attachment = texture;
         break;
       default:

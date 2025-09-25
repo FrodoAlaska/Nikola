@@ -1,4 +1,4 @@
-# Update 0.3
+# Update 0.3: Being "Feature complete"
 
 - [x] UI 
     - [x] Have a `UIImage` that will just be a regular texture, but it will conform to a UI layout. 
@@ -38,43 +38,47 @@
     - [x] PBR pipeline
     - [x] Emissive materials
     - [] Fix shadows 
+- [] Animations 
+    - [] Test animations with multiple instances.
     - [] Documentation
 - [] Resources 
     - [] Have a few functions specifically for the `NBR*` types to save, load, and unload them.
-    - [] Improve the load times of the resource manager
     - [] Maybe have a JSON file that associates the resources with each other? 
+        - Perhaps we can use this as a way to represent our materials and then save them a `.nbr` files.
         - For example, a texture can be referred in a material and a material can be referred to in a mesh. 
         - That way, we can have the artists (and even myself) use different combinations of resources as we liked.
         - It's almost like a description of how the resources will be used. 
         - We can also take it a step further and make it edit lights and their parameters.
-    - [] Documentation
-- [] Renderer: Performance enhancement
-    - [] Smooth out the pass system a bit. Appending and referring to passes is a bit weird. Paas chain? Passes pool? WTH?
-    - [] Improve instancing completely. It's currently awfully architected. Take into account the animations and so on.
-    - [] Improve the performance of the renderer by using the GPU to dispatch draw calls, using indirect buffers.
-    - [] Improve lighting performance using clustered rendering (This is optional if the performance is fine).
-    - [] Documentation
-- [] Animations 
-    - [] Test animations with multiple instances.
-    - [] Jobify with the animator or just make it more performant
     - [] Documentation
 - [] GPU Particles
     - [] GPU-based particle system, using compute shaders.
     - [] Have a lot of options to edit the shape, distribution, and gravity. Perhaps save it in a file?
     - [] Documentation
 
-## Update 0.4
+# Update 0.4: Run-Time And Start-Time Performance Enhancement
+
+- [] Run-time performance
+    - [] Improve instancing completely. It's currently awfully architected. Take into account the animations and so on.
+    - [] Improve the performance of the renderer by using the GPU to dispatch draw calls, using indirect buffers.
+    - [] Improve lighting performance using clustered rendering (This is optional if the performance is fine).
+    - [] Jobify with the animator or just make it more performant
+    - [] Documentation
+- [] Start-Time performance
+    - [] Improve the load times of the resource manager
+    - [] NBR conversion time enhancement
+- [] Threading
+    - [] A better job system using fibers
+    - [] Thread pools
+    - [] Documentation
+
+## Update 0.5
 
 - [] Renderer: Beautify v2.0 
     - This one is just a thinking exersice. We don't want to add every rendering technique under the sun to "beautify" the engine's look. 
     - [] Gaussian blur
     - [] Bloom integration 
-    - [] Emissive materials
+    - [] Diffuse irradiance IBL (at least)
     - [] Global illumination (GI) 
-- [] Threading
-    - [] A better job system using fibers
-    - [] Thread pools
-    - [] Documentation
 - [] Renderer: Extra primitives 
     - [] More shapes like planes, capsules, and so on.
     - [] Decal rendering 
@@ -97,6 +101,7 @@ Maybe find a better way to do this.
 - (Renderer): Shadows. They're turned off right now. Fix everything about em. Fuck em. Fix em. Marry em?
 - (Renderer): Capsules cannot be rendererd. Need to render those for debug purposes. 
 - (Renderer): Spheres are not so perfect. Fix that. 
+- (Renderer): Smooth out the pass system a bit. Appending and referring to passes is a bit weird. Paas chain? Passes pool? WTH?
 
 - (Physics): The functions for adding the bodies in bulk (`_prepare_bodies` and `_finalize_bodies`) don't work so well.
 
