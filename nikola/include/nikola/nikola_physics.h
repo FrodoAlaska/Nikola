@@ -235,6 +235,9 @@ struct RayCastResult {
 
   /// The exact point in world space of the hit point.
   Vec3 point            = Vec3(0.0f);
+
+  /// The original direction of the ray that hit the body. 
+  Vec3 ray_direction    = Vec3(0.0f);
 };
 /// RayCastResult
 ///---------------------------------------------------------------------------------------------------------------------

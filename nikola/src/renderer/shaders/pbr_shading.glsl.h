@@ -275,7 +275,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         }
 
         // @TEMP (Shadows): Have a better bias setup here...
-        float bias = 0.0005;
+        float bias = 0.005;
 
         // Applying a simple PCF (Percentage-closer filtering)
         // @TEMP (Shadows): Have a better PCF algo here...

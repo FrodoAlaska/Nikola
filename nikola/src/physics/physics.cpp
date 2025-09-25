@@ -535,8 +535,9 @@ const bool physics_world_cast_ray(const RayCastDesc& cast_desc) {
                           (s_world->body_interface->GetCenterOfMassPosition(result->mBodyID) - ray.mOrigin);
 
     RayCastResult ray_result = {
-      .body_id = body_id,
-      .point   = jph_vec3_to_vec3(hit_point),
+      .body_id       = body_id,
+      .point         = jph_vec3_to_vec3(hit_point),
+      .ray_direction = cast_desc.direction, 
     };
 
     // Send out an event

@@ -18,6 +18,7 @@ struct nikola::App {
 
   nikola::CharacterID cube_body;
   nikola::ColliderID cube_collider, sphere_collider;
+  nikola::Vec3 velocity = nikola::Vec3(0.0f);
 
   nikola::RenderPass* debug_pass = nullptr;
 };
@@ -136,7 +137,9 @@ static bool on_raycast_event(const nikola::Event& event, const void* dispatcher,
 
   nikola::Vec3 body_position = nikola::physics_body_get_position(body_id);
   nikola::Vec3 hit_position  = event.cast_result.point;
-  
+
+  nikola::physics_body_apply_force(body_id, event.cast_result.ray_direction * 1000.0f);
+
   nikola::physics_world_set_safe_mode(true);
   return true;
 }
@@ -230,35 +233,36 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
   // Handle input
 
   nikola::Vec3 current_velocity = nikola::character_body_get_linear_velocity(app->cube_body);
-  nikola::Vec3 velocity         = nikola::Vec3(0.0f, current_velocity.y, 0.0f);
+  app->velocity                 = nikola::Vec3(0.0f, current_velocity.y, 0.0f);
 
   if(nikola::input_key_down(nikola::KEY_W)) {
-    velocity.x = 10.0f;
+    app->velocity.x = 10.0f;
   }
   else if(nikola::input_key_down(nikola::KEY_S)) {
-    velocity.x = -10.0f;
+    app->velocity.x = -10.0f;
   }
   
   if(nikola::input_key_down(nikola::KEY_D)) {
-    velocity.z = 10.0f;
+    app->velocity.z = 10.0f;
   }
   else if(nikola::input_key_down(nikola::KEY_A)) {
-    velocity.z = -10.0f;
+    app->velocity.z = -10.0f;
   }
 
   if(nikola::input_key_pressed(nikola::KEY_SPACE)) {
-    velocity.y = 5.0f;
+    app->velocity.y = 5.0f;
   }
 
-  if(nikola::input_button_pressed(nikola::MOUSE_BUTTON_LEFT)) {
-    nikola::Vec2 mouse_pos;
-    nikola::input_mouse_position(&mouse_pos.x, &mouse_pos.y);
-
-    nikola::RayCastDesc ray = nikola::camera_screen_to_world_space(app->frame_data.camera, mouse_pos, app->window);
+  if(nikola::input_key_pressed(nikola::KEY_P)) {
+    nikola::RayCastDesc ray = {
+      .origin    = app->frame_data.camera.position, 
+      .direction = app->frame_data.camera.front, 
+      .distance  = 1000000.0f, 
+    };
     nikola::physics_world_cast_ray(ray);
   }
 
-  nikola::character_body_set_linear_velocity(app->cube_body, velocity);
+  // nikola::character_body_set_linear_velocity(app->cube_body, app->velocity);
 
   // Update the camera
   nikola::camera_update(app->frame_data.camera);
