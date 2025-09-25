@@ -159,46 +159,45 @@ void camera_update(Camera& cam) {
 }
 
 void camera_calculate_frustrum_corners(const Camera& cam, Vec3* out_corners) {
-  f32 tan_fov    = nikola::tan(cam.zoom * DEG2RAD);
+  f32 tan_fov    = nikola::tan((cam.zoom * DEG2RAD) * 0.5f);
   Vec3 cam_right = vec3_cross(cam.front, cam.up);
 
   // Calculating the bounds of the frustrum
 
-  f32 far_width  = tan_fov * cam.far;
-  f32 far_height = far_width / cam.aspect_ratio;
+  f32 near_height = 2.0f * tan_fov * cam.near;
+  f32 near_width  = near_height * cam.aspect_ratio;
 
-  f32 near_width  = tan_fov * cam.near;
-  f32 near_height = near_width / cam.aspect_ratio;
+  f32 far_height = 2.0f * tan_fov * cam.far;
+  f32 far_width  = far_height * cam.aspect_ratio;
 
   // Calculating the center of both the near and far planes
 
-  Vec3 far_center  = cam.position + (cam.front * cam.far);
   Vec3 near_center = cam.position + (cam.front * cam.near);
+  Vec3 far_center  = cam.position + (cam.front * cam.far);
 
   // Calculating each far point in both the near and far planes
 
-  Vec3 far_top   = far_center + cam.up    * far_height; 
-  Vec3 far_right = far_center + cam_right * far_width;
+  Vec3 near_top   = near_center + cam.up    * (near_height * 0.5f); 
+  Vec3 near_right = near_center + cam_right * (near_width  * 0.5f);
 
-  Vec3 near_top   = near_center + cam.up    * near_height; 
-  Vec3 near_right = near_center + cam_right * near_width;
+  Vec3 far_top   = far_center + cam.up    * (far_height * 0.5f); 
+  Vec3 far_right = far_center + cam_right * (far_width  * 0.5f);
 
   // Filling the given `corners` array with the new calculated values
-  
-  // Far plane
-
-  out_corners[0] = far_center + far_top - far_right; // Bottom left
-  out_corners[1] = far_center + far_top - far_right; // Top left
-  out_corners[2] = far_center + far_top + far_right; // Top right
-  out_corners[3] = far_center - far_top + far_right; // Bottom right
 
   // Near plane
 
-  out_corners[4] = near_center - near_top - near_right; // Bottom left
-  out_corners[5] = near_center + near_top - near_right; // Top left
-  out_corners[6] = near_center + near_top + near_right; // Top right
-  out_corners[7] = near_center - near_top + near_right; // Bottom right
- 
+  out_corners[0] = near_center - near_top - near_right; // Bottom left
+  out_corners[1] = near_center + near_top - near_right; // Top left
+  out_corners[2] = near_center + near_top + near_right; // Top right
+  out_corners[3] = near_center - near_top + near_right; // Bottom right
+  
+  // Far plane
+
+  out_corners[4] = far_center - far_top - far_right; // Bottom left
+  out_corners[5] = far_center + far_top - far_right; // Top left
+  out_corners[6] = far_center + far_top + far_right; // Top right
+  out_corners[7] = far_center - far_top + far_right; // Bottom right
 }
 
 void camera_follow(Camera& cam, const Vec3& target, const Vec3& offset) {

@@ -267,11 +267,31 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       }
 
       float calculate_shadow() {
-        vec3 proj_coords = fs_in.shadow_pos.xyz / fs_in.shadow_pos.w; 
-        proj_coords      = proj_coords * 0.5 + 0.5; 
+        // Converting the shadow space position to texture coordinates
+        
+        vec3 proj_coords = (fs_in.shadow_pos.xyz / fs_in.shadow_pos.w) * 0.5f + 0.5f;
+        if(proj_coords.z > 1.0) { // Early out for objects too far away
+          return 0.0;
+        }
 
-        float shadow_depth = texture(u_shadow_map, proj_coords.xy).r;
-        return proj_coords.z > shadow_depth ? 0.8 : 0.0; 
+        // @TEMP (Shadows): Have a better bias setup here...
+        float bias = 0.0005;
+
+        // Applying a simple PCF (Percentage-closer filtering)
+        // @TEMP (Shadows): Have a better PCF algo here...
+
+        float shadow_factor = 0.0; 
+        vec2 texture_size   = 1.0 / textureSize(u_shadow_map, 0);
+
+        for(int x = -1; x < 1; x++) {
+          for(int y = -1; y < 1; y++) {
+            float pcf_depth = texture(u_shadow_map, proj_coords.xy + vec2(x, y) * texture_size).r;
+            shadow_factor  += (proj_coords.z - bias) > pcf_depth ? 1.0 : 0.0;
+          }
+        }
+
+        // Final shadow value
+        return (shadow_factor /= 9.0);
       }  
 
       // Lights
@@ -370,8 +390,8 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
 
         // Add it all together...
         
-        vec3 final_color = vec3(1 - calculate_shadow());//emissive_texel + (dir_light_factor + point_lights_factor + spot_lights_factor);
-        frag_color       = vec4(final_color, u_material.transparency);
+        vec3 final_color = emissive_texel + (dir_light_factor + point_lights_factor + spot_lights_factor);
+        frag_color       = vec4((1 - calculate_shadow()) * final_color, u_material.transparency);
       }
     )"
   };

@@ -33,11 +33,11 @@
         - [x] Implement other debug shapes like spheres and capsules
     - [x] Implement mouse to screen and mouse to world for editing levels easier
     - [x] Documentation 
-- [] Renderer: Beautify it v1.0
+- [x] Renderer: Beautify it v1.0
     - [x] Better attenuation
     - [x] PBR pipeline
     - [x] Emissive materials
-    - [] Fix shadows 
+    - [x] Fix shadows 
 - [] Animations 
     - [] Test animations with multiple instances.
     - [] Documentation
@@ -98,7 +98,6 @@
 - (Window & Renderer): When resizing the window or changing the fullscreen state, the renderer really does not hold up. I'm guessing it's because of the render passes? They need to update their own frame sizes when the window resizes? 
 Maybe find a better way to do this.
 
-- (Renderer): Shadows. They're turned off right now. Fix everything about em. Fuck em. Fix em. Marry em?
 - (Renderer): Capsules cannot be rendererd. Need to render those for debug purposes. 
 - (Renderer): Spheres are not so perfect. Fix that. 
 - (Renderer): Smooth out the pass system a bit. Appending and referring to passes is a bit weird. Paas chain? Passes pool? WTH?

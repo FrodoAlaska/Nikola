@@ -64,11 +64,11 @@ void shadow_pass_init(Window* window) {
     .width  = (u32)pass_desc.frame_size.x,
     .height = (u32)pass_desc.frame_size.x,
 
-    .type   = GFX_TEXTURE_2D, 
-    .format = GFX_TEXTURE_FORMAT_DEPTH16, 
-    .filter = GFX_TEXTURE_FILTER_MIN_MAG_LINEAR,
-
-    .wrap_mode = GFX_TEXTURE_WRAP_CLAMP,
+    .type         = GFX_TEXTURE_2D, 
+    .format       = GFX_TEXTURE_FORMAT_DEPTH16, 
+    .filter       = GFX_TEXTURE_FILTER_MIN_MAG_LINEAR,
+    .wrap_mode    = GFX_TEXTURE_WRAP_CLAMP,
+    .compare_func = GFX_COMPARE_LESS_EQUAL, 
   };
   pass_desc.targets.push_back(target_desc);
   
@@ -80,8 +80,6 @@ void shadow_pass_init(Window* window) {
 
 void shadow_pass_prepare(RenderPass* pass, const FrameData& data) {
   // Setup the light projection matrix
-
-  // @TODO (Renderer): Shadows just do not work _at all_.
 
   // Get the center of the frustrum by averaging the 
   // frustrum's corners.

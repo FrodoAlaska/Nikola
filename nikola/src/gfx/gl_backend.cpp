@@ -2019,7 +2019,6 @@ const bool gfx_texture_load(GfxTexture* texture, const GfxTextureDesc& desc) {
 
   glTextureParameteri(texture->id, GL_TEXTURE_COMPARE_MODE, compare_func);
   glTextureParameteri(texture->id, GL_TEXTURE_COMPARE_FUNC, get_gl_compare_func(desc.compare_func));
-
   glTextureParameterfv(texture->id, GL_TEXTURE_BORDER_COLOR, desc.border_color);
 
   // Setting the pixel store alignment
