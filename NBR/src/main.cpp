@@ -79,7 +79,7 @@ static bool lex_args(int argc, char** argv, nbr::ListContext* list, nikola::i32*
 
   for(int i = 1; i < 6; i++) {
     if(check_arg(argv[i], ARG_VERSION)) {
-      NIKOLA_LOG_ERROR("[NBR]: Version = %i", NBR_VERSION);
+      NIKOLA_LOG_ERROR("[NBR]: Version = %i.%i", nikola::NBR_VALID_MAJOR_VERSION, nikola::NBR_VALID_MINOR_VERSION);
       return false;
     }
     else if(check_arg(argv[i], ARG_PARENT_DIR)) {

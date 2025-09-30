@@ -633,6 +633,24 @@ void gui_edit_audio_listener(const char* name) {
   ImGui::PopID(); 
 }
 
+void gui_edit_timer(const char* name, Timer* timer) {
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+
+  // Limit 
+  {
+    ImGui::DragFloat("Limit", &timer->limit, s_gui.big_step, 0.0f);
+  }
+
+  // Booleans
+  {
+    ImGui::Checkbox("One shot", &timer->is_one_shot);
+    ImGui::Checkbox("Active", &timer->is_active);
+  }
+  
+  ImGui::PopID(); 
+}
+
 void gui_edit_physics_body(const char* name, PhysicsBodyID& body) {
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 

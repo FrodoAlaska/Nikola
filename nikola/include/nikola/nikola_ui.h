@@ -449,6 +449,9 @@ NIKOLA_API void gui_edit_audio_source(const char* name, AudioSourceID& source);
 /// Add an audio listener section identified by `name` to edit the global audio listener.
 NIKOLA_API void gui_edit_audio_listener(const char* name);
 
+/// Add a timer section identified by `name` to edit the given `timer`.
+NIKOLA_API void gui_edit_timer(const char* name, Timer* timer);
+
 /// Add a physics body section identified by `name` to edit the given `body`.
 NIKOLA_API void gui_edit_physics_body(const char* name, PhysicsBodyID& body);
 

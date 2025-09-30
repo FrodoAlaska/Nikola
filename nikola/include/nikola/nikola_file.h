@@ -18,6 +18,7 @@ struct DirectionalLight;
 struct PointLight;
 struct SpotLight;
 struct FrameData;
+struct Timer;
 
 struct PhysicsBodyID;
 struct PhysicsBodyDesc;
@@ -362,6 +363,11 @@ NIKOLA_API void file_write_bytes(File& file, const AudioSourceID& source);
 /// @NOTE: This function will raise an error if `file` is not opened.
 NIKOLA_API void file_write_bytes(File& file, const AudioListenerDesc& listener_desc);
 
+/// Write the contents of the given `timer` into `file`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_write_bytes(File& file, const Timer& timer);
+
 /// Write the contents of the given `body` into `file`.
 ///
 /// @NOTE: This function will raise an error if `file` is not opened.
@@ -438,6 +444,11 @@ NIKOLA_API void file_read_bytes(File& file, AudioSourceID& source);
 ///
 /// @NOTE: This function will raise an error if `file` is not opened.
 NIKOLA_API void file_read_bytes(File& file, AudioListenerDesc* listener);
+
+/// Read an `Timer` from `file` and save it into `timer`.
+///
+/// @NOTE: This function will raise an error if `file` is not opened.
+NIKOLA_API void file_read_bytes(File& file, Timer* timer);
 
 /// Read a `PhysicsBodyDesc` from `file` and save it into `body_desc`.
 ///

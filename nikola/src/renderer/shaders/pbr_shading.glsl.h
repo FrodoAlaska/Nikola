@@ -230,7 +230,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       // Stages 
 
       BRDFResult calculate_brdf(const BRDFDesc desc) {
-        vec3 halfway_dir = normalize(desc.view_dir + desc.light_dir);
+        vec3 halfway_dir = normalize(desc.light_dir + desc.view_dir);
         float hv_dot     = max(dot(halfway_dir, desc.view_dir), 0.0);
         float nv_dot     = max(dot(desc.normal, desc.view_dir), 0.0);
         float nl_dot     = max(dot(desc.normal, desc.light_dir), 0.0);
@@ -368,7 +368,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
 
         BRDFDesc brdf; 
         brdf.f0           = f0; 
-        brdf.normal       = calculate_normal(normal_texel);
+        brdf.normal       = normalize(fs_in.normal);//calculate_normal(normal_texel);
         brdf.view_dir     = normalize(fs_in.camera_pos - fs_in.pixel_pos); 
         brdf.roughness    = roughness_texel;
         brdf.metallic     = metallic_texel;

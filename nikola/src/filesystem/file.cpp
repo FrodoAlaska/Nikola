@@ -5,6 +5,7 @@
 #include "nikola/nikola_audio.h"
 #include "nikola/nikola_physics.h"
 #include "nikola/nikola_resources.h"
+#include "nikola/nikola_timer.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -533,6 +534,14 @@ void file_write_bytes(File& file, const AudioListenerDesc& listener_desc) {
   file_write_bytes(file, data, sizeof(data));
 }
 
+void file_write_bytes(File& file, const Timer& timer) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  
+  file_write_bytes(file, &timer.limit, sizeof(timer.limit));
+  file_write_bytes(file, &timer.is_one_shot, sizeof(timer.is_one_shot));
+  file_write_bytes(file, &timer.is_active, sizeof(timer.is_active));
+}
+
 void file_write_bytes(File& file, const PhysicsBodyID& body) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
  
@@ -1022,6 +1031,14 @@ void file_read_bytes(File& file, AudioListenerDesc* listener) {
   audio_listener_set_volume(listener->volume);
   audio_listener_set_position(listener->position);
   audio_listener_set_velocity(listener->velocity);
+}
+
+void file_read_bytes(File& file, Timer* timer) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+
+  file_read_bytes(file, &timer->limit, sizeof(timer->limit));
+  file_read_bytes(file, &timer->is_one_shot, sizeof(timer->is_one_shot));
+  file_read_bytes(file, &timer->is_active, sizeof(timer->is_active));
 }
 
 void file_read_bytes(File& file, PhysicsBodyDesc* body_desc) {

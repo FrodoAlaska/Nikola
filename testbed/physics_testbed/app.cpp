@@ -262,7 +262,7 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     nikola::physics_world_cast_ray(ray);
   }
 
-  // nikola::character_body_set_linear_velocity(app->cube_body, app->velocity);
+  nikola::character_body_set_linear_velocity(app->cube_body, app->velocity);
 
   // Update the camera
   nikola::camera_update(app->frame_data.camera);
