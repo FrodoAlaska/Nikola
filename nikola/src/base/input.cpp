@@ -250,12 +250,12 @@ const bool input_action_pressed(const char* action_name) {
   }
   
   // Check the binded mouse button
-  if(action->key_bind != MOUSE_BUTTON_UNKNOWN) {
+  if(action->mouse_bind != MOUSE_BUTTON_UNKNOWN) {
     is_mouse_pressed = input_button_pressed(action->mouse_bind);
   }
   
-  // Check the binded mouse button
-  if(action->key_bind != GAMEPAD_BUTTON_UNKNOWN) {
+  // Check the binded gamepad button
+  if(action->gamepad_bind != GAMEPAD_BUTTON_UNKNOWN) {
     is_gamepad_pressed = input_gamepad_button_pressed(JOYSTICK_ID_0, action->gamepad_bind);
   }
 
