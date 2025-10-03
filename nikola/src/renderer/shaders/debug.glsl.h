@@ -10,6 +10,10 @@ inline nikola::GfxShaderDesc generate_debug_shader() {
       // Layouts
       
       layout (location = 0) in vec3 aPos;
+      layout (location = 1) in vec2 aTextureCoords;
+
+      // Outputs
+      out vec2 texture_coords;
 
       // Uniforms
 
@@ -24,7 +28,8 @@ inline nikola::GfxShaderDesc generate_debug_shader() {
       };
 
       void main() {
-        gl_Position = u_projection * u_view * u_model[gl_InstanceID] * vec4(aPos, 1.0);
+        gl_Position    = u_projection * u_view * u_model[gl_InstanceID] * vec4(aPos, 1.0);
+        texture_coords = aTextureCoords;
       }
     )",
 
@@ -33,7 +38,10 @@ inline nikola::GfxShaderDesc generate_debug_shader() {
      
       // Layouts
       layout (location = 0) out vec4 frag_color;
-    
+   
+      // Inputs
+      in vec2 texture_coords;
+
       // Uniforms
       
       struct Material {
@@ -42,9 +50,12 @@ inline nikola::GfxShaderDesc generate_debug_shader() {
       };
 
       uniform Material u_material;
+      
+      layout (binding = 0) uniform sampler2D u_albedo;
 
       void main() {
-        frag_color = vec4(u_material.color, u_material.transparency);
+        vec3 texel = texture(u_albedo, texture_coords).rgb * u_material.color;
+        frag_color = vec4(texel, u_material.transparency);
       }
     )"
   };

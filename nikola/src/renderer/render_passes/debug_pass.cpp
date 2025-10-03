@@ -94,6 +94,9 @@ void debug_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& 
  
     GfxBindingDesc bind_desc = {
       .shader = pass->shader_context->shader, 
+
+      .textures       = &geo.material->albedo_map, 
+      .textures_count = 1,
     };
     gfx_context_use_bindings(pass->gfx, bind_desc);
 

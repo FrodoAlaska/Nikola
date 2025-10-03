@@ -451,48 +451,48 @@ static void create_billboard_geo(const ResourceGroupID& group_id, GfxPipelineDes
 static void create_debug_cube_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc) {
   // Vertices init
   
-  Vec3 vertices[24] = {
+  float vertices[120] = {
     // Back face
 
-    Vec3(-1.0f, -1.0f, -1.0f),
-    Vec3( 1.0f, -1.0f, -1.0f),
-    Vec3( 1.0f,  1.0f, -1.0f),
-    Vec3(-1.0f,  1.0f, -1.0f),
+    -1.0f, -1.0f, -1.0f,  0.0f, 0.0f,
+     1.0f, -1.0f, -1.0f,  1.0f, 0.0f,
+     1.0f,  1.0f, -1.0f,  1.0f, 1.0f,
+    -1.0f,  1.0f, -1.0f,  0.0f, 1.0f,
 
     // Front face
 
-    Vec3(-1.0f, -1.0f,  1.0f),
-    Vec3( 1.0f, -1.0f,  1.0f),
-    Vec3( 1.0f,  1.0f,  1.0f),
-    Vec3(-1.0f,  1.0f,  1.0f),
+    -1.0f, -1.0f,  1.0f,  0.0f, 0.0f,
+     1.0f, -1.0f,  1.0f,  1.0f, 0.0f,
+     1.0f,  1.0f,  1.0f,  1.0f, 1.0f,
+    -1.0f,  1.0f,  1.0f,  0.0f, 1.0f,
 
     // Left face
 
-    Vec3(-1.0f,  1.0f,  1.0f),
-    Vec3(-1.0f,  1.0f, -1.0f),
-    Vec3(-1.0f, -1.0f, -1.0f),
-    Vec3(-1.0f, -1.0f,  1.0f),
+    -1.0f,  1.0f,  1.0f,  1.0f, 0.0f,
+    -1.0f,  1.0f, -1.0f,  1.0f, 1.0f,
+    -1.0f, -1.0f, -1.0f,  0.0f, 1.0f,
+    -1.0f, -1.0f,  1.0f,  0.0f, 0.0f,
 
     // Right face
 
-    Vec3(1.0f,  1.0f,  1.0f),
-    Vec3(1.0f,  1.0f, -1.0f),
-    Vec3(1.0f, -1.0f, -1.0f),
-    Vec3(1.0f, -1.0f,  1.0f),
+    1.0f,  1.0f,  1.0f,  1.0f, 0.0f,
+    1.0f,  1.0f, -1.0f,  1.0f, 1.0f,
+    1.0f, -1.0f, -1.0f,  0.0f, 1.0f,
+    1.0f, -1.0f,  1.0f,  0.0f, 0.0f,
 
     // Top face
 
-    Vec3(-1.0f, -1.0f, -1.0f),
-    Vec3( 1.0f, -1.0f, -1.0f),
-    Vec3( 1.0f, -1.0f,  1.0f),
-    Vec3(-1.0f, -1.0f,  1.0f),
+    -1.0f, -1.0f, -1.0f,  0.0f, 1.0f,
+     1.0f, -1.0f, -1.0f,  1.0f, 1.0f,
+     1.0f, -1.0f,  1.0f,  1.0f, 0.0f,
+    -1.0f, -1.0f,  1.0f,  0.0f, 0.0f,
 
     // Bottom face
 
-    Vec3(-1.0f,  1.0f, -1.0f),
-    Vec3( 1.0f,  1.0f, -1.0f),
-    Vec3( 1.0f,  1.0f,  1.0f),
-    Vec3(-1.0f,  1.0f,  1.0f),
+    -1.0f,  1.0f, -1.0f,  0.0f, 1.0f,
+     1.0f,  1.0f, -1.0f,  1.0f, 1.0f,
+     1.0f,  1.0f,  1.0f,  1.0f, 0.0f,
+    -1.0f,  1.0f,  1.0f,  0.0f, 0.0f,
   };
 
   // Indices init
@@ -533,12 +533,12 @@ static void create_debug_cube_geo(const ResourceGroupID& group_id, GfxPipelineDe
   
   GfxBufferDesc buff_desc = {
     .data  = (void*)vertices,
-    .size  = sizeof(Vec3) * 24,
+    .size  = sizeof(f32) * 120,
     .type  = GFX_BUFFER_VERTEX, 
     .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
   };
   pipe_desc->vertex_buffer  = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
-  pipe_desc->vertices_count = 24;  
+  pipe_desc->vertices_count = 120;  
 
   // Index buffer init
   
@@ -554,7 +554,8 @@ static void create_debug_cube_geo(const ResourceGroupID& group_id, GfxPipelineDe
   // Layout init
   
   pipe_desc->layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT3;
-  pipe_desc->layouts[0].attributes_count = 1;
+  pipe_desc->layouts[0].attributes[1]    = GFX_LAYOUT_FLOAT2;
+  pipe_desc->layouts[0].attributes_count = 2;
 
   // Draw mode init
   pipe_desc->draw_mode = GFX_DRAW_MODE_TRIANGLE;
@@ -570,8 +571,8 @@ static void create_debug_sphere_geo(const ResourceGroupID& group_id, GfxPipeline
 
   // Vertices init
   
-  DynamicArray<Vec3> vertices;
-  vertices.reserve(24);
+  DynamicArray<f32> vertices;
+  vertices.reserve(120);
 
   for(u32 i = 0; i <= stack_count; i++) {
     f32 stack_angle = ((PI / 2.0f) - (i * stack_step));
@@ -581,9 +582,17 @@ static void create_debug_sphere_geo(const ResourceGroupID& group_id, GfxPipeline
 
     for(u32 j = 0; j <= sector_count; j++) {
       f32 sector_angle = j * sector_step;
-      vertices.emplace_back(xy * nikola::cos(sector_angle), 
-                            xy * nikola::sin(sector_angle), 
-                            z);
+    
+      // Positions
+      
+      vertices.push_back(xy * nikola::cos(sector_angle));
+      vertices.push_back(xy * nikola::sin(sector_angle));
+      vertices.push_back(z);
+
+      // Texture coords
+      
+      vertices.push_back((f32)j / sector_count);
+      vertices.push_back((f32)i / stack_count); 
     }
   }
 
@@ -618,7 +627,7 @@ static void create_debug_sphere_geo(const ResourceGroupID& group_id, GfxPipeline
   
   GfxBufferDesc buff_desc = {
     .data  = (void*)vertices.data(),
-    .size  = sizeof(Vec3) * vertices.size(),
+    .size  = sizeof(f32) * vertices.size(),
     .type  = GFX_BUFFER_VERTEX, 
     .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
   };
@@ -639,7 +648,8 @@ static void create_debug_sphere_geo(const ResourceGroupID& group_id, GfxPipeline
   // Layout init
   
   pipe_desc->layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT3;
-  pipe_desc->layouts[0].attributes_count = 1;
+  pipe_desc->layouts[0].attributes[1]    = GFX_LAYOUT_FLOAT2;
+  pipe_desc->layouts[0].attributes_count = 2;
 
   // Draw mode init
   pipe_desc->draw_mode = GFX_DRAW_MODE_TRIANGLE;

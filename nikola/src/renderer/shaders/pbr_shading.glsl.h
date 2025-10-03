@@ -355,7 +355,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       void main() {
         // Sampling the many textures 
 
-        vec3 albedo_texel     = texture(u_albedo_map, fs_in.tex_coords).rgb * u_ambient;
+        vec3 albedo_texel     = texture(u_albedo_map, fs_in.tex_coords).rgb * u_material.color;
         float roughness_texel = texture(u_roughness_map, fs_in.tex_coords).g * u_material.roughness;
         float metallic_texel  = texture(u_mettalic_map, fs_in.tex_coords).b * u_material.metallic;
         vec3 normal_texel     = texture(u_normal_map, fs_in.tex_coords).rgb;
@@ -368,7 +368,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
 
         BRDFDesc brdf; 
         brdf.f0           = f0; 
-        brdf.normal       = normalize(fs_in.normal);//calculate_normal(normal_texel);
+        brdf.normal       = calculate_normal(normal_texel);
         brdf.view_dir     = normalize(fs_in.camera_pos - fs_in.pixel_pos); 
         brdf.roughness    = roughness_texel;
         brdf.metallic     = metallic_texel;
@@ -390,7 +390,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
 
         // Add it all together...
         
-        vec3 final_color = emissive_texel + (dir_light_factor + point_lights_factor + spot_lights_factor);
+        vec3 final_color = (emissive_texel + (dir_light_factor + point_lights_factor + spot_lights_factor)) * u_ambient;
         frag_color       = vec4((1 - calculate_shadow()) * final_color, u_material.transparency);
       }
     )"
