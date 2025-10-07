@@ -145,7 +145,7 @@ struct Event {
   /// The physics body that was given to this event 
   /// by either `EVENT_PHYSICS_BODY_ACTIVATED` or 
   /// `EVENT_PHYSICS_BODY_DEACTIVATED`.
-  PhysicsBodyID body_id;
+  PhysicsBody* body;
 
   /// The collision data given to this event 
   /// by either `EVENT_PHYSICS_CONTACT_ADDED`,

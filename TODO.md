@@ -102,6 +102,4 @@ Maybe find a better way to do this.
 - (Renderer): Spheres are not so perfect. Fix that. 
 - (Renderer): Smooth out the pass system a bit. Appending and referring to passes is a bit weird. Paas chain? Passes pool? WTH?
 
-- (Physics): The functions for adding the bodies in bulk (`_prepare_bodies` and `_finalize_bodies`) don't work so well.
-
 - Check all of the `TODO`, `FIX`, and `TEMP` in the codebase.

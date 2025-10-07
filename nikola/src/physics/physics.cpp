@@ -50,9 +50,9 @@ namespace nikola { // Start of nikola
 ///---------------------------------------------------------------------------------------------------------------------
 /// Defines
 
-#define BODY_ID_CHECK(id)      NIKOLA_ASSERT((id._id != PHYSICS_ID_INVALID), "Trying to access a physics body with an invalid ID")
-#define COLLIDER_ID_CHECK(id)  NIKOLA_ASSERT((id._id != PHYSICS_ID_INVALID), "Trying to access a collider with an invalid ID")
-#define CHARACTER_ID_CHECK(id) NIKOLA_ASSERT((id._id != PHYSICS_ID_INVALID), "Trying to access a character with an invalid ID")
+#define BODY_CHECK(body)     NIKOLA_ASSERT((body && body->handle), "Trying to access a physics body with an invalid ID")
+#define COLLIDER_CHECK(coll) NIKOLA_ASSERT((coll && coll->handle), "Trying to access a collider with an invalid ID")
+#define CHARACTER_CHECK(ch)  NIKOLA_ASSERT((ch && ch->handle), "Trying to access a character with an invalid ID")
 
 /// Defines
 ///---------------------------------------------------------------------------------------------------------------------
@@ -75,30 +75,53 @@ static bool assert_impl(const char* expr, const char* msg, const char* file, JPH
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// PhysicsBody
+struct PhysicsBody {
+  JPH::Body* handle  = nullptr;
+  void* user_data    = nullptr;
+  Collider* collider = nullptr;
+};
+/// PhysicsBody
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Character
+struct Character {
+  JPH::Ref<JPH::Character> handle = nullptr;
+  void* user_data                 = nullptr;
+  Collider* collider              = nullptr;
+};
+/// Character
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Collider
+struct Collider {
+  JPH::Ref<JPH::Shape> handle = nullptr;
+  ColliderType type;
+
+  Vec3 extents = Vec3(0.0f);
+};
+/// Collider
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// NKBodyActivationListener  
 class NKBodyActivationListener : public JPH::BodyActivationListener
 {
 public:
 	void OnBodyActivated(const JPH::BodyID &inBodyID, JPH::uint64 inBodyUserData) override {
-    PhysicsBodyID body_id = {
-      ._id = inBodyID.GetIndex(),
-    };
-    
     Event event = {
-      .type    = EVENT_PHYSICS_BODY_ACTIVATED,
-      .body_id = body_id,
+      .type = EVENT_PHYSICS_BODY_ACTIVATED,
+      .body = reinterpret_cast<PhysicsBody*>(inBodyUserData), 
     };
     event_dispatch(event);
 	}
 
 	void OnBodyDeactivated(const JPH::BodyID &inBodyID, JPH::uint64 inBodyUserData) override {
-    PhysicsBodyID body_id = {
-      ._id = inBodyID.GetIndex(),
-    };
-    
     Event event = {
-      .type    = EVENT_PHYSICS_BODY_DEACTIVATED,
-      .body_id = body_id,
+      .type = EVENT_PHYSICS_BODY_DEACTIVATED,
+      .body = reinterpret_cast<PhysicsBody*>(inBodyUserData), 
     };
     event_dispatch(event);
 	}
@@ -123,8 +146,8 @@ public:
                       const JPH::ContactManifold& inManifold, 
                       JPH::ContactSettings& ioSettings) override {
     CollisionData data = {
-      .body1_id = inBody1.GetID().GetIndex(), 
-      .body2_id = inBody2.GetID().GetIndex(), 
+      .body1 = reinterpret_cast<PhysicsBody*>(inBody1.GetUserData()), 
+      .body2 = reinterpret_cast<PhysicsBody*>(inBody2.GetUserData()), 
 
       .base_offset       = jph_vec3_to_vec3(inManifold.mBaseOffset), 
       .normal            = jph_vec3_to_vec3(inManifold.mWorldSpaceNormal),
@@ -143,8 +166,8 @@ public:
                           const JPH::ContactManifold& inManifold, 
                           JPH::ContactSettings& ioSettings) override {
     CollisionData data = {
-      .body1_id = inBody1.GetID().GetIndex(), 
-      .body2_id = inBody2.GetID().GetIndex(), 
+      .body1 = reinterpret_cast<PhysicsBody*>(inBody1.GetUserData()), 
+      .body2 = reinterpret_cast<PhysicsBody*>(inBody2.GetUserData()), 
 
       .base_offset       = jph_vec3_to_vec3(inManifold.mBaseOffset), 
       .normal            = jph_vec3_to_vec3(inManifold.mWorldSpaceNormal),
@@ -159,16 +182,15 @@ public:
 	}
 
 	void OnContactRemoved(const JPH::SubShapeIDPair& inSubShapePair) override {
-    CollisionData data = {
-      .body1_id = inSubShapePair.GetBody1ID().GetIndex(), 
-      .body2_id = inSubShapePair.GetBody2ID().GetIndex(), 
-    };
-
-    Event event = {
-      .type           = EVENT_PHYSICS_CONTACT_REMOVED,
-      .collision_data = data,
-    };
-    event_dispatch(event);
+    // @TODO (Physics)
+    // CollisionData data = {
+    // };
+    //
+    // Event event = {
+    //   .type           = EVENT_PHYSICS_CONTACT_REMOVED,
+    //   .collision_data = data,
+    // };
+    // event_dispatch(event);
 	}
 };
 /// NKContactListener  
@@ -189,12 +211,6 @@ struct PhysicsWorld {
   NKContactListener contact_listener;
 
   JPH::BodyInterface* body_interface;
-
-  DynamicArray<JPH::Ref<JPH::Shape>> shapes; 
-  DynamicArray<JPH::BodyID> bodies;
-  DynamicArray<JPH::Ref<JPH::Character>> characters;
-
-  Queue<JPH::BodyInterface::AddState> batches_queue;
 
   f32 collision_tolerance = 0.05f;
   bool is_paused          = false;
@@ -356,43 +372,16 @@ void physics_world_init(const PhysicsWorldDesc& desc) {
                               *s_world->obj_vs_obj_layer_table);  
   s_world->physics_system.SetGravity(vec3_to_jph_vec3(desc.gravity));
 
+  // Body interface init
+  s_world->body_interface = &s_world->physics_system.GetBodyInterface();
+
   // Listeners init
 
   s_world->physics_system.SetBodyActivationListener(&s_world->activation_listener);
   s_world->physics_system.SetContactListener(&s_world->contact_listener);
-
-  // Body interface init
-  s_world->body_interface = &s_world->physics_system.GetBodyInterface();
 }
 
 void physics_world_shutdown() {
-  // Delete all characters from the world
- 
-  for(sizei i = 0; i < s_world->characters.size(); i++) {
-    JPH::Ref<JPH::Character> character = s_world->characters[i];
-
-    character->RemoveFromPhysicsSystem();
-
-    sizei body_index = character->GetBodyID().GetIndex();
-    s_world->bodies[body_index] = JPH::BodyID();
-  }
-  s_world->characters.clear();
-
-  // Delete all the bodies in the world
-  
-  for(sizei i = 0; i < s_world->bodies.size(); i++) {
-    JPH::BodyID body = s_world->bodies[i];
-    if(body.IsInvalid()) {
-      continue;
-    }
-
-    s_world->body_interface->RemoveBody(body);
-    s_world->body_interface->DestroyBody(body);
-  }
-
-  s_world->bodies.clear();
-  s_world->shapes.clear();
-
   // De-initialize Jolt
 
   JPH::UnregisterTypes();
@@ -414,19 +403,16 @@ void physics_world_step(const f32 delta_time, const i32 collision_steps) {
 
   // Update the world
   s_world->physics_system.Update(delta_time, collision_steps, s_world->temp_allocater, s_world->job_system);
-
-  // Post update for all the characters 
-  for(auto& character : s_world->characters) {
-    character->PostSimulation(s_world->collision_tolerance);
-  }
 }
 
-PhysicsBodyID physics_world_create_body(const PhysicsBodyDesc& desc) {
-  COLLIDER_ID_CHECK(desc.collider_id);
-
-  // Create the body
+PhysicsBody* physics_world_create_body(const PhysicsBodyDesc& desc) {
+  COLLIDER_CHECK(desc.collider);
   
-  JPH::BodyCreationSettings body_settings(s_world->shapes[desc.collider_id._id], 
+  PhysicsBody* nk_body = new PhysicsBody{};
+
+  // Create the Jolt body
+
+  JPH::BodyCreationSettings body_settings(desc.collider->handle, 
                                           vec3_to_jph_vec3(desc.position), 
                                           quat_to_jph_quat(desc.rotation), 
                                           body_type_to_jph_body_type(desc.type), 
@@ -436,75 +422,61 @@ PhysicsBodyID physics_world_create_body(const PhysicsBodyDesc& desc) {
   body_settings.mFriction      = desc.friction;
   body_settings.mGravityFactor = desc.gravity_factor;
   body_settings.mIsSensor      = desc.is_sensor;  
-  body_settings.mUserData      = desc.user_data;
+  body_settings.mUserData      = (JPH::uint64)nk_body;
 
-  JPH::Body* body = s_world->body_interface->CreateBody(body_settings); 
+  // Create our body
+ 
+  nk_body->handle      = s_world->body_interface->CreateBody(body_settings); 
+  nk_body->collider    = (Collider*)desc.collider; 
+  nk_body->user_data   = (void*)desc.user_data;
 
-  // Add the body to our internal buffer
-  
-  s_world->bodies.push_back(body->GetID());
-  return PhysicsBodyID {
-    ._id = (body->GetID().GetIndex()),
-  };
+  return nk_body;
 }
 
-void physics_world_add_body(const PhysicsBodyID& body_id, const bool is_active) {
-  BODY_ID_CHECK(body_id);
+void physics_world_add_body(const PhysicsBody* body, const bool is_active) {
+  BODY_CHECK(body);
 
   JPH::EActivation active = is_active ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
-  JPH::BodyID body        = s_world->bodies[body_id._id];
-  s_world->body_interface->AddBody(body, active);
+  s_world->body_interface->AddBody(body->handle->GetID(), active);
 }
 
-void physics_world_add_character(const CharacterID& char_id, const bool is_active) {
-  CHARACTER_ID_CHECK(char_id);
+void physics_world_add_character(const Character* character, const bool is_active) {
+  CHARACTER_CHECK(character);
 
-  JPH::Character* character = s_world->characters[char_id._id];
   JPH::EActivation activate = is_active ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
-
-  character->AddToPhysicsSystem(activate);
-  s_world->bodies.push_back(character->GetBodyID());
+  character->handle->AddToPhysicsSystem(activate);
 }
 
-PhysicsBodyID physics_world_create_and_add_body(const PhysicsBodyDesc& desc, const bool is_active) {
-  PhysicsBodyID id = physics_world_create_body(desc);
-  physics_world_add_body(id, is_active);
+PhysicsBody* physics_world_create_and_add_body(const PhysicsBodyDesc& desc, const bool is_active) {
+  PhysicsBody* body = physics_world_create_body(desc);
+  physics_world_add_body(body, is_active);
 
-  return id;
+  return body;
 }
 
-void physics_world_prepare_bodies(PhysicsBodyID* bodies, const sizei bodies_count) {
-  JPH::BodyInterface::AddState batch = s_world->body_interface->AddBodiesPrepare(&s_world->bodies[bodies[0]._id], bodies_count);
-  s_world->batches_queue.push(batch);
+void physics_world_remove_body(PhysicsBody* body) {
+  BODY_CHECK(body);
+  
+  s_world->body_interface->RemoveBody(body->handle->GetID());
 }
 
-const bool physics_world_finalize_bodies(PhysicsBodyID* bodies, const sizei bodies_count, const bool is_active) {
-  if(s_world->batches_queue.empty()) {
-    return false;
-  }
+void physics_world_destroy_body(PhysicsBody* body) {
+  BODY_CHECK(body);
+  
+  s_world->body_interface->DestroyBody(body->handle->GetID());
 
-  JPH::BodyInterface::AddState batch = s_world->batches_queue.front();
-  JPH::EActivation active            = is_active ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
-  s_world->bodies.resize(s_world->bodies.size() + bodies_count);
-
-  s_world->body_interface->AddBodiesFinalize(&s_world->bodies[bodies[0]._id], bodies_count, batch, active);
-  s_world->batches_queue.pop();
-
-  s_world->physics_system.OptimizeBroadPhase();
-  return true;
+  delete body->collider;
+  delete body;
 }
 
-const bool physics_world_abort_bodies(PhysicsBodyID* bodies, const sizei bodies_count) {
-  if(s_world->batches_queue.empty()) {
-    return false;
-  }
+void physics_world_destroy_and_remove(PhysicsBody* body) {
+  physics_world_remove_body(body);
+  physics_world_destroy_body(body);
+}
 
-  JPH::BodyInterface::AddState batch = s_world->batches_queue.front();
-
-  s_world->body_interface->AddBodiesAbort(&s_world->bodies[bodies[0]._id], bodies_count, batch);
-  s_world->batches_queue.pop();
-
-  return true;
+void physics_world_remove_character(Character* character) {
+  CHARACTER_CHECK(character);
+  character->handle->RemoveFromPhysicsSystem();
 }
 
 const bool physics_world_cast_ray(const RayCastDesc& cast_desc) {
@@ -527,15 +499,11 @@ const bool physics_world_cast_ray(const RayCastDesc& cast_desc) {
     
     JPH::BroadPhaseCastResult* result = &collector.mHits[i];
     
-    PhysicsBodyID body_id = {
-      ._id = result->mBodyID.GetIndex(),
-    };
-
     JPH::Vec3 hit_point = ray.mOrigin + result->mFraction * 
                           (s_world->body_interface->GetCenterOfMassPosition(result->mBodyID) - ray.mOrigin);
 
     RayCastResult ray_result = {
-      .body_id       = body_id,
+      .body          = reinterpret_cast<PhysicsBody*>(s_world->body_interface->GetUserData(result->mBodyID)), 
       .point         = jph_vec3_to_vec3(hit_point),
       .ray_direction = cast_desc.direction, 
     };
@@ -591,319 +559,223 @@ const bool physics_world_is_paused() {
   return s_world->is_paused;
 }
 
-void physics_world_draw() {
-  DynamicArray<Transform> cubes;
-  cubes.reserve(s_world->bodies.size());
-  
-  DynamicArray<Transform> spheres;
-  spheres.reserve(s_world->bodies.size());
- 
-  // Go through all of the bodies and render their shapes
-
-  for(auto& body : s_world->bodies) {
-    JPH::RefConst<JPH::Shape> shape = s_world->body_interface->GetShape(body);
-    JPH::AABox shape_aabb           = shape->GetLocalBounds();
-   
-    Transform transform;
-    transform.position = jph_vec3_to_vec3(s_world->body_interface->GetCenterOfMassPosition(body));
-    transform.scale    = jph_vec3_to_vec3(shape_aabb.GetExtent());
-
-    transform_apply(transform);
-
-    // Push the shape to the appropriate array
-
-    ColliderType collider_type = (ColliderType)shape->GetUserData();
-    switch(collider_type) {
-      case COLLIDER_BOX:
-        cubes.push_back(transform);
-        break;
-      case COLLIDER_SPHERE:
-        spheres.push_back(transform);
-        break;
-      case COLLIDER_CAPSULE:
-        // @TODO (Physics/Debug): Capsules...
-        break;
-    }
-  }
-  
-  // Render cubes
- 
-  if(!cubes.empty()) {
-    renderer_queue_debug_cube_instanced(cubes.data(), cubes.size());
-  }
-  
-  // Render spheres
- 
-  if(!spheres.empty()) {
-    renderer_queue_debug_sphere_instanced(spheres.data(), spheres.size());
-  }
-}
-
 /// Physics world functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// Physics body functions
 
-void physics_body_set_position(const PhysicsBodyID& body_id, const Vec3 position, const bool activate) {
-  BODY_ID_CHECK(body_id);
-  JPH::BodyID body = s_world->bodies[body_id._id];
+void physics_body_set_position(PhysicsBody* body, const Vec3 position, const bool activate) {
+  BODY_CHECK(body);
 
   JPH::EActivation active = activate ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
-  s_world->body_interface->SetPosition(body, vec3_to_jph_vec3(position), active);
+  s_world->body_interface->SetPosition(body->handle->GetID(), vec3_to_jph_vec3(position), active);
 }
 
-void physics_body_set_rotation(const PhysicsBodyID& body_id, const Quat rotation, const bool activate) {
-  BODY_ID_CHECK(body_id);
-  JPH::BodyID body = s_world->bodies[body_id._id];
+void physics_body_set_rotation(PhysicsBody* body, const Quat rotation, const bool activate) {
+  BODY_CHECK(body);
 
   JPH::EActivation active = activate ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
-  s_world->body_interface->SetRotation(body, quat_to_jph_quat(rotation), active);
+  s_world->body_interface->SetRotation(body->handle->GetID(), quat_to_jph_quat(rotation), active);
 }
 
-void physics_body_set_rotation(const PhysicsBodyID& body_id, const Vec3 axis, const f32 angle, const bool activate) {
-  BODY_ID_CHECK(body_id);
-  JPH::BodyID body = s_world->bodies[body_id._id];
+void physics_body_set_rotation(PhysicsBody* body, const Vec3 axis, const f32 angle, const bool activate) {
+  BODY_CHECK(body);
  
   JPH::EActivation active = activate ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
   JPH::Quat rotation      = quat_to_jph_quat(quat_angle_axis(axis, angle));
   
-  s_world->body_interface->SetRotation(body, rotation, active);
+  s_world->body_interface->SetRotation(body->handle->GetID(), rotation, active);
 }
 
-void physics_body_set_transform(const PhysicsBodyID& body_id, const Transform& transform, const bool activate) {
-  BODY_ID_CHECK(body_id);
-  JPH::BodyID body = s_world->bodies[body_id._id];
+void physics_body_set_transform(PhysicsBody* body, const Transform& transform, const bool activate) {
+  BODY_CHECK(body);
  
   JPH::EActivation active = activate ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
   JPH::Vec3 position      = vec3_to_jph_vec3(transform.position);
   JPH::Quat rotation      = quat_to_jph_quat(transform.rotation);
 
-  s_world->body_interface->SetPositionAndRotation(body, position, rotation, active);
+  s_world->body_interface->SetPositionAndRotation(body->handle->GetID(), position, rotation, active);
 }
 
-void physics_body_set_linear_velocity(const PhysicsBodyID& body_id, const Vec3 velocity) {
-  BODY_ID_CHECK(body_id);
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  
-  s_world->body_interface->SetLinearVelocity(body, vec3_to_jph_vec3(velocity));
+void physics_body_set_linear_velocity(PhysicsBody* body, const Vec3 velocity) {
+  BODY_CHECK(body);
+  body->handle->SetLinearVelocity(vec3_to_jph_vec3(velocity));
 }
 
-void physics_body_set_angular_velocity(const PhysicsBodyID& body_id, const Vec3 velocity) {
-  BODY_ID_CHECK(body_id);
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  
-  s_world->body_interface->SetAngularVelocity(body, vec3_to_jph_vec3(velocity));
+void physics_body_set_angular_velocity(PhysicsBody* body, const Vec3 velocity) {
+  BODY_CHECK(body);
+  body->handle->SetAngularVelocity(vec3_to_jph_vec3(velocity));
 }
 
-void physics_body_set_active(const PhysicsBodyID& body_id, const bool active) {
-  BODY_ID_CHECK(body_id);
-  JPH::BodyID body = s_world->bodies[body_id._id];
+void physics_body_set_active(PhysicsBody* body, const bool active) {
+  BODY_CHECK(body);
  
   if(active) {
-    s_world->body_interface->ActivateBody(body);
+    s_world->body_interface->ActivateBody(body->handle->GetID());
   }
   else {
-    s_world->body_interface->DeactivateBody(body);
+    s_world->body_interface->DeactivateBody(body->handle->GetID());
   }
 }
 
-void physics_body_set_user_data(const PhysicsBodyID& body_id, const u64 user_data) {
-  BODY_ID_CHECK(body_id);
+void physics_body_set_user_data(PhysicsBody* body, const void* user_data) {
+  BODY_CHECK(body);
   NIKOLA_ASSERT(user_data, "Passing invalid user data to body"); 
 
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  s_world->body_interface->SetUserData(body, (JPH::uint64)user_data);
+  body->user_data = (void*)user_data;
 }
 
-void physics_body_set_layer(const PhysicsBodyID& body_id, const PhysicsObjectLayer layer) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  s_world->body_interface->SetObjectLayer(body, (JPH::ObjectLayer)layer);
+void physics_body_set_layer(PhysicsBody* body, const PhysicsObjectLayer layer) {
+  BODY_CHECK(body);
+  s_world->body_interface->SetObjectLayer(body->handle->GetID(), (JPH::ObjectLayer)layer);
 }
 
-void physics_body_set_restitution(const PhysicsBodyID& body_id, const f32 restitution) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  s_world->body_interface->SetRestitution(body, restitution);
+void physics_body_set_restitution(PhysicsBody* body, const f32 restitution) {
+  BODY_CHECK(body);
+  body->handle->SetRestitution(restitution);
 }
 
-void physics_body_set_friction(const PhysicsBodyID& body_id, const f32 friction) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  s_world->body_interface->SetFriction(body, friction);
+void physics_body_set_friction(PhysicsBody* body, const f32 friction) {
+  BODY_CHECK(body);
+  body->handle->SetFriction(friction);
 }
 
-void physics_body_set_gravity_factor(const PhysicsBodyID& body_id, const f32 factor) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  s_world->body_interface->SetGravityFactor(body, factor);
+void physics_body_set_gravity_factor(PhysicsBody* body, const f32 factor) {
+  BODY_CHECK(body);
+  body->handle->GetMotionProperties()->SetGravityFactor(factor);
 }
 
-void physics_body_set_type(const PhysicsBodyID& body_id, const PhysicsBodyType type) {
-  BODY_ID_CHECK(body_id);
+void physics_body_set_type(PhysicsBody* body, const PhysicsBodyType type) {
+  BODY_CHECK(body);
   
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  s_world->body_interface->SetMotionType(body, body_type_to_jph_body_type(type), JPH::EActivation::Activate);
+  body->handle->SetMotionType(body_type_to_jph_body_type(type));
 }
 
-void physics_body_set_collider(const PhysicsBodyID& body_id, const ColliderID& collider_id, const bool activate) {
-  BODY_ID_CHECK(body_id);
-  COLLIDER_ID_CHECK(collider_id);
+void physics_body_set_collider(PhysicsBody* body, const Collider* collider, const bool activate) {
+  BODY_CHECK(body);
+  COLLIDER_CHECK(collider);
   
-  JPH::BodyID body        = s_world->bodies[body_id._id];
   JPH::EActivation active = activate ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
+  s_world->body_interface->SetShape(body->handle->GetID(), collider->handle, true, active);
 
-  s_world->body_interface->SetShape(body, s_world->shapes[collider_id._id], true, active);
+  body->collider = (Collider*)collider;
 }
 
-void physics_body_apply_linear_velocity(const PhysicsBodyID& body_id, const Vec3 velocity) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  s_world->body_interface->AddLinearVelocity(body, vec3_to_jph_vec3(velocity));
+void physics_body_apply_linear_velocity(PhysicsBody* body, const Vec3 velocity) {
+  BODY_CHECK(body);
+  s_world->body_interface->AddLinearVelocity(body->handle->GetID(), vec3_to_jph_vec3(velocity));
 }
 
-void physics_body_apply_force(const PhysicsBodyID& body_id, const Vec3 force) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  s_world->body_interface->AddForce(body, vec3_to_jph_vec3(force));
+void physics_body_apply_force(PhysicsBody* body, const Vec3 force) {
+  BODY_CHECK(body);
+  body->handle->AddForce(vec3_to_jph_vec3(force));
 }
 
-void physics_body_apply_force_at(const PhysicsBodyID& body_id, const Vec3 force, const Vec3 point) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  s_world->body_interface->AddForce(body, vec3_to_jph_vec3(force), vec3_to_jph_vec3(point));
+void physics_body_apply_force_at(PhysicsBody* body, const Vec3 force, const Vec3 point) {
+  BODY_CHECK(body);
+  body->handle->AddForce(vec3_to_jph_vec3(force), vec3_to_jph_vec3(point));
 }
 
-void physics_body_apply_torque(const PhysicsBodyID& body_id, const Vec3 torque) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  s_world->body_interface->AddTorque(body, vec3_to_jph_vec3(torque));
+void physics_body_apply_torque(PhysicsBody* body, const Vec3 torque) {
+  BODY_CHECK(body);
+  body->handle->AddTorque(vec3_to_jph_vec3(torque));
 }
 
-void physics_body_apply_impulse(const PhysicsBodyID& body_id, const Vec3 impulse) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  s_world->body_interface->AddImpulse(body, vec3_to_jph_vec3(impulse));
+void physics_body_apply_impulse(PhysicsBody* body, const Vec3 impulse) {
+  BODY_CHECK(body);
+  body->handle->AddImpulse(vec3_to_jph_vec3(impulse));
 }
 
-void physics_body_apply_impulse_at(const PhysicsBodyID& body_id, const Vec3 impulse, const Vec3 point) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  s_world->body_interface->AddImpulse(body, vec3_to_jph_vec3(impulse), vec3_to_jph_vec3(point));
+void physics_body_apply_impulse_at(PhysicsBody* body, const Vec3 impulse, const Vec3 point) {
+  BODY_CHECK(body);
+  body->handle->AddImpulse(vec3_to_jph_vec3(impulse), vec3_to_jph_vec3(point));
 }
 
-void physics_body_apply_angular_impulse(const PhysicsBodyID& body_id, const Vec3 impulse) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  s_world->body_interface->AddAngularImpulse(body, vec3_to_jph_vec3(impulse));
+void physics_body_apply_angular_impulse(PhysicsBody* body, const Vec3 impulse) {
+  BODY_CHECK(body);
+  s_world->body_interface->AddAngularImpulse(body->handle->GetID(), vec3_to_jph_vec3(impulse));
 }
 
-const Vec3 physics_body_get_position(const PhysicsBodyID& body_id) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  return jph_vec3_to_vec3(s_world->body_interface->GetPosition(body));
+const Vec3 physics_body_get_position(const PhysicsBody* body) {
+  BODY_CHECK(body);
+  return jph_vec3_to_vec3(body->handle->GetPosition());
 }
 
-const Vec3 physics_body_get_com_position(const PhysicsBodyID& body_id) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  return jph_vec3_to_vec3(s_world->body_interface->GetCenterOfMassPosition(body));
+const Vec3 physics_body_get_com_position(const PhysicsBody* body) {
+  BODY_CHECK(body);
+  return jph_vec3_to_vec3(s_world->body_interface->GetCenterOfMassPosition(body->handle->GetID()));
 }
 
-const Quat physics_body_get_rotation(const PhysicsBodyID& body_id) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  return jph_quat_to_quat(s_world->body_interface->GetRotation(body));
+const Quat physics_body_get_rotation(const PhysicsBody* body) {
+  BODY_CHECK(body);
+  return jph_quat_to_quat(body->handle->GetRotation());
 }
 
-const Vec3 physics_body_get_linear_velocity(const PhysicsBodyID& body_id) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  return jph_vec3_to_vec3(s_world->body_interface->GetLinearVelocity(body));
+const Vec3 physics_body_get_linear_velocity(const PhysicsBody* body) {
+  BODY_CHECK(body);
+  return jph_vec3_to_vec3(body->handle->GetLinearVelocity());
 }
 
-const Vec3 physics_body_get_angular_velocity(const PhysicsBodyID& body_id) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  return jph_vec3_to_vec3(s_world->body_interface->GetAngularVelocity(body));
+const Vec3 physics_body_get_angular_velocity(const PhysicsBody* body) {
+  BODY_CHECK(body);
+  return jph_vec3_to_vec3(body->handle->GetAngularVelocity());
 }
 
-const bool physics_body_is_active(const PhysicsBodyID& body_id) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  return s_world->body_interface->IsActive(body);
+const bool physics_body_is_active(const PhysicsBody* body) {
+  BODY_CHECK(body);
+  return body->handle->IsActive();
 }
 
-const u64 physics_body_get_user_data(const PhysicsBodyID& body_id) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  return (u64)s_world->body_interface->GetUserData(body);
+const bool physics_body_is_sensor(const PhysicsBody* body) {
+  BODY_CHECK(body);
+  return body->handle->IsSensor();
 }
 
-const PhysicsObjectLayer physics_body_get_layer(const PhysicsBodyID& body_id) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  return (PhysicsObjectLayer)s_world->body_interface->GetObjectLayer(body);
+void* physics_body_get_user_data(const PhysicsBody* body) {
+  BODY_CHECK(body);
+  return body->user_data;
 }
 
-const f32 physics_body_get_restitution(const PhysicsBodyID& body_id) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  return s_world->body_interface->GetRestitution(body);
+const PhysicsObjectLayer physics_body_get_layer(const PhysicsBody* body) {
+  BODY_CHECK(body);
+  return (PhysicsObjectLayer)body->handle->GetObjectLayer();
 }
 
-const f32 physics_body_get_friction(const PhysicsBodyID& body_id) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  return s_world->body_interface->GetFriction(body);
+const f32 physics_body_get_restitution(const PhysicsBody* body) {
+  BODY_CHECK(body);
+  return body->handle->GetRestitution();
 }
 
-const f32 physics_body_get_gravity_factor(const PhysicsBodyID& body_id) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  return s_world->body_interface->GetGravityFactor(body);
+const f32 physics_body_get_friction(const PhysicsBody* body) {
+  BODY_CHECK(body);
+  return body->handle->GetFriction();
 }
 
-const PhysicsBodyType physics_body_get_type(const PhysicsBodyID& body_id) {
-  BODY_ID_CHECK(body_id);
-  
-  JPH::BodyID body = s_world->bodies[body_id._id];
-  return jph_body_type_to_body_type(s_world->body_interface->GetMotionType(body));
+const f32 physics_body_get_gravity_factor(const PhysicsBody* body) {
+  BODY_CHECK(body);
+  return body->handle->GetMotionProperties()->GetGravityFactor();
 }
 
-Transform physics_body_get_transform(const PhysicsBodyID& body_id) {
-  BODY_ID_CHECK(body_id);
-  JPH::BodyID body = s_world->bodies[body_id._id];
+const PhysicsBodyType physics_body_get_type(const PhysicsBody* body) {
+  BODY_CHECK(body);
+  return jph_body_type_to_body_type(body->handle->GetMotionType());
+}
+
+Transform physics_body_get_transform(const PhysicsBody* body) {
+  BODY_CHECK(body);
 
   Transform transform;
-  transform.position = jph_vec3_to_vec3(s_world->body_interface->GetPosition(body));
-  transform.rotation = jph_quat_to_quat(s_world->body_interface->GetRotation(body));
+  transform.position = jph_vec3_to_vec3(body->handle->GetPosition());
+  transform.rotation = jph_quat_to_quat(body->handle->GetRotation());
 
   transform_apply(transform);
   return transform;
+}
+
+Collider* physics_body_get_collider(const PhysicsBody* body) {
+  BODY_CHECK(body);
+  return body->collider;
 }
 
 /// Physics body functions
@@ -912,64 +784,77 @@ Transform physics_body_get_transform(const PhysicsBodyID& body_id) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Collider functions
 
-ColliderID collider_create(const BoxColliderDesc& desc) {
+Collider* collider_create(const BoxColliderDesc& desc) {
+  // Create the Jolt shape
+
   JPH::BoxShapeSettings shape_settings(vec3_to_jph_vec3(desc.half_size));
   JPH::Shape::ShapeResult result = shape_settings.Create();
 
   if(!result.IsValid()) {
     NIKOLA_LOG_ERROR("Failed to create a box collider - %s", result.GetError().c_str());
-    return ColliderID{};
+    return nullptr;
   }
 
-  s_world->shapes.push_back(result.Get());
-  result.Get()->SetUserData((JPH::uint64)COLLIDER_BOX);
+  // Create the collider from the shape
 
-  ColliderID coll_id = {
-    ._type = COLLIDER_BOX,
-    ._id   = (u32)(s_world->shapes.size() - 1),
-  };
+  Collider* collider = new Collider{};
+  collider->handle   = result.Get();
+  collider->type     = COLLIDER_BOX;
+  collider->extents  = desc.half_size;
 
-  return coll_id;
+  return collider;
 }
 
-ColliderID collider_create(const SphereColliderDesc& desc) {
+Collider* collider_create(const SphereColliderDesc& desc) {
+  // Create the Jolt shape
+
   JPH::SphereShapeSettings shape_settings(desc.radius);
   JPH::Shape::ShapeResult result = shape_settings.Create();
 
   if(!result.IsValid()) {
     NIKOLA_LOG_ERROR("Failed to create a sphere collider - %s", result.GetError().c_str());
-    return ColliderID{};
+    return nullptr;
   }
 
-  s_world->shapes.push_back(result.Get());
-  result.Get()->SetUserData((JPH::uint64)COLLIDER_SPHERE);
+  // Create the collider from the shape
 
-  ColliderID coll_id = {
-    ._type = COLLIDER_SPHERE,
-    ._id   = (u32)(s_world->shapes.size() - 1),
-  };
+  Collider* collider = new Collider{};
+  collider->handle   = result.Get();
+  collider->type     = COLLIDER_SPHERE;
+  collider->extents  = Vec3(desc.radius);
 
-  return coll_id;
+  return collider;
 }
 
-ColliderID collider_create(const CapsuleColliderDesc& desc) {
+Collider* collider_create(const CapsuleColliderDesc& desc) {
+  // Create the Jolt shape
+
   JPH::CapsuleShapeSettings shape_settings(desc.half_height, desc.radius);
   JPH::Shape::ShapeResult result = shape_settings.Create();
 
   if(!result.IsValid()) {
     NIKOLA_LOG_ERROR("Failed to create a capsule collider - %s", result.GetError().c_str());
-    return ColliderID{};
+    return nullptr;
   }
 
-  s_world->shapes.push_back(result.Get());
-  result.Get()->SetUserData((JPH::uint64)COLLIDER_CAPSULE);
+  // Create the collider from the shape
 
-  ColliderID coll_id = {
-    ._type = COLLIDER_CAPSULE,
-    ._id   = (u32)(s_world->shapes.size() - 1),
-  };
+  Collider* collider = new Collider{};
+  collider->handle   = result.Get();
+  collider->type     = COLLIDER_CAPSULE;
+  collider->extents  = Vec3(desc.radius, desc.half_height, 0.0f);
 
-  return coll_id;
+  return collider;
+}
+
+ColliderType collider_get_type(const Collider* collider) {
+  COLLIDER_CHECK(collider);
+  return collider->type;
+}
+
+Vec3 collider_get_extents(const Collider* collider) {
+  COLLIDER_CHECK(collider);
+  return collider->extents;
 }
 
 /// Collider functions
@@ -978,8 +863,12 @@ ColliderID collider_create(const CapsuleColliderDesc& desc) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Character body functions
 
-CharacterID character_body_create(const CharacterBodyDesc& desc) {
-  COLLIDER_ID_CHECK(desc.collider_id);
+Character* character_body_create(const CharacterBodyDesc& desc) {
+  COLLIDER_CHECK(desc.collider);
+  
+  Character* nk_char = new Character{}; 
+
+  // Create the Jolt character
 
   JPH::Ref<JPH::CharacterSettings> settings = new JPH::CharacterSettings();
 
@@ -990,210 +879,170 @@ CharacterID character_body_create(const CharacterBodyDesc& desc) {
   settings->mGravityFactor = desc.gravity_factor;
 
   settings->mUp    = vec3_to_jph_vec3(desc.up_axis);
-  settings->mShape = s_world->shapes[desc.collider_id._id];
+  settings->mShape = desc.collider->handle;
 
   JPH::Ref<JPH::Character> character = new JPH::Character(settings, 
                                                           vec3_to_jph_vec3(desc.position), 
                                                           quat_to_jph_quat(desc.rotation), 
-                                                          desc.user_data, 
+                                                          (JPH::uint64)nk_char,
                                                           &s_world->physics_system);
-  s_world->characters.push_back(character);
 
-  return CharacterID {
-    ._id = (u32)(s_world->characters.size() - 1),
-  };
+  // Create our character
+
+  nk_char->handle    = character;
+  nk_char->user_data = (void*)desc.user_data;
+  nk_char->collider  = (Collider*)desc.collider;
+
+  return nk_char;
 }
 
-void character_body_set_position(const CharacterID& char_id, const Vec3 position) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  character->SetPosition(vec3_to_jph_vec3(position));
+void character_body_destroy(Character* character) {
+  CHARACTER_CHECK(character);
+
+  delete character->collider;
+  delete character;
 }
 
-void character_body_set_rotation(const CharacterID& char_id, const Quat rotation) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  character->SetRotation(quat_to_jph_quat(rotation));
+void character_body_update(Character* character) {
+  CHARACTER_CHECK(character);
+  character->handle->PostSimulation(s_world->collision_tolerance);
 }
 
-void character_body_set_rotation(const CharacterID& char_id, const Vec3 axis, const f32 angle) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  character->SetRotation(quat_to_jph_quat(quat_angle_axis(axis, angle)));
+void character_body_set_position(Character* character, const Vec3 position) {
+  CHARACTER_CHECK(character);
+  character->handle->SetPosition(vec3_to_jph_vec3(position));
 }
 
-void character_body_set_linear_velocity(const CharacterID& char_id, const Vec3 velocity) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  character->SetLinearVelocity(vec3_to_jph_vec3(velocity));
+void character_body_set_rotation(Character* character, const Quat rotation) {
+  CHARACTER_CHECK(character);
+  character->handle->SetRotation(quat_to_jph_quat(rotation));
 }
 
-void character_body_set_layer(const CharacterID& char_id, const PhysicsObjectLayer layer) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  character->SetLayer((JPH::ObjectLayer)layer);
+void character_body_set_rotation(Character* character, const Vec3 axis, const f32 angle) {
+  CHARACTER_CHECK(character);
+  character->handle->SetRotation(quat_to_jph_quat(quat_angle_axis(axis, angle)));
 }
 
-void character_body_set_slope_angle(const CharacterID& char_id, const f32 max_slope_angle) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  character->SetMaxSlopeAngle(max_slope_angle);
+void character_body_set_linear_velocity(Character* character, const Vec3 velocity) {
+  CHARACTER_CHECK(character);
+  character->handle->SetLinearVelocity(vec3_to_jph_vec3(velocity));
 }
 
-void character_body_set_collider(const CharacterID& char_id, const ColliderID& collider_id, const f32 max_penetration_depth) {
-  CHARACTER_ID_CHECK(char_id);
-  COLLIDER_ID_CHECK(collider_id); 
-
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  character->SetShape(s_world->shapes[collider_id._id], max_penetration_depth);
+void character_body_set_layer(Character* character, const PhysicsObjectLayer layer) {
+  CHARACTER_CHECK(character);
+  character->handle->SetLayer((JPH::ObjectLayer)layer);
 }
 
-void character_body_activate(const CharacterID& char_id) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  character->Activate();
+void character_body_set_slope_angle(Character* character, const f32 max_slope_angle) {
+  CHARACTER_CHECK(character);
+  character->handle->SetMaxSlopeAngle(max_slope_angle);
 }
 
-const Vec3 character_body_get_position(const CharacterID& char_id) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  return jph_vec3_to_vec3(character->GetPosition());
+void character_body_set_collider(Character* character, const Collider* collider, const f32 max_penetration_depth) {
+  CHARACTER_CHECK(character);
+  COLLIDER_CHECK(collider); 
+
+  character->handle->SetShape(collider->handle, max_penetration_depth);
+  character->collider = (Collider*)collider;
 }
 
-const Vec3 character_body_get_com_position(const CharacterID& char_id) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  return jph_vec3_to_vec3(character->GetCenterOfMassPosition());
+void character_body_activate(Character* character) {
+  CHARACTER_CHECK(character);
+  character->handle->Activate();
 }
 
-const Quat character_body_get_rotation(const CharacterID& char_id) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  return jph_quat_to_quat(character->GetRotation());
+void character_body_apply_linear_velocity(Character* character, const Vec3 velocity) {
+  CHARACTER_CHECK(character);
+  character->handle->AddLinearVelocity(vec3_to_jph_vec3(velocity));
 }
 
-const Vec3 character_body_get_linear_velocity(const CharacterID& char_id) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  return jph_vec3_to_vec3(character->GetLinearVelocity());
+void character_body_apply_impulse(Character* character, const Vec3 impulse) {
+  CHARACTER_CHECK(character);
+  character->handle->AddImpulse(vec3_to_jph_vec3(impulse));
 }
 
-const PhysicsObjectLayer character_body_get_layer(const CharacterID& char_id) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  return (PhysicsObjectLayer)character->GetLayer();
+const Vec3 character_body_get_position(const Character* character) {
+  CHARACTER_CHECK(character);
+  return jph_vec3_to_vec3(character->handle->GetPosition());
 }
 
-const f32 character_body_get_slope_angle(const CharacterID& char_id) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  return character->GetCosMaxSlopeAngle();
+const Vec3 character_body_get_com_position(const Character* character) {
+  CHARACTER_CHECK(character);
+  return jph_vec3_to_vec3(character->handle->GetCenterOfMassPosition());
 }
 
-Transform character_body_get_transform(const CharacterID& char_id) {
-  CHARACTER_ID_CHECK(char_id);
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
+const Quat character_body_get_rotation(const Character* character) {
+  CHARACTER_CHECK(character);
+  return jph_quat_to_quat(character->handle->GetRotation());
+}
+
+const Vec3 character_body_get_linear_velocity(const Character* character) {
+  CHARACTER_CHECK(character);
+  return jph_vec3_to_vec3(character->handle->GetLinearVelocity());
+}
+
+const PhysicsObjectLayer character_body_get_layer(const Character* character) {
+  CHARACTER_CHECK(character);
+  return (PhysicsObjectLayer)character->handle->GetLayer();
+}
+
+const f32 character_body_get_slope_angle(const Character* character) {
+  CHARACTER_CHECK(character);
+  return character->handle->GetCosMaxSlopeAngle();
+}
+
+Transform character_body_get_transform(const Character* character) {
+  CHARACTER_CHECK(character);
 
   Transform transform;
-  transform.position = jph_vec3_to_vec3(character->GetCenterOfMassPosition());
-  transform.rotation = jph_quat_to_quat(character->GetRotation());
+  transform.position = jph_vec3_to_vec3(character->handle->GetCenterOfMassPosition());
+  transform.rotation = jph_quat_to_quat(character->handle->GetRotation());
 
   transform_apply(transform);
   return transform;
 }
 
-const PhysicsBodyID character_body_get_body(const CharacterID& char_id) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  return PhysicsBodyID {
-    ._id = character->GetBodyID().GetIndex(),
-  };
+GroundState character_body_query_ground_state(const Character* character) {
+  CHARACTER_CHECK(character);
+  return jph_ground_state_top_ground_state(character->handle->GetGroundState());
 }
 
-GroundState character_body_query_ground_state(const CharacterID& char_id) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  return jph_ground_state_top_ground_state(character->GetGroundState());
+const bool character_body_is_supported(const Character* character) {
+  CHARACTER_CHECK(character);
+  return character->handle->IsSupported();
 }
 
-void character_body_apply_linear_velocity(const CharacterID& char_id, const Vec3 velocity) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  character->AddLinearVelocity(vec3_to_jph_vec3(velocity));
+const bool character_body_is_slope_too_steep(const Character* character, const Vec3 surface_normal) {
+  CHARACTER_CHECK(character);
+  return character->handle->IsSlopeTooSteep(vec3_to_jph_vec3(surface_normal));
 }
 
-void character_body_apply_impulse(const CharacterID& char_id, const Vec3 impulse) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  character->AddImpulse(vec3_to_jph_vec3(impulse));
+const Vec3 character_body_get_ground_position(const Character* character) {
+  CHARACTER_CHECK(character);
+  return jph_vec3_to_vec3(character->handle->GetGroundPosition());
 }
 
-const bool character_body_is_supported(const CharacterID& char_id) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  return character->IsSupported();
+const Vec3 character_body_get_ground_normal(const Character* character) {
+  CHARACTER_CHECK(character);
+  return jph_vec3_to_vec3(character->handle->GetGroundNormal());
 }
 
-const bool character_body_is_slope_too_steep(const CharacterID& char_id, const Vec3 surface_normal) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  return character->IsSlopeTooSteep(vec3_to_jph_vec3(surface_normal));
+const Vec3 character_body_get_ground_velocity(const Character* character) {
+  CHARACTER_CHECK(character);
+  return jph_vec3_to_vec3(character->handle->GetGroundVelocity());
 }
 
-const Vec3 character_body_get_ground_position(const CharacterID& char_id) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  return jph_vec3_to_vec3(character->GetGroundPosition());
+const PhysicsBody* character_body_get_ground_body(const Character* character) {
+  CHARACTER_CHECK(character);
+
+  JPH::uint64 user_data = s_world->body_interface->GetUserData(character->handle->GetGroundBodyID());
+  return reinterpret_cast<const PhysicsBody*>(user_data);
 }
 
-const Vec3 character_body_get_ground_normal(const CharacterID& char_id) {
-  CHARACTER_ID_CHECK(char_id);
+const bool character_body_cast_ray(const Character* character, const RayCastDesc& cast_desc) {
+  CHARACTER_CHECK(character);
   
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  return jph_vec3_to_vec3(character->GetGroundNormal());
-}
-
-const Vec3 character_body_get_ground_velocity(const CharacterID& char_id) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  return jph_vec3_to_vec3(character->GetGroundVelocity());
-}
-
-const PhysicsBodyID character_body_get_ground_body(const CharacterID& char_id) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  return PhysicsBodyID {
-    ._id = character->GetGroundBodyID().GetIndex(),
-  };
-}
-
-const bool character_body_cast_ray(const CharacterID& char_id, const RayCastDesc& cast_desc) {
-  CHARACTER_ID_CHECK(char_id);
-  
-  JPH::Ref<JPH::Character> character = s_world->characters[char_id._id];
-  JPH::TransformedShape trans_shape  = character->GetTransformedShape();
+  JPH::TransformedShape trans_shape = character->handle->GetTransformedShape();
  
   JPH::RayCast ray(vec3_to_jph_vec3(cast_desc.origin), vec3_to_jph_vec3(cast_desc.direction * cast_desc.distance));
   JPH::RayCastResult ray_result; 

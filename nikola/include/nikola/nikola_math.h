@@ -490,6 +490,9 @@ NIKOLA_API const String mat4_to_string(const Mat4& mat);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Math Quat functions
 
+/// Create and return an identity quaternion.
+NIKOLA_API Quat quat_identity();
+
 /// Returns the dot product between `q1` and `q2`.
 NIKOLA_API const f32 quat_dot(const Quat& q1, const Quat& q2);
 

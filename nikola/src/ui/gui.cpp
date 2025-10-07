@@ -651,7 +651,7 @@ void gui_edit_timer(const char* name, Timer* timer) {
   ImGui::PopID(); 
 }
 
-void gui_edit_physics_body(const char* name, PhysicsBodyID& body) {
+void gui_edit_physics_body(const char* name, PhysicsBody* body) {
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
   
@@ -734,7 +734,7 @@ void gui_edit_physics_body(const char* name, PhysicsBodyID& body) {
   ImGui::PopID(); 
 }
 
-void gui_edit_character_body(const char* name, CharacterID& character) {
+void gui_edit_character_body(const char* name, Character* character) {
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
   
@@ -795,35 +795,6 @@ void gui_edit_character_body(const char* name, CharacterID& character) {
     ImGui::Text("Ground state: %s", state_string.c_str());
   }
 
-  ImGui::PopID(); 
-}
-
-void gui_edit_collider(const char* name, ColliderID& collider) {
-  ImGui::SeparatorText(name); 
-  ImGui::PushID(name); 
- 
-  // @TODO (Physics)
-  // // Extents
-  // 
-  // Vec3 extents = collider_get_extents(collider);
-  // if(ImGui::DragFloat3("Extents", &extents[0], s_gui.big_step)) {
-  //   collider_set_extents(collider, extents);
-  // }
-  // 
-  // // Local position
-  // 
-  // Vec3 local_pos = collider_get_local_transform(collider).position;
-  // if(ImGui::DragFloat3("Local position", &local_pos[0], s_gui.big_step)) {
-  //   collider_set_local_position(collider, local_pos);
-  // }
-  // 
-  // // Density
-  // 
-  // f32 density = collider_get_density(collider);
-  // if(ImGui::DragFloat("Density", &density, s_gui.big_step)) {
-  //   collider_set_density(collider, density);
-  // }
-  
   ImGui::PopID(); 
 }
 

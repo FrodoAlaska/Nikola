@@ -13,13 +13,10 @@ struct nikola::App {
   nikola::ResourceID mesh_id, cube_id;
   nikola::ResourceID materials[2];
 
-  nikola::PhysicsBodyID floor_body; 
-  nikola::ColliderID floor_collider; 
+  nikola::PhysicsBody* floor_body; 
+  nikola::Character* cube_body;
 
-  nikola::CharacterID cube_body;
-  nikola::ColliderID cube_collider, sphere_collider;
-  nikola::Vec3 velocity = nikola::Vec3(0.0f);
-
+  nikola::Vec3 velocity          = nikola::Vec3(0.0f);
   nikola::RenderPass* debug_pass = nullptr;
 };
 /// App
@@ -60,7 +57,6 @@ static void init_bodies(nikola::App* app) {
   nikola::BoxColliderDesc coll_desc = {
     .half_size = nikola::Vec3(32.0f, 0.1f, 32.0f),
   };
-  app->floor_collider = nikola::collider_create(coll_desc);
 
   nikola::PhysicsBodyDesc body_desc = {
     .position = nikola::Vec3(10.0f, -5.0f, 10.0f),
@@ -69,22 +65,15 @@ static void init_bodies(nikola::App* app) {
     .type   = nikola::PHYSICS_BODY_STATIC, 
     .layers = nikola::PHYSICS_OBJECT_LAYER_0,
 
-    .collider_id = app->floor_collider,
-    .user_data   = 0,
+    .collider = nikola::collider_create(coll_desc),
   };
   app->floor_body = nikola::physics_world_create_and_add_body(body_desc);
 
   // Cube init
 
-  coll_desc = {
-    .half_size = nikola::Vec3(1.0f),
-  };
-  app->cube_collider = nikola::collider_create(coll_desc);
-
   nikola::SphereColliderDesc sphere_coll_desc = {
     .radius = 1.0f,
   };
-  app->sphere_collider = nikola::collider_create(sphere_coll_desc);
 
   nikola::CharacterBodyDesc char_desc = {
     .position = nikola::Vec3(10.0f, 5.0f, 10.0f),
@@ -92,8 +81,7 @@ static void init_bodies(nikola::App* app) {
 
     .layer = nikola::PHYSICS_OBJECT_LAYER_0,
     
-    .collider_id = app->sphere_collider,
-    .user_data   = 1,
+    .collider  = nikola::collider_create(sphere_coll_desc),
   };
 
   app->cube_body = nikola::character_body_create(char_desc);
@@ -111,17 +99,17 @@ static bool on_physics_event(const nikola::Event& event, const void* dispatcher,
 
   nikola::physics_world_set_safe_mode(false);
 
-  nikola::u64 user_data = nikola::physics_body_get_user_data(event.collision_data.body1_id);
-  nikola::Material* mat = nikola::resources_get_material(app->materials[user_data]);
-
-  switch(event.type) {
-    case nikola::EVENT_PHYSICS_CONTACT_ADDED:
-      mat->color = nikola::Vec3(1.0f, 0.0f, 0.0f);
-      break;
-    case nikola::EVENT_PHYSICS_CONTACT_REMOVED:
-      mat->color = nikola::Vec3(1.0f);
-      break;
-  }
+  // nikola::u64 user_data = nikola::physics_body_get_user_data(event.collision_data.body1_id);
+  // nikola::Material* mat = nikola::resources_get_material(app->materials[user_data]);
+  //
+  // switch(event.type) {
+  //   case nikola::EVENT_PHYSICS_CONTACT_ADDED:
+  //     mat->color = nikola::Vec3(1.0f, 0.0f, 0.0f);
+  //     break;
+  //   case nikola::EVENT_PHYSICS_CONTACT_REMOVED:
+  //     mat->color = nikola::Vec3(1.0f);
+  //     break;
+  // }
 
   nikola::physics_world_set_safe_mode(true);
   return true;
@@ -132,13 +120,13 @@ static bool on_raycast_event(const nikola::Event& event, const void* dispatcher,
 
   nikola::physics_world_set_safe_mode(false);
 
-  nikola::u64 user_data         = nikola::physics_body_get_user_data(event.cast_result.body_id);
-  nikola::PhysicsBodyID body_id = event.cast_result.body_id;
+  // nikola::u64 user_data         = nikola::physics_body_get_user_data(event.cast_result.body_id);
+  nikola::PhysicsBody* body = event.cast_result.body;
 
-  nikola::Vec3 body_position = nikola::physics_body_get_position(body_id);
+  nikola::Vec3 body_position = nikola::physics_body_get_position(body);
   nikola::Vec3 hit_position  = event.cast_result.point;
 
-  nikola::physics_body_apply_force(body_id, event.cast_result.ray_direction * 1000.0f);
+  nikola::physics_body_apply_force(body, event.cast_result.ray_direction * 1500.0f);
 
   nikola::physics_world_set_safe_mode(true);
   return true;
@@ -262,7 +250,10 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     nikola::physics_world_cast_ray(ray);
   }
 
+  // Update character
+  
   nikola::character_body_set_linear_velocity(app->cube_body, app->velocity);
+  nikola::character_body_update(app->cube_body);
 
   // Update the camera
   nikola::camera_update(app->frame_data.camera);
@@ -282,8 +273,6 @@ void app_render(nikola::App* app) {
   transform = nikola::character_body_get_transform(app->cube_body);
   nikola::transform_scale(transform, nikola::Vec3(1.0f));
   nikola::renderer_queue_mesh(app->cube_id, transform, app->materials[1]);
-  
-  nikola::physics_world_draw();
 
   nikola::renderer_end();
   

@@ -542,7 +542,7 @@ void file_write_bytes(File& file, const Timer& timer) {
   file_write_bytes(file, &timer.is_active, sizeof(timer.is_active));
 }
 
-void file_write_bytes(File& file, const PhysicsBodyID& body) {
+void file_write_bytes(File& file, const PhysicsBody* body) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
  
   Vec3 position = physics_body_get_position(body);
@@ -577,37 +577,6 @@ void file_write_bytes(File& file, const PhysicsBodyID& body) {
 
   file_write_bytes(file, f_data, sizeof(f_data));
   file_write_bytes(file, u_data, sizeof(u_data));
-}
-
-void file_write_bytes(File& file, const ColliderID& collider) {
-  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
-  
-  // @TODO (Physics)
-  // Vec3 offset  = collider_get_local_transform(collider).position;
-  // Vec3 extents = collider_get_extents(collider);
-  //
-  // f32 friction    = collider_get_friction(collider);
-  // f32 restitution = collider_get_restitution(collider);
-  // f32 density     = collider_get_density(collider);
-  //
-  // i32 sensor = (i32)collider_get_sensor(collider);
-  //
-  // f32 data[] = {
-  //   offset.x,
-  //   offset.y,
-  //   offset.z,
-  //   
-  //   extents.x,
-  //   extents.y,
-  //   extents.z,
-  //
-  //   friction, 
-  //   restitution, 
-  //   density,
-  // };
-  // 
-  // file_write_bytes(file, data, sizeof(data));
-  // file_write_bytes(file, &sensor, sizeof(sensor));
 }
 
 void file_write_string(File& file, const String& string) {
@@ -1075,24 +1044,6 @@ void file_read_bytes(File& file, PhysicsBodyDesc* body_desc) {
 
   body_desc->type   = type;
   body_desc->layers = layer;
-}
-
-void file_read_bytes(File& file, ColliderDesc* collider_desc) {
-  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
-
-  // @TODO (Physics)
-  // f32 data[9];
-  // file_read_bytes(file, data, sizeof(data));
-  //
-  // i32 sensor; 
-  // file_read_bytes(file, &sensor, sizeof(sensor));
-  //
-  // collider_desc->position    = Vec3(data[0], data[1], data[2]);
-  // collider_desc->extents     = Vec3(data[3], data[4], data[5]);
-  // collider_desc->friction    = data[6];
-  // collider_desc->restitution = data[7];
-  // collider_desc->density     = data[8];
-  // collider_desc->is_sensor   = (bool)sensor;
 }
 
 void file_read_string(File& file, String* str) {

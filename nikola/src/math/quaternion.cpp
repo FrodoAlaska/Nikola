@@ -11,6 +11,10 @@ namespace nikola { // Start of nikola
 /// ----------------------------------------------------------------------
 /// Quat functions
 
+Quat quat_identity() {
+  return Quat(1.0f, 0.0f, 0.0f, 0.0f);
+}
+
 const f32 quat_dot(const Quat& q1, const Quat& q2) {
   return glm::dot(q1, q2);
 }

@@ -20,9 +20,9 @@ struct SpotLight;
 struct FrameData;
 struct Timer;
 
-struct PhysicsBodyID;
+struct PhysicsBody;
 struct PhysicsBodyDesc;
-struct ColliderID;
+struct Collider;
 struct ColliderDesc;
 
 struct NBRHeader;
@@ -371,12 +371,7 @@ NIKOLA_API void file_write_bytes(File& file, const Timer& timer);
 /// Write the contents of the given `body` into `file`.
 ///
 /// @NOTE: This function will raise an error if `file` is not opened.
-NIKOLA_API void file_write_bytes(File& file, const PhysicsBodyID& body);
-
-/// Write the contents of the given `collider` into `file`.
-///
-/// @NOTE: This function will raise an error if `file` is not opened.
-NIKOLA_API void file_write_bytes(File& file, const ColliderID& collider);
+NIKOLA_API void file_write_bytes(File& file, const PhysicsBody* body);
 
 /// Write the given `string` into `file` as a string representation.
 ///
@@ -454,11 +449,6 @@ NIKOLA_API void file_read_bytes(File& file, Timer* timer);
 ///
 /// @NOTE: This function will raise an error if `file` is not opened.
 NIKOLA_API void file_read_bytes(File& file, PhysicsBodyDesc* body_desc);
-
-/// Read a `ColliderDesc` from `file` and save it into `collider_desc`.
-///
-/// @NOTE: This function will raise an error if `file` is not opened.
-NIKOLA_API void file_read_bytes(File& file, ColliderDesc* collider_desc);
 
 /// Read the WHOLE `file` as a `String` and save it into `str`.
 ///
