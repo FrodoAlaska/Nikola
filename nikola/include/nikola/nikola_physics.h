@@ -475,10 +475,10 @@ NIKOLA_API void physics_world_remove_body(PhysicsBody* body);
 /// Destroy the given `body`, deallocating any memory and disabling it in the world. 
 ///
 /// @NOTE: Make sure to call `physics_world_remove_body` _before_ this function.
-NIKOLA_API void physics_world_destroy_body(PhysicsBody* body);
+NIKOLA_API void physics_world_destroy_body(PhysicsBody** body);
 
 /// Combines the `physics_world_destroy_body` and `physics_world_remove_body` functions into one for convenience.
-NIKOLA_API void physics_world_destroy_and_remove(PhysicsBody* body);
+NIKOLA_API void physics_world_remove_and_destroy_body(PhysicsBody** body);
 
 /// Remove the given `character` from the physics world.
 ///
@@ -615,6 +615,9 @@ NIKOLA_API const bool physics_body_is_active(const PhysicsBody* body);
 /// Retrieve whether the given `body` is a sensor.
 NIKOLA_API const bool physics_body_is_sensor(const PhysicsBody* body);
 
+/// Retrieve whether the given `body` is a valid entry.
+NIKOLA_API const bool physics_body_is_valid(const PhysicsBody* body);
+
 /// Retrieve internal user data of the given `body`.
 NIKOLA_API void* physics_body_get_user_data(const PhysicsBody* body);
 
@@ -691,7 +694,7 @@ NIKOLA_API Character* character_body_create(const CharacterBodyDesc& desc);
 /// Destroy the given `character` and delete it from memory. 
 ///
 /// @NOTE: Make sure to call `physics_world_remove_character` _before_ this function.
-NIKOLA_API void character_body_destroy(Character* character);
+NIKOLA_API void character_body_destroy(Character** character);
 
 /// This function _must_ be called for the character to simulate fucntionalities 
 /// such as slop travesal and whatnot. This function _must_ be called _after_ 
@@ -761,6 +764,9 @@ NIKOLA_API const bool character_body_is_supported(const Character* character);
 
 /// Check whether the slope at `surface_normal` is too steep for the given `character`. 
 NIKOLA_API const bool character_body_is_slope_too_steep(const Character* character, const Vec3 surface_normal);
+
+/// Check whether the given `character` is a valid entry.
+NIKOLA_API const bool character_body_is_valid(const Character* character);
 
 /// Retrieve the position of the ground body touching `character`.
 NIKOLA_API const Vec3 character_body_get_ground_position(const Character* character);

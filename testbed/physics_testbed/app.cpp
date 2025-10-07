@@ -101,15 +101,7 @@ static bool on_physics_event(const nikola::Event& event, const void* dispatcher,
 
   // nikola::u64 user_data = nikola::physics_body_get_user_data(event.collision_data.body1_id);
   // nikola::Material* mat = nikola::resources_get_material(app->materials[user_data]);
-  //
-  // switch(event.type) {
-  //   case nikola::EVENT_PHYSICS_CONTACT_ADDED:
-  //     mat->color = nikola::Vec3(1.0f, 0.0f, 0.0f);
-  //     break;
-  //   case nikola::EVENT_PHYSICS_CONTACT_REMOVED:
-  //     mat->color = nikola::Vec3(1.0f);
-  //     break;
-  // }
+  // mat->color = nikola::Vec3(1.0f, 0.0f, 0.0f);
 
   nikola::physics_world_set_safe_mode(true);
   return true;
@@ -120,9 +112,7 @@ static bool on_raycast_event(const nikola::Event& event, const void* dispatcher,
 
   nikola::physics_world_set_safe_mode(false);
 
-  // nikola::u64 user_data         = nikola::physics_body_get_user_data(event.cast_result.body_id);
-  nikola::PhysicsBody* body = event.cast_result.body;
-
+  nikola::PhysicsBody* body  = event.cast_result.body;
   nikola::Vec3 body_position = nikola::physics_body_get_position(body);
   nikola::Vec3 hit_position  = event.cast_result.point;
 
@@ -176,7 +166,6 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Listen to events
   
   nikola::event_listen(nikola::EVENT_PHYSICS_CONTACT_ADDED, on_physics_event, app);
-  nikola::event_listen(nikola::EVENT_PHYSICS_CONTACT_REMOVED, on_physics_event, app);
   nikola::event_listen(nikola::EVENT_PHYSICS_RAYCAST_HIT, on_raycast_event, app);
 
   app->debug_pass = nikola::renderer_peek_pass(nikola::RENDER_PASS_DEBUG);
@@ -185,6 +174,8 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 }
 
 void app_shutdown(nikola::App* app) {
+  nikola::physics_world_remove_and_destroy_body(&app->floor_body);
+
   nikola::resources_destroy_group(app->res_group_id);
   nikola::gui_shutdown();
 
@@ -218,7 +209,19 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     }
   }
 
+  if(nikola::input_key_pressed(nikola::KEY_K)) {
+    nikola::physics_world_remove_character(app->cube_body);
+    nikola::character_body_destroy(&app->cube_body);
+  }
+
+  // Update the camera
+  nikola::camera_update(app->frame_data.camera);
+
   // Handle input
+
+  if(!nikola::character_body_is_valid(app->cube_body)) {
+    return;
+  }
 
   nikola::Vec3 current_velocity = nikola::character_body_get_linear_velocity(app->cube_body);
   app->velocity                 = nikola::Vec3(0.0f, current_velocity.y, 0.0f);
@@ -254,9 +257,6 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
   
   nikola::character_body_set_linear_velocity(app->cube_body, app->velocity);
   nikola::character_body_update(app->cube_body);
-
-  // Update the camera
-  nikola::camera_update(app->frame_data.camera);
 }
 
 void app_render(nikola::App* app) {
@@ -269,10 +269,12 @@ void app_render(nikola::App* app) {
   transform = nikola::physics_body_get_transform(app->floor_body);
   nikola::transform_scale(transform, nikola::Vec3(32.0f, 0.1f, 32.0f));
   nikola::renderer_queue_mesh(app->cube_id, transform, app->materials[0]);
-  
-  transform = nikola::character_body_get_transform(app->cube_body);
-  nikola::transform_scale(transform, nikola::Vec3(1.0f));
-  nikola::renderer_queue_mesh(app->cube_id, transform, app->materials[1]);
+ 
+  if(app->cube_body) {
+    transform = nikola::character_body_get_transform(app->cube_body);
+    nikola::transform_scale(transform, nikola::Vec3(1.0f));
+    nikola::renderer_queue_mesh(app->cube_id, transform, app->materials[1]);
+  }
 
   nikola::renderer_end();
   
@@ -298,7 +300,10 @@ void app_render_gui(nikola::App* app) {
   // Bodies
   if(ImGui::CollapsingHeader("Bodies")) {
     nikola::gui_edit_physics_body("Floor", app->floor_body);
-    nikola::gui_edit_character_body("Cube", app->cube_body);
+
+    if(app->cube_body) {
+      nikola::gui_edit_character_body("Cube", app->cube_body);
+    }
   }
 
   // Frame 

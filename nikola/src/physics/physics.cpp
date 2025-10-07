@@ -460,17 +460,20 @@ void physics_world_remove_body(PhysicsBody* body) {
   s_world->body_interface->RemoveBody(body->handle->GetID());
 }
 
-void physics_world_destroy_body(PhysicsBody* body) {
-  BODY_CHECK(body);
+void physics_world_destroy_body(PhysicsBody** body) {
+  BODY_CHECK((*body));
   
-  s_world->body_interface->DestroyBody(body->handle->GetID());
+  s_world->body_interface->DestroyBody((*body)->handle->GetID());
+  (*body)->handle = nullptr;
 
-  delete body->collider;
-  delete body;
+  delete (*body)->collider;
+  delete (*body);
+
+  *body = nullptr;
 }
 
-void physics_world_destroy_and_remove(PhysicsBody* body) {
-  physics_world_remove_body(body);
+void physics_world_remove_and_destroy_body(PhysicsBody** body) {
+  physics_world_remove_body(*body);
   physics_world_destroy_body(body);
 }
 
@@ -732,6 +735,10 @@ const bool physics_body_is_sensor(const PhysicsBody* body) {
   return body->handle->IsSensor();
 }
 
+const bool physics_body_is_valid(const PhysicsBody* body) {
+  return (body && body->handle);
+}
+
 void* physics_body_get_user_data(const PhysicsBody* body) {
   BODY_CHECK(body);
   return body->user_data;
@@ -896,11 +903,15 @@ Character* character_body_create(const CharacterBodyDesc& desc) {
   return nk_char;
 }
 
-void character_body_destroy(Character* character) {
-  CHARACTER_CHECK(character);
+void character_body_destroy(Character** character) {
+  CHARACTER_CHECK((*character));
+  
+  (*character)->handle = nullptr;
 
-  delete character->collider;
-  delete character;
+  delete (*character)->collider;
+  delete (*character);
+
+  *character = nullptr;
 }
 
 void character_body_update(Character* character) {
@@ -1015,6 +1026,10 @@ const bool character_body_is_supported(const Character* character) {
 const bool character_body_is_slope_too_steep(const Character* character, const Vec3 surface_normal) {
   CHARACTER_CHECK(character);
   return character->handle->IsSlopeTooSteep(vec3_to_jph_vec3(surface_normal));
+}
+
+const bool character_body_is_valid(const Character* character) {
+  return (character && character->handle);
 }
 
 const Vec3 character_body_get_ground_position(const Character* character) {

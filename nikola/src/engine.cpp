@@ -32,7 +32,7 @@ static Engine s_engine;
 /// Consts
 
 constexpr f32 PHYSICS_WORLD_DEFAULT_DELTA_TIME      = 0.0166666667f;
-constexpr i32 PHYSICS_WORLD_DEFAULT_COLLISION_STEPS = 2;
+constexpr i32 PHYSICS_WORLD_DEFAULT_COLLISION_STEPS = 1;
 
 /// Consts
 /// ----------------------------------------------------------------------
