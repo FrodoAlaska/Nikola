@@ -78,7 +78,7 @@ static bool assert_impl(const char* expr, const char* msg, const char* file, JPH
 /// PhysicsBody
 struct PhysicsBody {
   JPH::Body* handle  = nullptr;
-  void* user_data    = nullptr;
+  u64 user_data      = 0;
   Collider* collider = nullptr;
 };
 /// PhysicsBody
@@ -88,7 +88,7 @@ struct PhysicsBody {
 /// Character
 struct Character {
   JPH::Ref<JPH::Character> handle = nullptr;
-  void* user_data                 = nullptr;
+  u64 user_data                   = 0;
   Collider* collider              = nullptr;
 };
 /// Character
@@ -428,7 +428,7 @@ PhysicsBody* physics_world_create_body(const PhysicsBodyDesc& desc) {
  
   nk_body->handle      = s_world->body_interface->CreateBody(body_settings); 
   nk_body->collider    = (Collider*)desc.collider; 
-  nk_body->user_data   = (void*)desc.user_data;
+  nk_body->user_data   = desc.user_data;
 
   return nk_body;
 }
@@ -622,11 +622,9 @@ void physics_body_set_active(PhysicsBody* body, const bool active) {
   }
 }
 
-void physics_body_set_user_data(PhysicsBody* body, const void* user_data) {
+void physics_body_set_user_data(PhysicsBody* body, const u64 user_data) {
   BODY_CHECK(body);
-  NIKOLA_ASSERT(user_data, "Passing invalid user data to body"); 
-
-  body->user_data = (void*)user_data;
+  body->user_data = user_data;
 }
 
 void physics_body_set_layer(PhysicsBody* body, const PhysicsObjectLayer layer) {
@@ -739,7 +737,7 @@ const bool physics_body_is_valid(const PhysicsBody* body) {
   return (body && body->handle);
 }
 
-void* physics_body_get_user_data(const PhysicsBody* body) {
+const u64 physics_body_get_user_data(const PhysicsBody* body) {
   BODY_CHECK(body);
   return body->user_data;
 }
@@ -897,7 +895,7 @@ Character* character_body_create(const CharacterBodyDesc& desc) {
   // Create our character
 
   nk_char->handle    = character;
-  nk_char->user_data = (void*)desc.user_data;
+  nk_char->user_data = desc.user_data;
   nk_char->collider  = (Collider*)desc.collider;
 
   return nk_char;

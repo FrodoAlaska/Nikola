@@ -333,7 +333,7 @@ struct PhysicsBodyDesc {
 
   /// User-specific data to keep in the physics body 
   /// for later retrieval.
-  void* user_data  = 0;
+  u64 user_data  = 0;
 
   /// If this flag is set to `true`, the body will 
   /// act as a sensor, which will detect collisions 
@@ -394,7 +394,7 @@ struct CharacterBodyDesc {
   
   /// User-specific data to keep in the physics body 
   /// for later retrieval.
-  void* user_data          = 0;
+  u64 user_data          = 0;
 };
 /// CharacterBodyDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -550,7 +550,7 @@ NIKOLA_API void physics_body_set_angular_velocity(PhysicsBody* body, const Vec3 
 NIKOLA_API void physics_body_set_active(PhysicsBody* body, const bool active);
 
 /// Set the internal user data of the given `body` to `user_data`.
-NIKOLA_API void physics_body_set_user_data(PhysicsBody* body, const void* user_data);
+NIKOLA_API void physics_body_set_user_data(PhysicsBody* body, const u64 user_data);
 
 /// Set the object layer of the given `body` to `layer`.
 NIKOLA_API void physics_body_set_layer(PhysicsBody* body, const PhysicsObjectLayer layer);
@@ -619,7 +619,7 @@ NIKOLA_API const bool physics_body_is_sensor(const PhysicsBody* body);
 NIKOLA_API const bool physics_body_is_valid(const PhysicsBody* body);
 
 /// Retrieve internal user data of the given `body`.
-NIKOLA_API void* physics_body_get_user_data(const PhysicsBody* body);
+NIKOLA_API const u64 physics_body_get_user_data(const PhysicsBody* body);
 
 /// Retrieve the object layer of the given `body`.
 NIKOLA_API const PhysicsObjectLayer physics_body_get_layer(const PhysicsBody* body);
