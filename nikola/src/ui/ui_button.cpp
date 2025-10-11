@@ -36,9 +36,8 @@ static const bool is_hovered(const UIButton& button) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// UIButton functions
 
-void ui_button_create(UIButton* button, Window* window, const UIButtonDesc& desc) {
+void ui_button_create(UIButton* button, const UIButtonDesc& desc) {
   NIKOLA_ASSERT(button, "Invalid UIButton given to ui_button_create");
-  NIKOLA_ASSERT(window, "Invalid Window struct given to ui_button_create");
   NIKOLA_ASSERT(RESOURCE_IS_VALID(desc.font_id), "Invalid font given to ui_button_create");
 
   // Text init
@@ -48,11 +47,13 @@ void ui_button_create(UIButton* button, Window* window, const UIButtonDesc& desc
     .font_id   = desc.font_id, 
     .font_size = desc.font_size,
 
-    .anchor = desc.anchor, 
+    .anchor        = desc.anchor, 
+    .canvas_bounds = desc.canvas_bounds,
+
     .offset = desc.offset,
     .color  = desc.text_color,
   };
-  ui_text_create(&button->text, window, text_desc);
+  ui_text_create(&button->text, text_desc);
 
   // Variables init
 
@@ -70,8 +71,8 @@ void ui_button_create(UIButton* button, Window* window, const UIButtonDesc& desc
   button->was_hovered = false;
 }
 
-void ui_button_set_anchor(UIButton& button, const UIAnchor& anchor) {
-  ui_text_set_anchor(button.text, anchor);
+void ui_button_set_anchor(UIButton& button, const UIAnchor& anchor, const Vec2& bounds) {
+  ui_text_set_anchor(button.text, anchor, bounds);
   adjust_button(button);
 }
 

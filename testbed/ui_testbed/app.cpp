@@ -75,7 +75,11 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::renderer_set_clear_color(nikola::Vec4(0.8f, 0.1f, 0.1f, 1.0f));
 
   // Window init
+  
   app->window = window;
+  
+  nikola::i32 width, height;
+  nikola::window_get_size(window, &width, &height);
 
   // Editor init
   nikola::gui_init(window);
@@ -99,7 +103,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::event_listen(nikola::EVENT_UI_BUTTON_EXITED, on_button_event, app);
 
   // UI layout init
-  nikola::ui_layout_create(&app->ui_layout, app->window, app->font_id);
+  nikola::ui_layout_create(&app->ui_layout, nikola::Vec2(width, height), app->font_id);
   
   nikola::ui_layout_begin(app->ui_layout, nikola::UI_ANCHOR_TOP_CENTER, nikola::Vec2(0.0f, 128.0f));
   

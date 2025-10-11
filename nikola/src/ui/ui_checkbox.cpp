@@ -28,20 +28,18 @@ static const bool is_hovered(const UICheckbox& checkbox) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// UICheckbox
 
-void ui_checkbox_create(UICheckbox* checkbox, Window* window, const UICheckboxDesc& desc) {
+void ui_checkbox_create(UICheckbox* checkbox, const UICheckboxDesc& desc) {
   NIKOLA_ASSERT(checkbox, "Invalid UICheckbox given to ui_checkbox_create");
-  NIKOLA_ASSERT(window, "Invalid Window struct given to ui_checkbox_create");
 
   // Variables init
 
-  checkbox->id         = desc.bind_id;
-  checkbox->window_ref = window;
+  checkbox->id = desc.bind_id;
 
   checkbox->anchor = desc.anchor; 
   checkbox->size   = Vec2(desc.size);
   checkbox->offset = desc.offset;
  
-  ui_checkbox_set_anchor(*checkbox, checkbox->anchor);
+  ui_checkbox_set_anchor(*checkbox, checkbox->anchor, desc.canvas_bounds);
 
   checkbox->color         = desc.color;
   checkbox->outline_color = desc.outline_color;
@@ -51,14 +49,9 @@ void ui_checkbox_create(UICheckbox* checkbox, Window* window, const UICheckboxDe
   checkbox->was_hovered = false;
 }
 
-void ui_checkbox_set_anchor(UICheckbox& checkbox, const UIAnchor& anchor) {
-  checkbox.anchor = anchor;
-
-  i32 width, height; 
-  window_get_size(checkbox.window_ref, &width, &height);
-
-  Vec2 window_size   = Vec2(width, height);
-  Vec2 window_center = window_size / 2.0f;
+void ui_checkbox_set_anchor(UICheckbox& checkbox, const UIAnchor& anchor, const Vec2& bounds) {
+  checkbox.anchor    = anchor;
+  Vec2 bounds_center = bounds / 2.0f;
 
   Vec2 half_size = checkbox.size / 2.0f; 
   Vec2 padding   = Vec2(10.0f);
@@ -68,34 +61,34 @@ void ui_checkbox_set_anchor(UICheckbox& checkbox, const UIAnchor& anchor) {
       checkbox.position = padding;
       break;
     case UI_ANCHOR_TOP_CENTER:
-      checkbox.position.x = (window_center.x - half_size.x); 
+      checkbox.position.x = (bounds_center.x - half_size.x); 
       checkbox.position.y = padding.y; 
       break;
     case UI_ANCHOR_TOP_RIGHT:
-      checkbox.position.x = (window_size.x - checkbox.size.x - padding.x); 
+      checkbox.position.x = (bounds.x - checkbox.size.x - padding.x); 
       checkbox.position.y = padding.y;  
       break;
     case UI_ANCHOR_CENTER_LEFT:  
       checkbox.position.x = padding.x;
-      checkbox.position.y = (window_center.y - half_size.y - padding.y); 
+      checkbox.position.y = (bounds_center.y - half_size.y - padding.y); 
       break;
     case UI_ANCHOR_CENTER:
-      checkbox.position = (window_center - half_size);
+      checkbox.position = (bounds_center - half_size);
       break;
     case UI_ANCHOR_CENTER_RIGHT:
-      checkbox.position.x = (window_size.x - checkbox.size.x - padding.x); 
-      checkbox.position.y = (window_center.y - half_size.y - padding.y); 
+      checkbox.position.x = (bounds.x - checkbox.size.x - padding.x); 
+      checkbox.position.y = (bounds_center.y - half_size.y - padding.y); 
       break;
     case UI_ANCHOR_BOTTOM_LEFT:  
       checkbox.position.x = padding.x + checkbox.offset.x;
-      checkbox.position.y = (window_size.y - checkbox.size.y - padding.y); 
+      checkbox.position.y = (bounds.y - checkbox.size.y - padding.y); 
       break;
     case UI_ANCHOR_BOTTOM_CENTER:
-      checkbox.position.x = (window_center.x - half_size.x);
-      checkbox.position.y = (window_size.y - checkbox.size.y - padding.y); 
+      checkbox.position.x = (bounds_center.x - half_size.x);
+      checkbox.position.y = (bounds.y - checkbox.size.y - padding.y); 
       break;
     case UI_ANCHOR_BOTTOM_RIGHT:
-      checkbox.position = window_size - checkbox.size - padding; 
+      checkbox.position = bounds - checkbox.size - padding; 
       break;
   }
 

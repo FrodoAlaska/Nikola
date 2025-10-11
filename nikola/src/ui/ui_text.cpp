@@ -64,7 +64,7 @@ static void apply_animation_ballon(UIText& text, const i32 dir, const f32 durati
   text.font_size += (dir * duration) * niclock_get_delta_time();
 
   // Re-position the text to not lose the anchor position 
-  ui_text_set_anchor(text, text.anchor);
+  ui_text_set_anchor(text, text.anchor, text.canvas_bounds);
 }
 
 /// Private functions
@@ -73,14 +73,11 @@ static void apply_animation_ballon(UIText& text, const i32 dir, const f32 durati
 ///---------------------------------------------------------------------------------------------------------------------
 /// UIText functions
 
-void ui_text_create(UIText* text, Window* window, const UITextDesc& desc) {
+void ui_text_create(UIText* text, const UITextDesc& desc) {
   NIKOLA_ASSERT(text, "Invalid UIText given to ui_text_create");
-  NIKOLA_ASSERT(window, "Invalid Window struct given to ui_text_create");
   NIKOLA_ASSERT(RESOURCE_IS_VALID(desc.font_id), "Invalid font given to ui_text_create");
 
   // Variables init
-
-  text->window_ref = window;
 
   text->string    = desc.string;
   text->font      = resources_get_font(desc.font_id);
@@ -90,24 +87,19 @@ void ui_text_create(UIText* text, Window* window, const UITextDesc& desc) {
   text->offset   = desc.offset;
   text->bounds   = measure_bounds(*text);
 
-  text->anchor = desc.anchor;
-  text->color  = desc.color;
-  ui_text_set_anchor(*text, text->anchor);
+  text->anchor        = desc.anchor;
+  text->canvas_bounds = desc.canvas_bounds;
+  text->color         = desc.color;
+  ui_text_set_anchor(*text, text->anchor, desc.canvas_bounds);
 
   text->is_active = true;
 }
 
-void ui_text_set_anchor(UIText& text, const UIAnchor& anchor) {
-  text.anchor = anchor;
-
-  int width, height; 
-  window_get_size(text.window_ref, &width, &height);
-
-  text.bounds      = measure_bounds(text);
-  Vec2 text_center = text.bounds / 2.0f;
-  
-  Vec2 window_size   = Vec2(width, height);
-  Vec2 window_center = window_size / 2.0f;
+void ui_text_set_anchor(UIText& text, const UIAnchor& anchor, const Vec2& bounds) {
+  text.anchor        = anchor;
+  text.bounds        = measure_bounds(text);
+  Vec2 text_center   = text.bounds / 2.0f;
+  Vec2 bounds_center = bounds / 2.0f;
   
   Vec2 padding = Vec2(15.0f, text.font_size);
 
@@ -116,42 +108,42 @@ void ui_text_set_anchor(UIText& text, const UIAnchor& anchor) {
       text.position = padding + text.offset;
       break;
     case UI_ANCHOR_TOP_CENTER:
-      text.position.x = (window_center.x - text_center.x) + text.offset.x; 
+      text.position.x = (bounds_center.x - text_center.x) + text.offset.x; 
       text.position.y = padding.y + text.offset.y; 
       break;
     case UI_ANCHOR_TOP_RIGHT:
-      text.position.x = (window_size.x - text.bounds.x - padding.x - 15.0f) + text.offset.x; 
+      text.position.x = (bounds.x - text.bounds.x - padding.x - 15.0f) + text.offset.x; 
       text.position.y = padding.y + text.offset.y;  
       break;
     case UI_ANCHOR_CENTER_LEFT:  
       text.position.x = padding.x + text.offset.x;
-      text.position.y = (window_center.y - text_center.y) + text.offset.y; 
+      text.position.y = (bounds_center.y - text_center.y) + text.offset.y; 
       break;
     case UI_ANCHOR_CENTER:
-      text.position = (window_center - text_center) + text.offset;
+      text.position = (bounds_center - text_center) + text.offset;
       break;
     case UI_ANCHOR_CENTER_RIGHT:
-      text.position.x = (window_size.x - text.bounds.x - padding.x - 15.0f) + text.offset.x; 
-      text.position.y = (window_center.y - text_center.y) + text.offset.y; 
+      text.position.x = (bounds.x - text.bounds.x - padding.x - 15.0f) + text.offset.x; 
+      text.position.y = (bounds_center.y - text_center.y) + text.offset.y; 
       break;
     case UI_ANCHOR_BOTTOM_LEFT:  
       text.position.x = padding.x + text.offset.x;
-      text.position.y = (window_size.y - text.bounds.y) + text.offset.y + (text.font_size / 2.0f); 
+      text.position.y = (bounds.y - text.bounds.y) + text.offset.y + (text.font_size / 2.0f); 
       break;
     case UI_ANCHOR_BOTTOM_CENTER:
-      text.position.x = (window_center.x - text_center.x) + text.offset.x;
-      text.position.y = (window_size.y - text.bounds.y) + text.offset.y + (text.font_size / 2.0f); 
+      text.position.x = (bounds_center.x - text_center.x) + text.offset.x;
+      text.position.y = (bounds.y - text.bounds.y) + text.offset.y + (text.font_size / 2.0f); 
       break;
     case UI_ANCHOR_BOTTOM_RIGHT:
-      text.position.x = (window_size.x - text.bounds.x - padding.x - 15.0f) + text.offset.x; 
-      text.position.y = (window_size.y - text.bounds.y) + text.offset.y + (text.font_size / 2.0f); 
+      text.position.x = (bounds.x - text.bounds.x - padding.x - 15.0f) + text.offset.x; 
+      text.position.y = (bounds.y - text.bounds.y) + text.offset.y + (text.font_size / 2.0f); 
       break;
   }
 }
 
 void ui_text_set_string(UIText& text, const String& new_string) {
   text.string = new_string;
-  ui_text_set_anchor(text, text.anchor);
+  ui_text_set_anchor(text, text.anchor, text.canvas_bounds);
 }
 
 void ui_text_apply_animation(UIText& text, const UITextAnimation anim_type, const f32 duration) {

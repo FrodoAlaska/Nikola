@@ -74,10 +74,9 @@ static const f32 to_screen_space(const UISlider& slider) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// UISlider
 
-void ui_slider_create(UISlider* slider, Window* window, const UISliderDesc& desc) {
+void ui_slider_create(UISlider* slider, const UISliderDesc& desc) {
   NIKOLA_ASSERT(slider, "Invalid UISlider given to ui_slider_create");
   NIKOLA_ASSERT(desc.value, "Invalid value given to ui_slider_create");
-  NIKOLA_ASSERT(window, "Invalid Window struct given to ui_slider_create");
   
   // Variables init
 
@@ -89,15 +88,14 @@ void ui_slider_create(UISlider* slider, Window* window, const UISliderDesc& desc
   slider->size       = Vec2(250.0f, 12.0f);
   slider->notch_size = Vec2(24.0f);
 
-  slider->id         = desc.bind_id;
-  slider->window_ref = window;
+  slider->id = desc.bind_id;
   
   slider->value = desc.value; 
   slider->min   = desc.min;
   slider->max   = desc.max;
   slider->step  = desc.step;
 
-  ui_slider_set_anchor(*slider, slider->anchor);
+  ui_slider_set_anchor(*slider, slider->anchor, desc.canvas_bounds);
 
   slider->color       = desc.color; 
   slider->notch_color = desc.notch_color;
@@ -108,14 +106,9 @@ void ui_slider_create(UISlider* slider, Window* window, const UISliderDesc& desc
   event_listen(EVENT_MOUSE_MOVED, on_mouse_move, slider);
 }
 
-void ui_slider_set_anchor(UISlider& slider, const UIAnchor& anchor) {
-  slider.anchor = anchor;
-
-  i32 width, height; 
-  window_get_size(slider.window_ref, &width, &height);
-
-  Vec2 window_size   = Vec2(width, height);
-  Vec2 window_center = window_size / 2.0f;
+void ui_slider_set_anchor(UISlider& slider, const UIAnchor& anchor, const Vec2& bounds) {
+  slider.anchor      = anchor;
+  Vec2 bounds_center = bounds / 2.0f;
 
   Vec2 half_size = slider.size / 2.0f; 
   Vec2 padding   = Vec2(10.0f);
@@ -125,34 +118,34 @@ void ui_slider_set_anchor(UISlider& slider, const UIAnchor& anchor) {
       slider.position = padding;
       break;
     case UI_ANCHOR_TOP_CENTER:
-      slider.position.x = (window_center.x - half_size.x); 
+      slider.position.x = (bounds_center.x - half_size.x); 
       slider.position.y = padding.y; 
       break;
     case UI_ANCHOR_TOP_RIGHT:
-      slider.position.x = (window_size.x - slider.size.x - padding.x); 
+      slider.position.x = (bounds.x - slider.size.x - padding.x); 
       slider.position.y = padding.y;  
       break;
     case UI_ANCHOR_CENTER_LEFT:  
       slider.position.x = padding.x;
-      slider.position.y = (window_center.y - half_size.y - padding.y); 
+      slider.position.y = (bounds_center.y - half_size.y - padding.y); 
       break;
     case UI_ANCHOR_CENTER:
-      slider.position = (window_center - half_size);
+      slider.position = (bounds_center - half_size);
       break;
     case UI_ANCHOR_CENTER_RIGHT:
-      slider.position.x = (window_size.x - slider.size.x - padding.x); 
-      slider.position.y = (window_center.y - half_size.y - padding.y); 
+      slider.position.x = (bounds.x - slider.size.x - padding.x); 
+      slider.position.y = (bounds_center.y - half_size.y - padding.y); 
       break;
     case UI_ANCHOR_BOTTOM_LEFT:  
       slider.position.x = padding.x + slider.offset.x;
-      slider.position.y = (window_size.y - slider.size.y - padding.y); 
+      slider.position.y = (bounds.y - slider.size.y - padding.y); 
       break;
     case UI_ANCHOR_BOTTOM_CENTER:
-      slider.position.x = (window_center.x - half_size.x);
-      slider.position.y = (window_size.y - slider.size.y - padding.y); 
+      slider.position.x = (bounds_center.x - half_size.x);
+      slider.position.y = (bounds.y - slider.size.y - padding.y); 
       break;
     case UI_ANCHOR_BOTTOM_RIGHT:
-      slider.position = window_size - slider.size - padding; 
+      slider.position = bounds - slider.size - padding; 
       break;
   }
 

@@ -72,7 +72,7 @@ enum UITextAnimation {
 /// UIText
 struct UIText {
   Vec2 position, offset, bounds;
-  Window* window_ref;
+  Vec2 canvas_bounds; 
 
   String string;
   Font* font;
@@ -172,6 +172,7 @@ struct UILayout {
  UIAnchor current_anchor;
  Vec2 extra_offset;
  Vec2 current_offset;
+ Vec2 bounds;
 
  f32 buttons_outline_thickness;
  Vec2 buttons_padding;
@@ -195,6 +196,11 @@ struct UITextDesc {
 
   /// The anchor point of the text UI element.
   UIAnchor anchor;
+
+  /// The bounds of the canvas that the text will 
+  /// be placed on. The UI element will calculate 
+  /// its anchor point based on this.
+  Vec2 canvas_bounds;
 
   /// The extra offset to be applied to the text UI element.
   ///
@@ -223,6 +229,11 @@ struct UIButtonDesc {
   
   /// The anchor point of the button UI element.
   UIAnchor anchor; 
+
+  /// The bounds of the canvas that the text will 
+  /// be placed on. The UI element will calculate 
+  /// its anchor point based on this.
+  Vec2 canvas_bounds;
  
   /// The binded id that will be used to identify the button.
   ///
@@ -270,6 +281,11 @@ struct UICheckboxDesc {
 
   /// The anchor point of the checkbox.
   UIAnchor anchor;
+
+  /// The bounds of the canvas that the text will 
+  /// be placed on. The UI element will calculate 
+  /// its anchor point based on this.
+  Vec2 canvas_bounds;
   
   /// The extra offset to be applied to the checkbox.
   ///
@@ -304,6 +320,11 @@ struct UICheckboxDesc {
 struct UISliderDesc {
   /// The anchor point of the slider.
   UIAnchor anchor; 
+
+  /// The bounds of the canvas that the text will 
+  /// be placed on. The UI element will calculate 
+  /// its anchor point based on this.
+  Vec2 canvas_bounds;
   
   /// The extra offset to be applied to the slider.
   ///
@@ -359,6 +380,11 @@ struct UIImageDesc {
 
   /// The anchor point of the image.
   UIAnchor anchor; 
+  
+  /// The bounds of the canvas that the text will 
+  /// be placed on. The UI element will calculate 
+  /// its anchor point based on this.
+  Vec2 canvas_bounds;
   
   /// The extra offset to be applied to the image.
   ///
@@ -470,11 +496,11 @@ NIKOLA_API void gui_edit_animator(const char* name, Animator* animator);
 ///---------------------------------------------------------------------------------------------------------------------
 /// UIText functions
 
-/// Initialize the UI `text` element, using the given `window` and the information in `desc`.
-NIKOLA_API void ui_text_create(UIText* text, Window* window, const UITextDesc& desc);
+/// Initialize the UI `text` element, using the information in `desc`.
+NIKOLA_API void ui_text_create(UIText* text, const UITextDesc& desc);
 
-/// Set the position of `text` based on the anchor point `anchor`.
-NIKOLA_API void ui_text_set_anchor(UIText& text, const UIAnchor& anchor);
+/// Set the position of `text` based on the anchor point `anchor`, inside `bounds`.
+NIKOLA_API void ui_text_set_anchor(UIText& text, const UIAnchor& anchor, const Vec2& bounds);
 
 /// Set the internal string `text` to `new_string` and re-position accordingly.
 NIKOLA_API void ui_text_set_string(UIText& text, const String& new_string);
@@ -491,11 +517,11 @@ NIKOLA_API void ui_text_render(const UIText& text);
 ///---------------------------------------------------------------------------------------------------------------------
 /// UIButton functions
 
-/// Initialize the UI `button` element, using the given `window` and the information in `desc`.
-NIKOLA_API void ui_button_create(UIButton* button, Window* window, const UIButtonDesc& desc);
+/// Initialize the UI `button` element, using the information in `desc`.
+NIKOLA_API void ui_button_create(UIButton* button, const UIButtonDesc& desc);
 
-/// Set the position of `button` based on the anchor point `anchor`.
-NIKOLA_API void ui_button_set_anchor(UIButton& button, const UIAnchor& anchor);
+/// Set the position of `button` based on the anchor point `anchor`, inside `bounds`.
+NIKOLA_API void ui_button_set_anchor(UIButton& button, const UIAnchor& anchor, const Vec2& bounds);
 
 /// Set the internal string of `button` to `new_string` and re-position accordingly.
 NIKOLA_API void ui_button_set_string(UIButton& button, const String& new_string);
@@ -509,11 +535,11 @@ NIKOLA_API void ui_button_render(UIButton& button);
 ///---------------------------------------------------------------------------------------------------------------------
 /// UICheckbox functions
 
-/// Initialize the UI `checkbox` element, using the given `window` and the information in `desc`.
-NIKOLA_API void ui_checkbox_create(UICheckbox* checkbox, Window* window, const UICheckboxDesc& desc);
+/// Initialize the UI `checkbox` element, using the information in `desc`.
+NIKOLA_API void ui_checkbox_create(UICheckbox* checkbox, const UICheckboxDesc& desc);
 
-/// Set the position of `checkbox` based on the anchor point `anchor`.
-NIKOLA_API void ui_checkbox_set_anchor(UICheckbox& checkbox, const UIAnchor& anchor);
+/// Set the position of `checkbox` based on the anchor point `anchor`, inside `bounds`.
+NIKOLA_API void ui_checkbox_set_anchor(UICheckbox& checkbox, const UIAnchor& anchor, const Vec2& bounds);
 
 /// Render the given `checkbox` UI element.
 NIKOLA_API void ui_checkbox_render(UICheckbox& checkbox);
@@ -524,11 +550,11 @@ NIKOLA_API void ui_checkbox_render(UICheckbox& checkbox);
 ///---------------------------------------------------------------------------------------------------------------------
 /// UISlider functions
 
-/// Initialize the UI `slider` element, using the given `window` and the information in `desc`.
-NIKOLA_API void ui_slider_create(UISlider* slider, Window* window, const UISliderDesc& desc);
+/// Initialize the UI `slider` element, using the information in `desc`.
+NIKOLA_API void ui_slider_create(UISlider* slider, const UISliderDesc& desc);
 
-/// Set the position of `slider` based on the anchor point `anchor`.
-NIKOLA_API void ui_slider_set_anchor(UISlider& slider, const UIAnchor& anchor);
+/// Set the position of `slider` based on the anchor point `anchor`, inside `bounds`.
+NIKOLA_API void ui_slider_set_anchor(UISlider& slider, const UIAnchor& anchor, const Vec2& bounds);
 
 /// Render the given `slider` UI element.
 NIKOLA_API void ui_slider_render(UISlider& slider);
@@ -539,11 +565,11 @@ NIKOLA_API void ui_slider_render(UISlider& slider);
 ///---------------------------------------------------------------------------------------------------------------------
 /// UIImage functions
 
-/// Initialize the UI `image` element, using the given `window` and the information in `desc`.
-NIKOLA_API void ui_image_create(UIImage* image, Window* window, const UIImageDesc& desc);
+/// Initialize the UI `image` element, using the information in `desc`.
+NIKOLA_API void ui_image_create(UIImage* image, const UIImageDesc& desc);
 
-/// Set the position of `image` based on the anchor point `anchor`.
-NIKOLA_API void ui_image_set_anchor(UIImage& image, const UIAnchor& anchor);
+/// Set the position of `image` based on the anchor point `anchor`, inside `bounds`.
+NIKOLA_API void ui_image_set_anchor(UIImage& image, const UIAnchor& anchor, const Vec2& bounds);
 
 /// Set the texture of `image` based to the given `texture_id`.
 NIKOLA_API void ui_image_set_texture(UIImage& image, const ResourceID& texture_id);
@@ -557,9 +583,9 @@ NIKOLA_API void ui_image_render(UIImage& image);
 ///---------------------------------------------------------------------------------------------------------------------
 /// UILayout functions
 
-/// Initialize the UI `layout` element, using the given `window` and the `font_id` to be used 
+/// Initialize the UI `layout` element, using the given `bounds` and the `font_id` to be used 
 /// for any text in this specific layout.
-NIKOLA_API void ui_layout_create(UILayout* layout, Window* window, const ResourceID& font_id);
+NIKOLA_API void ui_layout_create(UILayout* layout, const Vec2& bounds, const ResourceID& font_id);
 
 /// Begin a new layout segment of `layout` at anchor point `anchor`, increasing by `offset` every 
 /// new entry using the `ui_layout_push_*` functions.
@@ -570,11 +596,11 @@ NIKOLA_API void ui_layout_end(UILayout& layout);
 
 /// Push a new text entry to `layout`, using `str`, `size`, and `color`.
 /// Use `layout_padding` for extra padding between this element and the next.
-NIKOLA_API void ui_layout_push_text(UILayout& layout, 
-                                    const String& str, 
-                                    const f32 size, 
-                                    const Vec4& color, 
-                                    const Vec2& layout_padding = Vec2(0.0f));
+NIKOLA_API UIText& ui_layout_push_text(UILayout& layout, 
+                                       const String& str, 
+                                       const f32 size, 
+                                       const Vec4& color, 
+                                       const Vec2& layout_padding = Vec2(0.0f));
 
 /// Push a new button entry to `layout`, using `str`, `size`, `color`, `outline_color`, `text_color`, and `bind_id`.
 /// Use `layout_padding` for extra padding between this element and the next.
@@ -585,14 +611,14 @@ NIKOLA_API void ui_layout_push_text(UILayout& layout,
 ///
 /// @NOTE: The outline thickness as well as the internal button padding can be set 
 /// using the internal `buttons_outline_thickness` and `buttons_padding` in `UILayout`.
-NIKOLA_API void ui_layout_push_button(UILayout& layout, 
-                                      const String& str, 
-                                      const f32 size, 
-                                      const Vec4& color, 
-                                      const Vec4& outline_color, 
-                                      const Vec4& text_color, 
-                                      const i32 bind_id          = -1,
-                                      const Vec2& layout_padding = Vec2(0.0f));
+NIKOLA_API UIButton& ui_layout_push_button(UILayout& layout, 
+                                            const String& str, 
+                                            const f32 size, 
+                                            const Vec4& color, 
+                                            const Vec4& outline_color, 
+                                            const Vec4& text_color, 
+                                            const i32 bind_id          = -1,
+                                            const Vec2& layout_padding = Vec2(0.0f));
 
 /// Push a new checkbox entry to `layout`, using `size`, `color`, `outline_color`, and `bind_id`.
 /// Use `layout_padding` for extra padding between this element and the next.
@@ -600,12 +626,12 @@ NIKOLA_API void ui_layout_push_button(UILayout& layout,
 /// @NOTE: When the `bind_id` is left as the default value (which is `-1`), the layout will assign 
 /// it to the element's index in the layout's array. Otherwise, the UI element will have the given 
 /// `bind_id`.
-NIKOLA_API void ui_layout_push_checkbox(UILayout& layout, 
-                                        const f32 size, 
-                                        const Vec4& color, 
-                                        const Vec4& outline_color, 
-                                        const i32 bind_id          = -1,
-                                        const Vec2& layout_padding = Vec2(0.0f));
+NIKOLA_API UICheckbox& ui_layout_push_checkbox(UILayout& layout, 
+                                               const f32 size, 
+                                               const Vec4& color, 
+                                               const Vec4& outline_color, 
+                                               const i32 bind_id          = -1,
+                                               const Vec2& layout_padding = Vec2(0.0f));
 
 /// Push a new slider entry to `layout`, using `value`, `min`, `max`, `step`, `color`, `notch_color`, and `bind_id`.
 /// Use `layout_padding` for extra padding between this element and the next.
@@ -613,23 +639,23 @@ NIKOLA_API void ui_layout_push_checkbox(UILayout& layout,
 /// @NOTE: When the `bind_id` is left as the default value (which is `-1`), the layout will assign 
 /// it to the element's index in the layout's array. Otherwise, the UI element will have the given 
 /// `bind_id`.
-NIKOLA_API void ui_layout_push_slider(UILayout& layout, 
-                                      f32* value,
-                                      const f32 min, 
-                                      const f32 max,
-                                      const f32 step,
-                                      const Vec4& color, 
-                                      const Vec4& notch_color    = Vec4(0.5f, 0.5f, 0.5f, 1.0f), 
-                                      const i32 bind_id          = -1,
-                                      const Vec2& layout_padding = Vec2(0.0f));
+NIKOLA_API UISlider& ui_layout_push_slider(UILayout& layout, 
+                                           f32* value,
+                                           const f32 min, 
+                                           const f32 max,
+                                           const f32 step,
+                                           const Vec4& color, 
+                                           const Vec4& notch_color    = Vec4(0.5f, 0.5f, 0.5f, 1.0f), 
+                                           const i32 bind_id          = -1,
+                                           const Vec2& layout_padding = Vec2(0.0f));
 
 /// Push a new image entry to `layout`, using the given `texture_id`, `size`, and `tint`.
 /// Use `layout_padding` for extra padding between this element and the next.
-NIKOLA_API void ui_layout_push_image(UILayout& layout, 
-                                     const ResourceID& texture_id, 
-                                     const Vec2& size, 
-                                     const Vec4& tint           = Vec4(1.0f), 
-                                     const Vec2& layout_padding = Vec2(0.0f));
+NIKOLA_API UIImage& ui_layout_push_image(UILayout& layout, 
+                                         const ResourceID& texture_id, 
+                                         const Vec2& size, 
+                                         const Vec4& tint           = Vec4(1.0f), 
+                                         const Vec2& layout_padding = Vec2(0.0f));
 
 /// Render all of the active UI elements in the given `layout`.
 NIKOLA_API void ui_layout_render(const UILayout& layout);
