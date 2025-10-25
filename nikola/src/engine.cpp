@@ -63,12 +63,24 @@ void engine_init(const AppDesc& desc) {
 
   // Useful input actions init
   
-  InputAction ui_click_action = {
+  InputAction action_desc = {
     .key_bind     = KEY_ENTER, 
     .mouse_bind   = MOUSE_BUTTON_LEFT, 
     .gamepad_bind = GAMEPAD_BUTTON_CROSS,
   };
-  input_action_bind("ui-click", ui_click_action);
+  input_action_bind("ui-click", action_desc);
+  
+  action_desc = {
+    .key_bind     = KEY_DOWN, 
+    .gamepad_bind = GAMEPAD_BUTTON_DPAD_DOWN,
+  };
+  input_action_bind("ui-nav-down", action_desc);
+  
+  action_desc = {
+    .key_bind     = KEY_UP, 
+    .gamepad_bind = GAMEPAD_BUTTON_DPAD_UP,
+  };
+  input_action_bind("ui-nav-up", action_desc);
 
   // Audio init
   audio_device_init(nullptr);

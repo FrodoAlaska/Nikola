@@ -91,8 +91,10 @@ void ui_button_render(UIButton& button) {
   // Check input state 
 
   // Hovered 
+  
   if(is_hovered(button)) {
     // Just entered the button
+   
     if(!button.was_hovered) {
       Event event = {
         .type   = EVENT_UI_BUTTON_ENTERED, 
@@ -109,6 +111,7 @@ void ui_button_render(UIButton& button) {
   }
 
   // Exited
+  
   if(!button.was_hovered) {
     Event event = {
       .type   = EVENT_UI_BUTTON_EXITED,
@@ -118,6 +121,7 @@ void ui_button_render(UIButton& button) {
   }
 
   // Pressed
+  
   if(button.was_hovered && input_action_pressed("ui-click")) {
     color.a = 0.5f;
 

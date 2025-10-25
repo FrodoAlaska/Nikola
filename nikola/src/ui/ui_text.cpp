@@ -29,7 +29,7 @@ static const Vec2 measure_bounds(const UIText& text) {
 
     // Take into account the spaces as well as normal characters
     if(ch == ' ' || ch == '\t') {
-      result.x += prev_advance * font_scale;
+      result.x += (prev_advance * font_scale);
       continue;
     }
      
@@ -47,6 +47,7 @@ static void apply_animation_fade(UIText& text, const i32 dir, const f32 duration
   // i.e: if we're fading _in_ (increasing the alpha), 
   // and the alpha is already at 1.0f, then we won't see 
   // the effect.
+  
   if(dir > 0 && text.color.a == 1.0f) {
     text.color.a = 0.0f;
   }
@@ -55,6 +56,7 @@ static void apply_animation_fade(UIText& text, const i32 dir, const f32 duration
   }
 
   // "Animate" the fade effect
+  
   text.color.a += (dir * duration) * niclock_get_delta_time();
   text.color.a = clamp_float(text.color.a, 0.001f, 0.99f);
 }
@@ -173,7 +175,7 @@ void ui_text_apply_animation(UIText& text, const UITextAnimation anim_type, cons
   }
 }
 
-void ui_text_render(const UIText& text) {
+void ui_text_render(UIText& text) {
   if(!text.is_active) {
     return;
   }

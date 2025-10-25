@@ -2,8 +2,6 @@
 #include "nikola/nikola_resources.h"
 #include "nikola/nikola_render.h"
 #include "nikola/nikola_math.h"
-#include "nikola/nikola_event.h"
-#include "nikola/nikola_input.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -220,7 +218,7 @@ UIImage& ui_layout_push_image(UILayout& layout,
   return image;
 }
 
-void ui_layout_render(const UILayout& layout) {
+void ui_layout_render(UILayout& layout) {
   if(!layout.is_active) {
     return;
   }
@@ -232,22 +230,22 @@ void ui_layout_render(const UILayout& layout) {
 
   // Render the buttons
   for(auto& button : layout.buttons) {
-    ui_button_render((UIButton&)button);
+    ui_button_render(button);
   }
   
   // Render the checkboxes
   for(auto& checkbox : layout.checkboxes) {
-    ui_checkbox_render((UICheckbox&)checkbox);
+    ui_checkbox_render(checkbox);
   }
   
   // Render the sliders
   for(auto& slider : layout.sliders) {
-    ui_slider_render((UISlider&)slider);
+    ui_slider_render(slider);
   }
   
   // Render the images
   for(auto& image : layout.images) {
-    ui_image_render((UIImage&)image);
+    ui_image_render(image);
   }
 }
 

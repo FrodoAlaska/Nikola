@@ -12,8 +12,7 @@ struct nikola::App {
   nikola::ResourceGroupID res_group_id;
   nikola::ResourceID font_id;
 
-  nikola::UISlider ui_slider;
-  nikola::UILayout ui_layout;
+  nikola::UIMenu main_menu;
 
   bool has_editor = false;
 };
@@ -23,12 +22,8 @@ struct nikola::App {
 /// ----------------------------------------------------------------------
 /// Callbacks
 
-static bool on_button_event(const nikola::Event& event, const void* dispatcher, const void* listener) {
-  if(event.type != nikola::EVENT_UI_BUTTON_CLICKED) {
-    return false;
-  }
-
-  switch(event.button->id) {
+static bool on_menu_event(const nikola::Event& event, const void* dispatcher, const void* listener) {
+  switch(event.menu->current_item) {
     case 0: // Play
       break;
     case 1: // Settings
@@ -98,44 +93,27 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   init_resources(app);
 
   // Listen to events
-  nikola::event_listen(nikola::EVENT_UI_BUTTON_CLICKED, on_button_event, app);
-  nikola::event_listen(nikola::EVENT_UI_BUTTON_ENTERED, on_button_event, app);
-  nikola::event_listen(nikola::EVENT_UI_BUTTON_EXITED, on_button_event, app);
+  nikola::event_listen(nikola::EVENT_UI_MENU_ITEM_CLICKED, on_menu_event, app);
 
-  // UI layout init
-  nikola::ui_layout_create(&app->ui_layout, nikola::Vec2(width, height), app->font_id);
-  
-  nikola::ui_layout_begin(app->ui_layout, nikola::UI_ANCHOR_TOP_CENTER, nikola::Vec2(0.0f, 128.0f));
-  
-  nikola::ui_layout_push_text(app->ui_layout, "Hello, Nikola", 80.0f, nikola::Vec4(1.0f));
-  nikola::ui_layout_push_image(app->ui_layout, 
-                               nikola::resources_get_id(app->res_group_id, "frodo"), 
-                               nikola::Vec2(128.0f),
-                               nikola::Vec4(0.0f, 1.0f, 0.0f, 1.0f));
-  
-  nikola::ui_layout_end(app->ui_layout);
- 
-  nikola::Vec4 color(1.0f);
-  nikola::Vec4 outline_color(0.0f, 0.0f, 0.0f, 1.0f);
-  nikola::Vec4 text_color(0.0f, 0.0f, 0.0f, 1.0f);
+  // UI menu init
 
-  nikola::ui_layout_begin(app->ui_layout, nikola::UI_ANCHOR_CENTER, nikola::Vec2(0.0f, 65.0f));
-  
-  nikola::ui_layout_push_button(app->ui_layout, "Play", 40.0f, color, outline_color, text_color);
-  nikola::ui_layout_push_button(app->ui_layout, "Settings", 40.0f, color, outline_color, text_color);
-  nikola::ui_layout_push_button(app->ui_layout, "Quit", 40.0f, color, outline_color, text_color);
-  
-  nikola::ui_layout_push_checkbox(app->ui_layout, 32.0f, color, outline_color);
-  nikola::ui_layout_push_slider(app->ui_layout, 
-                                &app->ui_layout.texts[0].color.a, 
-                                0.0f, 1.0f, 0.01f, 
-                                color);
-  nikola::ui_layout_push_slider(app->ui_layout, 
-                                &test_value, 
-                                0.0f, 1.0f, 0.1f, 
-                                color);
-  
-  nikola::ui_layout_end(app->ui_layout);
+  nikola::UIMenuDesc menu_desc = {
+    .bounds  = nikola::Vec2(width, height),
+    .font_id = app->font_id,
+
+    .title_anchor = nikola::UI_ANCHOR_TOP_CENTER, 
+    .item_anchor  = nikola::UI_ANCHOR_CENTER,
+
+    .item_offset  = nikola::Vec2(0.0f, 40.0f),
+    .item_padding = nikola::Vec2(12.0f, 4.0f),
+  };
+  nikola::ui_menu_create(&app->main_menu, menu_desc);
+
+  nikola::ui_menu_set_title(app->main_menu, "Menu Title", 50.0f, nikola::Vec4(1.0f));
+
+  nikola::ui_menu_push_item(app->main_menu, "Play", 30.0f, nikola::Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+  nikola::ui_menu_push_item(app->main_menu, "Settings", 30.0f, nikola::Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+  nikola::ui_menu_push_item(app->main_menu, "Quit", 30.0f, nikola::Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
   return app;
 }
@@ -149,18 +127,22 @@ void app_shutdown(nikola::App* app) {
 
 void app_update(nikola::App* app, const nikola::f64 delta_time) {
   // Quit the application when the specified exit key is pressed
+  
   if(nikola::input_key_pressed(nikola::KEY_ESCAPE)) {
     nikola::event_dispatch(nikola::Event{.type = nikola::EVENT_APP_QUIT});
     return;
   }
 
   // Disable/enable the GUI
+  
   if(nikola::input_key_pressed(nikola::KEY_F1)) {
     app->has_editor                  = !app->has_editor;
     app->frame_data.camera.is_active = !app->has_editor;
 
     nikola::input_cursor_show(app->has_editor);
   }
+
+  nikola::ui_menu_process_input(app->main_menu);
 
   // Update the camera
   nikola::camera_update(app->frame_data.camera);
@@ -173,11 +155,7 @@ void app_render(nikola::App* app) {
   
   // Render 2D 
   nikola::batch_renderer_begin();
-
-  // nikola::ui_text_apply_animation(app->ui_layout.texts[0], nikola::UI_TEXT_ANIMATION_FADE_IN, 0.4f);
-  // nikola::ui_slider_render(app->ui_slider); 
-  nikola::ui_layout_render(app->ui_layout);
-
+  nikola::ui_menu_render(app->main_menu);
   nikola::batch_renderer_end();
 }
 

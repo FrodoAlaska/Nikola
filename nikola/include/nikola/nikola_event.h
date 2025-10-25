@@ -14,6 +14,8 @@ namespace nikola { // Start of nikola
 struct UIButton;
 struct UICheckbox;
 struct UISlider;
+struct UIImage;
+struct UIMenu;
 
 /// ---------------------------------------------------------------------
  
@@ -59,7 +61,7 @@ enum EventType {
   EVENT_JOYSTICK_DISCONNECTED, 
 
   /// UI events
-
+  
   EVENT_UI_BUTTON_CLICKED, 
   EVENT_UI_BUTTON_ENTERED,
   EVENT_UI_BUTTON_EXITED,
@@ -70,6 +72,13 @@ enum EventType {
   
   EVENT_UI_SLIDER_CLICKED,
   EVENT_UI_SLIDER_CHANGED,
+  
+  EVENT_UI_IMAGE_CLICKED,
+  EVENT_UI_IMAGE_ENTERED,
+  EVENT_UI_IMAGE_EXITED,
+
+  EVENT_UI_MENU_ITEM_CHANGED,
+  EVENT_UI_MENU_ITEM_CLICKED,
 
   /// Physics events
 
@@ -141,6 +150,12 @@ struct Event {
   
   /// The slider UI element given to this event. 
   UISlider* slider      = nullptr;
+  
+  /// The image UI element given to this event. 
+  UIImage* image        = nullptr;
+  
+  /// The menu UI element given to this event. 
+  UIMenu* menu          = nullptr;
 
   /// The physics body that was given to this event 
   /// by either `EVENT_PHYSICS_BODY_ACTIVATED` or 

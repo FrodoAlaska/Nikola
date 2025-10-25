@@ -1,10 +1,29 @@
 #include "nikola/nikola_ui.h"
 #include "nikola/nikola_render.h"
 #include "nikola/nikola_resources.h"
+#include "nikola/nikola_input.h"
+#include "nikola/nikola_event.h"
 
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Private functions
+
+static const bool is_hovered(const UIImage& image) {
+  Vec2 mouse_pos;
+  input_mouse_position(&mouse_pos.x, &mouse_pos.y);
+  
+  Vec2 min = image.position;
+  Vec2 max = image.position + image.size;
+  
+  return (mouse_pos.x > min.x && mouse_pos.x < max.x) && 
+         (mouse_pos.y > min.y && mouse_pos.y < max.y);
+}
+
+/// Private functions
+///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// UIImage functions
@@ -18,8 +37,9 @@ void ui_image_create(UIImage* image, const UIImageDesc& desc) {
   
   image->texture = resources_get_texture(desc.texture_id);
 
-  image->tint      = desc.tint;
-  image->is_active = true;
+  image->tint        = desc.tint;
+  image->is_active   = true;
+  image->was_hovered = false;
 
   ui_image_set_anchor(*image, image->anchor, desc.canvas_bounds);
 }
@@ -77,6 +97,47 @@ void ui_image_set_texture(UIImage& image, const ResourceID& texture_id) {
 void ui_image_render(UIImage& image) {
   if(!image.is_active) {
     return;
+  }
+  
+  // Check input state 
+
+  // Hovered
+
+  if(is_hovered(image)) {
+    // Just entered the image
+   
+    if(!image.was_hovered) {
+      Event event = {
+        .type = EVENT_UI_IMAGE_ENTERED, 
+        .image = &image, 
+      };
+      event_dispatch(event);
+    }
+
+    image.was_hovered = true;
+  }
+  else {
+    image.was_hovered = false;
+  }
+  
+  // Exited
+  
+  if(!image.was_hovered) {
+    Event event = {
+      .type = EVENT_UI_IMAGE_EXITED, 
+      .image = &image, 
+    };
+    event_dispatch(event);
+  }
+  
+  // Pressed
+  
+  if(image.was_hovered && input_action_pressed("ui-click")) {
+    Event event = {
+      .type = EVENT_UI_IMAGE_CLICKED,
+      .image = &image,
+    };
+    event_dispatch(event);
   }
 
   batch_render_texture(image.texture, image.position, image.size, image.tint);

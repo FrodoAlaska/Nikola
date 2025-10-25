@@ -80,6 +80,7 @@ struct UIText {
 
   UIAnchor anchor; 
   Vec4 color;
+
   bool is_active;
 };
 /// UIText
@@ -109,7 +110,6 @@ struct UICheckbox {
   Vec2 position, size, offset; 
 
   u32 id;
-  Window* window_ref;
 
   Vec4 color, outline_color;
   bool is_active, is_checked, was_hovered;
@@ -128,7 +128,6 @@ struct UISlider {
   Vec2 size, notch_size; 
   
   u32 id;
-  Window* window_ref;
   
   f32* value;
   f32 min, max, step;
@@ -148,20 +147,38 @@ struct UIImage {
   Vec2 position, size, offset; 
 
   GfxTexture* texture = nullptr; 
-  Window* window_ref  = nullptr;
 
   Vec4 tint = Vec4(1.0f); 
-
-  bool is_active;
+  bool is_active, was_hovered;
 };
 /// UIImage
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// UIMenu
+struct UIMenu {
+  Vec2 bounds;
+  ResourceID font_id;
+
+  UIAnchor title_anchor, item_anchor; 
+  Vec2 current_offset, title_offset, item_offset;
+  Vec2 item_padding;
+
+  UIText title; 
+  DynamicArray<UIText> items; 
+
+  sizei current_item  = 0;
+  Vec4 selector_color = Vec4(1.0f); 
+
+  bool is_active = true;
+};
+/// UIMenu
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
 /// UILayout
 struct UILayout {
  ResourceID font_id; 
- Window* window_ref;
   
  DynamicArray<UIText> texts;
  DynamicArray<UIButton> buttons;
@@ -170,8 +187,7 @@ struct UILayout {
  DynamicArray<UIImage> images;
 
  UIAnchor current_anchor;
- Vec2 extra_offset;
- Vec2 current_offset;
+ Vec2 extra_offset, current_offset;
  Vec2 bounds;
 
  f32 buttons_outline_thickness;
@@ -399,6 +415,50 @@ struct UIImageDesc {
 /// UIImageDesc
 /// ----------------------------------------------------------------------
 
+/// ----------------------------------------------------------------------
+/// UIMenuDesc
+struct UIMenuDesc {
+  /// The bounds of the menu container, used to anchor 
+  /// UI elements.
+  Vec2 bounds;
+
+  /// The ID of the font that will be used in the container.
+  ResourceID font_id;
+
+  /// The base anchor of the title element.
+  UIAnchor title_anchor; 
+
+  /// The base anchor of each item in the container.
+  UIAnchor item_anchor; 
+  
+  /// The offset applied to the title. 
+  ///
+  /// @NOTE: This is set to `Vec2(0.0f, 0.0f)` by default.
+  Vec2 title_offset   = Vec2(0.0f);
+
+  /// The offset applied between items. 
+  ///
+  /// @NOTE: This is set to `Vec2(0.0f, 0.0f)` by default.
+  Vec2 item_offset    = Vec2(0.0f);
+  
+  /// The padding applied inside the item selector. 
+  ///
+  /// @NOTE: This is set to `Vec2(4.0f, 4.0f)` by default.
+  Vec2 item_padding   = Vec2(4.0f);
+
+  /// The starting item the selector will initially land on. 
+  ///
+  /// @NOTE: This is set to `0` by default.
+  sizei starting_item = 0;
+
+  /// The color of the item selector.
+  ///
+  /// @NOTE: This is set to `Vec4(1.0f, 1.0f, 1.0f, 1.0f)` by default.
+  Vec4 selector_color = Vec4(1.0f);
+};
+/// UIMenuDesc
+/// ----------------------------------------------------------------------
+
 ///---------------------------------------------------------------------------------------------------------------------
 /// GUI functions
 
@@ -509,7 +569,7 @@ NIKOLA_API void ui_text_set_string(UIText& text, const String& new_string);
 NIKOLA_API void ui_text_apply_animation(UIText& text, const UITextAnimation anim_type, const f32 duration);
 
 /// Render the given `text` UI element.
-NIKOLA_API void ui_text_render(const UIText& text);
+NIKOLA_API void ui_text_render(UIText& text);
 
 /// UIText functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -578,6 +638,39 @@ NIKOLA_API void ui_image_set_texture(UIImage& image, const ResourceID& texture_i
 NIKOLA_API void ui_image_render(UIImage& image);
 
 /// UIImage functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UIMenu functions
+
+/// Initialize the UI `menu` container, using the information in `desc`.
+NIKOLA_API void ui_menu_create(UIMenu* menu, const UIMenuDesc& desc);
+
+/// Set the title element of the given `menu` container, using the given `str`,
+/// `size`, `color`, and `padding` for extra padding inside the container.
+NIKOLA_API void ui_menu_set_title(UIMenu& menu, 
+                                  const String& str,
+                                  const f32 size, 
+                                  const Vec4& color, 
+                                  const Vec2& padding = Vec2(0.0f));
+
+/// Push a new the item into the given `menu` container, using the given `str`,
+/// `size`, `color`, and `padding` for extra padding inside the container.
+NIKOLA_API UIText& ui_menu_push_item(UIMenu& menu, 
+                                     const String& str,
+                                     const f32 size, 
+                                     const Vec4& color, 
+                                     const Vec2& padding = Vec2(0.0f));
+
+/// Process the navigation of the given `menu`. 
+///
+/// @NOTE: This _must_ be called every frame to enable menu navigation.
+NIKOLA_API void ui_menu_process_input(UIMenu& menu);
+
+/// Render all of the active UI elements in the given `menu`.
+NIKOLA_API void ui_menu_render(UIMenu& menu);
+
+/// UIMenu functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -658,7 +751,7 @@ NIKOLA_API UIImage& ui_layout_push_image(UILayout& layout,
                                          const Vec2& layout_padding = Vec2(0.0f));
 
 /// Render all of the active UI elements in the given `layout`.
-NIKOLA_API void ui_layout_render(const UILayout& layout);
+NIKOLA_API void ui_layout_render(UILayout& layout);
 
 /// UILayout functions
 ///---------------------------------------------------------------------------------------------------------------------
