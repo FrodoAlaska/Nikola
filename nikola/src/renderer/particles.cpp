@@ -132,6 +132,8 @@ void particles_init() {
 }
 
 void particles_update(const f64 delta_time) {
+  NIKOLA_PROFILE_FUNCTION();
+
   for(sizei i = 0; i < PARTICLE_EMITTERS_MAX; i++) {
     ParticleEmitter* emitter = &s_manager.emitters[i];
     if(!emitter->is_active) {

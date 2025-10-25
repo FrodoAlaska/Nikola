@@ -3,6 +3,8 @@
 #include "nikola_base.h"
 #include "nikola_containers.h"
 
+#include <tracy/Tracy.hpp>
+
 #include <chrono>
 
 //////////////////////////////////////////////////////////////////////////
@@ -49,6 +51,10 @@ NIKOLA_API String perf_timer_to_string(PerfTimer& timer);
   #define NIKOLA_PERF_TIMER_BEGIN(timer)
   #define NIKOLA_PERF_TIMER_END(timer, tag)
 #endif
+
+#define NIKOLA_PROFILE_FUNCTION() ZoneScoped
+
+#define NIKOLA_PROFILE_FUNCTION_NAMED(name) ZoneScopedN(name)
 
 /// Macros
 ///---------------------------------------------------------------------------------------------------------------------

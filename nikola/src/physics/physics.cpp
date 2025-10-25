@@ -4,6 +4,7 @@
 #include "nikola/nikola_containers.h"
 #include "nikola/nikola_event.h"
 #include "nikola/nikola_render.h"
+#include "nikola/nikola_timer.h"
 
 #include <Jolt/Jolt.h>
 
@@ -397,6 +398,8 @@ void physics_world_shutdown() {
 }
  
 void physics_world_step(const f32 delta_time, const i32 collision_steps) {
+  NIKOLA_PROFILE_FUNCTION();
+
   if(s_world->is_paused) {
     return;
   }

@@ -2,6 +2,7 @@
 #include "nikola/nikola_base.h"
 #include "nikola/nikola_gfx.h"
 #include "nikola/nikola_resources.h"
+#include "nikola/nikola_timer.h"
 
 #include "shaders/batch.glsl.h"
 
@@ -270,6 +271,7 @@ void batch_renderer_shutdown() {
 
 void batch_renderer_begin() {
   // Get the size of the window 
+  
   i32 width, height; 
   window_get_size(s_batch.ctx_desc.window, &width, &height);
 
@@ -278,7 +280,10 @@ void batch_renderer_begin() {
 }
 
 void batch_renderer_end() {
+  NIKOLA_PROFILE_FUNCTION();
+
   // Render all of the batches 
+  
   for(auto& batch : s_batch.batches) {
     flush_batch(batch, s_batch.shader);
   }

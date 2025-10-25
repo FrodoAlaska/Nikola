@@ -20,11 +20,11 @@ set(TESTBED_TYPE
   # "compute_testbed"
   # "particles_testbed"
   # "engine_testbed"
-  # "animation_testbed"
+  "animation_testbed"
   # "font_testbed"
   # "audio_testbed"
   # "physics_testbed"
-  "ui_testbed"
+  # "ui_testbed"
 )
 ############################################################
 

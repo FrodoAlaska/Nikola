@@ -3,6 +3,7 @@
 #include "nikola/nikola_gfx.h"
 #include "nikola/nikola_math.h"
 #include "nikola/nikola_resources.h"
+#include "nikola/nikola_timer.h"
 
 #include "render_passes/render_passes.h"
 
@@ -284,6 +285,8 @@ void renderer_begin(FrameData& data) {
 }
 
 void renderer_end() {
+  NIKOLA_PROFILE_FUNCTION();
+
   // Initiate all of the render passes in order
   
   RenderPass* current = s_renderer.head_pass;

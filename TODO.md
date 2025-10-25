@@ -3,7 +3,7 @@
 - [x] Additional UI widgets 
     - [x] Add `UI_IMAGE_ENTERED` and `UI_IMAGE_EXITED` events 
     - [x] Add a `UIMenu` widget
-- [] Integrate Tracy
+- [x] Integrate Tracy
 - [] Run-time performance
     - [] Improve instancing completely. It's currently awfully architected. Take into account the animations and so on.
         - [] NOTE: Perhaps have an internal cache in the renderer of all the materials being used? 
