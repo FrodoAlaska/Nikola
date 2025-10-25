@@ -8,7 +8,7 @@ namespace nikola { // Start of nikola
 ///---------------------------------------------------------------------------------------------------------------------
 /// Private functions
 
-// @TEMP
+// @TEMP (Animator)
 static const f32 get_scale_factor(const f32 last_time, const f32 next_time, const f32 anim_time) {
   f32 mid_way_len = anim_time - last_time; 
   f32 frame_diff  = next_time - last_time;

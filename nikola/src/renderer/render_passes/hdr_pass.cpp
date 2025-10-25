@@ -3,6 +3,7 @@
 #include "../shaders/hdr.glsl.h"
 
 #include "nikola/nikola_render.h"
+#include "nikola/nikola_timer.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -52,10 +53,14 @@ void hdr_pass_init(Window* window) {
 }
 
 void hdr_pass_prepare(RenderPass* pass, const FrameData& data) {
+  NIKOLA_PROFILE_FUNCTION();
+
   shader_context_set_uniform(pass->shader_context, "u_exposure", data.camera.exposure); 
 }
 
 void hdr_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue) {
+  NIKOLA_PROFILE_FUNCTION();
+
   // Using resources
 
   GfxBindingDesc bind_desc = {

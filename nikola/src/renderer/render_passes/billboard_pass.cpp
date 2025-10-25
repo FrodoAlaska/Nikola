@@ -3,6 +3,7 @@
 #include "../shaders/billboard.glsl.h"
 
 #include "nikola/nikola_render.h"
+#include "nikola/nikola_timer.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -70,6 +71,8 @@ void billboard_pass_init(Window* window) {
 }
 
 void billboard_pass_prepare(RenderPass* pass, const FrameData& data) {
+  NIKOLA_PROFILE_FUNCTION();
+
   // @TODO (Renderer): Absolutely not!!!!! 
   // NOOOOOOOOO!!!! DO NOT COPY THE FUCKING FRAMEBUFFERSSS!!!!!!
 
@@ -87,9 +90,10 @@ void billboard_pass_prepare(RenderPass* pass, const FrameData& data) {
 }
 
 void billboard_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue) {
+  NIKOLA_PROFILE_FUNCTION();
+
   for(auto& geo : queue) {
     // Settings uniforms
-    
     shader_context_set_uniform(pass->shader_context, "u_material", geo.material);
 
     // Using resources

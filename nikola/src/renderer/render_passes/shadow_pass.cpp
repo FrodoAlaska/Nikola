@@ -4,6 +4,7 @@
 
 #include "nikola/nikola_render.h"
 #include "nikola/nikola_math.h"
+#include "nikola/nikola_timer.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -79,6 +80,8 @@ void shadow_pass_init(Window* window) {
 }
 
 void shadow_pass_prepare(RenderPass* pass, const FrameData& data) {
+  NIKOLA_PROFILE_FUNCTION();
+
   // Setup the light projection matrix
 
   // Get the center of the frustrum by averaging the 
@@ -118,6 +121,8 @@ void shadow_pass_prepare(RenderPass* pass, const FrameData& data) {
 }
 
 void shadow_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue) {
+  NIKOLA_PROFILE_FUNCTION();
+  
   // Render everything 
 
   for(auto& geo : queue) {

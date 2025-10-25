@@ -3,6 +3,7 @@
 #include "../shaders/pbr_shading.glsl.h"
 
 #include "nikola/nikola_render.h"
+#include "nikola/nikola_timer.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -89,6 +90,8 @@ void light_pass_init(Window* window) {
 }
 
 void light_pass_prepare(RenderPass* pass, const FrameData& data) {
+  NIKOLA_PROFILE_FUNCTION();
+
   ShaderContext* ctx = pass->shader_context;
 
   // Turning the light space view into a texture coordinate
@@ -152,6 +155,8 @@ void light_pass_prepare(RenderPass* pass, const FrameData& data) {
 }
 
 void light_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue) {
+  NIKOLA_PROFILE_FUNCTION();
+
   // Render the skybox
 
   if(RESOURCE_IS_VALID(s_state.skybox_id)) {

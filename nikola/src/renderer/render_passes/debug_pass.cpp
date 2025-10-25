@@ -3,6 +3,7 @@
 #include "../shaders/debug.glsl.h"
 
 #include "nikola/nikola_render.h"
+#include "nikola/nikola_timer.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -68,6 +69,8 @@ void debug_pass_init(Window* window) {
 }
 
 void debug_pass_prepare(RenderPass* pass, const FrameData& data) {
+  NIKOLA_PROFILE_FUNCTION();
+
   // @TODO (Renderer): Absolutely not!!!!! 
   // NOOOOOOOOO!!!! DO NOT COPY THE FUCKING FRAMEBUFFERSSS!!!!!!
 
@@ -85,6 +88,8 @@ void debug_pass_prepare(RenderPass* pass, const FrameData& data) {
 }
 
 void debug_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue) {
+  NIKOLA_PROFILE_FUNCTION();
+
   for(auto& geo : queue) {
     // Settings uniforms
     
