@@ -127,7 +127,7 @@ using RenderPassSumbitFn  = void(*)(RenderPass* pass, const RenderQueueEntry& qu
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderQueueEntry 
 struct RenderQueueEntry {
-  DynamicArray<f32> vertices; 
+  DynamicArray<Vertex3D> vertices; 
   DynamicArray<u32> indices; 
   DynamicArray<Mat4> transforms; 
   DynamicArray<Material*> materials; // @TODO (Renderer): Bindless??
@@ -146,30 +146,20 @@ struct RenderQueueEntry {
 ///---------------------------------------------------------------------------------------------------------------------
 /// RendererDefaults 
 struct RendererDefaults {
-  // Textures
-  
   GfxTexture* albedo_texture    = nullptr;
   GfxTexture* roughness_texture = nullptr;
   GfxTexture* metallic_texture  = nullptr;
   GfxTexture* normal_texture    = nullptr;
   GfxTexture* emissive_texture  = nullptr;
- 
-  // Buffers
-
+  
   GfxBuffer* matrices_buffer  = nullptr;
   GfxBuffer* instance_buffer  = nullptr;
   GfxBuffer* lights_buffer    = nullptr;
   GfxBuffer* animation_buffer = nullptr;
- 
-  // Materials
-
+  
   Material* material       = nullptr;
   Material* debug_material = nullptr;
-  
-  // Pipelines
-  
-  GfxPipeline* screen_quad_pipe = nullptr;
-  GfxPipeline* skybox_pipe      = nullptr;
+  GfxPipeline* screen_quad = nullptr;
 };
 /// RendererDefaults 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -657,6 +647,13 @@ NIKOLA_API void renderer_queue_debug_sphere_instanced(const Transform* transform
 
 NIKOLA_API void renderer_queue_debug_cube(const Transform& transform, const ResourceID& mat_id = {});
 NIKOLA_API void renderer_queue_debug_sphere(const Transform& transform, const ResourceID& mat_id = {});
+
+/// Draw the given `geo` geometry into the scene. 
+///
+/// @NOTE: When using this function outside of a render pass, it can potentially not render, 
+/// or if it does render, it will not be shaded or influenced by any pass. 
+/// Only use this inside render passes or for debug purposes.
+NIKOLA_API void renderer_draw_geometry_primitive(const GeometryPrimitive& geo);
 
 /// Draw the given `skybox_id` skybox into the scene. 
 ///

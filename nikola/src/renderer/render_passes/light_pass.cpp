@@ -154,7 +154,7 @@ void light_pass_prepare(RenderPass* pass, const FrameData& data) {
   s_state.skybox_id = data.skybox_id;
 }
 
-void light_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue) {
+void light_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
   NIKOLA_PROFILE_FUNCTION();
 
   // Render the skybox
@@ -163,34 +163,30 @@ void light_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& 
     renderer_draw_skybox(s_state.skybox_id);
   }
 
-  // Render everything 
+  // Use the required resources
 
-  for(auto& geo : queue) {
-    // Setup uniforms
-    
-    shader_context_set_uniform(pass->shader_context, "u_material", geo.material);
+  GfxTexture* textures[] = {
+    // @TODO (Renderer)
+    // geo.material->albedo_map,
+    // geo.material->roughness_map,
+    // geo.material->metallic_map,
+    // geo.material->normal_map,
+    // geo.material->emissive_map,
+    pass->previous->outputs[0],
+  };
 
-    // Use the required resources
+  GfxBindingDesc bind_desc = {
+    .shader = pass->shader_context->shader,
 
-    GfxTexture* textures[] = {
-      geo.material->albedo_map,
-      geo.material->roughness_map,
-      geo.material->metallic_map,
-      geo.material->normal_map,
-      geo.material->emissive_map,
-      pass->previous->outputs[0],
-    };
+    .textures       = textures, 
+    .textures_count = 6,
+  };
+  gfx_context_use_bindings(pass->gfx, bind_desc);
 
-    GfxBindingDesc bind_desc = {
-      .shader = pass->shader_context->shader,
+  // Render the scene
 
-      .textures       = textures, 
-      .textures_count = 6,
-    };
-    gfx_context_use_bindings(pass->gfx, bind_desc);
-
-    renderer_draw_geometry_primitive(geo);
-  }
+  gfx_context_use_pipeline(pass->gfx, queue.pipe);
+  gfx_context_draw_multi_indirect(pass->gfx, 0, queue.commands.size());
 
   // Setting the output textures
 

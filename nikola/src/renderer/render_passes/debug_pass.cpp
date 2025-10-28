@@ -87,26 +87,24 @@ void debug_pass_prepare(RenderPass* pass, const FrameData& data) {
                        pass->framebuffer_desc.clear_flags);
 }
 
-void debug_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue) {
+void debug_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
   NIKOLA_PROFILE_FUNCTION();
 
-  for(auto& geo : queue) {
-    // Settings uniforms
-    
-    shader_context_set_uniform(pass->shader_context, "u_material", geo.material);
+  // Using resources
 
-    // Using resources
- 
-    GfxBindingDesc bind_desc = {
-      .shader = pass->shader_context->shader, 
+  GfxBindingDesc bind_desc = {
+    .shader = pass->shader_context->shader, 
 
-      .textures       = &geo.material->albedo_map, 
-      .textures_count = 1,
-    };
-    gfx_context_use_bindings(pass->gfx, bind_desc);
+    // @TODO (Renderer)
+    // .textures       = &geo.material->albedo_map, 
+    // .textures_count = 1,
+  };
+  gfx_context_use_bindings(pass->gfx, bind_desc);
 
-    renderer_draw_geometry_primitive(geo);
-  }
+  // Render the scene
+  
+  gfx_context_use_pipeline(pass->gfx, queue.pipe);
+  gfx_context_draw_multi_indirect(pass->gfx, 0, queue.commands.size());
 
   // Setting the output textures
 

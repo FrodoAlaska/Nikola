@@ -120,21 +120,20 @@ void shadow_pass_prepare(RenderPass* pass, const FrameData& data) {
   shader_context_set_uniform(pass->shader_context, "u_light_space", s_state.light_view_proj);
 }
 
-void shadow_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue) {
+void shadow_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
   NIKOLA_PROFILE_FUNCTION();
   
-  // Render everything 
+  // Use the required resources
 
-  for(auto& geo : queue) {
-    // Use the required resources
+  GfxBindingDesc bind_desc = {
+    .shader = pass->shader_context->shader,
+  };
+  gfx_context_use_bindings(pass->gfx, bind_desc);
 
-    GfxBindingDesc bind_desc = {
-      .shader = pass->shader_context->shader,
-    };
-    gfx_context_use_bindings(pass->gfx, bind_desc);
-
-    renderer_draw_geometry_primitive(geo);
-  }
+  // Render the scene
+  
+  gfx_context_use_pipeline(pass->gfx, queue.pipe);
+  gfx_context_draw_multi_indirect(pass->gfx, 0, queue.commands.size());
 
   // Setting the output textures
 

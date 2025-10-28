@@ -510,7 +510,7 @@ static void create_debug_sphere_geo(DynamicArray<f32>& vertices, DynamicArray<u3
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// Mesh loader functions
+/// Geometry loader functions
 
 void geometry_loader_load(DynamicArray<f32>& vertices, DynamicArray<u32>& indices, const GeometryType type) {
   switch(type) {
@@ -538,7 +538,41 @@ void geometry_loader_load(DynamicArray<f32>& vertices, DynamicArray<u32>& indice
   }
 }
 
-/// Mesh loader functions
+void geometry_loader_set_vertex_layout(GfxVertexLayout& layout, const GeometryType type) {
+  switch(type) {
+    case GEOMETRY_CUBE:
+    case GEOMETRY_SPHERE:
+      layout.attributes[0]    = GFX_LAYOUT_FLOAT3; // Position
+      layout.attributes[1]    = GFX_LAYOUT_FLOAT3; // Normal
+      layout.attributes[2]    = GFX_LAYOUT_FLOAT3; // Tangent
+      layout.attributes[3]    = GFX_LAYOUT_FLOAT4; // Joint ID
+      layout.attributes[4]    = GFX_LAYOUT_FLOAT4; // Joint weight
+      layout.attributes[5]    = GFX_LAYOUT_FLOAT2; // Texture coords
+      layout.attributes_count = 6;
+      break;
+    case GEOMETRY_SKYBOX:
+      layout.attributes[0]    = GFX_LAYOUT_FLOAT3; // Position
+      layout.attributes_count = 1;
+      break;
+    case GEOMETRY_BILLBOARD:
+      layout.attributes[0]    = GFX_LAYOUT_FLOAT3; // Position
+      layout.attributes[1]    = GFX_LAYOUT_FLOAT3; // Normal
+      layout.attributes[2]    = GFX_LAYOUT_FLOAT2; // Texture coords
+      layout.attributes_count = 3;
+      break;
+    case GEOMETRY_DEBUG_CUBE:
+    case GEOMETRY_DEBUG_SPHERE:
+      layout.attributes[0]    = GFX_LAYOUT_FLOAT3; // Position
+      layout.attributes[1]    = GFX_LAYOUT_FLOAT2; // Texture coords
+      layout.attributes_count = 2;
+      break;
+    default:
+      NIKOLA_LOG_ERROR("Invalid geometry shape given");
+      break;
+  }
+}
+
+/// Geometry loader functions
 /// ----------------------------------------------------------------------
 
 } // End of nikola

@@ -1126,24 +1126,24 @@ struct GfxPipelineDesc {
   ///
   /// @NOTE: This buffer _must_ be set. It cannot be left a `nullptr`.
   /// Even if `draw_index` is being used.
-  GfxBuffer* vertex_buffer           = nullptr; 
+  GfxBuffer* vertex_buffer   = nullptr; 
 
   /// The amount of vertices in the `vertex_buffer` to be drawn. 
-  sizei vertices_count               = 0;
+  sizei vertices_count       = 0;
   
   /// The index buffer to be used in a `draw_index` command.
   ///
   /// @NOTE: This buffer _must_ be set if a `draw_index` command is used.
   /// Otherwise, it can be left as `nullptr`.
-  GfxBuffer* index_buffer            = nullptr;
+  GfxBuffer* index_buffer    = nullptr;
 
   /// The amount of indices in the `index_buffer` to be drawn.
-  sizei indices_count                = 0;
+  sizei indices_count        = 0;
  
   /// The type of each index in the `index_buffer`. 
   /// 
   /// @NOTE: The default is set to `GFX_LAYOUT_UINT1`.
-  GfxLayoutType indices_type         = GFX_LAYOUT_UINT1;
+  GfxLayoutType indices_type = GFX_LAYOUT_UINT1;
 
   /// Layout array up to `VERTEX_LAYOUTS_MAX` describing each layout attribute.
   ///
@@ -1160,17 +1160,17 @@ struct GfxPipelineDesc {
   /// or cannot write to the depth buffer. 
   ///
   /// @NOTE: By default, this value is `true`.
-  bool depth_mask                    = true;
+  bool depth_mask    = true;
 
   /// The stencil reference value of the pipeline. 
   ///
   /// @NOTE: This is `1` by default.
-  u32 stencil_ref                    = 1;
+  u32 stencil_ref    = 1;
   
   /// The blend factor to be used in the pipeline. 
   ///
   /// @NOTE: This is `{0, 0, 0, 0}` by default.
-  f32 blend_factor[4]                = {0, 0, 0, 0};
+  f32 blend_factor[4] = {0, 0, 0, 0};
 };
 /// GfxPipelineDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1237,6 +1237,9 @@ NIKOLA_API void gfx_context_shutdown(GfxContext* gfx);
 
 /// Retrieve the internal `GfxContextDesc` of `gfx`
 NIKOLA_API GfxContextDesc& gfx_context_get_desc(GfxContext* gfx);
+
+/// Check whether the given `ext` extension is supported in the current enviornment.
+NIKOLA_API bool gfx_context_has_extension(GfxContext* gfx, const char* ext); 
 
 /// Set any `state` of the context `gfx` to `value`. 
 /// i.e, this function can turn on or off the `state` in the given `gfx` context.

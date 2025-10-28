@@ -73,7 +73,7 @@ void shadow_pass_init(Window* window);
 
 void shadow_pass_prepare(RenderPass* pass, const FrameData& data);
 
-void shadow_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue);
+void shadow_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue);
 
 Mat4 shadow_pass_get_light_space(RenderPass* pass);
 
@@ -87,7 +87,7 @@ void light_pass_init(Window* window);
 
 void light_pass_prepare(RenderPass* pass, const FrameData& data);
 
-void light_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue);
+void light_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue);
 
 /// Light pass functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -99,7 +99,7 @@ void billboard_pass_init(Window* window);
 
 void billboard_pass_prepare(RenderPass* pass, const FrameData& data);
 
-void billboard_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue);
+void billboard_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue);
 
 /// Billboard pass functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -111,7 +111,7 @@ void hdr_pass_init(Window* window);
 
 void hdr_pass_prepare(RenderPass* pass, const FrameData& data);
 
-void hdr_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue);
+void hdr_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue);
 
 /// HDR pass functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -123,7 +123,7 @@ void debug_pass_init(Window* window);
 
 void debug_pass_prepare(RenderPass* pass, const FrameData& data);
 
-void debug_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue);
+void debug_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue);
 
 /// Debug pass functions
 ///---------------------------------------------------------------------------------------------------------------------

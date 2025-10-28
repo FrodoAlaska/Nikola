@@ -89,29 +89,28 @@ void billboard_pass_prepare(RenderPass* pass, const FrameData& data) {
                        pass->framebuffer_desc.clear_flags);
 }
 
-void billboard_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue) {
+void billboard_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
   NIKOLA_PROFILE_FUNCTION();
 
-  for(auto& geo : queue) {
-    // Settings uniforms
-    shader_context_set_uniform(pass->shader_context, "u_material", geo.material);
+  // Using resources
 
-    // Using resources
- 
-    GfxTexture* textures[] = {
-      geo.material->albedo_map, 
-    };
+  // @TODO (Renderer)
+  // GfxTexture* textures[] = {
+  //   geo.material->albedo_map, 
+  // };
 
-    GfxBindingDesc bind_desc = {
-      .shader = pass->shader_context->shader, 
+  GfxBindingDesc bind_desc = {
+    .shader = pass->shader_context->shader, 
 
-      .textures       = textures,
-      .textures_count = 1,
-    };
-    gfx_context_use_bindings(pass->gfx, bind_desc);
+    // .textures       = textures,
+    // .textures_count = 1,
+  };
+  gfx_context_use_bindings(pass->gfx, bind_desc);
 
-    renderer_draw_geometry_primitive(geo);
-  }
+  // Render the scene
+  
+  gfx_context_use_pipeline(pass->gfx, queue.pipe);
+  gfx_context_draw_multi_indirect(pass->gfx, 0, queue.commands.size());
 
   // Setting the output textures
 

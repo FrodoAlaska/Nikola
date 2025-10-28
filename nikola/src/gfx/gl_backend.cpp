@@ -58,6 +58,7 @@ struct GfxContext {
   u32 current_clear_flags = 0;
 
   GfxPipeline* bound_pipeline = nullptr;
+  DynamicArray<String> extensions;
 };
 /// GfxContext
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1121,13 +1122,6 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
   event_listen(EVENT_WINDOW_RESIZED, framebuffer_resize);
   event_listen(EVENT_WINDOW_FULLSCREEN, framebuffer_resize);
 
-  // Getting some OpenGL information
-  
-  const u8* vendor       = glGetString(GL_VENDOR); 
-  const u8* renderer     = glGetString(GL_RENDERER); 
-  const u8* gl_version   = glGetString(GL_VERSION);
-  const u8* glsl_version = glGetString(GL_SHADING_LANGUAGE_VERSION);
-
   // Getting the version number
   
   i32 major_ver, minor_ver;
@@ -1135,14 +1129,35 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
   glGetIntegerv(GL_MINOR_VERSION, &minor_ver);
   check_supported_gl_version(major_ver, minor_ver);
 
-  // Getting maximum values
+  // Getting some OpenGL information
+  
+  const u8* vendor       = glGetString(GL_VENDOR); 
+  const u8* renderer     = glGetString(GL_RENDERER); 
+  const u8* gl_version   = glGetString(GL_VERSION);
+  const u8* glsl_version = glGetString(GL_SHADING_LANGUAGE_VERSION);
+
+  // Check for extensions
+
+  i32 extensions_count = 0; 
+  glGetIntegerv(GL_NUM_EXTENSIONS, &extensions_count);
+
+  gfx->extensions.resize(extensions_count);
+
+  for(i32 i = 0; i < extensions_count; i++) {
+    String ext = (const char*)glGetStringi(GL_EXTENSIONS, i);
+    gfx->extensions[i] = ext;
+  }
+
+  // Some useful info dump
 
   NIKOLA_LOG_INFO("An OpenGL graphics context was successfully created:\n" 
-                 "              VENDOR: %s\n" 
-                 "              RENDERER: %s\n" 
-                 "              GL VERSION: %s\n" 
-                 "              GLSL VERSION: %s", 
-                 vendor, renderer, gl_version, glsl_version);
+                 "              Vendor: %s\n" 
+                 "              Renderer: %s\n" 
+                 "              GL version: %s\n" 
+                 "              GLSL version: %s\n" 
+                 "              Extensions count: %zu", 
+                 vendor, renderer, gl_version, glsl_version, gfx->extensions.size());
+
   return gfx;
 }
 
@@ -1159,6 +1174,18 @@ GfxContextDesc& gfx_context_get_desc(GfxContext* gfx) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
   
   return gfx->desc;
+}
+
+NIKOLA_API bool gfx_context_has_extension(GfxContext* gfx, const char* ext) {
+  NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
+
+  for(auto& ext_str : gfx->extensions) {
+    if(ext_str == ext) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 void gfx_context_set_state(GfxContext* gfx, const GfxStates state, const bool value) {

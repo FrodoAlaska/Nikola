@@ -771,6 +771,9 @@ NIKOLA_API void shader_context_set_uniform_buffer(ShaderContext* ctx, const size
 /// Fill the given `vertices` and `indices` arrays with the relavant data given the `type` geometry.
 NIKOLA_API void geometry_loader_load(DynamicArray<f32>& vertices, DynamicArray<u32>& indices, const GeometryType type);
 
+/// Fill the given vertex `layout` with attributes depending on `type`.
+NIKOLA_API void geometry_loader_set_vertex_layout(GfxVertexLayout& layout, const GeometryType type);
+
 /// Geometry functions
 ///---------------------------------------------------------------------------------------------------------------------
 

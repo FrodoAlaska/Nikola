@@ -58,7 +58,7 @@ void hdr_pass_prepare(RenderPass* pass, const FrameData& data) {
   shader_context_set_uniform(pass->shader_context, "u_exposure", data.camera.exposure); 
 }
 
-void hdr_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& queue) {
+void hdr_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
   NIKOLA_PROFILE_FUNCTION();
 
   // Using resources
@@ -73,7 +73,7 @@ void hdr_pass_sumbit(RenderPass* pass, const DynamicArray<GeometryPrimitive>& qu
 
   // Rendering the scene
  
-  gfx_context_use_pipeline(pass->gfx, renderer_get_defaults().screen_quad);
+  gfx_context_use_pipeline(pass->gfx, renderer_get_defaults().screen_quad_pipe);
   gfx_context_draw(pass->gfx, 0);
  
   // Setting outputs

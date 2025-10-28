@@ -15,31 +15,25 @@
 namespace nikola { // Start of nikola
 
 /// ----------------------------------------------------------------------
+/// Consts
+
+const sizei VERTICES_BUFFER_SIZE = MiB(1);
+const sizei INDICES_BUFFER_SIZE  = MiB(1);
+
+const sizei TRANSFORMS_MAX = 4096;
+const sizei MATERIALS_MAX  = 32;
+const sizei COMMANDS_MAX   = 4096;
+
+/// Consts
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// MatrixUniformBuffer
 struct MatrixUniformBuffer {
   Mat4 view, projection; 
   Vec3 camera_position;
 };
 /// MatrixUniformBuffer
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
-/// RenderQueueEntry 
-struct RenderQueueEntry {
-  DynamicArray<Vertex3D> vertices; 
-  DynamicArray<u32> indices; 
-  DynamicArray<Mat4> transforms; 
-  DynamicArray<Material*> materials; // @TODO (Renderer): Bindless??
-  DynamicArray<GfxDrawCommandIndirect> commands; 
-
-  GfxPipelineDesc pipe_desc = {};
-  GfxPipeline* pipe         = nullptr;
-
-  GfxBuffer* transform_buffer = nullptr; 
-  GfxBuffer* material_buffer  = nullptr; 
-  GfxBuffer* command_buffer   = nullptr;
-};
-/// RenderQueueEntry 
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -179,58 +173,148 @@ static void init_defaults() {
   s_renderer.geometries[GEOMETRY_DEBUG_SPHERE] = resources_get_mesh(resources_push_mesh(RESOURCE_CACHE_ID, GEOMETRY_DEBUG_SPHERE));
 }
 
-static void init_pipeline() {
+static void init_pipelines() {
+  //
+  // Screen-space quad
+  //
+
   GfxPipelineDesc pipe_desc = {};
 
-  f32 vertices[] = {
-    // Position    // Texture coords
-    -1.0f,  1.0f,  0.0f, 1.0f,
-    -1.0f, -1.0f,  0.0f, 0.0f,
-     1.0f, -1.0f,  1.0f, 0.0f,
-     1.0f,  1.0f,  1.0f, 1.0f
-  };
+  DynamicArray<f32> vertices; 
+  DynamicArray<u32> indices;
+  geometry_loader_load(vertices, indices, GEOMETRY_BILLBOARD); 
 
   // Vertex buffer init 
   
   GfxBufferDesc vert_desc = {
-    .data  = vertices,
-    .size  = sizeof(vertices),
+    .data  = vertices.data(),
+    .size  = vertices.size() * sizeof(f32),
     .type  = GFX_BUFFER_VERTEX, 
     .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
   };
   pipe_desc.vertex_buffer  = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, vert_desc));
-  pipe_desc.vertices_count = 4;
+  pipe_desc.vertices_count = vertices.size();
  
   // Index buffer init
   
-  u32 indices[] = {
-    0, 1, 2, 
-    2, 3, 0,
-  };
   GfxBufferDesc index_desc = {
-    .data  = indices,
-    .size  = sizeof(indices),
+    .data  = indices.data(),
+    .size  = indices.size() * sizeof(u32),
     .type  = GFX_BUFFER_INDEX, 
     .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
   };
   pipe_desc.index_buffer  = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, index_desc));
-  pipe_desc.indices_count = 6;
+  pipe_desc.indices_count = indices.size();
 
   // Layout init
-  
-  pipe_desc.layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT2;
-  pipe_desc.layouts[0].attributes[1]    = GFX_LAYOUT_FLOAT2;
-  pipe_desc.layouts[0].attributes_count = 2;
+  geometry_loader_set_vertex_layout(pipe_desc.layouts[0], GEOMETRY_BILLBOARD);
 
   // Draw mode init 
   pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
 
   // Pipeline init
-  s_renderer.defaults.screen_quad = gfx_pipeline_create(s_renderer.context, pipe_desc);
+  s_renderer.defaults.screen_quad_pipe = gfx_pipeline_create(s_renderer.context, pipe_desc);
+  
+  //
+  // Skybox quad
+  //
+
+  pipe_desc = {};
+  geometry_loader_load(vertices, indices, GEOMETRY_SKYBOX); 
+  
+  // Vertex buffer init 
+  
+  vert_desc = {
+    .data  = vertices.data(),
+    .size  = vertices.size() * sizeof(f32),
+    .type  = GFX_BUFFER_VERTEX, 
+    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
+  };
+  pipe_desc.vertex_buffer  = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, vert_desc));
+  pipe_desc.vertices_count = vertices.size();
+
+  // Layout init
+  geometry_loader_set_vertex_layout(pipe_desc.layouts[0], GEOMETRY_SKYBOX);
+
+  // Draw mode init 
+  pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
+
+  // Pipeline init
+  s_renderer.defaults.skybox_pipe = gfx_pipeline_create(s_renderer.context, pipe_desc);
 }
 
-static void render_queue_push(RenderQueueType type, Mesh* mesh, const Transform& transform, Material* material) {
+static void render_queue_create(const RenderQueueType type) {
   RenderQueueEntry* queue = &s_renderer.queues[type];
+
+  //
+  // Give the arrays some room for better performance
+  //
+
+  queue->vertices.reserve(128);
+  queue->indices.reserve(128);
+  queue->transforms.reserve(128);
+  queue->materials.reserve(32);
+  queue->commands.reserve(128);
+
+  //
+  // Create the buffers
+  //
+
+  GfxBufferDesc buff_desc = {
+    .data  = nullptr,
+    .size  = TRANSFORMS_MAX * sizeof(Mat4),
+    .type  = GFX_BUFFER_SHADER_STORAGE, 
+    .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
+  };
+  queue->transform_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
+
+  buff_desc = {
+    .data  = nullptr,
+    .size  = MATERIALS_MAX * sizeof(Material), // @TEMP (Renderer)
+    .type  = GFX_BUFFER_SHADER_STORAGE, 
+    .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
+  };
+  queue->material_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
+
+  buff_desc = {
+    .data  = nullptr,
+    .size  = COMMANDS_MAX * sizeof(GfxDrawCommandIndirect),
+    .type  = GFX_BUFFER_SHADER_STORAGE, 
+    .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
+  };
+  queue->command_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
+  
+  buff_desc = {
+    .data  = nullptr,
+    .size  = VERTICES_BUFFER_SIZE,
+    .type  = GFX_BUFFER_VERTEX, 
+    .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
+  };
+  queue->pipe_desc.vertex_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
+  
+  buff_desc = {
+    .data  = nullptr,
+    .size  = INDICES_BUFFER_SIZE,
+    .type  = GFX_BUFFER_INDEX, 
+    .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
+  };
+  queue->pipe_desc.index_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
+
+  //
+  // Create the pipeline
+  //
+
+  queue->pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
+  
+  // @TEMP (Renderer)
+  // Different render queues have different vertex layouts.
+  geometry_loader_set_vertex_layout(queue->pipe_desc.layouts[0], GEOMETRY_CUBE);
+  
+  queue->pipe = gfx_pipeline_create(s_renderer.context, queue->pipe_desc);
+}
+
+static void render_queue_push(const RenderQueueType type, Mesh* mesh, const Transform& transform, Material* material) {
+  RenderQueueEntry* entry = &s_renderer.queues[type];
   
   entry->vertices.insert(entry->vertices.end(), mesh->vertices.begin(), mesh->vertices.end());
   entry->indices.insert(entry->indices.end(), mesh->indices.begin(), mesh->indices.end());
@@ -268,7 +352,13 @@ void renderer_init(Window* window) {
   // Defaults init
   
   init_defaults();
-  init_pipeline();
+  init_pipelines();
+
+  // Create the queues
+
+  for(sizei i = 0; i < RENDER_QUEUES_MAX; i++) {
+    render_queue_create((RenderQueueType)i);
+  }
 
   // Defaults render passes init
   
@@ -299,9 +389,16 @@ void renderer_shutdown() {
 
   // Destroy resources
   
-  gfx_pipeline_destroy(s_renderer.defaults.screen_quad);
+  gfx_pipeline_destroy(s_renderer.defaults.screen_quad_pipe);
+  gfx_pipeline_destroy(s_renderer.defaults.skybox_pipe);
   gfx_context_shutdown(s_renderer.context);
-  
+ 
+  // Destroy the queues
+
+  for(sizei i = 0; i < RENDER_QUEUES_MAX; i++) {
+    gfx_pipeline_destroy(s_renderer.queues[i].pipe);
+  }
+
   NIKOLA_LOG_INFO("Successfully shutdown the renderer context");
 }
 
@@ -335,6 +432,57 @@ void renderer_begin(FrameData& data) {
 
 void renderer_end() {
   NIKOLA_PROFILE_FUNCTION();
+
+  // Update the buffers of each queue
+
+  for(sizei i = 0; i < RENDER_QUEUES_MAX; i++) {
+    // Update buffers if there is data
+ 
+    RenderQueueEntry* queue = &s_renderer.queues[i];
+    if(queue->commands.empty()) {
+      continue;
+    }
+
+    // Update the vertex buffer
+
+    gfx_buffer_upload_data(queue->pipe_desc.vertex_buffer,
+                           0,
+                           queue->vertices.size() * sizeof(f32), 
+                           queue->vertices.data());
+    queue->pipe_desc.vertices_count = queue->vertices.size();
+    
+    // Update the index buffer
+
+    gfx_buffer_upload_data(queue->pipe_desc.index_buffer,
+                           0,
+                           queue->indices.size() * sizeof(u32), 
+                           queue->indices.data());
+    queue->pipe_desc.indices_count = queue->indices.size();
+
+    // Update the trasform buffer
+
+    gfx_buffer_upload_data(queue->transform_buffer,
+                           0,
+                           queue->transforms.size() * sizeof(Mat4), 
+                           queue->transforms.data());
+
+    // Update the materials buffer
+
+    gfx_buffer_upload_data(queue->material_buffer,
+                           0,
+                           queue->materials.size() * sizeof(Material), 
+                           queue->materials.data());
+
+    // Update the command buffer
+
+    gfx_buffer_upload_data(queue->command_buffer,
+                           0,
+                           queue->commands.size() * sizeof(GfxDrawCommandIndirect), 
+                           queue->commands.data());
+
+    // Update the pipeline
+    gfx_pipeline_update(queue->pipe, queue->pipe_desc);
+  }
 
   // Initiate all of the render passes in order
   
@@ -380,7 +528,7 @@ void renderer_end() {
   
   // Draw the final result to the screen
   
-  gfx_context_use_pipeline(s_renderer.context, s_renderer.defaults.screen_quad);
+  gfx_context_use_pipeline(s_renderer.context, s_renderer.defaults.screen_quad_pipe);
   gfx_context_draw(s_renderer.context, 0);
 }
 
@@ -690,43 +838,6 @@ void renderer_queue_debug_sphere(const Transform& transform, const ResourceID& m
   render_queue_push(RENDER_QUEUE_DEBUG, mesh, transform, material); 
 }
 
-void renderer_draw_geometry_primitive(const GeometryPrimitive& geo) {
-  // Update the animation buffer if the primitive has animations
- 
-  if(geo.animation) {
-    gfx_buffer_upload_data(s_renderer.defaults.animation_buffer,
-                           0, 
-                           sizeof(Mat4) * geo.animation->joints.size(), 
-                           geo.animation->skinning_palette);
-  }
-  
-  // Update the instance buffer
-  
-  gfx_buffer_upload_data(s_renderer.defaults.instance_buffer,
-                         0, 
-                         sizeof(Mat4) * geo.instance_count, 
-                         geo.transforms);
-
-  // Set pipeline-related flags from the material
-
-  GfxPipelineDesc pipe_desc = gfx_pipeline_get_desc(geo.pipeline);
-  pipe_desc.depth_mask      = geo.material->depth_mask;
-  pipe_desc.stencil_ref     = geo.material->stencil_ref;
-  
-  gfx_pipeline_update(geo.pipeline, pipe_desc);
-
-  // Draw the mesh
-  
-  gfx_context_use_pipeline(s_renderer.context, geo.pipeline);
-
-  if(geo.instance_count > 1) {
-    gfx_context_draw_instanced(s_renderer.context, 0, geo.instance_count);
-  }
-  else {
-    gfx_context_draw(s_renderer.context, 0);
-  }
-}
-
 void renderer_draw_skybox(const ResourceID& skybox_id) {
   Skybox* skybox = resources_get_skybox(skybox_id); 
 
@@ -742,7 +853,7 @@ void renderer_draw_skybox(const ResourceID& skybox_id) {
 
   // Draw the skybox
   
-  gfx_context_use_pipeline(s_renderer.context, skybox->pipe);
+  gfx_context_use_pipeline(s_renderer.context, s_renderer.defaults.skybox_pipe);
   gfx_context_draw(s_renderer.context, 0);
 }
 

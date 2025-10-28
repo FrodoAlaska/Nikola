@@ -9,10 +9,16 @@
         - [x] Change the meshes and skyboxes representation of their data 
         - [x] Change the geometry loader
         - [x] Update the resource manager to accommodate for the new changes
-        - [] Change the renderer's queueing functions to the new architecture
-        - [] Update the buffers somewhere 
-        - [] Change the render passes
-    - [] Improve instancing completely. It's currently awfully architected. Take into account the animations and so on.
+        - [x] Change the renderer's queueing functions to the new architecture
+        - [x] Create a render queue
+        - [x] Update the buffers somewhere 
+        - [x] Change the render passes
+        - [x] Make a function to check for OpenGL extensions
+        - [] Enable bindless textures with functions like `make_transcent`, `make_non_transcent`, and `get_bindless_id`  
+        - [] Create a `MaterialInterface` struct for all the material data that will be sent to the shader
+        - [] Make a buffer specifically for texture bindless handles, and let the `MaterialInterface` refer to specific textures
+        - [] Don't forget to make the shader storage buffers in the shader an actually SSBO 
+    - [] Improve instancing completely. It's currently awfully architected.
     - [] Improve lighting performance using clustered rendering (This is optional if the performance is fine).
     - [] Documentation
 - [] Scenes?
@@ -59,29 +65,6 @@
     - [] Ring buffers
     - [] Hash map
     - [] Documentation
-
-```c++
-
-void renderer_sumbit() {
-    // Update the internals buffer
-
-    gfx_buffer_upload_data(renderer.pipe_desc.vertex_buffer, 0, renderer.vertices_buffer.size(), renderer.vertices_buffer.data());
-    gfx_buffer_upload_data(renderer.pipe_desc.index_buffer, 0, renderer.indices_buffer.size(), renderer.indices_buffer.data());
-    gfx_buffer_upload_data(renderer.matrix_buffer, 0, renderer.transforms_buffer.size(), renderer.transforms_buffer.data());
-    gfx_buffer_upload_data(renderer.material_buffer, 0, renderer.materials_buffer.size(), renderer.materials_buffer.data());
-    gfx_buffer_upload_data(renderer.command_buffer, 0, renderer.commands_buffer.size(), renderer.commands_buffer.data());
-
-    // Clear all the buffers for the next draw calls...
-    
-    renderer.vertices_buffer.clear();
-    //...
-
-    // Draw call
-
-    
-}
-
-```
 
 ## BUGS:
 - (Window & Renderer): When resizing the window or changing the fullscreen state, the renderer really does not hold up. I'm guessing it's because of the render passes? They need to update their own frame sizes when the window resizes? 
