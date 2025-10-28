@@ -71,10 +71,10 @@ static void generate_tangents(Vertex3D* vertices, const u32 indices_count, const
   }
 }
 
-static void create_cube_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc) {
+static void create_cube_geo(DynamicArray<f32>& vertices, DynamicArray<u32>& indices) {
   // Indices init
 
-  u32 indices[] = {
+  indices = {
     // Back face 
     0, 1, 2, 
     2, 3, 0, 
@@ -102,124 +102,106 @@ static void create_cube_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pi
 
   // Vertices init
   
-  Vertex3D vertices[24];
+  Vertex3D full_vertices[24];
   
   // Position, Color
 
   // Back face
   
-  vertices[0].position = Vec3(-1.0f, -1.0f, -1.0f);
-  vertices[1].position = Vec3( 1.0f, -1.0f, -1.0f);
-  vertices[2].position = Vec3( 1.0f,  1.0f, -1.0f);
-  vertices[3].position = Vec3(-1.0f,  1.0f, -1.0f);
+  full_vertices[0].position = Vec3(-1.0f, -1.0f, -1.0f);
+  full_vertices[1].position = Vec3( 1.0f, -1.0f, -1.0f);
+  full_vertices[2].position = Vec3( 1.0f,  1.0f, -1.0f);
+  full_vertices[3].position = Vec3(-1.0f,  1.0f, -1.0f);
   
-  vertices[0].texture_coords = Vec2(0.0f, 0.0f);
-  vertices[1].texture_coords = Vec2(1.0f, 0.0f);
-  vertices[2].texture_coords = Vec2(1.0f, 1.0f);
-  vertices[3].texture_coords = Vec2(0.0f, 1.0f);
+  full_vertices[0].texture_coords = Vec2(0.0f, 0.0f);
+  full_vertices[1].texture_coords = Vec2(1.0f, 0.0f);
+  full_vertices[2].texture_coords = Vec2(1.0f, 1.0f);
+  full_vertices[3].texture_coords = Vec2(0.0f, 1.0f);
 
   // Front face
    
-  vertices[4].position = Vec3(-1.0f, -1.0f,  1.0f);
-  vertices[5].position = Vec3( 1.0f, -1.0f,  1.0f);
-  vertices[6].position = Vec3( 1.0f,  1.0f,  1.0f);
-  vertices[7].position = Vec3(-1.0f,  1.0f,  1.0f);
+  full_vertices[4].position = Vec3(-1.0f, -1.0f,  1.0f);
+  full_vertices[5].position = Vec3( 1.0f, -1.0f,  1.0f);
+  full_vertices[6].position = Vec3( 1.0f,  1.0f,  1.0f);
+  full_vertices[7].position = Vec3(-1.0f,  1.0f,  1.0f);
   
-  vertices[4].texture_coords = Vec2(0.0f, 0.0f);
-  vertices[5].texture_coords = Vec2(1.0f, 0.0f);
-  vertices[6].texture_coords = Vec2(1.0f, 1.0f);
-  vertices[7].texture_coords = Vec2(0.0f, 1.0f);
+  full_vertices[4].texture_coords = Vec2(0.0f, 0.0f);
+  full_vertices[5].texture_coords = Vec2(1.0f, 0.0f);
+  full_vertices[6].texture_coords = Vec2(1.0f, 1.0f);
+  full_vertices[7].texture_coords = Vec2(0.0f, 1.0f);
   
   // Left face
   
-  vertices[8].position  = Vec3(-1.0f,  1.0f,  1.0f);
-  vertices[9].position  = Vec3(-1.0f,  1.0f, -1.0f);
-  vertices[10].position = Vec3(-1.0f, -1.0f, -1.0f);
-  vertices[11].position = Vec3(-1.0f, -1.0f,  1.0f);
+  full_vertices[8].position  = Vec3(-1.0f,  1.0f,  1.0f);
+  full_vertices[9].position  = Vec3(-1.0f,  1.0f, -1.0f);
+  full_vertices[10].position = Vec3(-1.0f, -1.0f, -1.0f);
+  full_vertices[11].position = Vec3(-1.0f, -1.0f,  1.0f);
   
-  vertices[8].texture_coords  = Vec2(1.0f, 0.0f);
-  vertices[9].texture_coords  = Vec2(1.0f, 1.0f);
-  vertices[10].texture_coords = Vec2(0.0f, 1.0f);
-  vertices[11].texture_coords = Vec2(0.0f, 0.0f);
+  full_vertices[8].texture_coords  = Vec2(1.0f, 0.0f);
+  full_vertices[9].texture_coords  = Vec2(1.0f, 1.0f);
+  full_vertices[10].texture_coords = Vec2(0.0f, 1.0f);
+  full_vertices[11].texture_coords = Vec2(0.0f, 0.0f);
  
   // Right face
  
-  vertices[12].position = Vec3(1.0f,  1.0f,  1.0f);
-  vertices[13].position = Vec3(1.0f,  1.0f, -1.0f);
-  vertices[14].position = Vec3(1.0f, -1.0f, -1.0f);
-  vertices[15].position = Vec3(1.0f, -1.0f,  1.0f);
+  full_vertices[12].position = Vec3(1.0f,  1.0f,  1.0f);
+  full_vertices[13].position = Vec3(1.0f,  1.0f, -1.0f);
+  full_vertices[14].position = Vec3(1.0f, -1.0f, -1.0f);
+  full_vertices[15].position = Vec3(1.0f, -1.0f,  1.0f);
   
-  vertices[12].texture_coords = Vec2(1.0f, 0.0f);
-  vertices[13].texture_coords = Vec2(1.0f, 1.0f);
-  vertices[14].texture_coords = Vec2(0.0f, 1.0f);
-  vertices[15].texture_coords = Vec2(0.0f, 0.0f);
+  full_vertices[12].texture_coords = Vec2(1.0f, 0.0f);
+  full_vertices[13].texture_coords = Vec2(1.0f, 1.0f);
+  full_vertices[14].texture_coords = Vec2(0.0f, 1.0f);
+  full_vertices[15].texture_coords = Vec2(0.0f, 0.0f);
 
   // Top face
  
-  vertices[16].position = Vec3(-1.0f, -1.0f, -1.0f);
-  vertices[17].position = Vec3( 1.0f, -1.0f, -1.0f);
-  vertices[18].position = Vec3( 1.0f, -1.0f,  1.0f);
-  vertices[19].position = Vec3(-1.0f, -1.0f,  1.0f);
+  full_vertices[16].position = Vec3(-1.0f, -1.0f, -1.0f);
+  full_vertices[17].position = Vec3( 1.0f, -1.0f, -1.0f);
+  full_vertices[18].position = Vec3( 1.0f, -1.0f,  1.0f);
+  full_vertices[19].position = Vec3(-1.0f, -1.0f,  1.0f);
   
-  vertices[16].texture_coords = Vec2(0.0f, 1.0f);
-  vertices[17].texture_coords = Vec2(1.0f, 1.0f);
-  vertices[18].texture_coords = Vec2(1.0f, 0.0f);
-  vertices[19].texture_coords = Vec2(0.0f, 0.0f);
+  full_vertices[16].texture_coords = Vec2(0.0f, 1.0f);
+  full_vertices[17].texture_coords = Vec2(1.0f, 1.0f);
+  full_vertices[18].texture_coords = Vec2(1.0f, 0.0f);
+  full_vertices[19].texture_coords = Vec2(0.0f, 0.0f);
  
   // Bottom face
  
-  vertices[20].position = Vec3(-1.0f,  1.0f, -1.0f);
-  vertices[21].position = Vec3( 1.0f,  1.0f, -1.0f);
-  vertices[22].position = Vec3( 1.0f,  1.0f,  1.0f);
-  vertices[23].position = Vec3(-1.0f,  1.0f,  1.0f);
+  full_vertices[20].position = Vec3(-1.0f,  1.0f, -1.0f);
+  full_vertices[21].position = Vec3( 1.0f,  1.0f, -1.0f);
+  full_vertices[22].position = Vec3( 1.0f,  1.0f,  1.0f);
+  full_vertices[23].position = Vec3(-1.0f,  1.0f,  1.0f);
   
-  vertices[20].texture_coords = Vec2(0.0f, 1.0f);
-  vertices[21].texture_coords = Vec2(1.0f, 1.0f);
-  vertices[22].texture_coords = Vec2(1.0f, 0.0f);
-  vertices[23].texture_coords = Vec2(0.0f, 0.0f);
+  full_vertices[20].texture_coords = Vec2(0.0f, 1.0f);
+  full_vertices[21].texture_coords = Vec2(1.0f, 1.0f);
+  full_vertices[22].texture_coords = Vec2(1.0f, 0.0f);
+  full_vertices[23].texture_coords = Vec2(0.0f, 0.0f);
 
-  // Normals, Tangents, UV Coords
+  // Normals and Tangents
 
-  generate_normals(vertices, 36, indices);
-  generate_tangents(vertices, 36, indices);
+  generate_normals(full_vertices, 36, indices.data());
+  generate_tangents(full_vertices, 36, indices.data());
 
-  // Vertex buffer init
-  
-  GfxBufferDesc buff_desc = {
-    .data  = (void*)vertices,
-    .size  = sizeof(vertices),
-    .type  = GFX_BUFFER_VERTEX, 
-    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
-  };
-  pipe_desc->vertex_buffer  = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
-  pipe_desc->vertices_count = 24;  
+  // Carrying over the full vertices into just floats
+  // @NOTE: Woah!!!!! What the hell??? How dare you??!!
 
-  // Index buffer init
-  
-  buff_desc = {
-    .data  = (void*)indices,
-    .size  = sizeof(indices),
-    .type  = GFX_BUFFER_INDEX, 
-    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
-  };
-  pipe_desc->index_buffer  = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
-  pipe_desc->indices_count = 36;  
+  vertices.reserve(24 * sizeof(Vertex3D));
+  for(auto& vertex : full_vertices) {
+    vertices.push_back(vertex.position.x);
+    vertices.push_back(vertex.position.y);
+    vertices.push_back(vertex.position.z);
 
-  // Layout init
-  
-  pipe_desc->layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT3;
-  pipe_desc->layouts[0].attributes[1]    = GFX_LAYOUT_FLOAT3;
-  pipe_desc->layouts[0].attributes[2]    = GFX_LAYOUT_FLOAT3;
-  pipe_desc->layouts[0].attributes[3]    = GFX_LAYOUT_FLOAT4;
-  pipe_desc->layouts[0].attributes[4]    = GFX_LAYOUT_FLOAT4;
-  pipe_desc->layouts[0].attributes[5]    = GFX_LAYOUT_FLOAT2;
-  pipe_desc->layouts[0].attributes_count = 6;
+    vertices.push_back(vertex.normal.x);
+    vertices.push_back(vertex.normal.y);
+    vertices.push_back(vertex.normal.z);
 
-  // Draw mode init
-  pipe_desc->draw_mode = GFX_DRAW_MODE_TRIANGLE;
+    vertices.push_back(vertex.texture_coords.x);
+    vertices.push_back(vertex.texture_coords.y);
+  }
 }
 
-static void create_sphere_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc) {
+static void create_sphere_geo(DynamicArray<f32>& vertices, DynamicArray<u32>& indices) {
   ///
   /// @NOTE (9/7/2025, Mohamed):
   /// No, I'm not smart enough to figure this whole thing out. Like any other great programmer, 
@@ -240,8 +222,8 @@ static void create_sphere_geo(const ResourceGroupID& group_id, GfxPipelineDesc* 
 
   // Vertices init
   
-  DynamicArray<Vertex3D> vertices;
-  vertices.reserve(24);
+  DynamicArray<Vertex3D> full_vertices; // @NOTE: I know this is bad, but oh well...
+  full_vertices.reserve(24);
 
   for(u32 i = 0; i <= stack_count; i++) {
     f32 stack_angle = ((PI / 2.0f) - (i * stack_step));
@@ -265,7 +247,7 @@ static void create_sphere_geo(const ResourceGroupID& group_id, GfxPipelineDesc* 
       vertex.texture_coords = Vec2((f32)j / sector_count, (f32)i / stack_count); 
 
       // New vertex!
-      vertices.push_back(vertex);
+      full_vertices.push_back(vertex); 
     }
   }
 
@@ -274,8 +256,7 @@ static void create_sphere_geo(const ResourceGroupID& group_id, GfxPipelineDesc* 
   u32 k1 = 0; 
   u32 k2 = 0;
 
-  DynamicArray<u32> indices;
-  indices.reserve(32);
+  indices.reserve(36);
 
   for(u32 i = 0; i < stack_count; i++) {
     k1 = i * (sector_count + 1);
@@ -297,47 +278,30 @@ static void create_sphere_geo(const ResourceGroupID& group_id, GfxPipelineDesc* 
   }
 
   // Tangents?
-  generate_tangents(&vertices[0], 36, &indices[0]);
+  generate_tangents(&full_vertices[0], 36, &indices[0]);
 
-  // Vertex buffer init
-  
-  GfxBufferDesc buff_desc = {
-    .data  = (void*)vertices.data(),
-    .size  = sizeof(Vertex3D) * vertices.size(),
-    .type  = GFX_BUFFER_VERTEX, 
-    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
-  };
-  pipe_desc->vertex_buffer  = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
-  pipe_desc->vertices_count = vertices.size();  
+  // Carrying over the full vertices into just floats
+  // @NOTE: Still bad. Don't worry about it, though. Calm down, dude.
 
-  // Index buffer init
-  
-  buff_desc = {
-    .data  = (void*)indices.data(),
-    .size  = sizeof(u32) * indices.size(),
-    .type  = GFX_BUFFER_INDEX, 
-    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
-  };
-  pipe_desc->index_buffer  = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
-  pipe_desc->indices_count = indices.size();  
+  vertices.reserve(24 * sizeof(Vertex3D));
+  for(auto& vertex : full_vertices) {
+    vertices.push_back(vertex.position.x);
+    vertices.push_back(vertex.position.y);
+    vertices.push_back(vertex.position.z);
 
-  // Layout init
-  
-  pipe_desc->layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT3;
-  pipe_desc->layouts[0].attributes[1]    = GFX_LAYOUT_FLOAT3;
-  pipe_desc->layouts[0].attributes[2]    = GFX_LAYOUT_FLOAT3;
-  pipe_desc->layouts[0].attributes[3]    = GFX_LAYOUT_FLOAT4;
-  pipe_desc->layouts[0].attributes[4]    = GFX_LAYOUT_FLOAT4;
-  pipe_desc->layouts[0].attributes[5]    = GFX_LAYOUT_FLOAT2;
-  pipe_desc->layouts[0].attributes_count = 6;
+    vertices.push_back(vertex.normal.x);
+    vertices.push_back(vertex.normal.y);
+    vertices.push_back(vertex.normal.z);
 
-  // Draw mode init
-  pipe_desc->draw_mode = GFX_DRAW_MODE_TRIANGLE;
+    vertices.push_back(vertex.texture_coords.x);
+    vertices.push_back(vertex.texture_coords.y);
+  }
 }
 
-static void create_skybox_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc) {
-  // Vertices
-  float vertices[] = {
+static void create_skybox_geo(DynamicArray<f32>& vertices) {
+  // Vertices init
+  
+  vertices = {
     -1.0f,  1.0f, -1.0f,
     -1.0f, -1.0f, -1.0f,
      1.0f, -1.0f, -1.0f,
@@ -380,78 +344,31 @@ static void create_skybox_geo(const ResourceGroupID& group_id, GfxPipelineDesc* 
     -1.0f, -1.0f,  1.0f,
      1.0f, -1.0f,  1.0f
   };
-  
-  // Vertex buffer init 
-  
-  GfxBufferDesc vert_desc = {
-    .data  = vertices, 
-    .size  = sizeof(vertices), 
-    .type  = GFX_BUFFER_VERTEX, 
-    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
-  };
-  pipe_desc->vertex_buffer  = resources_get_buffer(resources_push_buffer(group_id, vert_desc));
-  pipe_desc->vertices_count = 36;
-
-  // Layout init
-  
-  pipe_desc->layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT3;
-  pipe_desc->layouts[0].attributes_count = 1;
-
-  // Draw mode init
-  pipe_desc->draw_mode = GFX_DRAW_MODE_TRIANGLE;
 }
 
-static void create_billboard_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc) {
-  // Vertex buffer init
+static void create_billboard_geo(DynamicArray<f32>& vertices, DynamicArray<u32>& indices) {
+  // Vertices init
   
-  f32 vertices[] {
+  vertices = {
     // Position          Normal             Texture coords
     -1.0f,  1.0f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 1.0f,
     -1.0f, -1.0f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f,
      1.0f, -1.0f, 0.0f,  0.0f, 0.0f, 1.0f,  1.0f, 0.0f,
      1.0f,  1.0f, 0.0f,  0.0f, 0.0f, 1.0f,  1.0f, 1.0f,
   };
-  
-  GfxBufferDesc buff_desc = {
-    .data  = (void*)vertices,
-    .size  = sizeof(vertices),
-    .type  = GFX_BUFFER_VERTEX, 
-    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
-  };
-  pipe_desc->vertex_buffer  = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
-  pipe_desc->vertices_count = 4;  
 
-  // Index buffer init
+  // Indices init
  
-  u32 indices[6] = {
+  indices = {
     0, 1, 2, 
     2, 3, 0,
   };
-
-  buff_desc = {
-    .data  = (void*)indices,
-    .size  = sizeof(indices),
-    .type  = GFX_BUFFER_INDEX, 
-    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
-  };
-  pipe_desc->index_buffer  = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
-  pipe_desc->indices_count = 6;  
-
-  // Layout init
-  
-  pipe_desc->layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT3;
-  pipe_desc->layouts[0].attributes[1]    = GFX_LAYOUT_FLOAT3;
-  pipe_desc->layouts[0].attributes[2]    = GFX_LAYOUT_FLOAT2;
-  pipe_desc->layouts[0].attributes_count = 3;
-
-  // Draw mode init
-  pipe_desc->draw_mode = GFX_DRAW_MODE_TRIANGLE;
 }
 
-static void create_debug_cube_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc) {
+static void create_debug_cube_geo(DynamicArray<f32>& vertices, DynamicArray<u32>& indices) {
   // Vertices init
-  
-  float vertices[120] = {
+ 
+  vertices = {
     // Back face
 
     -1.0f, -1.0f, -1.0f,  0.0f, 0.0f,
@@ -495,9 +412,7 @@ static void create_debug_cube_geo(const ResourceGroupID& group_id, GfxPipelineDe
     -1.0f,  1.0f,  1.0f,  0.0f, 0.0f,
   };
 
-  // Indices init
-
-  u32 indices[] = {
+  indices = {
     // Back face 
     
     0, 1, 2, 
@@ -528,40 +443,9 @@ static void create_debug_cube_geo(const ResourceGroupID& group_id, GfxPipelineDe
     20, 21, 22, 
     22, 23, 20, 
   };
-
-  // Vertex buffer init
-  
-  GfxBufferDesc buff_desc = {
-    .data  = (void*)vertices,
-    .size  = sizeof(f32) * 120,
-    .type  = GFX_BUFFER_VERTEX, 
-    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
-  };
-  pipe_desc->vertex_buffer  = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
-  pipe_desc->vertices_count = 120;  
-
-  // Index buffer init
-  
-  buff_desc = {
-    .data  = (void*)indices,
-    .size  = sizeof(indices),
-    .type  = GFX_BUFFER_INDEX, 
-    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
-  };
-  pipe_desc->index_buffer  = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
-  pipe_desc->indices_count = 36;  
-
-  // Layout init
-  
-  pipe_desc->layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT3;
-  pipe_desc->layouts[0].attributes[1]    = GFX_LAYOUT_FLOAT2;
-  pipe_desc->layouts[0].attributes_count = 2;
-
-  // Draw mode init
-  pipe_desc->draw_mode = GFX_DRAW_MODE_TRIANGLE;
 }
 
-static void create_debug_sphere_geo(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc) {
+static void create_debug_sphere_geo(DynamicArray<f32>& vertices, DynamicArray<u32>& indices) {
   u32 sector_count = 32;
   u32 stack_count  = 32;
 
@@ -571,7 +455,6 @@ static void create_debug_sphere_geo(const ResourceGroupID& group_id, GfxPipeline
 
   // Vertices init
   
-  DynamicArray<f32> vertices;
   vertices.reserve(120);
 
   for(u32 i = 0; i <= stack_count; i++) {
@@ -601,7 +484,6 @@ static void create_debug_sphere_geo(const ResourceGroupID& group_id, GfxPipeline
   u32 k1 = 0; 
   u32 k2 = 0;
 
-  DynamicArray<u32> indices;
   indices.reserve(32);
 
   for(u32 i = 0; i < stack_count; i++) {
@@ -622,37 +504,6 @@ static void create_debug_sphere_geo(const ResourceGroupID& group_id, GfxPipeline
       }
     }
   }
-
-  // Vertex buffer init
-  
-  GfxBufferDesc buff_desc = {
-    .data  = (void*)vertices.data(),
-    .size  = sizeof(f32) * vertices.size(),
-    .type  = GFX_BUFFER_VERTEX, 
-    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
-  };
-  pipe_desc->vertex_buffer  = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
-  pipe_desc->vertices_count = vertices.size();  
-
-  // Index buffer init
-  
-  buff_desc = {
-    .data  = (void*)indices.data(),
-    .size  = sizeof(u32) * indices.size(),
-    .type  = GFX_BUFFER_INDEX, 
-    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
-  };
-  pipe_desc->index_buffer  = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
-  pipe_desc->indices_count = indices.size();  
-
-  // Layout init
-  
-  pipe_desc->layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT3;
-  pipe_desc->layouts[0].attributes[1]    = GFX_LAYOUT_FLOAT2;
-  pipe_desc->layouts[0].attributes_count = 2;
-
-  // Draw mode init
-  pipe_desc->draw_mode = GFX_DRAW_MODE_TRIANGLE;
 }
 
 /// Private functions  
@@ -661,25 +512,25 @@ static void create_debug_sphere_geo(const ResourceGroupID& group_id, GfxPipeline
 /// ----------------------------------------------------------------------
 /// Mesh loader functions
 
-void geometry_loader_load(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc, const GeometryType type) {
+void geometry_loader_load(DynamicArray<f32>& vertices, DynamicArray<u32>& indices, const GeometryType type) {
   switch(type) {
     case GEOMETRY_CUBE:
-      create_cube_geo(group_id, pipe_desc);
+      create_cube_geo(vertices, indices);
       break;
     case GEOMETRY_SPHERE:
-      create_sphere_geo(group_id, pipe_desc);
+      create_sphere_geo(vertices, indices);
       break;
     case GEOMETRY_SKYBOX:
-      create_skybox_geo(group_id, pipe_desc);
+      create_skybox_geo(vertices);
       break;
     case GEOMETRY_BILLBOARD:
-      create_billboard_geo(group_id, pipe_desc);
+      create_billboard_geo(vertices, indices);
       break;
     case GEOMETRY_DEBUG_CUBE:
-      create_debug_cube_geo(group_id, pipe_desc);
+      create_debug_cube_geo(vertices, indices);
       break;
     case GEOMETRY_DEBUG_SPHERE:
-      create_debug_sphere_geo(group_id, pipe_desc);
+      create_debug_sphere_geo(vertices, indices);
       break;
     default:
       NIKOLA_LOG_ERROR("Invalid geometry shape given");

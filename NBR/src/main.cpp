@@ -75,6 +75,8 @@ static nikola::ResourceType get_resource_type(const char* type) {
 }
 
 static bool lex_args(int argc, char** argv, nbr::ListContext* list, nikola::i32* res_type) {
+  NIKOLA_PROFILE_FUNCTION();
+
   nikola::FilePath path = "DI"; 
 
   for(int i = 1; i < 6; i++) {

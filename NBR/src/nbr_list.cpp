@@ -331,6 +331,7 @@ void list_context_create(const nikola::FilePath& path, ListContext* list) {
 }
 
 void list_context_convert_by_type(ListContext* list, const nikola::ResourceType type) {
+  // @TODO (NBR)
   // for(auto& section : list->sections) {
   //   if(section.type != type) {
   //     continue;
@@ -348,6 +349,8 @@ void list_context_convert_by_type(ListContext* list, const nikola::ResourceType 
 }
 
 void list_context_convert_all(ListContext* list) {
+  NIKOLA_PROFILE_FUNCTION();
+
   // Convert all the resource paths
 
   for(auto& entry : s_entries) {

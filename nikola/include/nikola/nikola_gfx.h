@@ -236,6 +236,9 @@ enum GfxBufferType {
 
   /// A shader storage buffer.
   GFX_BUFFER_SHADER_STORAGE,
+  
+  /// A draw command indirect buffer.
+  GFX_BUFFER_DRAW_INDIRECT,
 };
 /// GfxBufferType
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1095,18 +1098,21 @@ struct GfxBindingDesc {
   /// An array of textures of `textures_count`.
   ///
   /// @NOTE: The `textures_count` member MUST be < `TEXTURES_MAX`.
+  
   GfxTexture** textures = nullptr;
   sizei textures_count  = 0;
 
   /// An array of images of `images_count`.
   ///
   /// @NOTE: The `images_count` member MUST be < `TEXTURES_MAX`.
+  
   GfxTexture** images = nullptr;
   sizei images_count  = 0;
 
   /// An array of cubemaps of `cubemaps_count`.
   ///
   /// @NOTE: The `cubemaps_count` member MUST be < `CUBEMAPS_MAX`.
+  
   GfxCubemap** cubemaps = nullptr;
   sizei cubemaps_count  = 0;
 };
@@ -1139,12 +1145,6 @@ struct GfxPipelineDesc {
   /// @NOTE: The default is set to `GFX_LAYOUT_UINT1`.
   GfxLayoutType indices_type         = GFX_LAYOUT_UINT1;
 
-  /// The instance buffer to be used in a `draw_instanced` draw command.
-  ///
-  /// @NOTE: This buffer _must_ be set if a `draw_instanced` command is used.
-  /// Otherwise, it can be left as `nullptr`.
-  GfxBuffer* instance_buffer         = nullptr;
-
   /// Layout array up to `VERTEX_LAYOUTS_MAX` describing each layout attribute.
   ///
   /// @NOTE: The layout types `GFX_LAYOUT_MAT2`, `GFX_LAYOUT_MAT3`, and `GFX_LAYOUT_MAT4` 
@@ -1173,6 +1173,37 @@ struct GfxPipelineDesc {
   f32 blend_factor[4]                = {0, 0, 0, 0};
 };
 /// GfxPipelineDesc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// GfxDrawCommandIndirect
+struct GfxDrawCommandIndirect {
+  /// The number of primitives (vertices or indices) to be drawn.
+  u32 elements_count = 0; 
+
+  /// The number of instances to draw. 
+  u32 instance_count = 0;
+
+  /// The first element to be considered when drawing. 
+  ///
+  /// @NOTE: This is usually set to `0`.
+  u32 first_element  = 0; 
+
+  /// The base vertex to start drawing from. 
+  ///
+  /// @NOTE: This is used to offset into a large 
+  /// vertex/index array.
+  u32 base_vertex    = 0;
+
+  /// The base index of the vertex attribute to 
+  /// be used when using this command for an instanced 
+  /// draw call. 
+  ///
+  /// @NOTE: For non-instanced draw calls, this should 
+  /// be left as `0`.
+  u32 base_instance  = 0;
+};
+/// GfxDrawCommandIndirect
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1258,17 +1289,28 @@ NIKOLA_API void gfx_context_use_bindings(GfxContext* gfx, const GfxBindingDesc& 
 NIKOLA_API void gfx_context_use_pipeline(GfxContext* gfx, GfxPipeline* pipeline);
 
 /// Draw the currently bound `GfxPipeline` object of `gfx`, starting at `start_element`, drawing 
-/// either `GfxPipeline.vertices_count` or `GfxPipeline.indieces_count` amount of elements and/or vertices, 
+/// either `GfxPipeline.vertices_count` or `GfxPipeline.indices_count` amount of elements and/or vertices, 
 /// depending on which buffer is active.
 ///
 /// @NOTE: If the currently bound `GfxPipeline` object only has one valid `vertex_buffer`, then 
 /// this draw call will use the vertex buffer. Otherwise, the index buffer will be used. 
 NIKOLA_API void gfx_context_draw(GfxContext* gfx, const u32 start_element);
 
-/// Equivalent to the `gfx_context_draw` but uses instancing, using the `instance_count` parametar.
+/// Equivalent to `gfx_context_draw` but uses instancing, using the `instance_count` parametar.
 ///
 /// @NOTE: If the given `instance_count` is == 1, the function will STILL use instancing.
 NIKOLA_API void gfx_context_draw_instanced(GfxContext* gfx, const u32 start_element, const u32 instance_count);
+
+/// Draw the currently bound `GfxPipeline` object of `gfx` as an indirect call, using a buffer with a 
+/// type of `GFX_BUFFER_DRAW_INDIRECT` populated with `GfxDrawCommandIndirect` objects. 
+///
+/// The given `offset` will be used to offset into the vertex buffer or the index buffer. 
+/// The given `count` signifies the number of `GfxDrawCommandIndirect` objects in the buffer. 
+/// The given `stride` represents the distance between each `GfxDrawCommandIndirect` object in the buffer. 
+/// By default, the `stride` parametar is set to `0` to provide a packed buffer of draw commands.
+///
+/// @NOTE: If there is no buffer of type `GFX_BUFFER_DRAW_INDIRECT` created, you will get an OpenGL error. 
+NIKOLA_API void gfx_context_draw_multi_indirect(GfxContext* gfx, const u32 offset, const sizei count, const sizei stride = 0);
 
 /// Dispatch the currently active compute shader in `work_group_x`, `work_group_y`, and `work_group_z`. 
 /// Before calling this function, a previous call to `gfx_shader_use` MUST be made with the appropriate 

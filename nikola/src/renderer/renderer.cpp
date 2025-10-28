@@ -24,6 +24,25 @@ struct MatrixUniformBuffer {
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// RenderQueueEntry 
+struct RenderQueueEntry {
+  DynamicArray<Vertex3D> vertices; 
+  DynamicArray<u32> indices; 
+  DynamicArray<Mat4> transforms; 
+  DynamicArray<Material*> materials; // @TODO (Renderer): Bindless??
+  DynamicArray<GfxDrawCommandIndirect> commands; 
+
+  GfxPipelineDesc pipe_desc = {};
+  GfxPipeline* pipe         = nullptr;
+
+  GfxBuffer* transform_buffer = nullptr; 
+  GfxBuffer* material_buffer  = nullptr; 
+  GfxBuffer* command_buffer   = nullptr;
+};
+/// RenderQueueEntry 
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// Renderer
 struct Renderer {
   // Context data
@@ -53,7 +72,7 @@ struct Renderer {
   RenderPass* head_pass = nullptr; 
   RenderPass* tail_pass = nullptr;
 
-  DynamicArray<GeometryPrimitive> queues[RENDER_QUEUES_MAX];
+  RenderQueueEntry queues[RENDER_QUEUES_MAX];
 };
 
 static Renderer s_renderer{};
@@ -271,6 +290,8 @@ void renderer_shutdown() {
 }
 
 void renderer_begin(FrameData& data) {
+  NIKOLA_PROFILE_FUNCTION();
+
   GfxBuffer* matrix_buffer = s_renderer.defaults.matrices_buffer;
   s_renderer.frame_data    = &data;
    
@@ -282,6 +303,18 @@ void renderer_begin(FrameData& data) {
     .camera_position = data.camera.position,
   };
   gfx_buffer_upload_data(matrix_buffer, 0, sizeof(MatrixUniformBuffer), &s_renderer.matrix_uniform_buffer);
+
+  // Clear the data from the previous frame
+
+  for(sizei i = 0; i < RENDER_QUEUES_MAX; i++) {
+    RenderQueueEntry* entry = &s_renderer.queues[i];
+
+    entry->vertices.clear();
+    entry->indices.clear();
+    entry->transforms.clear();
+    entry->materials.clear();
+    entry->commands.clear();
+  }
 }
 
 void renderer_end() {
@@ -333,12 +366,6 @@ void renderer_end() {
   
   gfx_context_use_pipeline(s_renderer.context, s_renderer.defaults.screen_quad);
   gfx_context_draw(s_renderer.context, 0);
-  
-  // Clear the queues for the new frame
-  
-  for(sizei i = 0; i < RENDER_QUEUES_MAX; i++) {
-    s_renderer.queues[i].clear();
-  }
 }
 
 void renderer_set_clear_color(const Vec4& clear_color) {
@@ -602,7 +629,33 @@ void renderer_queue_billboard_instanced(const ResourceID& res_id,
 }
 
 void renderer_queue_mesh(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id) {
-  renderer_queue_mesh_instanced(res_id, &transform, 1, mat_id);
+  // renderer_queue_mesh_instanced(res_id, &transform, 1, mat_id);
+  // @TEMP
+
+  // Retrieving the necessary resources
+
+  RenderQueueEntry* opaque_entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
+
+  Mesh* mesh         = resources_get_mesh(res_id);
+  Material* material = s_renderer.defaults.material;
+
+  if(RESOURCE_IS_VALID(mat_id)) {
+    material = resources_get_material(mat_id);
+  }
+
+  // Issuing the draw command 
+
+  opaque_entry->vertices.insert(opaque_entry->vertices.end(), mesh->vertices.begin(), mesh->vertices.end());
+  opaque_entry->indices.insert(opaque_entry->indices.end(), mesh->indices.begin(), mesh->indices.end());
+  opaque_entry->transforms.push_back(transform.transform);
+  opaque_entry->materials.push_back(material); // @TEMP (Renderer): Bindless????
+
+  GfxDrawCommandIndirect cmd = {
+    .elements_count = (u32)mesh->vertices.size(),
+    .first_element  = (u32)opaque_entry->indices.size(),
+    .base_vertex    = (u32)opaque_entry->vertices.size(),
+  };
+  opaque_entry->commands.push_back(cmd);
 }
 
 void renderer_queue_model(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id) {
@@ -682,7 +735,6 @@ void renderer_draw_geometry_primitive(const GeometryPrimitive& geo) {
   GfxPipelineDesc pipe_desc = gfx_pipeline_get_desc(geo.pipeline);
   pipe_desc.depth_mask      = geo.material->depth_mask;
   pipe_desc.stencil_ref     = geo.material->stencil_ref;
-  pipe_desc.instance_buffer = s_renderer.defaults.instance_buffer;
   
   gfx_pipeline_update(geo.pipeline, pipe_desc);
 

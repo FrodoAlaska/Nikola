@@ -190,6 +190,8 @@ static bool parser_start(ListContext* list) {
 /// List parser functions
 
 bool list_parser_init(const nikola::DynamicArray<ListToken>& tokens, ListContext* list) {
+  NIKOLA_PROFILE_FUNCTION();
+
   if(tokens.empty()) {
     NIKOLA_LOG_ERROR("Empty tokens array given to parser!");
     return false;

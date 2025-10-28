@@ -4,8 +4,6 @@
 #include "nikola/nikola_file.h"
 #include "nikola/nikola_thread.h"
 
-#include <cstring>
-
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola
@@ -198,28 +196,30 @@ static T get_resource(const ResourceID& id, DynamicArray<T>& res, const Resource
 }
 
 static bool load_texture_nbr(ResourceGroup* group, GfxTexture* texture, const FilePath& nbr_path) {
+  //
   // Load the NBR file
-  
+  // 
+
   NBRHeader header;
   File file;
+  
   if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
+    file_close(file);
     return false;
   }
 
-  // Make sure it is the correct resource type
-  
   if(header.resource_type != RESOURCE_TYPE_TEXTURE) {
     NIKOLA_LOG_ERROR("Unexpected resource type found in NBR file '\%s\'", nbr_path.c_str());
     return false;
   }
 
-  // Load the NBR texture type
-  
   NBRTexture nbr_texture;
   file_read_bytes(file, &nbr_texture);
 
+  //
   // Convert the NBR format to a valid texture
-  
+  // 
+
   GfxTextureDesc tex_desc; 
   tex_desc.width  = nbr_texture.width; 
   tex_desc.height = nbr_texture.height; 
@@ -229,47 +229,54 @@ static bool load_texture_nbr(ResourceGroup* group, GfxTexture* texture, const Fi
   tex_desc.format = (GfxTextureFormat)nbr_texture.format; 
   tex_desc.data   = nbr_texture.pixels;
 
-  // Load the texture's data
-  
   if(!gfx_texture_load(texture, tex_desc)) {
     NIKOLA_LOG_ERROR("Failed to load texture at '\%s\'", nbr_path.c_str());
     return false;
   } 
 
+  //
   // Freeing NBR data
-  
+  // 
+
   memory_free(nbr_texture.pixels);
   file_close(file); 
+
+  // Some useful info dump
 
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed texture:", group->name.c_str());
   NIKOLA_LOG_DEBUG("     Size = %i X %i", tex_desc.width, tex_desc.height);
   NIKOLA_LOG_DEBUG("     Type = %s", texture_type_str(tex_desc.type));
   NIKOLA_LOG_DEBUG("     Path = %s", nbr_path.c_str());
+
+  // Done!
+  return true;
 }
 
 static bool load_cubemap_nbr(ResourceGroup* group, GfxCubemap* cubemap, const FilePath& nbr_path) {
+  ///
   // Load the NBR file
-  
+  // 
+
   NBRHeader header;
   File file;
+  
   if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
+    file_close(file); 
     return false;
   }
 
-  // Make sure it is the correct resource type
-  
   if(header.resource_type != RESOURCE_TYPE_CUBEMAP) {
     NIKOLA_LOG_ERROR("Unexpected resource type found in NBR file '\%s\'", nbr_path.c_str());
     return false;
   }
 
-  // Load the NBR cubemap
-  
   NBRCubemap nbr_cubemap;
   file_read_bytes(file, &nbr_cubemap);
 
+  //
   // Convert the NBR format to a valid cubemap
-  
+  // 
+
   GfxCubemapDesc cube_desc; 
   cube_desc.width       = nbr_cubemap.width; 
   cube_desc.height      = nbr_cubemap.height; 
@@ -281,56 +288,64 @@ static bool load_cubemap_nbr(ResourceGroup* group, GfxCubemap* cubemap, const Fi
     cube_desc.data[i] = nbr_cubemap.pixels[i];
   }
 
-  // Load the cubemap's data
   gfx_cubemap_load(cubemap, cube_desc);
 
+  //
   // Freeing NBR data
-  
+  // 
+
   for(sizei i = 0; i < nbr_cubemap.faces_count; i++) {
     memory_free(nbr_cubemap.pixels[i]);
   }
   file_close(file); 
 
+  // Some useful info dump
+
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed cubemap:", group->name.c_str());
   NIKOLA_LOG_DEBUG("     Size  = %i X %i", cube_desc.width, cube_desc.height);
   NIKOLA_LOG_DEBUG("     Faces = %i", cube_desc.faces_count);
   NIKOLA_LOG_DEBUG("     Path  = %s", nbr_path.c_str());
+  
+  // Done!
   return true;
 }
 
 static bool load_shader_nbr(ResourceGroup* group, GfxShader* shader, const FilePath& nbr_path) {
+  //
   // Load the NBR file
-  
+  // 
+
   NBRHeader header;
   File file;
+
   if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
+    file_close(file); 
     return false;
   }
-  
-  // Make sure it is the correct resource type
   
   if(header.resource_type != RESOURCE_TYPE_SHADER) {
     NIKOLA_LOG_ERROR("Unexpected resource type found in NBR file '\%s\'", nbr_path.c_str());
     return false;
   }
 
-  // Load the NBR shader type
-  
   NBRShader nbr_shader;
   file_read_bytes(file, &nbr_shader);
 
+  //
   // Convert the NBR format to a valid shader
- 
+  //
+
   GfxShaderDesc shader_desc = {};
   shader_desc.vertex_source  = nbr_shader.vertex_source;
   shader_desc.pixel_source   = nbr_shader.pixel_source;
   shader_desc.compute_source = nbr_shader.compute_source;
 
-  // Load the shader's data
   gfx_shader_load(shader, shader_desc);
 
+  //
   // Freeing NBR data
-  
+  // 
+
   if(nbr_shader.vertex_source) {
     memory_free(nbr_shader.vertex_source);
     memory_free(nbr_shader.pixel_source);
@@ -339,6 +354,8 @@ static bool load_shader_nbr(ResourceGroup* group, GfxShader* shader, const FileP
     memory_free(nbr_shader.compute_source);
   }
   file_close(file); 
+
+  // Some useful info dump
 
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed shader:", group->name.c_str());
   if(shader_desc.vertex_source) {
@@ -349,6 +366,409 @@ static bool load_shader_nbr(ResourceGroup* group, GfxShader* shader, const FileP
     NIKOLA_LOG_DEBUG("     Compute source length = %zu", strlen(shader_desc.compute_source));
   }
   NIKOLA_LOG_DEBUG("     Path = %s", nbr_path.c_str());
+  
+  // Done!
+  return true;
+}
+
+static void load_mesh_nbr(ResourceGroup* group, Mesh* mesh, NBRMesh& nbr_mesh) {
+  // Loading the data   
+
+  mesh->vertices.assign(nbr_mesh.vertices, nbr_mesh.vertices + nbr_mesh.vertices_count);
+  mesh->indices.assign(nbr_mesh.indices, nbr_mesh.indices + nbr_mesh.indices_count);
+  
+  mesh->material_index = nbr_mesh.material_index;
+
+  // Freeing NBR data
+  
+  memory_free(nbr_mesh.vertices);
+  memory_free(nbr_mesh.indices);
+}
+
+static bool load_model_nbr(ResourceGroup* group, Model* model, const FilePath& nbr_path) {
+  //
+  // Load the NBR model
+  // 
+  
+  NBRHeader header;
+  File file;
+
+  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
+    file_close(file);
+    return false;
+  }
+  
+  if(header.resource_type != RESOURCE_TYPE_MODEL) {
+    NIKOLA_LOG_ERROR("Unexpected resource type found in NBR file '\%s\'", nbr_path.c_str());
+    return false;
+  }
+
+  NBRModel nbr_model;
+  file_read_bytes(file, &nbr_model);
+ 
+  //
+  // Convert the NBR format to a valid model
+  // 
+
+  // Make some space for the arrays for some better performance?
+ 
+  model->meshes.reserve(nbr_model.meshes_count);
+  model->materials.reserve(nbr_model.materials_count);
+  
+  DynamicArray<ResourceID> texture_ids; // @FIX (Resource): This is bad. Don't do this!
+  
+  // Convert the textures
+  
+  for(sizei i = 0; i < nbr_model.textures_count; i++) {
+    NBRTexture* nbr_texture = &nbr_model.textures[i];
+
+    GfxTextureDesc desc; 
+    desc.format    = GFX_TEXTURE_FORMAT_RGBA8; 
+    desc.filter    = GFX_TEXTURE_FILTER_MIN_MAG_LINEAR; 
+    desc.wrap_mode = GFX_TEXTURE_WRAP_CLAMP;
+    desc.width     = nbr_texture->width; 
+    desc.height    = nbr_texture->height; 
+    desc.depth     = 0; 
+    desc.mips      = 1; 
+    desc.type      = GFX_TEXTURE_2D; 
+    desc.data      = nbr_texture->pixels;
+  
+    texture_ids.push_back(resources_push_texture(group->id, desc));
+  }
+  
+  // Convert the material 
+  
+  for(sizei i = 0; i < nbr_model.materials_count; i++) {
+    NBRMaterial* nbr_mat = &nbr_model.materials[i];
+
+    Vec3 color = Vec3(nbr_mat->color[0], 
+                      nbr_mat->color[1], 
+                      nbr_mat->color[2]);
+    
+    i8 albedo_index    = nbr_mat->albedo_index;
+    i8 roughness_index = nbr_mat->roughness_index;
+    i8 metallic_index  = nbr_mat->metallic_index;
+    i8 normal_index    = nbr_mat->normal_index;
+    i8 emissive_index  = nbr_mat->emissive_index;
+
+    MaterialDesc mat_desc = {
+      .albedo_id    = albedo_index    != -1 ? texture_ids[albedo_index]    : ResourceID{}, 
+      .roughness_id = roughness_index != -1 ? texture_ids[roughness_index] : ResourceID{},
+      .metallic_id  = metallic_index  != -1 ? texture_ids[metallic_index]  : ResourceID{},
+      .normal_id    = normal_index    != -1 ? texture_ids[normal_index]    : ResourceID{},
+      .emissive_id  = emissive_index  != -1 ? texture_ids[emissive_index]  : ResourceID{},
+
+      .color     = color,
+      .roughness = nbr_mat->roughness, 
+      .metallic  = nbr_mat->metallic, 
+      .emissive  = nbr_mat->emissive,
+    };
+    ResourceID mat_id = resources_push_material(group->id, mat_desc);
+
+    model->materials.push_back(resources_get_material(mat_id)); 
+  }
+  
+  // Convert the meshes 
+  
+  for(sizei i = 0; i < nbr_model.meshes_count; i++) {
+    ResourceID mesh_id = resources_push_mesh(group->id, nbr_model.meshes[i]);
+    model->meshes.push_back(resources_get_mesh(mesh_id));
+  }
+
+  // Freeing NBR data
+
+  for(sizei i = 0; i < nbr_model.textures_count; i++) {
+    memory_free(nbr_model.textures[i].pixels);
+  }
+
+  memory_free(nbr_model.meshes);
+  memory_free(nbr_model.materials);
+  memory_free(nbr_model.textures);
+  
+  file_close(file); 
+
+  // Some useful info dump
+
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed model:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Meshes    = %zu", model->meshes.size());
+  NIKOLA_LOG_DEBUG("     Materials = %zu", model->materials.size());
+  NIKOLA_LOG_DEBUG("     Textures  = %i", nbr_model.textures_count);
+  NIKOLA_LOG_DEBUG("     Path      = %s", nbr_path.c_str());
+  
+  // done!
+  return true;
+}
+
+static bool load_animation_nbr(ResourceGroup* group, Animation* anim, const FilePath& nbr_path) {
+  // 
+  // Load the NBR file 
+  //
+  
+  NBRHeader header;
+  File file;
+  
+  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
+    file_close(file);
+    return false;
+  }
+ 
+  if(header.resource_type != RESOURCE_TYPE_ANIMATION) {
+    NIKOLA_LOG_ERROR("Unexpected resource type found in NBR file '\%s\'", nbr_path.c_str());
+    return false;
+  }
+
+  NBRAnimation nbr_anim{};
+  file_read_bytes(file, &nbr_anim);
+
+  //
+  // Convert the NBR format to a valid model
+  // 
+  
+  anim->joints.reserve(nbr_anim.joints_count);
+  for(u16 i = 0; i < nbr_anim.joints_count; i++) {
+    Joint* joint        = new Joint{};
+    NBRJoint* nbr_joint = &nbr_anim.joints[i];
+
+    // Convert the positions
+
+    joint->position_samples.reserve(nbr_joint->positions_count);
+    for(u16 ip = 0; ip < nbr_joint->positions_count; ip += 4) {
+      VectorAnimSample sample;
+
+      sample.value.x = nbr_joint->position_samples[ip + 0];
+      sample.value.y = nbr_joint->position_samples[ip + 1];
+      sample.value.z = nbr_joint->position_samples[ip + 2];
+      sample.time    = nbr_joint->position_samples[ip + 3];
+
+      joint->position_samples.push_back(sample);
+    }
+    
+    // Convert the rotations
+
+    joint->rotation_samples.reserve(nbr_joint->rotations_count);
+    for(u16 ir = 0; ir < nbr_joint->rotations_count; ir += 5) {
+      QuatAnimSample sample;
+
+      sample.value.x = nbr_joint->rotation_samples[ir + 0];
+      sample.value.y = nbr_joint->rotation_samples[ir + 1];
+      sample.value.z = nbr_joint->rotation_samples[ir + 2];
+      sample.value.w = nbr_joint->rotation_samples[ir + 3];
+      sample.time    = nbr_joint->rotation_samples[ir + 4];
+
+      joint->rotation_samples.push_back(sample);
+    }
+    
+    // Convert the scales
+
+    joint->scale_samples.reserve(nbr_joint->scales_count);
+    for(u16 is = 0; is < nbr_joint->scales_count; is += 4) {
+      VectorAnimSample sample;
+
+      sample.value.x = nbr_joint->scale_samples[is + 0];
+      sample.value.y = nbr_joint->scale_samples[is + 1];
+      sample.value.z = nbr_joint->scale_samples[is + 2];
+      sample.time    = nbr_joint->scale_samples[is + 3];
+
+      joint->scale_samples.push_back(sample);
+    }
+
+    // Convert other joint information
+
+    joint->parent_index = (i32)nbr_joint->parent_index;
+    f32* matrix         = &nbr_joint->inverse_bind_pose[0];
+
+    joint->inverse_bind_pose = Mat4(matrix[0], matrix[4], matrix[8],  0.0f,
+                                    matrix[1], matrix[5], matrix[9],  0.0f,
+                                    matrix[2], matrix[6], matrix[10], 0.0f,
+                                    matrix[3], matrix[7], matrix[11], 1.0f);
+
+    // Transforming the joint with the default values
+
+    transform_translate(joint->current_transform, joint->position_samples[0].value);
+    transform_rotate(joint->current_transform, joint->rotation_samples[0].value);
+    transform_scale(joint->current_transform, joint->scale_samples[0].value); // @TEMP (Animation)
+
+    // Default initializing the skinning matrix of the joint (IMPORTANT!)
+    anim->skinning_palette[i] = joint->current_transform.transform;
+
+    // Welcome, Mr. Joint!
+    anim->joints.push_back(joint);
+  }
+
+  anim->duration   = nbr_anim.duration;
+  anim->frame_rate = nbr_anim.frame_rate;
+
+
+  //
+  // Freeing NBR data
+  // 
+
+  for(nikola::sizei i = 0; i < nbr_anim.joints_count; i++) {
+    memory_free(nbr_anim.joints[i].position_samples);
+    memory_free(nbr_anim.joints[i].rotation_samples);
+    memory_free(nbr_anim.joints[i].scale_samples);
+  } 
+
+  memory_free(nbr_anim.joints);
+  file_close(file); 
+
+  // Some useful info dump
+
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed animation:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Joints     = %i", nbr_anim.joints_count);
+  NIKOLA_LOG_DEBUG("     Duration   = %f", nbr_anim.duration);
+  NIKOLA_LOG_DEBUG("     Frame rate = %f", nbr_anim.frame_rate);
+  NIKOLA_LOG_DEBUG("     Path       = %s", nbr_path.c_str());
+  
+  // done!
+  return true;
+}
+
+static bool load_font_nbr(ResourceGroup* group, Font* font, const FilePath& nbr_path) {
+  // 
+  // Load the NBR file 
+  //
+  
+  NBRHeader header;
+  File file;
+  
+  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
+    file_close(file);
+    return false;
+  }
+ 
+  if(header.resource_type != RESOURCE_TYPE_FONT) {
+    NIKOLA_LOG_ERROR("Unexpected resource type found in NBR file '\%s\'", nbr_path.c_str());
+    return false;
+  }
+  
+  NBRFont nbr_font;
+  file_read_bytes(file, &nbr_font);
+ 
+  //
+  // Convert the NBR format to a valid font
+  //
+  
+  // Import the font information
+  
+  font->ascent   = (f32)nbr_font.ascent;
+  font->descent  = (f32)nbr_font.descent;
+  font->line_gap = (f32)nbr_font.line_gap;
+
+  // Import the glyphs 
+  
+  for(sizei i = 0; i < nbr_font.glyphs_count; i++) {
+    Glyph glyph;
+
+    glyph.unicode = nbr_font.glyphs[i].unicode;
+
+    glyph.size.x = nbr_font.glyphs[i].width;
+    glyph.size.y = nbr_font.glyphs[i].height;
+    
+    glyph.offset.x = nbr_font.glyphs[i].offset_x;
+    glyph.offset.y = nbr_font.glyphs[i].offset_y;
+    
+    glyph.left   = nbr_font.glyphs[i].left;
+    glyph.top    = nbr_font.glyphs[i].top;
+    glyph.right  = nbr_font.glyphs[i].right;
+    glyph.bottom = nbr_font.glyphs[i].bottom;
+    
+    glyph.advance_x    = nbr_font.glyphs[i].advance_x;
+    glyph.kern         = nbr_font.glyphs[i].kern;
+    glyph.left_bearing = nbr_font.glyphs[i].left_bearing;
+
+    // We don't care about glyphs that have a "non-size"
+    if(glyph.size.x <= 0) {
+      continue;
+    }
+  
+    // Importing the texture
+    
+    GfxTextureDesc face_desc {
+      .width  = (u32)nbr_font.glyphs[i].width,
+      .height = (u32)nbr_font.glyphs[i].height,
+      .depth  = 0, 
+      .mips   = 1,
+
+      .type      = GFX_TEXTURE_2D, 
+      .format    = GFX_TEXTURE_FORMAT_R8, 
+      .filter    = GFX_TEXTURE_FILTER_MIN_MAG_LINEAR, 
+      .wrap_mode = GFX_TEXTURE_WRAP_CLAMP,
+      
+      .data = (void*)nbr_font.glyphs[i].pixels,
+    };
+    glyph.texture = resources_get_texture(resources_push_texture(group->id, face_desc));
+
+    font->glyphs[glyph.unicode] = glyph;
+  }
+
+  //
+  // Freeing NBR data
+  //
+
+  for(u32 i = 0; i < nbr_font.glyphs_count; i++) {
+    memory_free(nbr_font.glyphs[i].pixels);
+  }
+
+  memory_free(nbr_font.glyphs);
+  
+  file_close(file); 
+
+  // Some useful info dump
+  
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed font:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Glyphs   = %zu", font->glyphs.size());
+  NIKOLA_LOG_DEBUG("     Ascent   = %0.3f", font->ascent);
+  NIKOLA_LOG_DEBUG("     Descent  = %0.3f", font->descent);
+  NIKOLA_LOG_DEBUG("     Line gap = %0.3f", font->line_gap);
+  NIKOLA_LOG_DEBUG("     Path     = %s", nbr_path.c_str());
+
+  // Done!
+  return true;
+}
+
+static bool load_audio_nbr(ResourceGroup* group, AudioBufferDesc* desc, const FilePath& nbr_path) {
+  //
+  // Load the NBR file
+  // 
+  
+  NBRHeader header;
+  File file;
+  
+  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
+    file_close(file);
+    return false;
+  }
+  
+  if(header.resource_type != RESOURCE_TYPE_AUDIO_BUFFER) {
+    NIKOLA_LOG_ERROR("Unexpected resource type found in NBR file '\%s\'", nbr_path.c_str());
+    return false;
+  }
+  
+  NBRAudio nbr_audio;
+  file_read_bytes(file, &nbr_audio);
+
+  //
+  // Convert the NBR format to a valid audio buffer desc
+  //
+  
+  desc->format      = (AudioBufferFormat)nbr_audio.format; 
+  desc->channels    = nbr_audio.channels; 
+  desc->sample_rate = nbr_audio.sample_rate;
+  desc->size        = nbr_audio.size;
+  desc->data        = (void*)nbr_audio.samples;
+
+  // 
+  // Freeing NBR data
+  // 
+
+  memory_free(nbr_audio.samples);
+  file_close(file); 
+ 
+  // Some useful info dump
+  NIKOLA_LOG_DEBUG("     Name        = %s", filepath_stem(nbr_path).c_str());
+
+  // Done!
   return true;
 }
 
@@ -711,16 +1131,16 @@ ResourceID resources_push_shader(const ResourceGroupID& group_id, const GfxShade
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
-  // Create and push the shader
+  // Create and load the shader
   
   GfxShader* shader = gfx_shader_create(renderer_get_context());
+  gfx_shader_load(shader, shader_desc); 
+
+  // New shader!
 
   ResourceID id; 
   PUSH_RESOURCE(group, shaders, shader, RESOURCE_TYPE_SHADER, id);
- 
-  // Load the shader's data
-  gfx_shader_load(shader, shader_desc); 
-
+  
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed shader:", group->name.c_str());
   if(shader_desc.vertex_source) {
     NIKOLA_LOG_DEBUG("     Vertex source length = %zu", strlen(shader_desc.vertex_source));
@@ -736,18 +1156,18 @@ ResourceID resources_push_shader(const ResourceGroupID& group_id, const FilePath
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
-  // Create and push the shader
+  // Create and load the shader
   
   GfxShader* shader = gfx_shader_create(renderer_get_context());
+  load_shader_nbr(group, shader, nbr_path);
+ 
+  // New shader loaded!
 
   ResourceID id; 
   PUSH_RESOURCE(group, shaders, shader, RESOURCE_TYPE_SHADER, id);
-
-  // Add and load the shader's data
-
+  
   group->named_ids[filepath_stem(nbr_path)] = id;
-
-  load_shader_nbr(group, shader, nbr_path);
+  
   return id;
 }
 
@@ -808,65 +1228,19 @@ ResourceID resources_push_mesh(const ResourceGroupID& group_id, NBRMesh& nbr_mes
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
-  // Allocate the mesh
+  // Allocate and load the mesh
   
-  Mesh* mesh      = new Mesh{};
-  mesh->pipe_desc = {}; 
-
-  // Convert the NBR mesh into the engine's mesh format 
+  Mesh* mesh = new Mesh{};
+  load_mesh_nbr(group, mesh, nbr_mesh);
   
-  GfxBufferDesc buff_desc = {
-    .data  = (void*)nbr_mesh.vertices,
-    .size  = nbr_mesh.vertices_count * sizeof(f32), 
-    .type  = GFX_BUFFER_VERTEX, 
-    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
-  };
-  mesh->vertex_buffer = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
-    
-  buff_desc = {
-    .data  = (void*)nbr_mesh.indices,
-    .size  = nbr_mesh.indices_count * sizeof(u32), 
-    .type  = GFX_BUFFER_INDEX, 
-    .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
-  };
-  mesh->index_buffer = resources_get_buffer(resources_push_buffer(group_id, buff_desc));
-
-  mesh->pipe_desc.vertex_buffer  = mesh->vertex_buffer;
-  mesh->pipe_desc.vertices_count = nbr_mesh.vertices_count;  
-  mesh->pipe_desc.index_buffer   = mesh->index_buffer;
-  mesh->pipe_desc.indices_count  = nbr_mesh.indices_count;  
-  mesh->pipe_desc.draw_mode      = GFX_DRAW_MODE_TRIANGLE;
-
-  // @TODO (Resource manager): Add some post-processing to the mesh in case 
-  // it does not include tangents, normals, or what have you.
-  // Layout init
-  
-  mesh->pipe_desc.layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT3;
-  mesh->pipe_desc.layouts[0].attributes[1]    = GFX_LAYOUT_FLOAT3;
-  mesh->pipe_desc.layouts[0].attributes[2]    = GFX_LAYOUT_FLOAT3;
-  mesh->pipe_desc.layouts[0].attributes[3]    = GFX_LAYOUT_FLOAT4;
-  mesh->pipe_desc.layouts[0].attributes[4]    = GFX_LAYOUT_FLOAT4;
-  mesh->pipe_desc.layouts[0].attributes[5]    = GFX_LAYOUT_FLOAT2;
-  mesh->pipe_desc.layouts[0].attributes_count = 6;
-  
-  // Create the mesh's pipeline
-  mesh->pipe = gfx_pipeline_create(renderer_get_context(), mesh->pipe_desc);
-
-  // Create the mesh
+  // New mesh added!
   
   ResourceID id; 
   PUSH_RESOURCE(group, meshes, mesh, RESOURCE_TYPE_MESH, id);
-
-  // Freeing NBR data
-  
-  memory_free(nbr_mesh.vertices);
-  memory_free(nbr_mesh.indices);
-
-  // New mesh added!
   
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed mesh:", group->name.c_str());
-  NIKOLA_LOG_DEBUG("     Vertices = %zu", mesh->pipe_desc.vertices_count);
-  NIKOLA_LOG_DEBUG("     Indices  = %zu", mesh->pipe_desc.indices_count);
+  NIKOLA_LOG_DEBUG("     Vertices = %zu", mesh->vertices.size());
+  NIKOLA_LOG_DEBUG("     Indices  = %zu", mesh->indices.size());
   return id;
 }
 
@@ -874,29 +1248,21 @@ ResourceID resources_push_mesh(const ResourceGroupID& group_id, const GeometryTy
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
   
-  // Allocate the mesh
-  Mesh* mesh = new Mesh{};
-
-  // Use the loader to set up the mesh
-  geometry_loader_load(group_id, &mesh->pipe_desc, type);
-
-  // Create the pipeline
+  // Allocate and load the mesh
   
-  mesh->vertex_buffer = mesh->pipe_desc.vertex_buffer;
-  mesh->index_buffer  = mesh->pipe_desc.index_buffer;
+  Mesh* mesh = new Mesh{};
+  geometry_loader_load(mesh->vertices, mesh->indices, type);
 
-  mesh->pipe = gfx_pipeline_create(renderer_get_context(), mesh->pipe_desc);
-
-  // Create the mesh
+  // New mesh added!
   
   ResourceID id; 
   PUSH_RESOURCE(group, meshes, mesh, RESOURCE_TYPE_MESH, id);
 
-  // New mesh added!
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed mesh:", group->name.c_str());
-  NIKOLA_LOG_DEBUG("     Vertices      = %zu", mesh->pipe_desc.vertices_count);
-  NIKOLA_LOG_DEBUG("     Indices       = %zu", mesh->pipe_desc.indices_count);
+  NIKOLA_LOG_DEBUG("     Vertices      = %zu", mesh->vertices.size());
+  NIKOLA_LOG_DEBUG("     Indices       = %zu", mesh->indices.size());
   NIKOLA_LOG_DEBUG("     Geomatry type = %s", geo_type_str(type));
+  
   return id;
 }
 
@@ -966,132 +1332,50 @@ ResourceID resources_push_material(const ResourceGroupID& group_id, const Materi
 ResourceID resources_push_skybox(const ResourceGroupID& group_id, const ResourceID& cubemap_id) {
   NIKOLA_ASSERT(RESOURCE_IS_VALID(cubemap_id), "Cannot push a new skybox with an invalid cubemap");
   GROUP_CHECK(group_id);
-  
-  // Get the group
   ResourceGroup* group = &s_manager.groups[group_id];
 
-  // Allocate the skybox
+  // Allocate and load the skybox
+
+  DynamicArray<u32> dummy_indices; // @TEMP (Resources)
+
   Skybox* skybox = new Skybox{};
-  
-  // Use the loader to set up the skybox
-  geometry_loader_load(group_id, &skybox->pipe_desc, GEOMETRY_SKYBOX);
+  geometry_loader_load(skybox->vertices, dummy_indices, GEOMETRY_SKYBOX);
 
   // Set the cubemap
   skybox->cubemap = resources_get_cubemap(cubemap_id);
 
-  // Create the pipeline 
-  skybox->pipe = gfx_pipeline_create(renderer_get_context(), skybox->pipe_desc);
-
-  // Create skybox
+  // New skybox added!
+  
   ResourceID id;
   PUSH_RESOURCE(group, skyboxes, skybox, RESOURCE_TYPE_SKYBOX, id);
 
-  // New skybox added!
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed skybox:", group->name.c_str());
-  NIKOLA_LOG_DEBUG("     Vertices = %zu", skybox->pipe_desc.vertices_count);
-  NIKOLA_LOG_DEBUG("     Indices  = %zu", skybox->pipe_desc.indices_count);
+  NIKOLA_LOG_DEBUG("     Vertices = %zu", skybox->vertices.size());
+  
   return id;
 }
 
 ResourceID resources_push_skybox(const ResourceGroupID& group_id, const FilePath& cubemap_path) {
-  // Get the cubemap first
+  // New skybox added!
+  
   ResourceID cubemap_id = resources_push_cubemap(group_id, cubemap_path);
-
-  // New context added!
   return resources_push_skybox(group_id, cubemap_id);
 }
 
 ResourceID resources_push_model(const ResourceGroupID& group_id, const FilePath& nbr_path) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
-  
-  // Load the NBR file
-  
-  NBRHeader header;
-  File file;
-  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
-    return ResourceID{};
-  }
-  
-  // Make sure it is the correct resource type
-  NIKOLA_ASSERT((header.resource_type == RESOURCE_TYPE_MODEL), "Expected RESOURCE_TYPE_MODEL");
 
   // Allocate the model
   Model* model = new Model{};
-  
-  // Load the NBR model
-  
-  NBRModel nbr_model;
-  file_read_bytes(file, &nbr_model);
-  
-  // Convert the NBR format to a valid model
-  
-  // Make some space for the arrays for some better performance?
- 
-  model->meshes.reserve(nbr_model.meshes_count);
-  model->materials.reserve(nbr_model.materials_count);
-  model->material_indices.reserve(nbr_model.meshes_count);
-  
-  DynamicArray<ResourceID> texture_ids; // @FIX (Resource): This is bad. Don't do this!
 
-  // Convert the textures
+  // Load the NBR data into the model
   
-  for(sizei i = 0; i < nbr_model.textures_count; i++) {
-    NBRTexture* nbr_texture = &nbr_model.textures[i];
+  if(!load_model_nbr(group, model, nbr_path)) {
+    delete model;
+    NIKOLA_LOG_ERROR("Failed to load NBR model file at \'%s\'", nbr_path.c_str());
 
-    GfxTextureDesc desc; 
-    desc.format    = GFX_TEXTURE_FORMAT_RGBA8; 
-    desc.filter    = GFX_TEXTURE_FILTER_MIN_MAG_LINEAR; 
-    desc.wrap_mode = GFX_TEXTURE_WRAP_CLAMP;
-    desc.width     = nbr_texture->width; 
-    desc.height    = nbr_texture->height; 
-    desc.depth     = 0; 
-    desc.mips      = 1; 
-    desc.type      = GFX_TEXTURE_2D; 
-    desc.data      = nbr_texture->pixels;
-  
-    texture_ids.push_back(resources_push_texture(group_id, desc));
-  }
-  
-  // Convert the material 
-  
-  for(sizei i = 0; i < nbr_model.materials_count; i++) {
-    NBRMaterial* nbr_mat = &nbr_model.materials[i];
-
-    Vec3 color = Vec3(nbr_mat->color[0], 
-                      nbr_mat->color[1], 
-                      nbr_mat->color[2]);
-    
-    i8 albedo_index    = nbr_mat->albedo_index;
-    i8 roughness_index = nbr_mat->roughness_index;
-    i8 metallic_index  = nbr_mat->metallic_index;
-    i8 normal_index    = nbr_mat->normal_index;
-    i8 emissive_index  = nbr_mat->emissive_index;
-
-    MaterialDesc mat_desc = {
-      .albedo_id    = albedo_index    != -1 ? texture_ids[albedo_index]    : ResourceID{}, 
-      .roughness_id = roughness_index != -1 ? texture_ids[roughness_index] : ResourceID{},
-      .metallic_id  = metallic_index  != -1 ? texture_ids[metallic_index]  : ResourceID{},
-      .normal_id    = normal_index    != -1 ? texture_ids[normal_index]    : ResourceID{},
-      .emissive_id  = emissive_index  != -1 ? texture_ids[emissive_index]  : ResourceID{},
-
-      .color     = color,
-      .roughness = nbr_mat->roughness, 
-      .metallic  = nbr_mat->metallic, 
-      .emissive  = nbr_mat->emissive,
-    };
-    ResourceID mat_id = resources_push_material(group_id, mat_desc);
-
-    model->materials.push_back(resources_get_material(mat_id)); 
-  }
-  
-  // Convert the vertices 
-  
-  for(sizei i = 0; i < nbr_model.meshes_count; i++) {
-    ResourceID mesh_id = resources_push_mesh(group_id, nbr_model.meshes[i]);
-    model->meshes.push_back(resources_get_mesh(mesh_id));
-
-    model->material_indices.push_back(nbr_model.meshes[i].material_index);
+    return ResourceID{};
   }
 
   // New model added!
@@ -1099,255 +1383,60 @@ ResourceID resources_push_model(const ResourceGroupID& group_id, const FilePath&
   ResourceID id;
   PUSH_RESOURCE(group, models, model, RESOURCE_TYPE_MODEL, id);
 
-  // Freeing NBR data
-
-  for(sizei i = 0; i < nbr_model.textures_count; i++) {
-    memory_free(nbr_model.textures[i].pixels);
-  }
-
-  memory_free(nbr_model.meshes);
-  memory_free(nbr_model.materials);
-  memory_free(nbr_model.textures);
-  
-  file_close(file); 
-
-  // Add the resource to the named resources
   group->named_ids[filepath_stem(nbr_path)] = id;
 
-  NIKOLA_LOG_DEBUG("Group \'%s\' pushed model:", group->name.c_str());
-  NIKOLA_LOG_DEBUG("     Meshes    = %zu", model->meshes.size());
-  NIKOLA_LOG_DEBUG("     Materials = %zu", model->materials.size());
-  NIKOLA_LOG_DEBUG("     Textures  = %i", nbr_model.textures_count);
-  NIKOLA_LOG_DEBUG("     Path      = %s", nbr_path.c_str());
   return id;
 }
 
 ResourceID resources_push_animation(const ResourceGroupID& group_id, const FilePath& nbr_path) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
-  
-  // Load the NBR file
-  
-  NBRHeader header;
-  File file;
-  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
-    return ResourceID{};
-  }
-  
-  // Make sure it is the correct resource type
-  NIKOLA_ASSERT((header.resource_type == RESOURCE_TYPE_ANIMATION), "Expected RESOURCE_TYPE_ANIMATION");
 
   // Allocate the animation
   Animation* anim = new Animation{};
-
-  // Load the NBRAnimation
-
-  NBRAnimation nbr_anim{};
-  file_read_bytes(file, &nbr_anim);
-
-  // Convert the NBR format into a valid animation
+  
+  // Load the NBR data into the animation
  
-  anim->joints.reserve(nbr_anim.joints_count);
-  for(u16 i = 0; i < nbr_anim.joints_count; i++) {
-    Joint* joint        = new Joint{};
-    NBRJoint* nbr_joint = &nbr_anim.joints[i];
+  if(!load_animation_nbr(group, anim, nbr_path)) {
+    delete anim;
+    NIKOLA_LOG_ERROR("Failed to load NBR animation file at \'%s\'", nbr_path.c_str());
 
-    // Convert the positions
-
-    joint->position_samples.reserve(nbr_joint->positions_count);
-    for(u16 ip = 0; ip < nbr_joint->positions_count; ip += 4) {
-      VectorAnimSample sample;
-
-      sample.value.x = nbr_joint->position_samples[ip + 0];
-      sample.value.y = nbr_joint->position_samples[ip + 1];
-      sample.value.z = nbr_joint->position_samples[ip + 2];
-      sample.time    = nbr_joint->position_samples[ip + 3];
-
-      joint->position_samples.push_back(sample);
-    }
-    
-    // Convert the rotations
-
-    joint->rotation_samples.reserve(nbr_joint->rotations_count);
-    for(u16 ir = 0; ir < nbr_joint->rotations_count; ir += 5) {
-      QuatAnimSample sample;
-
-      sample.value.x = nbr_joint->rotation_samples[ir + 0];
-      sample.value.y = nbr_joint->rotation_samples[ir + 1];
-      sample.value.z = nbr_joint->rotation_samples[ir + 2];
-      sample.value.w = nbr_joint->rotation_samples[ir + 3];
-      sample.time    = nbr_joint->rotation_samples[ir + 4];
-
-      joint->rotation_samples.push_back(sample);
-    }
-    
-    // Convert the scales
-
-    joint->scale_samples.reserve(nbr_joint->scales_count);
-    for(u16 is = 0; is < nbr_joint->scales_count; is += 4) {
-      VectorAnimSample sample;
-
-      sample.value.x = nbr_joint->scale_samples[is + 0];
-      sample.value.y = nbr_joint->scale_samples[is + 1];
-      sample.value.z = nbr_joint->scale_samples[is + 2];
-      sample.time    = nbr_joint->scale_samples[is + 3];
-
-      joint->scale_samples.push_back(sample);
-    }
-
-    // Convert other joint information
-
-    joint->parent_index = (i32)nbr_joint->parent_index;
-    f32* matrix         = &nbr_joint->inverse_bind_pose[0];
-
-    joint->inverse_bind_pose = Mat4(matrix[0], matrix[4], matrix[8],  0.0f,
-                                    matrix[1], matrix[5], matrix[9],  0.0f,
-                                    matrix[2], matrix[6], matrix[10], 0.0f,
-                                    matrix[3], matrix[7], matrix[11], 1.0f);
-
-    // Transforming the joint with the default values
-
-    transform_translate(joint->current_transform, joint->position_samples[0].value);
-    transform_rotate(joint->current_transform, joint->rotation_samples[0].value);
-    transform_scale(joint->current_transform, joint->scale_samples[0].value); // @TEMP (Animation)
-
-    // Default initializing the skinning matrix of the joint (IMPORTANT!)
-    anim->skinning_palette[i] = joint->current_transform.transform;
-
-    // Welcome, Mr. Joint!
-    anim->joints.push_back(joint);
+    return ResourceID{};
   }
-
-  anim->duration   = nbr_anim.duration;
-  anim->frame_rate = nbr_anim.frame_rate;
-
+  
   // New animation added!
   
   ResourceID id;
   PUSH_RESOURCE(group, animations, anim, RESOURCE_TYPE_ANIMATION, id);
-
-  // Freeing NBR data
   
-  for(nikola::sizei i = 0; i < nbr_anim.joints_count; i++) {
-    memory_free(nbr_anim.joints[i].position_samples);
-    memory_free(nbr_anim.joints[i].rotation_samples);
-    memory_free(nbr_anim.joints[i].scale_samples);
-  } 
-
-  memory_free(nbr_anim.joints);
-  file_close(file); 
-
-  // Add the resource to the named resources
   group->named_ids[filepath_stem(nbr_path)] = id;
 
-  NIKOLA_LOG_DEBUG("Group \'%s\' pushed animation:", group->name.c_str());
-  NIKOLA_LOG_DEBUG("     Joints     = %i", nbr_anim.joints_count);
-  NIKOLA_LOG_DEBUG("     Duration   = %f", nbr_anim.duration);
-  NIKOLA_LOG_DEBUG("     Frame rate = %f", nbr_anim.frame_rate);
-  NIKOLA_LOG_DEBUG("     Path       = %s", nbr_path.c_str());
   return id;
 }
 
 ResourceID resources_push_font(const ResourceGroupID& group_id, const FilePath& nbr_path) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
-  
-  // Load the NBR file
-  NBRHeader header;
-  File file;
-  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
-    return ResourceID{};
-  }
-
-  // Make sure it is the correct resource type
-  NIKOLA_ASSERT((header.resource_type == RESOURCE_TYPE_FONT), "Expected RESOURCE_TYPE_FONT");
 
   // Allocate the model
   Font* font = new Font{};
-  
-  // Load the NBR font
-  NBRFont nbr_font;
-  file_read_bytes(file, &nbr_font);
-  
-  // Convert the NBR format to a valid model
 
-  // Import the font information
-  
-  font->ascent   = (f32)nbr_font.ascent;
-  font->descent  = (f32)nbr_font.descent;
-  font->line_gap = (f32)nbr_font.line_gap;
+  // Load the NBR data into the font
 
-  // Import the glyphs 
-  
-  for(sizei i = 0; i < nbr_font.glyphs_count; i++) {
-    Glyph glyph;
+  if(!load_font_nbr(group, font, nbr_path)) {
+    delete font;
+    NIKOLA_LOG_ERROR("Failed to load NBR font at \'%s\'", nbr_path.c_str());
 
-    glyph.unicode = nbr_font.glyphs[i].unicode;
-
-    glyph.size.x = nbr_font.glyphs[i].width;
-    glyph.size.y = nbr_font.glyphs[i].height;
-    
-    glyph.offset.x = nbr_font.glyphs[i].offset_x;
-    glyph.offset.y = nbr_font.glyphs[i].offset_y;
-    
-    glyph.left   = nbr_font.glyphs[i].left;
-    glyph.top    = nbr_font.glyphs[i].top;
-    glyph.right  = nbr_font.glyphs[i].right;
-    glyph.bottom = nbr_font.glyphs[i].bottom;
-    
-    glyph.advance_x    = nbr_font.glyphs[i].advance_x;
-    glyph.kern         = nbr_font.glyphs[i].kern;
-    glyph.left_bearing = nbr_font.glyphs[i].left_bearing;
-
-    // We don't care about glyphs that have a "non-size"
-    if(glyph.size.x <= 0) {
-      continue;
-    }
-  
-    // Importing the texture
-    
-    GfxTextureDesc face_desc {
-      .width  = (u32)nbr_font.glyphs[i].width,
-      .height = (u32)nbr_font.glyphs[i].height,
-      .depth  = 0, 
-      .mips   = 1,
-
-      .type      = GFX_TEXTURE_2D, 
-      .format    = GFX_TEXTURE_FORMAT_R8, 
-      .filter    = GFX_TEXTURE_FILTER_MIN_MAG_LINEAR, 
-      .wrap_mode = GFX_TEXTURE_WRAP_CLAMP,
-      
-      .data = (void*)nbr_font.glyphs[i].pixels,
-    };
-    glyph.texture = resources_get_texture(resources_push_texture(group_id, face_desc));
-
-    font->glyphs[glyph.unicode] = glyph;
+    return ResourceID{};
   }
 
   // New font added!
   
   ResourceID id;
   PUSH_RESOURCE(group, fonts, font, RESOURCE_TYPE_FONT, id);
-
-  // Freeing NBR data
   
-  for(u32 i = 0; i < nbr_font.glyphs_count; i++) {
-    memory_free(nbr_font.glyphs[i].pixels);
-  }
-
-  memory_free(nbr_font.glyphs);
-  
-  file_close(file); 
-
-  // Add the resource to the named resources
   group->named_ids[filepath_stem(nbr_path)] = id;
 
-  NIKOLA_LOG_DEBUG("Group \'%s\' pushed font:", group->name.c_str());
-  NIKOLA_LOG_DEBUG("     Glyphs   = %zu", font->glyphs.size());
-  NIKOLA_LOG_DEBUG("     Ascent   = %0.3f", font->ascent);
-  NIKOLA_LOG_DEBUG("     Descent  = %0.3f", font->descent);
-  NIKOLA_LOG_DEBUG("     Line gap = %0.3f", font->line_gap);
-  NIKOLA_LOG_DEBUG("     Path     = %s", nbr_path.c_str());
   return id;
 }
 
@@ -1359,6 +1448,7 @@ ResourceID resources_push_audio_buffer(const ResourceGroupID& group_id, const Au
   AudioBufferID buffer = audio_buffer_create(desc);
 
   // New audio buffer added!
+  
   ResourceID id;
   PUSH_RESOURCE(group, audio_buffers, buffer, RESOURCE_TYPE_AUDIO_BUFFER, id);
 
@@ -1374,40 +1464,19 @@ ResourceID resources_push_audio_buffer(const ResourceGroupID& group_id, const Fi
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
-  // Load the NBR file
-  NBRHeader header;
-  File file;
-  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
+  // Load the NBR data into the audio buffer
+
+  AudioBufferDesc desc = {};
+  if(!load_audio_nbr(group, &desc, nbr_path)) {
+    NIKOLA_LOG_ERROR("Failed to load NBR audio buffer at \'%s\'", nbr_path.c_str());
     return ResourceID{};
   }
-  
-  // Make sure it is the correct resource type
-  NIKOLA_ASSERT((header.resource_type == RESOURCE_TYPE_AUDIO_BUFFER), "Expected RESOURCE_TYPE_AUDIO_BUFFER");
-  
-  // Load the NBR audio
-  NBRAudio nbr_audio;
-  file_read_bytes(file, &nbr_audio);
-  
-  // Convert the NBR format to a valid audio buffer desc
-  
-  AudioBufferDesc desc = {};
-  desc.format      = (AudioBufferFormat)nbr_audio.format; 
-  desc.channels    = nbr_audio.channels; 
-  desc.sample_rate = nbr_audio.sample_rate;
-  desc.size        = nbr_audio.size;
-  desc.data        = (void*)nbr_audio.samples;
 
   // New audio buffer added!
-  ResourceID id = resources_push_audio_buffer(group_id, desc);
  
-  // Freeing NBR data
-  memory_free(nbr_audio.samples);
-  file_close(file); 
-
-  // Add the resource to the named resources
+  ResourceID id = resources_push_audio_buffer(group_id, desc);
   group->named_ids[filepath_stem(nbr_path)] = id;
   
-  NIKOLA_LOG_DEBUG("     Name        = %s", filepath_stem(nbr_path).c_str());
   return id;
 }
 
@@ -1424,6 +1493,7 @@ ResourceID& resources_get_id(const ResourceGroupID& group_id, const nikola::Stri
   ResourceGroup* group = &s_manager.groups[group_id];
  
   // The resource was not found
+  
   if(group->named_ids.find(filename) == group->named_ids.end()) {
     NIKOLA_LOG_ERROR("Could not find resource \'%s\' in resource group \'%s\'", filename.c_str(), group->name.c_str());
     return group->named_ids["invalid"];

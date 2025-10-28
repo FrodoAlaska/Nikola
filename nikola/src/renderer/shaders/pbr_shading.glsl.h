@@ -24,11 +24,11 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         vec3 u_camera_pos;
       };
  
-      layout(std140, binding = 1) uniform InstanceBuffer {
+      layout(std140, binding = 2) uniform InstanceBuffer {
         mat4 u_model[1024];
       };
       
-      layout(std140, binding = 3) uniform AnimationBuffer {
+      layout(std140, binding = 4) uniform AnimationBuffer {
         mat4 u_skinning_palette[128]; // @TODO: Probably not the best count to have here
       };
 
@@ -51,7 +51,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       void main() {
         // Applying the skinning of the animation 
        
-        vec4 vertex_pos = vec4(0.0);
+        vec4 weighted_pos = vec4(0.0);
         
         for(int i = 0; i < 4; i++) {
           if(aJointId[i] == -1.0) { // The parent joint of the skeleton... skip
@@ -59,15 +59,16 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
           }
           // @TEMP
           else if(aJointId[i] == -2.0) { // This geometry is not supposed to be animated... break
-            vertex_pos = vec4(aPos, 1.0); 
+            weighted_pos = vec4(aPos, 1.0); 
             break;
           }
          
-          int index   = int(aJointId[i]);
-          vertex_pos += (u_skinning_palette[index] * vec4(aPos, 1.0)) * aJointWeight[i];
+          int index     = int(aJointId[i]);
+          weighted_pos += (u_skinning_palette[index] * vec4(aPos, 1.0)) * aJointWeight[i];
         }
-        
-        vec4 model_space = u_model[gl_InstanceID] * vertex_pos;
+
+        vec3 vertex_pos  = max(vec3(weighted_pos), aPos); // Just in case an animation buffer was not provided
+        vec4 model_space = u_model[gl_InstanceID] * vec4(vertex_pos, 1.0);
 
         mat3 model_m3  = transpose(inverse(mat3(u_model[gl_InstanceID])));
         vs_out.tangent = normalize(model_m3 * aTangent);
@@ -176,7 +177,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
 
       // Buffers
 
-      layout(std430, binding = 2) buffer LightsBuffer {
+      layout(std430, binding = 3) buffer LightsBuffer {
         DirectionalLight u_dir_light;
         PointLight u_points[LIGHTS_MAX];
         SpotLight u_spots[LIGHTS_MAX]; 

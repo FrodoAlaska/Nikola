@@ -139,8 +139,6 @@ struct GfxPipeline {
   GfxBuffer* index_buffer = nullptr; 
   sizei index_count       = 0;
 
-  GfxBuffer* instance_buffer = nullptr;
-
   GfxDrawMode draw_mode;
 };
 /// GfxPipeline
@@ -369,6 +367,8 @@ static GLenum get_buffer_type(const GfxBufferType type) {
       return GL_UNIFORM_BUFFER;
     case GFX_BUFFER_SHADER_STORAGE:
       return GL_SHADER_STORAGE_BUFFER;
+    case GFX_BUFFER_DRAW_INDIRECT:
+      return GL_DRAW_INDIRECT_BUFFER;
   } 
 }
 
@@ -1301,38 +1301,61 @@ void gfx_context_draw(GfxContext* gfx, const u32 start_element) {
   GfxPipeline* pipe = gfx->bound_pipeline;
   GLenum draw_mode = get_draw_mode(pipe->desc.draw_mode);
 
-  // Draw the index buffer (if it is valid)
+  // Draw the index buffer (if it is valid).
+  // Otherwise, draw using the vertex buffer.
+  
   if(pipe->index_buffer) {
     GLenum index_type = get_layout_type(pipe->desc.indices_type);
     glDrawElements(draw_mode, pipe->index_count, index_type, 0);
   }
-  // Draw the vertex buffer instead
   else {
     glDrawArrays(draw_mode, start_element, pipe->vertex_count);
   }
 
-  // Unbind the vertex array for better debugging.
+  // Unbind the vertex array for debugging purposes
   glBindVertexArray(0);
 }
 
 void gfx_context_draw_instanced(GfxContext* gfx, const u32 start_element, const u32 instance_count) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
   NIKOLA_ASSERT(gfx->bound_pipeline, "Cannot draw using an invalid bound pipeline");
-  NIKOLA_ASSERT(gfx->bound_pipeline->instance_buffer, "Must have a valid instance buffer to instance draw");
 
   GfxPipeline* pipe = gfx->bound_pipeline;
   GLenum draw_mode = get_draw_mode(pipe->desc.draw_mode);
   
-  // Draw the index buffer (if it is valid)
+  // Draw the index buffer (if it is valid).
+  // Otherwise, draw using the vertex buffer.
+  
   if(pipe->index_buffer) {
     GLenum index_type = get_layout_type(pipe->desc.indices_type);
     glDrawElementsInstanced(draw_mode, pipe->index_count, index_type, 0, instance_count);
   }
-  // Draw the vertex buffer instead
   else {
     glDrawArraysInstanced(draw_mode, start_element, pipe->vertex_count, instance_count);
   }
   
+  // Unbind the vertex array for debugging purposes
+  glBindVertexArray(0);
+}
+
+void gfx_context_draw_multi_indirect(GfxContext* gfx, const u32 offset, const sizei count, const sizei stride) {
+  NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
+  
+  GfxPipeline* pipe = gfx->bound_pipeline;
+  GLenum draw_mode = get_draw_mode(pipe->desc.draw_mode);
+  
+  // Draw the index buffer (if it is valid).
+  // Otherwise, draw using the vertex buffer.
+  
+  if(pipe->index_buffer) {
+    GLenum index_type = get_layout_type(pipe->desc.indices_type);
+    glMultiDrawElementsIndirect(draw_mode, index_type, (void*)0, count, stride);
+  }
+  else {
+    glMultiDrawArraysIndirect(draw_mode, (void*)0, count, stride);
+  }
+  
+  // Unbind the vertex array for debugging purposes
   glBindVertexArray(0);
 }
 
@@ -1347,6 +1370,7 @@ void gfx_context_dispatch(GfxContext* gfx, const u32 work_group_x, const u32 wor
   NIKOLA_ASSERT((is_group_x_count_valid && is_group_y_count_valid && is_group_z_count_valid), 
                 "Invalid work group counts given to gfx_context_dispatch");
 
+  // Some computing incoming!
   glDispatchCompute(work_group_x, work_group_y, work_group_z);
 }
 
@@ -1359,6 +1383,7 @@ void gfx_context_memory_barrier(GfxContext* gfx, const i32 barrier_bits) {
  
   // 10 = the maximum number of barriers
   // @FIX (GL-Backend): A magic number like that is probably not the best idea...
+  
   for(sizei i = 0; i < 10; i++) {
     i32 type = (GFX_MEMORY_BARRIER_VERTEX_ATTRIBUTE << i);
 
@@ -2260,34 +2285,27 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc, c
   glCreateVertexArrays(1, &pipe->vertex_array);
 
   // Pipeline layout init
+  
   _PipelineLayout layout; 
   init_pipeline_layout(pipe, &layout);
 
   // VBO init
+  
   pipe->vertex_buffer = desc.vertex_buffer; 
   pipe->vertex_count  = desc.vertices_count; 
   glVertexArrayVertexBuffer(pipe->vertex_array,      // VAO
                             0,                       // Binding index
                             pipe->vertex_buffer->id, // Buffer ID
-                            0,       // Starting offset
+                            0,                       // Starting offset
                             layout.strides[0]);      // Buffer stride
 
   // EBO init
+  
   if(desc.index_buffer) {
     pipe->index_buffer = desc.index_buffer;
     pipe->index_count  = desc.indices_count;
 
     glVertexArrayElementBuffer(pipe->vertex_array, pipe->index_buffer->id);
-  }
-
-  // Instance buffer init
-  if(desc.instance_buffer) {
-    pipe->instance_buffer = desc.instance_buffer; 
-    glVertexArrayVertexBuffer(pipe->vertex_array,        // VAO
-                              1,                         // Binding index
-                              pipe->instance_buffer->id, // Buffer ID
-                              0,         // Starting offset
-                              layout.strides[1]);        // Buffer stride
   }
 
   // Set the draw mode for the whole pipeline
@@ -2324,8 +2342,6 @@ void gfx_pipeline_update(GfxPipeline* pipeline, const GfxPipelineDesc& desc) {
   
   pipeline->vertex_count = desc.vertices_count;
   pipeline->index_count  = desc.indices_count;
-  
-  pipeline->instance_buffer = desc.instance_buffer;
   
   pipeline->draw_mode = desc.draw_mode;
 }

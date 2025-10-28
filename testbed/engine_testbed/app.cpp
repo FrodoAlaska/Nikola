@@ -4,6 +4,14 @@
 #include <imgui/imgui.h>
 
 /// ----------------------------------------------------------------------
+/// Consts 
+
+const nikola::sizei MAX_OBJECTS = 4;
+
+/// Consts 
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// App
 struct nikola::App {
   nikola::Window* window;
@@ -13,7 +21,8 @@ struct nikola::App {
   nikola::ResourceID mesh_id, model_id;
   nikola::ResourceID ground_material;
 
-  nikola::Transform transforms[2];
+  nikola::Transform ground_transform;
+  nikola::Transform transforms[MAX_OBJECTS][MAX_OBJECTS];
 };
 /// App
 /// ----------------------------------------------------------------------
@@ -33,7 +42,7 @@ static void init_resources(nikola::App* app) {
   app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
 
   // Models init
-  app->model_id = nikola::resources_push_model(app->res_group_id, "models/medieval_bridge.nbr"); 
+  app->model_id = nikola::resources_push_model(app->res_group_id, "models/medieval_knight.nbr"); 
 
   // Materials init
   
@@ -77,12 +86,15 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // Transform init
   
-  nikola::transform_translate(app->transforms[0], nikola::Vec3(10.0f, 0.5f, 10.0f));
-  nikola::transform_scale(app->transforms[0], nikola::Vec3(32.0f, 0.1f, 32.0f));
-  
-  nikola::transform_translate(app->transforms[1], nikola::Vec3(10.0f, 0.5f, 40.0f));
-  nikola::transform_scale(app->transforms[1], nikola::Vec3(4.0f));
-  nikola::transform_rotate(app->transforms[1], nikola::Vec3(1.0f, 0.0f, 0.0f), -90.0f * nikola::DEG2RAD);
+  nikola::transform_translate(app->ground_transform, nikola::Vec3(10.0f, 0.5f, 10.0f));
+  nikola::transform_scale(app->ground_transform, nikola::Vec3(32.0f, 0.1f, 32.0f));
+ 
+  for(nikola::sizei i = 0; i < MAX_OBJECTS; i++) {
+    for(nikola::sizei j = 0; j < MAX_OBJECTS; j++) {
+      nikola::transform_translate(app->transforms[i][j], nikola::Vec3(i * 10.0f, 0.5f, j * 10.0f));
+      nikola::transform_scale(app->transforms[i][j], nikola::Vec3(0.5f));
+    }
+  }
 
   // Lights init
 
@@ -103,12 +115,14 @@ void app_shutdown(nikola::App* app) {
 
 void app_update(nikola::App* app, const nikola::f64 delta_time) {
   // Quit the application when the specified exit key is pressed
+  
   if(nikola::input_key_pressed(nikola::KEY_ESCAPE)) {
     nikola::event_dispatch(nikola::Event{.type = nikola::EVENT_APP_QUIT});
     return;
   }
 
   // Disable/enable the GUI
+  
   if(nikola::input_key_pressed(nikola::KEY_F1)) {
     nikola::gui_toggle_active();
     app->frame_data.camera.is_active = !nikola::gui_is_active();
@@ -124,8 +138,13 @@ void app_render(nikola::App* app) {
 
   // Render the objects
   
-  nikola::renderer_queue_mesh(app->mesh_id, app->transforms[0], app->ground_material);
-  nikola::renderer_queue_model(app->model_id, app->transforms[1]);
+  nikola::renderer_queue_mesh(app->mesh_id, app->ground_transform, app->ground_material);
+
+  for(nikola::sizei i = 0; i < MAX_OBJECTS; i++) {
+    for(nikola::sizei j = 0; j < MAX_OBJECTS; j++) {
+      nikola::renderer_queue_model(app->model_id, app->transforms[i][j]);
+    }
+  }
 
   nikola::renderer_end();
   
@@ -147,15 +166,15 @@ void app_render_gui(nikola::App* app) {
   nikola::gui_begin_panel("Scene");
 
   // Entities
+  
   if(ImGui::CollapsingHeader("Entities")) {
-    nikola::gui_edit_transform("Ground", &app->transforms[0]);
-    nikola::gui_edit_transform("Model", &app->transforms[1]);
   }
   
   // Frame
   nikola::gui_edit_frame("Frame", &app->frame_data);
 
   // Resources
+  
   if(ImGui::CollapsingHeader("Resources")) {
     nikola::gui_edit_material("Material", nikola::resources_get_material(app->ground_material));
   }

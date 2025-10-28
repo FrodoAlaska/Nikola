@@ -31,6 +31,21 @@ const sizei POINT_LIGHTS_MAX       = 16;
 /// The maximum amount of particles tha can be emitted at a time.
 const sizei PARTICLES_MAX          = 256;
 
+/// The index of the matrices uniform buffer within all shaders.
+const sizei SHADER_MATRICES_BUFFER_INDEX  = 0;
+
+/// The index of the model matrices uniform buffer within all shaders.
+const sizei SHADER_MODELS_BUFFER_INDEX    = 1;
+
+/// The index of the instance uniform buffer within all shaders.
+const sizei SHADER_INSTANCE_BUFFER_INDEX  = 2;
+
+/// The index of the light uniform buffer within all shaders.
+const sizei SHADER_LIGHT_BUFFER_INDEX     = 3;
+
+/// The index of the animation uniform buffer within all shaders.
+const sizei SHADER_ANIMATION_BUFFER_INDEX = 4;
+
 /// Consts
 ///---------------------------------------------------------------------------------------------------------------------
 

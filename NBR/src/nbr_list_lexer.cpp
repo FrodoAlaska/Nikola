@@ -172,6 +172,8 @@ static bool lexer_start() {
 /// List lexer functions
 
 bool list_lexer_init(const nikola::FilePath& list_path, nikola::DynamicArray<ListToken>* tokens) {
+  NIKOLA_PROFILE_FUNCTION();
+
   s_lexer        = {}; 
   s_lexer.tokens = tokens;
 

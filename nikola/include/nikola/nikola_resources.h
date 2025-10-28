@@ -381,25 +381,13 @@ struct NBRAudio {
 /// Resources consts
 
 /// A value to indicate an invalid resource group.
-const u16 RESOURCE_GROUP_INVALID          = ((u16)-1);
+const u16 RESOURCE_GROUP_INVALID = ((u16)-1);
 
 /// The ID of the group associated with the resource cache.
-const u16 RESOURCE_CACHE_ID               = 0;
-
-/// The index of the matrices uniform buffer within all shaders.
-const sizei SHADER_MATRICES_BUFFER_INDEX  = 0;
-
-/// The index of the instance uniform buffer within all shaders.
-const sizei SHADER_INSTANCE_BUFFER_INDEX  = 1;
-
-/// The index of the light uniform buffer within all shaders.
-const sizei SHADER_LIGHT_BUFFER_INDEX     = 2;
-
-/// The index of the animation uniform buffer within all shaders.
-const sizei SHADER_ANIMATION_BUFFER_INDEX = 3;
+const u16 RESOURCE_CACHE_ID      = 0;
 
 /// The maximum amount of joints that can processed.
-const sizei JOINTS_MAX             = 256;
+const sizei JOINTS_MAX           = 256;
 
 /// Resources consts
 ///---------------------------------------------------------------------------------------------------------------------
@@ -539,16 +527,18 @@ struct ResourceID {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Mesh 
 struct Mesh {
-  /// The graphics buffers of the mesh. 
-
-  GfxBuffer* vertex_buffer = nullptr; 
-  GfxBuffer* index_buffer  = nullptr;
-
-  /// The graphics pipeline object and its 
-  /// description
+  /// The vertices data of this mesh.  
+  DynamicArray<f32> vertices; 
   
-  GfxPipeline* pipe         = nullptr;
-  GfxPipelineDesc pipe_desc = {};
+  /// The indices data of this mesh.  
+  DynamicArray<u32> indices; 
+
+  /// The index of the material to be used 
+  /// with this mesh. 
+  ///
+  /// @NOTE: This is `0` by default, representing 
+  /// the default material.
+  sizei material_index = 0;
 };
 /// Mesh 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -604,12 +594,9 @@ struct ShaderContext {
 struct Skybox {
   /// The underlying cubemap pointer of the skybox
   GfxCubemap* cubemap = nullptr;
-  
-  /// The graphics pipeline object and its 
-  /// description
-  
-  GfxPipelineDesc pipe_desc = {};
-  GfxPipeline* pipe         = nullptr;
+ 
+  /// The vertices of this skybox.
+  DynamicArray<f32> vertices;
 };
 /// Skybox
 ///---------------------------------------------------------------------------------------------------------------------
@@ -622,12 +609,6 @@ struct Model {
 
   /// All of the materials of the model.
   DynamicArray<Material*> materials;
-
-  /// An array of indices to be used with 
-  /// the `materials` array. Each index 
-  /// associates a mesh with its own material. 
-  /// Some meshes may (and will) share the same materials. 
-  DynamicArray<u8> material_indices;
 };
 /// Model 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -787,8 +768,8 @@ NIKOLA_API void shader_context_set_uniform_buffer(ShaderContext* ctx, const size
 ///---------------------------------------------------------------------------------------------------------------------
 /// Geometry functions
 
-/// Fill the given `pipe_desc` structure with geometry data based on the give `type`. 
-NIKOLA_API void geometry_loader_load(const ResourceGroupID& group_id, GfxPipelineDesc* pipe_desc, const GeometryType type);
+/// Fill the given `vertices` and `indices` arrays with the relavant data given the `type` geometry.
+NIKOLA_API void geometry_loader_load(DynamicArray<f32>& vertices, DynamicArray<u32>& indices, const GeometryType type);
 
 /// Geometry functions
 ///---------------------------------------------------------------------------------------------------------------------

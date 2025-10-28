@@ -5,19 +5,21 @@
     - [x] Add a `UIMenu` widget
 - [x] Integrate Tracy
 - [] Run-time performance
-    - [] Improve instancing completely. It's currently awfully architected. Take into account the animations and so on.
-        - [] NOTE: Perhaps have an internal cache in the renderer of all the materials being used? 
-        - [] NOTE: We can then use this cache to determine how many instances of a mesh needs to be drawn. 
-        - [] NOTE: Think about it, materials are the primitives that is most valuable to an instanced draw call.
-        - [] NOTE: That way, the user will not have to worry about what's instanced and what's not.
     - [] Improve the performance of the renderer by using the GPU to dispatch draw calls, using indirect buffers.
+        - [x] Change the meshes and skyboxes representation of their data 
+        - [x] Change the geometry loader
+        - [x] Update the resource manager to accommodate for the new changes
+        - [] Change the renderer's queueing functions to the new architecture
+        - [] Update the buffers somewhere 
+        - [] Change the render passes
+    - [] Improve instancing completely. It's currently awfully architected. Take into account the animations and so on.
     - [] Improve lighting performance using clustered rendering (This is optional if the performance is fine).
     - [] Documentation
+- [] Scenes?
 - [] Animations 
     - [] Test animations with multiple instances.
     - [] Documentation
 - [] Resources 
-    - [] Have a few functions specifically for the `NBR*` types to save, load, and unload them.
     - [] Maybe have a JSON file that associates the resources with each other? 
         - Perhaps we can use this as a way to represent our materials and then save them a `.nbr` files.
         - For example, a texture can be referred in a material and a material can be referred to in a mesh. 
@@ -33,7 +35,7 @@
     - [] Improve the load times of the resource manager
     - [] NBR conversion time enhancement
 - [] Threading
-    - [] A better job system using fibers
+    - [] A better job system using `std::function`
     - [] Thread pools
     - [] Documentation
 - [] Renderer: Beautify v2.0 
@@ -57,6 +59,29 @@
     - [] Ring buffers
     - [] Hash map
     - [] Documentation
+
+```c++
+
+void renderer_sumbit() {
+    // Update the internals buffer
+
+    gfx_buffer_upload_data(renderer.pipe_desc.vertex_buffer, 0, renderer.vertices_buffer.size(), renderer.vertices_buffer.data());
+    gfx_buffer_upload_data(renderer.pipe_desc.index_buffer, 0, renderer.indices_buffer.size(), renderer.indices_buffer.data());
+    gfx_buffer_upload_data(renderer.matrix_buffer, 0, renderer.transforms_buffer.size(), renderer.transforms_buffer.data());
+    gfx_buffer_upload_data(renderer.material_buffer, 0, renderer.materials_buffer.size(), renderer.materials_buffer.data());
+    gfx_buffer_upload_data(renderer.command_buffer, 0, renderer.commands_buffer.size(), renderer.commands_buffer.data());
+
+    // Clear all the buffers for the next draw calls...
+    
+    renderer.vertices_buffer.clear();
+    //...
+
+    // Draw call
+
+    
+}
+
+```
 
 ## BUGS:
 - (Window & Renderer): When resizing the window or changing the fullscreen state, the renderer really does not hold up. I'm guessing it's because of the render passes? They need to update their own frame sizes when the window resizes? 
