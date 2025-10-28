@@ -37,14 +37,20 @@ const sizei SHADER_MATRICES_BUFFER_INDEX  = 0;
 /// The index of the model matrices uniform buffer within all shaders.
 const sizei SHADER_MODELS_BUFFER_INDEX    = 1;
 
+/// The index of the material matrices uniform buffer within all shaders.
+const sizei SHADER_MATERIALS_BUFFER_INDEX = 2;
+
+/// The index of the material matrices uniform buffer within all shaders.
+const sizei SHADER_TEXTURES_BUFFER_INDEX  = 3;
+
 /// The index of the instance uniform buffer within all shaders.
-const sizei SHADER_INSTANCE_BUFFER_INDEX  = 2;
+const sizei SHADER_INSTANCE_BUFFER_INDEX  = 4;
 
 /// The index of the light uniform buffer within all shaders.
-const sizei SHADER_LIGHT_BUFFER_INDEX     = 3;
+const sizei SHADER_LIGHT_BUFFER_INDEX     = 5;
 
 /// The index of the animation uniform buffer within all shaders.
-const sizei SHADER_ANIMATION_BUFFER_INDEX = 4;
+const sizei SHADER_ANIMATION_BUFFER_INDEX = 6;
 
 /// Consts
 ///---------------------------------------------------------------------------------------------------------------------
@@ -125,28 +131,9 @@ using RenderPassSumbitFn  = void(*)(RenderPass* pass, const RenderQueueEntry& qu
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// RenderQueueEntry 
-struct RenderQueueEntry {
-  DynamicArray<f32> vertices; 
-  DynamicArray<u32> indices; 
-  DynamicArray<Mat4> transforms; 
-  DynamicArray<Material*> materials; // @TODO (Renderer): Bindless??
-  DynamicArray<GfxDrawCommandIndirect> commands; 
-
-  GfxPipelineDesc pipe_desc = {};
-  GfxPipeline* pipe         = nullptr;
-
-  GfxBuffer* transform_buffer = nullptr; 
-  GfxBuffer* material_buffer  = nullptr; 
-  GfxBuffer* command_buffer   = nullptr;
-};
-/// RenderQueueEntry 
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
 /// RendererDefaults 
 struct RendererDefaults {
-  // Textures
+  /// Textures
   
   GfxTexture* albedo_texture    = nullptr;
   GfxTexture* roughness_texture = nullptr;
@@ -154,25 +141,85 @@ struct RendererDefaults {
   GfxTexture* normal_texture    = nullptr;
   GfxTexture* emissive_texture  = nullptr;
  
-  // Buffers
+  /// Buffers
 
   GfxBuffer* matrices_buffer  = nullptr;
   GfxBuffer* instance_buffer  = nullptr;
   GfxBuffer* lights_buffer    = nullptr;
   GfxBuffer* animation_buffer = nullptr;
  
-  // Materials
+  /// Materials
 
   Material* material       = nullptr;
   Material* debug_material = nullptr;
   
-  // Pipelines
+  /// Pipelines
   
   GfxPipeline* screen_quad_pipe = nullptr;
   GfxPipeline* skybox_pipe      = nullptr;
 };
 /// RendererDefaults 
 ///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// MaterialInterface
+struct MaterialInterface {
+  ///
+  /// The shader representation of the material
+  ///
+  /// @NOTE: Don't mind the order of members. They 
+  /// are set up to satisfy the shader.
+  ///
+
+  /// Vec4 padding
+  
+  u32 albedo_index    = 0;  
+  u32 metallic_index  = 0;  
+  u32 roughness_index = 0;  
+  u32 normal_index    = 0;  
+  
+  /// Vec4 padding
+  
+  u32 emissive_index = 0;  
+  f32 metallic       = 0.0f;
+  f32 roughness      = 1.0f;
+  f32 emissive       = 0.0f;
+
+  /// Vec4 padding
+
+  Vec3 color       = Vec3(1.0f);
+  f32 transparency = 1.0f;
+};
+/// MaterialInterface
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// RenderQueueEntry 
+struct RenderQueueEntry {
+  /// Data to be transferred to the buffers
+
+  DynamicArray<f32> vertices; 
+  DynamicArray<u32> indices; 
+  DynamicArray<Mat4> transforms; 
+  DynamicArray<MaterialInterface> materials; // @TODO (Renderer): Bindless??
+  DynamicArray<u64> textures;
+  DynamicArray<GfxDrawCommandIndirect> commands; 
+
+  /// Pipeline
+
+  GfxPipelineDesc pipe_desc = {};
+  GfxPipeline* pipe         = nullptr;
+
+  /// GPU buffers
+
+  GfxBuffer* transform_buffer = nullptr; 
+  GfxBuffer* material_buffer  = nullptr; 
+  GfxBuffer* texture_buffer   = nullptr;
+  GfxBuffer* command_buffer   = nullptr;
+};
+/// RenderQueueEntry 
+///---------------------------------------------------------------------------------------------------------------------
+
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// RenderPassDesc
@@ -550,6 +597,9 @@ NIKOLA_API IVec2 renderer_get_viewport_size();
 
 /// Retrieve the renderer's current clear color.
 NIKOLA_API Vec4 renderer_get_clear_color();
+
+/// Retrieve the render queue of `type`.
+NIKOLA_API const RenderQueueEntry* renderer_get_queue(const RenderQueueType type);
 
 /// Create a new render pass using the information from `desc`, returning back a
 /// pointer to the newly added render pass. 

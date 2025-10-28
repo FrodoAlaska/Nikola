@@ -138,13 +138,13 @@ void app_render(nikola::App* app) {
 
   // Render the objects
   
-  // nikola::renderer_queue_mesh(app->mesh_id, app->ground_transform, app->ground_material);
-  //
-  // for(nikola::sizei i = 0; i < MAX_OBJECTS; i++) {
-  //   for(nikola::sizei j = 0; j < MAX_OBJECTS; j++) {
-  //     nikola::renderer_queue_model(app->model_id, app->transforms[i][j]);
-  //   }
-  // }
+  nikola::renderer_queue_mesh(app->mesh_id, app->ground_transform, app->ground_material);
+
+  for(nikola::sizei i = 0; i < MAX_OBJECTS; i++) {
+    for(nikola::sizei j = 0; j < MAX_OBJECTS; j++) {
+      nikola::renderer_queue_model(app->model_id, app->transforms[i][j]);
+    }
+  }
 
   nikola::renderer_end();
   

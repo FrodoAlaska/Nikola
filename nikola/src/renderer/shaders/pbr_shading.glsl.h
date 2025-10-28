@@ -24,11 +24,11 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         vec3 u_camera_pos;
       };
  
-      layout(std140, binding = 2) uniform InstanceBuffer {
-        mat4 u_model[1024];
+      layout(std430, binding = 1) readonly buffer ModelsBuffer {
+        mat4 u_model[4096];
       };
       
-      layout(std140, binding = 4) uniform AnimationBuffer {
+      layout(std140, binding = 6) uniform AnimationBuffer {
         mat4 u_skinning_palette[128]; // @TODO: Probably not the best count to have here
       };
 
@@ -46,6 +46,8 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         vec3 pixel_pos;
 
         vec4 shadow_pos;
+
+        flat int material_index;
       } vs_out;
       
       void main() {
@@ -68,9 +70,9 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         }
 
         vec3 vertex_pos  = max(vec3(weighted_pos), aPos); // Just in case an animation buffer was not provided
-        vec4 model_space = u_model[gl_InstanceID] * vec4(vertex_pos, 1.0);
+        vec4 model_space = u_model[gl_DrawID] * vec4(vertex_pos, 1.0);
 
-        mat3 model_m3  = transpose(inverse(mat3(u_model[gl_InstanceID])));
+        mat3 model_m3  = transpose(inverse(mat3(u_model[gl_DrawID])));
         vs_out.tangent = normalize(model_m3 * aTangent);
         vs_out.normal  = normalize(model_m3 * aNormal);
         
@@ -86,12 +88,15 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         vs_out.tex_coords = aTexCoords;
         vs_out.shadow_pos = u_light_space * vec4(vs_out.pixel_pos, 1.0);
 
+        vs_out.material_index = gl_DrawID;
+
         gl_Position = u_projection * u_view * model_space;
       }
     )",
 
     .pixel_source = R"(
       #version 460 core
+      #extension GL_ARB_bindless_texture : require
      
       layout (location = 0) out vec4 frag_color;
     
@@ -106,18 +111,25 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         vec3 pixel_pos;
 
         vec4 shadow_pos;
+
+        flat int material_index;
       } fs_in;
    
       #define LIGHTS_MAX 16
       #define PI         3.14159265359
   
       struct Material {
-        vec3 color;
+        int albedo_index;
+        int metallic_index;
+        int roughness_index;
+        int normal_index;
 
-        float roughness;
+        int emissive_index;
         float metallic;
+        float roughness;
         float emissive;
 
+        vec3 color;
         float transparency;
       };
 
@@ -176,8 +188,16 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       };
 
       // Buffers
+      
+      layout(std430, binding = 2) readonly buffer MaterialsBuffer {
+        Material u_materials[4096];
+      };
+      
+      layout(binding = 3, std140) uniform TexturesBuffer {
+        sampler2D u_textures[4096];
+      };
 
-      layout(std430, binding = 3) buffer LightsBuffer {
+      layout(std430, binding = 5) buffer LightsBuffer {
         DirectionalLight u_dir_light;
         PointLight u_points[LIGHTS_MAX];
         SpotLight u_spots[LIGHTS_MAX]; 
@@ -185,19 +205,9 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         vec3 u_ambient;
         int u_points_count, u_spots_count;
       };
-
-      // Uniforms
-
-      uniform Material u_material;
       
       // Textures
-
-      layout (binding = 0) uniform sampler2D u_albedo_map;
-      layout (binding = 1) uniform sampler2D u_roughness_map;
-      layout (binding = 2) uniform sampler2D u_mettalic_map;
-      layout (binding = 3) uniform sampler2D u_normal_map;
-      layout (binding = 4) uniform sampler2D u_emissive_map;
-      layout (binding = 5) uniform sampler2D u_shadow_map;
+      uniform sampler2D u_shadow_map;
    
       // BRDF terms 
 
@@ -356,11 +366,13 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       void main() {
         // Sampling the many textures 
 
-        vec3 albedo_texel     = texture(u_albedo_map, fs_in.tex_coords).rgb * u_material.color;
-        float roughness_texel = texture(u_roughness_map, fs_in.tex_coords).g * u_material.roughness;
-        float metallic_texel  = texture(u_mettalic_map, fs_in.tex_coords).b * u_material.metallic;
-        vec3 normal_texel     = texture(u_normal_map, fs_in.tex_coords).rgb;
-        vec3 emissive_texel   = texture(u_emissive_map, fs_in.tex_coords).rgb * u_material.emissive;
+        Material material = u_materials[fs_in.material_index];
+
+        vec3 albedo_texel     = texture(u_textures[material.albedo_index], fs_in.tex_coords).rgb * material.color;
+        float roughness_texel = texture(u_textures[material.roughness_index], fs_in.tex_coords).g * material.roughness;
+        float metallic_texel  = texture(u_textures[material.metallic_index], fs_in.tex_coords).b * material.metallic;
+        vec3 normal_texel     = texture(u_textures[material.normal_index], fs_in.tex_coords).rgb;
+        vec3 emissive_texel   = texture(u_textures[material.emissive_index], fs_in.tex_coords).rgb * material.emissive;
         
         // Preparing the BRDF stage
        
@@ -392,7 +404,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         // Add it all together...
         
         vec3 final_color = (emissive_texel + (dir_light_factor + point_lights_factor + spot_lights_factor)) * u_ambient;
-        frag_color       = vec4((1 - calculate_shadow()) * final_color, u_material.transparency);
+        frag_color       = vec4((1 - calculate_shadow()) * final_color, material.transparency);
       }
     )"
   };

@@ -14,10 +14,11 @@
         - [x] Update the buffers somewhere 
         - [x] Change the render passes
         - [x] Make a function to check for OpenGL extensions
-        - [] Enable bindless textures with functions like `make_transcent`, `make_non_transcent`, and `get_bindless_id`  
-        - [] Create a `MaterialInterface` struct for all the material data that will be sent to the shader
-        - [] Make a buffer specifically for texture bindless handles, and let the `MaterialInterface` refer to specific textures
-        - [] Don't forget to make the shader storage buffers in the shader an actually SSBO 
+        - [x] Enable bindless textures in the `gfx` backend
+        - [x] Create a `MaterialInterface` struct for all the material data that will be sent to the shader
+        - [x] Make a buffer specifically for texture bindless handles, and let the `MaterialInterface` refer to specific textures
+        - [x] Don't forget to make the shader storage buffers in the shader an actually SSBO 
+        - [] Fix errors
     - [] Improve instancing completely. It's currently awfully architected.
     - [] Improve lighting performance using clustered rendering (This is optional if the performance is fine).
     - [] Documentation

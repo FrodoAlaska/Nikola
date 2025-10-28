@@ -21,8 +21,8 @@ inline nikola::GfxShaderDesc generate_billboard_shader() {
         vec3 u_camera_pos;
       };
  
-      layout(std140, binding = 1) uniform InstanceBuffer {
-        mat4 u_model[1024];
+      layout(std430, binding = 1) readonly buffer ModelsBuffer {
+        mat4 u_model[4096];
       };
   
       // Outputs
@@ -31,12 +31,14 @@ inline nikola::GfxShaderDesc generate_billboard_shader() {
         vec3 normal;
 
         vec3 camera_pos;
+        flat int material_index;
       } vs_out;
       
       void main() {
-        vs_out.tex_coords = aTexCoords;
-        vs_out.normal     = aNormal; 
-        vs_out.camera_pos = u_camera_pos;
+        vs_out.tex_coords     = aTexCoords;
+        vs_out.normal         = aNormal; 
+        vs_out.camera_pos     = u_camera_pos;
+        vs_out.material_index = gl_DrawID;
         
         // @NOTE (23/7/2025, Mohamed): 
         //
@@ -62,12 +64,13 @@ inline nikola::GfxShaderDesc generate_billboard_shader() {
         view[2][1] = 0;
         view[2][2] = 1;
 
-        gl_Position = u_projection * view * u_model[gl_InstanceID] * vec4(aPos, 1.0);
+        gl_Position = u_projection * view * u_model[gl_DrawID] * vec4(aPos, 1.0);
       }
     )",
 
     .pixel_source = R"(
       #version 460 core
+      #extension GL_ARB_bindless_texture : require
    
       layout (location = 0) out vec4 frag_color;
     
@@ -76,19 +79,37 @@ inline nikola::GfxShaderDesc generate_billboard_shader() {
         vec3 normal;
 
         vec3 camera_pos;
+        flat int material_index;
       } fs_in;
 
       struct Material {
+        int albedo_index;
+        int metallic_index;
+        int roughness_index;
+        int normal_index;
+
+        int emissive_index;
+        float metallic;
+        float roughness;
+        float emissive;
+
         vec3 color;
         float transparency;
       };
 
-      uniform Material u_material;
-      uniform sampler2D u_texture;
+      layout(binding = 2, std430) readonly buffer MaterialsBuffer {
+        Material u_materials[];
+      };
+      
+      layout(binding = 3, std140) uniform TexturesBuffer {
+        sampler2D u_textures[4096];
+      };
       
       void main() {
-        vec3 texel = vec3(texture(u_texture, fs_in.tex_coords)) * u_material.color;
-        frag_color = vec4(texel, u_material.transparency);
+        Material material = u_materials[fs_in.material_index];
+
+        vec3 texel = vec3(texture(u_textures[material.albedo_index], fs_in.tex_coords)) * material.color;
+        frag_color = vec4(texel, material.transparency);
       }
     )"
   };

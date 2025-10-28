@@ -17,12 +17,13 @@ namespace nikola { // Start of nikola
 /// ----------------------------------------------------------------------
 /// Consts
 
-const sizei VERTICES_BUFFER_SIZE = MiB(1);
-const sizei INDICES_BUFFER_SIZE  = MiB(1);
+const sizei VERTICES_BUFFER_SIZE = MiB(64);
+const sizei INDICES_BUFFER_SIZE  = MiB(64);
 
-const sizei TRANSFORMS_MAX = 4096;
-const sizei MATERIALS_MAX  = 32;
-const sizei COMMANDS_MAX   = 4096;
+const sizei TRANSFORMS_MAX        = 4096;
+const sizei MATERIALS_MAX         = 4096;
+const sizei BINDLESS_TEXTURES_MAX = 4096;
+const sizei COMMANDS_MAX          = 4096;
 
 /// Consts
 /// ----------------------------------------------------------------------
@@ -125,7 +126,6 @@ static void init_defaults() {
     .color        = Vec3(1.0f, 0.0f, 1.0f),
     .transparency = 0.5f,
     .depth_mask   = false,
-
   };
   s_renderer.defaults.debug_material = resources_get_material(resources_push_material(RESOURCE_CACHE_ID, mat_desc));
 
@@ -254,6 +254,7 @@ static void render_queue_create(const RenderQueueType type) {
   queue->indices.reserve(128);
   queue->transforms.reserve(128);
   queue->materials.reserve(32);
+  queue->textures.reserve(32);
   queue->commands.reserve(128);
 
   //
@@ -270,11 +271,19 @@ static void render_queue_create(const RenderQueueType type) {
 
   buff_desc = {
     .data  = nullptr,
-    .size  = MATERIALS_MAX * sizeof(Material), // @TEMP (Renderer)
+    .size  = MATERIALS_MAX * sizeof(MaterialInterface),
     .type  = GFX_BUFFER_SHADER_STORAGE, 
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
   queue->material_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
+
+  buff_desc = {
+    .data  = nullptr,
+    .size  = BINDLESS_TEXTURES_MAX * sizeof(u64),
+    .type  = GFX_BUFFER_UNIFORM, 
+    .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
+  };
+  queue->texture_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
 
   buff_desc = {
     .data  = nullptr,
@@ -315,11 +324,43 @@ static void render_queue_create(const RenderQueueType type) {
 
 static void render_queue_push(const RenderQueueType type, Mesh* mesh, const Transform& transform, Material* material) {
   RenderQueueEntry* entry = &s_renderer.queues[type];
-  
+ 
+  // Vertices, indices, and transforms
+
   entry->vertices.insert(entry->vertices.end(), mesh->vertices.begin(), mesh->vertices.end());
   entry->indices.insert(entry->indices.end(), mesh->indices.begin(), mesh->indices.end());
   entry->transforms.push_back(transform.transform);
-  entry->materials.push_back(material); // @TEMP (Renderer): Bindless????
+
+  // Material
+
+  MaterialInterface interface = {
+    .metallic     = material->metallic,
+    .roughness    = material->roughness, 
+    .emissive     = material->emissive,
+    .color        = material->color, 
+    .transparency = material->transparency,
+  };
+
+  // Textures
+
+  entry->textures.push_back(gfx_texture_get_bindless_id(material->albedo_map));
+  interface.albedo_index = (u32)(entry->textures.size() - 1);
+
+  entry->textures.push_back(gfx_texture_get_bindless_id(material->metallic_map));
+  interface.metallic_index = (u32)(entry->textures.size() - 1);
+  
+  entry->textures.push_back(gfx_texture_get_bindless_id(material->roughness_map));
+  interface.roughness_index = (u32)(entry->textures.size() - 1);
+  
+  entry->textures.push_back(gfx_texture_get_bindless_id(material->normal_map));
+  interface.normal_index = (u32)(entry->textures.size() - 1);
+  
+  entry->textures.push_back(gfx_texture_get_bindless_id(material->emissive_map));
+  interface.emissive_index = (u32)(entry->textures.size() - 1);
+
+  entry->materials.push_back(interface); 
+
+  // Command
 
   GfxDrawCommandIndirect cmd = {
     .elements_count = (u32)mesh->indices.size(),
@@ -426,6 +467,8 @@ void renderer_begin(FrameData& data) {
     entry->indices.clear();
     entry->transforms.clear();
     entry->materials.clear();
+
+    entry->textures.clear();
     entry->commands.clear();
   }
 }
@@ -450,7 +493,7 @@ void renderer_end() {
                            queue->vertices.size() * sizeof(f32), 
                            queue->vertices.data());
     queue->pipe_desc.vertices_count = queue->vertices.size();
-    
+
     // Update the index buffer
 
     gfx_buffer_upload_data(queue->pipe_desc.index_buffer,
@@ -470,8 +513,15 @@ void renderer_end() {
 
     gfx_buffer_upload_data(queue->material_buffer,
                            0,
-                           queue->materials.size() * sizeof(Material), 
+                           queue->materials.size() * sizeof(MaterialInterface), 
                            queue->materials.data());
+
+    // Update the textures buffer
+
+    gfx_buffer_upload_data(queue->texture_buffer,
+                           0,
+                           queue->textures.size() * sizeof(u64), 
+                           queue->textures.data());
 
     // Update the command buffer
 
@@ -553,6 +603,10 @@ IVec2 renderer_get_viewport_size() {
 
 Vec4 renderer_get_clear_color() {
   return s_renderer.clear_color;
+}
+
+const RenderQueueEntry* renderer_get_queue(const RenderQueueType type) {
+  return &s_renderer.queues[type];
 }
 
 RenderPass* renderer_create_pass(const RenderPassDesc& desc) {

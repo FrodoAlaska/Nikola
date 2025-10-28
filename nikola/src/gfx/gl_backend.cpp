@@ -111,6 +111,7 @@ struct GfxTexture {
   GfxContext* gfx     = nullptr;
 
   u32 id;
+  u64 bindless_id;
 };
 /// GfxTexture
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1094,12 +1095,14 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
   gfx->current_clear_flags = gfx->default_clear_flags;
 
   // Glad init
+  
   if(!gladLoadGL()) {
     NIKOLA_LOG_FATAL("Could not create an OpenGL instance");
     return nullptr;
   }
 
   // Enabling debug output on debug builds only
+
 #if NIKOLA_BUILD_DEBUG == 1 
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(gl_error_callback, nullptr);
@@ -1109,15 +1112,18 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
   window_set_current_context(desc.window);
 
   // Setting up the viewport for OpenGL
+  
   i32 width, height; 
   window_get_size(desc.window, &width, &height);
   glViewport(0, 0, width, height);
 
   // Setting the flags
+  
   gfx->states = (GfxStates)desc.states;
   set_gfx_states(gfx);
 
   // Listening to events 
+  
   event_listen(EVENT_WINDOW_FRAMEBUFFER_RESIZED, framebuffer_resize);
   event_listen(EVENT_WINDOW_RESIZED, framebuffer_resize);
   event_listen(EVENT_WINDOW_FULLSCREEN, framebuffer_resize);
@@ -2006,10 +2012,11 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureType tex_type, c
 
   GfxTexture* texture = (GfxTexture*)alloc_fn(sizeof(GfxTexture));
 
-  texture->desc.type = tex_type; 
-  texture->desc      = {};
-  texture->gfx       = gfx;
-  texture->id        = 0;
+  texture->desc.type   = tex_type; 
+  texture->desc        = {};
+  texture->gfx         = gfx;
+  texture->id          = 0;
+  texture->bindless_id = 0;
   
   // Creating the texutre based on its type
   
@@ -2039,7 +2046,7 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureType tex_type, c
       break;
     default:
       NIKOLA_LOG_ERROR("Invalid texture type");
-      break;
+      return nullptr;
   } 
 
   return texture;
@@ -2081,6 +2088,18 @@ const bool gfx_texture_load(GfxTexture* texture, const GfxTextureDesc& desc) {
   update_gl_texture_storage(texture, in_format);
   update_gl_texture_pixels(texture, gl_format, gl_pixel_type);
 
+  // Create the bindless texture handle, and make it 
+  // resident in GPU memory, ready to be used. 
+  //
+  // @TODO (GFX): Perhaps having the texture resident _as soon_ as it 
+  // is created is not the best idea.
+  //
+  
+  if(desc.is_bindless) {
+    texture->bindless_id = glGetTextureHandleARB(texture->id);
+    glMakeTextureHandleResidentARB(texture->bindless_id);
+  }
+
   // Generating some mipmaps
   glGenerateTextureMipmap(texture->id);
  
@@ -2091,6 +2110,10 @@ void gfx_texture_destroy(GfxTexture* texture, const FreeMemoryFn& free_fn) {
   if(!texture) {
     return;
   }
+ 
+  if(texture->desc.is_bindless) {
+    glMakeTextureHandleNonResidentARB(texture->bindless_id);
+  }
   
   glDeleteTextures(1, &texture->id);
   free_fn(texture);
@@ -2100,6 +2123,12 @@ GfxTextureDesc& gfx_texture_get_desc(GfxTexture* texture) {
   NIKOLA_ASSERT(texture, "Invalid GfxTexture struct passed");
 
   return texture->desc;
+}
+
+const u64 gfx_texture_get_bindless_id(GfxTexture* texture) {
+  NIKOLA_ASSERT(texture, "Invalid GfxTexture struct passed");
+
+  return texture->bindless_id;
 }
 
 void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc) {

@@ -1050,6 +1050,14 @@ struct GfxTextureDesc {
   /// @NOTE: By default, this value is set to `{1.0f, 1.0f, 1.0f, 1.0f}`. 
   f32 border_color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 
+  /// When this flag is on (which it is by default), 
+  /// this texture can be used in bindless operations. 
+  ///
+  /// If the texture was created in a non-bindless way, 
+  /// you _must_ destroy it and re-create it with this 
+  /// flag on, in order to enable bindless capabilities.
+  bool is_bindless    = true;
+
   /// The pixels that will be sent to the GPU.
   void* data          = nullptr;
 }; 
@@ -1482,6 +1490,9 @@ NIKOLA_API void gfx_texture_destroy(GfxTexture* texture, const FreeMemoryFn& fre
 
 /// Retrieve the internal `GfxTextureDesc` of `texture`
 NIKOLA_API GfxTextureDesc& gfx_texture_get_desc(GfxTexture* texture);
+
+/// Retrieve the internal bindless ID of `texture`.
+NIKOLA_API const u64 gfx_texture_get_bindless_id(GfxTexture* texture);
 
 /// Update the `texture`'s information from the given `desc`.
 ///

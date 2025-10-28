@@ -37,19 +37,17 @@ void light_pass_init(Window* window) {
   ResourceID pbr_shader       = resources_push_shader(RESOURCE_CACHE_ID, generate_pbr_shader());
   pass_desc.shader_context_id = resources_push_shader_context(RESOURCE_CACHE_ID, pbr_shader);
 
-  // Buffer injection
+  // Attaching buffers
 
-  shader_context_set_uniform_buffer(resources_get_shader_context(pass_desc.shader_context_id), 
-                                    SHADER_INSTANCE_BUFFER_INDEX, 
-                                    (GfxBuffer*)renderer_get_defaults().instance_buffer);
+  ShaderContext* shader_context = resources_get_shader_context(pass_desc.shader_context_id);
+  const RenderQueueEntry* queue = renderer_get_queue(RENDER_QUEUE_OPAQUE); 
+
+  shader_context_set_uniform_buffer(shader_context, SHADER_MODELS_BUFFER_INDEX, queue->transform_buffer);
+  shader_context_set_uniform_buffer(shader_context, SHADER_MATERIALS_BUFFER_INDEX, queue->material_buffer);
+  shader_context_set_uniform_buffer(shader_context, SHADER_TEXTURES_BUFFER_INDEX, queue->texture_buffer);
   
-  shader_context_set_uniform_buffer(resources_get_shader_context(pass_desc.shader_context_id), 
-                                    SHADER_LIGHT_BUFFER_INDEX, 
-                                    (GfxBuffer*)renderer_get_defaults().lights_buffer);
-  
-  shader_context_set_uniform_buffer(resources_get_shader_context(pass_desc.shader_context_id), 
-                                    SHADER_ANIMATION_BUFFER_INDEX, 
-                                    (GfxBuffer*)renderer_get_defaults().animation_buffer);
+  shader_context_set_uniform_buffer(shader_context, SHADER_LIGHT_BUFFER_INDEX, renderer_get_defaults().lights_buffer);
+  shader_context_set_uniform_buffer(shader_context, SHADER_ANIMATION_BUFFER_INDEX, renderer_get_defaults().animation_buffer);
 
   // Frame size and flags init
 
@@ -165,21 +163,11 @@ void light_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
 
   // Use the required resources
 
-  GfxTexture* textures[] = {
-    // @TODO (Renderer)
-    // geo.material->albedo_map,
-    // geo.material->roughness_map,
-    // geo.material->metallic_map,
-    // geo.material->normal_map,
-    // geo.material->emissive_map,
-    pass->previous->outputs[0],
-  };
-
   GfxBindingDesc bind_desc = {
     .shader = pass->shader_context->shader,
 
-    .textures       = textures, 
-    .textures_count = 6,
+    .textures       = &pass->previous->outputs[0], 
+    .textures_count = 1,
   };
   gfx_context_use_bindings(pass->gfx, bind_desc);
 

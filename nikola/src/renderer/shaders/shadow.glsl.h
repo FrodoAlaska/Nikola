@@ -18,14 +18,14 @@ inline nikola::GfxShaderDesc generate_shadow_shader() {
 
       // Uniforms
       
-      layout(std140, binding = 2) uniform InstanceBuffer {
-        mat4 u_model[1024];
+      layout(std140, binding = 1) readonly uniform ModelsBuffer {
+        mat4 u_model[4096];
       };
       
       uniform mat4 u_light_space;
 
       void main() {
-        gl_Position = u_light_space * u_model[gl_InstanceID] * vec4(aPos, 1.0f);
+        gl_Position = u_light_space * u_model[gl_DrawID] * vec4(aPos, 1.0f);
       }
     )",
   
