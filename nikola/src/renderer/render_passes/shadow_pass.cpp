@@ -54,6 +54,7 @@ void shadow_pass_init(Window* window) {
 
   pass_desc.frame_size  = IVec2(1280, 1280);
   pass_desc.clear_flags = (GFX_CLEAR_FLAGS_DEPTH_BUFFER); 
+  pass_desc.queue_type  = RENDER_QUEUE_OPAQUE;
 
   // Depth buffer init
 

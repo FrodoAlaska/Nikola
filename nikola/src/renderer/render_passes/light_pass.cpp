@@ -37,6 +37,15 @@ void light_pass_init(Window* window) {
   ResourceID pbr_shader       = resources_push_shader(RESOURCE_CACHE_ID, generate_pbr_shader());
   pass_desc.shader_context_id = resources_push_shader_context(RESOURCE_CACHE_ID, pbr_shader);
 
+  // Frame size and flags init
+
+  i32 width, height; 
+  window_get_size(window, &width, &height);
+
+  pass_desc.frame_size  = IVec2(width, height);
+  pass_desc.clear_flags = (GFX_CLEAR_FLAGS_COLOR_BUFFER | GFX_CLEAR_FLAGS_DEPTH_BUFFER); 
+  pass_desc.queue_type  = RENDER_QUEUE_OPAQUE;
+
   // Attaching buffers
 
   ShaderContext* shader_context = resources_get_shader_context(pass_desc.shader_context_id);
@@ -48,15 +57,6 @@ void light_pass_init(Window* window) {
   
   shader_context_set_uniform_buffer(shader_context, SHADER_LIGHT_BUFFER_INDEX, renderer_get_defaults().lights_buffer);
   shader_context_set_uniform_buffer(shader_context, SHADER_ANIMATION_BUFFER_INDEX, renderer_get_defaults().animation_buffer);
-
-  // Frame size and flags init
-
-  i32 width, height; 
-  window_get_size(window, &width, &height);
-
-  pass_desc.frame_size  = IVec2(width, height);
-  pass_desc.clear_flags = (GFX_CLEAR_FLAGS_COLOR_BUFFER | GFX_CLEAR_FLAGS_DEPTH_BUFFER); 
-  pass_desc.queue_type  = RENDER_QUEUE_OPAQUE;
 
   // Color attachment init
 

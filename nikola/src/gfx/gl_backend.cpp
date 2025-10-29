@@ -2067,24 +2067,24 @@ const bool gfx_texture_load(GfxTexture* texture, const GfxTextureDesc& desc) {
   GLenum min_filter, mag_filter;
   get_texture_gl_filter(desc.filter, &min_filter, &mag_filter); 
 
-  // Setting texture parameters
-  
-  glTextureParameteri(texture->id, GL_TEXTURE_MIN_FILTER, min_filter);
-  glTextureParameteri(texture->id, GL_TEXTURE_MAG_FILTER, mag_filter);
-  glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
-  glTextureParameteri(texture->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
+  // Setting texture parameters (for just images and textures, and not render targets)
+ 
+  if(!glIsRenderbuffer(texture->id)) {
+    glTextureParameteri(texture->id, GL_TEXTURE_MIN_FILTER, min_filter);
+    glTextureParameteri(texture->id, GL_TEXTURE_MAG_FILTER, mag_filter);
+    glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
+    glTextureParameteri(texture->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
 
-  GLint compare_func = (gl_format == GL_DEPTH_COMPONENT) ? GL_COMPARE_REF_TO_TEXTURE : GL_NONE;
+    GLint compare_func = (gl_format == GL_DEPTH_COMPONENT) ? GL_COMPARE_REF_TO_TEXTURE : GL_NONE;
 
-  glTextureParameteri(texture->id, GL_TEXTURE_COMPARE_MODE, compare_func);
-  glTextureParameteri(texture->id, GL_TEXTURE_COMPARE_FUNC, get_gl_compare_func(desc.compare_func));
-  glTextureParameterfv(texture->id, GL_TEXTURE_BORDER_COLOR, desc.border_color);
-
-  // Setting the pixel store alignment
-  set_texture_pixel_align(desc.format);
+    glTextureParameteri(texture->id, GL_TEXTURE_COMPARE_MODE, compare_func);
+    glTextureParameteri(texture->id, GL_TEXTURE_COMPARE_FUNC, get_gl_compare_func(desc.compare_func));
+    glTextureParameterfv(texture->id, GL_TEXTURE_BORDER_COLOR, desc.border_color);
+  }
 
   // Filling the texture with the data based on its type
-  
+ 
+  set_texture_pixel_align(desc.format);
   update_gl_texture_storage(texture, in_format);
   update_gl_texture_pixels(texture, gl_format, gl_pixel_type);
 
@@ -2179,12 +2179,14 @@ void gfx_texture_upload_data(GfxTexture* texture,
   get_texture_gl_format(texture->desc.format, &in_format, &gl_format, &gl_pixel_type);
   
   // Update the data
+  
   texture->desc.width  = width; 
   texture->desc.height = height; 
   texture->desc.depth  = depth; 
   texture->desc.data   = (void*)data; 
 
   // Updating the internal texture pixels
+  
   update_gl_texture_storage(texture, in_format);
   update_gl_texture_pixels(texture, gl_format, gl_pixel_type);
 
