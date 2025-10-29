@@ -66,6 +66,8 @@ void shadow_pass_init(Window* window) {
     .filter       = GFX_TEXTURE_FILTER_MIN_MAG_LINEAR,
     .wrap_mode    = GFX_TEXTURE_WRAP_CLAMP,
     .compare_func = GFX_COMPARE_LESS_EQUAL, 
+
+    .is_bindless = false,
   };
   pass_desc.targets.push_back(target_desc);
   

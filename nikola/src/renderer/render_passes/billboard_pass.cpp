@@ -53,6 +53,8 @@ void billboard_pass_init(Window* window) {
 
     .type   = GFX_TEXTURE_2D, 
     .format = GFX_TEXTURE_FORMAT_RGBA8, 
+
+    .is_bindless = false,
   };
   pass_desc.targets.push_back(target_desc);
 
@@ -64,6 +66,8 @@ void billboard_pass_init(Window* window) {
 
     .type   = GFX_TEXTURE_DEPTH_TARGET, 
     .format = GFX_TEXTURE_FORMAT_DEPTH16, 
+
+    .is_bindless = false,
   };
   pass_desc.targets.push_back(target_desc);
 

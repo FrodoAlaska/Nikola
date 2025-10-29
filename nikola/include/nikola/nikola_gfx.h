@@ -1047,8 +1047,8 @@ struct GfxTextureDesc {
   /// If the `wrap_mode` member is set to `GFX_TEXTURE_WRAP_BORDER_COLOR`, 
   /// this member, will decide said border color. 
   ///
-  /// @NOTE: By default, this value is set to `{1.0f, 1.0f, 1.0f, 1.0f}`. 
-  f32 border_color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+  /// @NOTE: By default, this value is set to `{0.0f, 0.0f, 0.0f, 0.0f}`. 
+  f32 border_color[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
   /// When this flag is on (which it is by default), 
   /// this texture can be used in bindless operations. 

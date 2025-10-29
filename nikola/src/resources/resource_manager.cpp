@@ -694,8 +694,9 @@ static bool load_font_nbr(ResourceGroup* group, Font* font, const FilePath& nbr_
       .format    = GFX_TEXTURE_FORMAT_R8, 
       .filter    = GFX_TEXTURE_FILTER_MIN_MAG_LINEAR, 
       .wrap_mode = GFX_TEXTURE_WRAP_CLAMP,
-      
-      .data = (void*)nbr_font.glyphs[i].pixels,
+
+      .is_bindless = false,
+      .data        = (void*)nbr_font.glyphs[i].pixels,
     };
     glyph.texture = resources_get_texture(resources_push_texture(group->id, face_desc));
 

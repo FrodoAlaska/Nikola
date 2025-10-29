@@ -111,7 +111,7 @@ struct GfxTexture {
   GfxContext* gfx     = nullptr;
 
   u32 id;
-  u64 bindless_id;
+  GLuint64 bindless_id;
 };
 /// GfxTexture
 ///---------------------------------------------------------------------------------------------------------------------
@@ -2088,20 +2088,19 @@ const bool gfx_texture_load(GfxTexture* texture, const GfxTextureDesc& desc) {
   update_gl_texture_storage(texture, in_format);
   update_gl_texture_pixels(texture, gl_format, gl_pixel_type);
 
+  // Generating some mipmaps
+  glGenerateTextureMipmap(texture->id);
+
   // Create the bindless texture handle, and make it 
   // resident in GPU memory, ready to be used. 
   //
   // @TODO (GFX): Perhaps having the texture resident _as soon_ as it 
   // is created is not the best idea.
   //
-  
   if(desc.is_bindless) {
     texture->bindless_id = glGetTextureHandleARB(texture->id);
     glMakeTextureHandleResidentARB(texture->bindless_id);
   }
-
-  // Generating some mipmaps
-  glGenerateTextureMipmap(texture->id);
  
   return true;
 }

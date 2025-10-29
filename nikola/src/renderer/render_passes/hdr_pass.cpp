@@ -43,6 +43,8 @@ void hdr_pass_init(Window* window) {
 
     .type   = GFX_TEXTURE_2D, 
     .format = GFX_TEXTURE_FORMAT_RGBA32F, 
+
+    .is_bindless = false,
   };
   pass_desc.targets.push_back(target_desc);
 
