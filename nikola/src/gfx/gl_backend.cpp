@@ -1162,6 +1162,13 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
     NIKOLA_LOG_FATAL("Could not find GL_ARB_draw_indirect extension in this driver.");
   }
 
+  if(!gfx_context_has_extension(gfx, "GL_ARB_seamless_cube_map")) {
+    NIKOLA_LOG_WARN("Could not find GL_ARB_seamless_cube_map extension in this driver.");
+  }
+  else {
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+  }
+
   // Some useful info dump
 
   NIKOLA_LOG_INFO("An OpenGL graphics context was successfully created:\n" 
