@@ -21,6 +21,8 @@ struct nikola::App {
   nikola::ResourceID mesh_id, model_id;
   nikola::ResourceID ground_material;
 
+  nikola::Font* font;
+
   nikola::Transform ground_transform;
   nikola::Transform transforms[MAX_OBJECTS][MAX_OBJECTS];
 };
@@ -36,7 +38,7 @@ static void init_resources(nikola::App* app) {
   app->res_group_id = nikola::resources_create_group("app_res", res_path);
 
   // Skybox init
-  app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group_id, "cubemaps/accurate_night.nbr");
+  app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group_id, "cubemaps/gloomy.nbr");
 
   // Meshes init
   app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
@@ -50,6 +52,9 @@ static void init_resources(nikola::App* app) {
     .albedo_id    = nikola::resources_push_texture(app->res_group_id, "textures/paviment.nbr"),
   };
   app->ground_material = nikola::resources_push_material(app->res_group_id, mat_desc);
+
+  // Fonts init
+  app->font = nikola::resources_get_font(nikola::resources_push_font(app->res_group_id, "fonts/bit5x3.nbr"));
 }
 
 /// Private functions 
@@ -72,8 +77,8 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Camera init
   
   nikola::CameraDesc cam_desc = {
-    .position     = nikola::Vec3(10.0f, 0.0f, 10.0f),
-    .target       = nikola::Vec3(-3.0f, 0.0f, 0.0f),
+    .position     = nikola::Vec3(10.0f, 10.0f, 10.0f),
+    .target       = nikola::Vec3(-3.0f, 10.0f, 0.0f),
     .up_axis      = nikola::Vec3(0.0f, 1.0f, 0.0f),
     .aspect_ratio = nikola::window_get_aspect_ratio(app->window),
     .move_func    = nikola::camera_free_move_func,
@@ -150,8 +155,9 @@ void app_render(nikola::App* app) {
   
   // Render 2D 
   
-  // nikola::batch_renderer_begin();
-  // nikola::batch_renderer_end();
+  nikola::batch_renderer_begin();
+  nikola::batch_render_fps(app->font, nikola::Vec2(30.0f, 40.0f), 32.0f, nikola::Vec4(1.0f)); 
+  nikola::batch_renderer_end();
 }
 
 void app_render_gui(nikola::App* app) {

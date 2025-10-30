@@ -7,8 +7,9 @@ inline nikola::GfxShaderDesc generate_screen_space_shader() {
     .vertex_source = R"(
       #version 460 core
       
-      layout (location = 0) in vec2 aPos;
-      layout (location = 1) in vec2 aTextureCoords;
+      layout (location = 0) in vec3 aPos;
+      layout (location = 1) in vec3 aNormal; // Unsused
+      layout (location = 2) in vec2 aTextureCoords;
       
       out VS_OUT {
         vec2 tex_coords;
@@ -16,7 +17,7 @@ inline nikola::GfxShaderDesc generate_screen_space_shader() {
       
       void main() {
         vs_out.tex_coords = aTextureCoords;
-        gl_Position       = vec4(aPos, 0.0, 1.0);
+        gl_Position       = vec4(aPos, 1.0);
       }
     )",
 

@@ -167,11 +167,15 @@ void light_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
 
   // Use the required resources
 
+  GfxBuffer* command_buff  = queue.command_buffer;
   GfxBindingDesc bind_desc = {
     .shader = pass->shader_context->shader,
 
     .textures       = &pass->previous->outputs[0], 
     .textures_count = 1,
+
+    .buffers       = &command_buff, 
+    .buffers_count = 1
   };
   gfx_context_use_bindings(pass->gfx, bind_desc);
 

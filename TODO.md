@@ -18,9 +18,19 @@
         - [x] Create a `MaterialInterface` struct for all the material data that will be sent to the shader
         - [x] Make a buffer specifically for texture bindless handles, and let the `MaterialInterface` refer to specific textures
         - [x] Don't forget to make the shader storage buffers in the shader an actually SSBO 
-        - [] Fix errors
+        - [x] Fix errors
+        - [x] Add `GfxBuffer`s to the `GfxBindingDesc`
+        - [x] Fix visual errors
+        - [] Instead of having a textures buffer, make the material refrence the actual texture handle and construct the sampler in the shader using said handle. The handle does not have to be a `u64`, by the way. It can just be a `uvec2`.
+        - [] Add `CUBEMAP_SEAMLESS` somewhere
+        - [] Apparently the `gfx_context_draw` functions of the HDR is taking _way_ longer than any other draw call??? Get rid of it???
     - [] Improve instancing completely. It's currently awfully architected.
-    - [] Improve lighting performance using clustered rendering (This is optional if the performance is fine).
+    - [] Profiling
+    - [] Frustum culling
+    - [] Documentation
+- [] Threading
+    - [] A better job system using `std::function`
+    - [] Thread pools
     - [] Documentation
 - [] Scenes?
 - [] Animations 
@@ -41,10 +51,6 @@
 - [] Start-Time performance
     - [] Improve the load times of the resource manager
     - [] NBR conversion time enhancement
-- [] Threading
-    - [] A better job system using `std::function`
-    - [] Thread pools
-    - [] Documentation
 - [] Renderer: Beautify v2.0 
     - This one is just a thinking exersice. We don't want to add every rendering technique under the sun to "beautify" the engine's look. 
     - [] Gaussian blur

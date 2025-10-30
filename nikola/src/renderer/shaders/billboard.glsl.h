@@ -70,7 +70,7 @@ inline nikola::GfxShaderDesc generate_billboard_shader() {
 
     .pixel_source = R"(
       #version 460 core
-      #extension GL_ARB_bindless_texture : require
+      #extension GL_ARB_bindless_texture : enable
    
       layout (location = 0) out vec4 frag_color;
     

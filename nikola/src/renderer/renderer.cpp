@@ -182,7 +182,9 @@ static void init_pipelines() {
 
   DynamicArray<f32> vertices; 
   DynamicArray<u32> indices;
+  
   geometry_loader_load(vertices, indices, GEOMETRY_BILLBOARD); 
+  geometry_loader_set_vertex_layout(pipe_desc.layouts[0], GEOMETRY_BILLBOARD);
 
   // Vertex buffer init 
   
@@ -193,7 +195,7 @@ static void init_pipelines() {
     .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
   };
   pipe_desc.vertex_buffer  = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, vert_desc));
-  pipe_desc.vertices_count = vertices.size();
+  pipe_desc.vertices_count = vertices.size() / 8; // 8 = number of elements per vertex
  
   // Index buffer init
   
@@ -206,9 +208,6 @@ static void init_pipelines() {
   pipe_desc.index_buffer  = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, index_desc));
   pipe_desc.indices_count = indices.size();
 
-  // Layout init
-  geometry_loader_set_vertex_layout(pipe_desc.layouts[0], GEOMETRY_BILLBOARD);
-
   // Draw mode init 
   pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
 
@@ -219,8 +218,10 @@ static void init_pipelines() {
   // Skybox quad
   //
 
-  pipe_desc = {};
+  GfxPipelineDesc skybox_pipe_desc = {};
+
   geometry_loader_load(vertices, indices, GEOMETRY_SKYBOX); 
+  geometry_loader_set_vertex_layout(skybox_pipe_desc.layouts[0], GEOMETRY_SKYBOX);
   
   // Vertex buffer init 
   
@@ -230,17 +231,16 @@ static void init_pipelines() {
     .type  = GFX_BUFFER_VERTEX, 
     .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
   };
-  pipe_desc.vertex_buffer  = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, vert_desc));
-  pipe_desc.vertices_count = vertices.size();
+  skybox_pipe_desc.vertex_buffer  = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, vert_desc));
+  skybox_pipe_desc.vertices_count = vertices.size() / 3; // 3 = number of elements per vertex
 
-  // Layout init
-  geometry_loader_set_vertex_layout(pipe_desc.layouts[0], GEOMETRY_SKYBOX);
-
-  // Draw mode init 
-  pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE;
+  // Setup the rest of the pipeline
+ 
+  skybox_pipe_desc.draw_mode  = GFX_DRAW_MODE_TRIANGLE;
+  skybox_pipe_desc.depth_mask = false; 
 
   // Pipeline init
-  s_renderer.defaults.skybox_pipe = gfx_pipeline_create(s_renderer.context, pipe_desc);
+  s_renderer.defaults.skybox_pipe = gfx_pipeline_create(s_renderer.context, skybox_pipe_desc);
 }
 
 static void render_queue_create(const RenderQueueType type) {
@@ -288,7 +288,7 @@ static void render_queue_create(const RenderQueueType type) {
   buff_desc = {
     .data  = nullptr,
     .size  = COMMANDS_MAX * sizeof(GfxDrawCommandIndirect),
-    .type  = GFX_BUFFER_SHADER_STORAGE, 
+    .type  = GFX_BUFFER_DRAW_INDIRECT, 
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
   queue->command_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
@@ -317,7 +317,18 @@ static void render_queue_create(const RenderQueueType type) {
   
   // @TEMP (Renderer)
   // Different render queues have different vertex layouts.
-  geometry_loader_set_vertex_layout(queue->pipe_desc.layouts[0], GEOMETRY_CUBE);
+  
+  switch(type) {
+    case RENDER_QUEUE_OPAQUE:
+      geometry_loader_set_vertex_layout(queue->pipe_desc.layouts[0], GEOMETRY_CUBE);
+      break;
+    case RENDER_QUEUE_BILLBOARD:
+      geometry_loader_set_vertex_layout(queue->pipe_desc.layouts[0], GEOMETRY_BILLBOARD);
+      break;
+    case RENDER_QUEUE_DEBUG:
+      geometry_loader_set_vertex_layout(queue->pipe_desc.layouts[0], GEOMETRY_DEBUG_CUBE);
+      break;
+  }
   
   queue->pipe = gfx_pipeline_create(s_renderer.context, queue->pipe_desc);
 }
@@ -427,18 +438,18 @@ void renderer_shutdown() {
       gfx_framebuffer_destroy(pass->framebuffer);
     }
   }
-
-  // Destroy resources
-  
-  gfx_pipeline_destroy(s_renderer.defaults.screen_quad_pipe);
-  gfx_pipeline_destroy(s_renderer.defaults.skybox_pipe);
-  gfx_context_shutdown(s_renderer.context);
  
   // Destroy the queues
 
   for(sizei i = 0; i < RENDER_QUEUES_MAX; i++) {
     gfx_pipeline_destroy(s_renderer.queues[i].pipe);
   }
+
+  // Destroy resources
+  
+  gfx_pipeline_destroy(s_renderer.defaults.screen_quad_pipe);
+  gfx_pipeline_destroy(s_renderer.defaults.skybox_pipe);
+  gfx_context_shutdown(s_renderer.context);
 
   NIKOLA_LOG_INFO("Successfully shutdown the renderer context");
 }
@@ -577,7 +588,7 @@ void renderer_end() {
   gfx_context_use_bindings(s_renderer.context, bind_desc);
   
   // Draw the final result to the screen
-  
+ 
   gfx_context_use_pipeline(s_renderer.context, s_renderer.defaults.screen_quad_pipe);
   gfx_context_draw(s_renderer.context, 0);
 }

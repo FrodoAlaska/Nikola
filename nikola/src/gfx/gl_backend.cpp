@@ -1154,6 +1154,10 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
     gfx->extensions[i] = ext;
   }
 
+  if(!gfx_context_has_extension(gfx, "GL_ARB_bindless_texture")) {
+    NIKOLA_LOG_WARN("Could not find GL_ARB_bindless_texture extension in this driver.");
+  }
+
   // Some useful info dump
 
   NIKOLA_LOG_INFO("An OpenGL graphics context was successfully created:\n" 
@@ -1298,6 +1302,15 @@ void gfx_context_use_bindings(GfxContext* gfx, const GfxBindingDesc& binding_des
                        in_format);                 // Image format            
   }
 
+  // Bind the buffers
+
+  for(sizei i = 0; i < binding_desc.buffers_count; i++) {
+    NIKOLA_ASSERT(binding_desc.buffers[i], "An invalid buffer found in buffers array");
+
+    GfxBuffer* buffer = binding_desc.buffers[i];
+    glBindBuffer(buffer->gl_buff_type, buffer->id);
+  }
+
   // Bind the cubemaps
   
   NIKOLA_ASSERT(((binding_desc.cubemaps_count >= 0) && (binding_desc.cubemaps_count < CUBEMAPS_MAX)), 
@@ -1332,7 +1345,7 @@ void gfx_context_draw(GfxContext* gfx, const u32 start_element) {
   NIKOLA_ASSERT(gfx->bound_pipeline, "Cannot draw using an invalid bound pipeline");
 
   GfxPipeline* pipe = gfx->bound_pipeline;
-  GLenum draw_mode = get_draw_mode(pipe->desc.draw_mode);
+  GLenum draw_mode  = get_draw_mode(pipe->desc.draw_mode);
 
   // Draw the index buffer (if it is valid).
   // Otherwise, draw using the vertex buffer.
@@ -1354,7 +1367,7 @@ void gfx_context_draw_instanced(GfxContext* gfx, const u32 start_element, const 
   NIKOLA_ASSERT(gfx->bound_pipeline, "Cannot draw using an invalid bound pipeline");
 
   GfxPipeline* pipe = gfx->bound_pipeline;
-  GLenum draw_mode = get_draw_mode(pipe->desc.draw_mode);
+  GLenum draw_mode  = get_draw_mode(pipe->desc.draw_mode);
   
   // Draw the index buffer (if it is valid).
   // Otherwise, draw using the vertex buffer.
@@ -1375,7 +1388,7 @@ void gfx_context_draw_multi_indirect(GfxContext* gfx, const u32 offset, const si
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
   
   GfxPipeline* pipe = gfx->bound_pipeline;
-  GLenum draw_mode = get_draw_mode(pipe->desc.draw_mode);
+  GLenum draw_mode  = get_draw_mode(pipe->desc.draw_mode);
   
   // Draw the index buffer (if it is valid).
   // Otherwise, draw using the vertex buffer.
