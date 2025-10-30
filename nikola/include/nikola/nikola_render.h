@@ -297,6 +297,7 @@ struct RenderPass {
   
   /// State handling
 
+  String debug_name;
   void* user_data = nullptr;
 };
 /// RenderPass
@@ -601,9 +602,9 @@ NIKOLA_API Vec4 renderer_get_clear_color();
 /// Retrieve the render queue of `type`.
 NIKOLA_API const RenderQueueEntry* renderer_get_queue(const RenderQueueType type);
 
-/// Create a new render pass using the information from `desc`, returning back a
-/// pointer to the newly added render pass. 
-NIKOLA_API RenderPass* renderer_create_pass(const RenderPassDesc& desc);
+/// Create a new render pass using the information from `desc` identified with `debug_name`,
+/// returning back a pointer to the newly added render pass. 
+NIKOLA_API RenderPass* renderer_create_pass(const RenderPassDesc& desc, const String& debug_name = "Unnamed");
 
 /// Append the given `pass` to the renderer's pass chain to be 
 /// initiated at the end of the chain.

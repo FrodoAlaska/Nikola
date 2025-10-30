@@ -180,21 +180,47 @@ static void create_cube_geo(DynamicArray<f32>& vertices, DynamicArray<u32>& indi
 
   // Normals and Tangents
 
-  generate_normals(full_vertices, 36, indices.data());
-  generate_tangents(full_vertices, 36, indices.data());
+  generate_normals(full_vertices, indices.size(), indices.data());
+  generate_tangents(full_vertices, indices.size(), indices.data());
 
   // Carrying over the full vertices into just floats
   // @NOTE: Woah!!!!! What the hell??? How dare you??!!
 
   vertices.reserve(24 * sizeof(Vertex3D));
   for(auto& vertex : full_vertices) {
+    // Position
+
     vertices.push_back(vertex.position.x);
     vertices.push_back(vertex.position.y);
     vertices.push_back(vertex.position.z);
 
+    // Normal
+
     vertices.push_back(vertex.normal.x);
     vertices.push_back(vertex.normal.y);
     vertices.push_back(vertex.normal.z);
+
+    // Tangents
+    
+    vertices.push_back(vertex.tangent.x);
+    vertices.push_back(vertex.tangent.y);
+    vertices.push_back(vertex.tangent.z);
+
+    // Joint IDs
+    
+    vertices.push_back(vertex.joint_ids.x);
+    vertices.push_back(vertex.joint_ids.y);
+    vertices.push_back(vertex.joint_ids.z);
+    vertices.push_back(vertex.joint_ids.w);
+
+    // Joint weight
+    
+    vertices.push_back(vertex.joint_weights.x);
+    vertices.push_back(vertex.joint_weights.y);
+    vertices.push_back(vertex.joint_weights.z);
+    vertices.push_back(vertex.joint_weights.w);
+
+    // Texture coords
 
     vertices.push_back(vertex.texture_coords.x);
     vertices.push_back(vertex.texture_coords.y);
@@ -285,13 +311,39 @@ static void create_sphere_geo(DynamicArray<f32>& vertices, DynamicArray<u32>& in
 
   vertices.reserve(24 * sizeof(Vertex3D));
   for(auto& vertex : full_vertices) {
+    // Position
+
     vertices.push_back(vertex.position.x);
     vertices.push_back(vertex.position.y);
     vertices.push_back(vertex.position.z);
 
+    // Normal
+
     vertices.push_back(vertex.normal.x);
     vertices.push_back(vertex.normal.y);
     vertices.push_back(vertex.normal.z);
+
+    // Tangents
+    
+    vertices.push_back(vertex.tangent.x);
+    vertices.push_back(vertex.tangent.y);
+    vertices.push_back(vertex.tangent.z);
+
+    // Joint IDs
+    
+    vertices.push_back(vertex.joint_ids.x);
+    vertices.push_back(vertex.joint_ids.y);
+    vertices.push_back(vertex.joint_ids.z);
+    vertices.push_back(vertex.joint_ids.w);
+
+    // Joint weight
+    
+    vertices.push_back(vertex.joint_weights.x);
+    vertices.push_back(vertex.joint_weights.y);
+    vertices.push_back(vertex.joint_weights.z);
+    vertices.push_back(vertex.joint_weights.w);
+
+    // Texture coords
 
     vertices.push_back(vertex.texture_coords.x);
     vertices.push_back(vertex.texture_coords.y);

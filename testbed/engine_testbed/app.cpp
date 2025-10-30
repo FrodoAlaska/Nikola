@@ -77,8 +77,8 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Camera init
   
   nikola::CameraDesc cam_desc = {
-    .position     = nikola::Vec3(10.0f, 10.0f, 10.0f),
-    .target       = nikola::Vec3(-3.0f, 10.0f, 0.0f),
+    .position     = nikola::Vec3(10.0f, 1.0f, 10.0f),
+    .target       = nikola::Vec3(-3.0f, 1.0f, 0.0f),
     .up_axis      = nikola::Vec3(0.0f, 1.0f, 0.0f),
     .aspect_ratio = nikola::window_get_aspect_ratio(app->window),
     .move_func    = nikola::camera_free_move_func,
@@ -145,11 +145,11 @@ void app_render(nikola::App* app) {
   
   nikola::renderer_queue_mesh(app->mesh_id, app->ground_transform, app->ground_material);
 
-  for(nikola::sizei i = 0; i < MAX_OBJECTS; i++) {
-    for(nikola::sizei j = 0; j < MAX_OBJECTS; j++) {
-      nikola::renderer_queue_model(app->model_id, app->transforms[i][j]);
-    }
-  }
+  // for(nikola::sizei i = 0; i < MAX_OBJECTS; i++) {
+  //   for(nikola::sizei j = 0; j < MAX_OBJECTS; j++) {
+  //     nikola::renderer_queue_model(app->model_id, app->transforms[i][j]);
+  //   }
+  // }
 
   nikola::renderer_end();
   

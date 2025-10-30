@@ -1155,7 +1155,11 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
   }
 
   if(!gfx_context_has_extension(gfx, "GL_ARB_bindless_texture")) {
-    NIKOLA_LOG_WARN("Could not find GL_ARB_bindless_texture extension in this driver.");
+    NIKOLA_LOG_FATAL("Could not find GL_ARB_bindless_texture extension in this driver.");
+  }
+  
+  if(!gfx_context_has_extension(gfx, "GL_ARB_draw_indirect")) {
+    NIKOLA_LOG_FATAL("Could not find GL_ARB_draw_indirect extension in this driver.");
   }
 
   // Some useful info dump

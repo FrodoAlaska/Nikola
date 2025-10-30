@@ -73,7 +73,7 @@ void billboard_pass_init(Window* window) {
 
   // Render pass init
   
-  RenderPass* billboard_pass = renderer_create_pass(pass_desc);
+  RenderPass* billboard_pass = renderer_create_pass(pass_desc, "Billboard pass");
   renderer_append_pass(billboard_pass);
 }
 
@@ -98,6 +98,18 @@ void billboard_pass_prepare(RenderPass* pass, const FrameData& data) {
 
 void billboard_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
   NIKOLA_PROFILE_FUNCTION();
+
+  // Early out to save on CPU time
+
+  if(queue.commands.empty()) {
+    // Saving the output of the last render pass, 
+    // since this one won't be used.
+
+    pass->outputs[0]    = pass->previous->framebuffer_desc.color_attachments[0];
+    pass->outputs_count = 1;
+    
+    return;
+  }
 
   // Using resources
 

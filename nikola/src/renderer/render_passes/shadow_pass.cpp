@@ -74,7 +74,7 @@ void shadow_pass_init(Window* window) {
   
   // Render pass init
   
-  RenderPass* shadow_pass = renderer_create_pass(pass_desc);
+  RenderPass* shadow_pass = renderer_create_pass(pass_desc, "Shadow pass");
   renderer_append_pass(shadow_pass);
 }
 
@@ -121,7 +121,7 @@ void shadow_pass_prepare(RenderPass* pass, const FrameData& data) {
 
 void shadow_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
   NIKOLA_PROFILE_FUNCTION();
-  
+
   // Use the required resources
 
   GfxBuffer* command_buff  = queue.command_buffer;

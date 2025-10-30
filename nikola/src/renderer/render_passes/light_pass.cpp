@@ -87,7 +87,7 @@ void light_pass_init(Window* window) {
 
   // Render pass init
   
-  RenderPass* light_pass = renderer_create_pass(pass_desc);
+  RenderPass* light_pass = renderer_create_pass(pass_desc, "Light pass");
   renderer_append_pass(light_pass);
 }
 
@@ -182,7 +182,7 @@ void light_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
   // Render the scene
 
   gfx_context_use_pipeline(pass->gfx, queue.pipe);
-  gfx_context_draw_multi_indirect(pass->gfx, 0, queue.commands.size());
+  gfx_context_draw(pass->gfx, 0);
 
   // Setting the output textures
 

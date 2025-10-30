@@ -373,10 +373,12 @@ static void render_queue_push(const RenderQueueType type, Mesh* mesh, const Tran
 
   // Command
 
+  sizei stride = mesh->vertices.size() / entry->pipe_desc.layouts[0].attributes_count;
+
   GfxDrawCommandIndirect cmd = {
     .elements_count = (u32)mesh->indices.size(),
-    .first_element  = (u32)entry->indices.size(),
-    .base_vertex    = (u32)entry->vertices.size(),
+    .first_element  = (u32)(entry->commands.size() * entry->indices.size()),
+    .base_vertex    = (u32)(entry->commands.size() * stride),
   };
   entry->commands.push_back(cmd);
 }
@@ -503,7 +505,7 @@ void renderer_end() {
                            0,
                            queue->vertices.size() * sizeof(f32), 
                            queue->vertices.data());
-    queue->pipe_desc.vertices_count = queue->vertices.size();
+    queue->pipe_desc.vertices_count = queue->vertices.size() / queue->pipe_desc.layouts[0].attributes_count;
 
     // Update the index buffer
 
@@ -620,7 +622,7 @@ const RenderQueueEntry* renderer_get_queue(const RenderQueueType type) {
   return &s_renderer.queues[type];
 }
 
-RenderPass* renderer_create_pass(const RenderPassDesc& desc) {
+RenderPass* renderer_create_pass(const RenderPassDesc& desc, const String& debug_name) {
   // Allocate the pass
   
   RenderPass* pass = &s_renderer.passes_pool[s_renderer.passes_count++];
@@ -661,12 +663,13 @@ RenderPass* renderer_create_pass(const RenderPassDesc& desc) {
   
   pass->framebuffer_desc.clear_flags = desc.clear_flags; 
   pass->framebuffer                  = gfx_framebuffer_create(pass->gfx, pass->framebuffer_desc);
+  pass->debug_name                   = debug_name;
   pass->user_data                    = desc.user_data;
 
   // Retrieve the context
   pass->shader_context = resources_get_shader_context(desc.shader_context_id);
 
-  NIKOLA_LOG_TRACE("Created pass with ID %zu", s_renderer.passes_count - 1);
+  NIKOLA_LOG_TRACE("Created pass \'%s\' at index \'%zu\'", debug_name.c_str(), s_renderer.passes_count - 1);
   return pass;
 }
 
@@ -706,7 +709,7 @@ void renderer_append_pass(RenderPass* pass) {
 
   s_renderer.tail_pass = pass;
   
-  NIKOLA_LOG_TRACE("Appended pass to the chain");
+  NIKOLA_LOG_TRACE("Appended pass \'%s\' to the chain", pass->debug_name.c_str());
 }
 
 void renderer_prepend_pass(RenderPass* pass) {
@@ -732,7 +735,7 @@ void renderer_prepend_pass(RenderPass* pass) {
 
   pass = s_renderer.head_pass;
 
-  NIKOLA_LOG_TRACE("Prepended pass to the chain");
+  NIKOLA_LOG_TRACE("Prepended pass \'%s\' to the chain", pass->debug_name.c_str());
 }
 
 void renderer_insert_pass(RenderPass* pass, const sizei index) {
@@ -749,7 +752,7 @@ void renderer_insert_pass(RenderPass* pass, const sizei index) {
   current->next  = pass;
   pass->previous = current;
 
-  NIKOLA_LOG_TRACE("Insterted pass at %zu", index);
+  NIKOLA_LOG_TRACE("Inserted pass \'%s\' at index \'%zu\'", pass->debug_name.c_str(), index);
 }
 
 void renderer_remove_pass(const sizei index) {
@@ -767,7 +770,7 @@ void renderer_remove_pass(const sizei index) {
     pass->next->previous = pass->previous;
   }
 
-  NIKOLA_LOG_TRACE("Removed pass at %zu", index);
+  NIKOLA_LOG_TRACE("Removed pass \'%s\'", pass->debug_name.c_str());
 }
 
 RenderPass* renderer_peek_pass(const sizei index) {

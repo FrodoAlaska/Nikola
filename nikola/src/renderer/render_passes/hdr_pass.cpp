@@ -50,7 +50,7 @@ void hdr_pass_init(Window* window) {
 
   // Render pass init
   
-  RenderPass* hdr_pass = renderer_create_pass(pass_desc);
+  RenderPass* hdr_pass = renderer_create_pass(pass_desc, "HDR pass");
   renderer_append_pass(hdr_pass);
 }
 

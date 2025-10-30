@@ -404,7 +404,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         // Add it all together...
         
         vec3 final_color = (emissive_texel + (dir_light_factor + point_lights_factor + spot_lights_factor)) * u_ambient;
-        frag_color       = vec4((1 - calculate_shadow()) * final_color, material.transparency);
+        frag_color       = vec4(1.0);//vec4((1 - calculate_shadow()) * final_color, material.transparency);
       }
     )"
   };

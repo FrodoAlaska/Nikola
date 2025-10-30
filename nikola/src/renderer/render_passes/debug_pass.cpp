@@ -72,7 +72,7 @@ void debug_pass_init(Window* window) {
   pass_desc.targets.push_back(target_desc);
 
   // Render pass init
-  RenderPass* debug_pass = renderer_create_pass(pass_desc);
+  RenderPass* debug_pass = renderer_create_pass(pass_desc, "Debug pass");
 }
 
 void debug_pass_prepare(RenderPass* pass, const FrameData& data) {
@@ -97,6 +97,18 @@ void debug_pass_prepare(RenderPass* pass, const FrameData& data) {
 void debug_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
   NIKOLA_PROFILE_FUNCTION();
 
+  // Early out to save on CPU time
+
+  if(queue.commands.empty()) {
+    // Saving the output of the last render pass, 
+    // since this one won't be used.
+
+    pass->outputs[0]    = pass->previous->framebuffer_desc.color_attachments[0];
+    pass->outputs_count = 1;
+    
+    return;
+  }
+
   // Using resources
 
   GfxBuffer* command_buff  = queue.command_buffer;
@@ -112,7 +124,7 @@ void debug_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
   
   gfx_context_use_pipeline(pass->gfx, queue.pipe);
   gfx_context_draw_multi_indirect(pass->gfx, 0, queue.commands.size());
-
+  
   // Setting the output textures
 
   pass->outputs[0]    = pass->framebuffer_desc.color_attachments[0];
