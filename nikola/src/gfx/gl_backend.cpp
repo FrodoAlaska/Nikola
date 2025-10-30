@@ -2144,6 +2144,11 @@ GfxTextureDesc& gfx_texture_get_desc(GfxTexture* texture) {
 const u64 gfx_texture_get_bindless_id(GfxTexture* texture) {
   NIKOLA_ASSERT(texture, "Invalid GfxTexture struct passed");
 
+  if(!texture->desc.is_bindless) {
+    NIKOLA_LOG_ERROR("Trying to access the bindless ID of a regular texture");
+    return 0;
+  }
+
   return texture->bindless_id;
 }
 

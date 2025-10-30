@@ -44,8 +44,6 @@ void shadow_pass_init(Window* window) {
   const RenderQueueEntry* queue = renderer_get_queue(RENDER_QUEUE_OPAQUE); 
 
   shader_context_set_uniform_buffer(shader_context, SHADER_MODELS_BUFFER_INDEX, queue->transform_buffer);
-  shader_context_set_uniform_buffer(shader_context, SHADER_MATERIALS_BUFFER_INDEX, queue->material_buffer);
-  shader_context_set_uniform_buffer(shader_context, SHADER_TEXTURES_BUFFER_INDEX, queue->texture_buffer);
   
   // Other init
 

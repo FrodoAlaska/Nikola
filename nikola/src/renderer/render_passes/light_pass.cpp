@@ -53,7 +53,6 @@ void light_pass_init(Window* window) {
 
   shader_context_set_uniform_buffer(shader_context, SHADER_MODELS_BUFFER_INDEX, queue->transform_buffer);
   shader_context_set_uniform_buffer(shader_context, SHADER_MATERIALS_BUFFER_INDEX, queue->material_buffer);
-  shader_context_set_uniform_buffer(shader_context, SHADER_TEXTURES_BUFFER_INDEX, queue->texture_buffer);
   
   shader_context_set_uniform_buffer(shader_context, SHADER_LIGHT_BUFFER_INDEX, renderer_get_defaults().lights_buffer);
   shader_context_set_uniform_buffer(shader_context, SHADER_ANIMATION_BUFFER_INDEX, renderer_get_defaults().animation_buffer);

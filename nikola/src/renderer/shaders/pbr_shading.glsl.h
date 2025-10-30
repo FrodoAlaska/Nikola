@@ -28,7 +28,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         mat4 u_model[4096];
       };
       
-      layout(std140, binding = 6) uniform AnimationBuffer {
+      layout(std140, binding = 5) uniform AnimationBuffer {
         mat4 u_skinning_palette[128]; // @TODO: Probably not the best count to have here
       };
 
@@ -83,11 +83,10 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         vec3 bitangent = normalize(cross(vs_out.normal, vs_out.tangent));
         vs_out.TBN     = transpose(mat3(vs_out.tangent, bitangent, vs_out.normal));
 
-        vs_out.camera_pos = u_camera_pos;
-        vs_out.pixel_pos  = vec3(model_space);
-        vs_out.tex_coords = aTexCoords;
-        vs_out.shadow_pos = u_light_space * vec4(vs_out.pixel_pos, 1.0);
-
+        vs_out.camera_pos     = u_camera_pos;
+        vs_out.pixel_pos      = vec3(model_space);
+        vs_out.tex_coords     = aTexCoords;
+        vs_out.shadow_pos     = u_light_space * vec4(vs_out.pixel_pos, 1.0);
         vs_out.material_index = gl_DrawID;
 
         gl_Position = u_projection * u_view * model_space;
@@ -96,7 +95,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
 
     .pixel_source = R"(
       #version 460 core
-      #extension GL_ARB_bindless_texture : enable
+      #extension GL_ARB_bindless_texture : require
      
       layout (location = 0) out vec4 frag_color;
     
@@ -119,18 +118,19 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       #define PI         3.14159265359
   
       struct Material {
-        int albedo_index;
-        int metallic_index;
-        int roughness_index;
-        int normal_index;
+        sampler2D albedo_handle;
+        sampler2D metallic_handle;
+        sampler2D roughness_handle;
+        sampler2D normal_handle;
+        sampler2D emissive_handle;
 
-        int emissive_index;
         float metallic;
         float roughness;
         float emissive;
+        float transparency;
+        vec2 __padding;
 
         vec3 color;
-        float transparency;
       };
 
       struct DirectionalLight {
@@ -192,12 +192,8 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       layout(std430, binding = 2) readonly buffer MaterialsBuffer {
         Material u_materials[4096];
       };
-      
-      layout(binding = 3, std140) uniform TexturesBuffer {
-        sampler2D u_textures[4096];
-      };
 
-      layout(std430, binding = 5) buffer LightsBuffer {
+      layout(std430, binding = 4) buffer LightsBuffer {
         DirectionalLight u_dir_light;
         PointLight u_points[LIGHTS_MAX];
         SpotLight u_spots[LIGHTS_MAX]; 
@@ -368,11 +364,11 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
 
         Material material = u_materials[fs_in.material_index];
 
-        vec3 albedo_texel     = texture(u_textures[material.albedo_index], fs_in.tex_coords).rgb * material.color;
-        float roughness_texel = texture(u_textures[material.roughness_index], fs_in.tex_coords).g * material.roughness;
-        float metallic_texel  = texture(u_textures[material.metallic_index], fs_in.tex_coords).b * material.metallic;
-        vec3 normal_texel     = texture(u_textures[material.normal_index], fs_in.tex_coords).rgb;
-        vec3 emissive_texel   = texture(u_textures[material.emissive_index], fs_in.tex_coords).rgb * material.emissive;
+        vec3 albedo_texel     = texture(material.albedo_handle, fs_in.tex_coords).rgb * material.color;
+        float roughness_texel = texture(material.roughness_handle, fs_in.tex_coords).g * material.roughness;
+        float metallic_texel  = texture(material.metallic_handle, fs_in.tex_coords).b * material.metallic;
+        vec3 normal_texel     = texture(material.normal_handle, fs_in.tex_coords).rgb;
+        vec3 emissive_texel   = texture(material.emissive_handle, fs_in.tex_coords).rgb * material.emissive;
         
         // Preparing the BRDF stage
        
@@ -404,7 +400,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         // Add it all together...
         
         vec3 final_color = (emissive_texel + (dir_light_factor + point_lights_factor + spot_lights_factor)) * u_ambient;
-        frag_color       = vec4(1.0);//vec4((1 - calculate_shadow()) * final_color, material.transparency);
+        frag_color       = vec4((1 - calculate_shadow()) * final_color, material.transparency);
       }
     )"
   };

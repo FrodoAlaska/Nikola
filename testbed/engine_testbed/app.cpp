@@ -49,7 +49,7 @@ static void init_resources(nikola::App* app) {
   // Materials init
   
   nikola::MaterialDesc mat_desc = {
-    .albedo_id    = nikola::resources_push_texture(app->res_group_id, "textures/paviment.nbr"),
+    .albedo_id = nikola::resources_push_texture(app->res_group_id, "textures/paviment.nbr"),
   };
   app->ground_material = nikola::resources_push_material(app->res_group_id, mat_desc);
 
@@ -65,6 +65,7 @@ static void init_resources(nikola::App* app) {
 
 nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // App init
+  
   nikola::App* app = new nikola::App{};
   nikola::renderer_set_clear_color(nikola::Vec4(0.1f, 0.1f, 0.1f, 1.0f));
 
@@ -77,8 +78,8 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Camera init
   
   nikola::CameraDesc cam_desc = {
-    .position     = nikola::Vec3(10.0f, 1.0f, 10.0f),
-    .target       = nikola::Vec3(-3.0f, 1.0f, 0.0f),
+    .position     = nikola::Vec3(10.0f, 5.0f, 10.0f),
+    .target       = nikola::Vec3(-3.0f, 5.0f, 0.0f),
     .up_axis      = nikola::Vec3(0.0f, 1.0f, 0.0f),
     .aspect_ratio = nikola::window_get_aspect_ratio(app->window),
     .move_func    = nikola::camera_free_move_func,
@@ -156,7 +157,7 @@ void app_render(nikola::App* app) {
   // Render 2D 
   
   nikola::batch_renderer_begin();
-  nikola::batch_render_fps(app->font, nikola::Vec2(30.0f, 40.0f), 32.0f, nikola::Vec4(1.0f)); 
+  nikola::batch_render_fps(app->font, nikola::Vec2(30.0f, 40.0f), 32.0f, nikola::Vec4(1.0f, 0.0f, 0.0f, 1.0f)); 
   nikola::batch_renderer_end();
 }
 

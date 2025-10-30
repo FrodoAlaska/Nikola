@@ -21,7 +21,7 @@
         - [x] Fix errors
         - [x] Add `GfxBuffer`s to the `GfxBindingDesc`
         - [x] Fix visual errors
-        - [] Instead of having a textures buffer, make the material refrence the actual texture handle and construct the sampler in the shader using said handle. The handle does not have to be a `u64`, by the way. It can just be a `uvec2`.
+        - [x] Instead of having a textures buffer, make the material refrence the actual texture handle and construct the sampler in the shader using said handle. The handle does not have to be a `u64`, by the way. It can just be a `uvec2`.
         - [] Add `CUBEMAP_SEAMLESS` somewhere
         - [] Apparently the `gfx_context_draw` functions of the HDR is taking _way_ longer than any other draw call??? Get rid of it???
         - [] Update the README to add the new features and Tracy as another library you use

@@ -40,17 +40,14 @@ const sizei SHADER_MODELS_BUFFER_INDEX    = 1;
 /// The index of the material matrices uniform buffer within all shaders.
 const sizei SHADER_MATERIALS_BUFFER_INDEX = 2;
 
-/// The index of the material matrices uniform buffer within all shaders.
-const sizei SHADER_TEXTURES_BUFFER_INDEX  = 3;
-
 /// The index of the instance uniform buffer within all shaders.
-const sizei SHADER_INSTANCE_BUFFER_INDEX  = 4;
+const sizei SHADER_INSTANCE_BUFFER_INDEX  = 3;
 
 /// The index of the light uniform buffer within all shaders.
-const sizei SHADER_LIGHT_BUFFER_INDEX     = 5;
+const sizei SHADER_LIGHT_BUFFER_INDEX     = 4;
 
 /// The index of the animation uniform buffer within all shaders.
-const sizei SHADER_ANIMATION_BUFFER_INDEX = 6;
+const sizei SHADER_ANIMATION_BUFFER_INDEX = 5;
 
 /// Consts
 ///---------------------------------------------------------------------------------------------------------------------
@@ -167,28 +164,24 @@ struct MaterialInterface {
   ///
   /// The shader representation of the material
   ///
-  /// @NOTE: Don't mind the order of members. They 
-  /// are set up to satisfy the shader.
-  ///
 
-  /// Vec4 padding
+  /// Textures
   
-  u32 albedo_index    = 0;  
-  u32 metallic_index  = 0;  
-  u32 roughness_index = 0;  
-  u32 normal_index    = 0;  
+  u64 albedo_handle    = 0;  
+  u64 metallic_handle  = 0;  
+  u64 roughness_handle = 0;  
+  u64 normal_handle    = 0;  
+  u64 emissive_handle  = 0;  
   
-  /// Vec4 padding
+  /// Variables
   
-  u32 emissive_index = 0;  
-  f32 metallic       = 0.0f;
-  f32 roughness      = 1.0f;
-  f32 emissive       = 0.0f;
-
-  /// Vec4 padding
-
-  Vec3 color       = Vec3(1.0f);
+  f32 metallic     = 0.0f;
+  f32 roughness    = 1.0f;
+  f32 emissive     = 0.0f;
   f32 transparency = 1.0f;
+  Vec2 __padding;
+
+  Vec3 color = Vec3(1.0f);
 };
 /// MaterialInterface
 ///---------------------------------------------------------------------------------------------------------------------
@@ -201,8 +194,7 @@ struct RenderQueueEntry {
   DynamicArray<f32> vertices; 
   DynamicArray<u32> indices; 
   DynamicArray<Mat4> transforms; 
-  DynamicArray<MaterialInterface> materials; // @TODO (Renderer): Bindless??
-  DynamicArray<u64> textures;
+  DynamicArray<MaterialInterface> materials;
   DynamicArray<GfxDrawCommandIndirect> commands; 
 
   /// Pipeline
@@ -214,7 +206,6 @@ struct RenderQueueEntry {
 
   GfxBuffer* transform_buffer = nullptr; 
   GfxBuffer* material_buffer  = nullptr; 
-  GfxBuffer* texture_buffer   = nullptr;
   GfxBuffer* command_buffer   = nullptr;
 };
 /// RenderQueueEntry 

@@ -39,7 +39,7 @@ inline nikola::GfxShaderDesc generate_debug_shader() {
 
     .pixel_source = R"(
       #version 460 core
-      #extension GL_ARB_bindless_texture : enable
+      #extension GL_ARB_bindless_texture : require
 
       // Layouts
       layout (location = 0) out vec4 frag_color;
@@ -52,32 +52,29 @@ inline nikola::GfxShaderDesc generate_debug_shader() {
       // Uniforms
       
       struct Material {
-        int albedo_index;
-        int metallic_index;
-        int roughness_index;
-        int normal_index;
+        sampler2D albedo_handle;
+        sampler2D metallic_handle;
+        sampler2D roughness_handle;
+        sampler2D normal_handle;
+        sampler2D emissive_handle;
 
-        int emissive_index;
         float metallic;
         float roughness;
         float emissive;
+        float transparency;
+        vec2 __padding;
 
         vec3 color;
-        float transparency;
       };
 
       layout(binding = 2, std430) readonly buffer MaterialsBuffer {
-        Material u_materials[];
-      };
-      
-      layout(binding = 3, std140) uniform TexturesBuffer {
-        sampler2D u_textures[4096];
+        Material u_materials[4096];
       };
 
       void main() {
         Material material = u_materials[material_index];
 
-        vec3 texel = vec3(texture(u_textures[material.albedo_index], texture_coords)) * material.color;
+        vec3 texel = vec3(texture(material.albedo_handle, texture_coords)) * material.color;
         frag_color = vec4(texel, material.transparency);
       }
     )"

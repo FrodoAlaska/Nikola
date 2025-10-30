@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -22,19 +23,19 @@ typedef int   i32;
 typedef long  i64;
 
 /// unsigned char
-typedef unsigned char  u8;
+typedef std::uint8_t  u8;
 
 /// unsigned short
-typedef unsigned short u16;   
+typedef std::uint16_t u16;   
 
 /// unsigned int
-typedef unsigned int   u32;   
+typedef std::uint32_t u32;   
 
 /// unsigned long
-typedef unsigned long  u64;   
+typedef std::uint64_t u64;   
 
 /// size_t
-typedef size_t         sizei;
+typedef size_t        sizei;
 
 /// float
 typedef float  f32;   

@@ -17,13 +17,12 @@ namespace nikola { // Start of nikola
 /// ----------------------------------------------------------------------
 /// Consts
 
-const sizei VERTICES_BUFFER_SIZE = MiB(64);
-const sizei INDICES_BUFFER_SIZE  = MiB(64);
-
-const sizei TRANSFORMS_MAX        = 4096;
-const sizei MATERIALS_MAX         = 4096;
-const sizei BINDLESS_TEXTURES_MAX = 4096;
-const sizei COMMANDS_MAX          = 4096;
+const sizei TRANSFORMS_BUFFER_SIZE = MiB(1);
+const sizei MATERIALS_BUFFER_SIZE  = MiB(1);
+const sizei TEXTURES_BUFFER_SIZE   = MiB(1);
+const sizei COMMANDS_BUFFER_SIZE   = MiB(1);
+const sizei VERTICES_BUFFER_SIZE   = MiB(64);
+const sizei INDICES_BUFFER_SIZE    = MiB(64);
 
 /// Consts
 /// ----------------------------------------------------------------------
@@ -254,7 +253,6 @@ static void render_queue_create(const RenderQueueType type) {
   queue->indices.reserve(128);
   queue->transforms.reserve(128);
   queue->materials.reserve(32);
-  queue->textures.reserve(32);
   queue->commands.reserve(128);
 
   //
@@ -263,7 +261,7 @@ static void render_queue_create(const RenderQueueType type) {
 
   GfxBufferDesc buff_desc = {
     .data  = nullptr,
-    .size  = TRANSFORMS_MAX * sizeof(Mat4),
+    .size  = TRANSFORMS_BUFFER_SIZE,
     .type  = GFX_BUFFER_SHADER_STORAGE, 
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
@@ -271,7 +269,7 @@ static void render_queue_create(const RenderQueueType type) {
 
   buff_desc = {
     .data  = nullptr,
-    .size  = MATERIALS_MAX * sizeof(MaterialInterface),
+    .size  = MATERIALS_BUFFER_SIZE,
     .type  = GFX_BUFFER_SHADER_STORAGE, 
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
@@ -279,15 +277,7 @@ static void render_queue_create(const RenderQueueType type) {
 
   buff_desc = {
     .data  = nullptr,
-    .size  = BINDLESS_TEXTURES_MAX * sizeof(u64),
-    .type  = GFX_BUFFER_UNIFORM, 
-    .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
-  };
-  queue->texture_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
-
-  buff_desc = {
-    .data  = nullptr,
-    .size  = COMMANDS_MAX * sizeof(GfxDrawCommandIndirect),
+    .size  = COMMANDS_BUFFER_SIZE,
     .type  = GFX_BUFFER_DRAW_INDIRECT, 
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
@@ -345,29 +335,18 @@ static void render_queue_push(const RenderQueueType type, Mesh* mesh, const Tran
   // Material
 
   MaterialInterface interface = {
+    .albedo_handle    = gfx_texture_get_bindless_id(material->albedo_map),
+    .metallic_handle  = gfx_texture_get_bindless_id(material->metallic_map),
+    .roughness_handle = gfx_texture_get_bindless_id(material->roughness_map),
+    .normal_handle    = gfx_texture_get_bindless_id(material->normal_map),
+    .emissive_handle  = gfx_texture_get_bindless_id(material->emissive_map),
+
     .metallic     = material->metallic,
     .roughness    = material->roughness, 
     .emissive     = material->emissive,
-    .color        = material->color, 
     .transparency = material->transparency,
+    .color        = material->color, 
   };
-
-  // Textures
-
-  entry->textures.push_back(gfx_texture_get_bindless_id(material->albedo_map));
-  interface.albedo_index = (u32)(entry->textures.size() - 1);
-
-  entry->textures.push_back(gfx_texture_get_bindless_id(material->metallic_map));
-  interface.metallic_index = (u32)(entry->textures.size() - 1);
-  
-  entry->textures.push_back(gfx_texture_get_bindless_id(material->roughness_map));
-  interface.roughness_index = (u32)(entry->textures.size() - 1);
-  
-  entry->textures.push_back(gfx_texture_get_bindless_id(material->normal_map));
-  interface.normal_index = (u32)(entry->textures.size() - 1);
-  
-  entry->textures.push_back(gfx_texture_get_bindless_id(material->emissive_map));
-  interface.emissive_index = (u32)(entry->textures.size() - 1);
 
   entry->materials.push_back(interface); 
 
@@ -418,9 +397,9 @@ void renderer_init(Window* window) {
   
   shadow_pass_init(window);
   light_pass_init(window);
-  billboard_pass_init(window);
+  // @TODO (Renderer) billboard_pass_init(window);
   hdr_pass_init(window);
-  debug_pass_init(window);
+  // @TODO (Renderer) debug_pass_init(window);
 
   // Batch renderer init
   batch_renderer_init();
@@ -480,8 +459,6 @@ void renderer_begin(FrameData& data) {
     entry->indices.clear();
     entry->transforms.clear();
     entry->materials.clear();
-
-    entry->textures.clear();
     entry->commands.clear();
   }
 }
@@ -528,13 +505,6 @@ void renderer_end() {
                            0,
                            queue->materials.size() * sizeof(MaterialInterface), 
                            queue->materials.data());
-
-    // Update the textures buffer
-
-    gfx_buffer_upload_data(queue->texture_buffer,
-                           0,
-                           queue->textures.size() * sizeof(u64), 
-                           queue->textures.data());
 
     // Update the command buffer
 
