@@ -207,6 +207,10 @@ struct RenderQueueEntry {
   GfxBuffer* transform_buffer = nullptr; 
   GfxBuffer* material_buffer  = nullptr; 
   GfxBuffer* command_buffer   = nullptr;
+
+  /// Misc.
+
+  i32 vertex_flags = 0;
 };
 /// RenderQueueEntry 
 ///---------------------------------------------------------------------------------------------------------------------

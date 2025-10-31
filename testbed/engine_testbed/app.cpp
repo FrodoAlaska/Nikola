@@ -38,7 +38,7 @@ static void init_resources(nikola::App* app) {
   app->res_group_id = nikola::resources_create_group("app_res", res_path);
 
   // Skybox init
-  app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group_id, "cubemaps/gloomy.nbr");
+  app->frame_data.skybox_id = nikola::resources_push_skybox(app->res_group_id, "cubemaps/Skybox.nbr");
 
   // Meshes init
   app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
@@ -146,11 +146,11 @@ void app_render(nikola::App* app) {
   
   nikola::renderer_queue_mesh(app->mesh_id, app->ground_transform, app->ground_material);
 
-  // for(nikola::sizei i = 0; i < MAX_OBJECTS; i++) {
-  //   for(nikola::sizei j = 0; j < MAX_OBJECTS; j++) {
-  //     nikola::renderer_queue_model(app->model_id, app->transforms[i][j]);
-  //   }
-  // }
+  for(nikola::sizei i = 0; i < MAX_OBJECTS; i++) {
+    for(nikola::sizei j = 0; j < MAX_OBJECTS; j++) {
+      nikola::renderer_queue_model(app->model_id, app->transforms[i][j]);
+    }
+  }
 
   nikola::renderer_end();
   

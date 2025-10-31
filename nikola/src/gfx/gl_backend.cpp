@@ -141,6 +141,8 @@ struct GfxPipeline {
   GfxBuffer* index_buffer = nullptr; 
   sizei index_count       = 0;
 
+  sizei stride = 0;
+
   GfxDrawMode draw_mode;
 };
 /// GfxPipeline
@@ -923,8 +925,8 @@ static u32 get_gl_clear_flags(const u32 flags) {
   return gl_flags;
 }
 
-static void init_pipeline_layout(const GfxPipeline* pipe, _PipelineLayout* layout) {
-  sizei stride = 0;
+static void init_pipeline_layout(GfxPipeline* pipe) {
+  pipe->stride = 0;
 
   // Set the layouts of the buffers
 
@@ -944,17 +946,14 @@ static void init_pipeline_layout(const GfxPipeline* pipe, _PipelineLayout* layou
       sizei size          = get_layout_size(attribute);
 
       glEnableVertexArrayAttrib(pipe->vertex_array, j);
-      glVertexArrayAttribFormat(pipe->vertex_array, j, comp_count, gl_comp_type, GL_FALSE, stride);
+      glVertexArrayAttribFormat(pipe->vertex_array, j, comp_count, gl_comp_type, GL_FALSE, pipe->stride);
       glVertexArrayAttribBinding(pipe->vertex_array, j, i);
       
       // Increase the stride for the next round
-      stride += size;
+      pipe->stride += size;
     }
  
-    layout->strides[i] = stride;
     glVertexArrayBindingDivisor(pipe->vertex_array, i, pipe->desc.layouts[i].instance_rate);
-  
-    stride = 0;
   }
 }
 
@@ -1406,10 +1405,10 @@ void gfx_context_draw_multi_indirect(GfxContext* gfx, const u32 offset, const si
   
   if(pipe->index_buffer) {
     GLenum index_type = get_layout_type(pipe->desc.indices_type);
-    glMultiDrawElementsIndirect(draw_mode, index_type, (void*)0, count, stride);
+    glMultiDrawElementsIndirect(draw_mode, index_type, nullptr, count, stride);
   }
   else {
-    glMultiDrawArraysIndirect(draw_mode, (void*)0, count, stride);
+    glMultiDrawArraysIndirect(draw_mode, nullptr, count, stride);
   }
   
   // Unbind the vertex array for debugging purposes
@@ -2372,8 +2371,7 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc, c
 
   // Pipeline layout init
   
-  _PipelineLayout layout; 
-  init_pipeline_layout(pipe, &layout);
+  init_pipeline_layout(pipe);
 
   // VBO init
   
@@ -2383,7 +2381,7 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc, c
                             0,                       // Binding index
                             pipe->vertex_buffer->id, // Buffer ID
                             0,                       // Starting offset
-                            layout.strides[0]);      // Buffer stride
+                            pipe->stride);           // Buffer stride
 
   // EBO init
   
@@ -2410,12 +2408,6 @@ void gfx_pipeline_destroy(GfxPipeline* pipeline, const FreeMemoryFn& free_fn) {
   free_fn(pipeline);
 }
 
-GfxPipelineDesc& gfx_pipeline_get_desc(GfxPipeline* pipeline) {
-  NIKOLA_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
-
-  return pipeline->desc;
-}
-
 void gfx_pipeline_update(GfxPipeline* pipeline, const GfxPipelineDesc& desc) {
   NIKOLA_ASSERT(pipeline, "Invalid GfxPipeline struct passed to gfx_pipeline_update");
   
@@ -2428,8 +2420,22 @@ void gfx_pipeline_update(GfxPipeline* pipeline, const GfxPipelineDesc& desc) {
   
   pipeline->vertex_count = desc.vertices_count;
   pipeline->index_count  = desc.indices_count;
-  
+ 
+  // @TODO (GFX): Recalculate the stride?
+  // pipeline->stride    = new_stride;
   pipeline->draw_mode = desc.draw_mode;
+}
+
+GfxPipelineDesc& gfx_pipeline_get_desc(GfxPipeline* pipeline) {
+  NIKOLA_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
+
+  return pipeline->desc;
+}
+
+const sizei gfx_pipeline_get_stride(GfxPipeline* pipeline) {
+  NIKOLA_ASSERT(pipeline, "Invalid GfxPipeline struct passed");
+
+  return pipeline->stride;
 }
 
 /// Pipeline functions 

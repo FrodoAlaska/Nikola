@@ -23,6 +23,7 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/math/matrix_types.cpp
   ${NIKOLA_SRC_DIR}/math/quaternion.cpp
   ${NIKOLA_SRC_DIR}/math/transform.cpp
+  ${NIKOLA_SRC_DIR}/math/vertex.cpp
   
   # Physics 
   ${NIKOLA_SRC_DIR}/physics/physics.cpp

@@ -40,13 +40,19 @@ const f64 FLOAT_MAX = 3.40282e+38F;
 /// Macros
 
 /// Convert the given `x` to a value representing a Kibibyte.
-#define KiB(x) (x * 1024)
+#define KiB(x)        (x * 1024)
 
 /// Convert the given `x` to a value representing a Mebibyte.
-#define MiB(x) ((KiB(x)) * 1024)
+#define MiB(x)        ((KiB(x)) * 1024)
 
 /// Convert the given `x` to a value representing a Gibibyte.
-#define GiB(x) ((MiB(x)) * 1024)
+#define GiB(x)        ((MiB(x)) * 1024)
+
+/// Convert the given `x` to radians
+#define TO_RADIANS(x) (x * nikola::DEG2RAD)
+
+/// Convert the given `x` to degrees
+#define TO_DEGREES(x) (x * nikola::RAD2DEG)
 
 /// Macros
 ///---------------------------------------------------------------------------------------------------------------------
@@ -55,22 +61,22 @@ const f64 FLOAT_MAX = 3.40282e+38F;
 /// VertexComponentType 
 enum VertexComponentType {
   /// A bit for the position component of a vertex.
-  VERTEX_COMPONENT_POSITION       = 0x02,
+  VERTEX_COMPONENT_POSITION       = 1 << 0,
   
   /// A bit for the normal component of a vertex.
-  VERTEX_COMPONENT_NORMAL         = 0x04,
+  VERTEX_COMPONENT_NORMAL         = 1 << 1,
   
   /// A bit for the tangent component of a vertex.
-  VERTEX_COMPONENT_TANGENT        = 0x08,
+  VERTEX_COMPONENT_TANGENT        = 1 << 2,
   
   /// A bit for the texture coordinate component of a vertex.
-  VERTEX_COMPONENT_TEXTURE_COORDS = 0x16,
+  VERTEX_COMPONENT_TEXTURE_COORDS = 1 << 3,
   
   /// A bit for the joint index component of a vertex.
-  VERTEX_COMPONENT_JOINT_ID       = 0x32,
+  VERTEX_COMPONENT_JOINT_ID       = 1 << 4,
   
   /// A bit for the joint weight component of a vertex.
-  VERTEX_COMPONENT_JOINT_WEIGHT   = 0x64,
+  VERTEX_COMPONENT_JOINT_WEIGHT   = 1 << 5,
 };
 /// VertexComponentType 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -579,6 +585,18 @@ NIKOLA_API void transform_lerp_rotation(Transform& trans, const Vec3& axis, cons
 NIKOLA_API void transform_lerp_scale(Transform& trans, const Vec3& scale, const f32 delta);
 
 /// Transform functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Vertex functions
+
+/// Returns the number of components per vertex type in the given `vertex_flags`.
+NIKOLA_API const sizei vertex_get_components_count(const i32 vertex_flags);
+
+/// Returns the stride in bytes in the given `vertex_flags`.
+NIKOLA_API const sizei vertex_get_stride(const i32 vertex_flags);
+
+/// Vertex functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 /// *** Math ***

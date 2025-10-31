@@ -1195,7 +1195,10 @@ struct GfxDrawCommandIndirect {
   u32 elements_count = 0; 
 
   /// The number of instances to draw. 
-  u32 instance_count = 0;
+  ///
+  /// @NOTE: This is usually set to `1` to render only 
+  /// _one_ instance of a mesh.
+  u32 instance_count = 1;
 
   /// The first element to be considered when drawing. 
   ///
@@ -1206,7 +1209,7 @@ struct GfxDrawCommandIndirect {
   ///
   /// @NOTE: This is used to offset into a large 
   /// vertex/index array.
-  u32 base_vertex    = 0;
+  i32 base_vertex    = 0;
 
   /// The base index of the vertex attribute to 
   /// be used when using this command for an instanced 
@@ -1569,11 +1572,14 @@ NIKOLA_API GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDe
 /// @NOTE: The `free_fn` uses the default memory allocater.
 NIKOLA_API void gfx_pipeline_destroy(GfxPipeline* pipeline, const FreeMemoryFn& free_fn = memory_free);
 
+/// Update the `pipeline`'s information from the given `desc`.
+NIKOLA_API void gfx_pipeline_update(GfxPipeline* pipeline, const GfxPipelineDesc& desc);
+
 /// Retrieve the internal `GfxPipelineDesc` of `pipeline`
 NIKOLA_API GfxPipelineDesc& gfx_pipeline_get_desc(GfxPipeline* pipeline);
 
-/// Update the `pipeline`'s information from the given `desc`.
-NIKOLA_API void gfx_pipeline_update(GfxPipeline* pipeline, const GfxPipelineDesc& desc);
+/// Retrieve the calculated stride of `pipeline`.
+NIKOLA_API const sizei gfx_pipeline_get_stride(GfxPipeline* pipeline);
 
 /// Pipeline functions 
 ///---------------------------------------------------------------------------------------------------------------------

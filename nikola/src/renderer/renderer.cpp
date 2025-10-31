@@ -19,8 +19,8 @@ namespace nikola { // Start of nikola
 
 const sizei TRANSFORMS_BUFFER_SIZE = MiB(1);
 const sizei MATERIALS_BUFFER_SIZE  = MiB(1);
-const sizei TEXTURES_BUFFER_SIZE   = MiB(1);
-const sizei COMMANDS_BUFFER_SIZE   = MiB(1);
+const sizei COMMANDS_BUFFER_SIZE   = KiB(256);
+
 const sizei VERTICES_BUFFER_SIZE   = MiB(64);
 const sizei INDICES_BUFFER_SIZE    = MiB(64);
 
@@ -311,12 +311,16 @@ static void render_queue_create(const RenderQueueType type) {
   switch(type) {
     case RENDER_QUEUE_OPAQUE:
       geometry_loader_set_vertex_layout(queue->pipe_desc.layouts[0], GEOMETRY_CUBE);
+      queue->vertex_flags = (VERTEX_COMPONENT_POSITION | VERTEX_COMPONENT_NORMAL | VERTEX_COMPONENT_TANGENT |
+                             VERTEX_COMPONENT_JOINT_ID | VERTEX_COMPONENT_JOINT_WEIGHT | VERTEX_COMPONENT_TEXTURE_COORDS);
       break;
     case RENDER_QUEUE_BILLBOARD:
       geometry_loader_set_vertex_layout(queue->pipe_desc.layouts[0], GEOMETRY_BILLBOARD);
+      queue->vertex_flags = (VERTEX_COMPONENT_POSITION | VERTEX_COMPONENT_NORMAL | VERTEX_COMPONENT_TEXTURE_COORDS);
       break;
     case RENDER_QUEUE_DEBUG:
       geometry_loader_set_vertex_layout(queue->pipe_desc.layouts[0], GEOMETRY_DEBUG_CUBE);
+      queue->vertex_flags = (VERTEX_COMPONENT_POSITION | VERTEX_COMPONENT_TEXTURE_COORDS);
       break;
   }
   
@@ -325,6 +329,15 @@ static void render_queue_create(const RenderQueueType type) {
 
 static void render_queue_push(const RenderQueueType type, Mesh* mesh, const Transform& transform, Material* material) {
   RenderQueueEntry* entry = &s_renderer.queues[type];
+
+  // Command
+
+  GfxDrawCommandIndirect cmd = {
+    .elements_count = (u32)mesh->indices.size(),
+    .first_element  = (u32)entry->indices.size(),
+    .base_vertex    = (i32)(entry->vertices.size() / vertex_get_components_count(entry->vertex_flags)),
+  };
+  entry->commands.push_back(cmd);
  
   // Vertices, indices, and transforms
 
@@ -349,17 +362,6 @@ static void render_queue_push(const RenderQueueType type, Mesh* mesh, const Tran
   };
 
   entry->materials.push_back(interface); 
-
-  // Command
-
-  sizei stride = mesh->vertices.size() / entry->pipe_desc.layouts[0].attributes_count;
-
-  GfxDrawCommandIndirect cmd = {
-    .elements_count = (u32)mesh->indices.size(),
-    .first_element  = (u32)(entry->commands.size() * entry->indices.size()),
-    .base_vertex    = (u32)(entry->commands.size() * stride),
-  };
-  entry->commands.push_back(cmd);
 }
 
 /// Private functions
@@ -482,7 +484,6 @@ void renderer_end() {
                            0,
                            queue->vertices.size() * sizeof(f32), 
                            queue->vertices.data());
-    queue->pipe_desc.vertices_count = queue->vertices.size() / queue->pipe_desc.layouts[0].attributes_count;
 
     // Update the index buffer
 
@@ -490,7 +491,6 @@ void renderer_end() {
                            0,
                            queue->indices.size() * sizeof(u32), 
                            queue->indices.data());
-    queue->pipe_desc.indices_count = queue->indices.size();
 
     // Update the trasform buffer
 
@@ -512,9 +512,6 @@ void renderer_end() {
                            0,
                            queue->commands.size() * sizeof(GfxDrawCommandIndirect), 
                            queue->commands.data());
-
-    // Update the pipeline
-    gfx_pipeline_update(queue->pipe, queue->pipe_desc);
   }
 
   // Initiate all of the render passes in order

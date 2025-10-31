@@ -181,7 +181,7 @@ void light_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
   // Render the scene
 
   gfx_context_use_pipeline(pass->gfx, queue.pipe);
-  gfx_context_draw(pass->gfx, 0);
+  gfx_context_draw_multi_indirect(pass->gfx, 0, queue.commands.size());
 
   // Setting the output textures
 
