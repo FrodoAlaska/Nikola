@@ -203,7 +203,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       };
       
       // Textures
-      layout (binding = 0) uniform sampler2D u_shadow_map;
+      uniform sampler2D u_shadow_map;
    
       // BRDF terms 
 

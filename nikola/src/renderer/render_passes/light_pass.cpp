@@ -96,9 +96,6 @@ void light_pass_prepare(RenderPass* pass, const FrameData& data) {
   ShaderContext* ctx = pass->shader_context;
 
   // Turning the light space view into a texture coordinate
-  
-  Mat4 shadow_space = mat4_scale(Vec3(0.5f)) * 
-                      mat4_translate(Vec3(0.5f)); 
   shader_context_set_uniform(pass->shader_context, "u_light_space", shadow_pass_get_light_space(pass->previous));
 
   // Set the light uniforms

@@ -1,13 +1,10 @@
 # TODO:
 
-- [x] Additional UI widgets 
-    - [x] Add `UI_IMAGE_ENTERED` and `UI_IMAGE_EXITED` events 
-    - [x] Add a `UIMenu` widget
-- [x] Integrate Tracy
 - [] Run-time performance
     - [] Improve instancing completely. It's currently awfully architected.
-    - [] Profiling
     - [] Frustum culling
+    - [] SHADOWS!!!!
+    - [] Billboard and debug passes fuck everything up apparently
     - [] Documentation
 - [] Threading
     - [] A better job system using `std::function`
@@ -62,6 +59,5 @@ Maybe find a better way to do this.
 
 - (Renderer): Capsules cannot be rendererd. Need to render those for debug purposes. 
 - (Renderer): Spheres are not so perfect. Fix that. 
-- (Renderer): Smooth out the pass system a bit. Appending and referring to passes is a bit weird. Paas chain? Passes pool? WTH?
 
 - Check all of the `TODO`, `FIX`, and `TEMP` in the codebase.
