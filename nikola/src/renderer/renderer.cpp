@@ -364,6 +364,50 @@ static void render_queue_push(const RenderQueueType type, Mesh* mesh, const Tran
   entry->materials.push_back(interface); 
 }
 
+static void render_queue_push_instanced(const RenderQueueType type, 
+                                        Mesh* mesh, 
+                                        Material* material,
+                                        const Transform* transforms, 
+                                        const sizei count) {
+  RenderQueueEntry* entry = &s_renderer.queues[type];
+
+  // Command
+
+  GfxDrawCommandIndirect cmd = {
+    .elements_count = (u32)mesh->indices.size(),
+    .instance_count = (u32)count, 
+
+    .first_element  = (u32)entry->indices.size(),
+    .base_vertex    = (i32)(entry->vertices.size() / vertex_get_components_count(entry->vertex_flags)),
+    .base_instance  = (u32)0,
+  };
+  entry->commands.push_back(cmd);
+ 
+  // Vertices, indices, and transforms
+
+  entry->vertices.insert(entry->vertices.end(), mesh->vertices.begin(), mesh->vertices.end());
+  entry->indices.insert(entry->indices.end(), mesh->indices.begin(), mesh->indices.end());
+  entry->transforms.push_back(transforms[0].transform);
+
+  // Material
+
+  MaterialInterface interface = {
+    .albedo_handle    = gfx_texture_get_bindless_id(material->albedo_map),
+    .metallic_handle  = gfx_texture_get_bindless_id(material->metallic_map),
+    .roughness_handle = gfx_texture_get_bindless_id(material->roughness_map),
+    .normal_handle    = gfx_texture_get_bindless_id(material->normal_map),
+    .emissive_handle  = gfx_texture_get_bindless_id(material->emissive_map),
+
+    .metallic     = material->metallic,
+    .roughness    = material->roughness, 
+    .emissive     = material->emissive,
+    .transparency = material->transparency,
+    .color        = material->color, 
+  };
+
+  entry->materials.push_back(interface); 
+}
+
 /// Private functions
 /// ----------------------------------------------------------------------
 

@@ -1135,23 +1135,29 @@ struct GfxBindingDesc {
 ///---------------------------------------------------------------------------------------------------------------------
 /// GfxPipelineDesc
 struct GfxPipelineDesc {
-  /// The vertex buffer to be used in a `draw_vertex` command.
+  /// The vertex buffer to be used in a `gfx_context_draw` command.
   ///
   /// @NOTE: This buffer _must_ be set. It cannot be left a `nullptr`.
-  /// Even if `draw_index` is being used.
+  /// Even if `gfx_context_draw` is being used.
   GfxBuffer* vertex_buffer   = nullptr; 
 
   /// The amount of vertices in the `vertex_buffer` to be drawn. 
   sizei vertices_count       = 0;
   
-  /// The index buffer to be used in a `draw_index` command.
-  ///
-  /// @NOTE: This buffer _must_ be set if a `draw_index` command is used.
-  /// Otherwise, it can be left as `nullptr`.
+  /// The index buffer to be used in a `gfx_context_draw` command.
   GfxBuffer* index_buffer    = nullptr;
 
   /// The amount of indices in the `index_buffer` to be drawn.
   sizei indices_count        = 0;
+  
+  /// The instance buffer to be used in a `gfx_context_draw_instanced` command.
+  ///
+  /// @NOTE: This buffer _must_ be set if `gfx_context_draw_instanced` 
+  /// is to be called.
+  GfxBuffer* instance_buffer = nullptr; 
+
+  /// The amount of vertices in the `vertex_buffer` to be drawn. 
+  sizei instance_count       = 0;
  
   /// The type of each index in the `index_buffer`. 
   /// 
@@ -1315,10 +1321,13 @@ NIKOLA_API void gfx_context_use_pipeline(GfxContext* gfx, GfxPipeline* pipeline)
 /// this draw call will use the vertex buffer. Otherwise, the index buffer will be used. 
 NIKOLA_API void gfx_context_draw(GfxContext* gfx, const u32 start_element);
 
-/// Equivalent to `gfx_context_draw` but uses instancing, using the `instance_count` parametar.
+/// Equivalent to `gfx_context_draw` but uses instancing, using the `GfxPipeline.instance_count` memeber.
 ///
 /// @NOTE: If the given `instance_count` is == 1, the function will STILL use instancing.
-NIKOLA_API void gfx_context_draw_instanced(GfxContext* gfx, const u32 start_element, const u32 instance_count);
+///
+/// @NOTE: This function will assert if `GfxPipeline.instance_buffer` is set to `nullptr`.
+/// An instance buffer _must_ be created before this function.
+NIKOLA_API void gfx_context_draw_instanced(GfxContext* gfx, const u32 start_element);
 
 /// Draw the currently bound `GfxPipeline` object of `gfx` as an indirect call, using a buffer with a 
 /// type of `GFX_BUFFER_DRAW_INDIRECT` populated with `GfxDrawCommandIndirect` objects. 
@@ -1577,9 +1586,6 @@ NIKOLA_API void gfx_pipeline_update(GfxPipeline* pipeline, const GfxPipelineDesc
 
 /// Retrieve the internal `GfxPipelineDesc` of `pipeline`
 NIKOLA_API GfxPipelineDesc& gfx_pipeline_get_desc(GfxPipeline* pipeline);
-
-/// Retrieve the calculated stride of `pipeline`.
-NIKOLA_API const sizei gfx_pipeline_get_stride(GfxPipeline* pipeline);
 
 /// Pipeline functions 
 ///---------------------------------------------------------------------------------------------------------------------

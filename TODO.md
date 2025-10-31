@@ -2,9 +2,16 @@
 
 - [] Run-time performance
     - [] Improve instancing completely. It's currently awfully architected.
-    - [] Frustum culling
-    - [] SHADOWS!!!!
+        - [x] Add an instanced buffer to the `GfxPipelineDesc`
+        - [x] Make sure that the layouts of the vertex attributes for both the instance and vertex buffers are correct 
+        - [] Ensure that the pipelines have an extra set of vertex attributes for the instance data 
+        - [] Start off by changing the PBR shader to include instanced vertex attributes 
+        - [] Create a seperate array specifically for instance transforms 
+        - [] Implement the rest of the instanced queue functions of the renderer 
+        - [] Update the instance buffer with the instanced transforms data
     - [] Billboard and debug passes fuck everything up apparently
+    - [] SHADOWS!!!!
+    - [] Frustum culling
     - [] Documentation
 - [] Threading
     - [] A better job system using `std::function`

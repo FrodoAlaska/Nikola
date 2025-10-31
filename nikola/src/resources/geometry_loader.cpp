@@ -591,6 +591,9 @@ void geometry_loader_load(DynamicArray<f32>& vertices, DynamicArray<u32>& indice
 }
 
 void geometry_loader_set_vertex_layout(GfxVertexLayout& layout, const GeometryType type) {
+  // @TODO (Geometry): This is not the best. Find a better place to do 
+  // this. Maybe bring back the `VertexType` enum?
+
   switch(type) {
     case GEOMETRY_CUBE:
     case GEOMETRY_SPHERE:
