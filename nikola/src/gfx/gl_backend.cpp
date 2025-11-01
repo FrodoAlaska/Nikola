@@ -1672,6 +1672,15 @@ GfxBufferDesc& gfx_buffer_get_desc(GfxBuffer* buffer) {
   return buffer->desc;
 }
 
+void gfx_buffer_bind_point(GfxBuffer* buffer, const u32 bind_point) {
+  NIKOLA_ASSERT(buffer, "Invalid GfxBuffer struct passed");
+  
+  bool is_valid_buffer = (buffer->desc.type == GFX_BUFFER_UNIFORM) || (buffer->desc.type == GFX_BUFFER_SHADER_STORAGE);
+  NIKOLA_ASSERT(is_valid_buffer, "Cannot bind a non-uniform or non-shader storage buffer to a bind point");
+
+  glBindBufferBase(get_buffer_type(buffer->desc.type), bind_point, buffer->id);
+}
+
 void gfx_buffer_update(GfxBuffer* buff, const GfxBufferDesc& desc) {
   NIKOLA_ASSERT(buff, "Invalid GfxBuffer struct passed");
   NIKOLA_ASSERT(buff->gfx, "Invalid GfxContext struct passed");
@@ -1932,16 +1941,6 @@ void gfx_shader_query(GfxShader* shader, GfxShaderQueryDesc* out_desc) {
   out_desc->work_group_x = groups[0];
   out_desc->work_group_y = groups[1];
   out_desc->work_group_z = groups[2];
-}
-
-void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer, const u32 bind_point) {
-  NIKOLA_ASSERT(shader->gfx, "Invalid GfxContext struct passed");
-  NIKOLA_ASSERT(shader, "Invalid GfxShader struct passed");
-
-  bool is_valid_buffer = (buffer->desc.type == GFX_BUFFER_UNIFORM) || (buffer->desc.type == GFX_BUFFER_SHADER_STORAGE);
-  NIKOLA_ASSERT(is_valid_buffer, "Cannot attach a non-uniform or non-shader storage buffer to shader");
-
-  glBindBufferBase(get_buffer_type(buffer->desc.type), bind_point, buffer->id);
 }
 
 i32 gfx_shader_uniform_lookup(GfxShader* shader, const i8* uniform_name) {

@@ -40,14 +40,11 @@ const sizei SHADER_MODELS_BUFFER_INDEX    = 1;
 /// The index of the material matrices uniform buffer within all shaders.
 const sizei SHADER_MATERIALS_BUFFER_INDEX = 2;
 
-/// The index of the instance uniform buffer within all shaders.
-const sizei SHADER_INSTANCE_BUFFER_INDEX  = 3;
-
 /// The index of the light uniform buffer within all shaders.
-const sizei SHADER_LIGHT_BUFFER_INDEX     = 4;
+const sizei SHADER_LIGHT_BUFFER_INDEX     = 3;
 
 /// The index of the animation uniform buffer within all shaders.
-const sizei SHADER_ANIMATION_BUFFER_INDEX = 5;
+const sizei SHADER_ANIMATION_BUFFER_INDEX = 4;
 
 /// Consts
 ///---------------------------------------------------------------------------------------------------------------------

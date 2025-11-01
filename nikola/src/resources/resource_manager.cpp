@@ -1200,11 +1200,6 @@ ResourceID resources_push_shader_context(const ResourceGroupID& group_id, const 
     ctx->uniforms_cache[uniform->name] = uniform->location;
   }
 
-  // Set a default matrices buffer 
-  
-  GfxBuffer* matrix_buffer = renderer_get_defaults().matrices_buffer;
-  shader_context_set_uniform_buffer(ctx, SHADER_MATRICES_BUFFER_INDEX, matrix_buffer);
-
   // New context added!
   
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed shader context:", group->name.c_str());

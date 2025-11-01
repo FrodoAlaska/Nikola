@@ -1,7 +1,6 @@
 # TODO:
 
 - [] Run-time performance
-    - [] Billboard and debug passes fuck everything up apparently
     - [] SHADOWS!!!!
     - [] Frustum culling
         - [] Add a `recalculate_fursturm` function and only call it once every `camera_update` and save the relevant data in `Camera`.

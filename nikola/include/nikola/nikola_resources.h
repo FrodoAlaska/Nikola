@@ -759,9 +759,6 @@ NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uni
 /// Set a uniform of type `SpotLight` with the name `uniform_name` in `ctx` to the given `value`. 
 NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const SpotLight& value);
 
-/// Set the data of the uniform buffer at `index` of the associated shader in `ctx` to `buffer`
-NIKOLA_API void shader_context_set_uniform_buffer(ShaderContext* ctx, const sizei index, const GfxBuffer* buffer);
-
 /// ShaderContext functions
 ///---------------------------------------------------------------------------------------------------------------------
 

@@ -28,7 +28,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         mat4 u_model[4096];
       };
       
-      layout(std140, binding = 5) uniform AnimationBuffer {
+      layout(std140, binding = 4) uniform AnimationBuffer {
         mat4 u_skinning_palette[128]; // @TODO: Probably not the best count to have here
       };
 
@@ -195,7 +195,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         Material u_materials[4096];
       };
 
-      layout(std430, binding = 4) buffer LightsBuffer {
+      layout(std430, binding = 3) buffer LightsBuffer {
         DirectionalLight u_dir_light;
         PointLight u_points[LIGHTS_MAX];
         SpotLight u_spots[LIGHTS_MAX]; 

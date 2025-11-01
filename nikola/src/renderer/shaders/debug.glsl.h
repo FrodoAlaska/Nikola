@@ -33,7 +33,8 @@ inline nikola::GfxShaderDesc generate_debug_shader() {
         texture_coords = aTextureCoords;
         material_index = gl_DrawID; 
 
-        gl_Position = u_projection * u_view * u_model[gl_DrawID] * vec4(aPos, 1.0);
+        int index   = gl_BaseInstance + gl_InstanceID;
+        gl_Position = u_projection * u_view * u_model[index] * vec4(aPos, 1.0);
       }
     )",
 
@@ -67,7 +68,7 @@ inline nikola::GfxShaderDesc generate_debug_shader() {
         vec3 color;
       };
 
-      layout(binding = 2, std430) readonly buffer MaterialsBuffer {
+      layout(std430, binding = 2) readonly buffer MaterialsBuffer {
         Material u_materials[4096];
       };
 

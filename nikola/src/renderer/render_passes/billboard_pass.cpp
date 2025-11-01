@@ -26,14 +26,6 @@ void billboard_pass_init(Window* window) {
 
   ResourceID billboard_shader = resources_push_shader(RESOURCE_CACHE_ID, generate_billboard_shader());
   pass_desc.shader_context_id = resources_push_shader_context(RESOURCE_CACHE_ID, billboard_shader);
-
-  // Attaching buffers
-
-  ShaderContext* shader_context = resources_get_shader_context(pass_desc.shader_context_id);
-  const RenderQueueEntry* queue = renderer_get_queue(RENDER_QUEUE_BILLBOARD); 
-
-  shader_context_set_uniform_buffer(shader_context, SHADER_MODELS_BUFFER_INDEX, queue->transform_buffer);
-  shader_context_set_uniform_buffer(shader_context, SHADER_MATERIALS_BUFFER_INDEX, queue->material_buffer);
   
   // Frame size and flags init
 
@@ -109,6 +101,11 @@ void billboard_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
     
     return;
   }
+
+  // Buffer bind points
+
+  gfx_buffer_bind_point(queue.transform_buffer, SHADER_MODELS_BUFFER_INDEX);
+  gfx_buffer_bind_point(queue.material_buffer, SHADER_MATERIALS_BUFFER_INDEX);
 
   // Using resources
 

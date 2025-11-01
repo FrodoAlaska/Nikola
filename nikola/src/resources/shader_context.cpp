@@ -134,15 +134,6 @@ void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, 
   shader_context_set_uniform(ctx, (uniform_name + ".outer_radius"), (f32)nikola::cos(value.outer_radius));
 }
 
-
-void shader_context_set_uniform_buffer(ShaderContext* ctx, const sizei index, const GfxBuffer* buffer) {
-  NIKOLA_ASSERT(ctx, "Invalid ShaderContext passed to shader_context_set_uniform_buffer");
-  NIKOLA_ASSERT(ctx->shader, "Invalid shader in ShaderContext passed to shader_context_set_uniform_buffer");
-  NIKOLA_ASSERT(buffer, "Invalid buffer given to shader_context_set_uniform_buffer");
-
-  gfx_shader_attach_uniform(ctx->shader, GFX_SHADER_VERTEX, (GfxBuffer*)buffer, index);
-}
-
 /// ShaderContext functions
 ///---------------------------------------------------------------------------------------------------------------------
 

@@ -47,15 +47,9 @@ void light_pass_init(Window* window) {
   pass_desc.queue_type  = RENDER_QUEUE_OPAQUE;
 
   // Attaching buffers
-
-  ShaderContext* shader_context = resources_get_shader_context(pass_desc.shader_context_id);
-  const RenderQueueEntry* queue = renderer_get_queue(RENDER_QUEUE_OPAQUE); 
-
-  shader_context_set_uniform_buffer(shader_context, SHADER_MODELS_BUFFER_INDEX, queue->transform_buffer);
-  shader_context_set_uniform_buffer(shader_context, SHADER_MATERIALS_BUFFER_INDEX, queue->material_buffer);
   
-  shader_context_set_uniform_buffer(shader_context, SHADER_LIGHT_BUFFER_INDEX, renderer_get_defaults().lights_buffer);
-  shader_context_set_uniform_buffer(shader_context, SHADER_ANIMATION_BUFFER_INDEX, renderer_get_defaults().animation_buffer);
+  gfx_buffer_bind_point(renderer_get_defaults().lights_buffer, SHADER_LIGHT_BUFFER_INDEX);
+  gfx_buffer_bind_point(renderer_get_defaults().animation_buffer, SHADER_ANIMATION_BUFFER_INDEX);
 
   // Color attachment init
 
@@ -154,6 +148,11 @@ void light_pass_prepare(RenderPass* pass, const FrameData& data) {
 
 void light_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
   NIKOLA_PROFILE_FUNCTION();
+
+  // Buffer bind points
+
+  gfx_buffer_bind_point(queue.transform_buffer, SHADER_MODELS_BUFFER_INDEX);
+  gfx_buffer_bind_point(queue.material_buffer, SHADER_MATERIALS_BUFFER_INDEX);
 
   // Render the skybox
 

@@ -102,7 +102,9 @@ static void init_defaults() {
     .type  = GFX_BUFFER_UNIFORM,
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
+
   s_renderer.defaults.matrices_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
+  gfx_buffer_bind_point(s_renderer.defaults.matrices_buffer, SHADER_MATRICES_BUFFER_INDEX);
 
   // Materials init
   
@@ -447,9 +449,9 @@ void renderer_init(Window* window) {
   
   shadow_pass_init(window);
   light_pass_init(window);
-  // @TODO (Renderer) billboard_pass_init(window);
+  billboard_pass_init(window);
   hdr_pass_init(window);
-  // @TODO (Renderer) debug_pass_init(window);
+  debug_pass_init(window);
 
   // Batch renderer init
   batch_renderer_init();
@@ -634,7 +636,7 @@ Vec4 renderer_get_clear_color() {
 }
 
 const RenderQueueEntry* renderer_get_queue(const RenderQueueType type) {
-  return &s_renderer.queues[type];
+  return &s_renderer.queues[(sizei)type];
 }
 
 RenderPass* renderer_create_pass(const RenderPassDesc& desc, const String& debug_name) {

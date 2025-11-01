@@ -37,13 +37,6 @@ void shadow_pass_init(Window* window) {
   pass_desc.res_group_id      = RESOURCE_CACHE_ID;
   pass_desc.shader_context_id = resources_push_shader_context(RESOURCE_CACHE_ID,  
                                                               resources_push_shader(RESOURCE_CACHE_ID, generate_shadow_shader()));
-
-  // Attaching buffers
-
-  ShaderContext* shader_context = resources_get_shader_context(pass_desc.shader_context_id);
-  const RenderQueueEntry* queue = renderer_get_queue(RENDER_QUEUE_OPAQUE); 
-
-  shader_context_set_uniform_buffer(shader_context, SHADER_MODELS_BUFFER_INDEX, queue->transform_buffer);
   
   // Other init
 
@@ -119,6 +112,9 @@ void shadow_pass_prepare(RenderPass* pass, const FrameData& data) {
 
 void shadow_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
   NIKOLA_PROFILE_FUNCTION();
+
+  // Buffer bind points
+  gfx_buffer_bind_point(queue.transform_buffer, SHADER_MODELS_BUFFER_INDEX);
 
   // Use the required resources
 

@@ -44,7 +44,7 @@ static void init_resources(nikola::App* app) {
   app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
 
   // Models init
-  app->model_id = nikola::resources_push_model(app->res_group_id, "models/medieval_knight.nbr"); 
+  app->model_id = nikola::resources_push_model(app->res_group_id, "models/behelit.nbr"); 
 
   // Materials init
   

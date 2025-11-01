@@ -1417,6 +1417,11 @@ NIKOLA_API const bool gfx_buffer_load(GfxBuffer* buffer, const GfxBufferDesc& de
 /// @NOTE: The `free_fn` uses the default memory allocater.
 NIKOLA_API void gfx_buffer_destroy(GfxBuffer* buff, const FreeMemoryFn& free_fn = memory_free);
 
+/// Bind the given `buffer` to bind point `bind_point` for shaders to reference it.
+///
+/// @NOTE: The given `buffer` type _must_ be either `GFX_BUFFER_UNIFORM` or `GFX_BUFFER_SHADER_STORAGE`.
+NIKOLA_API void gfx_buffer_bind_point(GfxBuffer* buffer, const u32 bind_point);
+
 /// Retrieve the internal `GfxBufferDesc` of `buffer`
 NIKOLA_API GfxBufferDesc& gfx_buffer_get_desc(GfxBuffer* buffer);
 
@@ -1461,16 +1466,6 @@ NIKOLA_API void gfx_shader_update(GfxShader* shader, const GfxShaderDesc& desc);
 /// @NOTE: If the given `shader` has not been correctly linked, 
 /// this function will raise an error.
 NIKOLA_API void gfx_shader_query(GfxShader* shader, GfxShaderQueryDesc* out_desc);
-
-/// Attaches the uniform `buffer` to the `shader` of type `type` to point `bind_point`. 
-/// Any updates to `buffer` will have an effect on the `shader`. Besides that, the 
-/// given `buffer` MUST be of type `GFX_BUFFER_UNIFORM`. Otherwise, this function 
-/// will assert.
-/// 
-/// @NOTE: For GLSL (OpenGL), you _need_ to specify the binding point of the uniform buffer in the shader itself. For example, 
-/// do something like, `layout (std140, binding = 0)`. Now the uniform buffer will be bound to the point `0` and the shader 
-/// can easily find it. 
-NIKOLA_API void gfx_shader_attach_uniform(GfxShader* shader, const GfxShaderType type, GfxBuffer* buffer, const u32 bind_point);
 
 /// Lookup the `uniform_name` in `shader` and retrieve its location. 
 ///
