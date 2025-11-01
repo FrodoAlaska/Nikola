@@ -1,24 +1,22 @@
 # TODO:
 
 - [] Run-time performance
-    - [] Improve instancing completely. It's currently awfully architected.
-        - [x] Add an instanced buffer to the `GfxPipelineDesc`
-        - [x] Make sure that the layouts of the vertex attributes for both the instance and vertex buffers are correct 
-        - [] Ensure that the pipelines have an extra set of vertex attributes for the instance data 
-        - [] Start off by changing the PBR shader to include instanced vertex attributes 
-        - [] Create a seperate array specifically for instance transforms 
-        - [] Implement the rest of the instanced queue functions of the renderer 
-        - [] Update the instance buffer with the instanced transforms data
     - [] Billboard and debug passes fuck everything up apparently
     - [] SHADOWS!!!!
     - [] Frustum culling
+        - [] Add a `recalculate_fursturm` function and only call it once every `camera_update` and save the relevant data in `Camera`.
+        - [] Calculate the bounding boxes of each mesh on load.
+        - [] Check any mesh against the camera's frustum before issuing the draw command.
+        - [] Profile.
     - [] Documentation
 - [] Threading
     - [] A better job system using `std::function`
+    - [] Different threads for different tasks. Perhaps there's no need to do a job manager. Just spin up a few threads to handle different areas of the engine. i.e, render thread, physics thread, etc...
     - [] Thread pools
     - [] Documentation
 - [] Scenes?
 - [] Animations 
+    - [] OZZ animation? I mean, it's, like, fucking _amazing_. More research needed.
     - [] Test animations with multiple instances.
     - [] Documentation
 - [] Resources 

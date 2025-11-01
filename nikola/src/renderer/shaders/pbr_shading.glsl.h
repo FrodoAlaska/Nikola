@@ -69,10 +69,12 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
           weighted_pos += (u_skinning_palette[index] * vec4(aPos, 1.0)) * aJointWeight[i];
         }
 
-        vec3 vertex_pos  = max(vec3(weighted_pos), aPos); // Just in case an animation buffer was not provided
-        vec4 model_space = u_model[gl_DrawID] * vec4(vertex_pos, 1.0);
+        int index = gl_BaseInstance + gl_InstanceID;
 
-        mat3 model_m3  = transpose(inverse(mat3(u_model[gl_DrawID])));
+        vec3 vertex_pos  = max(vec3(weighted_pos), aPos); // Just in case an animation buffer was not provided
+        vec4 model_space = (u_model[index]) * vec4(vertex_pos, 1.0);
+
+        mat3 model_m3  = transpose(inverse(mat3(u_model[index])));
         vs_out.tangent = normalize(model_m3 * aTangent);
         vs_out.normal  = normalize(model_m3 * aNormal);
         

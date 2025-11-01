@@ -6,7 +6,7 @@
 /// ----------------------------------------------------------------------
 /// Consts 
 
-const nikola::sizei MAX_OBJECTS = 4;
+const nikola::sizei MAX_OBJECTS = 128;
 
 /// Consts 
 /// ----------------------------------------------------------------------
@@ -24,7 +24,7 @@ struct nikola::App {
   nikola::Font* font;
 
   nikola::Transform ground_transform;
-  nikola::Transform transforms[MAX_OBJECTS][MAX_OBJECTS];
+  nikola::Transform transforms[MAX_OBJECTS];
 };
 /// App
 /// ----------------------------------------------------------------------
@@ -96,10 +96,8 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::transform_scale(app->ground_transform, nikola::Vec3(32.0f, 0.1f, 32.0f));
  
   for(nikola::sizei i = 0; i < MAX_OBJECTS; i++) {
-    for(nikola::sizei j = 0; j < MAX_OBJECTS; j++) {
-      nikola::transform_translate(app->transforms[i][j], nikola::Vec3(i * 10.0f, 0.5f, j * 10.0f));
-      nikola::transform_scale(app->transforms[i][j], nikola::Vec3(0.5f));
-    }
+    nikola::transform_translate(app->transforms[i], nikola::Vec3((i / 4) * 15.0f, 0.5f, (i % 4) * 15.0f));
+    nikola::transform_scale(app->transforms[i], nikola::Vec3(0.2f));
   }
 
   // Lights init
@@ -145,12 +143,7 @@ void app_render(nikola::App* app) {
   // Render the objects
   
   nikola::renderer_queue_mesh(app->mesh_id, app->ground_transform, app->ground_material);
-
-  for(nikola::sizei i = 0; i < MAX_OBJECTS; i++) {
-    for(nikola::sizei j = 0; j < MAX_OBJECTS; j++) {
-      nikola::renderer_queue_model(app->model_id, app->transforms[i][j]);
-    }
-  }
+  nikola::renderer_queue_model_instanced(app->model_id, app->transforms, MAX_OBJECTS);
 
   nikola::renderer_end();
   

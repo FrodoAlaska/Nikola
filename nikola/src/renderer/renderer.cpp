@@ -323,7 +323,8 @@ static void render_queue_create(const RenderQueueType type) {
       queue->vertex_flags = (VERTEX_COMPONENT_POSITION | VERTEX_COMPONENT_TEXTURE_COORDS);
       break;
   }
-  
+
+  // Done!
   queue->pipe = gfx_pipeline_create(s_renderer.context, queue->pipe_desc);
 }
 
@@ -379,7 +380,7 @@ static void render_queue_push_instanced(const RenderQueueType type,
 
     .first_element  = (u32)entry->indices.size(),
     .base_vertex    = (i32)(entry->vertices.size() / vertex_get_components_count(entry->vertex_flags)),
-    .base_instance  = (u32)0,
+    .base_instance  = (u32)entry->transforms.size(),
   };
   entry->commands.push_back(cmd);
  
@@ -387,7 +388,10 @@ static void render_queue_push_instanced(const RenderQueueType type,
 
   entry->vertices.insert(entry->vertices.end(), mesh->vertices.begin(), mesh->vertices.end());
   entry->indices.insert(entry->indices.end(), mesh->indices.begin(), mesh->indices.end());
-  entry->transforms.push_back(transforms[0].transform);
+
+  for(sizei i = 0; i < count; i++) {
+    entry->transforms.emplace_back(transforms[i].transform);
+  }
 
   // Material
 
@@ -793,14 +797,45 @@ void renderer_queue_mesh_instanced(const ResourceID& res_id,
                                    const Transform* transforms, 
                                    const sizei count, 
                                    const ResourceID& mat_id) {
-  // @TODO (Renderer)
+  // Retrieving the necessary resources
+
+  Mesh* mesh         = resources_get_mesh(res_id);
+  Material* material = s_renderer.defaults.material;
+
+  if(RESOURCE_IS_VALID(mat_id)) {
+    material = resources_get_material(mat_id);
+  }
+
+  // Issuing the draw command 
+  render_queue_push_instanced(RENDER_QUEUE_OPAQUE, mesh, material, transforms, count); 
 }
 
 void renderer_queue_model_instanced(const ResourceID& res_id, 
                                     const Transform* transforms, 
                                     const sizei count, 
                                     const ResourceID& mat_id) {
-  // @TODO (Renderer)
+  // Retrieving the necessary resources
+  
+  Material* material = s_renderer.defaults.material;
+  Model* model       = resources_get_model(res_id);
+
+  if(RESOURCE_IS_VALID(mat_id)) {
+    material = resources_get_material(mat_id);
+  }
+ 
+  // Issuing the draw command 
+  
+  for(sizei i = 0; i < model->meshes.size(); i++) {
+    Mesh* mesh    = model->meshes[i];
+    Material* mat = model->materials[mesh->material_index]; 
+    
+    // Let the main given material "influence" the model's material 
+    
+    mat->transparency = material->transparency;
+    mat->depth_mask   = material->depth_mask;
+
+    render_queue_push_instanced(RENDER_QUEUE_OPAQUE, mesh, mat, transforms, count); 
+  }  
 }
 
 void renderer_queue_animation_instanced(const ResourceID& res_id,
@@ -808,14 +843,24 @@ void renderer_queue_animation_instanced(const ResourceID& res_id,
                                         const Transform* transforms, 
                                         const sizei count, 
                                         const ResourceID& mat_id) {
-  // @TODO (Renderer)
+  // @TEMP (Renderer): How to handle animations?????? 
 }
 
 void renderer_queue_billboard_instanced(const ResourceID& res_id, 
                                         const Transform* transforms, 
                                         const sizei count, 
                                         const ResourceID& mat_id) {
-  // @TODO (Renderer)
+  // Retrieving the necessary resources
+
+  Material* material = s_renderer.defaults.material;
+  Mesh* mesh         =  resources_get_mesh(res_id);
+
+  if(RESOURCE_IS_VALID(mat_id)) {
+    material = resources_get_material(mat_id);
+  }
+
+  // Issuing the draw command
+  render_queue_push_instanced(RENDER_QUEUE_BILLBOARD, mesh, material, transforms, count); 
 }
 
 void renderer_queue_mesh(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id) {
@@ -862,9 +907,6 @@ void renderer_queue_animation(const ResourceID& res_id,
                               const Transform& transform, 
                               const ResourceID& mat_id) {
   // @TEMP (Renderer): How to handle animations?????? 
-
-  Animation* anim = resources_get_animation(res_id);
-  renderer_queue_model(model_id, transform, mat_id);
 }
 
 void renderer_queue_billboard(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id) {
@@ -882,11 +924,31 @@ void renderer_queue_billboard(const ResourceID& res_id, const Transform& transfo
 }
 
 void renderer_queue_debug_cube_instanced(const Transform* transforms, const sizei count, const ResourceID& mat_id) {
-  // @TODO (Renderer)
+  // Retrieving the necessary resources
+
+  Material* material = s_renderer.defaults.debug_material;
+  Mesh* mesh         =  s_renderer.geometries[GEOMETRY_DEBUG_CUBE];
+  
+  if(RESOURCE_IS_VALID(mat_id)) {
+    material = resources_get_material(mat_id);
+  }
+
+  // Issuing the draw command
+  render_queue_push_instanced(RENDER_QUEUE_DEBUG, mesh, material, transforms, count); 
 }
 
 void renderer_queue_debug_sphere_instanced(const Transform* transforms, const sizei count, const ResourceID& mat_id) {
-  // @TODO (Renderer)
+  // Retrieving the necessary resources
+
+  Material* material = s_renderer.defaults.debug_material;
+  Mesh* mesh         =  s_renderer.geometries[GEOMETRY_DEBUG_SPHERE];
+  
+  if(RESOURCE_IS_VALID(mat_id)) {
+    material = resources_get_material(mat_id);
+  }
+
+  // Issuing the draw command
+  render_queue_push_instanced(RENDER_QUEUE_DEBUG, mesh, material, transforms, count); 
 }
 
 void renderer_queue_debug_cube(const Transform& transform, const ResourceID& mat_id) {

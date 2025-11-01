@@ -38,15 +38,6 @@ namespace nikola { // Start of nikola
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// _PipelineLayout
-struct _PipelineLayout {
-  sizei offsets[VERTEX_LAYOUTS_MAX];
-  sizei strides[VERTEX_LAYOUTS_MAX]; 
-};
-/// _PipelineLayout
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
 /// GfxContext
 struct GfxContext {
   GfxContextDesc desc = {};
@@ -935,23 +926,25 @@ static void init_pipeline_layout(GfxPipeline* pipe, sizei* strides) {
 
     // Set the attributes of the buffer
 
-    sizei start = pipe->desc.layouts[i].start_index;
+    sizei start  = pipe->desc.layouts[i].start_index;
+    sizei stride = 0; 
 
-    for(sizei j = start; j < start + pipe->desc.layouts[i].attributes_count; j++) {
+    for(sizei j = 0; j < pipe->desc.layouts[i].attributes_count; j++) {
       GfxLayoutType attribute = pipe->desc.layouts[i].attributes[j];
       
       GLenum gl_comp_type = get_layout_type(attribute);
       sizei comp_count    = get_layout_count(attribute);
       sizei size          = get_layout_size(attribute);
 
-      glEnableVertexArrayAttrib(pipe->vertex_array, j);
-      glVertexArrayAttribFormat(pipe->vertex_array, j, comp_count, gl_comp_type, GL_FALSE, strides[i]);
-      glVertexArrayAttribBinding(pipe->vertex_array, j, i);
+      glEnableVertexArrayAttrib(pipe->vertex_array, start + j);
+      glVertexArrayAttribFormat(pipe->vertex_array, start + j, comp_count, gl_comp_type, GL_FALSE, stride);
+      glVertexArrayAttribBinding(pipe->vertex_array, start + j, i);
       
       // Increase the stride for the next round
-      strides[i] += size;
+      stride += size;
     }
- 
+
+    strides[i] = stride;
     glVertexArrayBindingDivisor(pipe->vertex_array, i, pipe->desc.layouts[i].instance_rate);
   }
 }
@@ -1195,7 +1188,7 @@ GfxContextDesc& gfx_context_get_desc(GfxContext* gfx) {
   return gfx->desc;
 }
 
-NIKOLA_API bool gfx_context_has_extension(GfxContext* gfx, const char* ext) {
+bool gfx_context_has_extension(GfxContext* gfx, const char* ext) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext struct passed");
 
   for(auto& ext_str : gfx->extensions) {
@@ -2387,7 +2380,7 @@ GfxPipeline* gfx_pipeline_create(GfxContext* gfx, const GfxPipelineDesc& desc, c
 
   // Instance buffer init
 
-  if(pipe->instance_buffer) {
+  if(pipe->desc.instance_buffer) {
     pipe->instance_buffer = desc.instance_buffer; 
     pipe->instance_count  = desc.instance_count; 
 
