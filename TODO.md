@@ -1,7 +1,6 @@
 # TODO:
 
 - [] Run-time performance
-    - [] SHADOWS!!!!
     - [] Frustum culling
         - [] Add a `recalculate_fursturm` function and only call it once every `camera_update` and save the relevant data in `Camera`.
         - [] Calculate the bounding boxes of each mesh on load.
@@ -13,12 +12,13 @@
     - [] Different threads for different tasks. Perhaps there's no need to do a job manager. Just spin up a few threads to handle different areas of the engine. i.e, render thread, physics thread, etc...
     - [] Thread pools
     - [] Documentation
-- [] Scenes?
 - [] Animations 
     - [] OZZ animation? I mean, it's, like, fucking _amazing_. More research needed.
     - [] Test animations with multiple instances.
     - [] Documentation
+- [] Scenes?
 - [] Resources 
+    - [] Material file format like `.mat` or something?
     - [] Maybe have a JSON file that associates the resources with each other? 
         - Perhaps we can use this as a way to represent our materials and then save them a `.nbr` files.
         - For example, a texture can be referred in a material and a material can be referred to in a mesh. 
@@ -58,8 +58,6 @@
 ## BUGS:
 - (Window & Renderer): When resizing the window or changing the fullscreen state, the renderer really does not hold up. I'm guessing it's because of the render passes? They need to update their own frame sizes when the window resizes? 
 Maybe find a better way to do this.
-
-- (Engine): Perhaps have a config file format working in the engine for things like volume, resolution, and such.
 
 - (Renderer): Capsules cannot be rendererd. Need to render those for debug purposes. 
 - (Renderer): Spheres are not so perfect. Fix that. 

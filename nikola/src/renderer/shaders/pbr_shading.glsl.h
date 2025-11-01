@@ -205,7 +205,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       };
       
       // Textures
-      uniform sampler2D u_shadow_map;
+      layout (binding = 0) uniform sampler2D u_shadow_map;
    
       // BRDF terms 
 
@@ -323,7 +323,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       }
 
       vec3 evaluate_directional_light(const DirectionalLight light, BRDFDesc brdf) {
-        brdf.light_dir = normalize(light.direction);
+        brdf.light_dir = normalize(-light.direction);
         brdf.radiance  = light.color;
 
         BRDFResult res = calculate_brdf(brdf);

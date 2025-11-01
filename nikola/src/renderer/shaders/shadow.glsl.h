@@ -18,19 +18,21 @@ inline nikola::GfxShaderDesc generate_shadow_shader() {
 
       // Uniforms
       
-      layout(std140, binding = 1) readonly uniform ModelsBuffer {
+      layout(std430, binding = 1) readonly buffer ModelsBuffer {
         mat4 u_model[4096];
       };
       
       uniform mat4 u_light_space;
 
       void main() {
-        gl_Position = u_light_space * u_model[gl_DrawID] * vec4(aPos, 1.0f);
+        int index   = gl_BaseInstance + gl_InstanceID;
+        gl_Position = u_light_space * u_model[index] * vec4(aPos, 1.0f);
       }
     )",
   
     .pixel_source = R"(
       #version 460 core
+      #extension GL_ARB_bindless_texture : require
 
       void main() {
         // Nothing here...
