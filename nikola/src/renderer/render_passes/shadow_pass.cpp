@@ -72,17 +72,16 @@ void shadow_pass_init(Window* window) {
 void shadow_pass_prepare(RenderPass* pass, const FrameData& data) {
   NIKOLA_PROFILE_FUNCTION();
 
+  //
   // Setup the light projection matrix
+  //
 
   // Get the center of the frustrum by averaging the 
   // frustrum's corners.
 
-  Vec3 corners[8];
-  camera_calculate_frustrum_corners(data.camera, &corners[0]);
-
   Vec3 center = Vec3(0.0f);
   for(sizei i = 0; i < 8; i++) {
-    center += corners[i]; 
+    center += data.camera.corners[i]; 
   }
   center /= 8.0f;
 
@@ -95,7 +94,7 @@ void shadow_pass_prepare(RenderPass* pass, const FrameData& data) {
   Vec3 max = Vec3(FLOAT_MIN);
 
   for(sizei i = 0; i < 8; i++) {
-    Vec3 center_light_space = Vec3(s_state.light_view * Vec4(corners[i], 1.0f));
+    Vec3 center_light_space = Vec3(s_state.light_view * Vec4(data.camera.corners[i], 1.0f));
 
     min = vec3_min(min, center_light_space);
     max = vec3_max(max, center_light_space);

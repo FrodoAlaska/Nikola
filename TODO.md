@@ -1,22 +1,19 @@
 # TODO:
 
-- [] Run-time performance
-    - [] Frustum culling
-        - [] Add a `recalculate_fursturm` function and only call it once every `camera_update` and save the relevant data in `Camera`.
-        - [] Calculate the bounding boxes of each mesh on load.
-        - [] Check any mesh against the camera's frustum before issuing the draw command.
-        - [] Profile.
-    - [] Documentation
 - [] Threading
     - [] A better job system using `std::function`
-    - [] Different threads for different tasks. Perhaps there's no need to do a job manager. Just spin up a few threads to handle different areas of the engine. i.e, render thread, physics thread, etc...
+    - [] Different threads for different tasks. 
+        - [] Perhaps there's no need to do a job manager. Just spin up a few threads to handle different areas of the engine. i.e, render thread, physics thread, etc.
+        - [] Each thread will await certain jobs. The resource thread will await and resolve resource loading threads, and etc.
+        - [] The `physics_world_step` function can run on a thread like a server
+        - [] Perhaps even have a certain thread specifically for game logic
     - [] Thread pools
+        - For implementation use [moodycamel](https://github.com/cameron314/concurrentqueue)? 
     - [] Documentation
 - [] Animations 
     - [] OZZ animation? I mean, it's, like, fucking _amazing_. More research needed.
     - [] Test animations with multiple instances.
     - [] Documentation
-- [] Scenes?
 - [] Resources 
     - [] Material file format like `.mat` or something?
     - [] Maybe have a JSON file that associates the resources with each other? 
@@ -30,9 +27,11 @@
     - [] GPU-based particle system, using compute shaders.
     - [] Have a lot of options to edit the shape, distribution, and gravity. Perhaps save it in a file?
     - [] Documentation
-- [] Start-Time performance
+- [] Scenes?
+- [] Performance v2.0
     - [] Improve the load times of the resource manager
     - [] NBR conversion time enhancement
+    - [] Simple frustum culling
 - [] Renderer: Beautify v2.0 
     - This one is just a thinking exersice. We don't want to add every rendering technique under the sun to "beautify" the engine's look. 
     - [] Gaussian blur

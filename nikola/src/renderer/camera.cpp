@@ -44,9 +44,61 @@ static bool window_resize_callback(const Event& event, const void* dispatcher, c
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// Private functions
+
+static void calculate_frustum_corners(Camera& cam) {
+  f32 tan_fov    = nikola::tan(TO_RADIANS(cam.zoom) * 0.5f); // Half the zoom
+  Vec3 cam_right = vec3_cross(cam.front, cam.up);
+
+  // Calculating the bounds of the frustrum
+
+  f32 near_height = 2.0f * tan_fov * cam.near;
+  f32 near_width  = near_height * cam.aspect_ratio;
+
+  f32 far_height = 2.0f * tan_fov * cam.far;
+  f32 far_width  = far_height * cam.aspect_ratio;
+
+  // Calculating the center of both the near and far planes
+
+  Vec3 near_center = cam.position + (cam.front * cam.near);
+  Vec3 far_center  = cam.position + (cam.front * cam.far);
+
+  // Calculating each far point in both the near and far planes
+
+  Vec3 near_top   = near_center + cam.up    * (near_height * 0.5f); 
+  Vec3 near_right = near_center + cam_right * (near_width  * 0.5f);
+
+  Vec3 far_top   = far_center + cam.up    * (far_height * 0.5f); 
+  Vec3 far_right = far_center + cam_right * (far_width  * 0.5f);
+
+  // Filling the given `corners` array with the new calculated values
+
+  // Near plane
+
+  cam.corners[0] = near_center - near_top - near_right; // Bottom left
+  cam.corners[1] = near_center + near_top - near_right; // Top left
+  cam.corners[2] = near_center + near_top + near_right; // Top right
+  cam.corners[3] = near_center - near_top + near_right; // Bottom right
+  
+  // Far plane
+
+  cam.corners[4] = far_center - far_top - far_right; // Bottom left
+  cam.corners[5] = far_center + far_top - far_right; // Top left
+  cam.corners[6] = far_center + far_top + far_right; // Top right
+  cam.corners[7] = far_center - far_top + far_right; // Bottom right
+}
+
+/// Private functions
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// Camera functions
 
 void camera_free_move_func(Camera& camera) {
+  if(!camera.is_active) {
+    return;
+  }
+
   float speed = CAMERA_SPEED * niclock_get_delta_time();
 
   Vec2 mouse_offset; 
@@ -78,6 +130,10 @@ void camera_free_move_func(Camera& camera) {
 }
 
 void camera_fps_move_func(Camera& camera) {
+  if(!camera.is_active) {
+    return;
+  }
+
   float speed = CAMERA_SPEED * niclock_get_delta_time();
 
   Vec2 mouse_offset; 
@@ -139,65 +195,22 @@ void camera_create(Camera* cam, const CameraDesc& desc) {
   cam->projection      = Mat4(1.0f);
   cam->view_projection = Mat4(1.0f);
 
-  cam->move_fn   = desc.move_func;
   cam->is_active = true;
 }
 
 void camera_update(Camera& cam) {
+  if(!cam.is_active) {
+    return;
+  }
+
   cam.view            = mat4_look_at(cam.position, cam.position + cam.front, cam.up);
   cam.projection      = mat4_perspective((cam.zoom * DEG2RAD), cam.aspect_ratio, cam.near, cam.far);
   cam.view_projection = (cam.projection * cam.view);
-
-  if(cam.move_fn && cam.is_active) {
-    cam.move_fn(cam);
-  }
 
   cam.direction.x = nikola::cos(cam.yaw   * DEG2RAD) * nikola::cos(cam.pitch * DEG2RAD);
   cam.direction.y = nikola::sin(cam.pitch * DEG2RAD);
   cam.direction.z = nikola::sin(cam.yaw   * DEG2RAD) * nikola::cos(cam.pitch * DEG2RAD);
   cam.front       = vec3_normalize(cam.direction);
-}
-
-void camera_calculate_frustrum_corners(const Camera& cam, Vec3* out_corners) {
-  f32 tan_fov    = nikola::tan((cam.zoom * DEG2RAD) * 0.5f);
-  Vec3 cam_right = vec3_cross(cam.front, cam.up);
-
-  // Calculating the bounds of the frustrum
-
-  f32 near_height = 2.0f * tan_fov * cam.near;
-  f32 near_width  = near_height * cam.aspect_ratio;
-
-  f32 far_height = 2.0f * tan_fov * cam.far;
-  f32 far_width  = far_height * cam.aspect_ratio;
-
-  // Calculating the center of both the near and far planes
-
-  Vec3 near_center = cam.position + (cam.front * cam.near);
-  Vec3 far_center  = cam.position + (cam.front * cam.far);
-
-  // Calculating each far point in both the near and far planes
-
-  Vec3 near_top   = near_center + cam.up    * (near_height * 0.5f); 
-  Vec3 near_right = near_center + cam_right * (near_width  * 0.5f);
-
-  Vec3 far_top   = far_center + cam.up    * (far_height * 0.5f); 
-  Vec3 far_right = far_center + cam_right * (far_width  * 0.5f);
-
-  // Filling the given `corners` array with the new calculated values
-
-  // Near plane
-
-  out_corners[0] = near_center - near_top - near_right; // Bottom left
-  out_corners[1] = near_center + near_top - near_right; // Top left
-  out_corners[2] = near_center + near_top + near_right; // Top right
-  out_corners[3] = near_center - near_top + near_right; // Bottom right
-  
-  // Far plane
-
-  out_corners[4] = far_center - far_top - far_right; // Bottom left
-  out_corners[5] = far_center + far_top - far_right; // Top left
-  out_corners[6] = far_center + far_top + far_right; // Top right
-  out_corners[7] = far_center - far_top + far_right; // Bottom right
 }
 
 void camera_follow(Camera& cam, const Vec3& target, const Vec3& offset) {
@@ -253,6 +266,14 @@ RayCastDesc camera_screen_to_world_space(const Camera& cam, const Vec2 position,
     .direction = vec3_normalize(Vec3(far_point - near_point)),
     .distance  = 1000000.0f,
   };
+}
+
+const bool camera_check_intersection(const Camera& cam, const Transform& transform) {
+  Vec3 min = transform.position; 
+  Vec3 max = transform.position + transform.scale;
+
+  // @TODO (Camera)
+  return true;
 }
 
 /// Camera functions

@@ -17,19 +17,22 @@ namespace nikola { // Start of nikola
 /// Consts
 
 /// The maximum amount of instances a renderer can dispatch.
-const sizei RENDERER_MAX_INSTANCES = 2048;
+const sizei RENDERER_MAX_INSTANCES     = 2048;
 
 /// The maximum degrees the camera can achieve. 
-const f32 CAMERA_MAX_DEGREES       = 89.0f;
+const f32 CAMERA_MAX_DEGREES           = 89.0f;
 
 /// The maximum amount of zoom the camera can achieve.
-const f32 CAMERA_MAX_ZOOM          = 180.0f;
+const f32 CAMERA_MAX_ZOOM              = 180.0f;
 
 /// The maximum amount of point lights a scene can have.
-const sizei POINT_LIGHTS_MAX       = 16;
+const sizei POINT_LIGHTS_MAX           = 16;
 
 /// The maximum amount of particles tha can be emitted at a time.
-const sizei PARTICLES_MAX          = 256;
+const sizei PARTICLES_MAX              = 256;
+
+/// The maximum amount of corners a camera's frustum can have.
+const sizei CAMERA_FRUSTUM_CORNERS_MAX = 8;
 
 /// The index of the matrices uniform buffer within all shaders.
 const sizei SHADER_MATRICES_BUFFER_INDEX  = 0;
@@ -107,14 +110,10 @@ enum ParticleDistributionType {
 
 // Have to do this to fix underfined variable errors in the callback.
 
-struct Camera;
 struct RenderPass;
 struct RenderPassDesc;
 struct FrameData;
 struct RenderQueueEntry;
-
-/// A function callback to move the camera every frame.
-using CameraMoveFn = void(*)(Camera& camera);
 
 /// Render pass callbacks
 
@@ -327,11 +326,6 @@ struct CameraDesc {
   ///
   /// @NOTE: This is set to `100.0f` by default.
   f32 far          = 100.0f;
-
-  /// The function callback to move the camera 
-  ///
-  /// @NOTE: See `CameraMoveFn` for more details.
-  CameraMoveFn move_func;
 };
 /// CameraDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -359,7 +353,7 @@ struct Camera {
 
   /// Some state to keep
 
-  CameraMoveFn move_fn;
+  Vec3 corners[CAMERA_FRUSTUM_CORNERS_MAX]; // The calculated corners of this camera's frustum.
   bool is_active;
 };
 /// Camera 
@@ -552,15 +546,6 @@ struct FrameData {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// Rect
-struct Rect {
-  Vec2 size; 
-  Vec2 position;
-};
-/// Rect
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
 /// Renderer functions
 
 /// Initialize the global renderer using the given `window` for dimensions.
@@ -731,7 +716,7 @@ NIKOLA_API void batch_renderer_end();
 /// Source the given `texture` at `src` and render into `dest`, tinted with `tint`.
 ///
 /// @NOTE: By default, `tint` is set to `Vec4(1.0f)`.
-NIKOLA_API void batch_render_texture(GfxTexture* texture, const Rect& src, const Rect& dest, const Vec4& tint = Vec4(1.0f));
+NIKOLA_API void batch_render_texture(GfxTexture* texture, const Rect2D& src, const Rect2D& dest, const Vec4& tint = Vec4(1.0f));
 
 /// Render the given `texture` at `position` with size of `size` and tinted with `tint`.
 ///
@@ -774,10 +759,6 @@ NIKOLA_API void camera_create(Camera* cam, const CameraDesc& desc);
 /// Update the internal matrices of `cam` and call the associated `CameraMoveFn`. 
 NIKOLA_API void camera_update(Camera& cam);
 
-/// Calculate the camera's 8 frutrum corners in world space, writing the results 
-/// back into the given `out_corners` array with 8 elements. 
-NIKOLA_API void camera_calculate_frustrum_corners(const Camera& cam, Vec3* corners);
-
 /// Have the given `cam` follow the `target`, taking into account the given `offset`.
 NIKOLA_API void camera_follow(Camera& cam, const Vec3& target, const Vec3& offset);
 
@@ -793,6 +774,9 @@ NIKOLA_API Vec2 camera_world_to_screen_space(const Camera& cam, const Vec3 posit
 /// using the width and height of the given `window`, returning back a ray with the direction 
 /// and the origin in world space coordinates. 
 NIKOLA_API RayCastDesc camera_screen_to_world_space(const Camera& cam, const Vec2 position, const Window* window);
+
+/// Check if the given `transform` is currently intersecting the `cam`'s frustum.
+NIKOLA_API const bool camera_check_intersection(const Camera& cam, const Transform& transform);
 
 /// Camera functions
 ///---------------------------------------------------------------------------------------------------------------------

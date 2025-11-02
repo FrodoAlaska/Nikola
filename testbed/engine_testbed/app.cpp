@@ -6,7 +6,7 @@
 /// ----------------------------------------------------------------------
 /// Consts 
 
-const nikola::sizei MAX_OBJECTS = 128;
+const nikola::sizei MAX_OBJECTS = 24;
 
 /// Consts 
 /// ----------------------------------------------------------------------
@@ -82,7 +82,6 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
     .target       = nikola::Vec3(-3.0f, 5.0f, 0.0f),
     .up_axis      = nikola::Vec3(0.0f, 1.0f, 0.0f),
     .aspect_ratio = nikola::window_get_aspect_ratio(app->window),
-    .move_func    = nikola::camera_free_move_func,
   };
   nikola::camera_create(&app->frame_data.camera, cam_desc);
   app->frame_data.camera.exposure = 1.0f;
@@ -133,6 +132,8 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
   }
 
   // Update the camera
+  
+  nikola::camera_free_move_func(app->frame_data.camera);
   nikola::camera_update(app->frame_data.camera);
 }
 
@@ -162,13 +163,7 @@ void app_render_gui(nikola::App* app) {
   nikola::gui_begin();
   
   nikola::gui_debug_info();
-  
   nikola::gui_begin_panel("Scene");
-
-  // Entities
-  
-  if(ImGui::CollapsingHeader("Entities")) {
-  }
   
   // Frame
   nikola::gui_edit_frame("Frame", &app->frame_data);
@@ -180,7 +175,6 @@ void app_render_gui(nikola::App* app) {
   }
 
   nikola::gui_end_panel();
-  
   nikola::gui_end();
 }
 

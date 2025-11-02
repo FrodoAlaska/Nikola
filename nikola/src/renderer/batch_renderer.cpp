@@ -113,7 +113,7 @@ static void init_pipeline() {
   s_batch.pipeline = gfx_pipeline_create(s_batch.context, s_batch.pipe_desc);
 }
 
-static void generate_quad_batch(BatchCall* batch, const Rect& src, const Rect& dest, const Vec4& color, const Vec2& shape_side) {
+static void generate_quad_batch(BatchCall* batch, const Rect2D& src, const Rect2D& dest, const Vec4& color, const Vec2& shape_side) {
   // Top-left
   Vertex2D v1 = {
     .position       = s_batch.ortho * Vec4(dest.position.x, dest.position.y, 0.0f, 1.0f),
@@ -157,12 +157,12 @@ static void generate_quad_batch(BatchCall* batch, const Rect& src, const Rect& d
 }
 
 static void generate_quad_batch(BatchCall* batch, const Vec2& pos, const Vec2& size, const Vec4& color, const Vec2& shape_side) {
-  Rect src = {
+  Rect2D src = {
     .size     = size, 
     .position = Vec2(0.0f),
   };
   
-  Rect dest = {
+  Rect2D dest = {
     .size     = size, 
     .position = pos,
   };
@@ -289,7 +289,7 @@ void batch_renderer_end() {
   }
 }
 
-void batch_render_texture(GfxTexture* texture, const Rect& src, const Rect& dest, const Vec4& tint) {
+void batch_render_texture(GfxTexture* texture, const Rect2D& src, const Rect2D& dest, const Vec4& tint) {
   NIKOLA_ASSERT(texture, "Trying to render a NULL texture in \'batch_render_texture\'");
  
   // Prepare the texture batch
@@ -300,12 +300,12 @@ void batch_render_texture(GfxTexture* texture, const Rect& src, const Rect& dest
 }
 
 void batch_render_texture(GfxTexture* texture, const Vec2& position, const Vec2& size, const Vec4& tint) {
-  Rect src = {
+  Rect2D src = {
     .size     = size, 
     .position = Vec2(0.0f),
   };
 
-  Rect dest = {
+  Rect2D dest = {
     .size     = size, 
     .position = position, 
   };
@@ -400,16 +400,18 @@ void batch_render_codepoint(Font* font, const char codepoint, const Vec2& positi
   Glyph glyph = font->glyphs[codepoint];
 
   // Set up the soruce and destination rectangles
-  Rect src = {
+  
+  Rect2D src = {
     .size     = glyph.size * scale,
     .position = Vec2(0.0f), 
   };
-  Rect dest = {
+  Rect2D dest = {
     .size     = src.size,
     .position = position + (glyph.offset * scale), 
   };
 
   // Prepare and render the glyph batch
+  
   BatchCall* batch = prepare_texture_batch(glyph.texture);
   generate_quad_batch(batch, src, dest, color, Vec2(SHAPE_TYPE_TEXT, 4.0f));
 }
