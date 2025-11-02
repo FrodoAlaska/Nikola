@@ -104,11 +104,11 @@ struct ListContext {
 /// ----------------------------------------------------------------------
 /// List context functions 
 
-void list_context_create(const nikola::FilePath& path, ListContext* list);
+void list_context_create(ListContext* list, const nikola::FilePath& path);
 
-void list_context_convert_by_type(ListContext* list, const nikola::ResourceType type);
+void list_context_convert_by_type(const ListContext& list, const nikola::ResourceType type, nikola::ThreadPool& pool);
 
-void list_context_convert_all(ListContext* list);
+void list_context_convert_all(const ListContext& list, nikola::ThreadPool& pool);
 
 /// List context functions 
 /// ----------------------------------------------------------------------

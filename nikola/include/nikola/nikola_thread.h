@@ -12,39 +12,44 @@ namespace nikola { // Start of nikola
 /// *** Threads ***
 
 /// ----------------------------------------------------------------------
-/// JobEntryFunc
+/// ThreadTaskFn
 
 /// The function callback to be invoked when a worker thread 
-/// is done with its work, passing in `params`, and `params_size`.
-using JobEntryFunc = std::function<bool(void* params, const sizei params_size)>;
+/// is done with its work.
+using ThreadTaskFn = std::function<void()>;
 
-/// JobEntryFunc
+/// ThreadTaskFn
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// JobDesc
-struct JobDesc {
-  JobEntryFunc entry_func; 
+/// ThreadPool 
+struct ThreadPool {
+  String name; 
+  bool is_active;
 
-  void* params;
-  sizei params_size;
+  DynamicArray<std::thread*> workers; 
+  moodycamel::ConcurrentQueue<ThreadTaskFn> tasks;
 };
-/// JobDesc
+/// ThreadPool 
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// Job manager functions
+/// ThreadPool functions
 
-/// Initialize the job manager system with `jobs_count` jobs.
-NIKOLA_API void job_manager_init(const sizei jobs_count);
+/// Create a thread pool with a given `name`, with `worker_count` amount 
+/// of worker threads the `pool` is allowed to have.
+NIKOLA_API void thread_pool_create(ThreadPool* pool, const String& name, const sizei worker_count);
 
-/// Shutdown the job manager.
-NIKOLA_API void job_manager_shutdown();
+/// Destroy the given `pool`, joining all of its worker threads.
+NIKOLA_API void thread_pool_destroy(ThreadPool& pool);
 
-/// Push the given `desc` job to the job manager's queue.
-NIKOLA_API void job_manager_enqueue_job(const JobDesc& desc);
+/// Push the given `task` job to the `pool`'s tasks.
+NIKOLA_API void thread_pool_push_task(ThreadPool& pool, const ThreadTaskFn& task);
 
-/// Job manager functions
+/// Retrieve the approximate amount of tasks left.
+NIKOLA_API const sizei thread_pool_get_approx_size(const ThreadPool& pool);
+
+/// ThreadPool functions
 /// ----------------------------------------------------------------------
 
 /// *** Threads ***

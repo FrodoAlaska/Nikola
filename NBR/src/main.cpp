@@ -109,7 +109,7 @@ static bool lex_args(int argc, char** argv, nbr::ListContext* list, nikola::i32*
   }
 
   // Create the context
-  nbr::list_context_create(path, list);
+  nbr::list_context_create(list, path);
   
   return true;
 }
@@ -125,9 +125,9 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  // Job manager init (this is usually done by the engine, but oh well)
-  nikola::job_manager_init(32); 
-  
+  nikola::ThreadPool convert_pool;
+  nikola::thread_pool_create(&convert_pool, "NBR Pool", 8);
+
   // Setting default values
 
   nbr::ListContext list; 
@@ -138,28 +138,24 @@ int main(int argc, char** argv) {
  
   nikola::i32 resource_type = -1;
   if (!lex_args(argc, argv, &list, &resource_type)) {
-    nikola::job_manager_shutdown();
     return -1;
   }
 
   // Actually convert the resources (if all goes well)
 
-  nikola::PerfTimer timer;
-  const char* func_name = "nbr::list_context_convert_all";
+  nikola::PerfTimer timer; 
   NIKOLA_PERF_TIMER_BEGIN(timer);
 
-  // Convert the resources
   if(resource_type == -1) {
-    nbr::list_context_convert_all(&list); 
+    nbr::list_context_convert_all(list, convert_pool); 
   } 
   else {
-    nbr::list_context_convert_by_type(&list, (nikola::ResourceType)resource_type); 
-    func_name = "nbr::list_context_convert_by_type";
+    nbr::list_context_convert_by_type(list, (nikola::ResourceType)resource_type, convert_pool); 
   }
-
-  nikola::job_manager_shutdown();
-  NIKOLA_PERF_TIMER_END(timer, func_name);
+ 
+  nikola::thread_pool_destroy(convert_pool);
   
+  NIKOLA_PERF_TIMER_END(timer, "nbr::list_context_convert_all");
   return 0;
 }
 /// Main function

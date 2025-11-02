@@ -43,7 +43,7 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/time/timer_utils.cpp
   
   # Threads 
-  ${NIKOLA_SRC_DIR}/threads/job_manager.cpp
+  ${NIKOLA_SRC_DIR}/threads/thread_pool.cpp
   
   # Renderer 
   ${NIKOLA_SRC_DIR}/renderer/camera.cpp

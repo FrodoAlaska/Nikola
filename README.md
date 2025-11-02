@@ -2,14 +2,6 @@
 
 Nikola is a cross-platform framework for window creation, input handling, audio playback, and rendering using OpenGL 4.5+, designed for your game development and prototyping needs. Inspired by classic game engines like Doom, Quake, and the Source Engine, it is lightweight yet robust and flexible. A game engine creation tool, if you will.
 
----
-
-![screenshot](https://github.com/FrodoAlaska/Nikola/blob/dev/assets/screenshot_1.png) 
-![screenshot](https://github.com/FrodoAlaska/Nikola/blob/dev/assets/screenshot_2.png) 
-![screenshot](https://github.com/FrodoAlaska/Nikola/blob/dev/assets/screenshot_0.png) 
-
----
-
 ## Dependencies
 
 ### Engine Dependencies:
@@ -20,6 +12,7 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 - [OpenAL-Soft](https://github.com/kcat/openal-soft)
 - [Jolt](https://github.com/jrouwe/JoltPhysics)
 - [Tracy](https://github.com/wolfpld/tracy)
+- [moodycamel](https://github.com/cameron314/concurrentqueue)
 
 ### NBR Tool Dependencies:
 
@@ -48,6 +41,14 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 Some missing features are not currently in the works (Long-term) while others are planned for the future (Short-term). Some other features may _never_ be implemented since it does not fit the current philosophy of the engine (Never).
 
 - Scripting (*Never*)
+
+---
+
+![screenshot](https://github.com/FrodoAlaska/Nikola/blob/dev/assets/screenshot_1.png) 
+![screenshot](https://github.com/FrodoAlaska/Nikola/blob/dev/assets/screenshot_2.png) 
+![screenshot](https://github.com/FrodoAlaska/Nikola/blob/dev/assets/screenshot_0.png) 
+
+---
 
 ## Build Instructions
 

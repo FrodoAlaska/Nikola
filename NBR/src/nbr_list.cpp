@@ -252,9 +252,7 @@ static bool convert_audio(const ConvertEntry& entry) {
   return true;
 }
 
-static bool convert_by_type(void* params, const nikola::sizei params_size) {
-  ConvertEntry entry = *(ConvertEntry*)params;
-
+static bool convert_by_type(const ConvertEntry& entry) {
   switch(entry.res_type) {
     case nikola::RESOURCE_TYPE_TEXTURE:
       convert_texture(entry);
@@ -291,7 +289,7 @@ static bool convert_by_type(void* params, const nikola::sizei params_size) {
 /// ----------------------------------------------------------------------
 /// List context functions 
 
-void list_context_create(const nikola::FilePath& path, ListContext* list) {
+void list_context_create(ListContext* list, const nikola::FilePath& path) {
   // Lex
   
   nikola::DynamicArray<ListToken> tokens;
@@ -330,38 +328,29 @@ void list_context_create(const nikola::FilePath& path, ListContext* list) {
   }
 }
 
-void list_context_convert_by_type(ListContext* list, const nikola::ResourceType type) {
-  // @TODO (NBR)
-  // for(auto& section : list->sections) {
-  //   if(section.type != type) {
-  //     continue;
-  //   }
-  //
-  //   nikola::JobDesc job = {
-  //     .entry_func = load_resources, 
-  //
-  //     .params       = (void*)&section, 
-  //     .params_size = sizeof(ListSection),
-  //   };
-  //
-  //   nikola::job_manager_enqueue_job(job);
-  // }
+void list_context_convert_by_type(const ListContext& list, const nikola::ResourceType type, nikola::ThreadPool& pool) {
+  NIKOLA_PROFILE_FUNCTION();
+  
+  for(auto& entry : s_entries) {
+    if(entry.res_type != type) {
+      continue;
+    }
+
+    nikola::thread_pool_push_task(pool, [&]() {
+      convert_by_type(entry);
+    });
+  }
 }
 
-void list_context_convert_all(ListContext* list) {
+void list_context_convert_all(const ListContext& list, nikola::ThreadPool& pool) {
   NIKOLA_PROFILE_FUNCTION();
 
   // Convert all the resource paths
 
   for(auto& entry : s_entries) {
-    nikola::JobDesc job = {
-      .entry_func = convert_by_type, 
-
-      .params      = (void*)&entry, 
-      .params_size = sizeof(ConvertEntry),
-    };
-
-    nikola::job_manager_enqueue_job(job);
+    nikola::thread_pool_push_task(pool, [&]() {
+      convert_by_type(entry);
+    });
   }
 }
 
