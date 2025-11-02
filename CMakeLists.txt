@@ -3,11 +3,10 @@ project(nikola)
 
 ### Project Options ###
 ############################################################
-option(NIKOLA_BUILD_SHARED  "Build Nikola as a shared library"            OFF)
-option(NIKOLA_BUILD_TESTBED "Build the testbeds with Nikola"              OFF)
-option(NIKOLA_BUILD_NBR     "Build the NBR tool with Nikola"              ON)
-option(NIKOLA_BUILD_TRACY   "Build the Tracy library to enable profiling" ON)
-option(NIKOLA_DISTRIBUTE    "Enable the distribution build"               OFF)
+option(NIKOLA_BUILD_SHARED  "Build Nikola as a shared library" OFF)
+option(NIKOLA_BUILD_TESTBED "Build the testbeds with Nikola"   OFF)
+option(NIKOLA_BUILD_NBR     "Build the NBR tool with Nikola"   ON)
+option(NIKOLA_DISTRIBUTE    "Enable the distribution build"    OFF)
 
 if(NIKOLA_BUILD_SHARED)
   set(NIKOLA_BUILD_TYPE SHARED)
@@ -66,15 +65,13 @@ FetchContent_Declare(
 
 # Tracy
 
-if(NIKOLA_BUILD_TRACY)
-  FetchContent_Declare(
-    tracy 
-    URL https://github.com/wolfpld/tracy/archive/refs/tags/v0.12.2.zip
-  )
+FetchContent_Declare(
+  tracy 
+  URL https://github.com/wolfpld/tracy/archive/refs/tags/v0.12.2.zip
+)
 
-  FetchContent_MakeAvailable(tracy)
-  add_definitions("-DTRACY_ENABLE")
-endif()
+FetchContent_MakeAvailable(tracy)
+add_definitions("-DTRACY_ENABLE")
 
 FetchContent_MakeAvailable(glfw-3.4 glm OpenAL jolt)
 ############################################################
