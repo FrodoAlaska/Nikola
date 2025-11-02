@@ -1,12 +1,5 @@
 # TODO:
 
-- [] Threading
-    - [] Different threads for different tasks. 
-        - [] Perhaps there's no need to do a job manager. Just spin up a few threads to handle different areas of the engine. i.e, render thread, physics thread, etc.
-        - [] Each thread will await certain jobs. The resource thread will await and resolve resource loading threads, and etc.
-        - [] The `physics_world_step` function can run on a thread like a server
-        - [] Perhaps even have a certain thread specifically for game logic
-    - [] Documentation
 - [] Animations 
     - [] OZZ animation? I mean, it's, like, fucking _amazing_. More research needed.
     - [] Test animations with multiple instances.

@@ -48,6 +48,9 @@ void thread_pool_destroy(ThreadPool& pool) {
   // Make sure that all of the tasks are done
   while(pool.tasks.size_approx() > 0);
 
+  // Make sure that all the worker threads are 
+  // done so that we can get rid of them.
+
   pool.is_active = false;
   for(auto& worker : pool.workers) {
     worker->join(); 
