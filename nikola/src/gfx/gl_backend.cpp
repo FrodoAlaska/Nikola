@@ -141,26 +141,6 @@ struct GfxPipeline {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// Callbacks 
-
-static bool framebuffer_resize(const Event& event, const void* disp, const void* list) {
-  switch(event.type) {
-    case EVENT_WINDOW_FRAMEBUFFER_RESIZED:
-      glViewport(0, 0, event.window_framebuffer_width, event.window_framebuffer_height);
-      return true;
-    case EVENT_WINDOW_RESIZED:
-    case EVENT_WINDOW_FULLSCREEN:
-      glViewport(0, 0, event.window_new_width, event.window_new_height);
-      return true;
-    default:
-      return false;
-  }
-}
-
-/// Callbacks 
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
 /// Private functions 
 
 static void check_supported_gl_version(const i32 major, const i32 minor) {
@@ -1014,8 +994,10 @@ static void update_gl_texture_pixels(GfxTexture* texture, GLenum gl_format, GLen
                           texture->desc.data);
       break;
     case GFX_TEXTURE_2D:
+    case GFX_TEXTURE_2D_PROXY:
     case GFX_TEXTURE_IMAGE_2D:
     case GFX_TEXTURE_1D_ARRAY:
+    case GFX_TEXTURE_1D_ARRAY_PROXY:
       glTextureSubImage2D(texture->id, 
                           0, 
                           0, 0,
@@ -1052,8 +1034,9 @@ static void update_gl_texture_storage(GfxTexture* texture, GLenum in_format) {
       glTextureStorage1D(texture->id, texture->desc.mips, in_format, texture->desc.width);
       break;
     case GFX_TEXTURE_2D:
+    case GFX_TEXTURE_2D_PROXY:
     case GFX_TEXTURE_IMAGE_2D:
-    case GFX_TEXTURE_1D_ARRAY:
+    case GFX_TEXTURE_1D_ARRAY_PROXY:
       glTextureStorage2D(texture->id, texture->desc.mips, in_format, texture->desc.width, texture->desc.height);
       break;
     case GFX_TEXTURE_3D:
@@ -1112,12 +1095,6 @@ GfxContext* gfx_context_init(const GfxContextDesc& desc) {
   
   gfx->states = (GfxStates)desc.states;
   set_gfx_states(gfx);
-
-  // Listening to events 
-  
-  event_listen(EVENT_WINDOW_FRAMEBUFFER_RESIZED, framebuffer_resize);
-  event_listen(EVENT_WINDOW_RESIZED, framebuffer_resize);
-  event_listen(EVENT_WINDOW_FULLSCREEN, framebuffer_resize);
 
   // Getting the version number
   
@@ -1525,6 +1502,8 @@ GfxFramebuffer* gfx_framebuffer_create(GfxContext* gfx, const GfxFramebufferDesc
 
     buff->stencil_texture = GL_STENCIL_ATTACHMENT;
   }
+  
+  // Setting the draw and read buffers
 
   glNamedFramebufferDrawBuffers(buff->id,  
                                 buff->desc.attachments_count, 
@@ -1533,6 +1512,8 @@ GfxFramebuffer* gfx_framebuffer_create(GfxContext* gfx, const GfxFramebufferDesc
   // @TEMP (GL-Backend)
   glNamedFramebufferReadBuffer(buff->id,  
                                buff->color_textures[0]);
+
+  // Sanity check
 
   if(glCheckNamedFramebufferStatus(buff->id, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
     NIKOLA_LOG_WARN("GL-ERROR: Framebuffer %i is incomplete", buff->id);
@@ -1580,6 +1561,9 @@ GfxFramebufferDesc& gfx_framebuffer_get_desc(GfxFramebuffer* framebuffer) {
 
 void gfx_framebuffer_update(GfxFramebuffer* framebuffer, const GfxFramebufferDesc& desc) {
   NIKOLA_ASSERT(framebuffer, "Invalid GfxFramebuffer struct passed");
+
+  bool is_count_valid = (desc.attachments_count >= 0) && (desc.attachments_count < FRAMEBUFFER_ATTACHMENTS_MAX);
+  NIKOLA_ASSERT(is_count_valid, "Attachments count in GfxFramebuffer cannot exceed FRAMEBUFFER_ATTACHMENTS_MAX");
   
   framebuffer->desc        = desc; 
   framebuffer->clear_flags = get_gl_clear_flags(desc.clear_flags);
@@ -1597,31 +1581,62 @@ void gfx_framebuffer_update(GfxFramebuffer* framebuffer, const GfxFramebufferDes
   // Attach the depth attachments (if it exists)
   
   if(desc.depth_attachment) {
-    GLenum depth_type = GL_DEPTH_ATTACHMENT; 
-    if(desc.depth_attachment->desc.type == GFX_TEXTURE_DEPTH_STENCIL_TARGET) {
-      depth_type = GL_DEPTH_STENCIL_ATTACHMENT;
-    }
+    // The depth attachment can either be a regular texture 
+    // tha can be sampled from or a render buffer object for 
+    // write-only purposes.
+     
+    GLenum depth_type = get_attachment_type(desc.depth_attachment->desc.format); 
 
-    glNamedFramebufferRenderbuffer(framebuffer->id, 
-                                   depth_type, 
-                                   GL_RENDERBUFFER, 
-                                   desc.depth_attachment->id);
+    if(glIsRenderbuffer(desc.depth_attachment->id)) {
+      glNamedFramebufferRenderbuffer(framebuffer->id, 
+                                     depth_type, 
+                                     GL_RENDERBUFFER, 
+                                     desc.depth_attachment->id);
+    }
+    else {
+      glNamedFramebufferTexture(framebuffer->id, 
+                                depth_type,
+                                desc.depth_attachment->id, 
+                                0);
+    }
+    
     framebuffer->depth_texture = depth_type;
   }
   
   // Attach the stencil attachments (if it exists)
   
   if(desc.stencil_attachment) {
-    glNamedFramebufferRenderbuffer(framebuffer->id, 
-                                   GL_STENCIL_ATTACHMENT, 
-                                   GL_RENDERBUFFER, 
-                                   desc.stencil_attachment->id);
+    // The stencil attachment can either be a regular texture 
+    // tha can be sampled from or a render buffer object for 
+    // write-only purposes.
+
+    if(glIsRenderbuffer(desc.stencil_attachment->id)) {
+      glNamedFramebufferRenderbuffer(framebuffer->id, 
+                                     GL_STENCIL_ATTACHMENT, 
+                                     GL_RENDERBUFFER, 
+                                     desc.stencil_attachment->id);
+    }
+    else {
+      glNamedFramebufferTexture(framebuffer->id, 
+                                GL_STENCIL_ATTACHMENT, 
+                                desc.stencil_attachment->id, 
+                                0);
+    }
+
     framebuffer->stencil_texture = GL_STENCIL_ATTACHMENT;
   }
+
+  // Setting the draw and read buffers
 
   glNamedFramebufferDrawBuffers(framebuffer->id,  
                                 framebuffer->desc.attachments_count, 
                                 framebuffer->color_textures);
+  
+  // @TEMP (GL-Backend)
+  glNamedFramebufferReadBuffer(framebuffer->id,  
+                               framebuffer->color_textures[0]);
+
+  // Sanity check
 
   if(glCheckNamedFramebufferStatus(framebuffer->id, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
     NIKOLA_LOG_WARN("GL-ERROR: Framebuffer %i is incomplete", framebuffer->id);
@@ -2043,9 +2058,15 @@ GfxTexture* gfx_texture_create(GfxContext* gfx, const GfxTextureType tex_type, c
     case GFX_TEXTURE_1D_ARRAY:
       glCreateTextures(GL_TEXTURE_1D_ARRAY, 1, &texture->id);
       break;
+    case GFX_TEXTURE_1D_ARRAY_PROXY:
+      glCreateTextures(GL_PROXY_TEXTURE_1D_ARRAY, 1, &texture->id);
+      break;
     case GFX_TEXTURE_2D:
     case GFX_TEXTURE_IMAGE_2D:
       glCreateTextures(GL_TEXTURE_2D, 1, &texture->id);
+      break;
+    case GFX_TEXTURE_2D_PROXY:
+      glCreateTextures(GL_PROXY_TEXTURE_2D, 1, &texture->id);
       break;
     case GFX_TEXTURE_2D_ARRAY:
       glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &texture->id);
@@ -2150,40 +2171,63 @@ const u64 gfx_texture_get_bindless_id(GfxTexture* texture) {
   return texture->bindless_id;
 }
 
-void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc) {
-  NIKOLA_ASSERT(texture->gfx, "Invalid GfxContext struct passed");
-  NIKOLA_ASSERT(texture, "Invalid GfxTexture struct passed");
- 
-  texture->desc = desc;
- 
-  // Updating the formats
-  
-  GLenum in_format, gl_format, gl_pixel_type;
-  get_texture_gl_format(texture->desc.format, &in_format, &gl_format, &gl_pixel_type);
+const bool gfx_texture_reload(GfxTexture* texture, const GfxTextureDesc& desc) {
+  NIKOLA_ASSERT(texture->gfx, "Invalid GfxContext struct passed to gfx_texture_upload_data");
+  NIKOLA_ASSERT(texture, "Invalid GfxTexture struct passed to gfx_texture_upload_data");
 
-  // Updating the addressing mode
- 
-  GLenum gl_wrap_format = get_texture_gl_wrap(desc.wrap_mode);
-  
-  glTextureParameteri(texture->id, GL_TEXTURE_WRAP_S, gl_wrap_format);
-  glTextureParameteri(texture->id, GL_TEXTURE_WRAP_T, gl_wrap_format);
-  
-  // Updating the filters
-  
-  GLenum min_filter, mag_filter;
-  get_texture_gl_filter(desc.filter, &min_filter, &mag_filter); 
-  
-  glTextureParameteri(texture->id, GL_TEXTURE_MIN_FILTER, min_filter);
-  glTextureParameteri(texture->id, GL_TEXTURE_MAG_FILTER, mag_filter);
+  // Get rid of the texture in the GPU 
 
-  // Updating the comparison parametars
+  if(desc.is_bindless) {
+    glMakeTextureHandleNonResidentARB(texture->bindless_id);
+  }
+  
+  // Creating the new texutre ID based on its type
+  
+  switch(desc.type) {
+    case GFX_TEXTURE_1D:
+    case GFX_TEXTURE_IMAGE_1D:
+      glDeleteTextures(1, &texture->id);
+      glCreateTextures(GL_TEXTURE_1D, 1, &texture->id);
+      break;
+    case GFX_TEXTURE_1D_ARRAY:
+      glDeleteTextures(1, &texture->id);
+      glCreateTextures(GL_TEXTURE_1D_ARRAY, 1, &texture->id);
+      break;
+    case GFX_TEXTURE_1D_ARRAY_PROXY:
+      glDeleteTextures(1, &texture->id);
+      glCreateTextures(GL_PROXY_TEXTURE_1D_ARRAY, 1, &texture->id);
+      break;
+    case GFX_TEXTURE_2D:
+    case GFX_TEXTURE_IMAGE_2D:
+      glDeleteTextures(1, &texture->id);
+      glCreateTextures(GL_TEXTURE_2D, 1, &texture->id);
+      break;
+    case GFX_TEXTURE_2D_PROXY:
+      glDeleteTextures(1, &texture->id);
+      glCreateTextures(GL_PROXY_TEXTURE_2D, 1, &texture->id);
+      break;
+    case GFX_TEXTURE_2D_ARRAY:
+      glDeleteTextures(1, &texture->id);
+      glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &texture->id);
+      break;
+    case GFX_TEXTURE_3D:
+    case GFX_TEXTURE_IMAGE_3D:
+      glDeleteTextures(1, &texture->id);
+      glCreateTextures(GL_TEXTURE_3D, 1, &texture->id);
+      break;
+    case GFX_TEXTURE_DEPTH_TARGET:
+    case GFX_TEXTURE_STENCIL_TARGET:
+    case GFX_TEXTURE_DEPTH_STENCIL_TARGET:
+      glDeleteRenderbuffers(1, &texture->id);
+      glCreateRenderbuffers(1, &texture->id);
+      break;
+    default:
+      NIKOLA_LOG_ERROR("Invalid texture type");
+      return false;
+  } 
 
-  int compare_func = (gl_format == GL_DEPTH_COMPONENT) ? GL_COMPARE_REF_TO_TEXTURE : GL_NONE;
-  glTextureParameteri(texture->id, GL_TEXTURE_COMPARE_MODE, compare_func);
-  glTextureParameteri(texture->id, GL_TEXTURE_COMPARE_FUNC, get_gl_compare_func(desc.compare_func));
-
-  // Setting the pixel store alignment
-  set_texture_pixel_align(desc.format);
+  // Load the new texture
+  return gfx_texture_load(texture, desc);
 }
 
 void gfx_texture_upload_data(GfxTexture* texture, 
@@ -2191,7 +2235,6 @@ void gfx_texture_upload_data(GfxTexture* texture,
                              const void* data) {
   NIKOLA_ASSERT(texture->gfx, "Invalid GfxContext struct passed to gfx_texture_upload_data");
   NIKOLA_ASSERT(texture, "Invalid GfxTexture struct passed to gfx_texture_upload_data");
-  NIKOLA_ASSERT(data, "Invalid texture data passed to gfx_texture_upload_data");
  
   // Updating the formats
   
@@ -2206,8 +2249,6 @@ void gfx_texture_upload_data(GfxTexture* texture,
   texture->desc.data   = (void*)data; 
 
   // Updating the internal texture pixels
-  
-  update_gl_texture_storage(texture, in_format);
   update_gl_texture_pixels(texture, gl_format, gl_pixel_type);
 
   // Re-generate some mipmaps

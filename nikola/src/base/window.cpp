@@ -57,6 +57,7 @@ static void window_pos_callback(GLFWwindow* handle, int xpos, int ypos) {
   
   event_dispatch(Event {
     .type = EVENT_WINDOW_MOVED, 
+
     .window_new_pos_x = window->position_x,
     .window_new_pos_y = window->position_y,
   });
@@ -65,14 +66,23 @@ static void window_pos_callback(GLFWwindow* handle, int xpos, int ypos) {
 static void window_maxmize_callback(GLFWwindow* window, int maximized) {
   EventType type; 
 
+  i32 width, height;
+  glfwGetFramebufferSize(window, &width, &height);
+
   if(maximized) {
     type = EVENT_WINDOW_MAXIMIZED;
   }
   else {
     type = EVENT_WINDOW_MINIMIZED;
+    glfwGetFramebufferSize(window, &width, &height);
   }
 
-  event_dispatch(Event{.type = type});
+  event_dispatch(Event {
+    .type = type,
+
+    .window_framebuffer_width  = width,
+    .window_framebuffer_height = height,
+  });
 }
 
 static void window_focus_callback(GLFWwindow* handle, int focused) {
@@ -81,6 +91,7 @@ static void window_focus_callback(GLFWwindow* handle, int focused) {
 
   event_dispatch(Event {
     .type = EVENT_WINDOW_FOCUSED, 
+
     .window_has_focus = window->is_focused,
   });
 }
@@ -92,6 +103,7 @@ static void window_framebuffer_resize_callback(GLFWwindow* handle, int width, in
   
   event_dispatch(Event {
     .type = EVENT_WINDOW_FRAMEBUFFER_RESIZED, 
+
     .window_framebuffer_width  = width,
     .window_framebuffer_height = height,
   });
@@ -104,6 +116,7 @@ static void window_resize_callback(GLFWwindow* handle, int width, int height) {
   
   event_dispatch(Event {
     .type = EVENT_WINDOW_RESIZED, 
+
     .window_new_width  = width,
     .window_new_height = height,
   });
@@ -258,7 +271,7 @@ static void set_window_hints(Window* window) {
     glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
   }
   
-  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_MAXMIZE)) {
+  if(IS_BIT_SET(window->flags, WINDOW_FLAGS_MAXIMIZE)) {
     glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
   }
   
@@ -325,21 +338,25 @@ Window* window_open(const char* title, const i32 width, const i32 height, i32 fl
   window->old_height = height;
 
   // GLFW init and setup 
+  
   glfwInit();
   set_window_hints(window);
 
   // This will make it easier to make the window fullscreen initially
+  
   GLFWmonitor* monitor = nullptr;
   if(window->is_fullscreen) {
     monitor                = glfwGetPrimaryMonitor();
     const GLFWvidmode* vid = glfwGetVideoMode(monitor);
 
     // Reset the size of the window to the monitor's size
+    
     window->width  = vid->width;
     window->height = vid->height;
 
     // Just in case the user decides to go back to 
     // non-fullscreen mode.
+    
     window->old_position_x = 100;
     window->old_position_y = 100;
   }
@@ -354,6 +371,7 @@ Window* window_open(const char* title, const i32 width, const i32 height, i32 fl
   set_window_callbacks(window);
   
   // Something wrong...
+  
   if(!window->handle) {
     memory_free(window);
     return nullptr;
@@ -363,6 +381,7 @@ Window* window_open(const char* title, const i32 width, const i32 height, i32 fl
   glfwSetWindowUserPointer(window->handle, window);
   
   // Querying data from the GLFW window
+  
   glfwGetWindowPos(window->handle, &window->position_x, &window->position_y); 
   glfwGetCursorPos(window->handle, &window->mouse_position_x, &window->mouse_position_y);
 
@@ -370,6 +389,7 @@ Window* window_open(const char* title, const i32 width, const i32 height, i32 fl
   window->last_mouse_position_y = window->mouse_position_y;
   
   // Setting the correct initial mouse offset
+  
   window->mouse_offset_x = window->last_mouse_position_x - window->mouse_position_x;
   window->mouse_offset_y = window->last_mouse_position_y - window->mouse_position_y;
 
@@ -377,6 +397,7 @@ Window* window_open(const char* title, const i32 width, const i32 height, i32 fl
   glfwMakeContextCurrent(window->handle);
 
   // Set input mode
+  
   i32 mode = window->is_cursor_shown ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED;
   glfwSetInputMode(window->handle, GLFW_CURSOR, mode);
   
@@ -472,6 +493,8 @@ void window_set_fullscreen(Window* window, const bool fullscreen) {
   window->is_fullscreen = fullscreen; 
   const GLFWvidmode* video_mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
+  // Enabling or disabling fullscreen
+
   if(fullscreen) {
     window->old_width  = window->width;
     window->old_height = window->height;
@@ -494,12 +517,19 @@ void window_set_fullscreen(Window* window, const bool fullscreen) {
   }
   
   // Firing an event for the internal systems
-  
+ 
+  i32 framebuffer_width, framebuffer_height;
+  glfwGetFramebufferSize(window->handle, &framebuffer_width, &framebuffer_height);
+
   Event event = {
     .type = EVENT_WINDOW_FULLSCREEN, 
     
     .window_new_width     = video_mode->width, 
     .window_new_height    = video_mode->height,
+    
+    .window_framebuffer_width  = framebuffer_width,
+    .window_framebuffer_height = framebuffer_height,
+
     .window_is_fullscreen = fullscreen,
   };
   event_dispatch(event, window);

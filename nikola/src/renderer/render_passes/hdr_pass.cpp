@@ -19,6 +19,7 @@ void hdr_pass_init(Window* window) {
 
   pass_desc.prepare_func = hdr_pass_prepare;
   pass_desc.sumbit_func  = hdr_pass_sumbit;
+  pass_desc.resize_func  = hdr_pass_on_resize;
 
   // Reosurce init
 
@@ -82,6 +83,21 @@ void hdr_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
 
   pass->outputs[0]    = pass->framebuffer_desc.color_attachments[0];
   pass->outputs_count = 1;
+}
+
+void hdr_pass_on_resize(RenderPass* pass, const IVec2& new_size) {
+  pass->frame_size = new_size;
+
+  // Updating the color attachment
+
+  GfxTextureDesc& color_desc = gfx_texture_get_desc(pass->framebuffer_desc.color_attachments[0]);
+
+  color_desc.width  = (u32)new_size.x;
+  color_desc.height = (u32)new_size.y;
+  gfx_texture_reload(pass->framebuffer_desc.color_attachments[0], color_desc);
+
+  // Update the framebuffer
+  gfx_framebuffer_update(pass->framebuffer, pass->framebuffer_desc);
 }
 
 /// HDR pass functions

@@ -19,6 +19,7 @@ void billboard_pass_init(Window* window) {
 
   pass_desc.prepare_func = billboard_pass_prepare;
   pass_desc.sumbit_func  = billboard_pass_sumbit;
+  pass_desc.resize_func  = billboard_pass_on_resize;
 
   // Reosurce init
 
@@ -127,6 +128,29 @@ void billboard_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
 
   pass->outputs[0]    = pass->framebuffer_desc.color_attachments[0];
   pass->outputs_count = 1;
+}
+
+void billboard_pass_on_resize(RenderPass* pass, const IVec2& new_size) {
+  pass->frame_size = new_size;
+
+  // Updating the color attachment
+
+  GfxTextureDesc& color_desc = gfx_texture_get_desc(pass->framebuffer_desc.color_attachments[0]);
+
+  color_desc.width  = (u32)new_size.x;
+  color_desc.height = (u32)new_size.y;
+  gfx_texture_reload(pass->framebuffer_desc.color_attachments[0], color_desc);
+
+  // Updating the depth attachment
+
+  GfxTextureDesc& depth_desc = gfx_texture_get_desc(pass->framebuffer_desc.depth_attachment);
+
+  depth_desc.width  = (u32)new_size.x;
+  depth_desc.height = (u32)new_size.y;
+  gfx_texture_reload(pass->framebuffer_desc.depth_attachment, depth_desc);
+
+  // Update the framebuffer
+  gfx_framebuffer_update(pass->framebuffer, pass->framebuffer_desc);
 }
 
 /// Billboard pass functions

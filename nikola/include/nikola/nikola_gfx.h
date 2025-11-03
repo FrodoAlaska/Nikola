@@ -394,11 +394,17 @@ enum GfxTextureType {
   /// Creates a 2D texture.
   GFX_TEXTURE_2D,
   
+  /// Creates a mutable 2D texture.
+  GFX_TEXTURE_2D_PROXY,
+  
   /// Creates a 3D texture.
   GFX_TEXTURE_3D,
   
   /// Creates a 1D texture array.
   GFX_TEXTURE_1D_ARRAY,
+  
+  /// Creates a mutable 1D texture array.
+  GFX_TEXTURE_1D_ARRAY_PROXY,
   
   /// Creates a 2D texture array.
   GFX_TEXTURE_2D_ARRAY,
@@ -1506,19 +1512,24 @@ NIKOLA_API GfxTextureDesc& gfx_texture_get_desc(GfxTexture* texture);
 /// Retrieve the internal bindless ID of `texture`.
 NIKOLA_API const u64 gfx_texture_get_bindless_id(GfxTexture* texture);
 
-/// Update the `texture`'s information from the given `desc`.
+/// Reload the data and dimensions of the given `texture` using the information found in `desc`, 
+/// returning `true` if all goes well, and `false` otherwise.
 ///
-/// @NOTE: This functions will NOT resend the pixels in `desc`.
-NIKOLA_API void gfx_texture_update(GfxTexture* texture, const GfxTextureDesc& desc);
+/// @NOTE: This is equivalent to calling `gfx_texture_destroy` and then `gfx_texture_create`, 
+/// but instead, `texture` stays a valid pointer throughout the reloading process. 
+/// However, the internal ID of `texture` will potentially change. So, if this texture 
+/// is bound to any framebuffer, it would have to be rebound again with the new ID.
+NIKOLA_API const bool gfx_texture_reload(GfxTexture* texture, const GfxTextureDesc& desc);
 
-/// Reupload the data of `texture`, using the given `width`, `height`, `depth`, and `data`.
+/// Reupload the data of `texture`, using the given `depth` and `data`.
 /// The `depth` parametar can be left as `0` for any non-3D textures.
 ///
 /// @NOTE: The internal `GfxTextureDesc` of `texture` will be used to supply information 
-/// about the `data`.
-NIKOLA_API void gfx_texture_upload_data(GfxTexture* texture, 
-                                        const i32 width, const i32 height, const i32 depth, 
-                                        const void* data);
+/// such as the filter type, wrap mode, etc.
+///
+/// @NOTE: Sadly, OpenGL does not allow to resize the texture after creation. 
+/// If you do wish to resize a texture, use `gfx_texture_reload` instead.
+NIKOLA_API void gfx_texture_upload_data(GfxTexture* texture, const i32 depth, const void* data);
 
 /// Texture functions 
 ///---------------------------------------------------------------------------------------------------------------------

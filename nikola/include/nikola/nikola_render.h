@@ -117,8 +117,9 @@ struct RenderQueueEntry;
 
 /// Render pass callbacks
 
-using RenderPassPrepareFn = void(*)(RenderPass* pass, const FrameData& data);
-using RenderPassSumbitFn  = void(*)(RenderPass* pass, const RenderQueueEntry& queue);
+using RenderPassPrepareFn  = void(*)(RenderPass* pass, const FrameData& data);
+using RenderPassSumbitFn   = void(*)(RenderPass* pass, const RenderQueueEntry& queue);
+using RenderPassOnResizeFn = void(*)(RenderPass* pass, const IVec2& new_size);
 
 /// Callbacks
 ///---------------------------------------------------------------------------------------------------------------------
@@ -217,8 +218,9 @@ struct RenderQueueEntry {
 struct RenderPassDesc {
   /// Render pass functions to be called.
 
-  RenderPassPrepareFn prepare_func; 
-  RenderPassSumbitFn sumbit_func;
+  RenderPassPrepareFn prepare_func = nullptr; 
+  RenderPassSumbitFn sumbit_func   = nullptr;
+  RenderPassOnResizeFn resize_func = nullptr;
 
   /// Resources to be extrated to the render pass.
 
@@ -257,6 +259,8 @@ struct RenderPass {
 
   RenderPassPrepareFn prepare_func; 
   RenderPassSumbitFn sumbit_func;
+  RenderPassOnResizeFn resize_func;
+
   RenderQueueType queue_type;
 
   /// Framebuffer information.

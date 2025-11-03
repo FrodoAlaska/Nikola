@@ -89,6 +89,8 @@ void light_pass_prepare(RenderPass* pass, const FrameData& data);
 
 void light_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue);
 
+void light_pass_on_resize(RenderPass* pass, const IVec2& new_size);
+
 /// Light pass functions
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -100,6 +102,8 @@ void billboard_pass_init(Window* window);
 void billboard_pass_prepare(RenderPass* pass, const FrameData& data);
 
 void billboard_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue);
+
+void billboard_pass_on_resize(RenderPass* pass, const IVec2& new_size);
 
 /// Billboard pass functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -113,6 +117,8 @@ void hdr_pass_prepare(RenderPass* pass, const FrameData& data);
 
 void hdr_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue);
 
+void hdr_pass_on_resize(RenderPass* pass, const IVec2& new_size);
+
 /// HDR pass functions
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -124,6 +130,8 @@ void debug_pass_init(Window* window);
 void debug_pass_prepare(RenderPass* pass, const FrameData& data);
 
 void debug_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue);
+
+void debug_pass_on_resize(RenderPass* pass, const IVec2& new_size);
 
 /// Debug pass functions
 ///---------------------------------------------------------------------------------------------------------------------

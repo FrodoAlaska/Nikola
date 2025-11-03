@@ -33,8 +33,8 @@ enum WindowFlags {
   /// Minimize the window on creation.
   WINDOW_FLAGS_MINIMIZE            = 1 << 4, 
   
-  /// Maxmize the window on creation.
-  WINDOW_FLAGS_MAXMIZE             = 1 << 5, 
+  /// Maximize the window on creation.
+  WINDOW_FLAGS_MAXIMIZE             = 1 << 5, 
   
   /// Disable window decoration such as borders, widgets, etc. 
   /// Decorations will be enabled by default.
@@ -69,7 +69,7 @@ enum WindowFlags {
 ///   - `WINDOW_FLAGS_FOCUS_ON_CREATE`     = The window will gain focus on creation.  
 ///   - `WINDOW_FLAGS_FOCUS_ON_SHOW`       = The window will always gain focus when shown. 
 ///   - `WINDOW_FLAGS_MINIMIZE`            = Minimize the window on creation. 
-///   - `WINDOW_FLAGS_MAXMIZE`             = Maxmize the window on creation. 
+///   - `WINDOW_FLAGS_MAXIMIZE`            = Maximize the window on creation. 
 ///   - `WINDOW_FLAGS_DISABLE_DECORATIONS` = Disable window decoration such as borders, widgets, etc. Decorations will be enabled by default.
 ///   - `WINDOW_FLAGS_CENTER_MOUSE`        = Center the mouse position relative to the screen on startup.
 ///   - `WINDOW_FLAGS_HIDE_CURSOR`         = Hide the cursor at creation. The cursos will be shown by default.

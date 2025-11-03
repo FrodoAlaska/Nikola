@@ -4,6 +4,7 @@
 #include "nikola/nikola_math.h"
 #include "nikola/nikola_resources.h"
 #include "nikola/nikola_timer.h"
+#include "nikola/nikola_event.h"
 
 #include "render_passes/render_passes.h"
 
@@ -423,6 +424,28 @@ static void render_queue_push_instanced(const RenderQueueType type,
 /// Private functions
 /// ----------------------------------------------------------------------
 
+/// ----------------------------------------------------------------------
+/// Callbacks
+
+static bool window_resized_callback(const Event& event, const void* dispatcher, const void* listener) {
+  // Resize each render pass
+  
+  IVec2 new_size = IVec2(event.window_framebuffer_width, event.window_framebuffer_height);
+
+  for(RenderPass& pass : s_renderer.passes_pool) {
+    if(!pass.resize_func) {
+      continue;
+    }
+    
+    pass.resize_func(&pass, new_size);
+  }
+
+  return true; 
+}
+
+/// Callbacks
+/// ----------------------------------------------------------------------
+
 ///---------------------------------------------------------------------------------------------------------------------
 /// Renderer functions
 
@@ -461,6 +484,12 @@ void renderer_init(Window* window) {
 
   // Batch renderer init
   batch_renderer_init();
+
+  // Listen to events
+
+  event_listen(EVENT_WINDOW_MAXIMIZED, window_resized_callback);
+  event_listen(EVENT_WINDOW_FRAMEBUFFER_RESIZED, window_resized_callback);
+  event_listen(EVENT_WINDOW_FULLSCREEN, window_resized_callback);
 
   NIKOLA_LOG_INFO("Successfully initialized the renderer context");
 }
@@ -655,6 +684,7 @@ RenderPass* renderer_create_pass(const RenderPassDesc& desc, const String& debug
 
   pass->prepare_func = desc.prepare_func;
   pass->sumbit_func  = desc.sumbit_func;
+  pass->resize_func  = desc.resize_func;
   pass->queue_type   = desc.queue_type;
   
   // Render targets init
