@@ -31,6 +31,8 @@ struct GUIState {
   ImGuiIO io_config;
   HashMap<String, Vec3> rotations;
 
+  GUIWindowFlags window_flags;
+
   f32 big_step   = 0.01f; 
   f32 small_step = 0.001f; 
 
@@ -104,8 +106,8 @@ bool gui_init(Window* window) {
 
   // Setting context flags
   
-  io.ConfigFlags = ImGuiConfigFlags_NavEnableKeyboard |
-                   ImGuiConfigFlags_DockingEnable;
+  io.ConfigFlags     = ImGuiConfigFlags_DockingEnable;
+  s_gui.window_flags = GUI_WINDOW_FLAGS_NONE;
 
   // Dark mode WOOOOOOOAH! 
   ImGui::StyleColorsDark();
@@ -154,8 +156,12 @@ void gui_end() {
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
+void gui_set_window_flags(const i32 flags) {
+  s_gui.window_flags = (GUIWindowFlags)flags;
+}
+
 bool gui_begin_panel(const char* name) {
-  return ImGui::Begin(name);
+  return ImGui::Begin(name, nullptr, (ImGuiWindowFlags)s_gui.window_flags);
 }
 
 void gui_end_panel() {
@@ -654,28 +660,32 @@ void gui_edit_timer(const char* name, Timer* timer) {
 void gui_edit_physics_body(const char* name, PhysicsBody* body) {
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
-  
-  // Position
-  {
-    Vec3 position = physics_body_get_position(body);
-    if(ImGui::DragFloat3("Position", &position[0], s_gui.big_step)) {
-      physics_body_set_position(body, position);
-    }
-  }
+ 
+  PhysicsBodyType body_type = physics_body_get_type(body);
 
-  // Linear velocity
-  {
-    Vec3 linear = physics_body_get_linear_velocity(body);
-    if(ImGui::DragFloat3("Linear velocity", &linear[0], s_gui.big_step)) {
-      physics_body_set_linear_velocity(body, linear);
+  if(body_type != PHYSICS_BODY_STATIC) {
+    // Position
+    {
+      Vec3 position = physics_body_get_position(body);
+      if(ImGui::DragFloat3("Position", &position[0], s_gui.big_step)) {
+        physics_body_set_position(body, position);
+      }
     }
-  }
 
-  // Angular velocity
-  {
-    Vec3 angular = physics_body_get_angular_velocity(body);
-    if(ImGui::DragFloat3("Angular velocity", &angular[0], s_gui.big_step)) {
-      physics_body_set_angular_velocity(body, angular);
+    // Linear velocity
+    {
+      Vec3 linear = physics_body_get_linear_velocity(body);
+      if(ImGui::DragFloat3("Linear velocity", &linear[0], s_gui.big_step)) {
+        physics_body_set_linear_velocity(body, linear);
+      }
+    }
+
+    // Angular velocity
+    {
+      Vec3 angular = physics_body_get_angular_velocity(body);
+      if(ImGui::DragFloat3("Angular velocity", &angular[0], s_gui.big_step)) {
+        physics_body_set_angular_velocity(body, angular);
+      }
     }
   }
 
@@ -699,7 +709,7 @@ void gui_edit_physics_body(const char* name, PhysicsBody* body) {
 
   // Body type
   {
-    i32 current_type    = (i32)physics_body_get_type(body);
+    i32 current_type    = (i32)body_type;
     const char* options = "Static\0Dynamic\0Kinematic\0\0";
 
     if(ImGui::Combo("Type", &current_type, options)) {

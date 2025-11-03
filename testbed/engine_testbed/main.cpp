@@ -22,8 +22,8 @@ int main(int argc, char** argv) {
     .render_gui_fn = app_render_gui, 
 
     .window_title  = "Engine Testbed", 
-    .window_width  = 1280, 
-    .window_height = 720, 
+    .window_width  = 1600, 
+    .window_height = 900, 
     .window_flags  = win_flags,
 
     .args_values = argv, 

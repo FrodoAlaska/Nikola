@@ -6,7 +6,7 @@
 /// ----------------------------------------------------------------------
 /// Consts 
 
-const nikola::sizei MAX_OBJECTS = 24;
+const nikola::sizei MAX_OBJECTS = 8;
 
 /// Consts 
 /// ----------------------------------------------------------------------
@@ -162,7 +162,9 @@ void app_render_gui(nikola::App* app) {
 
   nikola::gui_begin();
   
-  nikola::gui_debug_info();
+  nikola::gui_set_window_flags(nikola::GUI_WINDOW_FLAGS_NO_COLLAPSE | nikola::GUI_WINDOW_FLAGS_NO_MOVE);
+
+  ImGui::SetNextWindowPos(ImVec2(10.0f, 10.0f));
   nikola::gui_begin_panel("Scene");
   
   // Frame
