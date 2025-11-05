@@ -334,11 +334,9 @@ static void render_queue_create(const RenderQueueType type) {
 static void render_queue_push(const RenderQueueType type, Mesh* mesh, const Transform& transform, Material* material) {
   RenderQueueEntry* entry = &s_renderer.queues[type];
   
-  // Quick frustum culling test
-
-  if(!camera_check_intersection(s_renderer.frame_data->camera, transform)) { // @TODO (Renderer): Does nothing...
-    return; // Sorry... not in view...
-  }
+  // 
+  // @TODO (Renderer): Implement frustum culling test here..
+  //
 
   // Command
 
@@ -346,6 +344,7 @@ static void render_queue_push(const RenderQueueType type, Mesh* mesh, const Tran
     .elements_count = (u32)mesh->indices.size(),
     .first_element  = (u32)entry->indices.size(),
     .base_vertex    = (i32)(entry->vertices.size() / vertex_get_components_count(entry->vertex_flags)),
+    .base_instance  = (u32)entry->transforms.size(),
   };
   entry->commands.push_back(cmd);
  

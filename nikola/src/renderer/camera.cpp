@@ -203,14 +203,21 @@ void camera_update(Camera& cam) {
     return;
   }
 
+  // View-projection matrix calculation
+
   cam.view            = mat4_look_at(cam.position, cam.position + cam.front, cam.up);
   cam.projection      = mat4_perspective((cam.zoom * DEG2RAD), cam.aspect_ratio, cam.near, cam.far);
   cam.view_projection = (cam.projection * cam.view);
+
+  // Direction calculation
 
   cam.direction.x = nikola::cos(cam.yaw   * DEG2RAD) * nikola::cos(cam.pitch * DEG2RAD);
   cam.direction.y = nikola::sin(cam.pitch * DEG2RAD);
   cam.direction.z = nikola::sin(cam.yaw   * DEG2RAD) * nikola::cos(cam.pitch * DEG2RAD);
   cam.front       = vec3_normalize(cam.direction);
+
+  // Re-calculating frustrum corners
+  calculate_frustum_corners(cam);
 }
 
 void camera_follow(Camera& cam, const Vec3& target, const Vec3& offset) {

@@ -122,6 +122,8 @@ static const char* buffer_type_str(const GfxBufferType type) {
       return "GFX_BUFFER_UNIFORM";
     case GFX_BUFFER_SHADER_STORAGE: 
       return "GFX_BUFFER_SHADER_STORAGE";
+    case GFX_BUFFER_DRAW_INDIRECT: 
+      return "GFX_BUFFER_DRAW_INDIRECT";
     default:
       return "INVALID BUFFER TYPE";
   }
@@ -133,8 +135,14 @@ static const char* texture_type_str(const GfxTextureType type) {
       return "GFX_TEXTURE_1D";
     case GFX_TEXTURE_2D:
       return "GFX_TEXTURE_2D";
+    case GFX_TEXTURE_2D_PROXY:
+      return "GFX_TEXTURE_2D_PROXY";
     case GFX_TEXTURE_3D:
       return "GFX_TEXTURE_3D";
+    case GFX_TEXTURE_1D_ARRAY:
+      return "GFX_TEXTURE_1D_ARRAY";
+    case GFX_TEXTURE_1D_ARRAY_PROXY:
+      return "GFX_TEXTURE_1D_ARRAY_PROXY";
     case GFX_TEXTURE_2D_ARRAY:
       return "GFX_TEXTURE_2D_ARRAY";
     case GFX_TEXTURE_IMAGE_1D:

@@ -86,7 +86,7 @@ void shadow_pass_prepare(RenderPass* pass, const FrameData& data) {
   center /= 8.0f;
 
   // Calculate the light's view matrix for use later 
-  s_state.light_view = mat4_look_at(center + data.dir_light.direction, center, Vec3(0.0f, 1.0f, 0.0f));
+  s_state.light_view = mat4_look_at(center + -data.dir_light.direction, center, Vec3(0.0f, 1.0f, 0.0f));
 
   // Calculate the extents of the frustrum
 

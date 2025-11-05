@@ -95,7 +95,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::transform_scale(app->ground_transform, nikola::Vec3(32.0f, 0.1f, 32.0f));
  
   for(nikola::sizei i = 0; i < MAX_OBJECTS; i++) {
-    nikola::transform_translate(app->transforms[i], nikola::Vec3((i / 4) * 15.0f, 0.5f, (i % 4) * 15.0f));
+    nikola::transform_translate(app->transforms[i], nikola::Vec3((i / 4) * 15.0f, 1.5f, (i % 4) * 15.0f));
     nikola::transform_scale(app->transforms[i], nikola::Vec3(0.2f));
   }
 
@@ -144,7 +144,7 @@ void app_render(nikola::App* app) {
   // Render the objects
   
   nikola::renderer_queue_mesh(app->mesh_id, app->ground_transform, app->ground_material);
-  nikola::renderer_queue_model_instanced(app->model_id, app->transforms, MAX_OBJECTS);
+  nikola::renderer_queue_model_instanced(app->model_id, app->transforms, 2);
 
   nikola::renderer_end();
   
