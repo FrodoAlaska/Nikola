@@ -156,7 +156,6 @@ void particles_update(const f64 delta_time) {
 
     // Send out a render command for the emitter 
     // @TEMP (Particles)
-
     
     renderer_queue_billboard_instanced(s_manager.shape_id, 
                                        emitter->transforms, 

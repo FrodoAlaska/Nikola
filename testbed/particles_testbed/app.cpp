@@ -36,14 +36,15 @@ static void init_resources(nikola::App* app) {
   app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
 
   // Model init
-  app->building_id = nikola::resources_push_model(app->res_group_id, "models/bridge.nbr");
+  app->building_id = nikola::resources_push_model(app->res_group_id, "models/medieval_bridge.nbr");
 
   // Font init
   app->font_id = nikola::resources_push_font(app->res_group_id, "fonts/bit5x3.nbr");
 
   // Material init
+  
   nikola::MaterialDesc mat_desc = {
-    .diffuse_id = nikola::resources_push_texture(app->res_group_id, "textures/paviment.nbr"),
+    .albedo_id = nikola::resources_push_texture(app->res_group_id, "textures/paviment.nbr"),
   };
   app->material_id = nikola::resources_push_material(app->res_group_id, mat_desc);
 }
@@ -66,15 +67,16 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::gui_init(window);
 
   // Camera init
+  
   nikola::CameraDesc cam_desc = {
     .position     = nikola::Vec3(-40.0f, 2.5f, -18.0f),
     .target       = nikola::Vec3(-3.0f, 2.5f, 0.0f),
     .up_axis      = nikola::Vec3(0.0f, 1.0f, 0.0f),
     .aspect_ratio = nikola::window_get_aspect_ratio(app->window),
-    .move_func    = nikola::camera_free_move_func,
   };
-  nikola::camera_create(&app->frame_data.camera, cam_desc);
+
   app->frame_data.camera.exposure = 1.0f;
+  nikola::camera_create(&app->frame_data.camera, cam_desc);
 
   // Resoruces init
   init_resources(app);
@@ -85,7 +87,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::transform_scale(app->transforms[0], nikola::Vec3(64.0f, 0.1f, 64.0f));
   
   nikola::transform_translate(app->transforms[1], nikola::Vec3(5.0f, 0.2f, 70.0f));
-  nikola::transform_scale(app->transforms[1], nikola::Vec3(1.0f));
+  nikola::transform_scale(app->transforms[1], nikola::Vec3(10.0f));
   nikola::transform_rotate(app->transforms[1], nikola::Vec3(-90.0f * nikola::DEG2RAD, 0.0f, 0.0f));
 
   // Lights init
@@ -93,7 +95,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   app->frame_data.dir_light.direction = nikola::Vec3(1.0f, -1.0f, 1.0f);
   app->frame_data.dir_light.color     = nikola::Vec3(1.0f);
 
-  app->frame_data.ambient = nikola::Vec3(0.0f);
+  app->frame_data.ambient = nikola::Vec3(1.0f);
  
   // Particle emitter init
 
@@ -106,7 +108,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
     .lifetime       = 2.0f,
     .gravity_factor = -4.5f,
 
-    .count    = 64,
+    .count = 64,
   };
 
   return app;
@@ -121,24 +123,30 @@ void app_shutdown(nikola::App* app) {
 
 void app_update(nikola::App* app, const nikola::f64 delta_time) {
   // Quit the application when the specified exit key is pressed
+  
   if(nikola::input_key_pressed(nikola::KEY_ESCAPE)) {
     nikola::event_dispatch(nikola::Event{.type = nikola::EVENT_APP_QUIT});
     return;
   }
 
   // Disable/enable the GUI
+  
   if(nikola::input_key_pressed(nikola::KEY_F1)) {
     app->has_editor                  = !app->has_editor;
     app->frame_data.camera.is_active = !app->has_editor;
 
     nikola::input_cursor_show(app->has_editor);
   }
-    
+  
+  // Emit particles
+
   if(nikola::input_key_pressed(nikola::KEY_SPACE)) {
     nikola::particles_emit(app->particle_desc);
   }
 
   // Update the camera
+  
+  nikola::camera_free_move_func(app->frame_data.camera);
   nikola::camera_update(app->frame_data.camera);
 }
 
@@ -148,8 +156,8 @@ void app_render(nikola::App* app) {
 
   // Render the objects
   
-  nikola::renderer_queue_command(nikola::RENDERABLE_MESH, app->mesh_id, app->transforms[0], app->material_id);
-  nikola::renderer_queue_command(nikola::RENDERABLE_MODEL, app->building_id, app->transforms[1]);
+  nikola::renderer_queue_mesh(app->mesh_id, app->transforms[0], app->material_id);
+  nikola::renderer_queue_model(app->building_id, app->transforms[1]);
 
   nikola::renderer_end();
   
@@ -166,12 +174,13 @@ void app_render_gui(nikola::App* app) {
   }
 
   nikola::gui_begin();
-  
-  nikola::gui_debug_info();
-  
   nikola::gui_begin_panel("Scene");
- 
+
+  // Frame 
+  nikola::gui_edit_frame("Frame", &app->frame_data);
+
   // Entities
+  
   if(ImGui::CollapsingHeader("Entities")) {
     nikola::gui_edit_transform("Mesh", &app->transforms[0]);
     nikola::gui_edit_transform("Model", &app->transforms[1]);
@@ -179,48 +188,12 @@ void app_render_gui(nikola::App* app) {
   }
 
   // Resources
+  
   if(ImGui::CollapsingHeader("Resources")) {
     nikola::gui_edit_material("Material", nikola::resources_get_material(app->material_id));
   }
-  
-  // Lights
-  if(ImGui::CollapsingHeader("Lights")) {
-    nikola::gui_edit_directional_light("Directional", &app->frame_data.dir_light);
-
-    for(int i = 0; i < app->frame_data.point_lights.size(); i++) {
-      nikola::PointLight* light = &app->frame_data.point_lights[i];
-      nikola::String light_name = ("Point " + std::to_string(i));
-
-      nikola::gui_edit_point_light(light_name.c_str(), light);
-    }
-    
-    for(int i = 0; i < app->frame_data.spot_lights.size(); i++) {
-      nikola::SpotLight* light = &app->frame_data.spot_lights[i];
-      nikola::String light_name = ("Spot " + std::to_string(i));
-
-      nikola::gui_edit_spot_light(light_name.c_str(), light);
-    }
- 
-    ImGui::Separator();
-    if(ImGui::Button("Add PointLight")) {
-      nikola::Vec3 point_pos = nikola::Vec3(10.0f, 5.0f, 10.0f);
-      app->frame_data.point_lights.push_back(nikola::PointLight(point_pos));
-    }
-    
-    if(ImGui::Button("Add SpotLight")) {
-      nikola::Vec3 spot_pos = nikola::Vec3(10.0f, 5.0f, 10.0f);
-      app->frame_data.spot_lights.push_back(nikola::SpotLight());
-    }
-  }
-
-  // Camera
-  if(ImGui::CollapsingHeader("Camera")) {
-    nikola::gui_edit_camera("Editor Camera", &app->frame_data.camera); 
-    ImGui::DragFloat3("Ambient", &app->frame_data.ambient[0], 0.1f, 0.0f, 1.0f);
-  }
 
   nikola::gui_end_panel();
-  
   nikola::gui_end();
 }
 

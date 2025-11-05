@@ -551,7 +551,7 @@ void renderer_begin(FrameData& data) {
 
 void renderer_end() {
   NIKOLA_PROFILE_FUNCTION();
-
+  
   // Update the buffers of each queue
 
   for(sizei i = 0; i < RENDER_QUEUES_MAX; i++) {

@@ -38,7 +38,7 @@ inline nikola::GfxShaderDesc generate_billboard_shader() {
         vs_out.tex_coords     = aTexCoords;
         vs_out.normal         = aNormal; 
         vs_out.camera_pos     = u_camera_pos;
-        vs_out.material_index = gl_DrawID;
+        vs_out.material_index = gl_BaseInstance + gl_InstanceID;
         
         // @NOTE (23/7/2025, Mohamed): 
         //
@@ -64,8 +64,7 @@ inline nikola::GfxShaderDesc generate_billboard_shader() {
         view[2][1] = 0;
         view[2][2] = 1;
 
-        int index   = gl_BaseInstance + gl_InstanceID;
-        gl_Position = u_projection * view * u_model[index] * vec4(aPos, 1.0);
+        gl_Position = u_projection * view * u_model[vs_out.material_index] * vec4(aPos, 1.0);
       }
     )",
 
