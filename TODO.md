@@ -1,8 +1,17 @@
 # TODO:
 
+- [] Improve UI 
+    - [] Make the system interface
+    - [] Make the render interface
+    - [] Renderer context
+    - [] Documentation
 - [] Animations 
     - [] OZZ animation? I mean, it's, like, fucking _amazing_. More research needed.
     - [] Test animations with multiple instances.
+    - [] Documentation
+- [] GPU Particles
+    - [] GPU-based particle system, using compute shaders.
+    - [] Have a lot of options to edit the shape, distribution, and gravity. Perhaps save it in a file?
     - [] Documentation
 - [] Resources 
     - [] Material file format like `.mat` or something?
@@ -13,15 +22,13 @@
         - It's almost like a description of how the resources will be used. 
         - We can also take it a step further and make it edit lights and their parameters.
     - [] Documentation
-- [] GPU Particles
-    - [] GPU-based particle system, using compute shaders.
-    - [] Have a lot of options to edit the shape, distribution, and gravity. Perhaps save it in a file?
-    - [] Documentation
 - [] Scenes?
 - [] Performance v2.0
+    - [] You _have_ to find a way to improve the run time of the physics 
+        - [] Put the `physics_world_step` function on a separate thread, almost like running a server
+        - [] The `event_dispatch` function should be thread-safe. However, I'm not sure. It does only iterate through the events and calls functions. Test it, nonetheless.
     - [] Improve the load times of the resource manager
     - [] NBR conversion time enhancement
-    - [] Simple frustum culling
 - [] Renderer: Beautify v2.0 
     - This one is just a thinking exersice. We don't want to add every rendering technique under the sun to "beautify" the engine's look. 
     - [] Gaussian blur
@@ -33,15 +40,6 @@
     - [] Decal rendering 
     - [] Add noise functions to the math library
     - [] Terrain rendering and procedural generation (terrain generation using `stb_perlin` and loading from heightmap)
-    - [] Documentation
-- [] Data Structures
-    - [] Create your own string library 
-    - [] Dynamic array 
-    - [] Custom memory allocaters
-    - [] Singly-linked and doubly-linked lists
-    - [] Stacks and queues
-    - [] Ring buffers
-    - [] Hash map
     - [] Documentation
 
 ## BUGS:

@@ -107,6 +107,9 @@ NIKOLA_API const bool window_is_shown(const Window* window);
 /// Retrieve the current size of the `window` context.
 NIKOLA_API void window_get_size(const Window* window, i32* width, i32* height);
 
+/// Retrieve the current framebuffer size of the `window` context.
+NIKOLA_API void window_get_framebuffer_size(const Window* window, i32* width, i32* height);
+
 /// Retrieve the internal native handle of `window`.
 NIKOLA_API void* window_get_handle(const Window* window);
 

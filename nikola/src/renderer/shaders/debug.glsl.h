@@ -25,7 +25,7 @@ inline nikola::GfxShaderDesc generate_debug_shader() {
         vec3 u_camera_pos;
       };
  
-      layout(std140, binding = 1) uniform ModelsBuffer {
+      layout(std430, binding = 1) readonly buffer ModelsBuffer {
         mat4 u_model[4096];
       };
 

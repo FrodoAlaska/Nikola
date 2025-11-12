@@ -32,6 +32,7 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/resources/resource_manager.cpp
   ${NIKOLA_SRC_DIR}/resources/shader_context.cpp
   ${NIKOLA_SRC_DIR}/resources/geometry_loader.cpp
+  ${NIKOLA_SRC_DIR}/resources/nbr.cpp
 
   # Filesystem
   ${NIKOLA_SRC_DIR}/filesystem/file.cpp
@@ -49,6 +50,7 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/renderer/camera.cpp
   ${NIKOLA_SRC_DIR}/renderer/renderer.cpp
   ${NIKOLA_SRC_DIR}/renderer/batch_renderer.cpp
+  ${NIKOLA_SRC_DIR}/renderer/ui_renderer.cpp
   ${NIKOLA_SRC_DIR}/renderer/particles.cpp
   ${NIKOLA_SRC_DIR}/renderer/animator.cpp
 

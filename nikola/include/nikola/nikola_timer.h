@@ -45,15 +45,14 @@ NIKOLA_API String perf_timer_to_string(PerfTimer& timer);
 /// Macros
 
 #if NIKOLA_BUILD_DEBUG == 1 
-  #define NIKOLA_PERF_TIMER_BEGIN(timer) nikola::perf_timer_start(timer);
+  #define NIKOLA_PERF_TIMER_BEGIN(timer)    nikola::perf_timer_start(timer);
   #define NIKOLA_PERF_TIMER_END(timer, tag) nikola::perf_timer_stop(timer); NIKOLA_LOG_TRACE("\'%s\' took %s to run", tag, nikola::perf_timer_to_string(timer).c_str());
 #else
   #define NIKOLA_PERF_TIMER_BEGIN(timer)
   #define NIKOLA_PERF_TIMER_END(timer, tag)
 #endif
 
-#define NIKOLA_PROFILE_FUNCTION() ZoneScoped
-
+#define NIKOLA_PROFILE_FUNCTION()           ZoneScoped
 #define NIKOLA_PROFILE_FUNCTION_NAMED(name) ZoneScopedN(name)
 
 /// Macros

@@ -85,7 +85,6 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
     .target       = nikola::Vec3(-3.0f, 0.0f, 0.0f),
     .up_axis      = nikola::Vec3(0.0f, 1.0f, 0.0f),
     .aspect_ratio = nikola::window_get_aspect_ratio(app->window),
-    .move_func    = nikola::camera_free_move_func,
   };
   nikola::camera_create(&app->frame_data.camera, cam_desc);
 
@@ -145,6 +144,8 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
   nikola::ui_menu_process_input(app->main_menu);
 
   // Update the camera
+  
+  nikola::camera_free_move_func(app->frame_data.camera);
   nikola::camera_update(app->frame_data.camera);
 } 
 

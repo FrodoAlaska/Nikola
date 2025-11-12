@@ -82,9 +82,12 @@ void engine_init(const AppDesc& desc) {
   // Resource manager init 
   resource_manager_init();
 
-  // Renderer init 
+  // Renderers init 
+  
   renderer_init(s_engine.window);
   s_engine.gfx_context = renderer_get_context();
+  
+  ui_renderer_init(s_engine.gfx_context);
 
   // Physics world init
 
@@ -139,6 +142,7 @@ void engine_shutdown() {
   CHECK_VALID_CALLBACK(s_engine.app_desc.shutdown_fn, s_engine.app);
 
   physics_world_shutdown();
+  ui_renderer_shutdown();
   renderer_shutdown();
   resource_manager_shutdown();
   audio_device_shutdown();

@@ -70,10 +70,15 @@ FetchContent_Declare(
   URL https://github.com/wolfpld/tracy/archive/refs/tags/v0.12.2.zip
 )
 
-FetchContent_MakeAvailable(tracy)
-add_definitions("-DTRACY_ENABLE")
+# RmlUI (fork)
 
-FetchContent_MakeAvailable(glfw-3.4 glm OpenAL jolt)
+FetchContent_Declare(
+  rmlui 
+  GIT_REPOSITORY https://github.com/FrodoAlaska/RmlUi.git
+  GIT_TAG        f6875a7c13fddd23e79b378065211eaeef5f9509 
+)
+
+FetchContent_MakeAvailable(glfw-3.4 glm OpenAL jolt tracy rmlui)
 ############################################################
 
 ### Project Variables ###
@@ -92,6 +97,7 @@ set(NIKOLA_INCLUDES
   ${OpenAL_SOURCE_DIR}/include
   ${jolt_SOURCE_DIR}/Jolt
   ${tracy_SOURCE_DIR}/public
+  ${rmlui_SOURCE_DIR}/Include
 )
 
 set(NIKOLA_LIBRARIES 
@@ -99,6 +105,7 @@ set(NIKOLA_LIBRARIES
   OpenAL
   Jolt
   TracyClient
+  rmlui
 )
 
 # This script includes a bunch of platform-specific variables 

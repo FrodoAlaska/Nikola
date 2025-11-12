@@ -630,6 +630,20 @@ NIKOLA_API void gui_edit_animator(const char* name, Animator* animator);
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// UI renderer functions
+
+NIKOLA_API bool ui_renderer_init(GfxContext* gfx);
+
+NIKOLA_API void ui_renderer_shutdown();
+
+NIKOLA_API void ui_renderer_begin();
+
+NIKOLA_API void ui_renderer_end();
+
+/// UI renderer functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// UIText functions
 
 /// Initialize the UI `text` element, using the information in `desc`.

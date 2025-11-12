@@ -74,44 +74,6 @@ static ResourceManager s_manager;
 /// ----------------------------------------------------------------------
 /// Private functions 
 
-static bool open_and_check_nbr_file(const FilePath& parent_dir, const FilePath& nbr_path, File* file, NBRHeader* header) {
-  FilePath path = filepath_append(parent_dir, nbr_path);
-
-  // Open the NBR file and read the header 
-  
-  if(!file_open(file, path, (i32)(FILE_OPEN_READ | FILE_OPEN_BINARY))) {
-    NIKOLA_LOG_ERROR("Cannot load NBR file at \'%s\'", path.c_str());
-    return false;
-  }
-
-  file_read_bytes(*file, header);
-
-  // Check the validity of the reosurce type
-  
-  NIKOLA_ASSERT((header->resource_type != RESOURCE_TYPE_INVALID), 
-                "Invalid resource type found in NBR file!");
-  
-  // Check for the validity of the identifier
-  
-  if(header->identifier != NBR_VALID_IDENTIFIER) {
-    NIKOLA_LOG_ERROR("Invalid identifier found in NBR file at \'%s\'. Expected \'%i\' got \'%i\'", 
-                      path.c_str(), NBR_VALID_IDENTIFIER, header->identifier);
-
-    return false;
-  }  
-
-  // Check for the validity of the versions
-  
-  bool is_valid_version = ((header->major_version == NBR_VALID_MAJOR_VERSION) || 
-                           (header->minor_version == NBR_VALID_MINOR_VERSION));
-  if(!is_valid_version) {
-    NIKOLA_LOG_ERROR("Invalid version found in NBR file at \'%s\'", path.c_str());
-    return false;
-  }
-
-  return true;
-}
-
 static const char* buffer_type_str(const GfxBufferType type) {
   switch(type) {
     case GFX_BUFFER_VERTEX: 
@@ -207,17 +169,9 @@ static bool load_texture_nbr(ResourceGroup* group, GfxTexture* texture, const Fi
   //
   // Load the NBR file
   // 
-
-  NBRHeader header;
+ 
   File file;
-  
-  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
-    file_close(file);
-    return false;
-  }
-
-  if(header.resource_type != RESOURCE_TYPE_TEXTURE) {
-    NIKOLA_LOG_ERROR("Unexpected resource type found in NBR file '\%s\'", nbr_path.c_str());
+  if(!nbr_file_is_valid(file, filepath_append(group->parent_dir, nbr_path), RESOURCE_TYPE_TEXTURE)) {
     return false;
   }
 
@@ -265,16 +219,8 @@ static bool load_cubemap_nbr(ResourceGroup* group, GfxCubemap* cubemap, const Fi
   // Load the NBR file
   // 
 
-  NBRHeader header;
   File file;
-  
-  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
-    file_close(file); 
-    return false;
-  }
-
-  if(header.resource_type != RESOURCE_TYPE_CUBEMAP) {
-    NIKOLA_LOG_ERROR("Unexpected resource type found in NBR file '\%s\'", nbr_path.c_str());
+  if(!nbr_file_is_valid(file, filepath_append(group->parent_dir, nbr_path), RESOURCE_TYPE_CUBEMAP)) {
     return false;
   }
 
@@ -322,17 +268,9 @@ static bool load_shader_nbr(ResourceGroup* group, GfxShader* shader, const FileP
   //
   // Load the NBR file
   // 
-
-  NBRHeader header;
+ 
   File file;
-
-  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
-    file_close(file); 
-    return false;
-  }
-  
-  if(header.resource_type != RESOURCE_TYPE_SHADER) {
-    NIKOLA_LOG_ERROR("Unexpected resource type found in NBR file '\%s\'", nbr_path.c_str());
+  if(!nbr_file_is_valid(file, filepath_append(group->parent_dir, nbr_path), RESOURCE_TYPE_SHADER)) {
     return false;
   }
 
@@ -397,17 +335,9 @@ static bool load_model_nbr(ResourceGroup* group, Model* model, const FilePath& n
   //
   // Load the NBR model
   // 
-  
-  NBRHeader header;
+ 
   File file;
-
-  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
-    file_close(file);
-    return false;
-  }
-  
-  if(header.resource_type != RESOURCE_TYPE_MODEL) {
-    NIKOLA_LOG_ERROR("Unexpected resource type found in NBR file '\%s\'", nbr_path.c_str());
+  if(!nbr_file_is_valid(file, filepath_append(group->parent_dir, nbr_path), RESOURCE_TYPE_MODEL)) {
     return false;
   }
 
@@ -511,17 +441,9 @@ static bool load_animation_nbr(ResourceGroup* group, Animation* anim, const File
   // 
   // Load the NBR file 
   //
-  
-  NBRHeader header;
-  File file;
-  
-  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
-    file_close(file);
-    return false;
-  }
  
-  if(header.resource_type != RESOURCE_TYPE_ANIMATION) {
-    NIKOLA_LOG_ERROR("Unexpected resource type found in NBR file '\%s\'", nbr_path.c_str());
+  File file;
+  if(!nbr_file_is_valid(file, filepath_append(group->parent_dir, nbr_path), RESOURCE_TYPE_ANIMATION)) {
     return false;
   }
 
@@ -636,20 +558,12 @@ static bool load_font_nbr(ResourceGroup* group, Font* font, const FilePath& nbr_
   // 
   // Load the NBR file 
   //
-  
-  NBRHeader header;
-  File file;
-  
-  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
-    file_close(file);
-    return false;
-  }
  
-  if(header.resource_type != RESOURCE_TYPE_FONT) {
-    NIKOLA_LOG_ERROR("Unexpected resource type found in NBR file '\%s\'", nbr_path.c_str());
+  File file;
+  if(!nbr_file_is_valid(file, filepath_append(group->parent_dir, nbr_path), RESOURCE_TYPE_FONT)) {
     return false;
   }
-  
+
   NBRFont nbr_font;
   file_read_bytes(file, &nbr_font);
  
@@ -740,20 +654,12 @@ static bool load_audio_nbr(ResourceGroup* group, AudioBufferDesc* desc, const Fi
   //
   // Load the NBR file
   // 
-  
-  NBRHeader header;
+ 
   File file;
-  
-  if(!open_and_check_nbr_file(group->parent_dir, nbr_path, &file, &header)) {
-    file_close(file);
+  if(!nbr_file_is_valid(file, filepath_append(group->parent_dir, nbr_path), RESOURCE_TYPE_AUDIO_BUFFER)) {
     return false;
   }
-  
-  if(header.resource_type != RESOURCE_TYPE_AUDIO_BUFFER) {
-    NIKOLA_LOG_ERROR("Unexpected resource type found in NBR file '\%s\'", nbr_path.c_str());
-    return false;
-  }
-  
+
   NBRAudio nbr_audio;
   file_read_bytes(file, &nbr_audio);
 
@@ -796,12 +702,23 @@ static void resource_entry_iterate(const FilePath& base, const FilePath& path, v
   }
   
   // Load the NBR header
-  NBRHeader header;
+  // @TODO (Resources): Just please fix the NBR mess...
+  
   File file;
-  if(!open_and_check_nbr_file(base, filepath_filename(path), &file, &header)) {
+  NBRHeader header;
+  
+  FilePath full_path = filepath_append(base, filepath_filename(path));
+  if(!file_open(&file, full_path, (i32)(FILE_OPEN_READ | FILE_OPEN_BINARY))) {
+    NIKOLA_LOG_ERROR("Cannot load NBR file at \'%s\'", full_path.c_str());
+
+    file_close(file);
     return;
   }
+
+  file_read_bytes(file, &header);
   file_close(file);
+
+  // Load the resource depending on the resource type
 
   switch (header.resource_type) {
     case RESOURCE_TYPE_TEXTURE:
@@ -840,11 +757,18 @@ static void resource_entry_update(const FileStatus status, const FilePath& path,
   
   // Load the NBR header
   
-  NBRHeader header;
   File file;
-  if(!open_and_check_nbr_file(path, "", &file, &header)) {
+  NBRHeader header;
+  
+  if(!file_open(&file, path, (i32)(FILE_OPEN_READ | FILE_OPEN_BINARY))) {
+    NIKOLA_LOG_ERROR("Cannot load NBR file at \'%s\'", path.c_str());
+
+    file_close(file);
     return;
   }
+
+  file_read_bytes(file, &header);
+  file_close(file);
  
   // Get the stem of the path to identify the resource
   
