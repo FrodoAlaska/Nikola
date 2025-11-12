@@ -64,6 +64,7 @@ struct UIBatch {
 /// UIDrawCall
 struct UIDrawCall {
   GfxTexture* texture; 
+  ShaderContext* shader;
 
   Rml::Vector2f translation;
   UIBatch* batch;
@@ -78,6 +79,7 @@ struct UIRenderer {
   NKRenderInterface* render_interface;
 
   GfxContext* gfx;
+  Window* window;
   GfxPipeline* pipeline; 
 
   ShaderContext* shaders[SHADERS_MAX]; // Pre-compiled shader contexts
@@ -126,13 +128,9 @@ public:
   }
   
   void RenderGeometry(Rml::CompiledGeometryHandle geometry, Rml::Vector2f translation, Rml::TextureHandle texture) override {
-    if(geometry == 0) {
-      NIKOLA_LOG_DEBUG("Invalid geometry handle given to NKRenderInterface::RenderGeometry");
-      return;
-    }
-
     UIDrawCall call{};
-    call.texture     = renderer.textures[(sizei)(texture - 1)];
+    call.texture     = renderer.textures[(sizei)texture];
+    call.shader      = (texture == 0) ? renderer.shaders[SHADER_COLOR] : renderer.shaders[SHADER_TEXTURE];
     call.translation = translation;
     call.batch       = &renderer.batches[(sizei)(geometry - 1)];
 
@@ -274,7 +272,8 @@ bool ui_renderer_init(GfxContext* gfx) {
   NIKOLA_ASSERT(gfx, "Invalid GfxContext given to ui_renderer_init");
   NIKOLA_PROFILE_FUNCTION();
 
-  s_renderer.gfx = gfx;
+  s_renderer.gfx    = gfx;
+  s_renderer.window = gfx_context_get_desc(gfx).window;
 
   //
   // Pipeline init
@@ -314,7 +313,9 @@ bool ui_renderer_init(GfxContext* gfx) {
   pipe_desc.draw_mode = GFX_DRAW_MODE_TRIANGLE; 
   s_renderer.pipeline = gfx_pipeline_create(gfx, pipe_desc);
 
+  //
   // Shaders init
+  //
 
   ResourceID shader_ids[SHADERS_MAX] = {
     resources_push_shader(RESOURCE_CACHE_ID, generate_ui_texture_shader()), 
@@ -329,7 +330,15 @@ bool ui_renderer_init(GfxContext* gfx) {
     s_renderer.shaders[i] = resources_get_shader_context(resources_push_shader_context(RESOURCE_CACHE_ID, shader_ids[i]));
   }
 
+  //
+  // Default texture init
+  //
+
+  s_renderer.textures.push_back(renderer_get_defaults().albedo_texture);
+
+  //
   // Interfaces init
+  //
 
   s_renderer.system_interface = new NKSystemInterface();
   s_renderer.render_interface = new NKRenderInterface(s_renderer);
@@ -343,6 +352,17 @@ bool ui_renderer_init(GfxContext* gfx) {
 void ui_renderer_shutdown() {
   NIKOLA_PROFILE_FUNCTION();
 
+  // Clearing all the resources
+
+  for(auto& batch : s_renderer.batches) {
+    batch.vertices.clear();
+    batch.indices.clear();
+  }
+
+  s_renderer.textures.clear();
+  s_renderer.batches.clear();
+  s_renderer.draw_calls.clear();
+
   // Interfaces deinit
  
   delete s_renderer.render_interface;
@@ -353,10 +373,56 @@ void ui_renderer_shutdown() {
 
 void ui_renderer_begin() {
   NIKOLA_PROFILE_FUNCTION();
+
+  // Calculating the orthographic matrix
+
+  IVec2 framebuffer_size;
+  window_get_framebuffer_size(s_renderer.window, &framebuffer_size.x, &framebuffer_size.y);
+
+  s_renderer.ortho = mat4_ortho(0.0f, (f32)framebuffer_size.x, (f32)framebuffer_size.y, 0.0f);
+
+  // Clear calls from previous frames
+  s_renderer.draw_calls.clear();
 }
 
 void ui_renderer_end() {
   NIKOLA_PROFILE_FUNCTION();
+
+  // Initiating the draw calls
+
+  for(auto& call : s_renderer.draw_calls) {
+    // Use the resources
+
+    GfxBindingDesc bind_desc = {
+      .shader = call.shader->shader,
+
+      .textures       = &call.texture, 
+      .textures_count = 1,
+    };
+    gfx_context_use_bindings(s_renderer.gfx, bind_desc);
+
+    // Update the required resources
+    
+    GfxPipelineDesc& pipe_desc = gfx_pipeline_get_desc(s_renderer.pipeline);
+
+    gfx_buffer_upload_data(pipe_desc.vertex_buffer, 
+                           0, 
+                           sizeof(Rml::Vertex) * call.batch->vertices.size(), 
+                           call.batch->vertices.data());
+
+    gfx_buffer_upload_data(pipe_desc.index_buffer, 
+                           0, 
+                           sizeof(i32) * call.batch->indices.size(), 
+                           call.batch->indices.data());
+
+    pipe_desc.vertices_count = call.batch->vertices.size();
+    pipe_desc.indices_count  = call.batch->indices.size();
+    
+    // Render the batch
+
+    gfx_context_use_pipeline(s_renderer.gfx, s_renderer.pipeline); 
+    gfx_context_draw(s_renderer.gfx, 0);
+  }
 }
 
 /// UI renderer functions

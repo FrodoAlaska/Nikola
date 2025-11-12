@@ -151,13 +151,14 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 
 void app_render(nikola::App* app) {
   // Render 3D 
+  
   nikola::renderer_begin(app->frame_data);
   nikola::renderer_end();
   
-  // Render 2D 
-  nikola::batch_renderer_begin();
-  nikola::ui_menu_render(app->main_menu);
-  nikola::batch_renderer_end();
+  // Render UI 
+  
+  nikola::ui_renderer_begin();
+  nikola::ui_renderer_end();
 }
 
 void app_render_gui(nikola::App* app) {
