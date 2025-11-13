@@ -67,7 +67,9 @@ struct UIDrawCall {
   GfxTexture* texture; 
   ShaderContext* shader;
 
-  Rml::Vector2f translation;
+  Vec2 translation = Vec2(0.0f);
+  Mat4 transform   = Mat4(1.0f);
+
   UIBatch* batch;
 };
 /// UIDrawCall
@@ -152,7 +154,8 @@ public:
     UIDrawCall call{};
     call.texture     = renderer.textures[(sizei)texture];
     call.shader      = (texture == 0) ? renderer.shaders[SHADER_COLOR] : renderer.shaders[SHADER_TEXTURE];
-    call.translation = translation;
+    call.translation = Vec2(translation.x, translation.y);
+    call.transform   = renderer.transform;
     call.batch       = &renderer.batches[(sizei)(geometry - 1)];
 
     renderer.draw_calls.push_back(call);
@@ -261,11 +264,14 @@ public:
   }
 
   void EnableScissorRegion(bool enable) override {
-    // @TODO (UI)
+    gfx_context_set_state(renderer.gfx, GFX_STATE_SCISSOR, enable);
   }
 
   void SetScissorRegion(Rml::Rectanglei region) {
-    // @TODO (UI)
+    Rml::Vector2i position = region.Position();
+    Rml::Vector2i size     = region.Size();
+
+    gfx_context_set_scissor_rect(renderer.gfx, position.x, position.y, size.x, size.y);
   }
 
   void SetTransform(const Rml::Matrix4f* transform) {
@@ -274,7 +280,15 @@ public:
       return;
     }
 
-    // @TODO (UI)
+    Rml::Vector4f colomn1 = (*transform)[0];
+    Rml::Vector4f colomn2 = (*transform)[1];
+    Rml::Vector4f colomn3 = (*transform)[2];
+    Rml::Vector4f colomn4 = (*transform)[3];
+
+    renderer.transform[0] = Vec4(colomn1.x, colomn1.y, colomn1.z, colomn1.w);
+    renderer.transform[1] = Vec4(colomn2.x, colomn2.y, colomn2.z, colomn2.w);
+    renderer.transform[2] = Vec4(colomn3.x, colomn3.y, colomn3.z, colomn3.w);
+    renderer.transform[3] = Vec4(colomn4.x, colomn4.y, colomn4.z, colomn4.w);
   }
 
   Rml::CompiledShaderHandle CompileShader(const Rml::String& name, const Rml::Dictionary& parameters) {
@@ -436,8 +450,9 @@ void ui_renderer_end() {
   for(auto& call : s_renderer.draw_calls) {
     // Setting uniforms 
 
-    shader_context_set_uniform(call.shader, "u_translate", Vec2(call.translation.x, call.translation.y));
-    shader_context_set_uniform(call.shader, "u_transform", s_renderer.ortho);
+    shader_context_set_uniform(call.shader, "u_translate", call.translation);
+    shader_context_set_uniform(call.shader, "u_transform", call.transform);
+    shader_context_set_uniform(call.shader, "u_projection", s_renderer.ortho);
 
     // Use the resources
 

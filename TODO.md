@@ -12,11 +12,12 @@
         - [] Slider 
         - [] Etc...
     - [] Extended features
-        - [] Transforms 
+        - [x] Transforms 
         - [] Animations 
         - [] Trying different shaders 
         - [] Clip mask 
         - [] Etc...
+    - [] Remove the batch renderer?
     - [] Documentation
 - [] Animations 
     - [] OZZ animation? I mean, it's, like, fucking _amazing_. More research needed.

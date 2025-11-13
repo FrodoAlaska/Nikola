@@ -27,14 +27,14 @@ inline const char* generate_vertex_main() {
    
       // Uniforms
 
-      uniform mat4 u_transform; 
+      uniform mat4 u_transform, u_projection; 
       uniform vec2 u_translate;
       
       void main() {
         vs_out.color      = aColor;
         vs_out.tex_coords = aTextureCoords;
      
-        gl_Position = u_transform * vec4(vec2(u_translate + aPos), 0.0, 1.0);
+        gl_Position = u_projection * u_transform * vec4(vec2(u_translate + aPos), 0.0, 1.0);
       }
   )";
 }
