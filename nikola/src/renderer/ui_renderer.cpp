@@ -8,10 +8,12 @@
 
 #include "shaders/ui_shaders.h"
 
+#include <RmlUi/Core.h>
 #include <RmlUi/Core/SystemInterface.h>
 #include <RmlUi/Core/RenderInterface.h>
 #include <RmlUi/Core/Input.h>
 #include <RmlUi/Core/Types.h>
+#include <RmlUi/Core/Log.h>
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -20,9 +22,8 @@ namespace nikola { // Start of nikola
 ///---------------------------------------------------------------------------------------------------------------------
 /// Consts
 
-const sizei MAX_QUADS    = 10000;
-const sizei MAX_VERTICES = MAX_QUADS * 4;
-const sizei MAX_INDICES  = MAX_VERTICES * 6;
+const sizei VERTEX_BUFFER_SIZE = KiB(256);
+const sizei INDEX_BUFFER_SIZE  = KiB(256);
 
 /// Consts
 ///---------------------------------------------------------------------------------------------------------------------
@@ -87,8 +88,9 @@ struct UIRenderer {
   DynamicArray<UIBatch> batches;       // Compiled batches
   DynamicArray<GfxTexture*> textures;  // Textures in use
   DynamicArray<UIDrawCall> draw_calls; // Compiled draw calls
-  
-  Mat4 ortho = Mat4(1.0f);
+
+  Mat4 transform = Mat4(1.0f);
+  Mat4 ortho     = Mat4(1.0f);
 };
 
 static UIRenderer s_renderer;
@@ -102,8 +104,27 @@ public:
   NKSystemInterface() = default;
 
 public:
-  double GetElapsedTime() {
+  double GetElapsedTime() override {
     return niclock_get_time();
+  }
+
+  bool LogMessage(Rml::Log::Type type, const Rml::String& message) override {
+    switch(type) {
+      case Rml::Log::Type::LT_ERROR:
+        NIKOLA_LOG_ERROR("RML-ERROR: %s", message.c_str());
+        return false;
+      case Rml::Log::Type::LT_ASSERT:
+        NIKOLA_ASSERT(false, message.c_str());
+        return false;
+      case Rml::Log::Type::LT_WARNING:
+        NIKOLA_LOG_WARN("RML-WARNING: %s", message.c_str());
+        break;
+      case Rml::Log::Type::LT_INFO:
+        NIKOLA_LOG_INFO("RML-INFO:  %s", message.c_str());
+        break;
+    }
+
+    return true;
   }
 };
 /// NKSystemInterface
@@ -191,7 +212,7 @@ public:
     // Done!
     
     renderer.textures.push_back(texture); 
-    return (Rml::TextureHandle)renderer.textures.size();
+    return (Rml::TextureHandle)(renderer.textures.size() - 1);
   }
 
   Rml::TextureHandle GenerateTexture(Rml::Span<const Rml::byte> source, Rml::Vector2i source_dimensions) override {
@@ -220,11 +241,20 @@ public:
     // Done!
     
     renderer.textures.push_back(texture); 
-    return (Rml::TextureHandle)renderer.textures.size();
+    return (Rml::TextureHandle)(renderer.textures.size() - 1);
   }
 
   void ReleaseTexture(Rml::TextureHandle texture) override {
+    // @NOTE:
+    //
+    // The first texture in the array is handled by the engine. If we free it here, the resource manager 
+    // will try to free it again later. Double free. That's never good.
+    //
+
     sizei index = (sizei)(texture - 1);
+    if(index == 0) { 
+      return; 
+    }
 
     gfx_texture_destroy(renderer.textures[index]);
     renderer.textures[index] = nullptr;
@@ -239,6 +269,11 @@ public:
   }
 
   void SetTransform(const Rml::Matrix4f* transform) {
+    if(!transform) {
+      renderer.transform = Mat4(1.0f);
+      return;
+    }
+
     // @TODO (UI)
   }
 
@@ -285,7 +320,7 @@ bool ui_renderer_init(GfxContext* gfx) {
 
   GfxBufferDesc buff_desc = {
     .data  = nullptr, 
-    .size  = sizeof(Rml::Vertex) * MAX_VERTICES, 
+    .size  = VERTEX_BUFFER_SIZE,
     .type  = GFX_BUFFER_VERTEX,
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
@@ -295,7 +330,7 @@ bool ui_renderer_init(GfxContext* gfx) {
 
   buff_desc = {
     .data  = nullptr, 
-    .size  = sizeof(i32) * MAX_INDICES, 
+    .size  = INDEX_BUFFER_SIZE,
     .type  = GFX_BUFFER_INDEX,
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
@@ -304,7 +339,7 @@ bool ui_renderer_init(GfxContext* gfx) {
   // Layouts init
 
   pipe_desc.layouts[0].attributes[0]    = GFX_LAYOUT_FLOAT2; // Position
-  pipe_desc.layouts[0].attributes[1]    = GFX_LAYOUT_FLOAT4; // Color
+  pipe_desc.layouts[0].attributes[1]    = GFX_LAYOUT_UBYTE4; // Color
   pipe_desc.layouts[0].attributes[2]    = GFX_LAYOUT_FLOAT2; // Texture coords
   pipe_desc.layouts[0].attributes_count = 3;
   
@@ -343,6 +378,11 @@ bool ui_renderer_init(GfxContext* gfx) {
   s_renderer.system_interface = new NKSystemInterface();
   s_renderer.render_interface = new NKRenderInterface(s_renderer);
 
+  Rml::SetSystemInterface(s_renderer.system_interface);
+  Rml::SetRenderInterface(s_renderer.render_interface);
+  
+  Rml::Initialise();
+
   // Done!
   
   NIKOLA_LOG_INFO("Successfully initialized the ui renderer");
@@ -351,6 +391,13 @@ bool ui_renderer_init(GfxContext* gfx) {
 
 void ui_renderer_shutdown() {
   NIKOLA_PROFILE_FUNCTION();
+
+  // Interfaces deinit
+  
+  Rml::Shutdown();
+
+  delete s_renderer.render_interface;
+  delete s_renderer.system_interface;
 
   // Clearing all the resources
 
@@ -363,11 +410,7 @@ void ui_renderer_shutdown() {
   s_renderer.batches.clear();
   s_renderer.draw_calls.clear();
 
-  // Interfaces deinit
- 
-  delete s_renderer.render_interface;
-  delete s_renderer.system_interface;
-
+  // Done!
   NIKOLA_LOG_INFO("Successfully shutdown the ui renderer");
 }
 
@@ -377,9 +420,9 @@ void ui_renderer_begin() {
   // Calculating the orthographic matrix
 
   IVec2 framebuffer_size;
-  window_get_framebuffer_size(s_renderer.window, &framebuffer_size.x, &framebuffer_size.y);
+  window_get_size(s_renderer.window, &framebuffer_size.x, &framebuffer_size.y);
 
-  s_renderer.ortho = mat4_ortho(0.0f, (f32)framebuffer_size.x, (f32)framebuffer_size.y, 0.0f);
+  s_renderer.ortho = mat4_ortho(0.0f, (f32)framebuffer_size.x, (f32)framebuffer_size.y, 0.0f) * s_renderer.transform;
 
   // Clear calls from previous frames
   s_renderer.draw_calls.clear();
@@ -391,6 +434,11 @@ void ui_renderer_end() {
   // Initiating the draw calls
 
   for(auto& call : s_renderer.draw_calls) {
+    // Setting uniforms 
+
+    shader_context_set_uniform(call.shader, "u_translate", Vec2(call.translation.x, call.translation.y));
+    shader_context_set_uniform(call.shader, "u_transform", s_renderer.ortho);
+
     // Use the resources
 
     GfxBindingDesc bind_desc = {
@@ -417,6 +465,7 @@ void ui_renderer_end() {
 
     pipe_desc.vertices_count = call.batch->vertices.size();
     pipe_desc.indices_count  = call.batch->indices.size();
+    gfx_pipeline_update(s_renderer.pipeline, pipe_desc);
     
     // Render the batch
 

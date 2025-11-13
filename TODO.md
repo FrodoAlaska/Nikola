@@ -1,9 +1,22 @@
 # TODO:
 
 - [] Improve UI 
-    - [] Make the system interface
-    - [] Make the render interface
-    - [] Renderer context
+    - [x] Make the system interface
+    - [x] Make the render interface
+    - [] RmlUi abstractions
+        - [] Context 
+        - [] Input
+        - [] Element 
+        - [] Text 
+        - [] Button 
+        - [] Slider 
+        - [] Etc...
+    - [] Extended features
+        - [] Transforms 
+        - [] Animations 
+        - [] Trying different shaders 
+        - [] Clip mask 
+        - [] Etc...
     - [] Documentation
 - [] Animations 
     - [] OZZ animation? I mean, it's, like, fucking _amazing_. More research needed.

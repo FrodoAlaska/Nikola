@@ -3,6 +3,8 @@
 #include <nikola/nikola.h>
 #include <imgui/imgui.h>
 
+#include <RmlUi/Core.h>
+
 /// ----------------------------------------------------------------------
 /// App
 struct nikola::App {
@@ -15,30 +17,11 @@ struct nikola::App {
   nikola::UIMenu main_menu;
 
   bool has_editor = false;
+
+  Rml::Context* context; 
+  Rml::ElementDocument* document;
 };
 /// App
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
-/// Callbacks
-
-static bool on_menu_event(const nikola::Event& event, const void* dispatcher, const void* listener) {
-  switch(event.menu->current_item) {
-    case 0: // Play
-      break;
-    case 1: // Settings
-      break;
-    case 2: // Quit
-      nikola::event_dispatch(nikola::Event{.type = nikola::EVENT_APP_QUIT});
-      break;
-    default:
-      break;
-  }
-
-  return true;
-}
-
-/// Callbacks
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -52,7 +35,7 @@ static void init_resources(nikola::App* app) {
 
   // Resoruces init
   
-  app->font_id = nikola::resources_push_font(app->res_group_id, "fonts/IosevkaNerdFont-Bold.nbr");
+  // app->font_id = nikola::resources_push_font(app->res_group_id, "fonts/IosevkaNerdFont-Bold.nbr");
   nikola::resources_push_texture(app->res_group_id, "textures/frodo.nbr");
 }
 
@@ -80,6 +63,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::gui_init(window);
 
   // Camera init
+  
   nikola::CameraDesc cam_desc = {
     .position     = nikola::Vec3(10.0f, 0.0f, 10.0f),
     .target       = nikola::Vec3(-3.0f, 0.0f, 0.0f),
@@ -91,28 +75,17 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Resoruces init
   init_resources(app);
 
-  // Listen to events
-  nikola::event_listen(nikola::EVENT_UI_MENU_ITEM_CLICKED, on_menu_event, app);
+  // UI init
 
-  // UI menu init
+  nikola::FilePath res_path  = nikola::filepath_append(nikola::filesystem_current_path(), "res");
+  nikola::FilePath doc_path  = nikola::filepath_append(res_path, "ui/first.rml");
+  nikola::FilePath font_path = nikola::filepath_append(res_path, "fonts/HeavyDataNerdFont.ttf");
 
-  nikola::UIMenuDesc menu_desc = {
-    .bounds  = nikola::Vec2(width, height),
-    .font_id = app->font_id,
+  Rml::LoadFontFace(font_path);
 
-    .title_anchor = nikola::UI_ANCHOR_TOP_CENTER, 
-    .item_anchor  = nikola::UI_ANCHOR_CENTER,
-
-    .item_offset  = nikola::Vec2(0.0f, 40.0f),
-    .item_padding = nikola::Vec2(12.0f, 4.0f),
-  };
-  nikola::ui_menu_create(&app->main_menu, menu_desc);
-
-  nikola::ui_menu_set_title(app->main_menu, "Menu Title", 50.0f, nikola::Vec4(1.0f));
-
-  nikola::ui_menu_push_item(app->main_menu, "Play", 30.0f, nikola::Vec4(0.0f, 0.0f, 0.0f, 1.0f));
-  nikola::ui_menu_push_item(app->main_menu, "Settings", 30.0f, nikola::Vec4(0.0f, 0.0f, 0.0f, 1.0f));
-  nikola::ui_menu_push_item(app->main_menu, "Quit", 30.0f, nikola::Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+  app->context  = Rml::CreateContext("main", Rml::Vector2i(width, height)); 
+  app->document = app->context->LoadDocument(doc_path); 
+  app->document->Show();
 
   return app;
 }
@@ -141,11 +114,11 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     nikola::input_cursor_show(app->has_editor);
   }
 
-  nikola::ui_menu_process_input(app->main_menu);
+  app->context->Update();
 
   // Update the camera
   
-  nikola::camera_free_move_func(app->frame_data.camera);
+  // nikola::camera_free_move_func(app->frame_data.camera);
   nikola::camera_update(app->frame_data.camera);
 } 
 
@@ -158,6 +131,7 @@ void app_render(nikola::App* app) {
   // Render UI 
   
   nikola::ui_renderer_begin();
+  app->context->Render();
   nikola::ui_renderer_end();
 }
 

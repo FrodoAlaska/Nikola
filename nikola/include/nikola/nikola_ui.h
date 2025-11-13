@@ -632,15 +632,27 @@ NIKOLA_API void gui_edit_animator(const char* name, Animator* animator);
 ///---------------------------------------------------------------------------------------------------------------------
 /// UI renderer functions
 
+/// Initialize the UI renderer.
 NIKOLA_API bool ui_renderer_init(GfxContext* gfx);
 
+/// Shutdown and reclaim all the memory allocated by the UI renderer.
 NIKOLA_API void ui_renderer_shutdown();
 
+/// Begin the rendering process of the UI renderer.
 NIKOLA_API void ui_renderer_begin();
 
+/// End the rendering process of the UI renderer. 
 NIKOLA_API void ui_renderer_end();
 
 /// UI renderer functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UIContext functions
+
+NIKOLA_API void ui_context_create();
+
+/// UIContext functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
