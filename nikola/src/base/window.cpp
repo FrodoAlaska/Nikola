@@ -130,13 +130,17 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
   if(action == GLFW_PRESS) {
     event_dispatch(Event {
       .type = EVENT_KEY_PRESSED, 
-      .key_pressed = key,
+
+      .key_pressed  = key,
+      .key_modifier = mods,
     });
   }
   else if(action == GLFW_RELEASE) {
     event_dispatch(Event {
       .type = EVENT_KEY_RELEASED, 
+      
       .key_released = key,
+      .key_modifier = mods,
     });
   }
 }
@@ -145,12 +149,16 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
   if(action == GLFW_PRESS) {
     event_dispatch(Event {
       .type = EVENT_MOUSE_BUTTON_PRESSED, 
+
+      .key_modifier         = mods,
       .mouse_button_pressed = button,
     });
   }
   else if(action == GLFW_RELEASE) {
     event_dispatch(Event {
       .type = EVENT_MOUSE_BUTTON_RELEASED, 
+
+      .key_modifier          = mods,
       .mouse_button_released = button,
     });
   }

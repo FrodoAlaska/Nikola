@@ -3,8 +3,6 @@
 #include <nikola/nikola.h>
 #include <imgui/imgui.h>
 
-#include <RmlUi/Core.h>
-
 /// ----------------------------------------------------------------------
 /// App
 struct nikola::App {
@@ -18,8 +16,8 @@ struct nikola::App {
 
   bool has_editor = false;
 
-  Rml::Context* context; 
-  Rml::ElementDocument* document;
+  nikola::UIContext* context; 
+  nikola::UIDocument* document;
 };
 /// App
 /// ----------------------------------------------------------------------
@@ -81,11 +79,11 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::FilePath doc_path  = nikola::filepath_append(res_path, "ui/first.rml");
   nikola::FilePath font_path = nikola::filepath_append(res_path, "fonts/HeavyDataNerdFont.ttf");
 
-  Rml::LoadFontFace(font_path);
+  nikola::ui_renderer_load_font(font_path);
 
-  app->context  = Rml::CreateContext("main", Rml::Vector2i(width, height)); 
-  app->document = app->context->LoadDocument(doc_path); 
-  app->document->Show();
+  app->context  = nikola::ui_context_create("main", nikola::IVec2(width, height)); 
+  app->document = nikola::ui_document_load(app->context, doc_path); 
+  nikola::ui_document_show(app->document);
 
   return app;
 }
@@ -105,16 +103,8 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     return;
   }
 
-  // Disable/enable the GUI
-  
-  if(nikola::input_key_pressed(nikola::KEY_F1)) {
-    app->has_editor                  = !app->has_editor;
-    app->frame_data.camera.is_active = !app->has_editor;
-
-    nikola::input_cursor_show(app->has_editor);
-  }
-
-  app->context->Update();
+  // UI update
+  nikola::ui_context_update(app->context);
 
   // Update the camera
   
@@ -131,7 +121,7 @@ void app_render(nikola::App* app) {
   // Render UI 
   
   nikola::ui_renderer_begin();
-  app->context->Render();
+  nikola::ui_context_render(app->context);
   nikola::ui_renderer_end();
 }
 

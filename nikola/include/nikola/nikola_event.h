@@ -120,6 +120,11 @@ struct Event {
 
   /// The key that was just released.
   i32 key_released;
+
+  /// A key modifier that is passed on either 
+  /// `EVENT_KEY_PRESSED`, `EVENT_KEY_RELEASED`, 
+  /// `EVENT_MOUSE_BUTTON_PRESSED`, or `EVENT_MOUSE_BUTTON_RELEASED`.
+  i32 key_modifier;
   
   /// The current mouse position (relative to the screen). 
   f32 mouse_pos_x, mouse_pos_y;    

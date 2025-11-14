@@ -103,10 +103,12 @@ static bool joystick_callback(const Event& event, const void* dispatcher, const 
 
 void input_init() {
   // Listening to key events 
+  
   event_listen(EVENT_KEY_PRESSED, key_callback);
   event_listen(EVENT_KEY_RELEASED, key_callback);
 
   // Listening to mouse events 
+  
   event_listen(EVENT_MOUSE_MOVED, mouse_callback); 
   event_listen(EVENT_MOUSE_ENTER, mouse_callback); 
   event_listen(EVENT_MOUSE_LEAVE, mouse_callback); 
@@ -115,6 +117,7 @@ void input_init() {
   event_listen(EVENT_MOUSE_SCROLL_WHEEL, mouse_callback); 
   
   // Listening to joystick events
+  
   event_listen(EVENT_JOYSTICK_CONNECTED, joystick_callback); 
   event_listen(EVENT_JOYSTICK_DISCONNECTED, joystick_callback); 
 
@@ -123,18 +126,22 @@ void input_init() {
 
 void input_update() {
   // Updating the input states 
+  
   memory_copy(s_input.previous_key_state, s_input.current_key_state, sizeof(s_input.current_key_state)); 
   memory_copy(s_input.previous_mouse_state, s_input.current_mouse_state, sizeof(s_input.current_mouse_state)); 
   memory_copy(s_input.previous_gamepad_state, s_input.current_gamepad_state, sizeof(s_input.current_gamepad_state)); 
   
   // Checking for joystick input every frame to set the current state
+  
   for(i32 i = 0; i < JOYSTICK_ID_LAST; i++) {
     // We don't care about non-gamepad joysticks
+   
     if(!glfwJoystickIsGamepad(i)) {
       continue;
     }
 
     // Check for every button press/release
+    
     for(i32 j = 0; j < GAMEPAD_BUTTONS_MAX; j++) {
       GLFWgamepadstate gamepad_state;
       glfwGetGamepadState(i, &gamepad_state);
@@ -245,16 +252,19 @@ const bool input_action_pressed(const char* action_name) {
   bool is_gamepad_pressed = false;
 
   // Check the binded key
+  
   if(action->key_bind != KEY_UNKNOWN) {
     is_key_pressed = input_key_pressed(action->key_bind);
   }
   
   // Check the binded mouse button
+  
   if(action->mouse_bind != MOUSE_BUTTON_UNKNOWN) {
     is_mouse_pressed = input_button_pressed(action->mouse_bind);
   }
   
   // Check the binded gamepad button
+  
   if(action->gamepad_bind != GAMEPAD_BUTTON_UNKNOWN) {
     is_gamepad_pressed = input_gamepad_button_pressed(JOYSTICK_ID_0, action->gamepad_bind);
   }

@@ -7,6 +7,17 @@
 #include "nikola_physics.h"
 #include "nikola_timer.h"
 
+/// ----------------------------------------------------------------------
+
+// Some workaround so we don't have to include RmlUi here... probably not the best solution, but oh well.
+
+namespace Rml {
+  class Context;
+  class ElementDocument;
+}
+
+/// ----------------------------------------------------------------------
+
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola
@@ -135,6 +146,18 @@ enum GUIWindowFlags {
   GUI_WINDOW_FLAGS_NO_DOCKING                   = 1 << 19, 
 };
 /// GUIWindowFlags
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// UIContext
+using UIContext = Rml::Context;
+/// UIContext
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// UIDocument
+using UIDocument = Rml::ElementDocument;
+/// UIDocument
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -644,15 +667,48 @@ NIKOLA_API void ui_renderer_begin();
 /// End the rendering process of the UI renderer. 
 NIKOLA_API void ui_renderer_end();
 
+/// Load the font face found at the given `path`.
+/// Returns `true` if the font was loaded successfully, or `false` otherwise.
+///
+/// @NOTE: This is only a temporary function until I find a way 
+/// to integrate NBR fonts into the UI renderer.
+NIKOLA_API bool ui_renderer_load_font(const FilePath& path);
+
 /// UI renderer functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// UIContext functions
 
-NIKOLA_API void ui_context_create();
+NIKOLA_API UIContext* ui_context_create(const String& name, const IVec2 bounds);
+
+NIKOLA_API void ui_context_destroy(UIContext* ui_ctx);
+
+NIKOLA_API void ui_context_update(UIContext* ui_ctx);
+
+NIKOLA_API void ui_context_render(UIContext* ui_ctx);
+
+NIKOLA_API void ui_context_enable_mouse_cursor(UIContext* ui_ctx, const bool enable);
+
+NIKOLA_API void ui_context_activate_theme(UIContext* ui_ctx, const String& theme_name, const bool active);
+
+NIKOLA_API bool ui_context_is_theme_active(UIContext* ui_ctx, const String& theme_name);
 
 /// UIContext functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UIDocument functions
+
+NIKOLA_API UIDocument* ui_document_load(UIContext* ui_ctx, const FilePath& doc_path);
+
+NIKOLA_API UIDocument* ui_document_load_from_memory(UIContext* ui_ctx, const String& doc_src);
+
+NIKOLA_API UIDocument* ui_document_create(UIContext* ui_ctx, const String& maker_name = "body");
+
+NIKOLA_API void ui_document_show(UIDocument* ui_doc);
+
+/// UIDocument functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------

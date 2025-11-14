@@ -22,8 +22,8 @@ namespace nikola { // Start of nikola
 ///---------------------------------------------------------------------------------------------------------------------
 /// Consts
 
-const sizei VERTEX_BUFFER_SIZE = KiB(256);
-const sizei INDEX_BUFFER_SIZE  = KiB(256);
+const sizei VERTEX_BUFFER_SIZE = MiB(1);
+const sizei INDEX_BUFFER_SIZE  = MiB(1);
 
 /// Consts
 ///---------------------------------------------------------------------------------------------------------------------
@@ -487,6 +487,10 @@ void ui_renderer_end() {
     gfx_context_use_pipeline(s_renderer.gfx, s_renderer.pipeline); 
     gfx_context_draw(s_renderer.gfx, 0);
   }
+}
+
+bool ui_renderer_load_font(const FilePath& path) {
+  return Rml::LoadFontFace(path.c_str());
 }
 
 /// UI renderer functions
