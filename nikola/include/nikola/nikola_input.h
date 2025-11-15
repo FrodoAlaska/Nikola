@@ -344,6 +344,9 @@ NIKOLA_API const bool input_action_down(const char* action_name);
 /// Check if the binded keys for `action_name` are currently held up.
 NIKOLA_API const bool input_action_up(const char* action_name);
 
+/// Retrieve an `InputAction` struct with the name `action_name`.
+NIKOLA_API const InputAction& input_get_action(const char* action_name);
+
 /// Input functions 
 ///---------------------------------------------------------------------------------------------------------------------
 

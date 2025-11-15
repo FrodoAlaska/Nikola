@@ -347,6 +347,10 @@ const bool input_action_up(const char* action_name) {
   return is_key_up || is_mouse_up || is_gamepad_up;
 }
 
+const InputAction& input_get_action(const char* action_name) {
+  return s_input.actions[String(action_name)];
+}
+
 /// Input functions
 /// ---------------------------------------------------------------------
 

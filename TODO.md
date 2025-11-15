@@ -1,24 +1,5 @@
 # TODO:
 
-- [] Improve UI 
-    - [x] Make the system interface
-    - [x] Make the render interface
-    - [] RmlUi abstractions
-        - [x] Context 
-        - [x] Input
-        - [] Element 
-        - [] Text 
-        - [] Button 
-        - [] Slider 
-        - [] Etc...
-    - [] Extended features
-        - [x] Transforms 
-        - [] Animations 
-        - [] Trying different shaders 
-        - [] Clip mask 
-        - [] Etc...
-    - [] Remove the batch renderer?
-    - [] Documentation
 - [] Animations 
     - [] OZZ animation? I mean, it's, like, fucking _amazing_. More research needed.
     - [] Test animations with multiple instances.
