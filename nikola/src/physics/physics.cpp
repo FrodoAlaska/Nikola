@@ -408,6 +408,10 @@ void physics_world_step(const f32 delta_time, const i32 collision_steps) {
   s_world->physics_system.Update(delta_time, collision_steps, s_world->temp_allocater, s_world->job_system);
 }
 
+void physics_world_optimize_broadphase() {
+  s_world->physics_system.OptimizeBroadPhase();
+}
+
 PhysicsBody* physics_world_create_body(const PhysicsBodyDesc& desc) {
   COLLIDER_CHECK(desc.collider);
   
@@ -455,6 +459,53 @@ PhysicsBody* physics_world_create_and_add_body(const PhysicsBodyDesc& desc, cons
   physics_world_add_body(body, is_active);
 
   return body;
+}
+
+PhysicsBatchHandle physics_world_prepare_bodies(PhysicsBody** bodies, const sizei count) {
+  // @TEMP (Physics): This works for now, but it's not the pretiest thing ever 
+  // Convert our physics body struct into BodyIDs. 
+
+  DynamicArray<JPH::BodyID> body_ids;
+  body_ids.reserve(count);
+
+  for(sizei i = 0; i < count; i++) {
+    body_ids.emplace_back(bodies[i]->handle->GetID());
+  }
+
+  // Initiate the prepare process
+  return (PhysicsBatchHandle)s_world->body_interface->AddBodiesPrepare(body_ids.data(), (i32)body_ids.size());
+}
+
+void physics_world_finalize_bodies(PhysicsBody** bodies, const sizei count, PhysicsBatchHandle batch_handle, const bool is_active) {
+  JPH::EActivation active = is_active ? JPH::EActivation::Activate : JPH::EActivation::DontActivate;
+  
+  // @TEMP (Physics): This works for now, but it's not the pretiest thing ever 
+  // Convert our physics body struct into BodyIDs. 
+
+  DynamicArray<JPH::BodyID> body_ids;
+  body_ids.reserve(count);
+
+  for(sizei i = 0; i < count; i++) {
+    body_ids.emplace_back(bodies[i]->handle->GetID());
+  }
+
+  // Initiate the prepare process
+  return s_world->body_interface->AddBodiesFinalize(body_ids.data(), (i32)body_ids.size(), (JPH::BodyInterface::AddState)batch_handle, active);
+}
+
+void physics_world_abort_bodies(PhysicsBody** bodies, const sizei count, PhysicsBatchHandle batch_handle) {
+  // @TEMP (Physics): This works for now, but it's not the pretiest thing ever 
+  // Convert our physics body struct into BodyIDs. 
+
+  DynamicArray<JPH::BodyID> body_ids;
+  body_ids.reserve(count);
+
+  for(sizei i = 0; i < count; i++) {
+    body_ids.emplace_back(bodies[i]->handle->GetID());
+  }
+
+  // Initiate the prepare process
+  return s_world->body_interface->AddBodiesAbort(body_ids.data(), (i32)body_ids.size(), (JPH::BodyInterface::AddState)batch_handle);
 }
 
 void physics_world_remove_body(PhysicsBody* body) {

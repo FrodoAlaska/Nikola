@@ -167,6 +167,12 @@ struct Character;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// PhysicsBatchHandle
+using PhysicsBatchHandle = void*;
+/// PhysicsBatchHandle
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// CollisionData
 struct CollisionData {
   /// The physics body that were involved in the collision.
@@ -451,6 +457,13 @@ NIKOLA_API void physics_world_shutdown();
 /// @NOTE: The `collision_steps` parametar is set to `1` by default.
 NIKOLA_API void physics_world_step(const f32 delta_time, const i32 collision_steps = 1);
 
+/// Optimize the broadphase of the physics system. This call is only needed if 
+/// a batch of bodies have been added to the world prior to `physics_world_step`.
+///
+/// @NOTE: Do _NOT_ call this every frame. Only call it once when a batch of bodies 
+/// have been added. That's it.
+NIKOLA_API void physics_world_optimize_broadphase();
+
 /// Create and allocate a physics body using the information provided in the given `desc`, 
 /// returning back a valid `PhysicsBody` to be used later.
 NIKOLA_API PhysicsBody* physics_world_create_body(const PhysicsBodyDesc& desc);
@@ -465,6 +478,21 @@ NIKOLA_API void physics_world_add_character(const Character* character, const bo
 
 /// Combines the `physics_world_create_body` and `physics_world_add_body` functions into one for convenience.
 NIKOLA_API PhysicsBody* physics_world_create_and_add_body(const PhysicsBodyDesc& desc, const bool is_active = true);
+
+/// Prepare `bodies` array of `count` elements to be created, and return a `PhysicsBatchHandle` to give 
+/// to either `physics_world_finalize_bodies` or `physics_world_abort_bodies`.
+NIKOLA_API PhysicsBatchHandle physics_world_prepare_bodies(PhysicsBody** bodies, const sizei count);
+
+/// Finalize the `batch_handle` prepare process, with the given `bodies` array of `count` elements. 
+/// In addition, `is_active` indicates whether to wake the bodies upon addition or not.
+///
+/// @NOTE: Please make sure that the `bodies` was not modiefied in any way after the `physics_world_prepare_bodies`
+/// function call. It _MUST_ be the same. 
+NIKOLA_API void physics_world_finalize_bodies(PhysicsBody** bodies, const sizei count, PhysicsBatchHandle batch_handle, const bool is_active = true);
+
+/// Abort the `batch_handle` prepare process, with the given `bodies` array of `count` elements. 
+/// After this function is called the `batch_handle` will be invalidated.
+NIKOLA_API void physics_world_abort_bodies(PhysicsBody** bodies, const sizei count, PhysicsBatchHandle batch_handle);
 
 /// Remove the given `body` from the physics world.
 ///
@@ -482,8 +510,8 @@ NIKOLA_API void physics_world_remove_and_destroy_body(PhysicsBody** body);
 
 /// Remove the given `character` from the physics world.
 ///
-/// @NOTE: Make sure to call `character_body_destroy` to remove 
-/// the character completely.
+/// @NOTE: Make sure to call `character_body_destroy` beforhand 
+/// to remove the character completely.
 NIKOLA_API void physics_world_remove_character(Character* character);
 
 /// Cast a ray using the information provided by `cast_desc` into the world, 

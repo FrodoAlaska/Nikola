@@ -1,5 +1,9 @@
 # TODO:
 
+- [] Performance v2.0
+    - [] You _have_ to find a way to improve the run time of the physics 
+    - [] Improve the load times of the resource manager
+    - [] NBR conversion time enhancement
 - [] Animations 
     - [] OZZ animation? I mean, it's, like, fucking _amazing_. More research needed.
     - [] Test animations with multiple instances.
@@ -15,15 +19,9 @@
         - For example, a texture can be referred in a material and a material can be referred to in a mesh. 
         - That way, we can have the artists (and even myself) use different combinations of resources as we liked.
         - It's almost like a description of how the resources will be used. 
-        - We can also take it a step further and make it edit lights and their parameters.
+    - [] We need to get rid of the NBR conversion tool and instead have the conversion process happen in the engine itself. 
     - [] Documentation
 - [] Scenes?
-- [] Performance v2.0
-    - [] You _have_ to find a way to improve the run time of the physics 
-        - [] Put the `physics_world_step` function on a separate thread, almost like running a server
-        - [] The `event_dispatch` function should be thread-safe. However, I'm not sure. It does only iterate through the events and calls functions. Test it, nonetheless.
-    - [] Improve the load times of the resource manager
-    - [] NBR conversion time enhancement
 - [] Renderer: Beautify v2.0 
     - This one is just a thinking exersice. We don't want to add every rendering technique under the sun to "beautify" the engine's look. 
     - [] Gaussian blur

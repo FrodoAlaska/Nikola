@@ -29,15 +29,6 @@ static Engine s_engine;
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
-/// Consts
-
-constexpr f32 PHYSICS_WORLD_DEFAULT_DELTA_TIME      = 0.0166666667f;
-constexpr i32 PHYSICS_WORLD_DEFAULT_COLLISION_STEPS = 1;
-
-/// Consts
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
 /// Engine functions
 
 void engine_init(const AppDesc& desc) {
@@ -121,7 +112,7 @@ void engine_run() {
   while(window_is_open(s_engine.window)) {
     // Update 
     
-    physics_world_step(PHYSICS_WORLD_DEFAULT_DELTA_TIME, PHYSICS_WORLD_DEFAULT_COLLISION_STEPS); 
+    physics_world_step(1 / 60.0f, 1); 
     particles_update(niclock_get_delta_time());
    
     CHECK_VALID_CALLBACK(s_engine.app_desc.update_fn, s_engine.app, niclock_get_delta_time());

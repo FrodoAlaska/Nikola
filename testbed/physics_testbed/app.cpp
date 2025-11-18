@@ -4,16 +4,27 @@
 #include <imgui/imgui.h>
 
 /// ----------------------------------------------------------------------
+/// Consts
+
+const nikola::sizei TILES_MAX = 1280;
+
+/// Consts
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// App
 struct nikola::App {
   nikola::Window* window;
   nikola::FrameData frame_data;
 
   nikola::ResourceGroupID res_group_id;
-  nikola::ResourceID mesh_id, cube_id;
+  nikola::ResourceID cube_id;
   nikola::ResourceID materials[2];
+  nikola::Font* font;
 
-  nikola::PhysicsBody* floor_body; 
+  nikola::PhysicsBody* tiles[TILES_MAX];
+  nikola::Transform transforms[TILES_MAX];
+
   nikola::Character* cube_body;
 
   nikola::Vec3 velocity          = nikola::Vec3(0.0f);
@@ -46,28 +57,87 @@ static void init_resources(nikola::App* app) {
   app->materials[1] = nikola::resources_push_material(app->res_group_id, mat);
 
   // Meshes init
-  
-  app->mesh_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_SPHERE);
   app->cube_id = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE);
+
+  // Fonts init
+ 
+  nikola::ResourceID font_id = nikola::resources_push_font(app->res_group_id, "fonts/HeavyDataNerdFont.nbr");
+  app->font                  = nikola::resources_get_font(font_id);
 }
 
-static void init_bodies(nikola::App* app) {
-  // Floor init
+static void init_bodies_slow(nikola::App* app) {
+  // Tiles init
 
-  nikola::BoxColliderDesc coll_desc = {
-    .half_size = nikola::Vec3(32.0f, 0.1f, 32.0f),
+  for(nikola::sizei i = 0; i < TILES_MAX; i++) {
+    nikola::BoxColliderDesc coll_desc = {
+      .half_size = nikola::Vec3(2.0f),
+    };
+
+    nikola::PhysicsBodyDesc body_desc = {
+      .position = nikola::Vec3((i / 8) * 4.0f, 0.0f, (i % 8) * 4.0f),
+      .rotation = nikola::Quat(0.0f, 0.0f, 0.0f, 1.0f),
+
+      .type   = nikola::PHYSICS_BODY_STATIC, 
+      .layers = nikola::PHYSICS_OBJECT_LAYER_0,
+
+      .collider = nikola::collider_create(coll_desc),
+    };
+    app->tiles[i] = nikola::physics_world_create_and_add_body(body_desc);
+
+    app->transforms[i].position = body_desc.position; 
+    app->transforms[i].rotation = body_desc.rotation; 
+    app->transforms[i].scale    = coll_desc.half_size; 
+    nikola::transform_apply(app->transforms[i]);
+  }
+
+  // Cube init
+
+  nikola::SphereColliderDesc sphere_coll_desc = {
+    .radius = 1.0f,
   };
 
-  nikola::PhysicsBodyDesc body_desc = {
-    .position = nikola::Vec3(10.0f, -5.0f, 10.0f),
+  nikola::CharacterBodyDesc char_desc = {
+    .position = nikola::Vec3(10.0f, 5.0f, 10.0f),
     .rotation = nikola::Quat(0.0f, 0.0f, 0.0f, 1.0f),
 
-    .type   = nikola::PHYSICS_BODY_STATIC, 
-    .layers = nikola::PHYSICS_OBJECT_LAYER_0,
-
-    .collider = nikola::collider_create(coll_desc),
+    .layer = nikola::PHYSICS_OBJECT_LAYER_0,
+    
+    .collider  = nikola::collider_create(sphere_coll_desc),
   };
-  app->floor_body = nikola::physics_world_create_and_add_body(body_desc);
+
+  app->cube_body = nikola::character_body_create(char_desc);
+  nikola::physics_world_add_character(app->cube_body);
+}
+
+static void init_bodies_fast(nikola::App* app) {
+  // Tiles init
+
+  for(nikola::sizei i = 0; i < TILES_MAX; i++) {
+    nikola::BoxColliderDesc coll_desc = {
+      .half_size = nikola::Vec3(2.0f),
+    };
+
+    nikola::PhysicsBodyDesc body_desc = {
+      .position = nikola::Vec3((i / 8) * 4.0f, 0.0f, (i % 8) * 4.0f),
+      .rotation = nikola::Quat(0.0f, 0.0f, 0.0f, 1.0f),
+
+      .type   = nikola::PHYSICS_BODY_STATIC, 
+      .layers = nikola::PHYSICS_OBJECT_LAYER_0,
+
+      .collider = nikola::collider_create(coll_desc),
+    };
+    app->tiles[i] = nikola::physics_world_create_body(body_desc);
+    
+    app->transforms[i].position = body_desc.position; 
+    app->transforms[i].rotation = body_desc.rotation; 
+    app->transforms[i].scale    = coll_desc.half_size; 
+    nikola::transform_apply(app->transforms[i]);
+  }
+
+  nikola::PhysicsBatchHandle batch_handle = nikola::physics_world_prepare_bodies(app->tiles, TILES_MAX);
+  nikola::physics_world_finalize_bodies(app->tiles, TILES_MAX, batch_handle);
+
+  nikola::physics_world_optimize_broadphase();
 
   // Cube init
 
@@ -147,7 +217,6 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
     .target       = nikola::Vec3(-3.0f, 0.0f, 0.0f),
     .up_axis      = nikola::Vec3(0.0f, 1.0f, 0.0f),
     .aspect_ratio = nikola::window_get_aspect_ratio(app->window),
-    .move_func    = nikola::camera_free_move_func,
   };
   nikola::camera_create(&app->frame_data.camera, cam_desc);
 
@@ -155,11 +224,13 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   init_resources(app);
 
   // Bodies init
-  init_bodies(app);
+  
+  //init_bodies_slow(app);
+  init_bodies_fast(app);
 
   // Lights init
   
-  app->frame_data.dir_light.direction = nikola::Vec3(-5.0f, 1.0f, 1.0f);
+  app->frame_data.dir_light.direction = nikola::Vec3(3.0f, 5.0f, -1.0f);
   app->frame_data.dir_light.color     = nikola::Vec3(2.0f);
   app->frame_data.ambient             = nikola::Vec3(1.0f); 
 
@@ -174,7 +245,14 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 }
 
 void app_shutdown(nikola::App* app) {
-  nikola::physics_world_remove_and_destroy_body(&app->floor_body);
+  for(nikola::sizei i = 0; i < TILES_MAX; i++) {
+    nikola::physics_world_remove_and_destroy_body(&app->tiles[i]);
+  }
+
+  if(app->cube_body) {
+    nikola::physics_world_remove_character(app->cube_body);
+    nikola::character_body_destroy(&app->cube_body);
+  }
 
   nikola::resources_destroy_group(app->res_group_id);
   nikola::gui_shutdown();
@@ -215,6 +293,8 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
   }
 
   // Update the camera
+  
+  nikola::camera_free_move_func(app->frame_data.camera);
   nikola::camera_update(app->frame_data.camera);
 
   // Handle input
@@ -264,14 +344,13 @@ void app_render(nikola::App* app) {
   
   nikola::renderer_begin(app->frame_data);
 
-  nikola::Transform transform;
+  // Render tiles
+  nikola::renderer_queue_mesh_instanced(app->cube_id, app->transforms, TILES_MAX, app->materials[0]);
 
-  transform = nikola::physics_body_get_transform(app->floor_body);
-  nikola::transform_scale(transform, nikola::Vec3(32.0f, 0.1f, 32.0f));
-  nikola::renderer_queue_mesh(app->cube_id, transform, app->materials[0]);
- 
+  // Render the player 
+  
   if(app->cube_body) {
-    transform = nikola::character_body_get_transform(app->cube_body);
+    nikola::Transform transform = nikola::character_body_get_transform(app->cube_body);
     nikola::transform_scale(transform, nikola::Vec3(1.0f));
     nikola::renderer_queue_mesh(app->cube_id, transform, app->materials[1]);
   }
@@ -281,11 +360,7 @@ void app_render(nikola::App* app) {
   // Render 2D 
   
   nikola::batch_renderer_begin();
-  
-  nikola::i32 width, height; 
-  nikola::window_get_size(app->window, &width, &height);
-
-  nikola::batch_render_quad(nikola::Vec2(width, height) / 2.0f, nikola::Vec2(8.0f), nikola::Vec4(1.0f));
+  nikola::batch_render_fps(app->font, nikola::Vec2(10.0f, 20.0f), 24.0f, nikola::Vec4(1.0f));
   nikola::batch_renderer_end();
 }
 
@@ -296,15 +371,6 @@ void app_render_gui(nikola::App* app) {
 
   nikola::gui_begin();
   nikola::gui_begin_panel("Scene");
-
-  // Bodies
-  if(ImGui::CollapsingHeader("Bodies")) {
-    nikola::gui_edit_physics_body("Floor", app->floor_body);
-
-    if(app->cube_body) {
-      nikola::gui_edit_character_body("Cube", app->cube_body);
-    }
-  }
 
   // Frame 
   nikola::gui_edit_frame("Frame", &app->frame_data);
