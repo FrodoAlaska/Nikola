@@ -1,6 +1,6 @@
 #include "render_passes.h"
 
-#include "../shaders/billboard.glsl.h"
+#include "../shaders/particle.glsl.h"
 
 #include "nikola/nikola_render.h"
 #include "nikola/nikola_timer.h"
@@ -10,23 +10,23 @@
 namespace nikola { // Start of nikola
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// Billboard pass functions
+/// Particle pass functions
 
-void billboard_pass_init(Window* window) {
+void particle_pass_init(Window* window) {
   RenderPassDesc pass_desc = {}; 
 
   // Callbacks init
 
-  pass_desc.prepare_func = billboard_pass_prepare;
-  pass_desc.sumbit_func  = billboard_pass_sumbit;
-  pass_desc.resize_func  = billboard_pass_on_resize;
+  pass_desc.prepare_func = particle_pass_prepare;
+  pass_desc.sumbit_func  = particle_pass_sumbit;
+  pass_desc.resize_func  = particle_pass_on_resize;
 
   // Reosurce init
 
   pass_desc.res_group_id = RESOURCE_CACHE_ID;
 
-  ResourceID billboard_shader = resources_push_shader(RESOURCE_CACHE_ID, generate_billboard_shader());
-  pass_desc.shader_context_id = resources_push_shader_context(RESOURCE_CACHE_ID, billboard_shader);
+  ResourceID particle_shader  = resources_push_shader(RESOURCE_CACHE_ID, generate_particle_shader());
+  pass_desc.shader_context_id = resources_push_shader_context(RESOURCE_CACHE_ID, particle_shader);
   
   // Frame size and flags init
 
@@ -35,7 +35,7 @@ void billboard_pass_init(Window* window) {
 
   pass_desc.frame_size  = IVec2(width, height);
   pass_desc.clear_flags = (GFX_CLEAR_FLAGS_COLOR_BUFFER | GFX_CLEAR_FLAGS_DEPTH_BUFFER); 
-  pass_desc.queue_type  = RENDER_QUEUE_BILLBOARD;
+  pass_desc.queue_type  = RENDER_QUEUE_PARTICLE;
 
   // Color attachment init
 
@@ -65,11 +65,11 @@ void billboard_pass_init(Window* window) {
 
   // Render pass init
   
-  RenderPass* billboard_pass = renderer_create_pass(pass_desc, "Billboard pass");
-  renderer_append_pass(billboard_pass);
+  RenderPass* particle_pass = renderer_create_pass(pass_desc, "Particle pass");
+  renderer_append_pass(particle_pass);
 }
 
-void billboard_pass_prepare(RenderPass* pass, const FrameData& data) {
+void particle_pass_prepare(RenderPass* pass, const FrameData& data) {
   NIKOLA_PROFILE_FUNCTION();
 
   // @TODO (Renderer): Absolutely not!!!!! 
@@ -88,7 +88,7 @@ void billboard_pass_prepare(RenderPass* pass, const FrameData& data) {
                        pass->framebuffer_desc.clear_flags);
 }
 
-void billboard_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
+void particle_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
   NIKOLA_PROFILE_FUNCTION();
 
   // Early out to save on CPU time
@@ -130,7 +130,7 @@ void billboard_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
   pass->outputs_count = 1;
 }
 
-void billboard_pass_on_resize(RenderPass* pass, const IVec2& new_size) {
+void particle_pass_on_resize(RenderPass* pass, const IVec2& new_size) {
   pass->frame_size = new_size;
 
   // Updating the color attachment
@@ -153,7 +153,7 @@ void billboard_pass_on_resize(RenderPass* pass, const IVec2& new_size) {
   gfx_framebuffer_update(pass->framebuffer, pass->framebuffer_desc);
 }
 
-/// Billboard pass functions
+/// Particle pass functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 } // End of nikola

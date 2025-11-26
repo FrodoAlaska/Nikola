@@ -2,7 +2,7 @@
 
 #include "nikola/nikola_gfx.h"
 
-inline nikola::GfxShaderDesc generate_billboard_shader() {
+inline nikola::GfxShaderDesc generate_particle_shader() {
   return nikola::GfxShaderDesc {
     .vertex_source = R"(
       #version 460 core
@@ -28,43 +28,14 @@ inline nikola::GfxShaderDesc generate_billboard_shader() {
       // Outputs
       out VS_OUT {
         vec2 tex_coords;
-        vec3 normal;
-
-        vec3 camera_pos;
         flat int material_index;
       } vs_out;
       
       void main() {
         vs_out.tex_coords     = aTexCoords;
-        vs_out.normal         = aNormal; 
-        vs_out.camera_pos     = u_camera_pos;
         vs_out.material_index = gl_BaseInstance + gl_InstanceID;
         
-        // @NOTE (23/7/2025, Mohamed): 
-        //
-        // This is kind of cheating to achieve the billboard look. 
-        // We are effectively "canceling" the rotation of the object
-        // to make it always point towards the camera. 
-        //
-        // We can probably use a spherical billboard to have a better-looking 
-        // billboard. But, for now, this will do.
-        //
-        
-        mat4 view = u_view; // We can't edit the uniforms directly. GLSL, man.
-
-        view[0][0] = 1;
-        view[0][1] = 0;
-        view[0][2] = 0;
-        
-        view[1][0] = 0;
-        view[1][1] = 1;
-        view[1][2] = 0;
-        
-        view[2][0] = 0;
-        view[2][1] = 0;
-        view[2][2] = 1;
-
-        gl_Position = u_projection * view * u_model[vs_out.material_index] * vec4(aPos, 1.0);
+        gl_Position = u_projection * u_view * u_model[vs_out.material_index] * vec4(aPos, 1.0);
       }
     )",
 
@@ -76,9 +47,6 @@ inline nikola::GfxShaderDesc generate_billboard_shader() {
     
       in VS_OUT {
         vec2 tex_coords;
-        vec3 normal;
-
-        vec3 camera_pos;
         flat int material_index;
       } fs_in;
 

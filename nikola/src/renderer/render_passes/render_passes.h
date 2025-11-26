@@ -95,17 +95,17 @@ void light_pass_on_resize(RenderPass* pass, const IVec2& new_size);
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// Billboard pass functions
+/// Particle pass functions
 
-void billboard_pass_init(Window* window);
+void particle_pass_init(Window* window);
 
-void billboard_pass_prepare(RenderPass* pass, const FrameData& data);
+void particle_pass_prepare(RenderPass* pass, const FrameData& data);
 
-void billboard_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue);
+void particle_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue);
 
-void billboard_pass_on_resize(RenderPass* pass, const IVec2& new_size);
+void particle_pass_on_resize(RenderPass* pass, const IVec2& new_size);
 
-/// Billboard pass functions
+/// Particle pass functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------

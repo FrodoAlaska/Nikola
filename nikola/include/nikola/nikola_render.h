@@ -88,7 +88,7 @@ enum RenderPassID {
 /// RenderQueueType
 enum RenderQueueType {
   RENDER_QUEUE_OPAQUE = 0,
-  RENDER_QUEUE_BILLBOARD,
+  RENDER_QUEUE_PARTICLE,
   RENDER_QUEUE_DEBUG,
 
   RENDER_QUEUES_MAX,
@@ -663,11 +663,6 @@ NIKOLA_API void renderer_queue_animation_instanced(const ResourceID& res_id,
                                                    const sizei count, 
                                                    const ResourceID& mat_id = {});
 
-NIKOLA_API void renderer_queue_billboard_instanced(const ResourceID& res_id, 
-                                                   const Transform* transforms, 
-                                                   const sizei count, 
-                                                   const ResourceID& mat_id = {});
-
 /// A series of functions that queue a rendering command, using the given `res_id`
 /// at `transform` in world space, using `mat_id`.
 ///
@@ -686,9 +681,7 @@ NIKOLA_API void renderer_queue_animation(const ResourceID& res_id,
                                          const Transform& transform, 
                                          const ResourceID& mat_id = {});
 
-NIKOLA_API void renderer_queue_billboard(const ResourceID& res_id, 
-                                         const Transform& transform, 
-                                         const ResourceID& mat_id = {});
+NIKOLA_API void renderer_queue_particles(const ParticleEmitter& emitter);
 
 /// A series of functions to queue `count` instanced debug rendering commands
 /// using the given the `transforms` and `mat_id`.

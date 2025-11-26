@@ -108,13 +108,13 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
     .velocity = nikola::Vec3(5.0f),
     .scale    = nikola::Vec3(0.1f),
 
-    .mesh_id     = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE),
+    .mesh_id     = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_SIMPLE_CUBE),
     .material_id = nikola::resources_push_material(app->res_group_id, mat_desc),
 
     .lifetime       = 3.5f,
     .gravity_factor = -9.81f,
 
-    .count = 128,
+    .count = 256,
   };
   nikola::particle_emitter_create(&app->particle_emitter, emitter_desc);
 
@@ -172,10 +172,7 @@ void app_render(nikola::App* app) {
   // @TEMP: Render the particles
   
   if(app->particle_emitter.is_active) {
-    nikola::renderer_queue_mesh_instanced(app->particle_emitter.mesh_id, 
-                                          app->particle_emitter.transforms,
-                                          app->particle_emitter.particles_count, 
-                                          app->particle_emitter.material_id); 
+    nikola::renderer_queue_particles(app->particle_emitter);
   }
 
   nikola::renderer_end();

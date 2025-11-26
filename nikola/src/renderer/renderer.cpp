@@ -185,8 +185,8 @@ static void init_pipelines() {
   DynamicArray<f32> vertices; 
   DynamicArray<u32> indices;
   
-  geometry_loader_load(vertices, indices, GEOMETRY_BILLBOARD); 
-  geometry_loader_set_vertex_layout(pipe_desc.layouts[0], GEOMETRY_BILLBOARD);
+  geometry_loader_load(vertices, indices, GEOMETRY_QUAD); 
+  geometry_loader_set_vertex_layout(pipe_desc.layouts[0], GEOMETRY_QUAD);
 
   // Vertex buffer init 
   
@@ -197,7 +197,7 @@ static void init_pipelines() {
     .usage = GFX_BUFFER_USAGE_STATIC_DRAW,
   };
   pipe_desc.vertex_buffer  = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, vert_desc));
-  pipe_desc.vertices_count = vertices.size() / 8; // 8 = number of elements per vertex
+  pipe_desc.vertices_count = vertices.size() / 5; // 5 = number of elements per vertex
  
   // Index buffer init
   
@@ -317,10 +317,7 @@ static void render_queue_create(const RenderQueueType type) {
       queue->vertex_flags = (VERTEX_COMPONENT_POSITION | VERTEX_COMPONENT_NORMAL | VERTEX_COMPONENT_TANGENT |
                              VERTEX_COMPONENT_JOINT_ID | VERTEX_COMPONENT_JOINT_WEIGHT | VERTEX_COMPONENT_TEXTURE_COORDS);
       break;
-    case RENDER_QUEUE_BILLBOARD:
-      geometry_loader_set_vertex_layout(queue->pipe_desc.layouts[0], GEOMETRY_BILLBOARD);
-      queue->vertex_flags = (VERTEX_COMPONENT_POSITION | VERTEX_COMPONENT_NORMAL | VERTEX_COMPONENT_TEXTURE_COORDS);
-      break;
+    case RENDER_QUEUE_PARTICLE:
     case RENDER_QUEUE_DEBUG:
       geometry_loader_set_vertex_layout(queue->pipe_desc.layouts[0], GEOMETRY_SIMPLE_CUBE);
       queue->vertex_flags = (VERTEX_COMPONENT_POSITION | VERTEX_COMPONENT_NORMAL | VERTEX_COMPONENT_TEXTURE_COORDS);
@@ -477,7 +474,7 @@ void renderer_init(Window* window) {
   
   shadow_pass_init(window);
   light_pass_init(window);
-  billboard_pass_init(window);
+  particle_pass_init(window);
   hdr_pass_init(window);
   debug_pass_init(window);
 
@@ -883,23 +880,6 @@ void renderer_queue_animation_instanced(const ResourceID& res_id,
   // @TEMP (Renderer): How to handle animations?????? 
 }
 
-void renderer_queue_billboard_instanced(const ResourceID& res_id, 
-                                        const Transform* transforms, 
-                                        const sizei count, 
-                                        const ResourceID& mat_id) {
-  // Retrieving the necessary resources
-
-  Material* material = s_renderer.defaults.material;
-  Mesh* mesh         =  resources_get_mesh(res_id);
-
-  if(RESOURCE_IS_VALID(mat_id)) {
-    material = resources_get_material(mat_id);
-  }
-
-  // Issuing the draw command
-  render_queue_push_instanced(RENDER_QUEUE_BILLBOARD, mesh, material, transforms, count); 
-}
-
 void renderer_queue_mesh(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id) {
   // Retrieving the necessary resources
 
@@ -946,18 +926,18 @@ void renderer_queue_animation(const ResourceID& res_id,
   // @TEMP (Renderer): How to handle animations?????? 
 }
 
-void renderer_queue_billboard(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id) {
+void renderer_queue_particles(const ParticleEmitter& emitter) {
   // Retrieving the necessary resources
 
   Material* material = s_renderer.defaults.material;
-  Mesh* mesh         =  resources_get_mesh(res_id);
-
-  if(RESOURCE_IS_VALID(mat_id)) {
-    material = resources_get_material(mat_id);
+  Mesh* mesh         =  resources_get_mesh(emitter.mesh_id);
+  
+  if(RESOURCE_IS_VALID(emitter.material_id)) {
+    material = resources_get_material(emitter.material_id);
   }
-
+  
   // Issuing the draw command
-  render_queue_push(RENDER_QUEUE_BILLBOARD, mesh, transform, material); 
+  render_queue_push_instanced(RENDER_QUEUE_PARTICLE, mesh, material, emitter.transforms, emitter.particles_count); 
 }
 
 void renderer_queue_debug_cube_instanced(const Transform* transforms, const sizei count, const ResourceID& mat_id) {

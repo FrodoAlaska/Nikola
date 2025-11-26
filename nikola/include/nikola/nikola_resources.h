@@ -467,8 +467,8 @@ enum GeometryType {
   /// A predefined skybox geometry shape.
   GEOMETRY_SKYBOX, 
   
-  /// A predefined billboard geometry shape.
-  GEOMETRY_BILLBOARD, 
+  /// A predefined 2D quad geometry shape.
+  GEOMETRY_QUAD, 
   
   /// A much simpler cube shape (position, normal, and texture coordinates).
   GEOMETRY_SIMPLE_CUBE,

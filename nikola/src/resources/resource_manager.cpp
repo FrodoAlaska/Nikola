@@ -132,8 +132,8 @@ static const char* geo_type_str(const GeometryType type) {
       return "GEOMETRY_SPHERE";
     case GEOMETRY_SKYBOX:
       return "GEOMETRY_SKYBOX";
-    case GEOMETRY_BILLBOARD:
-      return "GEOMETRY_BILLBOARD";
+    case GEOMETRY_QUAD:
+      return "GEOMETRY_QUAD";
     case GEOMETRY_SIMPLE_CUBE:
       return "GEOMETRY_SIMPLE_CUBE";
     case GEOMETRY_SIMPLE_SPHERE:

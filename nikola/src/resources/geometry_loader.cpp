@@ -398,15 +398,15 @@ static void create_skybox_geo(DynamicArray<f32>& vertices) {
   };
 }
 
-static void create_billboard_geo(DynamicArray<f32>& vertices, DynamicArray<u32>& indices) {
+static void create_quad_geo(DynamicArray<f32>& vertices, DynamicArray<u32>& indices) {
   // Vertices init
   
   vertices = {
-    // Position          Normal             Texture coords
-    -1.0f,  1.0f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 1.0f,
-    -1.0f, -1.0f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f,
-     1.0f, -1.0f, 0.0f,  0.0f, 0.0f, 1.0f,  1.0f, 0.0f,
-     1.0f,  1.0f, 0.0f,  0.0f, 0.0f, 1.0f,  1.0f, 1.0f,
+    // Position          Texture coords
+    -1.0f,  1.0f, 0.0f,  0.0f, 1.0f,
+    -1.0f, -1.0f, 0.0f,  0.0f, 0.0f,
+     1.0f, -1.0f, 0.0f,  1.0f, 0.0f,
+     1.0f,  1.0f, 0.0f,  1.0f, 1.0f,
   };
 
   // Indices init
@@ -585,8 +585,8 @@ void geometry_loader_load(DynamicArray<f32>& vertices, DynamicArray<u32>& indice
     case GEOMETRY_SKYBOX:
       create_skybox_geo(vertices);
       break;
-    case GEOMETRY_BILLBOARD:
-      create_billboard_geo(vertices, indices);
+    case GEOMETRY_QUAD:
+      create_quad_geo(vertices, indices);
       break;
     case GEOMETRY_SIMPLE_CUBE:
       create_simple_cube_geo(vertices, indices);
@@ -619,11 +619,10 @@ void geometry_loader_set_vertex_layout(GfxVertexLayout& layout, const GeometryTy
       layout.attributes[0]    = GFX_LAYOUT_FLOAT3; // Position
       layout.attributes_count = 1;
       break;
-    case GEOMETRY_BILLBOARD:
+    case GEOMETRY_QUAD:
       layout.attributes[0]    = GFX_LAYOUT_FLOAT3; // Position
-      layout.attributes[1]    = GFX_LAYOUT_FLOAT3; // Normal
-      layout.attributes[2]    = GFX_LAYOUT_FLOAT2; // Texture coords
-      layout.attributes_count = 3;
+      layout.attributes[1]    = GFX_LAYOUT_FLOAT2; // Texture coords
+      layout.attributes_count = 2;
       break;
     case GEOMETRY_SIMPLE_CUBE:
     case GEOMETRY_SIMPLE_SPHERE:

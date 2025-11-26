@@ -56,7 +56,7 @@ set(NIKOLA_SOURCES
 
   ${NIKOLA_SRC_DIR}/renderer/render_passes/light_pass.cpp
   ${NIKOLA_SRC_DIR}/renderer/render_passes/shadow_pass.cpp
-  ${NIKOLA_SRC_DIR}/renderer/render_passes/billboard_pass.cpp
+  ${NIKOLA_SRC_DIR}/renderer/render_passes/particle_pass.cpp
   ${NIKOLA_SRC_DIR}/renderer/render_passes/hdr_pass.cpp
   ${NIKOLA_SRC_DIR}/renderer/render_passes/debug_pass.cpp
   
