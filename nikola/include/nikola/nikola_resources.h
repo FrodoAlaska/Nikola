@@ -470,11 +470,11 @@ enum GeometryType {
   /// A predefined billboard geometry shape.
   GEOMETRY_BILLBOARD, 
   
-  /// A much simpler cube shape for debug purposes.
-  GEOMETRY_DEBUG_CUBE,
+  /// A much simpler cube shape (position, normal, and texture coordinates).
+  GEOMETRY_SIMPLE_CUBE,
   
-  /// A much simpler sphere shape for debug purposes.
-  GEOMETRY_DEBUG_SPHERE,
+  /// A much simpler sphere shape (position, normal, and texture coordinates).
+  GEOMETRY_SIMPLE_SPHERE,
 
   /// The maximum number of geometry types. 
   GEOMETRY_TYPES_MAX,

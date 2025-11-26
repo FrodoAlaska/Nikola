@@ -171,8 +171,8 @@ static void init_defaults() {
 
   // Debug geometries init
 
-  s_renderer.geometries[GEOMETRY_DEBUG_CUBE]   = resources_get_mesh(resources_push_mesh(RESOURCE_CACHE_ID, GEOMETRY_DEBUG_CUBE));
-  s_renderer.geometries[GEOMETRY_DEBUG_SPHERE] = resources_get_mesh(resources_push_mesh(RESOURCE_CACHE_ID, GEOMETRY_DEBUG_SPHERE));
+  s_renderer.geometries[GEOMETRY_SIMPLE_CUBE]   = resources_get_mesh(resources_push_mesh(RESOURCE_CACHE_ID, GEOMETRY_SIMPLE_CUBE));
+  s_renderer.geometries[GEOMETRY_SIMPLE_SPHERE] = resources_get_mesh(resources_push_mesh(RESOURCE_CACHE_ID, GEOMETRY_SIMPLE_SPHERE));
 }
 
 static void init_pipelines() {
@@ -322,8 +322,8 @@ static void render_queue_create(const RenderQueueType type) {
       queue->vertex_flags = (VERTEX_COMPONENT_POSITION | VERTEX_COMPONENT_NORMAL | VERTEX_COMPONENT_TEXTURE_COORDS);
       break;
     case RENDER_QUEUE_DEBUG:
-      geometry_loader_set_vertex_layout(queue->pipe_desc.layouts[0], GEOMETRY_DEBUG_CUBE);
-      queue->vertex_flags = (VERTEX_COMPONENT_POSITION | VERTEX_COMPONENT_TEXTURE_COORDS);
+      geometry_loader_set_vertex_layout(queue->pipe_desc.layouts[0], GEOMETRY_SIMPLE_CUBE);
+      queue->vertex_flags = (VERTEX_COMPONENT_POSITION | VERTEX_COMPONENT_NORMAL | VERTEX_COMPONENT_TEXTURE_COORDS);
       break;
   }
 
@@ -964,7 +964,7 @@ void renderer_queue_debug_cube_instanced(const Transform* transforms, const size
   // Retrieving the necessary resources
 
   Material* material = s_renderer.defaults.debug_material;
-  Mesh* mesh         =  s_renderer.geometries[GEOMETRY_DEBUG_CUBE];
+  Mesh* mesh         =  s_renderer.geometries[GEOMETRY_SIMPLE_CUBE];
   
   if(RESOURCE_IS_VALID(mat_id)) {
     material = resources_get_material(mat_id);
@@ -978,7 +978,7 @@ void renderer_queue_debug_sphere_instanced(const Transform* transforms, const si
   // Retrieving the necessary resources
 
   Material* material = s_renderer.defaults.debug_material;
-  Mesh* mesh         =  s_renderer.geometries[GEOMETRY_DEBUG_SPHERE];
+  Mesh* mesh         =  s_renderer.geometries[GEOMETRY_SIMPLE_SPHERE];
   
   if(RESOURCE_IS_VALID(mat_id)) {
     material = resources_get_material(mat_id);
@@ -992,7 +992,7 @@ void renderer_queue_debug_cube(const Transform& transform, const ResourceID& mat
   // Retrieving the necessary resources
 
   Material* material = s_renderer.defaults.debug_material;
-  Mesh* mesh         =  s_renderer.geometries[GEOMETRY_DEBUG_CUBE];
+  Mesh* mesh         =  s_renderer.geometries[GEOMETRY_SIMPLE_CUBE];
   
   if(RESOURCE_IS_VALID(mat_id)) {
     material = resources_get_material(mat_id);
@@ -1006,7 +1006,7 @@ void renderer_queue_debug_sphere(const Transform& transform, const ResourceID& m
   // Retrieving the necessary resources
 
   Material* material = s_renderer.defaults.debug_material;
-  Mesh* mesh         =  s_renderer.geometries[GEOMETRY_DEBUG_SPHERE];
+  Mesh* mesh         =  s_renderer.geometries[GEOMETRY_SIMPLE_SPHERE];
   
   if(RESOURCE_IS_VALID(mat_id)) {
     material = resources_get_material(mat_id);

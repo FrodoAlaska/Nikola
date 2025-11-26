@@ -3,7 +3,7 @@
 - [] Improve CPU particles 
     - [x] Make a `ParticleEmitter` struct instead of that whole mess 
     - [x] Find a way to replace 2D billboards for particles to 3D meshes 
-    - [] Replace the `GEOMETRY_DEBUG_CUBE` and `GEOMETRY_DEBUG_SPHERE` to `_SIMPLE` instead 
+    - [x] Replace the `GEOMETRY_DEBUG_CUBE` and `GEOMETRY_DEBUG_SPHERE` to `_SIMPLE` instead 
     - [] Get rid of the billboard pass and replace it with a particle pass 
         - [] Bonus if you can find a way to combine the particle pass and the light pass into one
     - [] Find a way to render the particles or sumbit a particles draw command to the renderer

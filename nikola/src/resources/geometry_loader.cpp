@@ -417,51 +417,51 @@ static void create_billboard_geo(DynamicArray<f32>& vertices, DynamicArray<u32>&
   };
 }
 
-static void create_debug_cube_geo(DynamicArray<f32>& vertices, DynamicArray<u32>& indices) {
+static void create_simple_cube_geo(DynamicArray<f32>& vertices, DynamicArray<u32>& indices) {
   // Vertices init
  
   vertices = {
     // Back face
 
-    -1.0f, -1.0f, -1.0f,  0.0f, 0.0f,
-     1.0f, -1.0f, -1.0f,  1.0f, 0.0f,
-     1.0f,  1.0f, -1.0f,  1.0f, 1.0f,
-    -1.0f,  1.0f, -1.0f,  0.0f, 1.0f,
+    -1.0f, -1.0f, -1.0f,  0.0f, 0.0f, -1.0f,  0.0f, 0.0f,
+     1.0f, -1.0f, -1.0f,  0.0f, 0.0f, -1.0f,  1.0f, 0.0f,
+     1.0f,  1.0f, -1.0f,  0.0f, 0.0f, -1.0f,  1.0f, 1.0f,
+    -1.0f,  1.0f, -1.0f,  0.0f, 0.0f, -1.0f,  0.0f, 1.0f,
 
     // Front face
 
-    -1.0f, -1.0f,  1.0f,  0.0f, 0.0f,
-     1.0f, -1.0f,  1.0f,  1.0f, 0.0f,
-     1.0f,  1.0f,  1.0f,  1.0f, 1.0f,
-    -1.0f,  1.0f,  1.0f,  0.0f, 1.0f,
+    -1.0f, -1.0f,  1.0f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f,
+     1.0f, -1.0f,  1.0f,  0.0f, 0.0f, 1.0f,  1.0f, 0.0f,
+     1.0f,  1.0f,  1.0f,  0.0f, 0.0f, 1.0f,  1.0f, 1.0f,
+    -1.0f,  1.0f,  1.0f,  0.0f, 0.0f, 1.0f,  0.0f, 1.0f,
 
     // Left face
 
-    -1.0f,  1.0f,  1.0f,  1.0f, 0.0f,
-    -1.0f,  1.0f, -1.0f,  1.0f, 1.0f,
-    -1.0f, -1.0f, -1.0f,  0.0f, 1.0f,
-    -1.0f, -1.0f,  1.0f,  0.0f, 0.0f,
+    -1.0f,  1.0f,  1.0f,  -1.0f, 0.0f, 0.0f,  1.0f, 0.0f,
+    -1.0f,  1.0f, -1.0f,  -1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
+    -1.0f, -1.0f, -1.0f,  -1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+    -1.0f, -1.0f,  1.0f,  -1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
 
     // Right face
 
-    1.0f,  1.0f,  1.0f,  1.0f, 0.0f,
-    1.0f,  1.0f, -1.0f,  1.0f, 1.0f,
-    1.0f, -1.0f, -1.0f,  0.0f, 1.0f,
-    1.0f, -1.0f,  1.0f,  0.0f, 0.0f,
+    1.0f,  1.0f,  1.0f,  1.0f, 0.0f, 0.0f,  1.0f, 0.0f,
+    1.0f,  1.0f, -1.0f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
+    1.0f, -1.0f, -1.0f,  1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+    1.0f, -1.0f,  1.0f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
 
     // Top face
 
-    -1.0f, -1.0f, -1.0f,  0.0f, 1.0f,
-     1.0f, -1.0f, -1.0f,  1.0f, 1.0f,
-     1.0f, -1.0f,  1.0f,  1.0f, 0.0f,
-    -1.0f, -1.0f,  1.0f,  0.0f, 0.0f,
+    -1.0f, -1.0f, -1.0f,  0.0f, -1.0f, 0.0f,  0.0f, 1.0f,
+     1.0f, -1.0f, -1.0f,  0.0f, -1.0f, 0.0f,  1.0f, 1.0f,
+     1.0f, -1.0f,  1.0f,  0.0f, -1.0f, 0.0f,  1.0f, 0.0f,
+    -1.0f, -1.0f,  1.0f,  0.0f, -1.0f, 0.0f,  0.0f, 0.0f,
 
     // Bottom face
 
-    -1.0f,  1.0f, -1.0f,  0.0f, 1.0f,
-     1.0f,  1.0f, -1.0f,  1.0f, 1.0f,
-     1.0f,  1.0f,  1.0f,  1.0f, 0.0f,
-    -1.0f,  1.0f,  1.0f,  0.0f, 0.0f,
+    -1.0f,  1.0f, -1.0f,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f,
+     1.0f,  1.0f, -1.0f,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f,
+     1.0f,  1.0f,  1.0f,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f,
+    -1.0f,  1.0f,  1.0f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
   };
 
   indices = {
@@ -497,13 +497,14 @@ static void create_debug_cube_geo(DynamicArray<f32>& vertices, DynamicArray<u32>
   };
 }
 
-static void create_debug_sphere_geo(DynamicArray<f32>& vertices, DynamicArray<u32>& indices) {
+static void create_simple_sphere_geo(DynamicArray<f32>& vertices, DynamicArray<u32>& indices) {
   u32 sector_count = 32;
   u32 stack_count  = 32;
 
   f32 sector_step = 2 * PI / sector_count;
   f32 stack_step  = PI / stack_count;
   f32 radius      = 1.0f;
+  f32 inv_length  = 1.0f / radius;
 
   // Vertices init
   
@@ -519,10 +520,19 @@ static void create_debug_sphere_geo(DynamicArray<f32>& vertices, DynamicArray<u3
       f32 sector_angle = j * sector_step;
     
       // Positions
-      
-      vertices.push_back(xy * nikola::cos(sector_angle));
-      vertices.push_back(xy * nikola::sin(sector_angle));
+     
+      f32 x_pos = xy * nikola::cos(sector_angle);
+      f32 y_pos = xy * nikola::sin(sector_angle);
+
+      vertices.push_back(x_pos);
+      vertices.push_back(y_pos);
       vertices.push_back(z);
+
+      // Normals 
+
+      vertices.push_back(-(x_pos * inv_length));
+      vertices.push_back(-(y_pos * inv_length));
+      vertices.push_back(-(z * inv_length));
 
       // Texture coords
       
@@ -578,11 +588,11 @@ void geometry_loader_load(DynamicArray<f32>& vertices, DynamicArray<u32>& indice
     case GEOMETRY_BILLBOARD:
       create_billboard_geo(vertices, indices);
       break;
-    case GEOMETRY_DEBUG_CUBE:
-      create_debug_cube_geo(vertices, indices);
+    case GEOMETRY_SIMPLE_CUBE:
+      create_simple_cube_geo(vertices, indices);
       break;
-    case GEOMETRY_DEBUG_SPHERE:
-      create_debug_sphere_geo(vertices, indices);
+    case GEOMETRY_SIMPLE_SPHERE:
+      create_simple_sphere_geo(vertices, indices);
       break;
     default:
       NIKOLA_LOG_ERROR("Invalid geometry shape given");
@@ -615,11 +625,12 @@ void geometry_loader_set_vertex_layout(GfxVertexLayout& layout, const GeometryTy
       layout.attributes[2]    = GFX_LAYOUT_FLOAT2; // Texture coords
       layout.attributes_count = 3;
       break;
-    case GEOMETRY_DEBUG_CUBE:
-    case GEOMETRY_DEBUG_SPHERE:
+    case GEOMETRY_SIMPLE_CUBE:
+    case GEOMETRY_SIMPLE_SPHERE:
       layout.attributes[0]    = GFX_LAYOUT_FLOAT3; // Position
-      layout.attributes[1]    = GFX_LAYOUT_FLOAT2; // Texture coords
-      layout.attributes_count = 2;
+      layout.attributes[1]    = GFX_LAYOUT_FLOAT3; // Normal
+      layout.attributes[2]    = GFX_LAYOUT_FLOAT2; // Texture coords
+      layout.attributes_count = 3;
       break;
     default:
       NIKOLA_LOG_ERROR("Invalid geometry shape given");
