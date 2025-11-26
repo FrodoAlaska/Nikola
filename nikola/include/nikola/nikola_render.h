@@ -5,6 +5,7 @@
 #include "nikola_math.h"
 #include "nikola_containers.h"
 #include "nikola_physics.h"
+#include "nikola_timer.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -17,22 +18,22 @@ namespace nikola { // Start of nikola
 /// Consts
 
 /// The maximum amount of instances a renderer can dispatch.
-const sizei RENDERER_MAX_INSTANCES     = 2048;
+const sizei RENDERER_MAX_INSTANCES        = 2048;
 
 /// The maximum degrees the camera can achieve. 
-const f32 CAMERA_MAX_DEGREES           = 89.0f;
+const f32 CAMERA_MAX_DEGREES              = 89.0f;
 
 /// The maximum amount of zoom the camera can achieve.
-const f32 CAMERA_MAX_ZOOM              = 180.0f;
+const f32 CAMERA_MAX_ZOOM                 = 180.0f;
 
 /// The maximum amount of point lights a scene can have.
-const sizei POINT_LIGHTS_MAX           = 16;
+const sizei POINT_LIGHTS_MAX              = 16;
 
-/// The maximum amount of particles tha can be emitted at a time.
-const sizei PARTICLES_MAX              = 256;
+/// The maximum amount of particles tha can be emitted per emitter.
+const sizei PARTICLES_MAX                 = 1024;
 
 /// The maximum amount of corners a camera's frustum can have.
-const sizei CAMERA_FRUSTUM_CORNERS_MAX = 8;
+const sizei CAMERA_FRUSTUM_CORNERS_MAX    = 8;
 
 /// The index of the matrices uniform buffer within all shaders.
 const sizei SHADER_MATRICES_BUFFER_INDEX  = 0;
@@ -378,10 +379,11 @@ struct ParticleEmitterDesc {
   /// @NOTE: The default scale is set to `Vec3(0.2f, 0.2f, 0.2f)`.
   Vec3 scale                            = Vec3(0.2f);
 
-  /// The color of each particle in the system.
-  ///
-  /// @NOTE: The default color is set to `Vec4(1.0f, 1.0f, 1.0f, 1.0f)`.
-  Vec4 color                            = Vec4(1.0f);
+  /// The mesh of the particle to be used on rendering.
+  ResourceID mesh_id;
+
+  /// The material of the particle to be used on rendering.
+  ResourceID material_id;
 
   /// The maximum amount of time a particle can 
   /// live for after being activated.
@@ -416,6 +418,31 @@ struct ParticleEmitterDesc {
   sizei count                           = 0; 
 };
 /// ParticleEmitterDesc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// ParticleEmitter 
+struct ParticleEmitter {
+  Vec3 initial_position = Vec3(0.0f);
+  Vec3 initial_velocity = Vec3(0.0f);
+
+  Transform transforms[PARTICLES_MAX];
+  Vec3 forces[PARTICLES_MAX];
+  Vec3 velocities[PARTICLES_MAX];
+
+  sizei particles_count = 0;
+  Timer lifetime; 
+
+  ResourceID mesh_id; 
+  ResourceID material_id;
+  
+  f32 distribution_radius               = 1.0f;
+  ParticleDistributionType distribution = DISTRIBUTION_RANDOM;
+
+  f32 gravity_factor = 0.0f; 
+  bool is_active     = false;
+};
+/// ParticleEmitter 
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -786,18 +813,21 @@ NIKOLA_API const bool camera_check_intersection(const Camera& cam, const Transfo
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// Particles functions
+/// ParticleEmitter functions
 
-/// Initialize the particle system. 
-NIKOLA_API void particles_init();
+/// Create a particle emitter `out_emitter`, using the information in `desc`.
+NIKOLA_API void particle_emitter_create(ParticleEmitter* out_emitter, const ParticleEmitterDesc& desc);
 
-/// A physics update of each particle in the system. 
-NIKOLA_API void particles_update(const f64 delta_time); 
+/// A physics update of each particle in the given `emitter` using the scale of `delta_time`. 
+NIKOLA_API void particle_emitter_update(ParticleEmitter& emitter, const f64 delta_time); 
 
-/// Emit particles using the information given by `desc`.
-NIKOLA_API void particles_emit(const ParticleEmitterDesc& desc);
+/// Emit the particles of `emitter`.
+NIKOLA_API void particle_emitter_emit(ParticleEmitter& emitter);
 
-/// Particles functions
+/// Reset the given `emitter` to its initial state.
+NIKOLA_API void particle_emitter_reset(ParticleEmitter& emitter);
+
+/// ParticleEmitter functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------

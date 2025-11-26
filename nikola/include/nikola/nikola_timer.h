@@ -86,8 +86,8 @@ struct Timer {
 /// Create a new `timer` with a maximum `limit`.
 NIKOLA_API void timer_create(Timer* timer, const f32 limit, const bool one_shot, const bool initial_active = true);
 
-/// Let the given `timer` tick.
-NIKOLA_API void timer_update(Timer& timer);
+/// Let the given `timer` tick, scaled by `delta_time.
+NIKOLA_API void timer_update(Timer& timer, const f32 delta_time);
 
 /// Reset the `timer` to its initial state.
 NIKOLA_API void timer_reset(Timer& timer);

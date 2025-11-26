@@ -1,16 +1,15 @@
-# TODO:
+## Update 0.4:
 
-- [] Performance v2.0
-    - [] You _have_ to find a way to improve the run time of the physics 
-    - [] Improve the load times of the resource manager
-    - [] NBR conversion time enhancement
+- [] Improve CPU particles 
+    - [x] Make a `ParticleEmitter` struct instead of that whole mess 
+    - [x] Find a way to replace 2D billboards for particles to 3D meshes 
+    - [] Replace the `GEOMETRY_DEBUG_CUBE` and `GEOMETRY_DEBUG_SPHERE` to `_SIMPLE` instead 
+    - [] Get rid of the billboard pass and replace it with a particle pass 
+        - [] Bonus if you can find a way to combine the particle pass and the light pass into one
+    - [] Find a way to render the particles or sumbit a particles draw command to the renderer
 - [] Animations 
     - [] OZZ animation? I mean, it's, like, fucking _amazing_. More research needed.
     - [] Test animations with multiple instances.
-    - [] Documentation
-- [] GPU Particles
-    - [] GPU-based particle system, using compute shaders.
-    - [] Have a lot of options to edit the shape, distribution, and gravity. Perhaps save it in a file?
     - [] Documentation
 - [] Resources 
     - [] Material file format like `.mat` or something?
@@ -20,6 +19,16 @@
         - That way, we can have the artists (and even myself) use different combinations of resources as we liked.
         - It's almost like a description of how the resources will be used. 
     - [] We need to get rid of the NBR conversion tool and instead have the conversion process happen in the engine itself. 
+    - [] Documentation
+- [] Performance v2.0
+    - [] Improve the load times of the resource manager
+    - [] NBR conversion time enhancement
+
+## Update 0.5:
+
+- [] GPU Particles
+    - [] GPU-based particle system, using compute shaders.
+    - [] Have a lot of options to edit the shape, distribution, and gravity. Perhaps save it in a file?
     - [] Documentation
 - [] Scenes?
 - [] Renderer: Beautify v2.0 

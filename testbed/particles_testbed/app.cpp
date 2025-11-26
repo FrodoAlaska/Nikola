@@ -14,7 +14,7 @@ struct nikola::App {
   nikola::ResourceID font_id, material_id;
 
   nikola::Transform transforms[5];
-  nikola::ParticleEmitterDesc particle_desc;
+  nikola::ParticleEmitter particle_emitter;
 
   bool has_editor = false;
 };
@@ -26,6 +26,7 @@ struct nikola::App {
 
 static void init_resources(nikola::App* app) {
   // Resource storage init 
+  
   nikola::FilePath res_path = nikola::filepath_append(nikola::filesystem_current_path(), "res");
   app->res_group_id = nikola::resources_create_group("app_res", res_path);
 
@@ -58,7 +59,6 @@ static void init_resources(nikola::App* app) {
 nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // App init
   nikola::App* app = new nikola::App{};
-  nikola::renderer_set_clear_color(nikola::Vec4(0.1f, 0.1f, 0.1f, 1.0f));
 
   // Window init
   app->window = window;
@@ -99,17 +99,24 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
  
   // Particle emitter init
 
-  app->particle_desc = {
-    .position = nikola::Vec3(-6.0f, 25.0f, 5.0f),
-    .velocity = nikola::Vec3(700.0f),
-    .scale    = nikola::Vec3(0.1f),
-    .color    = nikola::Vec4(1.0f),
-
-    .lifetime       = 2.0f,
-    .gravity_factor = -4.5f,
-
-    .count = 64,
+  nikola::MaterialDesc mat_desc = {
+    .color = nikola::Vec3(1.0f, 0.0f, 0.0f), 
   };
+   
+  nikola::ParticleEmitterDesc emitter_desc = {
+    .position = nikola::Vec3(-6.0f, 25.0f, 5.0f),
+    .velocity = nikola::Vec3(5.0f),
+    .scale    = nikola::Vec3(0.1f),
+
+    .mesh_id     = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_CUBE),
+    .material_id = nikola::resources_push_material(app->res_group_id, mat_desc),
+
+    .lifetime       = 3.5f,
+    .gravity_factor = -9.81f,
+
+    .count = 128,
+  };
+  nikola::particle_emitter_create(&app->particle_emitter, emitter_desc);
 
   return app;
 }
@@ -141,8 +148,11 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
   // Emit particles
 
   if(nikola::input_key_pressed(nikola::KEY_SPACE)) {
-    nikola::particles_emit(app->particle_desc);
+    nikola::particle_emitter_emit(app->particle_emitter);
   }
+
+  // Update the particle emitter 
+  nikola::particle_emitter_update(app->particle_emitter, delta_time);
 
   // Update the camera
   
@@ -159,13 +169,22 @@ void app_render(nikola::App* app) {
   nikola::renderer_queue_mesh(app->mesh_id, app->transforms[0], app->material_id);
   nikola::renderer_queue_model(app->building_id, app->transforms[1]);
 
+  // @TEMP: Render the particles
+  
+  if(app->particle_emitter.is_active) {
+    nikola::renderer_queue_mesh_instanced(app->particle_emitter.mesh_id, 
+                                          app->particle_emitter.transforms,
+                                          app->particle_emitter.particles_count, 
+                                          app->particle_emitter.material_id); 
+  }
+
   nikola::renderer_end();
   
   // Render 2D 
   
-  // nikola::batch_renderer_begin();
-  // nikola::batch_render_fps(nikola::resources_get_font(app->font_id), nikola::Vec2(10.0f, 32.0f), 32.0f, nikola::Vec4(1.0f)); 
-  // nikola::batch_renderer_end();
+  nikola::batch_renderer_begin();
+  nikola::batch_render_fps(nikola::resources_get_font(app->font_id), nikola::Vec2(10.0f, 32.0f), 32.0f, nikola::Vec4(1.0f)); 
+  nikola::batch_renderer_end();
 }
 
 void app_render_gui(nikola::App* app) {
@@ -184,7 +203,7 @@ void app_render_gui(nikola::App* app) {
   if(ImGui::CollapsingHeader("Entities")) {
     nikola::gui_edit_transform("Mesh", &app->transforms[0]);
     nikola::gui_edit_transform("Model", &app->transforms[1]);
-    nikola::gui_edit_particle_emitter("Particles", &app->particle_desc);
+    nikola::gui_edit_particle_emitter("Particles", &app->particle_emitter);
   }
 
   // Resources

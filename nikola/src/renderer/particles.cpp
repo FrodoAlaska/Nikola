@@ -6,93 +6,46 @@
 namespace nikola { // Start of nikola 
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// Consts
-
-const sizei PARTICLE_EMITTERS_MAX = 16;
-
-/// Consts
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// ParticleEmitter 
-struct ParticleEmitter {
-  Transform transforms[PARTICLES_MAX];
-  Vec3 forces[PARTICLES_MAX];
-  Vec3 velocities[PARTICLES_MAX];
-
-  Timer lifetime;
-  sizei particles_count = 0;
-  float gravity_factor  = 0.0f;
-
-  bool is_active = false;
-};
-/// ParticleEmitter 
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// ParticleManager
-struct ParticleManager {
-  ParticleEmitter emitters[PARTICLE_EMITTERS_MAX];
-  sizei active_emitters = 0; 
-
-  ResourceID shape_id, material_id;
-  Material* material;
-};
-
-static ParticleManager s_manager;
-/// ParticleManager
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
 /// Private functions
 
-static void apply_normal_distribution(ParticleEmitter* emitter, const ParticleEmitterDesc& desc) {
-  for(sizei i = 0; i < emitter->particles_count; i++) {
-    Vec3 direction     = Vec3(random_f32(-desc.distribution_radius, desc.distribution_radius), 
-                              random_f32(-desc.distribution_radius, desc.distribution_radius),
-                              random_f32(-desc.distribution_radius, desc.distribution_radius));
-    emitter->forces[i] = desc.velocity * direction;
-
-    transform_translate(emitter->transforms[i], desc.position);
-    transform_scale(emitter->transforms[i], desc.scale);
+static void apply_normal_distribution(ParticleEmitter& emitter) {
+  for(sizei i = 0; i < emitter.particles_count; i++) {
+    Vec3 direction         = Vec3(random_f32(-emitter.distribution_radius, emitter.distribution_radius), 
+                                  random_f32(-emitter.distribution_radius, emitter.distribution_radius),
+                                  random_f32(-emitter.distribution_radius, emitter.distribution_radius));
+    emitter.velocities[i] *= direction;
   }
 }
 
-static void apply_square_distribution(ParticleEmitter* emitter, const ParticleEmitterDesc& desc) {
-  Vec3 min = (desc.position - (desc.distribution_radius / 2.0f));
-  Vec3 max = min + desc.distribution_radius;
+static void apply_square_distribution(ParticleEmitter& emitter) {
+  Vec3 min = (emitter.initial_position - (emitter.distribution_radius / 2.0f));
+  Vec3 max = min + emitter.distribution_radius;
 
   min = vec3_normalize(min);
   max = vec3_normalize(max);
 
-  for(sizei i = 0; i < emitter->particles_count; i++) {
-    Vec3 direction     = Vec3(random_f32(min.x, max.x), 
-                              1.0f,
-                              random_f32(min.z, max.z));
-    emitter->forces[i] = desc.velocity * direction;
-
-    transform_translate(emitter->transforms[i], desc.position);
-    transform_scale(emitter->transforms[i], desc.scale);
+  for(sizei i = 0; i < emitter.particles_count; i++) {
+    Vec3 direction        = Vec3(random_f32(min.x, max.x), 
+                                 1.0f,
+                                 random_f32(min.z, max.z));
+    emitter.velocities[i] *= direction;
   }
 }
 
-static void apply_cube_distribution(ParticleEmitter* emitter, const ParticleEmitterDesc& desc) {
+static void apply_cube_distribution(ParticleEmitter& emitter) {
   // @TODO (Particles): Looks more like the random distribution
 
-  Vec3 min = (desc.position - (desc.distribution_radius / 2.0f));
-  Vec3 max = min + desc.distribution_radius;
+  Vec3 min = (emitter.initial_position - (emitter.distribution_radius / 2.0f));
+  Vec3 max = min + emitter.distribution_radius;
 
   min = vec3_normalize(min);
   max = vec3_normalize(max);
 
-  for(sizei i = 0; i < emitter->particles_count; i++) {
-    Vec3 direction     = Vec3(random_f32(min.x, max.x), 
-                              random_f32(min.y, max.y),
-                              random_f32(min.z, max.z));
-    emitter->forces[i] = desc.velocity * direction;
-
-    transform_translate(emitter->transforms[i], desc.position);
-    transform_scale(emitter->transforms[i], desc.scale);
+  for(sizei i = 0; i < emitter.particles_count; i++) {
+    Vec3 direction         = Vec3(random_f32(min.x, max.x), 
+                                  random_f32(min.y, max.y),
+                                  random_f32(min.z, max.z));
+    emitter.velocities[i] *= direction;
   }
 }
 
@@ -100,139 +53,111 @@ static void apply_cube_distribution(ParticleEmitter* emitter, const ParticleEmit
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// Particles functions
+/// ParticleEmitter functions
 
-void particles_init() {
-  // Particles resources init
+void particle_emitter_create(ParticleEmitter* out_emitter, const ParticleEmitterDesc& desc) {
+  NIKOLA_ASSERT(out_emitter, "Invalid ParticleEmitter given to particle_emitter_create")
+
+  // Setting default values 
   
-  s_manager.shape_id    = resources_push_mesh(RESOURCE_CACHE_ID, GEOMETRY_BILLBOARD);
-  s_manager.material_id = resources_push_material(RESOURCE_CACHE_ID, MaterialDesc{});
-  
-  s_manager.material = resources_get_material(s_manager.material_id);
+  out_emitter->initial_position = desc.position;
+  out_emitter->initial_velocity = desc.velocity;
 
-  // Default values for each emitter
+  out_emitter->particles_count  = desc.count;
+  out_emitter->gravity_factor   = desc.gravity_factor; 
 
-  for(sizei i = 0; i < PARTICLE_EMITTERS_MAX; i++) {
-    ParticleEmitter* emitter = &s_manager.emitters[i];
+  out_emitter->distribution_radius = desc.distribution_radius; 
+  out_emitter->distribution        = desc.distribution;
 
-    for(sizei j = 0; j < PARTICLES_MAX; j++) {
-      transform_translate(emitter->transforms[j], Vec3(-1000.0f));
-    }
+  for(sizei i = 0; i < desc.count; i++) {
+    Transform* transform = &out_emitter->transforms[i];
 
-    for(sizei j = 0; j < PARTICLES_MAX; j++) {
-      emitter->forces[j] = Vec3(0.0f);
-    }
-
-    for(sizei j = 0; j < PARTICLES_MAX; j++) {
-      emitter->velocities[j] = Vec3(0.0f);
-    }
-     
-    timer_create(&emitter->lifetime, 2.5f, false);
-  }
-}
-
-void particles_update(const f64 delta_time) {
-  NIKOLA_PROFILE_FUNCTION();
-
-  for(sizei i = 0; i < PARTICLE_EMITTERS_MAX; i++) {
-    ParticleEmitter* emitter = &s_manager.emitters[i];
-    if(!emitter->is_active) {
-      continue;
-    }
-
-    // Apply the numarical integrator 
-  
-    for(sizei j = 0; j < emitter->particles_count; j++) {
-      Vec3 acceleration = emitter->forces[j] * -1.0f; // -1.0f = inverse mass... for now
-      acceleration.y   += emitter->gravity_factor;
-
-      emitter->velocities[j]          += acceleration * (f32)delta_time;
-      emitter->transforms[j].position += emitter->velocities[j] * (f32)delta_time;
-
-      transform_translate(emitter->transforms[j], emitter->transforms[j].position);
-
-      emitter->forces[j] = Vec3(0.0f);
-    }
-
-    // Send out a render command for the emitter 
-    // @TEMP (Particles)
-    
-    renderer_queue_billboard_instanced(s_manager.shape_id, 
-                                       emitter->transforms, 
-                                       emitter->particles_count, 
-                                       s_manager.material_id);
-
-    // Manage lifetimes
-  
-    timer_update(emitter->lifetime);
-    if(!emitter->lifetime.has_runout) {
-      continue;
-    }
-
-    // Emitter has runout. Deactivated.
-     
-    emitter->is_active = false;
-    s_manager.active_emitters--;
-
-    for(sizei j = 0; j < emitter->particles_count; j++) {
-      emitter->velocities[j]          = Vec3(0.0f);
-      emitter->transforms[j].position = Vec3(0.0f);
-    }
+    transform->position = desc.position; 
+    transform->scale    = desc.scale;
+    transform_apply(*transform);
   }
 
-  // Just some safety procedures 
-  s_manager.active_emitters = clamp_int(s_manager.active_emitters, 0, PARTICLE_EMITTERS_MAX - 1);
+  for(sizei i = 0; i < desc.count; i++) {
+    out_emitter->forces[i] = Vec3(0.0f);
+  }
+  
+  for(sizei i = 0; i < desc.count; i++) {
+    out_emitter->velocities[i] = desc.velocity;
+  }
+
+  // Setting render variables 
+
+  out_emitter->mesh_id     = desc.mesh_id; 
+  out_emitter->material_id = desc.material_id;
+
+  // Create the timer 
+  timer_create(&out_emitter->lifetime, desc.lifetime, false);
 }
 
-void particles_emit(const ParticleEmitterDesc& desc) {
-  NIKOLA_ASSERT((desc.count >= 0 && desc.count < PARTICLES_MAX), "Out-of-bounds particles count");
-
-  // Restrict the particles from over... uh... particling?
-  // Just wait for the next frame.
-  if((s_manager.active_emitters + 1) >= (PARTICLE_EMITTERS_MAX - 1)) {
+void particle_emitter_update(ParticleEmitter& emitter, const f64 delta_time) {
+  if(!emitter.is_active) {
     return;
   }
 
-  // Retrieve any inactive emitter from the array
+  // Apply the numarical integrator for each particle 
 
-  ParticleEmitter* emitter = nullptr;
-  for(sizei i = 0; i < PARTICLE_EMITTERS_MAX; i++) {
-    if(s_manager.emitters[i].is_active) {
-      continue;
-    }
-
-    emitter            = &s_manager.emitters[i];
-    emitter->is_active = true;
-    s_manager.active_emitters++;
-
-    break;
+  for(sizei i = 0; i < emitter.particles_count; i++) {
+    emitter.transforms[i].position += (emitter.velocities[i] + Vec3(0.0f, emitter.gravity_factor, 0.0f)) * (f32)delta_time; 
+    transform_translate(emitter.transforms[i], emitter.transforms[i].position);
   }
 
-  // Applying the settings to the selected emitter
+  // Update the timer 
 
-  s_manager.material->color        = Vec3(desc.color);
-  s_manager.material->transparency = desc.color.a;
+  timer_update(emitter.lifetime, (f32)delta_time);
+  if(!emitter.lifetime.has_runout) {
+    return;
+  }
 
-  emitter->particles_count = desc.count;
-  emitter->lifetime.limit  = desc.lifetime;
-  emitter->gravity_factor  = desc.gravity_factor;
+  // Bye bye, emitter. Goodnight
+  emitter.is_active = false; 
+}
 
-  switch(desc.distribution) {
+void particle_emitter_emit(ParticleEmitter& emitter) {
+  if(!emitter.is_active) {
+    particle_emitter_reset(emitter);
+    emitter.is_active = true;
+  }
+
+  // Applying the distribution
+
+  switch(emitter.distribution) {
     case DISTRIBUTION_RANDOM: 
-      apply_normal_distribution(emitter, desc);
+      apply_normal_distribution(emitter);
       break;
     case DISTRIBUTION_SQUARE: 
-      apply_square_distribution(emitter, desc);
+      apply_square_distribution(emitter);
       break;
     case DISTRIBUTION_CUBE: 
-      apply_cube_distribution(emitter, desc);
+      apply_cube_distribution(emitter);
       break;
     default:
       break;
   }
 }
 
-/// Particles functions
+void particle_emitter_reset(ParticleEmitter& emitter) {
+  emitter.is_active = false;
+  timer_reset(emitter.lifetime);
+  
+  for(sizei i = 0; i < emitter.particles_count; i++) {
+    transform_translate(emitter.transforms[i], emitter.initial_position);
+  }
+  
+  for(sizei i = 0; i < emitter.particles_count; i++) {
+    emitter.forces[i] = Vec3(0.0f);
+  }
+  
+  for(sizei i = 0; i < emitter.particles_count; i++) {
+    emitter.velocities[i] = emitter.initial_velocity;
+  }
+}
+
+/// ParticleEmitter functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 } // End of nikola

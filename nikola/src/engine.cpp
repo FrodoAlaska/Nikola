@@ -90,9 +90,6 @@ void engine_init(const AppDesc& desc) {
 
   physics_world_init(world_desc);
 
-  // Particles init
-  particles_init();
-
   // Check for any command line arguments
   
   Args cli_args; 
@@ -113,8 +110,6 @@ void engine_run() {
     // Update 
     
     physics_world_step(1 / 60.0f, 1); 
-    particles_update(niclock_get_delta_time());
-   
     CHECK_VALID_CALLBACK(s_engine.app_desc.update_fn, s_engine.app, niclock_get_delta_time());
 
     // Render

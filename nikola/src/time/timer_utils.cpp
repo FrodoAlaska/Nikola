@@ -53,16 +53,16 @@ void timer_create(Timer* timer, const f32 limit, const bool one_shot, const bool
   timer->is_active   = initial_active; 
 }
 
-void timer_update(Timer& timer) {
-  // An inactive timer shouldn't run logic
+void timer_update(Timer& timer, const f32 delta_time) {
   if(!timer.is_active) {
     return;
   }
   
   // Keep counting
-  timer.counter += (f32)niclock_get_delta_time();
+  timer.counter += delta_time;
 
   // Check if the timer has reached its limit
+  
   if(timer.counter > timer.limit) {
     timer.counter    = 0.0f;
     timer.has_runout = true;

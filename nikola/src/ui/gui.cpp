@@ -808,29 +808,26 @@ void gui_edit_character_body(const char* name, Character* character) {
   ImGui::PopID(); 
 }
 
-void gui_edit_particle_emitter(const char* name, ParticleEmitterDesc* emitter_desc) {
+void gui_edit_particle_emitter(const char* name, ParticleEmitter* emitter) {
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
  
-  ImGui::DragFloat3("Position", &emitter_desc->position[0], s_gui.big_step);
-  ImGui::DragFloat3("Velocity", &emitter_desc->velocity[0], s_gui.big_step);
-
-  ImGui::DragFloat3("Scale", &emitter_desc->scale[0], s_gui.big_step, 0.0f, 256.0f);
-  ImGui::DragFloat4("Color", &emitter_desc->color[0], s_gui.big_step, 0.0f, 12.0f);
+  ImGui::DragFloat3("Position", &emitter->initial_position[0], s_gui.big_step);
+  ImGui::DragFloat3("Velocity", &emitter->initial_velocity[0], s_gui.big_step);
   
-  ImGui::DragFloat("Lifetime", &emitter_desc->lifetime, s_gui.big_step, 0.0f, 512.0f);
-  ImGui::DragFloat("Gravity", &emitter_desc->gravity_factor, s_gui.big_step);
+  ImGui::DragFloat("Lifetime", &emitter->lifetime.limit, s_gui.big_step, 0.0f, 512.0f);
+  ImGui::DragFloat("Gravity", &emitter->gravity_factor, s_gui.big_step);
   
-  ImGui::DragFloat("Distribution radius", &emitter_desc->distribution_radius, s_gui.big_step);
+  ImGui::DragFloat("Distribution radius", &emitter->distribution_radius, s_gui.big_step);
   
-  i32 current_dist = emitter_desc->distribution;
+  i32 current_dist = emitter->distribution;
   if(ImGui::Combo("Distributions", &current_dist, "Random\0Square\0Cube\0\0")) {
-    emitter_desc->distribution = (ParticleDistributionType)current_dist;
+    emitter->distribution = (ParticleDistributionType)current_dist;
   }
 
-  i32 count = (i32)emitter_desc->count;
+  i32 count = (i32)emitter->particles_count;
   if(ImGui::SliderInt("Count", &count, 1, (i32)(PARTICLES_MAX - 1))) {
-    emitter_desc->count = (sizei)count;
+    emitter->particles_count = (sizei)count;
   }
   
   ImGui::PopID(); 
