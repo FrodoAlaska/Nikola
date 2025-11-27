@@ -33,10 +33,12 @@ inline nikola::GfxShaderDesc generate_particle_shader() {
       } vs_out;
       
       void main() {
+        int index = gl_BaseInstance + gl_InstanceID;
+
         vs_out.tex_coords     = aTexCoords;
-        vs_out.material_index = gl_BaseInstance + gl_InstanceID;
+        vs_out.material_index = gl_DrawID;
         
-        gl_Position = u_projection * u_view * u_model[vs_out.material_index] * vec4(aPos, 1.0);
+        gl_Position = u_projection * u_view * u_model[index] * vec4(aPos, 1.0);
       }
     )",
 

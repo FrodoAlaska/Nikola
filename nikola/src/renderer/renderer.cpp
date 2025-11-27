@@ -339,6 +339,7 @@ static void render_queue_push(const RenderQueueType type, Mesh* mesh, const Tran
 
   GfxDrawCommandIndirect cmd = {
     .elements_count = (u32)mesh->indices.size(),
+
     .first_element  = (u32)entry->indices.size(),
     .base_vertex    = (i32)(entry->vertices.size() / vertex_get_components_count(entry->vertex_flags)),
     .base_instance  = (u32)entry->transforms.size(),

@@ -33,10 +33,12 @@ inline nikola::GfxShaderDesc generate_debug_shader() {
       } vs_out;
 
       void main() {
-        vs_out.tex_coords     = aTextureCoords;
-        vs_out.material_index = gl_BaseInstance + gl_InstanceID; 
+        int index = gl_BaseInstance + gl_InstanceID;
 
-        gl_Position = u_projection * u_view * u_model[vs_out.material_index] * vec4(aPos, 1.0);
+        vs_out.tex_coords     = aTexCoords;
+        vs_out.material_index = gl_DrawID;
+        
+        gl_Position = u_projection * u_view * u_model[index] * vec4(aPos, 1.0);
       }
     )",
 
