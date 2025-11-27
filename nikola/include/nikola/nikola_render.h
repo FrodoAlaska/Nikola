@@ -54,20 +54,6 @@ const sizei SHADER_ANIMATION_BUFFER_INDEX = 4;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// RenderableType
-enum RenderableType {
-  /// The currently supported renderable types to be used 
-  /// with the `renderer_queue_*` functions.
-
-  RENDERABLE_MESH = 0, 
-  RENDERABLE_MODEL, 
-  RENDERABLE_ANIMATION, 
-  RENDERABLE_BILLBOARD, 
-};
-/// RenderableType
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
 /// RenderPassID
 enum RenderPassID {
   /// The currently available render passes the 
@@ -75,7 +61,7 @@ enum RenderPassID {
 
   RENDER_PASS_SHADOW = 0, 
   RENDER_PASS_LIGHT,
-  RENDER_PASS_BILLBOARD,
+  RENDER_PASS_PARTICLE,
   RENDER_PASS_HDR,
   RENDER_PASS_DEBUG,
   
@@ -713,7 +699,7 @@ NIKOLA_API void renderer_queue_debug_sphere(const Transform& transform, const Re
 /// Draw the given `skybox_id` skybox into the scene. 
 ///
 /// @NOTE: This call should only be made inside render passes. 
-/// Any calls to this function outside render passes, is not 
+/// Any calls to this function outside render passes is not 
 /// guaranteed to work.
 ///
 /// Yes, I am a bad developer. Thank you.

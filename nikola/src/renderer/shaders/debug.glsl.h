@@ -13,11 +13,6 @@ inline nikola::GfxShaderDesc generate_debug_shader() {
       layout (location = 1) in vec3 aNormal;
       layout (location = 2) in vec2 aTextureCoords;
 
-      // Outputs
-      
-      out vec2 texture_coords;
-      out flat int material_index;
-
       // Uniforms
 
       layout(std140, binding = 0) uniform Matrices {
@@ -29,12 +24,19 @@ inline nikola::GfxShaderDesc generate_debug_shader() {
       layout(std430, binding = 1) readonly buffer ModelsBuffer {
         mat4 u_model[4096];
       };
+  
+      // Outputs
+      
+      out VS_OUT {
+        vec2 tex_coords;
+        flat int material_index;
+      } vs_out;
 
       void main() {
-        texture_coords = aTextureCoords;
-        material_index = gl_BaseInstance + gl_InstanceID; 
+        vs_out.tex_coords     = aTextureCoords;
+        vs_out.material_index = gl_BaseInstance + gl_InstanceID; 
 
-        gl_Position = u_projection * u_view * u_model[material_index] * vec4(aPos, 1.0);
+        gl_Position = u_projection * u_view * u_model[vs_out.material_index] * vec4(aPos, 1.0);
       }
     )",
 
@@ -46,12 +48,14 @@ inline nikola::GfxShaderDesc generate_debug_shader() {
       layout (location = 0) out vec4 frag_color;
    
       // Inputs
-      
-      in vec2 texture_coords;
-      in flat int material_index;
 
-      // Uniforms
-      
+      in VS_OUT {
+        vec2 tex_coords;
+        flat int material_index;
+      } fs_in;
+
+      // Material
+
       struct Material {
         sampler2D albedo_handle;
         sampler2D metallic_handle;
@@ -68,14 +72,16 @@ inline nikola::GfxShaderDesc generate_debug_shader() {
         vec3 color;
       };
 
+      // Uniforms
+      
       layout(std430, binding = 2) readonly buffer MaterialsBuffer {
         Material u_materials[4096];
       };
 
       void main() {
-        Material material = u_materials[material_index];
+        Material material = u_materials[fs_in.material_index];
 
-        vec3 texel = vec3(texture(material.albedo_handle, texture_coords)) * material.color;
+        vec3 texel = vec3(texture(material.albedo_handle, fs_in.tex_coords)) * material.color;
         frag_color = vec4(texel, material.transparency);
       }
     )"

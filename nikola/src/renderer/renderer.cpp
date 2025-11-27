@@ -726,6 +726,7 @@ void renderer_append_pass(RenderPass* pass) {
   NIKOLA_ASSERT(pass, "Invalid RenderPass passed to renderer_append_pass");
 
   // The first pass. Make it the head.
+  
   if(!s_renderer.head_pass) {
     s_renderer.head_pass = pass; 
     
@@ -737,6 +738,7 @@ void renderer_append_pass(RenderPass* pass) {
   }
 
   // Perhaps there is no tail? Make it the tail if so
+  
   if(!s_renderer.tail_pass) {
     s_renderer.tail_pass = pass; 
 
@@ -930,7 +932,7 @@ void renderer_queue_particles(const ParticleEmitter& emitter) {
   // Retrieving the necessary resources
 
   Material* material = s_renderer.defaults.material;
-  Mesh* mesh         =  resources_get_mesh(emitter.mesh_id);
+  Mesh* mesh         = resources_get_mesh(emitter.mesh_id);
   
   if(RESOURCE_IS_VALID(emitter.material_id)) {
     material = resources_get_material(emitter.material_id);

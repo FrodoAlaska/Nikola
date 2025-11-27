@@ -26,6 +26,7 @@ inline nikola::GfxShaderDesc generate_particle_shader() {
       };
   
       // Outputs
+      
       out VS_OUT {
         vec2 tex_coords;
         flat int material_index;
@@ -42,13 +43,18 @@ inline nikola::GfxShaderDesc generate_particle_shader() {
     .pixel_source = R"(
       #version 460 core
       #extension GL_ARB_bindless_texture : require
-   
+  
+      // Layouts
       layout (location = 0) out vec4 frag_color;
-    
+ 
+      // Inputs
+
       in VS_OUT {
         vec2 tex_coords;
         flat int material_index;
       } fs_in;
+
+      // Material
 
       struct Material {
         sampler2D albedo_handle;
@@ -66,6 +72,8 @@ inline nikola::GfxShaderDesc generate_particle_shader() {
         vec3 color;
       };
 
+      // Uniforms
+
       layout(std430, binding = 2) readonly buffer MaterialsBuffer {
         Material u_materials[4096];
       };
@@ -73,8 +81,10 @@ inline nikola::GfxShaderDesc generate_particle_shader() {
       void main() {
         Material material = u_materials[fs_in.material_index];
 
-        vec3 texel = vec3(texture(material.albedo_handle, fs_in.tex_coords)) * material.color;
-        frag_color = vec4(texel, material.transparency);
+        vec3 albedo_texel   = vec3(texture(material.albedo_handle, fs_in.tex_coords)) * material.color;
+        vec3 emissive_texel = vec3(texture(material.emissive_handle, fs_in.tex_coords)) * material.emissive;
+
+        frag_color = vec4(albedo_texel + emissive_texel, material.transparency);
       }
     )"
   };

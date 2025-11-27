@@ -88,7 +88,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   
   nikola::transform_translate(app->transforms[1], nikola::Vec3(5.0f, 0.2f, 70.0f));
   nikola::transform_scale(app->transforms[1], nikola::Vec3(10.0f));
-  nikola::transform_rotate(app->transforms[1], nikola::Vec3(-90.0f * nikola::DEG2RAD, 0.0f, 0.0f));
+  nikola::transform_rotate(app->transforms[1], nikola::Vec3(TO_RADIANS(-90.0f), 0.0f, 0.0f));
 
   // Lights init
 
@@ -106,7 +106,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::ParticleEmitterDesc emitter_desc = {
     .position = nikola::Vec3(-6.0f, 25.0f, 5.0f),
     .velocity = nikola::Vec3(5.0f),
-    .scale    = nikola::Vec3(0.1f),
+    .scale    = nikola::Vec3(0.5f),
 
     .mesh_id     = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_SIMPLE_CUBE),
     .material_id = nikola::resources_push_material(app->res_group_id, mat_desc),
@@ -114,7 +114,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
     .lifetime       = 3.5f,
     .gravity_factor = -9.81f,
 
-    .count = 256,
+    .count = 64,
   };
   nikola::particle_emitter_create(&app->particle_emitter, emitter_desc);
 
