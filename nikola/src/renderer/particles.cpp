@@ -118,10 +118,11 @@ void particle_emitter_update(ParticleEmitter& emitter, const f64 delta_time) {
 }
 
 void particle_emitter_emit(ParticleEmitter& emitter) {
-  if(!emitter.is_active) {
+  if(emitter.is_active) {
     particle_emitter_reset(emitter);
-    emitter.is_active = true;
   }
+
+  emitter.is_active = true;
 
   // Applying the distribution
 

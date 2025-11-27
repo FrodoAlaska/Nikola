@@ -108,7 +108,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
     .velocity = nikola::Vec3(5.0f),
     .scale    = nikola::Vec3(0.1f),
 
-    .mesh_id     = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_SIMPLE_CUBE),
+    .mesh_id     = nikola::resources_push_mesh(app->res_group_id, nikola::GEOMETRY_SIMPLE_SPHERE),
     .material_id = nikola::resources_push_material(app->res_group_id, mat_desc),
 
     .lifetime       = 3.5f,
