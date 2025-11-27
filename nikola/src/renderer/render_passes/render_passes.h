@@ -71,6 +71,8 @@ struct LightBuffer {
 
 void shadow_pass_init(Window* window);
 
+void shadow_pass_destroy(RenderPass* pass);
+
 void shadow_pass_prepare(RenderPass* pass, const FrameData& data);
 
 void shadow_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue);
@@ -84,6 +86,8 @@ Mat4 shadow_pass_get_light_space(RenderPass* pass);
 /// Light pass functions
 
 void light_pass_init(Window* window);
+
+void light_pass_destroy(RenderPass* pass);
 
 void light_pass_prepare(RenderPass* pass, const FrameData& data);
 
@@ -99,8 +103,6 @@ void light_pass_on_resize(RenderPass* pass, const IVec2& new_size);
 
 void particle_pass_init(Window* window);
 
-void particle_pass_prepare(RenderPass* pass, const FrameData& data);
-
 void particle_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue);
 
 void particle_pass_on_resize(RenderPass* pass, const IVec2& new_size);
@@ -112,6 +114,8 @@ void particle_pass_on_resize(RenderPass* pass, const IVec2& new_size);
 /// HDR pass functions
 
 void hdr_pass_init(Window* window);
+
+void hdr_pass_destroy(RenderPass* pass);
 
 void hdr_pass_prepare(RenderPass* pass, const FrameData& data);
 
@@ -126,8 +130,6 @@ void hdr_pass_on_resize(RenderPass* pass, const IVec2& new_size);
 /// Debug pass functions
 
 void debug_pass_init(Window* window);
-
-void debug_pass_prepare(RenderPass* pass, const FrameData& data);
 
 void debug_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue);
 

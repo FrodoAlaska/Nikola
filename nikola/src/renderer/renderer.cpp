@@ -498,8 +498,8 @@ void renderer_shutdown() {
   for(sizei i = 0; i < s_renderer.passes_count; i++) { 
     RenderPass* pass = &s_renderer.passes_pool[i];   
 
-    if(pass->framebuffer) {
-      gfx_framebuffer_destroy(pass->framebuffer);
+    if(pass->destroy_func) {
+      pass->destroy_func(pass);
     }
   }
  
@@ -599,13 +599,8 @@ void renderer_end() {
   
   RenderPass* current = s_renderer.head_pass;
   while(current) {
-    // Prepare the context for the render pass
-
+    // Set the target to the pass's framebuffer
     gfx_context_set_target(current->gfx, current->framebuffer);
-    gfx_context_set_viewport(current->gfx, 0, 0, current->frame_size.x, current->frame_size.y);
-
-    Vec4 col = s_renderer.clear_color;
-    gfx_context_clear(current->gfx, col.r, col.g, col.b, col.a);
 
     // Initiating the render pass callbacks
 
@@ -670,7 +665,7 @@ const RenderQueueEntry* renderer_get_queue(const RenderQueueType type) {
   return &s_renderer.queues[(sizei)type];
 }
 
-RenderPass* renderer_create_pass(const RenderPassDesc& desc, const String& debug_name) {
+RenderPass* renderer_create_pass(const RenderPassDesc& desc, const String& debug_name, const RenderPass* parent) {
   // Allocate the pass
   
   RenderPass* pass = &s_renderer.passes_pool[s_renderer.passes_count++];
@@ -681,11 +676,26 @@ RenderPass* renderer_create_pass(const RenderPassDesc& desc, const String& debug
   pass->prepare_func = desc.prepare_func;
   pass->sumbit_func  = desc.sumbit_func;
   pass->resize_func  = desc.resize_func;
+  pass->destroy_func = desc.destroy_func;
   pass->queue_type   = desc.queue_type;
-  
-  // Render targets init
+  pass->debug_name   = debug_name;
+  pass->frame_size   = desc.frame_size;
 
-  pass->frame_size = desc.frame_size;
+  // Retrieve the context
+  pass->shader_context = resources_get_shader_context(desc.shader_context_id);
+
+  // Just inherit the parent's framebuffer information
+
+  if(parent) {
+    pass->framebuffer_desc = parent->framebuffer_desc;
+    pass->framebuffer      = parent->framebuffer;
+    pass->frame_size       = parent->frame_size;
+
+    NIKOLA_LOG_TRACE("Created pass \'%s\' at index \'%zu\'", debug_name.c_str(), s_renderer.passes_count - 1);
+    return pass;
+  }
+
+  // Render targets init
   
   for(auto& target : desc.targets) {
     ResourceID tex_id   = resources_push_texture(desc.res_group_id, target);
@@ -712,11 +722,6 @@ RenderPass* renderer_create_pass(const RenderPassDesc& desc, const String& debug
   
   pass->framebuffer_desc.clear_flags = desc.clear_flags; 
   pass->framebuffer                  = gfx_framebuffer_create(pass->gfx, pass->framebuffer_desc);
-  pass->debug_name                   = debug_name;
-  pass->user_data                    = desc.user_data;
-
-  // Retrieve the context
-  pass->shader_context = resources_get_shader_context(desc.shader_context_id);
 
   NIKOLA_LOG_TRACE("Created pass \'%s\' at index \'%zu\'", debug_name.c_str(), s_renderer.passes_count - 1);
   return pass;

@@ -104,9 +104,10 @@ struct RenderQueueEntry;
 
 /// Render pass callbacks
 
-using RenderPassPrepareFn  = void(*)(RenderPass* pass, const FrameData& data);
-using RenderPassSumbitFn   = void(*)(RenderPass* pass, const RenderQueueEntry& queue);
-using RenderPassOnResizeFn = void(*)(RenderPass* pass, const IVec2& new_size);
+using RenderPassPrepareFn   = void(*)(RenderPass* pass, const FrameData& data);
+using RenderPassSumbitFn    = void(*)(RenderPass* pass, const RenderQueueEntry& queue);
+using RenderPassOnResizeFn  = void(*)(RenderPass* pass, const IVec2& new_size);
+using RenderPassOnDestroyFn = void(*)(RenderPass* pass);
 
 /// Callbacks
 ///---------------------------------------------------------------------------------------------------------------------
@@ -205,9 +206,10 @@ struct RenderQueueEntry {
 struct RenderPassDesc {
   /// Render pass functions to be called.
 
-  RenderPassPrepareFn prepare_func = nullptr; 
-  RenderPassSumbitFn sumbit_func   = nullptr;
-  RenderPassOnResizeFn resize_func = nullptr;
+  RenderPassPrepareFn prepare_func   = nullptr; 
+  RenderPassSumbitFn sumbit_func     = nullptr;
+  RenderPassOnResizeFn resize_func   = nullptr;
+  RenderPassOnDestroyFn destroy_func = nullptr; 
 
   /// Resources to be extrated to the render pass.
 
@@ -228,10 +230,6 @@ struct RenderPassDesc {
 
   /// The number of render targets of the render pass. 
   DynamicArray<GfxTextureDesc> targets;
-
-  /// Some user data to be sent over with every execution of 
-  /// the callbacks.
-  void* user_data = nullptr;
 };
 /// RenderPassDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -244,9 +242,10 @@ struct RenderPass {
 
   /// Render pass functions to be called.
 
-  RenderPassPrepareFn prepare_func; 
-  RenderPassSumbitFn sumbit_func;
-  RenderPassOnResizeFn resize_func;
+  RenderPassPrepareFn prepare_func   = nullptr; 
+  RenderPassSumbitFn sumbit_func     = nullptr;
+  RenderPassOnResizeFn resize_func   = nullptr;
+  RenderPassOnDestroyFn destroy_func = nullptr; 
 
   RenderQueueType queue_type;
 
@@ -278,9 +277,7 @@ struct RenderPass {
   RenderPass* next;
   
   /// State handling
-
   String debug_name;
-  void* user_data = nullptr;
 };
 /// RenderPass
 ///---------------------------------------------------------------------------------------------------------------------
@@ -598,7 +595,13 @@ NIKOLA_API const RenderQueueEntry* renderer_get_queue(const RenderQueueType type
 
 /// Create a new render pass using the information from `desc` identified with `debug_name`,
 /// returning back a pointer to the newly added render pass. 
-NIKOLA_API RenderPass* renderer_create_pass(const RenderPassDesc& desc, const String& debug_name = "Unnamed");
+///
+/// If the given `parent` is set to be valid, the `GfxFramebuffer` of the render pass,
+/// `GfxFramebufferDesc`, and the `frame_size` will all be inherited from `parent`. Otherwise, 
+/// the pass will create its own `GfxFramebuffer`, using the information provided in `desc`.
+///
+/// @NOTE: By default, `parent` is set to `nullptr`.
+NIKOLA_API RenderPass* renderer_create_pass(const RenderPassDesc& desc, const String& debug_name, const RenderPass* parent = nullptr);
 
 /// Append the given `pass` to the renderer's pass chain to be 
 /// initiated at the end of the chain.

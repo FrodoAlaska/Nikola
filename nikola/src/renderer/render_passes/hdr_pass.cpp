@@ -20,6 +20,7 @@ void hdr_pass_init(Window* window) {
   pass_desc.prepare_func = hdr_pass_prepare;
   pass_desc.sumbit_func  = hdr_pass_sumbit;
   pass_desc.resize_func  = hdr_pass_on_resize;
+  pass_desc.destroy_func = hdr_pass_destroy;
 
   // Reosurce init
 
@@ -55,9 +56,21 @@ void hdr_pass_init(Window* window) {
   renderer_append_pass(hdr_pass);
 }
 
+void hdr_pass_destroy(RenderPass* pass) {
+  gfx_framebuffer_destroy(pass->framebuffer);
+}
+
 void hdr_pass_prepare(RenderPass* pass, const FrameData& data) {
   NIKOLA_PROFILE_FUNCTION();
 
+  // Prepare the context for rendering 
+
+  gfx_context_set_viewport(pass->gfx, 0, 0, pass->frame_size.x, pass->frame_size.y);
+
+  Vec4 col = renderer_get_clear_color();
+  gfx_context_clear(pass->gfx, col.r, col.g, col.b, col.a);
+
+  // Sending this lonely uniform to the shader
   shader_context_set_uniform(pass->shader_context, "u_exposure", data.camera.exposure); 
 }
 

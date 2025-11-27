@@ -30,6 +30,7 @@ void light_pass_init(Window* window) {
   pass_desc.prepare_func = light_pass_prepare;
   pass_desc.sumbit_func  = light_pass_sumbit;
   pass_desc.resize_func  = light_pass_on_resize;
+  pass_desc.destroy_func = light_pass_destroy;
 
   // Reosurce init
 
@@ -85,12 +86,23 @@ void light_pass_init(Window* window) {
   renderer_append_pass(light_pass);
 }
 
+void light_pass_destroy(RenderPass* pass) {
+  gfx_framebuffer_destroy(pass->framebuffer);
+}
+
 void light_pass_prepare(RenderPass* pass, const FrameData& data) {
   NIKOLA_PROFILE_FUNCTION();
 
-  ShaderContext* ctx = pass->shader_context;
+  // Prepare the context for rendering 
+
+  gfx_context_set_viewport(pass->gfx, 0, 0, pass->frame_size.x, pass->frame_size.y);
+
+  Vec4 col = renderer_get_clear_color();
+  gfx_context_clear(pass->gfx, col.r, col.g, col.b, col.a);
 
   // Turning the light space view into a texture coordinate
+  
+  ShaderContext* ctx = pass->shader_context;
   shader_context_set_uniform(pass->shader_context, "u_light_space", shadow_pass_get_light_space(pass->previous));
 
   // Set the light uniforms

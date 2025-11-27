@@ -17,9 +17,8 @@ void particle_pass_init(Window* window) {
 
   // Callbacks init
 
-  pass_desc.prepare_func = particle_pass_prepare;
-  pass_desc.sumbit_func  = particle_pass_sumbit;
-  pass_desc.resize_func  = particle_pass_on_resize;
+  pass_desc.sumbit_func = particle_pass_sumbit;
+  pass_desc.resize_func = particle_pass_on_resize;
 
   // Reosurce init
 
@@ -28,64 +27,13 @@ void particle_pass_init(Window* window) {
   ResourceID particle_shader  = resources_push_shader(RESOURCE_CACHE_ID, generate_particle_shader());
   pass_desc.shader_context_id = resources_push_shader_context(RESOURCE_CACHE_ID, particle_shader);
   
-  // Frame size and flags init
-
-  i32 width, height; 
-  window_get_size(window, &width, &height);
-
-  pass_desc.frame_size  = IVec2(width, height);
-  pass_desc.clear_flags = (GFX_CLEAR_FLAGS_COLOR_BUFFER | GFX_CLEAR_FLAGS_DEPTH_BUFFER); 
+  // Other variables init
   pass_desc.queue_type  = RENDER_QUEUE_PARTICLE;
-
-  // Color attachment init
-
-  GfxTextureDesc target_desc = {
-    .width  = (u32)width,
-    .height = (u32)height,
-
-    .type   = GFX_TEXTURE_2D, 
-    .format = GFX_TEXTURE_FORMAT_RGBA8, 
-
-    .is_bindless = false,
-  };
-  pass_desc.targets.push_back(target_desc);
-
-  // Depth attachment init
-
-  target_desc = {
-    .width  = (u32)width,
-    .height = (u32)height,
-
-    .type   = GFX_TEXTURE_DEPTH_TARGET, 
-    .format = GFX_TEXTURE_FORMAT_DEPTH16, 
-
-    .is_bindless = false,
-  };
-  pass_desc.targets.push_back(target_desc);
 
   // Render pass init
   
-  RenderPass* particle_pass = renderer_create_pass(pass_desc, "Particle pass");
+  RenderPass* particle_pass = renderer_create_pass(pass_desc, "Particle pass", renderer_peek_pass(RENDER_PASS_LIGHT));
   renderer_append_pass(particle_pass);
-}
-
-void particle_pass_prepare(RenderPass* pass, const FrameData& data) {
-  NIKOLA_PROFILE_FUNCTION();
-
-  // @TODO (Renderer): Absolutely not!!!!! 
-  // NOOOOOOOOO!!!! DO NOT COPY THE FUCKING FRAMEBUFFERSSS!!!!!!
-
-  IVec2 start_pos = IVec2(0);
-  IVec2 src_size  = pass->previous->frame_size;
-  IVec2 dest_size = pass->frame_size;
-
-  gfx_framebuffer_copy(pass->previous->framebuffer, 
-                       pass->framebuffer, 
-                       start_pos.x, start_pos.y, 
-                       src_size.x, src_size.y,
-                       start_pos.x, start_pos.y,
-                       dest_size.x, dest_size.y,
-                       pass->framebuffer_desc.clear_flags);
 }
 
 void particle_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {

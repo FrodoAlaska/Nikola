@@ -31,6 +31,7 @@ void shadow_pass_init(Window* window) {
 
   pass_desc.prepare_func = shadow_pass_prepare;
   pass_desc.sumbit_func  = shadow_pass_sumbit;
+  pass_desc.destroy_func = shadow_pass_destroy;
 
   // Reosurce init
 
@@ -69,8 +70,19 @@ void shadow_pass_init(Window* window) {
   renderer_append_pass(shadow_pass);
 }
 
+void shadow_pass_destroy(RenderPass* pass) {
+  gfx_framebuffer_destroy(pass->framebuffer);
+}
+
 void shadow_pass_prepare(RenderPass* pass, const FrameData& data) {
   NIKOLA_PROFILE_FUNCTION();
+  
+  // Prepare the context for rendering 
+
+  gfx_context_set_viewport(pass->gfx, 0, 0, pass->frame_size.x, pass->frame_size.y);
+
+  Vec4 col = renderer_get_clear_color();
+  gfx_context_clear(pass->gfx, col.r, col.g, col.b, col.a);
 
   //
   // Setup the light projection matrix

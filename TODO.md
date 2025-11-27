@@ -19,17 +19,22 @@
 
 ## Update 0.5:
 
-- [] GPU Particles
-    - [] GPU-based particle system, using compute shaders.
-    - [] Have a lot of options to edit the shape, distribution, and gravity. Perhaps save it in a file?
-    - [] Documentation
-- [] Scenes?
+- [] Renderer architecture
+    - [] The current render pass system needs to go. 
+        - Either reform it completely or get rid of it for more "handmade" passes. 
+    - [] Instead, we can have "post-process" passes much similiar to the current pass system, except way simpler.
 - [] Renderer: Beautify v2.0 
     - This one is just a thinking exersice. We don't want to add every rendering technique under the sun to "beautify" the engine's look. 
     - [] Gaussian blur
     - [] Bloom integration 
     - [] Diffuse irradiance IBL (at least)
     - [] Global illumination (GI) 
+
+- [] GPU Particles
+    - [] GPU-based particle system, using compute shaders.
+    - [] Have a lot of options to edit the shape, distribution, and gravity. Perhaps save it in a file?
+    - [] Documentation
+- [] Scenes?
 - [] Renderer: Extra primitives 
     - [] More shapes like planes, capsules, and so on.
     - [] Decal rendering 
