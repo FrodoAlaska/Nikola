@@ -38,11 +38,7 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 - A robust and easy-to-use 2D game UI system with canvas anchoring, including widgets like buttons, sliders, checkboxes, and texts.
 - Simple 3D skeletal animation system, supporting both the **GLTF**, **GLB**, and **Collada** formats.
 
-## Missing Features
-
-Some missing features are not currently in the works (Long-term) while others are planned for the future (Short-term). Some other features may _never_ be implemented since it does not fit the current philosophy of the engine (Never).
-
-- Scripting (*Never*)
+## Showcase
 
 ---
 
