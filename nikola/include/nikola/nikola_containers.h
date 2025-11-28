@@ -16,6 +16,9 @@ using String       = std::string;
 template<typename T>
 using DynamicArray = std::vector<T>;
 
+template<typename T, sizei N>
+using Array        = std::array<T, N>;
+
 template<typename K, typename V> 
 using HashMap      = std::unordered_map<K, V>;
 

@@ -28,8 +28,12 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         mat4 u_model[4096];
       };
       
-      layout(std140, binding = 4) uniform AnimationBuffer {
-        mat4 u_skinning_palette[128]; // @TODO: Probably not the best count to have here
+      layout(std430, binding = 4) readonly buffer AnimationBuffer {
+        // A 2D array of skinning matrices. 
+        // The X-axis represents the indivisual animation instance, 
+        // whereas the Y-axis represents the skinning matrices of that instance.
+
+        mat4 u_skinning_palette[1024][128]; // @TODO: Probably not the best count to have here
       };
 
       uniform mat4 u_light_space;
@@ -51,40 +55,47 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       } vs_out;
       
       void main() {
+        //
         // Applying the skinning of the animation 
-       
-        vec4 weighted_pos = vec4(0.0);
+        // 
+
+        vec4 weighted_pos = vec4(vec3(0.0), 1.0);
+        int index         = gl_BaseInstance + gl_InstanceID;
         
         for(int i = 0; i < 4; i++) {
           if(aJointId[i] == -1.0) { // The parent joint of the skeleton... skip
             continue;
           }
-          // @TEMP
           else if(aJointId[i] == -2.0) { // This geometry is not supposed to be animated... break
-            weighted_pos = vec4(aPos, 1.0); 
+            weighted_pos.xyz = aPos;
             break;
           }
          
-          int index     = int(aJointId[i]);
-          weighted_pos += (u_skinning_palette[index] * vec4(aPos, 1.0)) * aJointWeight[i];
+          int joint_index = int(aJointId[i]);
+          weighted_pos   += (u_skinning_palette[gl_InstanceID][joint_index] * vec4(aPos, 1.0)) * aJointWeight[i];
         }
 
-        int index = gl_BaseInstance + gl_InstanceID;
+        vec4 model_space = u_model[index] * weighted_pos;
 
-        vec3 vertex_pos  = max(vec3(weighted_pos), aPos); // Just in case an animation buffer was not provided
-        vec4 model_space = (u_model[index]) * vec4(vertex_pos, 1.0);
+        //
+        // Calculations for the normals
+        //
 
         mat3 model_m3  = transpose(inverse(mat3(u_model[index])));
         vs_out.tangent = normalize(model_m3 * aTangent);
         vs_out.normal  = normalize(model_m3 * aNormal);
         
         // @NOTE: Using the Gram-Schmidt process to re-othogonalize the tangent vector to make 
-        // sure all vectors are perpendicular to each other
+        // sure all vectors are perpendicular to each other.
         vs_out.tangent = normalize(vs_out.tangent - dot(vs_out.tangent, vs_out.normal) * vs_out.normal); 
         
         vec3 bitangent = normalize(cross(vs_out.normal, vs_out.tangent));
         vs_out.TBN     = transpose(mat3(vs_out.tangent, bitangent, vs_out.normal));
 
+        //
+        // Carrying out information to the fragment shader 
+        //
+        
         vs_out.camera_pos     = u_camera_pos;
         vs_out.pixel_pos      = vec3(model_space);
         vs_out.tex_coords     = aTexCoords;

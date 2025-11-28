@@ -4,6 +4,14 @@
 #include <imgui/imgui.h>
 
 /// ----------------------------------------------------------------------
+/// Consts
+
+const nikola::sizei ANIMATORS_MAX = 2;
+
+/// Consts
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// App
 struct nikola::App {
   nikola::Window* window;
@@ -15,8 +23,8 @@ struct nikola::App {
   nikola::ResourceID model;
   nikola::ResourceID animation;
   
-  nikola::Animator animator;
-  nikola::Transform transforms[2];
+  nikola::Animator animators[ANIMATORS_MAX];
+  nikola::Transform transforms[3];
 };
 /// App
 /// ----------------------------------------------------------------------
@@ -36,10 +44,10 @@ static void init_resources(nikola::App* app) {
   app->mesh_id = nikola::resources_push_model(app->res_group_id, "models/medieval_bridge.nbr");
 
   // Models init
-  app->model = nikola::resources_push_model(app->res_group_id, "models/dancing_knight.nbr");
+  app->model = nikola::resources_push_model(app->res_group_id, "models/medieval_knight.nbr");
 
   // Animations init
-  app->animation = nikola::resources_push_animation(app->res_group_id, "animations/dancing_knight.nbr");
+  app->animation = nikola::resources_push_animation(app->res_group_id, "animations/medieval_knight.nbr");
 
   // Materials init
   
@@ -74,7 +82,6 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
     .target       = nikola::Vec3(-3.0f, 7.0f, 0.0f),
     .up_axis      = nikola::Vec3(0.0f, 1.0f, 0.0f),
     .aspect_ratio = nikola::window_get_aspect_ratio(app->window),
-    .move_func    = nikola::camera_free_move_func,
   };
   nikola::camera_create(&app->frame_data.camera, cam_desc);
   app->frame_data.camera.exposure = 1.0f;
@@ -84,7 +91,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   if(!nikola::file_open(&file, "scene_config.nkcfg", file_flags)) {
     NIKOLA_LOG_ERROR("Failed to load file from path");
   }
-    
+   
   nikola::file_read_bytes(file, &app->frame_data);
   nikola::file_close(file);
 
@@ -92,16 +99,22 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   init_resources(app);
 
   // Animators init
-  nikola::animator_create(&app->animator, app->animation);
+  
+  for(nikola::sizei i = 0; i < ANIMATORS_MAX; i++) {
+    nikola::animator_create(&app->animators[i], app->animation);
+  }
 
   // Transform init
   
   nikola::transform_translate(app->transforms[0], nikola::Vec3(10.0f, 0.1f, 65.0f));
-  nikola::transform_rotate(app->transforms[0], nikola::Vec3(1.0f, 0.0f, 0.0f), -90.0f * nikola::DEG2RAD);
+  nikola::transform_rotate(app->transforms[0], nikola::Vec3(1.0f, 0.0f, 0.0f), TO_RADIANS(-90.0f));
   nikola::transform_scale(app->transforms[0], nikola::Vec3(10.0f));
   
   nikola::transform_translate(app->transforms[1], nikola::Vec3(10.0f, 11.0f, -21.4f));
-  nikola::transform_scale(app->transforms[1], nikola::Vec3(0.8f));
+  nikola::transform_scale(app->transforms[1], nikola::Vec3(0.5f));
+  
+  nikola::transform_translate(app->transforms[2], nikola::Vec3(30.0f, 11.0f, -21.4f));
+  nikola::transform_scale(app->transforms[2], nikola::Vec3(0.5f));
 
   return app;
 }
@@ -115,21 +128,28 @@ void app_shutdown(nikola::App* app) {
 
 void app_update(nikola::App* app, const nikola::f64 delta_time) {
   // Quit the application when the specified exit key is pressed
+  
   if(nikola::input_key_pressed(nikola::KEY_ESCAPE)) {
     nikola::event_dispatch(nikola::Event{.type = nikola::EVENT_APP_QUIT});
     return;
   }
 
   // Disable/enable the GUI
+  
   if(nikola::input_key_pressed(nikola::KEY_F1)) {
     nikola::gui_toggle_active();
     app->frame_data.camera.is_active = !nikola::gui_is_active();
   }
 
   // Animators update
-  nikola::animator_animate(app->animator, (nikola::f32)delta_time);
+  
+  for(nikola::sizei i = 0; i < ANIMATORS_MAX; i++) {
+    nikola::animator_animate(app->animators[i], (nikola::f32)delta_time);
+  }
 
   // Update the camera
+  
+  nikola::camera_free_move_func(app->frame_data.camera);
   nikola::camera_update(app->frame_data.camera);
 }
 
@@ -140,7 +160,7 @@ void app_render(nikola::App* app) {
   // Render the objects
   
   nikola::renderer_queue_model(app->mesh_id, app->transforms[0], app->material_id);
-  nikola::renderer_queue_animation(app->animator.animation_id, app->model, app->transforms[1]);
+  nikola::renderer_queue_animation_instanced(app->model, &app->transforms[1], app->animators, ANIMATORS_MAX);
 
   nikola::renderer_end();
   
@@ -168,7 +188,10 @@ void app_render_gui(nikola::App* app) {
     nikola::gui_edit_transform("Ground", &app->transforms[0]);
 
     nikola::gui_edit_transform("Model 1", &app->transforms[1]);
-    nikola::gui_edit_animator("Animator 1", &app->animator);
+
+    for(nikola::sizei i = 0; i < ANIMATORS_MAX; i++) {
+      nikola::gui_edit_animator(nikola::String("Animator " + std::to_string(i)).c_str(), &app->animators[i]);
+    }
   }
 
   // Frame

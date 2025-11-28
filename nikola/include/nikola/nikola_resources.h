@@ -387,7 +387,7 @@ const u16 RESOURCE_GROUP_INVALID = ((u16)-1);
 const u16 RESOURCE_CACHE_ID      = 0;
 
 /// The maximum amount of joints that can processed.
-const sizei JOINTS_MAX           = 256;
+const sizei JOINTS_MAX           = 128;
 
 /// Resources consts
 ///---------------------------------------------------------------------------------------------------------------------
@@ -670,7 +670,7 @@ struct Animation {
   /// inverse bind matrix of each joint. 
   /// 
   /// This is essentially ready to be sent to the shader.
-  Mat4 skinning_palette[JOINTS_MAX];
+  Array<Mat4, JOINTS_MAX> skinning_palette;
 };
 /// Animation
 ///---------------------------------------------------------------------------------------------------------------------

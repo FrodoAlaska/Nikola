@@ -20,6 +20,7 @@ namespace nikola { // Start of nikola
 
 const sizei TRANSFORMS_BUFFER_SIZE = MiB(1);
 const sizei MATERIALS_BUFFER_SIZE  = MiB(1);
+const sizei ANIMATIONS_BUFFER_SIZE = MiB(1);
 const sizei COMMANDS_BUFFER_SIZE   = KiB(256);
 
 const sizei VERTICES_BUFFER_SIZE   = MiB(64);
@@ -159,16 +160,6 @@ static void init_defaults() {
   };
   s_renderer.defaults.lights_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
 
-  // Animation buffer init
-  
-  buff_desc = {
-    .data  = nullptr,
-    .size  = sizeof(Mat4) * JOINTS_MAX,
-    .type  = GFX_BUFFER_UNIFORM, 
-    .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
-  };
-  s_renderer.defaults.animation_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
-
   // Debug geometries init
 
   s_renderer.geometries[GEOMETRY_SIMPLE_CUBE]   = resources_get_mesh(resources_push_mesh(RESOURCE_CACHE_ID, GEOMETRY_SIMPLE_CUBE));
@@ -277,6 +268,16 @@ static void render_queue_create(const RenderQueueType type) {
     .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
   };
   queue->material_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
+  
+  if(type == RENDER_QUEUE_OPAQUE) { // There's only the opaque queue that requires animations really
+    buff_desc = {
+      .data  = nullptr,
+      .size  = ANIMATIONS_BUFFER_SIZE,
+      .type  = GFX_BUFFER_SHADER_STORAGE, 
+      .usage = GFX_BUFFER_USAGE_DYNAMIC_DRAW,
+    };
+    queue->animation_buffer = resources_get_buffer(resources_push_buffer(RESOURCE_CACHE_ID, buff_desc));
+  }
 
   buff_desc = {
     .data  = nullptr,
@@ -543,6 +544,7 @@ void renderer_begin(FrameData& data) {
     entry->indices.clear();
     entry->transforms.clear();
     entry->materials.clear();
+    entry->animations.clear();
     entry->commands.clear();
   }
 }
@@ -587,6 +589,15 @@ void renderer_end() {
                            0,
                            queue->materials.size() * sizeof(MaterialInterface), 
                            queue->materials.data());
+
+    // Update the animation buffer (just for the opaque queue)
+
+    if(queue->animation_buffer) {
+      gfx_buffer_upload_data(queue->animation_buffer,
+                             0,
+                             queue->animations.size() * (sizeof(Mat4) * JOINTS_MAX), 
+                             queue->animations.data());
+    }
 
     // Update the command buffer
 
@@ -880,12 +891,22 @@ void renderer_queue_model_instanced(const ResourceID& res_id,
   }  
 }
 
-void renderer_queue_animation_instanced(const ResourceID& res_id,
-                                        const ResourceID& model_id,
+void renderer_queue_animation_instanced(const ResourceID& model_id,
                                         const Transform* transforms, 
+                                        const Animator* animators,
                                         const sizei count, 
                                         const ResourceID& mat_id) {
-  // @TEMP (Renderer): How to handle animations?????? 
+  // Queue the skinned model first
+  renderer_queue_model_instanced(model_id, transforms, count, mat_id);
+
+  // Queue the animation 
+
+  for(sizei i = 0; i < count; i++) {
+    Animation* animation    = resources_get_animation(animators[i].animation_id);
+    RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
+
+    entry->animations.emplace_back(animation->skinning_palette);
+  }
 }
 
 void renderer_queue_mesh(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id) {
@@ -927,11 +948,19 @@ void renderer_queue_model(const ResourceID& res_id, const Transform& transform, 
   }  
 }
 
-void renderer_queue_animation(const ResourceID& res_id, 
-                              const ResourceID& model_id,
+void renderer_queue_animation(const ResourceID& model_id,
                               const Transform& transform, 
+                              const Animator& animator,
                               const ResourceID& mat_id) {
-  // @TEMP (Renderer): How to handle animations?????? 
+  // Queue the skinned model first
+  renderer_queue_model(model_id, transform, mat_id);
+
+  // Queue the animation
+
+  Animation* animation    = resources_get_animation(animator.animation_id);
+  RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
+
+  entry->animations.emplace_back(animation->skinning_palette);
 }
 
 void renderer_queue_particles(const ParticleEmitter& emitter) {

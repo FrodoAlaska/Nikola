@@ -514,9 +514,10 @@ static bool load_animation_nbr(ResourceGroup* group, Animation* anim, const File
 
     // Transforming the joint with the default values
 
-    transform_translate(joint->current_transform, joint->position_samples[0].value);
-    transform_rotate(joint->current_transform, joint->rotation_samples[0].value);
-    transform_scale(joint->current_transform, joint->scale_samples[0].value); // @TEMP (Animation)
+    joint->current_transform.position = joint->position_samples[0].value;
+    joint->current_transform.rotation = joint->rotation_samples[0].value;
+    joint->current_transform.scale    = joint->scale_samples[0].value; // @TEMP (Animation)
+    transform_apply(joint->current_transform);
 
     // Default initializing the skinning matrix of the joint (IMPORTANT!)
     anim->skinning_palette[i] = joint->current_transform.transform;
@@ -527,7 +528,6 @@ static bool load_animation_nbr(ResourceGroup* group, Animation* anim, const File
 
   anim->duration   = nbr_anim.duration;
   anim->frame_rate = nbr_anim.frame_rate;
-
 
   //
   // Freeing NBR data

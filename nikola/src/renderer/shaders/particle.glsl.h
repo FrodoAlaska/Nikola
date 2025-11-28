@@ -11,7 +11,7 @@ inline nikola::GfxShaderDesc generate_particle_shader() {
       
       layout (location = 0) in vec3 aPos;
       layout (location = 1) in vec3 aNormal;
-      layout (location = 2) in vec2 aTexCoords;
+      layout (location = 2) in vec2 aTextureCoords;
 
       // Uniforms
 
@@ -35,7 +35,7 @@ inline nikola::GfxShaderDesc generate_particle_shader() {
       void main() {
         int index = gl_BaseInstance + gl_InstanceID;
 
-        vs_out.tex_coords     = aTexCoords;
+        vs_out.tex_coords     = aTextureCoords;
         vs_out.material_index = gl_DrawID;
         
         gl_Position = u_projection * u_view * u_model[index] * vec4(aPos, 1.0);

@@ -23,7 +23,7 @@ static void animate_joint(const f32& current_time, Joint* joint) {
 
   sizei next_position_sample = joint->current_position_sample;
 
-  for(sizei i = joint->current_position_sample; i < joint->position_samples.size(); i++) {
+  for(sizei i = 0; i < joint->position_samples.size(); i++) {
     if(joint->position_samples[i].time > current_time) {
       next_position_sample = i; 
       break;
@@ -34,7 +34,7 @@ static void animate_joint(const f32& current_time, Joint* joint) {
 
   sizei next_rotation_sample = joint->current_rotation_sample;
 
-  for(sizei i = joint->current_rotation_sample; i < joint->rotation_samples.size(); i++) {
+  for(sizei i = 0; i < joint->rotation_samples.size(); i++) {
     if(joint->rotation_samples[i].time > current_time) {
       next_rotation_sample = i; 
       break;
@@ -45,7 +45,7 @@ static void animate_joint(const f32& current_time, Joint* joint) {
 
   sizei next_scale_sample = joint->current_scale_sample;
 
-  for(sizei i = joint->current_scale_sample; i < joint->scale_samples.size(); i++) {
+  for(sizei i = 0; i < joint->scale_samples.size(); i++) {
     if(joint->scale_samples[i].time > current_time) {
       next_scale_sample = i; 
       break;

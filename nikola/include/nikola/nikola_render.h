@@ -95,7 +95,7 @@ enum ParticleDistributionType {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Callbacks
 
-// Have to do this to fix underfined variable errors in the callback.
+// Forward declarations
 
 struct RenderPass;
 struct RenderPassDesc;
@@ -125,10 +125,9 @@ struct RendererDefaults {
  
   /// Buffers
 
-  GfxBuffer* matrices_buffer  = nullptr;
-  GfxBuffer* instance_buffer  = nullptr;
-  GfxBuffer* lights_buffer    = nullptr;
-  GfxBuffer* animation_buffer = nullptr;
+  GfxBuffer* matrices_buffer = nullptr;
+  GfxBuffer* instance_buffer = nullptr;
+  GfxBuffer* lights_buffer   = nullptr;
  
   /// Materials
 
@@ -180,6 +179,7 @@ struct RenderQueueEntry {
   DynamicArray<u32> indices; 
   DynamicArray<Mat4> transforms; 
   DynamicArray<MaterialInterface> materials;
+  DynamicArray<Array<Mat4, JOINTS_MAX>> animations;
   DynamicArray<GfxDrawCommandIndirect> commands; 
 
   /// Pipeline
@@ -191,6 +191,7 @@ struct RenderQueueEntry {
 
   GfxBuffer* transform_buffer = nullptr; 
   GfxBuffer* material_buffer  = nullptr; 
+  GfxBuffer* animation_buffer = nullptr; 
   GfxBuffer* command_buffer   = nullptr;
 
   /// Misc.
@@ -646,9 +647,9 @@ NIKOLA_API void renderer_queue_model_instanced(const ResourceID& res_id,
                                                const sizei count, 
                                                const ResourceID& mat_id = {});
 
-NIKOLA_API void renderer_queue_animation_instanced(const ResourceID& res_id, 
-                                                   const ResourceID& model_id,
+NIKOLA_API void renderer_queue_animation_instanced(const ResourceID& model_id,
                                                    const Transform* transforms, 
+                                                   const Animator* animators,
                                                    const sizei count, 
                                                    const ResourceID& mat_id = {});
 
@@ -665,9 +666,10 @@ NIKOLA_API void renderer_queue_model(const ResourceID& res_id,
                                      const Transform& transform, 
                                      const ResourceID& mat_id = {});
 
-NIKOLA_API void renderer_queue_animation(const ResourceID& res_id, 
-                                         const ResourceID& model_id,
+
+NIKOLA_API void renderer_queue_animation(const ResourceID& model_id,
                                          const Transform& transform, 
+                                         const Animator& animator,
                                          const ResourceID& mat_id = {});
 
 NIKOLA_API void renderer_queue_particles(const ParticleEmitter& emitter);

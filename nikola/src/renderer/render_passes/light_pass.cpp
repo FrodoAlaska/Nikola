@@ -49,9 +49,7 @@ void light_pass_init(Window* window) {
   pass_desc.queue_type  = RENDER_QUEUE_OPAQUE;
 
   // Attaching buffers
-  
   gfx_buffer_bind_point(renderer_get_defaults().lights_buffer, SHADER_LIGHT_BUFFER_INDEX);
-  gfx_buffer_bind_point(renderer_get_defaults().animation_buffer, SHADER_ANIMATION_BUFFER_INDEX);
 
   // Color attachment init
 
@@ -166,6 +164,7 @@ void light_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
 
   gfx_buffer_bind_point(queue.transform_buffer, SHADER_MODELS_BUFFER_INDEX);
   gfx_buffer_bind_point(queue.material_buffer, SHADER_MATERIALS_BUFFER_INDEX);
+  gfx_buffer_bind_point(queue.animation_buffer, SHADER_ANIMATION_BUFFER_INDEX);
 
   // Render the skybox
 
