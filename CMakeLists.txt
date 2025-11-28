@@ -78,7 +78,23 @@ FetchContent_Declare(
   GIT_TAG        f6875a7c13fddd23e79b378065211eaeef5f9509 
 )
 
-FetchContent_MakeAvailable(glfw-3.4 glm OpenAL jolt tracy rmlui)
+# OZZ Animation
+
+set(ozz_build_tools    OFF)
+set(ozz_build_fbx      OFF)
+set(ozz_build_gltf     OFF)
+set(ozz_build_data     OFF)
+set(ozz_build_samples  OFF)
+set(ozz_build_howtos   OFF)
+set(ozz_build_tests    OFF)
+set(ozz_build_simd_ref ON)
+
+FetchContent_Declare(
+  ozz 
+  URL https://github.com/guillaumeblanc/ozz-animation/archive/refs/tags/0.16.0.zip
+)
+
+FetchContent_MakeAvailable(glfw-3.4 glm OpenAL jolt tracy rmlui ozz)
 ############################################################
 
 ### Project Variables ###
@@ -98,6 +114,7 @@ set(NIKOLA_INCLUDES
   ${jolt_SOURCE_DIR}/Jolt
   ${tracy_SOURCE_DIR}/public
   ${rmlui_SOURCE_DIR}/Include
+  ${ozz_SOURCE_DIR}/include
 )
 
 set(NIKOLA_LIBRARIES 
@@ -106,6 +123,8 @@ set(NIKOLA_LIBRARIES
   Jolt
   TracyClient
   rmlui
+  ozz_animation
+  ozz_animation_offline
 )
 
 # This script includes a bunch of platform-specific variables 
