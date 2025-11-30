@@ -438,112 +438,31 @@ static bool load_model_nbr(ResourceGroup* group, Model* model, const FilePath& n
   return true;
 }
 
-static bool load_skeleton_nbr(ResourceGroup* group, Skeleton* skele, const FilePath& nbr_path) {
-  // 
+static bool load_skeleton_nbr(ResourceGroup* group, NBRSkeleton* out_skele, const FilePath& nbr_path) {
   // Load the NBR file 
-  //
  
   File file;
   if(!nbr_file_is_valid(file, filepath_append(group->parent_dir, nbr_path), RESOURCE_TYPE_SKELETON)) {
     return false;
   }
 
+  // Read the skeleton
+  file_read_bytes(file, out_skele); 
+
   return true;
 }
 
-static bool load_animation_nbr(ResourceGroup* group, Animation* anim, const FilePath& nbr_path) {
-  // 
+static bool load_animation_nbr(ResourceGroup* group, NBRAnimation* out_anim, const FilePath& nbr_path) {
   // Load the NBR file 
-  //
  
   File file;
   if(!nbr_file_is_valid(file, filepath_append(group->parent_dir, nbr_path), RESOURCE_TYPE_ANIMATION)) {
     return false;
   }
 
-  NBRAnimation nbr_anim{};
-  file_read_bytes(file, &nbr_anim);
+  // Read the animation
+  file_read_bytes(file, out_anim);
 
-  //
-  // Convert the NBR format to a valid model
-  // 
-  // @TOOD (Resources) 
-  
-  // anim->joints.reserve(nbr_anim.joints_count);
-  // for(u16 i = 0; i < nbr_anim.joints_count; i++) {
-  //   Joint* joint        = new Joint{};
-  //   NBRJoint* nbr_joint = &nbr_anim.joints[i];
-  //
-  //   // Convert the positions
-  //
-  //   joint->position_samples.reserve(nbr_joint->positions_count);
-  //   for(u16 ip = 0; ip < nbr_joint->positions_count; ip += 4) {
-  //     VectorAnimSample sample;
-  //
-  //     sample.value.x = nbr_joint->position_samples[ip + 0];
-  //     sample.value.y = nbr_joint->position_samples[ip + 1];
-  //     sample.value.z = nbr_joint->position_samples[ip + 2];
-  //     sample.time    = nbr_joint->position_samples[ip + 3];
-  //
-  //     joint->position_samples.push_back(sample);
-  //   }
-  //   
-  //   // Convert the rotations
-  //
-  //   joint->rotation_samples.reserve(nbr_joint->rotations_count);
-  //   for(u16 ir = 0; ir < nbr_joint->rotations_count; ir += 5) {
-  //     QuatAnimSample sample;
-  //
-  //     sample.value.x = nbr_joint->rotation_samples[ir + 0];
-  //     sample.value.y = nbr_joint->rotation_samples[ir + 1];
-  //     sample.value.z = nbr_joint->rotation_samples[ir + 2];
-  //     sample.value.w = nbr_joint->rotation_samples[ir + 3];
-  //     sample.time    = nbr_joint->rotation_samples[ir + 4];
-  //
-  //     joint->rotation_samples.push_back(sample);
-  //   }
-  //   
-  //   // Convert the scales
-  //
-  //   joint->scale_samples.reserve(nbr_joint->scales_count);
-  //   for(u16 is = 0; is < nbr_joint->scales_count; is += 4) {
-  //     VectorAnimSample sample;
-  //
-  //     sample.value.x = nbr_joint->scale_samples[is + 0];
-  //     sample.value.y = nbr_joint->scale_samples[is + 1];
-  //     sample.value.z = nbr_joint->scale_samples[is + 2];
-  //     sample.time    = nbr_joint->scale_samples[is + 3];
-  //
-  //     joint->scale_samples.push_back(sample);
-  //   }
-  //
-  //   // Convert other joint information
-  //
-  //   joint->parent_index = (i32)nbr_joint->parent_index;
-  //   f32* matrix         = &nbr_joint->inverse_bind_pose[0];
-  //
-  //   joint->inverse_bind_pose = Mat4(matrix[0], matrix[4], matrix[8],  0.0f,
-  //                                   matrix[1], matrix[5], matrix[9],  0.0f,
-  //                                   matrix[2], matrix[6], matrix[10], 0.0f,
-  //                                   matrix[3], matrix[7], matrix[11], 1.0f);
-  //
-  //   // Transforming the joint with the default values
-  //
-  //   joint->current_transform.position = joint->position_samples[0].value;
-  //   joint->current_transform.rotation = joint->rotation_samples[0].value;
-  //   joint->current_transform.scale    = joint->scale_samples[0].value; // @TEMP (Animation)
-  //   transform_apply(joint->current_transform);
-  //
-  //   // Default initializing the skinning matrix of the joint (IMPORTANT!)
-  //   anim->skinning_palette[i] = joint->current_transform.transform;
-  //
-  //   // Welcome, Mr. Joint!
-  //   anim->joints.push_back(joint);
-  // }
-  //
-  // anim->duration   = nbr_anim.duration;
-  // anim->frame_rate = nbr_anim.frame_rate;
-  //
   // //
   // // Freeing NBR data
   // // 
@@ -1335,18 +1254,25 @@ ResourceID resources_push_skeleton(const ResourceGroupID& group_id, const FilePa
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
-  // Allocate the skeleton
-  Skeleton* skele = skeleton_create();
-  
   // Load the NBR data into the skeleton
- 
-  if(!load_skeleton_nbr(group, skele, nbr_path)) {
-    skeleton_destroy(skele);
-    NIKOLA_LOG_ERROR("Failed to load NBR skeleton file at \'%s\'", nbr_path.c_str());
 
+  NBRSkeleton nbr_skele;
+  if(!load_skeleton_nbr(group, &nbr_skele, nbr_path)) {
+    NIKOLA_LOG_ERROR("Failed to load NBR skeleton file at \'%s\'", nbr_path.c_str());
     return ResourceID{};
   }
   
+  // Allocate and load the skeleton
+  Skeleton* skele = skeleton_create(nbr_skele);
+ 
+  // Free the NBR data
+  
+  for(u16 i = 0; i < nbr_skele.joints_count; i++) {
+    memory_free(nbr_skele.joints[i].children);
+  }
+
+  memory_free(nbr_skele.joints);
+
   // New skeleton added!
   
   ResourceID id;
@@ -1360,17 +1286,34 @@ ResourceID resources_push_animation(const ResourceGroupID& group_id, const FileP
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
-  // Allocate the animation
-  Animation* anim = animation_create();
-  
   // Load the NBR data into the animation
- 
-  if(!load_animation_nbr(group, anim, nbr_path)) {
-    animation_destroy(anim);
-    NIKOLA_LOG_ERROR("Failed to load NBR animation file at \'%s\'", nbr_path.c_str());
 
+  NBRAnimation nbr_anim;
+  if(!load_animation_nbr(group, &nbr_anim, nbr_path)) {
+    NIKOLA_LOG_ERROR("Failed to load NBR animation file at \'%s\'", nbr_path.c_str());
     return ResourceID{};
   }
+  
+  // Allocate and load the animation
+  Animation* anim = animation_create(nbr_anim);
+  
+  // Free the NBR data
+  
+  for(u16 i = 0; i < nbr_anim.tracks_count; i++) {
+    if(nbr_anim.tracks[i].position_samples) {
+      memory_free(nbr_anim.tracks[i].position_samples);
+    }
+
+    if(nbr_anim.tracks[i].rotation_samples) {
+      memory_free(nbr_anim.tracks[i].rotation_samples);
+    }
+
+    if(nbr_anim.tracks[i].scale_samples) {
+      memory_free(nbr_anim.tracks[i].scale_samples);
+    }
+  } 
+
+  memory_free(nbr_anim.tracks);
   
   // New animation added!
   

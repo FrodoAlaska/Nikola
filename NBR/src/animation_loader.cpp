@@ -309,7 +309,7 @@ bool animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& p
 }
 
 void animation_loader_unload(nikola::NBRAnimation& anim) {
-  for(nikola::sizei i = 0; i < anim.tracks_count; i++) {
+  for(nikola::u16 i = 0; i < anim.tracks_count; i++) {
     if(anim.tracks[i].position_samples) {
       nikola::memory_free(anim.tracks[i].position_samples);
     }

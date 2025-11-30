@@ -1004,7 +1004,7 @@ NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uni
 ///---------------------------------------------------------------------------------------------------------------------
 /// Skeleton functions
 
-NIKOLA_API Skeleton* skeleton_create();
+NIKOLA_API Skeleton* skeleton_create(const NBRSkeleton& nbr_skele);
 
 NIKOLA_API void skeleton_destroy(Skeleton* skele);
 
@@ -1014,7 +1014,7 @@ NIKOLA_API void skeleton_destroy(Skeleton* skele);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Animation functions
 
-NIKOLA_API Animation* animation_create();
+NIKOLA_API Animation* animation_create(const NBRAnimation& nbr_anim);
 
 NIKOLA_API void animation_destroy(Animation* anim);
 

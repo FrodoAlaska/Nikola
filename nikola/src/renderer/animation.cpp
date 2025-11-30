@@ -37,7 +37,7 @@ struct Animator {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Skeleton functions
 
-Skeleton* skeleton_create() {
+Skeleton* skeleton_create(const NBRSkeleton& nbr_skele) {
   Skeleton* skele = new Skeleton{};
 
   return skele;
@@ -57,7 +57,7 @@ void skeleton_destroy(Skeleton* skele) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Animation functions
 
-Animation* animation_create() {
+Animation* animation_create(const NBRAnimation& nbr_anim) {
   Animation* anim = new Animation{};
 
   return anim;
