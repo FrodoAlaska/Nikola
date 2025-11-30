@@ -4,6 +4,7 @@
 #include "nikola_file.h"
 #include "nikola_math.h"
 #include "nikola_audio.h"
+#include "nikola_render.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -11,18 +12,18 @@ namespace nikola { // Start of nikola
 
 // Forward declarations
 
-struct PointLight;
-struct DirectionalLight;
-struct SpotLight;
-struct Mesh;
-struct MaterialDesc; 
-struct Material; 
-struct ShaderContext; 
-struct Skybox;
-struct Model;
-struct Skeleton;
-struct Animation;
-struct Font;
+// struct PointLight;
+// struct DirectionalLight;
+// struct SpotLight;
+// struct Mesh;
+// struct MaterialDesc; 
+// struct Material; 
+// struct ShaderContext; 
+// struct Skybox;
+// struct Model;
+// struct Skeleton;
+// struct Animation;
+// struct Font;
 
 /// ----------------------------------------------------------------------
 /// ** NBR (Nikola Binary Resource) ***
@@ -40,7 +41,7 @@ const u8 NBR_VALID_IDENTIFIER     = 107;
 const i16 NBR_VALID_MAJOR_VERSION = 0;
 
 /// The currently valid minor version of any `.nbr` file
-const i16 NBR_VALID_MINOR_VERSION = 6;
+const i16 NBR_VALID_MINOR_VERSION = 5;
 
 /// The maximum number of weights a joint can have in an NBR file. 
 const u8 NBR_JOINT_WEIGHTS_MAX    = 4;
@@ -235,33 +236,24 @@ struct NBRModel {
 /// NBRSkeleton
 struct NBRSkeleton {
   struct NBRJoint {
-    /// An array of `children_count` that represent 
+    /// A children of `children_count` that represent 
     /// the children of this joint in a tree manner. 
-    /// Each child is an index that can be used with 
-    /// the `joints` array of this skeleton.
+    /// Leaf joints set this array as a `nullptr`.
 
     u16 children_count = 0;
-    u16* children = nullptr;
+    NBRJoint* children = nullptr;
 
-    /// The position of the joint (X, Y, Z) in local space.
-    f32 position[3];
-
-    /// The rotation of the joint (X, Y, Z, W) in local space.
-    f32 rotation[4];
-
-    /// The scale of the joint (X, Y, Z) in local space.
-    f32 scale[3];
+    /// A 4x3 matrix defining the inverse bind pose of this 
+    /// joint that transforms to the joint's local coordinates.
+    f32 inverse_bind_pose[12];
   };
- 
-  /// All of the joints in the skeleton that can be 
-  /// referred to by the indices in each joint.
 
-  u16 joints_count = 0; 
-  NBRJoint* joints = nullptr;
+  /// A roots array of `roots_count` that represent 
+  /// the number of roots of this skeleton. 
+  /// This array can be empty if the skeleton has no joints. 
   
-  /// The index of the root joint of the skeleton. 
-  /// Usually, this is set to `0`.
-  u16 root_index = 0;
+  u16 roots_count = 0;
+  NBRJoint* roots = nullptr;
 };
 /// NBRSkeleton
 ///---------------------------------------------------------------------------------------------------------------------

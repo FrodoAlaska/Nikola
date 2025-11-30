@@ -1,7 +1,18 @@
 ## Update 0.4:
 
 - [] Animations 
-    - [] OZZ animation? I mean, it's, like, fucking _amazing_. More research needed.
+    - [x] Separate the animation into two components: `Skeleton` and `Animation` for both the NBR and the engine formats 
+    - [x] Import both the skeletons and animations from the NBR format
+    - [] Load the engine formats from the NBR formats
+    - [] Both the `Skeleton` and the `Animation` formats will be opaque types, implementing ozz formats under the hood 
+    - [] The animator will also need to be an opaque type
+    - [] Remember to delete both the skeleton and animations in the resource manager
+    - [x] OZZ animation? I mean, it's, like, fucking _amazing_. More research needed.
+        - [] Import the animations into OZZ runtime formats 
+        - [] Add sampling and local-to-model jobs 
+        - [] Test and see if it works 
+        - [] Add the ability to do blending 
+        - [] Inverse kinematics post-process 
     - [] Test animations with multiple instances.
     - [] Documentation
 - [] Resources 

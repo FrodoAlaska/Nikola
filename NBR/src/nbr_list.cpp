@@ -179,6 +179,31 @@ static bool convert_model(const ConvertEntry& entry) {
   return true;
 }
 
+static bool convert_skeleton(const ConvertEntry& entry) {
+  nikola::NBRSkeleton skele; 
+  if(!skeleton_loader_load(&skele, entry.in_path)) {
+    return false;
+  }
+
+  // Save the skeleton
+  
+  nikola::File file;
+  nikola::FilePath path = nikola::filepath_append(entry.out_path, 
+                                                  nikola::filepath_stem(nikola::filepath_parent_path(entry.in_path)));
+  if(!open_nbr_file(path, &file, entry.res_type)) {
+    return false;
+  }
+  nikola::file_write_bytes(file, skele);
+
+  // Unload the skeleton
+  skeleton_loader_unload(skele);
+  
+  NIKOLA_LOG_INFO("[NBR]: Converted skeleton \'%s\' to \'%s\'...", entry.in_path.c_str(), path.c_str());
+  nikola::file_close(file);
+  
+  return true;
+}
+
 static bool convert_animation(const ConvertEntry& entry) {
   nikola::NBRAnimation anim; 
   if(!animation_loader_load(&anim, entry.in_path)) {
@@ -265,6 +290,9 @@ static bool convert_by_type(const ConvertEntry& entry) {
       break;
     case nikola::RESOURCE_TYPE_MODEL:
       convert_model(entry);
+      break;
+    case nikola::RESOURCE_TYPE_SKELETON:
+      convert_skeleton(entry);
       break;
     case nikola::RESOURCE_TYPE_ANIMATION:
       convert_animation(entry);

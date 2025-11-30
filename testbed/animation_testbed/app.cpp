@@ -23,7 +23,7 @@ struct nikola::App {
   nikola::ResourceID model;
   nikola::ResourceID animation;
   
-  nikola::Animator animators[ANIMATORS_MAX];
+  // nikola::Animator animators[ANIMATORS_MAX];
   nikola::Transform transforms[3];
 };
 /// App
@@ -47,7 +47,7 @@ static void init_resources(nikola::App* app) {
   app->model = nikola::resources_push_model(app->res_group_id, "models/medieval_knight.nbr");
 
   // Animations init
-  app->animation = nikola::resources_push_animation(app->res_group_id, "animations/medieval_knight.nbr");
+  // app->animation = nikola::resources_push_animation(app->res_group_id, "animations/medieval_knight.nbr");
 
   // Materials init
   
@@ -100,9 +100,9 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // Animators init
   
-  for(nikola::sizei i = 0; i < ANIMATORS_MAX; i++) {
-    nikola::animator_create(&app->animators[i], app->animation);
-  }
+  // for(nikola::sizei i = 0; i < ANIMATORS_MAX; i++) {
+  //   nikola::animator_create(&app->animators[i], app->animation);
+  // }
 
   // Transform init
   
@@ -143,9 +143,9 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 
   // Animators update
   
-  for(nikola::sizei i = 0; i < ANIMATORS_MAX; i++) {
-    nikola::animator_animate(app->animators[i], (nikola::f32)delta_time);
-  }
+  // for(nikola::sizei i = 0; i < ANIMATORS_MAX; i++) {
+  //   nikola::animator_animate(app->animators[i], (nikola::f32)delta_time);
+  // }
 
   // Update the camera
   
@@ -160,7 +160,7 @@ void app_render(nikola::App* app) {
   // Render the objects
   
   nikola::renderer_queue_model(app->mesh_id, app->transforms[0], app->material_id);
-  nikola::renderer_queue_animation_instanced(app->model, &app->transforms[1], app->animators, ANIMATORS_MAX);
+  // nikola::renderer_queue_animation_instanced(app->model, &app->transforms[1], app->animators, ANIMATORS_MAX);
 
   nikola::renderer_end();
   
@@ -189,9 +189,9 @@ void app_render_gui(nikola::App* app) {
 
     nikola::gui_edit_transform("Model 1", &app->transforms[1]);
 
-    for(nikola::sizei i = 0; i < ANIMATORS_MAX; i++) {
-      nikola::gui_edit_animator(nikola::String("Animator " + std::to_string(i)).c_str(), &app->animators[i]);
-    }
+    // for(nikola::sizei i = 0; i < ANIMATORS_MAX; i++) {
+    //   nikola::gui_edit_animator(nikola::String("Animator " + std::to_string(i)).c_str(), &app->animators[i]);
+    // }
   }
 
   // Frame

@@ -204,6 +204,7 @@ static void load_scene_meshes(const aiScene* scene, ObjData* data, aiNode* node)
     aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 
     // Convert an `aiMesh` into our `NBRMesh`
+    
     nikola::NBRMesh nbr_mesh; 
     load_node_mesh(data, mesh, &nbr_mesh);
 
@@ -213,6 +214,7 @@ static void load_scene_meshes(const aiScene* scene, ObjData* data, aiNode* node)
 
   // The given `node` will also have children of its own. Those 
   // will need to be processed as well, obviously.
+  
   for(nikola::sizei i = 0; i < node->mNumChildren; i++) {
     load_scene_meshes(scene, data, node->mChildren[i]);
   }

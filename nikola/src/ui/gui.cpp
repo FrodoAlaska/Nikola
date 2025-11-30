@@ -515,7 +515,7 @@ void gui_edit_font(const char* name, Font* font, String* label) {
   
   if(ImGui::CollapsingHeader("Glyphs")) {
     for(auto& ch : *label) {
-      Glyph* glyph = &font->glyphs[ch]; 
+      Font::Glyph* glyph = &font->glyphs[ch]; 
       
       String str_id = ("Char: " + ch);
       ImGui::PushID(str_id.c_str());
@@ -837,13 +837,15 @@ void gui_edit_animator(const char* name, Animator* animator) {
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
 
-  ImGui::DragFloat("Start point", &animator->start_point, s_gui.big_step, 0.0f, animator->end_point);
-  ImGui::DragFloat("End point", &animator->end_point, s_gui.big_step, 0.0f);
-  ImGui::DragFloat("Current point", &animator->current_time, 1.0f, animator->start_point, animator->end_point);
+  AnimatorDesc& desc = animator_get_desc(animator);
 
-  ImGui::Checkbox("Looping", &animator->is_looping);
-  ImGui::Checkbox("Playing", &animator->is_animating);
-  ImGui::Checkbox("Reversed", &animator->is_reversed);
+  ImGui::DragFloat("Start point", &desc.start_point, s_gui.big_step, 0.0f, desc.end_point);
+  ImGui::DragFloat("End point", &desc.end_point, s_gui.big_step, 0.0f);
+  ImGui::DragFloat("Current point", &desc.current_time, 1.0f, desc.start_point, desc.end_point);
+
+  ImGui::Checkbox("Looping", &desc.is_looping);
+  ImGui::Checkbox("Playing", &desc.is_animating);
+  ImGui::Checkbox("Reversed", &desc.is_reversed);
   
   ImGui::PopID(); 
 }

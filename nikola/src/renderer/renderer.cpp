@@ -901,12 +901,12 @@ void renderer_queue_animation_instanced(const ResourceID& model_id,
 
   // Queue the animation 
 
-  for(sizei i = 0; i < count; i++) {
-    Animation* animation    = resources_get_animation(animators[i].animation_id);
-    RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
-
-    entry->animations.emplace_back(animation->skinning_palette);
-  }
+  // for(sizei i = 0; i < count; i++) {
+  //   Animation* animation    = resources_get_animation(animators[i].animation_id);
+  //   RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
+  //
+  //   entry->animations.emplace_back(animation->skinning_palette);
+  // }
 }
 
 void renderer_queue_mesh(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id) {
@@ -957,10 +957,10 @@ void renderer_queue_animation(const ResourceID& model_id,
 
   // Queue the animation
 
-  Animation* animation    = resources_get_animation(animator.animation_id);
-  RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
-
-  entry->animations.emplace_back(animation->skinning_palette);
+  // Animation* animation    = resources_get_animation(animator.animation_id);
+  // RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
+  //
+  // entry->animations.emplace_back(animation->skinning_palette);
 }
 
 void renderer_queue_particles(const ParticleEmitter& emitter) {

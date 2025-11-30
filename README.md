@@ -21,6 +21,7 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 - [stb](https://github.com/nothings/stb)
 - [Assimp](https://github.com/assimp/assimp)
 - [dr_libs](https://github.com/mackron/dr_libs)
+- [cgltf](https://github.com/jkuhlmann/cgltf)
 
 ## Features  
 

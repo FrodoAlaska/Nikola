@@ -44,6 +44,16 @@ void model_loader_unload(nikola::NBRModel& model);
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// Skeleton loader functions
+
+bool skeleton_loader_load(nikola::NBRSkeleton* skele, const nikola::FilePath& path); 
+
+void skeleton_loader_unload(nikola::NBRSkeleton& skele); 
+
+/// Skeleton loader functions
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// Animation loader functions
 
 bool animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& path); 

@@ -273,46 +273,59 @@ void file_write_bytes(File& file, const NBRModel& model) {
 void file_write_bytes(File& file, const NBRAnimation& anim) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
 
-  // Write the resource's information
-
-  // Write the joints
-
-  file_write_bytes(file, &anim.joints_count, sizeof(anim.joints_count)); 
-  for(sizei i = 0; i < anim.joints_count; i++) {
-    NBRJoint* joint = &anim.joints[i];
-
-    // Write the parent index 
-    file_write_bytes(file, &joint->parent_index, sizeof(joint->parent_index)); 
-
-    // Write the inverse bind matrix
-    file_write_bytes(file, &joint->inverse_bind_pose, sizeof(joint->inverse_bind_pose)); 
+  // Write the tracks
+  
+  file_write_bytes(file, &anim.tracks_count, sizeof(anim.tracks_count)); 
+  for(sizei i = 0; i < anim.tracks_count; i++) {
+    NBRAnimation::NBRJointTrack* track = &anim.tracks[i];
 
     // Write the positions
 
-    file_write_bytes(file, &joint->positions_count, sizeof(joint->positions_count)); 
-    file_write_bytes(file, joint->position_samples, sizeof(f32) * joint->positions_count); 
+    file_write_bytes(file, &track->positions_count, sizeof(track->positions_count)); 
+    file_write_bytes(file, track->position_samples, sizeof(f32) * track->positions_count); 
     
     // Write the rotations
 
-    file_write_bytes(file, &joint->rotations_count, sizeof(joint->rotations_count)); 
-    file_write_bytes(file, joint->rotation_samples, sizeof(f32) * joint->rotations_count); 
+    file_write_bytes(file, &track->rotations_count, sizeof(track->rotations_count)); 
+    file_write_bytes(file, track->rotation_samples, sizeof(f32) * track->rotations_count); 
     
     // Write the scales
 
-    file_write_bytes(file, &joint->scales_count, sizeof(joint->scales_count)); 
-    file_write_bytes(file, joint->scale_samples, sizeof(f32) * joint->scales_count); 
+    file_write_bytes(file, &track->scales_count, sizeof(track->scales_count)); 
+    file_write_bytes(file, track->scale_samples, sizeof(f32) * track->scales_count); 
   } 
-
+  
   // Write time info
-
   file_write_bytes(file, &anim.duration, sizeof(anim.duration)); 
-  file_write_bytes(file, &anim.frame_rate, sizeof(anim.frame_rate)); 
+}
+
+void file_write_bytes(File& file, const NBRSkeleton& skele) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+
+  // Write the joints
+  
+  file_write_bytes(file, &skele.joints_count, sizeof(skele.joints_count));
+  for(u16 i = 0; i < skele.joints_count; i++) {
+    NBRSkeleton::NBRJoint* joint = &skele.joints[i];
+
+    // Write the children 
+    
+    file_write_bytes(file, &joint->children_count, sizeof(joint->children_count));
+    file_write_bytes(file, joint->children, sizeof(joint->children_count * sizeof(u16)));
+
+    // Write the transform
+  
+    file_write_bytes(file, joint->position, sizeof(joint->position));
+    file_write_bytes(file, joint->rotation, sizeof(joint->rotation));
+    file_write_bytes(file, joint->scale, sizeof(joint->scale));
+  }
+
+  // Write the root index
+  file_write_bytes(file, &skele.root_index, sizeof(skele.root_index));
 }
 
 void file_write_bytes(File& file, const NBRFont& font) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
-  
-  // Write the resource's information
   
   // Write the glyphs 
   
@@ -759,47 +772,69 @@ void file_read_bytes(File& file, NBRModel* out_model) {
 void file_read_bytes(File& file, NBRAnimation* out_anim) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
   NIKOLA_ASSERT(out_anim, "Invalid NBRAnimation type given to file_read_bytes");
+  
+  // Read the tracks
 
-  // Read the joints
+  file_read_bytes(file, &out_anim->tracks_count, sizeof(out_anim->tracks_count)); 
+  out_anim->tracks = (NBRAnimation::NBRJointTrack*)memory_allocate(sizeof(NBRAnimation::NBRJointTrack) * out_anim->tracks_count);
 
-  file_read_bytes(file, &out_anim->joints_count, sizeof(out_anim->joints_count)); 
-  out_anim->joints = (NBRJoint*)memory_allocate(sizeof(NBRJoint) * out_anim->joints_count);
-
-  for(sizei i = 0; i < out_anim->joints_count; i++) {
-    NBRJoint* joint = &out_anim->joints[i];
-
-    // Read the parent index 
-    file_read_bytes(file, &joint->parent_index, sizeof(joint->parent_index)); 
-
-    // Read the inverse bind matrix
-    file_read_bytes(file, &joint->inverse_bind_pose, sizeof(joint->inverse_bind_pose)); 
-
+  for(sizei i = 0; i < out_anim->tracks_count; i++) {
+    NBRAnimation::NBRJointTrack* track = &out_anim->tracks[i];
+  
     // Read the positions
 
-    file_read_bytes(file, &joint->positions_count, sizeof(joint->positions_count)); 
-    joint->position_samples = (f32*)memory_allocate(sizeof(f32) * joint->positions_count); 
+    file_read_bytes(file, &track->positions_count, sizeof(track->positions_count)); 
+    track->position_samples = (f32*)memory_allocate(sizeof(f32) * track->positions_count); 
     
-    file_read_bytes(file, joint->position_samples, sizeof(f32) * joint->positions_count); 
+    file_read_bytes(file, track->position_samples, sizeof(f32) * track->positions_count); 
     
     // Read the rotations
 
-    file_read_bytes(file, &joint->rotations_count, sizeof(joint->rotations_count)); 
-    joint->rotation_samples = (f32*)memory_allocate(sizeof(f32) * joint->rotations_count); 
+    file_read_bytes(file, &track->rotations_count, sizeof(track->rotations_count)); 
+    track->rotation_samples = (f32*)memory_allocate(sizeof(f32) * track->rotations_count); 
     
-    file_read_bytes(file, joint->rotation_samples, sizeof(f32) * joint->rotations_count); 
+    file_read_bytes(file, track->rotation_samples, sizeof(f32) * track->rotations_count); 
     
     // Read the scales
 
-    file_read_bytes(file, &joint->scales_count, sizeof(joint->scales_count)); 
-    joint->scale_samples = (f32*)memory_allocate(sizeof(f32) * joint->scales_count); 
+    file_read_bytes(file, &track->scales_count, sizeof(track->scales_count)); 
+    track->scale_samples = (f32*)memory_allocate(sizeof(f32) * track->scales_count); 
     
-    file_read_bytes(file, joint->scale_samples, sizeof(f32) * joint->scales_count); 
+    file_read_bytes(file, track->scale_samples, sizeof(f32) * track->scales_count); 
   } 
 
   // Read time info
-
   file_read_bytes(file, &out_anim->duration, sizeof(out_anim->duration)); 
-  file_read_bytes(file, &out_anim->frame_rate, sizeof(out_anim->frame_rate)); 
+}
+
+void file_read_bytes(File& file, NBRSkeleton* out_skele) {
+  NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
+  NIKOLA_ASSERT(out_skele, "Invalid NBRSkeleton type given to file_read_bytes");
+
+  // Read the joints
+  
+  file_read_bytes(file, &out_skele->joints_count, sizeof(out_skele->joints_count));
+  out_skele->joints = (NBRSkeleton::NBRJoint*)memory_allocate(sizeof(NBRSkeleton::NBRJoint) * out_skele->joints_count);
+
+  for(u16 i = 0; i < out_skele->joints_count; i++) {
+    NBRSkeleton::NBRJoint* joint = &out_skele->joints[i];
+
+    // Read the children 
+    
+    file_read_bytes(file, &joint->children_count, sizeof(joint->children_count));
+   
+    joint->children = (u16*)memory_allocate(sizeof(u16) * joint->children_count);
+    file_read_bytes(file, joint->children, sizeof(joint->children_count * sizeof(u16)));
+
+    // Read the transform
+  
+    file_read_bytes(file, joint->position, sizeof(joint->position));
+    file_read_bytes(file, joint->rotation, sizeof(joint->rotation));
+    file_read_bytes(file, joint->scale, sizeof(joint->scale));
+  }
+
+  // Read the root index
+  file_write_bytes(file, &out_skele->root_index, sizeof(out_skele->root_index));
 }
 
 void file_read_bytes(File& file, NBRFont* out_font) {

@@ -26,6 +26,7 @@ struct ResourceGroup {
   DynamicArray<ShaderContext*> shader_contexts;
   DynamicArray<Skybox*> skyboxes;
   DynamicArray<Model*> models;
+  DynamicArray<Skeleton*> skeletons;
   DynamicArray<Animation*> animations;
   DynamicArray<Font*> fonts;
 
@@ -437,6 +438,19 @@ static bool load_model_nbr(ResourceGroup* group, Model* model, const FilePath& n
   return true;
 }
 
+static bool load_skeleton_nbr(ResourceGroup* group, Skeleton* skele, const FilePath& nbr_path) {
+  // 
+  // Load the NBR file 
+  //
+ 
+  File file;
+  if(!nbr_file_is_valid(file, filepath_append(group->parent_dir, nbr_path), RESOURCE_TYPE_SKELETON)) {
+    return false;
+  }
+
+  return true;
+}
+
 static bool load_animation_nbr(ResourceGroup* group, Animation* anim, const FilePath& nbr_path) {
   // 
   // Load the NBR file 
@@ -453,102 +467,103 @@ static bool load_animation_nbr(ResourceGroup* group, Animation* anim, const File
   //
   // Convert the NBR format to a valid model
   // 
+  // @TOOD (Resources) 
   
-  anim->joints.reserve(nbr_anim.joints_count);
-  for(u16 i = 0; i < nbr_anim.joints_count; i++) {
-    Joint* joint        = new Joint{};
-    NBRJoint* nbr_joint = &nbr_anim.joints[i];
-
-    // Convert the positions
-
-    joint->position_samples.reserve(nbr_joint->positions_count);
-    for(u16 ip = 0; ip < nbr_joint->positions_count; ip += 4) {
-      VectorAnimSample sample;
-
-      sample.value.x = nbr_joint->position_samples[ip + 0];
-      sample.value.y = nbr_joint->position_samples[ip + 1];
-      sample.value.z = nbr_joint->position_samples[ip + 2];
-      sample.time    = nbr_joint->position_samples[ip + 3];
-
-      joint->position_samples.push_back(sample);
-    }
-    
-    // Convert the rotations
-
-    joint->rotation_samples.reserve(nbr_joint->rotations_count);
-    for(u16 ir = 0; ir < nbr_joint->rotations_count; ir += 5) {
-      QuatAnimSample sample;
-
-      sample.value.x = nbr_joint->rotation_samples[ir + 0];
-      sample.value.y = nbr_joint->rotation_samples[ir + 1];
-      sample.value.z = nbr_joint->rotation_samples[ir + 2];
-      sample.value.w = nbr_joint->rotation_samples[ir + 3];
-      sample.time    = nbr_joint->rotation_samples[ir + 4];
-
-      joint->rotation_samples.push_back(sample);
-    }
-    
-    // Convert the scales
-
-    joint->scale_samples.reserve(nbr_joint->scales_count);
-    for(u16 is = 0; is < nbr_joint->scales_count; is += 4) {
-      VectorAnimSample sample;
-
-      sample.value.x = nbr_joint->scale_samples[is + 0];
-      sample.value.y = nbr_joint->scale_samples[is + 1];
-      sample.value.z = nbr_joint->scale_samples[is + 2];
-      sample.time    = nbr_joint->scale_samples[is + 3];
-
-      joint->scale_samples.push_back(sample);
-    }
-
-    // Convert other joint information
-
-    joint->parent_index = (i32)nbr_joint->parent_index;
-    f32* matrix         = &nbr_joint->inverse_bind_pose[0];
-
-    joint->inverse_bind_pose = Mat4(matrix[0], matrix[4], matrix[8],  0.0f,
-                                    matrix[1], matrix[5], matrix[9],  0.0f,
-                                    matrix[2], matrix[6], matrix[10], 0.0f,
-                                    matrix[3], matrix[7], matrix[11], 1.0f);
-
-    // Transforming the joint with the default values
-
-    joint->current_transform.position = joint->position_samples[0].value;
-    joint->current_transform.rotation = joint->rotation_samples[0].value;
-    joint->current_transform.scale    = joint->scale_samples[0].value; // @TEMP (Animation)
-    transform_apply(joint->current_transform);
-
-    // Default initializing the skinning matrix of the joint (IMPORTANT!)
-    anim->skinning_palette[i] = joint->current_transform.transform;
-
-    // Welcome, Mr. Joint!
-    anim->joints.push_back(joint);
-  }
-
-  anim->duration   = nbr_anim.duration;
-  anim->frame_rate = nbr_anim.frame_rate;
-
+  // anim->joints.reserve(nbr_anim.joints_count);
+  // for(u16 i = 0; i < nbr_anim.joints_count; i++) {
+  //   Joint* joint        = new Joint{};
+  //   NBRJoint* nbr_joint = &nbr_anim.joints[i];
   //
-  // Freeing NBR data
-  // 
-
-  for(nikola::sizei i = 0; i < nbr_anim.joints_count; i++) {
-    memory_free(nbr_anim.joints[i].position_samples);
-    memory_free(nbr_anim.joints[i].rotation_samples);
-    memory_free(nbr_anim.joints[i].scale_samples);
-  } 
-
-  memory_free(nbr_anim.joints);
-  file_close(file); 
+  //   // Convert the positions
+  //
+  //   joint->position_samples.reserve(nbr_joint->positions_count);
+  //   for(u16 ip = 0; ip < nbr_joint->positions_count; ip += 4) {
+  //     VectorAnimSample sample;
+  //
+  //     sample.value.x = nbr_joint->position_samples[ip + 0];
+  //     sample.value.y = nbr_joint->position_samples[ip + 1];
+  //     sample.value.z = nbr_joint->position_samples[ip + 2];
+  //     sample.time    = nbr_joint->position_samples[ip + 3];
+  //
+  //     joint->position_samples.push_back(sample);
+  //   }
+  //   
+  //   // Convert the rotations
+  //
+  //   joint->rotation_samples.reserve(nbr_joint->rotations_count);
+  //   for(u16 ir = 0; ir < nbr_joint->rotations_count; ir += 5) {
+  //     QuatAnimSample sample;
+  //
+  //     sample.value.x = nbr_joint->rotation_samples[ir + 0];
+  //     sample.value.y = nbr_joint->rotation_samples[ir + 1];
+  //     sample.value.z = nbr_joint->rotation_samples[ir + 2];
+  //     sample.value.w = nbr_joint->rotation_samples[ir + 3];
+  //     sample.time    = nbr_joint->rotation_samples[ir + 4];
+  //
+  //     joint->rotation_samples.push_back(sample);
+  //   }
+  //   
+  //   // Convert the scales
+  //
+  //   joint->scale_samples.reserve(nbr_joint->scales_count);
+  //   for(u16 is = 0; is < nbr_joint->scales_count; is += 4) {
+  //     VectorAnimSample sample;
+  //
+  //     sample.value.x = nbr_joint->scale_samples[is + 0];
+  //     sample.value.y = nbr_joint->scale_samples[is + 1];
+  //     sample.value.z = nbr_joint->scale_samples[is + 2];
+  //     sample.time    = nbr_joint->scale_samples[is + 3];
+  //
+  //     joint->scale_samples.push_back(sample);
+  //   }
+  //
+  //   // Convert other joint information
+  //
+  //   joint->parent_index = (i32)nbr_joint->parent_index;
+  //   f32* matrix         = &nbr_joint->inverse_bind_pose[0];
+  //
+  //   joint->inverse_bind_pose = Mat4(matrix[0], matrix[4], matrix[8],  0.0f,
+  //                                   matrix[1], matrix[5], matrix[9],  0.0f,
+  //                                   matrix[2], matrix[6], matrix[10], 0.0f,
+  //                                   matrix[3], matrix[7], matrix[11], 1.0f);
+  //
+  //   // Transforming the joint with the default values
+  //
+  //   joint->current_transform.position = joint->position_samples[0].value;
+  //   joint->current_transform.rotation = joint->rotation_samples[0].value;
+  //   joint->current_transform.scale    = joint->scale_samples[0].value; // @TEMP (Animation)
+  //   transform_apply(joint->current_transform);
+  //
+  //   // Default initializing the skinning matrix of the joint (IMPORTANT!)
+  //   anim->skinning_palette[i] = joint->current_transform.transform;
+  //
+  //   // Welcome, Mr. Joint!
+  //   anim->joints.push_back(joint);
+  // }
+  //
+  // anim->duration   = nbr_anim.duration;
+  // anim->frame_rate = nbr_anim.frame_rate;
+  //
+  // //
+  // // Freeing NBR data
+  // // 
+  //
+  // for(nikola::sizei i = 0; i < nbr_anim.joints_count; i++) {
+  //   memory_free(nbr_anim.joints[i].position_samples);
+  //   memory_free(nbr_anim.joints[i].rotation_samples);
+  //   memory_free(nbr_anim.joints[i].scale_samples);
+  // } 
+  //
+  // memory_free(nbr_anim.joints);
+  // file_close(file); 
 
   // Some useful info dump
 
-  NIKOLA_LOG_DEBUG("Group \'%s\' pushed animation:", group->name.c_str());
-  NIKOLA_LOG_DEBUG("     Joints     = %i", nbr_anim.joints_count);
-  NIKOLA_LOG_DEBUG("     Duration   = %f", nbr_anim.duration);
-  NIKOLA_LOG_DEBUG("     Frame rate = %f", nbr_anim.frame_rate);
-  NIKOLA_LOG_DEBUG("     Path       = %s", nbr_path.c_str());
+  // NIKOLA_LOG_DEBUG("Group \'%s\' pushed animation:", group->name.c_str());
+  // NIKOLA_LOG_DEBUG("     Joints     = %i", nbr_anim.joints_count);
+  // NIKOLA_LOG_DEBUG("     Duration   = %f", nbr_anim.duration);
+  // NIKOLA_LOG_DEBUG("     Frame rate = %f", nbr_anim.frame_rate);
+  // NIKOLA_LOG_DEBUG("     Path       = %s", nbr_path.c_str());
   
   // done!
   return true;
@@ -580,7 +595,7 @@ static bool load_font_nbr(ResourceGroup* group, Font* font, const FilePath& nbr_
   // Import the glyphs 
   
   for(sizei i = 0; i < nbr_font.glyphs_count; i++) {
-    Glyph glyph;
+    Font::Glyph glyph;
 
     glyph.unicode = nbr_font.glyphs[i].unicode;
 
@@ -889,17 +904,17 @@ void resources_destroy_group(const ResourceGroupID& group_id) {
   DESTROY_COMP_RESOURCE_MAP(group, fonts);
 
   // @TODO (Resource): No. 
-  for(auto& anim : group->animations) {
-    for(auto& joint : anim->joints) {
-      joint->position_samples.clear();
-      joint->rotation_samples.clear();
-      joint->scale_samples.clear();
-
-      delete joint;
-    }
-
-    delete anim;
-  }
+  // for(auto& anim : group->animations) {
+  //   for(auto& joint : anim->joints) {
+  //     joint->position_samples.clear();
+  //     joint->rotation_samples.clear();
+  //     joint->scale_samples.clear();
+  //
+  //     delete joint;
+  //   }
+  //
+  //   delete anim;
+  // }
 
   // Destroy core resources
   
@@ -1316,17 +1331,42 @@ ResourceID resources_push_model(const ResourceGroupID& group_id, const FilePath&
   return id;
 }
 
+ResourceID resources_push_skeleton(const ResourceGroupID& group_id, const FilePath& nbr_path) {
+  GROUP_CHECK(group_id);
+  ResourceGroup* group = &s_manager.groups[group_id];
+
+  // Allocate the skeleton
+  Skeleton* skele = skeleton_create();
+  
+  // Load the NBR data into the skeleton
+ 
+  if(!load_skeleton_nbr(group, skele, nbr_path)) {
+    skeleton_destroy(skele);
+    NIKOLA_LOG_ERROR("Failed to load NBR skeleton file at \'%s\'", nbr_path.c_str());
+
+    return ResourceID{};
+  }
+  
+  // New skeleton added!
+  
+  ResourceID id;
+  PUSH_RESOURCE(group, skeletons, skele, RESOURCE_TYPE_SKELETON, id);
+  
+  group->named_ids[filepath_stem(nbr_path)] = id;
+  return id;
+}
+
 ResourceID resources_push_animation(const ResourceGroupID& group_id, const FilePath& nbr_path) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
 
   // Allocate the animation
-  Animation* anim = new Animation{};
+  Animation* anim = animation_create();
   
   // Load the NBR data into the animation
  
   if(!load_animation_nbr(group, anim, nbr_path)) {
-    delete anim;
+    animation_destroy(anim);
     NIKOLA_LOG_ERROR("Failed to load NBR animation file at \'%s\'", nbr_path.c_str());
 
     return ResourceID{};
@@ -1338,7 +1378,6 @@ ResourceID resources_push_animation(const ResourceGroupID& group_id, const FileP
   PUSH_RESOURCE(group, animations, anim, RESOURCE_TYPE_ANIMATION, id);
   
   group->named_ids[filepath_stem(nbr_path)] = id;
-
   return id;
 }
 
@@ -1473,6 +1512,11 @@ Skybox* resources_get_skybox(const ResourceID& id) {
 Model* resources_get_model(const ResourceID& id) {
   ResourceGroup* group = &s_manager.groups[id.group];
   return get_resource(id, group->models, RESOURCE_TYPE_MODEL);
+}
+
+Skeleton* resources_get_skeleton(const ResourceID& id) {
+  ResourceGroup* group = &s_manager.groups[id.group];
+  return get_resource(id, group->skeletons, RESOURCE_TYPE_SKELETON);
 }
 
 Animation* resources_get_animation(const ResourceID& id) {

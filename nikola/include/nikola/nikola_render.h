@@ -430,11 +430,151 @@ struct ParticleEmitter {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// Animator
-struct Animator {
-  /// The animation associated with this animator.
-  ResourceID animation_id; 
+/// Mesh 
+struct Mesh {
+  /// The vertices data of this mesh.  
+  DynamicArray<f32> vertices; 
+  
+  /// The indices data of this mesh.  
+  DynamicArray<u32> indices; 
 
+  /// The index of the material to be used 
+  /// with this mesh. 
+  ///
+  /// @NOTE: This is `0` by default, representing 
+  /// the default material.
+  sizei material_index = 0;
+};
+/// Mesh 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// MaterialDesc
+struct MaterialDesc {
+  ResourceID albedo_id    = {};
+  ResourceID roughness_id = {};
+  ResourceID metallic_id  = {};
+  ResourceID normal_id    = {};
+  ResourceID emissive_id  = {};
+
+  Vec3 color = Vec3(1.0f); 
+
+  f32 roughness    = 1.0f; 
+  f32 metallic     = 0.0f; 
+  f32 emissive     = 0.0f; 
+  f32 transparency = 1.0f;
+
+  bool depth_mask  = true;
+  u32 stencil_ref  = 0xFF;
+};
+/// MaterialDesc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Material 
+struct Material {
+  /// Texture maps.
+
+  GfxTexture* albedo_map    = nullptr;
+  GfxTexture* metallic_map  = nullptr;
+  GfxTexture* roughness_map = nullptr;
+  GfxTexture* normal_map    = nullptr;
+  GfxTexture* emissive_map  = nullptr;
+ 
+  /// Useful surface-defining flags.
+
+  Vec3 color       = Vec3(1.0f);
+  f32 roughness    = 1.0f;
+  f32 metallic     = 0.0f;
+  f32 emissive     = 0.0f;
+  f32 transparency = 1.0f;
+ 
+  /// Pipeline-related flags 
+
+  Vec4 blend_factor = Vec4(0.0f);
+  bool depth_mask   = true;
+  i32 stencil_ref   = 1;
+
+  /// A bitwise flag, detemnining which texture 
+  /// maps to use in the shader.
+  i32 map_flags = 0;
+};
+/// Material 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// ShaderContext
+struct ShaderContext {
+  /// The underlying shader pointer of the context.
+  GfxShader* shader = nullptr; 
+
+  /// A cache of uniforms where the key is the name of 
+  /// the uniform in the shader and the value is the 
+  /// uniform's location in the shader.
+  HashMap<String, i32> uniforms_cache;
+};
+/// ShaderContext
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Skybox
+struct Skybox {
+  /// The underlying cubemap pointer of the skybox
+  GfxCubemap* cubemap = nullptr;
+ 
+  /// The vertices of this skybox.
+  DynamicArray<f32> vertices;
+};
+/// Skybox
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Model 
+struct Model {
+  /// All of the raw meshes of the model.
+  DynamicArray<Mesh*> meshes;
+
+  /// All of the materials of the model.
+  DynamicArray<Material*> materials;
+};
+/// Model 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Skeleton
+struct Skeleton;
+/// Skeleton
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Animation
+struct Animation;
+/// Animation
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Font 
+struct Font {
+  struct Glyph {
+    i8 unicode; 
+    GfxTexture* texture = nullptr;
+
+    Vec2 size;
+    Vec2 offset;
+
+    u32 left, right, top, bottom;
+    i32 advance_x, kern, left_bearing;
+  };
+
+  f32 ascent, descent, line_gap;
+  HashMap<i8, Glyph> glyphs;
+};
+/// Font 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// AnimatorDesc
+struct AnimatorDesc {
   /// The current ticking time of the animation.
   f32 current_time  = 0.0f;
  
@@ -461,6 +601,12 @@ struct Animator {
   /// played in reverse or not.
   bool is_reversed  = false;
 };
+/// AnimatorDesc
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Animator
+struct Animator;
 /// Animator
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -815,17 +961,78 @@ NIKOLA_API void particle_emitter_reset(ParticleEmitter& emitter);
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// ShaderContext functions
+
+/// Cache the location of the uniform with the name `uniform_name` to the given `ctx`.
+/// 
+/// @NOTE: If the uniform's name is not found within the context, the function will throw a warning. 
+NIKOLA_API void shader_context_cache_uniform(ShaderContext* ctx, const i8* uniform_name);
+
+/// Set a uniform of type `i32` with the name `uniform_name` in `ctx` to the given `value`. 
+NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const i32 value);
+
+/// Set a uniform of type `f32` with the name `uniform_name` in `ctx` to the given `value`. 
+NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const f32 value);
+
+/// Set a uniform of type `Vec2` with the name `uniform_name` in `ctx` to the given `value`. 
+NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const Vec2& value);
+
+/// Set a uniform of type `Vec3` with the name `uniform_name` in `ctx` to the given `value`. 
+NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const Vec3& value);
+
+/// Set a uniform of type `Vec4` with the name `uniform_name` in `ctx` to the given `value`. 
+NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const Vec4& value);
+
+/// Set a uniform of type `Mat4` with the name `uniform_name` in `ctx` to the given `value`. 
+NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const Mat4& value);
+
+/// Set a uniform of type `Material` with the name `uniform_name` in `ctx` to the given `value`. 
+NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const Material* value);
+
+/// Set a uniform of type `PointLight` with the name `uniform_name` in `ctx` to the given `value`. 
+NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const PointLight& value);
+
+/// Set a uniform of type `DirectionalLight` with the name `uniform_name` in `ctx` to the given `value`. 
+NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const DirectionalLight& value);
+
+/// Set a uniform of type `SpotLight` with the name `uniform_name` in `ctx` to the given `value`. 
+NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const SpotLight& value);
+
+/// ShaderContext functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Skeleton functions
+
+NIKOLA_API Skeleton* skeleton_create();
+
+NIKOLA_API void skeleton_destroy(Skeleton* skele);
+
+/// Skeleton functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Animation functions
+
+NIKOLA_API Animation* animation_create();
+
+NIKOLA_API void animation_destroy(Animation* anim);
+
+/// Animation functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// Animator functions
 
-/// Create an animator component using the given `animation`.
-NIKOLA_API void animator_create(Animator* animator, const ResourceID& animation);
+/// Create an animator component using the information in `desc`.
+NIKOLA_API Animator* animator_create(const AnimatorDesc& desc);
 
 /// Start the animation process of the given `animator`, using the given `dt` as 
-/// a delta time for progressing through the animation.
-NIKOLA_API void animator_animate(Animator& animator, const f32& dt);
+/// a delta time for progressing through the `animation_id` with `skeleton_id` as the rig.
+NIKOLA_API void animator_animate(Animator* animator, const ResourceID& skeleton_id, const ResourceID& animation_id, const f32 dt);
 
-/// Set the current animation of `animator` to the given `animation`.
-NIKOLA_API void animator_set_animation(Animator& animator, const ResourceID& animation);
+/// Retrieve a reference of the internal `AnimatorDesc` of `animator`.
+NIKOLA_API AnimatorDesc& animator_get_desc(Animator* animator);
 
 /// Animator functions
 ///---------------------------------------------------------------------------------------------------------------------

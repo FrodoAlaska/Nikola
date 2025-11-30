@@ -17,7 +17,7 @@ static const Vec2 measure_bounds(const UIText& text) {
   f32 prev_advance = 0.0f;
 
   for(auto& ch : text.string) {
-    Glyph* glyph = &text.font->glyphs[ch];
+    Font::Glyph* glyph = &text.font->glyphs[ch];
      
     // Give some love to the Y-axis as well
     if(ch == '\n') {

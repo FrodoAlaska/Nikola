@@ -30,7 +30,6 @@ set(NIKOLA_SOURCES
   
   # Resources
   ${NIKOLA_SRC_DIR}/resources/resource_manager.cpp
-  ${NIKOLA_SRC_DIR}/resources/shader_context.cpp
   ${NIKOLA_SRC_DIR}/resources/geometry_loader.cpp
   ${NIKOLA_SRC_DIR}/resources/nbr.cpp
 
@@ -52,7 +51,8 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/renderer/batch_renderer.cpp
   ${NIKOLA_SRC_DIR}/renderer/ui_renderer.cpp
   ${NIKOLA_SRC_DIR}/renderer/particles.cpp
-  ${NIKOLA_SRC_DIR}/renderer/animator.cpp
+  ${NIKOLA_SRC_DIR}/renderer/animation.cpp
+  ${NIKOLA_SRC_DIR}/renderer/shader_context.cpp
 
   ${NIKOLA_SRC_DIR}/renderer/render_passes/light_pass.cpp
   ${NIKOLA_SRC_DIR}/renderer/render_passes/shadow_pass.cpp
@@ -104,23 +104,17 @@ set(LIBS_SOURCES
 
   # ImGui
   ${NIKOLA_LIBS_DIR}/imgui/backends/imgui_impl_glfw.cpp
-  ${NIKOLA_LIBS_DIR}/imgui/backends/imgui_impl_glfw.h
   ${NIKOLA_LIBS_DIR}/imgui/backends/imgui_impl_opengl3.cpp
-  ${NIKOLA_LIBS_DIR}/imgui/backends/imgui_impl_opengl3.h
-  ${NIKOLA_LIBS_DIR}/imgui/backends/imgui_impl_opengl3_loader.h
-  ${NIKOLA_LIBS_DIR}/imgui/imconfig.h
   ${NIKOLA_LIBS_DIR}/imgui/imgui.cpp
-  ${NIKOLA_LIBS_DIR}/imgui/imgui.h
   ${NIKOLA_LIBS_DIR}/imgui/imgui_demo.cpp
   ${NIKOLA_LIBS_DIR}/imgui/imgui_draw.cpp
-  ${NIKOLA_LIBS_DIR}/imgui/imgui_internal.h
   ${NIKOLA_LIBS_DIR}/imgui/imgui_stdlib.cpp
   ${NIKOLA_LIBS_DIR}/imgui/imgui_stdlib.h
   ${NIKOLA_LIBS_DIR}/imgui/imgui_tables.cpp
   ${NIKOLA_LIBS_DIR}/imgui/imgui_widgets.cpp
-  ${NIKOLA_LIBS_DIR}/imgui/imstb_rectpack.h
-  ${NIKOLA_LIBS_DIR}/imgui/imstb_textedit.h
-  ${NIKOLA_LIBS_DIR}/imgui/imstb_truetype.h
+
+  # CGLTF 
+  ${NIKOLA_LIBS_DIR}/cgltf/cgltf.cpp
 )
 ############################################################
 

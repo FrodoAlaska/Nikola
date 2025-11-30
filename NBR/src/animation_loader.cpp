@@ -1,53 +1,38 @@
 #include "nbr.h"
 
 #include <nikola/nikola.h>
-
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
+#include <cgltf/cgltf.h>
 
 //////////////////////////////////////////////////////////////////////////
 
 namespace nbr { // Start of nbr
 
 /// ----------------------------------------------------------------------
-/// NodeData
-struct NodeData {
-  nikola::String name;
-  nikola::String parent_name = "INVALID";
-  nikola::i32 index          = 0;
+/// NodeAnim
 
-  aiMatrix4x4 inverse_bind_pose;
-  aiMatrix4x4 transform;
-};
-/// NodeData
-/// ----------------------------------------------------------------------
+struct NodeAnim {
+  nikola::DynamicArray<nikola::VectorAnimSample> positions;
+  nikola::DynamicArray<nikola::QuatAnimSample> rotations;
+  nikola::DynamicArray<nikola::VectorAnimSample> scales;
 
-/// ----------------------------------------------------------------------
-/// PoseData
-struct PoseData {
-  nikola::DynamicArray<aiVectorKey> positions;
-  nikola::DynamicArray<aiQuatKey> rotations;
-  nikola::DynamicArray<aiVectorKey> scalings;
+  nikola::sizei samples_max = 0;
+  nikola::f32 duration      = 0.0f;
 };
-/// PoseData
+
+/// NodeAnim
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
 /// AnimData
 
 struct AnimData {
-  const aiScene* ai_scene;
-  
-  nikola::HashMap<nikola::String, NodeData> node_map;
-  nikola::HashMap<nikola::String, PoseData> poses; 
- 
-  nikola::DynamicArray<nikola::String> node_indices;
+  cgltf_data* gltf;
 
-  nikola::f32 duration, frame_rate;
-  nikola::DynamicArray<nikola::NBRJoint> joints;
+  nikola::HashMap<nikola::String, NodeAnim> tracks;
+  nikola::f32 duration = 0.0f;
 };
-// AnimData
+
+/// AnimData
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -55,222 +40,133 @@ struct AnimData {
 
 static bool is_valid_extension(const nikola::FilePath& ext) {
   return ext == ".gltf" || 
-         ext == ".glb"  || 
-         ext == ".dae";
+         ext == ".glb";
 }
 
-static void decompose_ai_matrix(nikola::NBRJoint* joint, const aiMatrix4x4& mat) {
-  // 1st row
+static void read_positions(NodeAnim* track, cgltf_animation_sampler* sampler) {
+  /// @NOTE: 
+  ///
+  /// I realize that the actions below probably can be pulled out and 
+  /// placed into a function so that they are a bit less error-prone, which 
+  /// will also make me more "professional". But, listen, I'm tired, okay? 
+  ///
+  /// Leave me alone... 
+  ///
 
-  joint->inverse_bind_pose[0] = mat[0][0];
-  joint->inverse_bind_pose[1] = mat[0][1];
-  joint->inverse_bind_pose[2] = mat[0][2];
-  joint->inverse_bind_pose[3] = mat[0][3];
+  // Read the input (the time scale)
 
-  // 2nd row
+  nikola::sizei floats_read = cgltf_accessor_unpack_floats(sampler->input, nullptr, sampler->input->count);
 
-  joint->inverse_bind_pose[4] = mat[1][0];
-  joint->inverse_bind_pose[5] = mat[1][1];
-  joint->inverse_bind_pose[6] = mat[1][2];
-  joint->inverse_bind_pose[7] = mat[1][3];
+  nikola::f32* input_buffer = (nikola::f32*)nikola::memory_allocate(sizeof(nikola::f32) * floats_read);
+  cgltf_accessor_unpack_floats(sampler->input, input_buffer, floats_read);
 
-  // 3rd row
-
-  joint->inverse_bind_pose[8]  = mat[2][0];
-  joint->inverse_bind_pose[9]  = mat[2][1];
-  joint->inverse_bind_pose[10] = mat[2][2];
-  joint->inverse_bind_pose[11] = mat[2][3];
-}
-
-static void strip_junk_from_name(nikola::String* name) {
-  // @NOTE: We need this function because Assimp adds some junk to 
-  // the name for FBX files in order to structure animations correctly (I think?)
-  // Since we rely heavily on the names for getting the indices, we _have_ to get 
-  // the "raw" name of the bone. Otherwise, the `load_bone_map` function won't find 
-  // the correct nodes.
-  //
-  // By the way, for reference, the name can look something like this "mixamorig:RightHand_$AssimpFbx$_Rotation".
-
-  nikola::sizei unique_sign = name->find_first_of('$');
-  *name                     = name->substr(0, unique_sign - 1);
-}
-
-static void push_node_from_bone(AnimData* data, aiBone* bone) {
-  NodeData node_data{};
-
-  node_data.name        = bone->mNode->mName.C_Str();
-  node_data.parent_name = bone->mNode->mParent->mName.C_Str();
-  strip_junk_from_name(&node_data.name);
-  strip_junk_from_name(&node_data.parent_name);
-
-  if(data->node_map.find(node_data.name) != data->node_map.end()) { // Node is already in the map
-    return;
-  } 
-
-  node_data.index             = (nikola::i32)data->node_map.size();
-  node_data.inverse_bind_pose = bone->mOffsetMatrix;
-  node_data.transform         = bone->mNode->mTransformation; 
-
-  data->node_indices.push_back(node_data.name);
-  data->node_map[node_data.name] = node_data;
-}
-
-static void push_parent_node(AnimData* data, aiBone* bone) {
-  // Recursively go through all the parents until you hit a 
-  // parent joint that is already in the map. This way, 
-  // we can make sure that the sequential order is kept 
-  // for the runtime. Parents _MUST_ come before children 
-  // in the array. 
-
-  aiBone* parent_bone = nullptr;
-  if(data->node_map.find(bone->mNode->mParent->mName.C_Str()) == data->node_map.end()) {
-    parent_bone = data->ai_scene->findBone(bone->mNode->mParent->mName);
-  }
-
-  if(parent_bone) {
-    push_parent_node(data, parent_bone);
-  }
-
-  push_node_from_bone(data, bone);
-}
-
-static void load_bone_map(AnimData* data) {
-  for(nikola::u32 i = 0; i < data->ai_scene->mNumMeshes; i++) {
-    aiMesh* mesh = data->ai_scene->mMeshes[i];
-    
-    for(nikola::u32 j = 0; j < mesh->mNumBones; j++) {
-      aiBone* bone = mesh->mBones[j];
-
-      nikola::String node_name   = bone->mNode->mName.C_Str();
-      nikola::String parent_name = bone->mNode->mParent->mName.C_Str();
-    
-      push_parent_node(data, bone);
-      push_node_from_bone(data, bone);
-    }
-  }
-}
-
-static void load_pose_map(AnimData* data) {
-  // @TEMP (Animation loader): The loader currently only support one animation 
-  // per file, which is annoying overall. Perhaps we can do something about this 
-  // by creating multiple animation files or keeping it all in one `NBRAnimation` struct.
-  // Perhaps by using armature data from Assimp... 
+  // Read the position values
   
-  // Load some animation data
+  floats_read = cgltf_accessor_unpack_floats(sampler->output, nullptr, sampler->output->count);
 
-  aiAnimation* anim = data->ai_scene->mAnimations[0];
-  
-  data->duration   = anim->mDuration; 
-  data->frame_rate = anim->mTicksPerSecond;
+  nikola::f32* output_buffer = (nikola::f32*)nikola::memory_allocate(sizeof(nikola::f32) * floats_read);
+  cgltf_accessor_unpack_floats(sampler->output, output_buffer, floats_read);
 
-  // Running through all of the affected nodes of the animation
+  // Add the values into our internal array
 
-  for(nikola::sizei ia = 0; ia < anim->mNumChannels; ia++) {
-    aiNodeAnim* anim_node = anim->mChannels[ia];
-    PoseData pose_data    = {};
+  for(nikola::sizei i = 0; i < floats_read; i += 3) { // 3 = number of components in a Vec3
+    nikola::f32 time = input_buffer[i % 3];
+    track->duration  = nikola::max_float(track->duration, sampler->input->max[0]); 
 
-    // Load positions
-    
-    for(nikola::u32 i = 0; i < anim_node->mNumPositionKeys; i++) {
-      pose_data.positions.push_back(anim_node->mPositionKeys[i]);
-    }
-    
-    // Load positions
-    
-    for(nikola::u32 i = 0; i < anim_node->mNumRotationKeys; i++) {
-      pose_data.rotations.push_back(anim_node->mRotationKeys[i]);
-    }
+    nikola::f32 x_pos = output_buffer[i + 0];
+    nikola::f32 y_pos = output_buffer[i + 1];
+    nikola::f32 z_pos = output_buffer[i + 2];
 
-    // Load scales
-    
-    for(nikola::u32 i = 0; i < anim_node->mNumScalingKeys; i++) {
-      pose_data.scalings.push_back(anim_node->mScalingKeys[i]);
-    }
-
-    data->poses[anim_node->mNodeName.C_Str()] = pose_data;
+    track->positions.emplace_back(nikola::Vec3(x_pos, y_pos, z_pos), time);
   }
-}
-
-static void load_position_channels(nikola::NBRJoint* joint, aiVectorKey* keys, const nikola::sizei count) {
-  joint->positions_count  = (nikola::u16)(4 * count); 
-  joint->position_samples = (nikola::f32*)nikola::memory_allocate(sizeof(float) * joint->positions_count);
-
-  for(nikola::u32 i = 0, j = 0; i < count; i++, j += 4) {
-    joint->position_samples[j + 0] = keys[i].mValue.x;
-    joint->position_samples[j + 1] = keys[i].mValue.y;
-    joint->position_samples[j + 2] = keys[i].mValue.z;
-    joint->position_samples[j + 3] = (nikola::f32)keys[i].mTime;
-  }
-}
-
-static void load_rotation_channels(nikola::NBRJoint* joint, aiQuatKey* keys, const nikola::sizei count) {
-  joint->rotations_count  = (nikola::u16)(5 * count); 
-  joint->rotation_samples = (nikola::f32*)nikola::memory_allocate(sizeof(float) * joint->rotations_count);
-
-  for(nikola::u32 i = 0, j = 0; i < count; i++, j += 5) {
-    joint->rotation_samples[j + 0] = keys[i].mValue.x;
-    joint->rotation_samples[j + 1] = keys[i].mValue.y;
-    joint->rotation_samples[j + 2] = keys[i].mValue.z;
-    joint->rotation_samples[j + 3] = keys[i].mValue.w;
-    joint->rotation_samples[j + 4] = (nikola::f32)keys[i].mTime;
-  }
-}
-
-static void load_scale_channels(nikola::NBRJoint* joint, aiVectorKey* keys, const nikola::sizei count) {
-  joint->scales_count  = (nikola::u16)(4 * count);
-  joint->scale_samples = (nikola::f32*)nikola::memory_allocate(sizeof(float) * joint->scales_count);
-
-  for(nikola::u32 i = 0, j = 0; i < count; i++, j += 4) {
-    joint->scale_samples[j + 0] = keys[i].mValue.x;
-    joint->scale_samples[j + 1] = keys[i].mValue.y;
-    joint->scale_samples[j + 2] = keys[i].mValue.z;
-    joint->scale_samples[j + 3] = (nikola::f32)keys[i].mTime;
-  }
-}
-
-static void load_joints(AnimData* data) {
-  data->joints.reserve(data->node_map.size());
-
-  for(nikola::sizei i = 0; i < data->node_indices.size(); i++) {
-    NodeData* node_data    = &data->node_map[data->node_indices[i]];
-    nikola::NBRJoint joint = {};
-
-    // Load the channel keys if this joint gets animated
-
-    if(data->poses.find(node_data->name) != data->poses.end()) { // The node is affected by the animation
-      PoseData* pose = &data->poses[node_data->name];
-
-      load_position_channels(&joint, pose->positions.data(), pose->positions.size());
-      load_rotation_channels(&joint, pose->rotations.data(), pose->rotations.size());
-      load_scale_channels(&joint, pose->scalings.data(), pose->scalings.size());
-    }
-    else { // Just use the node's position, rotation, and scale since this joint isn't affected by the animation
-      aiVectorKey position, scale; 
-      aiQuatKey rotation;
-      node_data->transform.Decompose(position.mValue, rotation.mValue, scale.mValue);
-
-      position.mTime = 0.0f;
-      rotation.mTime = 0.0f;
-      scale.mTime    = 0.0f;
-      scale.mValue   = aiVector3D(1.0f, 1.0f, 1.0f);
-
-      load_position_channels(&joint, &position, 1);
-      load_rotation_channels(&joint, &rotation, 1);
-      load_scale_channels(&joint, &scale, 1);
-    }
  
-    // Load other relevant information
+  // Freeing up some memory 
+  
+  nikola::memory_free(input_buffer);
+  nikola::memory_free(output_buffer);
 
-    joint.parent_index = -1;
-    if(data->node_map.find(node_data->parent_name) != data->node_map.end()) {
-      joint.parent_index = (nikola::i16)data->node_map[node_data->parent_name].index;
-    }
+  // Update the samples count for later
+  track->samples_max = track->positions.size();
+}
 
-    // NIKOLA_LOG_TRACE("%s (%i) - %s (%i)", node_data->name.c_str(), node_data->index, node_data->parent_name.c_str(), joint.parent_index);
-    decompose_ai_matrix(&joint, node_data->inverse_bind_pose);
+static void read_rotations(NodeAnim* track, cgltf_animation_sampler* sampler) {
+  // Read the input (the time scale)
 
-    // Welcome, Mr. Joint!
-    data->joints.push_back(joint);
+  nikola::sizei floats_read = cgltf_accessor_unpack_floats(sampler->input, nullptr, sampler->input->count);
+
+  nikola::f32* input_buffer = (nikola::f32*)nikola::memory_allocate(sizeof(nikola::f32) * floats_read);
+  cgltf_accessor_unpack_floats(sampler->input, input_buffer, floats_read);
+
+  // Read the rotation values
+  
+  floats_read = cgltf_accessor_unpack_floats(sampler->output, nullptr, sampler->output->count);
+
+  nikola::f32* output_buffer = (nikola::f32*)nikola::memory_allocate(sizeof(nikola::f32) * floats_read);
+  cgltf_accessor_unpack_floats(sampler->output, output_buffer, floats_read);
+
+  // Add the values into our internal array
+
+  for(nikola::sizei i = 0; i < floats_read; i += 4) { // 4 = number of components in a Quat
+    nikola::f32 time = input_buffer[i % 3];
+    track->duration  = nikola::max_float(track->duration, sampler->input->max[0]); 
+
+    nikola::f32 x_pos = output_buffer[i + 0];
+    nikola::f32 y_pos = output_buffer[i + 1];
+    nikola::f32 z_pos = output_buffer[i + 2];
+    nikola::f32 w_pos = output_buffer[i + 3];
+
+    track->rotations.emplace_back(nikola::Quat(w_pos, x_pos, y_pos, z_pos), time);
+  }
+ 
+  // Freeing up some memory 
+  
+  nikola::memory_free(input_buffer);
+  nikola::memory_free(output_buffer);
+
+  // Update the samples count for later
+ 
+  if(track->samples_max < track->rotations.size()) {
+    track->samples_max = track->rotations.size();
+  }
+}
+
+static void read_scales(NodeAnim* track, cgltf_animation_sampler* sampler) {
+  // Read the input (the time scale)
+
+  nikola::sizei floats_read = cgltf_accessor_unpack_floats(sampler->input, nullptr, sampler->input->count);
+
+  nikola::f32* input_buffer = (nikola::f32*)nikola::memory_allocate(sizeof(nikola::f32) * floats_read);
+  cgltf_accessor_unpack_floats(sampler->input, input_buffer, floats_read);
+
+  // Read the scale values
+  
+  floats_read = cgltf_accessor_unpack_floats(sampler->output, nullptr, sampler->output->count);
+
+  nikola::f32* output_buffer = (nikola::f32*)nikola::memory_allocate(sizeof(nikola::f32) * floats_read);
+  cgltf_accessor_unpack_floats(sampler->output, output_buffer, floats_read);
+
+  // Add the values into our internal array
+
+  for(nikola::sizei i = 0; i < floats_read; i += 3) { // 4 = number of components in a Vec3
+    nikola::f32 time = input_buffer[i % 3];
+    track->duration  = nikola::max_float(track->duration, sampler->input->max[0]); 
+
+    nikola::f32 x_pos = output_buffer[i + 0];
+    nikola::f32 y_pos = output_buffer[i + 1];
+    nikola::f32 z_pos = output_buffer[i + 2];
+
+    track->scales.emplace_back(nikola::Vec3(x_pos, y_pos, z_pos), time);
+  }
+ 
+  // Freeing up some memory 
+  
+  nikola::memory_free(input_buffer);
+  nikola::memory_free(output_buffer);
+  
+  // Update the samples count for later
+ 
+  if(track->samples_max < track->scales.size()) {
+    track->samples_max = track->scales.size();
   }
 }
 
@@ -290,70 +186,144 @@ bool animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& p
     return false;
   } 
 
-  // Load Assimp file
-  
-  int flags = (aiProcess_Triangulate           | 
-               aiProcess_SplitLargeMeshes      |
-               aiProcess_ImproveCacheLocality  | 
-               aiProcess_JoinIdenticalVertices |
-               aiProcess_PopulateArmatureData  |
-               aiProcess_LimitBoneWeights      | 
-               aiProcess_GlobalScale           | 
-               aiProcess_OptimizeMeshes); 
+  // Load the GLTF file
 
-  Assimp::Importer imp; 
-  imp.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, nikola::NBR_MODEL_IMPORT_SCALE);
-  imp.SetPropertyInteger(AI_CONFIG_PP_LBW_MAX_WEIGHTS, nikola::NBR_JOINT_WEIGHTS_MAX);
+  cgltf_data* gltf      = new cgltf_data{};
+  cgltf_options options = {}; 
 
-  const aiScene* scene = imp.ReadFile(path, flags);
-  if(!scene || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) || !scene->mRootNode) {
-    NIKOLA_LOG_ERROR("Could not load animation at \'%s\' - %s", path.c_str(), imp.GetErrorString());
+  cgltf_result res = cgltf_parse_file(&options, path.c_str(), &gltf);
+  if(res != cgltf_result_success) {
+    cgltf_free(gltf);
+
+    NIKOLA_LOG_ERROR("Failed to open GLTF file at \'%s\'", path.c_str());
     return false;
   }
 
-  // Load everything into the `AnimData` struct 
+  // Load the buffers
 
-  AnimData* data  = new AnimData{};
-  data->ai_scene  = scene;
- 
-  load_bone_map(data);
-  load_pose_map(data);
+  res = cgltf_load_buffers(&options, gltf, path.c_str());
+  if(res != cgltf_result_success) {
+    cgltf_free(gltf);
 
-  // Load the joints 
+    NIKOLA_LOG_ERROR("Failed to load GLTF buffers at \'%s\'", path.c_str());
+    return false;
+  }
 
-  load_joints(data);
+  // Load the animation data
 
-  anim->joints_count = (nikola::u16)data->joints.size(); 
-  anim->joints       = (nikola::NBRJoint*)nikola::memory_allocate(sizeof(nikola::NBRJoint) * anim->joints_count);
-  nikola::memory_copy(anim->joints, data->joints.data(), sizeof(nikola::NBRJoint) * anim->joints_count);
+  AnimData data;
+  data.gltf = gltf;
 
-  // Load the animation's time info
+  cgltf_animation* gltf_anim = &gltf->animations[0];
+  for(nikola::sizei i = 0; i < gltf_anim->channels_count; i++) {
+    cgltf_animation_channel* channel = &gltf_anim->channels[i];
+    cgltf_animation_sampler* sampler = &gltf_anim->samplers[cgltf_animation_sampler_index(gltf_anim, channel->sampler)];
 
-  anim->duration   = data->duration; 
-  anim->frame_rate = data->frame_rate;
- 
-  data->node_map.clear();
-  // delete data; @TEMP: Causes a segfault. Fuck it. Let it leak...
-  
+    switch(channel->target_path) {
+      case cgltf_animation_path_type_translation:
+        read_positions(&data.tracks[nikola::String(channel->target_node->name)], sampler);
+        break;
+      case cgltf_animation_path_type_rotation:
+        read_rotations(&data.tracks[nikola::String(channel->target_node->name)], sampler);
+        break;
+      case cgltf_animation_path_type_scale:
+        read_scales(&data.tracks[nikola::String(channel->target_node->name)], sampler);
+        break;
+      default: 
+        break;
+    }
+  }
+
+  // Converting the data accumlated into our stupid NBR format 
+  // @NOTE: Yes, I'm traversing a hash map. Get off my back, dude. 
+
+  anim->tracks_count = (nikola::u16)data.tracks.size();
+  anim->tracks       = (nikola::NBRAnimation::NBRJointTrack*)nikola::memory_allocate(sizeof(nikola::NBRAnimation::NBRJointTrack) * anim->tracks_count);
+
+  nikola::sizei index = 0;
+  for(auto& [name, track] : data.tracks) {
+    nikola::NBRAnimation::NBRJointTrack* joint = &anim->tracks[index];
+
+    // Make sure that there is at least _one_ value in each array 
+    // for easier navigation.
+    
+    if(track.positions.empty()) {
+      track.positions.emplace_back(nikola::Vec3(0.0f), 0.0f);
+    }
+    
+    if(track.rotations.empty()) {
+      track.rotations.emplace_back(nikola::Quat(1.0f, 0.0f, 0.0f, 0.0f), 0.0f);
+    }
+    
+    if(track.scales.empty()) {
+      track.scales.emplace_back(nikola::Vec3(1.0f), 0.0f);
+    }
+
+    // Convert positions
+    
+    joint->positions_count  = (nikola::u16)track.positions.size();
+    joint->position_samples = (nikola::f32*)nikola::memory_allocate(sizeof(nikola::VectorAnimSample) * joint->positions_count);
+    
+    for(nikola::sizei i = 0, j = 0; i < track.positions.size(); i++, j += 4) {
+      joint->position_samples[j + 0] = track.positions[i].value.x; 
+      joint->position_samples[j + 1] = track.positions[i].value.y; 
+      joint->position_samples[j + 2] = track.positions[i].value.z; 
+      joint->position_samples[j + 3] = track.positions[i].time;
+    }
+
+    // Convert rotations
+    
+    joint->rotations_count  = (nikola::u16)track.rotations.size();
+    joint->rotation_samples = (nikola::f32*)nikola::memory_allocate(sizeof(nikola::QuatAnimSample) * joint->rotations_count);
+    
+    for(nikola::sizei i = 0, j = 0; i < track.rotations.size(); i++, j += 5) {
+      joint->rotation_samples[j + 0] = track.rotations[i].value.x; 
+      joint->rotation_samples[j + 1] = track.rotations[i].value.y; 
+      joint->rotation_samples[j + 2] = track.rotations[i].value.z; 
+      joint->rotation_samples[j + 3] = track.rotations[i].value.w; 
+      joint->rotation_samples[j + 4] = track.rotations[i].time;
+    }
+    
+    // Convert scales
+    
+    joint->scales_count  = (nikola::u16)track.scales.size();
+    joint->scale_samples = (nikola::f32*)nikola::memory_allocate(sizeof(nikola::QuatAnimSample) * joint->scales_count);
+    
+    for(nikola::sizei i = 0, j = 0; i < track.scales.size(); i++, j += 4) {
+      joint->scale_samples[j + 0] = track.scales[i].value.x; 
+      joint->scale_samples[j + 1] = track.scales[i].value.y; 
+      joint->scale_samples[j + 2] = track.scales[i].value.z; 
+      joint->scale_samples[j + 3] = track.scales[i].time;
+    }
+
+    index++;
+    data.duration = nikola::max_float(data.duration, track.duration);
+  }
+
+  anim->duration = data.duration;
+
+  // Done!
+
+  cgltf_free(gltf);
   return true;
 }
 
 void animation_loader_unload(nikola::NBRAnimation& anim) {
-  for(nikola::sizei i = 0; i < anim.joints_count; i++) {
-    if(anim.joints[i].position_samples) {
-      nikola::memory_free(anim.joints[i].position_samples);
+  for(nikola::sizei i = 0; i < anim.tracks_count; i++) {
+    if(anim.tracks[i].position_samples) {
+      nikola::memory_free(anim.tracks[i].position_samples);
     }
 
-    if(anim.joints[i].rotation_samples) {
-      nikola::memory_free(anim.joints[i].rotation_samples);
+    if(anim.tracks[i].rotation_samples) {
+      nikola::memory_free(anim.tracks[i].rotation_samples);
     }
 
-    if(anim.joints[i].scale_samples) {
-      nikola::memory_free(anim.joints[i].scale_samples);
+    if(anim.tracks[i].scale_samples) {
+      nikola::memory_free(anim.tracks[i].scale_samples);
     }
   } 
 
-  nikola::memory_free(anim.joints);
+  nikola::memory_free(anim.tracks);
 }
 
 /// Animation loader functions

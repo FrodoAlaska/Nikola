@@ -364,7 +364,7 @@ void batch_render_text(Font* font, const String& text, const Vec2& position, con
   for(sizei i = 0; i < text.size(); i++) {
     // Retrieve the "correct" glyph from the font
     i8 ch       = text[i]; 
-    Glyph glyph = font->glyphs[ch];
+    Font::Glyph glyph = font->glyphs[ch];
 
     // Using the information in the glyph, add a new line for the next glyph
     if(ch == '\n') {
@@ -397,7 +397,7 @@ void batch_render_codepoint(Font* font, const char codepoint, const Vec2& positi
   f32 scale = font_size / 256.0f;
 
   // Retrieve the "correct" glyph from the font
-  Glyph glyph = font->glyphs[codepoint];
+  Font::Glyph glyph = font->glyphs[codepoint];
 
   // Set up the soruce and destination rectangles
   
