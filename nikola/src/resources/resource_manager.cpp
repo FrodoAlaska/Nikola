@@ -462,27 +462,6 @@ static bool load_animation_nbr(ResourceGroup* group, NBRAnimation* out_anim, con
 
   // Read the animation
   file_read_bytes(file, out_anim);
-
-  // //
-  // // Freeing NBR data
-  // // 
-  //
-  // for(nikola::sizei i = 0; i < nbr_anim.joints_count; i++) {
-  //   memory_free(nbr_anim.joints[i].position_samples);
-  //   memory_free(nbr_anim.joints[i].rotation_samples);
-  //   memory_free(nbr_anim.joints[i].scale_samples);
-  // } 
-  //
-  // memory_free(nbr_anim.joints);
-  // file_close(file); 
-
-  // Some useful info dump
-
-  // NIKOLA_LOG_DEBUG("Group \'%s\' pushed animation:", group->name.c_str());
-  // NIKOLA_LOG_DEBUG("     Joints     = %i", nbr_anim.joints_count);
-  // NIKOLA_LOG_DEBUG("     Duration   = %f", nbr_anim.duration);
-  // NIKOLA_LOG_DEBUG("     Frame rate = %f", nbr_anim.frame_rate);
-  // NIKOLA_LOG_DEBUG("     Path       = %s", nbr_path.c_str());
   
   // done!
   return true;
@@ -822,19 +801,6 @@ void resources_destroy_group(const ResourceGroupID& group_id) {
   DESTROY_COMP_RESOURCE_MAP(group, models);
   DESTROY_COMP_RESOURCE_MAP(group, fonts);
 
-  // @TODO (Resource): No. 
-  // for(auto& anim : group->animations) {
-  //   for(auto& joint : anim->joints) {
-  //     joint->position_samples.clear();
-  //     joint->rotation_samples.clear();
-  //     joint->scale_samples.clear();
-  //
-  //     delete joint;
-  //   }
-  //
-  //   delete anim;
-  // }
-
   // Destroy core resources
   
   DESTROY_CORE_RESOURCE_MAP(group, buffers, gfx_buffer_destroy);
@@ -842,6 +808,8 @@ void resources_destroy_group(const ResourceGroupID& group_id) {
   DESTROY_CORE_RESOURCE_MAP(group, cubemaps, gfx_cubemap_destroy);
   DESTROY_CORE_RESOURCE_MAP(group, shaders, gfx_shader_destroy);
   DESTROY_CORE_RESOURCE_MAP(group, audio_buffers, audio_buffer_destroy);
+  DESTROY_CORE_RESOURCE_MAP(group, skeletons, skeleton_destroy);
+  DESTROY_CORE_RESOURCE_MAP(group, animations, animation_destroy);
 
   NIKOLA_LOG_INFO("Resource group \'%s\' was successfully destroyed", group->name.c_str());
   s_manager.groups.erase(group_id);
@@ -1279,6 +1247,13 @@ ResourceID resources_push_skeleton(const ResourceGroupID& group_id, const FilePa
   PUSH_RESOURCE(group, skeletons, skele, RESOURCE_TYPE_SKELETON, id);
   
   group->named_ids[filepath_stem(nbr_path)] = id;
+
+  // Some useful info dump
+  
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed skeleton:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Joints = %i", nbr_skele.joints_count);
+  NIKOLA_LOG_DEBUG("     Path   = %s", nbr_path.c_str());
+
   return id;
 }
 
@@ -1321,6 +1296,14 @@ ResourceID resources_push_animation(const ResourceGroupID& group_id, const FileP
   PUSH_RESOURCE(group, animations, anim, RESOURCE_TYPE_ANIMATION, id);
   
   group->named_ids[filepath_stem(nbr_path)] = id;
+  
+  // Some useful info dump
+
+  NIKOLA_LOG_DEBUG("Group \'%s\' pushed animation:", group->name.c_str());
+  NIKOLA_LOG_DEBUG("     Tracks   = %i", nbr_anim.tracks_count);
+  NIKOLA_LOG_DEBUG("     Duration = %f", nbr_anim.duration);
+  NIKOLA_LOG_DEBUG("     Path     = %s", nbr_path.c_str());
+  
   return id;
 }
 

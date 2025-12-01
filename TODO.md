@@ -4,8 +4,8 @@
     - [x] Separate the animation into two components: `Skeleton` and `Animation` for both the NBR and the engine formats 
     - [x] Import both the skeletons and animations from the NBR format
     - [x] Load the engine formats from the NBR formats
+    - [x] Remember to delete both the skeleton and animations in the resource manager
     - [] Import the animations into OZZ runtime formats 
-    - [] Remember to delete both the skeleton and animations in the resource manager
     - [] Animation logic
         - [] Add sampling and local-to-model jobs 
         - [] Test and see if it works 
@@ -38,7 +38,6 @@
     - [] Bloom integration 
     - [] Diffuse irradiance IBL (at least)
     - [] Global illumination (GI) 
-
 - [] GPU Particles
     - [] GPU-based particle system, using compute shaders.
     - [] Have a lot of options to edit the shape, distribution, and gravity. Perhaps save it in a file?

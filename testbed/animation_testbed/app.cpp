@@ -21,9 +21,9 @@ struct nikola::App {
   nikola::ResourceID mesh_id, material_id;
 
   nikola::ResourceID model;
-  nikola::ResourceID animation;
+  nikola::ResourceID animation, skeleton;
   
-  // nikola::Animator animators[ANIMATORS_MAX];
+  nikola::Animator* animator;
   nikola::Transform transforms[3];
 };
 /// App
@@ -46,8 +46,11 @@ static void init_resources(nikola::App* app) {
   // Models init
   app->model = nikola::resources_push_model(app->res_group_id, "models/medieval_knight.nbr");
 
+  // Skeletons init
+  app->skeleton = nikola::resources_push_skeleton(app->res_group_id, "rigs/medieval_knight.nbr");
+
   // Animations init
-  // app->animation = nikola::resources_push_animation(app->res_group_id, "animations/medieval_knight.nbr");
+  app->animation = nikola::resources_push_animation(app->res_group_id, "animations/medieval_knight.nbr");
 
   // Materials init
   
@@ -66,6 +69,7 @@ static void init_resources(nikola::App* app) {
 
 nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // App init
+  
   nikola::App* app = new nikola::App{};
   nikola::renderer_set_clear_color(nikola::Vec4(0.1f, 0.1f, 0.1f, 1.0f));
 
@@ -99,10 +103,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   init_resources(app);
 
   // Animators init
-  
-  // for(nikola::sizei i = 0; i < ANIMATORS_MAX; i++) {
-  //   nikola::animator_create(&app->animators[i], app->animation);
-  // }
+  app->animator = nikola::animator_create();
 
   // Transform init
   
@@ -141,11 +142,8 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     app->frame_data.camera.is_active = !nikola::gui_is_active();
   }
 
-  // Animators update
-  
-  // for(nikola::sizei i = 0; i < ANIMATORS_MAX; i++) {
-  //   nikola::animator_animate(app->animators[i], (nikola::f32)delta_time);
-  // }
+  // Animator update
+  nikola::animator_animate(app->animator, app->skeleton, app->animation, (float)delta_time);
 
   // Update the camera
   
@@ -160,7 +158,7 @@ void app_render(nikola::App* app) {
   // Render the objects
   
   nikola::renderer_queue_model(app->mesh_id, app->transforms[0], app->material_id);
-  // nikola::renderer_queue_animation_instanced(app->model, &app->transforms[1], app->animators, ANIMATORS_MAX);
+  nikola::renderer_queue_animation(app->model, app->transforms[1], app->animator);
 
   nikola::renderer_end();
   

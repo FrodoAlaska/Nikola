@@ -795,7 +795,7 @@ NIKOLA_API void renderer_queue_model_instanced(const ResourceID& res_id,
 
 NIKOLA_API void renderer_queue_animation_instanced(const ResourceID& model_id,
                                                    const Transform* transforms, 
-                                                   const Animator* animators,
+                                                   const Animator** animators,
                                                    const sizei count, 
                                                    const ResourceID& mat_id = {});
 
@@ -815,7 +815,7 @@ NIKOLA_API void renderer_queue_model(const ResourceID& res_id,
 
 NIKOLA_API void renderer_queue_animation(const ResourceID& model_id,
                                          const Transform& transform, 
-                                         const Animator& animator,
+                                         const Animator* animator,
                                          const ResourceID& mat_id = {});
 
 NIKOLA_API void renderer_queue_particles(const ParticleEmitter& emitter);
@@ -1024,8 +1024,8 @@ NIKOLA_API void animation_destroy(Animation* anim);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Animator functions
 
-/// Create an animator component using the information in `desc`.
-NIKOLA_API Animator* animator_create(const AnimatorDesc& desc);
+/// Allocate an animator component.
+NIKOLA_API Animator* animator_create();
 
 /// Start the animation process of the given `animator`, using the given `dt` as 
 /// a delta time for progressing through the `animation_id` with `skeleton_id` as the rig.

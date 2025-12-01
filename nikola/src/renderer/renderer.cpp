@@ -893,7 +893,7 @@ void renderer_queue_model_instanced(const ResourceID& res_id,
 
 void renderer_queue_animation_instanced(const ResourceID& model_id,
                                         const Transform* transforms, 
-                                        const Animator* animators,
+                                        const Animator** animators,
                                         const sizei count, 
                                         const ResourceID& mat_id) {
   // Queue the skinned model first
@@ -950,7 +950,7 @@ void renderer_queue_model(const ResourceID& res_id, const Transform& transform, 
 
 void renderer_queue_animation(const ResourceID& model_id,
                               const Transform& transform, 
-                              const Animator& animator,
+                              const Animator* animator,
                               const ResourceID& mat_id) {
   // Queue the skinned model first
   renderer_queue_model(model_id, transform, mat_id);

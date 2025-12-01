@@ -282,17 +282,17 @@ void file_write_bytes(File& file, const NBRAnimation& anim) {
     // Write the positions
 
     file_write_bytes(file, &track->positions_count, sizeof(track->positions_count)); 
-    file_write_bytes(file, track->position_samples, sizeof(f32) * track->positions_count); 
+    file_write_bytes(file, track->position_samples, sizeof(VectorAnimSample) * track->positions_count); 
     
     // Write the rotations
 
     file_write_bytes(file, &track->rotations_count, sizeof(track->rotations_count)); 
-    file_write_bytes(file, track->rotation_samples, sizeof(f32) * track->rotations_count); 
+    file_write_bytes(file, track->rotation_samples, sizeof(QuatAnimSample) * track->rotations_count); 
     
     // Write the scales
 
     file_write_bytes(file, &track->scales_count, sizeof(track->scales_count)); 
-    file_write_bytes(file, track->scale_samples, sizeof(f32) * track->scales_count); 
+    file_write_bytes(file, track->scale_samples, sizeof(VectorAnimSample) * track->scales_count); 
   } 
   
   // Write time info
@@ -784,23 +784,23 @@ void file_read_bytes(File& file, NBRAnimation* out_anim) {
     // Read the positions
 
     file_read_bytes(file, &track->positions_count, sizeof(track->positions_count)); 
-    track->position_samples = (f32*)memory_allocate(sizeof(f32) * track->positions_count); 
+    track->position_samples = (f32*)memory_allocate(sizeof(VectorAnimSample) * track->positions_count); 
     
-    file_read_bytes(file, track->position_samples, sizeof(f32) * track->positions_count); 
+    file_read_bytes(file, track->position_samples, sizeof(VectorAnimSample) * track->positions_count); 
     
     // Read the rotations
 
     file_read_bytes(file, &track->rotations_count, sizeof(track->rotations_count)); 
-    track->rotation_samples = (f32*)memory_allocate(sizeof(f32) * track->rotations_count); 
+    track->rotation_samples = (f32*)memory_allocate(sizeof(QuatAnimSample) * track->rotations_count); 
     
-    file_read_bytes(file, track->rotation_samples, sizeof(f32) * track->rotations_count); 
+    file_read_bytes(file, track->rotation_samples, sizeof(QuatAnimSample) * track->rotations_count); 
     
     // Read the scales
 
     file_read_bytes(file, &track->scales_count, sizeof(track->scales_count)); 
-    track->scale_samples = (f32*)memory_allocate(sizeof(f32) * track->scales_count); 
+    track->scale_samples = (f32*)memory_allocate(sizeof(VectorAnimSample) * track->scales_count); 
     
-    file_read_bytes(file, track->scale_samples, sizeof(f32) * track->scales_count); 
+    file_read_bytes(file, track->scale_samples, sizeof(VectorAnimSample) * track->scales_count); 
   } 
 
   // Read time info
