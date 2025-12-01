@@ -103,7 +103,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   init_resources(app);
 
   // Animators init
-  app->animator = nikola::animator_create();
+  app->animator = nikola::animator_create(app->animation, app->skeleton);
 
   // Transform init
   
@@ -143,7 +143,7 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
   }
 
   // Animator update
-  nikola::animator_animate(app->animator, app->skeleton, app->animation, (float)delta_time);
+  nikola::animator_animate(app->animator, (float)delta_time);
 
   // Update the camera
   

@@ -576,6 +576,7 @@ struct Font {
 /// AnimatorDesc
 struct AnimatorDesc {
   /// The current ticking time of the animation.
+  /// This value goes from [0.0, 1.0].
   f32 current_time  = 0.0f;
  
   /// Indicates the start point in frames 
@@ -589,6 +590,10 @@ struct AnimatorDesc {
   /// member of the `animation_id` is.
   f32 end_point     = 0.0f;
 
+  /// The playback speed of the animation in real-time. 
+  /// This value can be negative to play the animation in reverse.
+  f32 play_speed    = 1.0f;
+
   /// Determines whether the animation should loop or not.
   bool is_looping   = true;
 
@@ -596,10 +601,6 @@ struct AnimatorDesc {
   /// go through its samples and play. Otherwise, the animation 
   /// will be paused.
   bool is_animating = true;
-
-  /// Determines whether the animation should be 
-  /// played in reverse or not.
-  bool is_reversed  = false;
 };
 /// AnimatorDesc
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1024,15 +1025,27 @@ NIKOLA_API void animation_destroy(Animation* anim);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Animator functions
 
-/// Allocate an animator component.
-NIKOLA_API Animator* animator_create();
+/// Allocate and create an animator component using the given `animation_id` and `skeleton_id`.
+///
+/// @NOTE: Both the animation and skeleton of the animator can later be changed using 
+/// the `animator_set_animation` and `animator_set_skeleton` functions
+NIKOLA_API Animator* animator_create(const ResourceID& animation_id, const ResourceID& skeleton_id);
 
-/// Start the animation process of the given `animator`, using the given `dt` as 
-/// a delta time for progressing through the `animation_id` with `skeleton_id` as the rig.
-NIKOLA_API void animator_animate(Animator* animator, const ResourceID& skeleton_id, const ResourceID& animation_id, const f32 dt);
+/// Switch the internal animation of `animator` to the given `animation_id`.
+NIKOLA_API void animator_set_animation(Animator* animator, const ResourceID& animation_id);
+
+/// Switch the internal skeleton of `animator` to the given `skeleton_id`.
+NIKOLA_API void animator_set_skeleton(Animator* animator, const ResourceID& skeleton_id);
 
 /// Retrieve a reference of the internal `AnimatorDesc` of `animator`.
 NIKOLA_API AnimatorDesc& animator_get_desc(Animator* animator);
+
+/// Start the animation process of the given `animator`, using the given `dt` as 
+/// a delta time for progressing.
+NIKOLA_API void animator_animate(Animator* animator, const f32 dt);
+
+/// Reset the `animator` to its initial state.
+NIKOLA_API void animator_reset(Animator* animator);
 
 /// Animator functions
 ///---------------------------------------------------------------------------------------------------------------------

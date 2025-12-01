@@ -26,8 +26,6 @@ struct NodeAnim {
 /// AnimData
 
 struct AnimData {
-  cgltf_data* gltf;
-
   nikola::HashMap<nikola::String, NodeAnim> tracks;
   nikola::f32 duration = 0.0f;
 };
@@ -107,7 +105,7 @@ static void read_rotations(NodeAnim* track, cgltf_animation_sampler* sampler) {
   // Add the values into our internal array
 
   for(nikola::sizei i = 0; i < floats_read; i += 4) { // 4 = number of components in a Quat
-    nikola::f32 time = input_buffer[i % 3];
+    nikola::f32 time = input_buffer[i % 4];
     track->duration  = nikola::max_float(track->duration, sampler->input->max[0]); 
 
     nikola::f32 x_pos = output_buffer[i + 0];
@@ -208,11 +206,20 @@ bool animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& p
     NIKOLA_LOG_ERROR("Failed to load GLTF buffers at \'%s\'", path.c_str());
     return false;
   }
+  
+  AnimData data;
+
+  // Build a joint hierarchy first to make sure everything is in order
+
+  cgltf_skin* skin = &gltf->skins[0];
+  for(nikola::sizei i = 0; i < skin->joints_count; i++) {
+    cgltf_node* joint   = skin->joints[i];
+    nikola::String name = joint->name;
+
+    data.tracks[name] = NodeAnim{};
+  }
 
   // Load the animation data
-
-  AnimData data;
-  data.gltf = gltf;
 
   cgltf_animation* gltf_anim = &gltf->animations[0];
   for(nikola::sizei i = 0; i < gltf_anim->channels_count; i++) {

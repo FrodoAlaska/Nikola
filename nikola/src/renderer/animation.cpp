@@ -7,6 +7,14 @@
 #include <ozz/animation/offline/animation_builder.h>
 
 #include <ozz/animation/runtime/animation.h>
+#include <ozz/animation/runtime/skeleton.h>
+#include <ozz/animation/runtime/local_to_model_job.h>
+#include <ozz/animation/runtime/sampling_job.h>
+
+#include <ozz/base/maths/transform.h>
+#include <ozz/base/maths/simd_math.h>
+#include <ozz/base/maths/soa_transform.h>
+#include <ozz/base/maths/vec_float.h>
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -15,7 +23,7 @@ namespace nikola { // Start of nikola
 ///---------------------------------------------------------------------------------------------------------------------
 /// Skeleton
 struct Skeleton {
-
+  ozz::unique_ptr<ozz::animation::Skeleton> handle;
 };
 /// Skeleton
 ///---------------------------------------------------------------------------------------------------------------------
@@ -31,9 +39,47 @@ struct Animation {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Animator
 struct Animator {
+  Animation* animation = nullptr; 
+  Skeleton* skeleton   = nullptr;
+
+  ozz::animation::SamplingJob::Context context;
+
+  ozz::vector<ozz::math::SoaTransform> locals;
+  ozz::vector<ozz::math::Float4x4> models;
+
   AnimatorDesc desc;
 };
 /// Animator
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// Private functions
+
+static void traverse_joints(ozz::animation::offline::RawSkeleton::Joint* joint, const NBRSkeleton& nbr_skele, const NBRSkeleton::NBRJoint& nbr_joint) {
+  // Converting the transform
+
+  joint->transform.translation = ozz::math::Float3(nbr_joint.position[0], 
+                                                   nbr_joint.position[1], 
+                                                   nbr_joint.position[2]);
+
+  joint->transform.rotation = ozz::math::Quaternion(nbr_joint.rotation[0], 
+                                                    nbr_joint.rotation[1], 
+                                                    nbr_joint.rotation[2],
+                                                    nbr_joint.rotation[3]);
+  
+  joint->transform.scale = ozz::math::Float3(nbr_joint.scale[0], 
+                                             nbr_joint.scale[1], 
+                                             nbr_joint.scale[2]);
+ 
+  // Going over the children
+
+  joint->children.resize(nbr_joint.children_count);
+  for(sizei i = 0; i < joint->children.size(); i++) {
+    traverse_joints(&joint->children[i], nbr_skele, nbr_skele.joints[nbr_joint.children[i]]);
+  }
+}
+
+/// Private functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -41,7 +87,32 @@ struct Animator {
 
 Skeleton* skeleton_create(const NBRSkeleton& nbr_skele) {
   Skeleton* skele = new Skeleton{};
+  
+  // Converting our NBR format to the OZZ runtime format
 
+  ozz::animation::offline::RawSkeleton raw_skele;
+  raw_skele.roots.resize(1);
+
+  // Root joint init
+  traverse_joints(&raw_skele.roots[0], nbr_skele, nbr_skele.joints[nbr_skele.root_index]);
+
+  // Validate the skeleton first before existing. 
+  // This is crucial, as the skeleton will not be built 
+  // if this validation fails.
+
+  if(!raw_skele.Validate()) {
+    delete skele;
+
+    NIKOLA_LOG_ERROR("Failed to validate skeleton!");
+    return nullptr;
+  }
+
+  // Build the skeleton
+
+  ozz::animation::offline::SkeletonBuilder builder;
+  skele->handle = builder(raw_skele);
+
+  // Done!
   return skele;
 }
 
@@ -50,6 +121,7 @@ void skeleton_destroy(Skeleton* skele) {
     return;
   }
 
+  skele->handle.reset();
   delete skele;
 }
 
@@ -105,7 +177,25 @@ Animation* animation_create(const NBRAnimation& nbr_anim) {
       track->scales[ip].value.z = nbr_track->scale_samples[j + 2];
       track->scales[ip].time    = nbr_track->scale_samples[j + 3];
     }
+
+    if(!track->Validate(raw_anim.duration)) {
+      NIKOLA_LOG_ERROR("Failed to validate joint at index \'%zu\'", i);
+    }
   }
+  
+  // Validate the animation first...
+
+  if(!raw_anim.Validate()) {
+    delete anim;
+
+    NIKOLA_LOG_ERROR("Failed to validate animation!");
+    return nullptr;
+  }
+
+  // Build the animation
+
+  ozz::animation::offline::AnimationBuilder builder;
+  anim->handle = builder(raw_anim);
 
   // Done!
   return anim;
@@ -126,19 +216,102 @@ void animation_destroy(Animation* anim) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Animator functions
 
-Animator* animator_create() {
+Animator* animator_create(const ResourceID& animation_id, const ResourceID& skeleton_id) {
   Animator* anim = new Animator{};
 
+  // Retrieving the resources
+
+  anim->animation = resources_get_animation(animation_id);
+  anim->skeleton  = resources_get_skeleton(skeleton_id);
+
+  // Resizing arrays for performance reasons
+
+  anim->locals.resize(anim->skeleton->handle->num_soa_joints());
+  anim->models.resize(anim->skeleton->handle->num_joints());
+  anim->context.Resize(anim->skeleton->handle->num_joints());
+
+  // Done!
   return anim;
 }
 
-void animator_animate(Animator* animator, const ResourceID& skeleton_id, const ResourceID& animation_id, const f32 dt) {
-  NIKOLA_ASSERT(animator, "Invalid Animator given to animator_animate");
+void animator_set_animation(Animator* animator, const ResourceID& animation_id) {
+  NIKOLA_ASSERT(animator, "Invalid Animator given to animator_set_animation");
+
+  // Update the animation
+  animator->animation = resources_get_animation(animation_id);
+
+  // Reset the animator to not mess anything up (I think?)
+  animator_reset(animator);
+}
+
+void animator_set_skeleton(Animator* animator, const ResourceID& skeleton_id) {
+  NIKOLA_ASSERT(animator, "Invalid Animator given to animator_set_skeleton");
+
+  // Update the skeleton
+  animator->skeleton = resources_get_skeleton(skeleton_id);
+
+  // Updating the animator after a new skeleton
+
+  animator->locals.clear();
+  animator->models.clear();
+
+  animator->locals.resize(animator->skeleton->handle->num_soa_joints());
+  animator->models.resize(animator->skeleton->handle->num_joints());
+  animator->context.Resize(animator->skeleton->handle->num_joints());
+
+  // Reset the animator to not mess anything up (I think?)
+  animator_reset(animator);
 }
 
 AnimatorDesc& animator_get_desc(Animator* animator) {
   NIKOLA_ASSERT(animator, "Invalid Animator given to animator_get_desc");
   return animator->desc;
+}
+
+void animator_animate(Animator* animator, const f32 dt) {
+  NIKOLA_ASSERT(animator, "Invalid Animator given to animator_animate");
+
+  // Update the time 
+
+  if(!animator->desc.is_animating) { 
+    return;
+  }
+
+  animator->desc.current_time = (dt * animator->desc.play_speed) / animator->desc.end_point;
+  animator->desc.current_time = clamp_float(animator->desc.current_time, 0.0f, 1.0f);
+
+  // Sampling job
+
+  ozz::animation::SamplingJob sample_job;
+  sample_job.animation = animator->animation->handle.get();
+  sample_job.context   = &animator->context;
+  sample_job.ratio     = animator->desc.current_time;
+  sample_job.output    = make_span(animator->locals);
+
+  if(!sample_job.Run()) {
+    NIKOLA_LOG_DEBUG("Failed to run the sampling job for an animator");
+    return;
+  }
+
+  // Local to model job
+
+  ozz::animation::LocalToModelJob local_to_model_job;
+  local_to_model_job.skeleton = animator->skeleton->handle.get();
+  local_to_model_job.input    = make_span(animator->locals);
+  local_to_model_job.output   = make_span(animator->models);
+
+  if(!local_to_model_job.Run()) {
+    NIKOLA_LOG_DEBUG("Failed to run the local to model job for an animator");
+    return;
+  }
+}
+
+void animator_reset(Animator* animator) {
+  NIKOLA_ASSERT(animator, "Invalid Animator given to animator_reset");
+
+  animator->desc.current_time = 0.0f;
+  animator->desc.start_point  = 0.0f;
+  animator->desc.end_point    = animator->animation->handle->duration();
 }
 
 /// Animator functions

@@ -1251,8 +1251,9 @@ ResourceID resources_push_skeleton(const ResourceGroupID& group_id, const FilePa
   // Some useful info dump
   
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed skeleton:", group->name.c_str());
-  NIKOLA_LOG_DEBUG("     Joints = %i", nbr_skele.joints_count);
-  NIKOLA_LOG_DEBUG("     Path   = %s", nbr_path.c_str());
+  NIKOLA_LOG_DEBUG("     Joints     = %i", nbr_skele.joints_count);
+  NIKOLA_LOG_DEBUG("     Root index = %zu", nbr_skele.root_index);
+  NIKOLA_LOG_DEBUG("     Path       = %s", nbr_path.c_str());
 
   return id;
 }

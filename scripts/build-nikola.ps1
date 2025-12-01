@@ -88,7 +88,7 @@ for ($i = 0; $i -lt $Args.Count; $i++) {
   $arg = $($args[$i]);
   
   switch ($arg) {
-    "--clean"       { $build_flags += " --target clean " }
+    "--clean"       { $build_flags += "--clean-first" }
     "--debug"       { Check-Build-Dir $build_dir; $build_config = "Debug" }
     "--rel"         { Check-Build-Dir $build_dir; $build_config = "Release" }
     "--jobs"        { $i++; $build_flags += "--parallel $($args[$i])" }
@@ -110,7 +110,7 @@ for ($i = 0; $i -lt $Args.Count; $i++) {
 Log-Msg -msg "Building for the '$build_config' configuration..." -log_level "INFO"
 cd $build_dir
 
-cmake --build . --config $build_config $build_flags 
+cmake --build .\ --config $build_config $build_flags 
 Check-Exit-Code -msg "Failed to build.."
 
 cd $working_dir

@@ -62,6 +62,16 @@ bool skeleton_loader_load(nikola::NBRSkeleton* skele, const nikola::FilePath& pa
   skele->joints       = (nikola::NBRSkeleton::NBRJoint*)nikola::memory_allocate(sizeof(nikola::NBRSkeleton::NBRJoint) * skele->joints_count);
   skele->root_index   = 0; 
 
+  // Build a joint hierarchy first to make sure everything is in order
+
+  nikola::HashMap<nikola::String, nikola::u16> joints_lookup_table;
+  for(nikola::sizei i = 1; i < skin->joints_count; i++) {
+    cgltf_node* joint   = skin->joints[i];
+    nikola::String name = joint->name;
+
+    joints_lookup_table[name] = (nikola::u16)i;
+  }
+
   // Load the joint hierarchy
 
   for(nikola::sizei i = 0; i < skin->joints_count; i++) {
@@ -76,7 +86,7 @@ bool skeleton_loader_load(nikola::NBRSkeleton* skele, const nikola::FilePath& pa
     // Set the children indices
     
     for(nikola::sizei j = 0; j < joint->children_count; j++) {
-      nbr_joint->children[j] = (nikola::u16)cgltf_node_index(gltf, joint->children[j]);
+      nbr_joint->children[j] = joints_lookup_table[nikola::String(joint->children[j]->name)];
     }
 
     // Set the transform

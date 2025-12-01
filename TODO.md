@@ -5,10 +5,10 @@
     - [x] Import both the skeletons and animations from the NBR format
     - [x] Load the engine formats from the NBR formats
     - [x] Remember to delete both the skeleton and animations in the resource manager
-    - [] Import the animations into OZZ runtime formats 
+    - [x] Import the animations into OZZ runtime formats 
     - [] Animation logic
-        - [] Add sampling and local-to-model jobs 
-        - [] Test and see if it works 
+        - [x] Add sampling and local-to-model jobs 
+        - [] Send the skinning matrices to the renderer
         - [] Add the ability to do blending 
         - [] Inverse kinematics post-process 
     - [] Test animations with multiple instances.
