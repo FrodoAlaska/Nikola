@@ -65,7 +65,7 @@ bool skeleton_loader_load(nikola::NBRSkeleton* skele, const nikola::FilePath& pa
   // Build a joint hierarchy first to make sure everything is in order
 
   nikola::HashMap<nikola::String, nikola::u16> joints_lookup_table;
-  for(nikola::sizei i = 1; i < skin->joints_count; i++) {
+  for(nikola::sizei i = 0; i < skin->joints_count; i++) {
     cgltf_node* joint   = skin->joints[i];
     nikola::String name = joint->name;
 
@@ -77,7 +77,23 @@ bool skeleton_loader_load(nikola::NBRSkeleton* skele, const nikola::FilePath& pa
   for(nikola::sizei i = 0; i < skin->joints_count; i++) {
     cgltf_node* joint                        = skin->joints[i];
     nikola::NBRSkeleton::NBRJoint* nbr_joint = &skele->joints[i];
-   
+
+    // Set the transform
+    
+    nikola::memory_copy(nbr_joint->position, joint->translation, sizeof(joint->translation));
+    nikola::memory_copy(nbr_joint->rotation, joint->rotation, sizeof(joint->rotation));
+    nikola::memory_copy(nbr_joint->scale, joint->scale, sizeof(joint->scale));
+
+    // No children, no processing. 
+    // Sorry, dude. Go get laid or something... 
+
+    if(joint->children_count <= 0) {
+      nbr_joint->children_count = 0;
+      nbr_joint->children       = nullptr;
+
+      continue;
+    }
+
     // Allocate children
 
     nbr_joint->children_count = (nikola::u16)joint->children_count;
@@ -88,12 +104,6 @@ bool skeleton_loader_load(nikola::NBRSkeleton* skele, const nikola::FilePath& pa
     for(nikola::sizei j = 0; j < joint->children_count; j++) {
       nbr_joint->children[j] = joints_lookup_table[nikola::String(joint->children[j]->name)];
     }
-
-    // Set the transform
-    
-    nikola::memory_copy(nbr_joint->position, joint->translation, sizeof(joint->translation));
-    nikola::memory_copy(nbr_joint->rotation, joint->rotation, sizeof(joint->rotation));
-    nikola::memory_copy(nbr_joint->scale, joint->scale, sizeof(joint->scale));
   }
 
   // Done!
@@ -104,7 +114,9 @@ bool skeleton_loader_load(nikola::NBRSkeleton* skele, const nikola::FilePath& pa
 
 void skeleton_loader_unload(nikola::NBRSkeleton& skele) {
   for(nikola::u16 i = 0; i < skele.joints_count; i++) {
-    nikola::memory_free(skele.joints[i].children);
+    if(skele.joints[i].children_count > 0) {
+      nikola::memory_free(skele.joints[i].children);
+    }
   }
 
   nikola::memory_free(skele.joints);

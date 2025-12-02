@@ -1236,7 +1236,9 @@ ResourceID resources_push_skeleton(const ResourceGroupID& group_id, const FilePa
   // Free the NBR data
   
   for(u16 i = 0; i < nbr_skele.joints_count; i++) {
-    memory_free(nbr_skele.joints[i].children);
+    if(nbr_skele.joints[i].children_count > 0) {
+      memory_free(nbr_skele.joints[i].children);
+    }
   }
 
   memory_free(nbr_skele.joints);

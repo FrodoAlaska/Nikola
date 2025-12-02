@@ -241,7 +241,7 @@ struct NBRSkeleton {
     /// the `joints` array of this skeleton.
 
     u16 children_count = 0;
-    u16* children = nullptr;
+    u16* children      = nullptr;
 
     /// The position of the joint (X, Y, Z) in local space.
     f32 position[3];

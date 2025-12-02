@@ -91,11 +91,21 @@ static void traverse_joints(ozz::animation::offline::RawSkeleton::Joint* joint, 
 
 Skeleton* skeleton_create(const NBRSkeleton& nbr_skele) {
   Skeleton* skele = new Skeleton{};
-
+  
   // Converting our NBR format to the OZZ runtime format
 
   ozz::animation::offline::RawSkeleton raw_skele;
   raw_skele.roots.resize(1);
+
+  for(u16 i = 0; i < nbr_skele.joints_count; i++) {
+    for(u16 j = 0; j < nbr_skele.joints[i].children_count; j++) {
+      NIKOLA_LOG_TRACE("PARENT = %i, COUNT = %i, CHILD = %i", i, nbr_skele.joints[i].children_count, nbr_skele.joints[i].children[j]);
+    }
+  }
+
+  if(false) {
+    return;
+  }
 
   // Root joint init
   traverse_joints(&raw_skele.roots[0], nbr_skele, nbr_skele.joints[nbr_skele.root_index]);

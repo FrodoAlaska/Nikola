@@ -226,6 +226,11 @@ bool animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& p
     cgltf_animation_channel* channel = &gltf_anim->channels[i];
     cgltf_animation_sampler* sampler = &gltf_anim->samplers[cgltf_animation_sampler_index(gltf_anim, channel->sampler)];
 
+    nikola::String node_name = channel->target_node->name;
+    if(data.tracks.find(node_name) == data.tracks.end()) { // Can't find the node in the lookup table... probably a dull
+      continue;
+    }
+
     switch(channel->target_path) {
       case cgltf_animation_path_type_translation:
         read_positions(&data.tracks[nikola::String(channel->target_node->name)], sampler);

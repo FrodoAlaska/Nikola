@@ -311,7 +311,10 @@ void file_write_bytes(File& file, const NBRSkeleton& skele) {
     // Write the children 
     
     file_write_bytes(file, &joint->children_count, sizeof(joint->children_count));
-    file_write_bytes(file, joint->children, sizeof(joint->children_count * sizeof(u16)));
+
+    if(joint->children_count > 0) {
+      file_write_bytes(file, joint->children, joint->children_count * sizeof(u16));
+    }
 
     // Write the transform
   
@@ -822,9 +825,15 @@ void file_read_bytes(File& file, NBRSkeleton* out_skele) {
     // Read the children 
     
     file_read_bytes(file, &joint->children_count, sizeof(joint->children_count));
-   
-    joint->children = (u16*)memory_allocate(sizeof(u16) * joint->children_count);
-    file_read_bytes(file, joint->children, sizeof(joint->children_count * sizeof(u16)));
+  
+    if(joint->children_count > 0) {
+      joint->children = (u16*)memory_allocate(sizeof(u16) * joint->children_count);
+      file_read_bytes(file, joint->children, joint->children_count * sizeof(u16));
+
+      for(u16 j = 0; j < joint->children_count; j++) {
+        NIKOLA_LOG_TRACE("PARENT = %i, COUNT = %i, CHILD = %i", i, joint->children_count, joint->children[j]);
+      }
+    }
 
     // Read the transform
   
@@ -834,7 +843,7 @@ void file_read_bytes(File& file, NBRSkeleton* out_skele) {
   }
 
   // Read the root index
-  file_write_bytes(file, &out_skele->root_index, sizeof(out_skele->root_index));
+  file_read_bytes(file, &out_skele->root_index, sizeof(out_skele->root_index));
 }
 
 void file_read_bytes(File& file, NBRFont* out_font) {

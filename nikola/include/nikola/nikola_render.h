@@ -1031,6 +1031,9 @@ NIKOLA_API void animation_destroy(Animation* anim);
 /// the `animator_set_animation` and `animator_set_skeleton` functions
 NIKOLA_API Animator* animator_create(const ResourceID& animation_id, const ResourceID& skeleton_id);
 
+/// Reclaim/decallocate the memory consumed by `animator`.
+NIKOLA_API void animator_destroy(Animator* animator);
+
 /// Switch the internal animation of `animator` to the given `animation_id`.
 NIKOLA_API void animator_set_animation(Animator* animator, const ResourceID& animation_id);
 
