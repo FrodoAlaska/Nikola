@@ -67,8 +67,8 @@ static void read_positions(NodeAnim* track, cgltf_animation_sampler* sampler) {
 
   // Add the values into our internal array
 
-  for(nikola::sizei i = 0; i < floats_read; i += 3) { // 3 = number of components in a Vec3
-    nikola::f32 time = input_buffer[i % 3];
+  for(nikola::sizei i = 0, j = 0; i < floats_read; i += 3, j++) { // 3 = number of components in a Vec3
+    nikola::f32 time = input_buffer[j];
     track->duration  = nikola::max_float(track->duration, sampler->input->max[0]); 
 
     nikola::f32 x_pos = output_buffer[i + 0];
@@ -104,8 +104,8 @@ static void read_rotations(NodeAnim* track, cgltf_animation_sampler* sampler) {
 
   // Add the values into our internal array
 
-  for(nikola::sizei i = 0; i < floats_read; i += 4) { // 4 = number of components in a Quat
-    nikola::f32 time = input_buffer[i % 4];
+  for(nikola::sizei i = 0, j = 0; i < floats_read; i += 4, j++) { // 4 = number of components in a Quat
+    nikola::f32 time = input_buffer[j];
     track->duration  = nikola::max_float(track->duration, sampler->input->max[0]); 
 
     nikola::f32 x_pos = output_buffer[i + 0];
@@ -145,8 +145,8 @@ static void read_scales(NodeAnim* track, cgltf_animation_sampler* sampler) {
 
   // Add the values into our internal array
 
-  for(nikola::sizei i = 0; i < floats_read; i += 3) { // 4 = number of components in a Vec3
-    nikola::f32 time = input_buffer[i % 3];
+  for(nikola::sizei i = 0, j = 0; i < floats_read; i += 3, j++) { // 4 = number of components in a Vec3
+    nikola::f32 time = input_buffer[j];
     track->duration  = nikola::max_float(track->duration, sampler->input->max[0]); 
 
     nikola::f32 x_pos = output_buffer[i + 0];
@@ -312,6 +312,7 @@ bool animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& p
     data.duration = nikola::max_float(data.duration, track.duration);
   }
 
+  // Getting the final duration of the animation
   anim->duration = data.duration;
 
   // Done!

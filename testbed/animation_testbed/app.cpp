@@ -44,13 +44,13 @@ static void init_resources(nikola::App* app) {
   app->mesh_id = nikola::resources_push_model(app->res_group_id, "models/medieval_bridge.nbr");
 
   // Models init
-  app->model = nikola::resources_push_model(app->res_group_id, "models/scifi_girl.nbr");
+  app->model = nikola::resources_push_model(app->res_group_id, "models/zombie_idle.nbr");
 
   // Skeletons init
-  app->skeleton = nikola::resources_push_skeleton(app->res_group_id, "rigs/scifi_girl.nbr");
+  app->skeleton = nikola::resources_push_skeleton(app->res_group_id, "rigs/zombie_idle.nbr");
 
   // Animations init
-  app->animation = nikola::resources_push_animation(app->res_group_id, "animations/scifi_girl.nbr");
+  app->animation = nikola::resources_push_animation(app->res_group_id, "animations/zombie_idle.nbr");
 
   // Materials init
   
