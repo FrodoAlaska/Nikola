@@ -87,7 +87,6 @@ static void read_positions(NodeAnim* track, cgltf_animation_sampler* sampler) {
 
   for(nikola::sizei i = 0, j = 0; i < values_buffer.size(); i += 3, j++) { // 3 = number of components in a Vec3
     nikola::f32 time = time_buffer[j];
-    track->duration  = nikola::max_float(track->duration, sampler->input->max[0]); 
 
     nikola::Vec3 pos;
     pos.x = values_buffer[i + 0];
@@ -96,6 +95,9 @@ static void read_positions(NodeAnim* track, cgltf_animation_sampler* sampler) {
 
     track->positions.emplace_back(pos, time);
   }
+  
+  // Set the duration of the track
+  track->duration = nikola::max_float(track->duration, sampler->input->max[0]);
 }
 
 static void read_rotations(NodeAnim* track, cgltf_animation_sampler* sampler) {
@@ -112,7 +114,6 @@ static void read_rotations(NodeAnim* track, cgltf_animation_sampler* sampler) {
   
   for(nikola::sizei i = 0, j = 0; i < values_buffer.size(); i += 4, j++) { // 4 = number of components in a Quat
     nikola::f32 time = time_buffer[j];
-    track->duration  = nikola::max_float(track->duration, sampler->input->max[0]); 
 
     nikola::Quat rot;
     rot.x = values_buffer[i + 0];
@@ -122,6 +123,9 @@ static void read_rotations(NodeAnim* track, cgltf_animation_sampler* sampler) {
 
     track->rotations.emplace_back(rot, time);
   }
+  
+  // Set the duration of the track
+  track->duration = nikola::max_float(track->duration, sampler->input->max[0]);
 }
 
 static void read_scales(NodeAnim* track, cgltf_animation_sampler* sampler) {
@@ -138,7 +142,6 @@ static void read_scales(NodeAnim* track, cgltf_animation_sampler* sampler) {
 
   for(nikola::sizei i = 0, j = 0; i < values_buffer.size(); i += 3, j++) { // 3 = number of components in a Vec3
     nikola::f32 time = time_buffer[j];
-    track->duration  = nikola::max_float(track->duration, sampler->input->max[0]); 
 
     nikola::Vec3 scale;
     scale.x = values_buffer[i + 0];
@@ -147,6 +150,9 @@ static void read_scales(NodeAnim* track, cgltf_animation_sampler* sampler) {
 
     track->scales.emplace_back(scale, time);
   }
+
+  // Set the duration of the track
+  track->duration = nikola::max_float(track->duration, sampler->input->max[0]);
 }
 
 /// Private functions
@@ -213,9 +219,22 @@ bool animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& p
     cgltf_animation_channel* channel = &gltf_anim->channels[i];
     cgltf_animation_sampler* sampler = &gltf_anim->samplers[cgltf_animation_sampler_index(gltf_anim, channel->sampler)];
 
+    /// @NOTE (9/12/2025, Mohamed):
+    ///
+    /// We currently only support bone animations and nothing else.
+    /// Some animations might include mesh animation (such as cloth, hair, etc...), 
+    /// and we'll need to rule those out. Hence, the following check.
+    /// If it's not a bone/joint, we're not interested.
+    ///
+    
     nikola::String node_name = channel->target_node->name;
-    NodeAnim* node           = &data.tracks[data.tracks_table[node_name]];
+    if(data.tracks_table.find(node_name) == data.tracks_table.end()) {
+      continue; 
+    }
 
+    // Read the samples of the specific channel type
+
+    NodeAnim* node = &data.tracks[data.tracks_table[node_name]];
     switch(channel->target_path) {
       case cgltf_animation_path_type_translation:
         read_positions(node, sampler);
@@ -246,6 +265,9 @@ bool animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& p
   for(nikola::sizei i = 0; i < data.tracks.size(); i++) {
     NodeAnim& track                            = data.tracks[i];
     nikola::NBRAnimation::NBRJointTrack* joint = &anim->tracks[i];
+
+    // Setting the max time
+    data.duration = nikola::max_float(data.duration, track.duration);
 
     // Make sure that there is at least _one_ value in each array 
     // for easier navigation. Usually, it's going to be 
@@ -299,8 +321,6 @@ bool animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& p
       joint->scale_samples[j + 2] = track.scales[i].value.z; 
       joint->scale_samples[j + 3] = track.scales[i].time;
     }
-
-    data.duration = nikola::max_float(data.duration, track.duration);
   }
 
   // Getting the final duration of the animation

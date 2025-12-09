@@ -201,7 +201,7 @@ Animation* animation_create(const NBRAnimation& nbr_anim) {
     }
 
     if(!track->Validate(raw_anim.duration)) {
-      NIKOLA_LOG_ERROR("Failed to validate joint at index \'%zu\'", i);
+      NIKOLA_LOG_ERROR("Failed to validate track at index \'%zu\'", i);
     }
   }
   
@@ -322,15 +322,17 @@ void animator_animate(Animator* animator, const f32 dt) {
   }
    
   // Looping is turned off and we're past the end so return...
-   
+  // Otherwise, we can start the animation again. 
+
   if(!animator->desc.is_looping && animator->desc.current_time > animator->desc.end_point) {
     return;
   }
+  else if(animator->desc.current_time >= animator->desc.end_point) { 
+    animator->desc.current_time = animator->desc.start_point;
+  }
   
   // Update the time 
-
-  animator->desc.current_time = (dt * animator->desc.play_speed) / animator->desc.end_point;
-  animator->desc.current_time = clamp_float(animator->desc.current_time, 0.0f, animator->desc.end_point);
+  animator->desc.current_time += (dt * animator->desc.play_speed) / animator->desc.end_point;
 
   // Sampling job
 
