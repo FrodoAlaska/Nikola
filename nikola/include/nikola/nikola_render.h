@@ -1043,6 +1043,9 @@ NIKOLA_API void animator_set_skeleton(Animator* animator, const ResourceID& skel
 /// Retrieve a reference of the internal `AnimatorDesc` of `animator`.
 NIKOLA_API AnimatorDesc& animator_get_desc(Animator* animator);
 
+/// Retrieve a reference of the calculated skinning palette of `animator`.
+NIKOLA_API const Array<Mat4, JOINTS_MAX>& animator_get_skinning_palette(const Animator* animator);
+
 /// Start the animation process of the given `animator`, using the given `dt` as 
 /// a delta time for progressing.
 NIKOLA_API void animator_animate(Animator* animator, const f32 dt);

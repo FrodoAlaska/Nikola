@@ -44,13 +44,13 @@ static void init_resources(nikola::App* app) {
   app->mesh_id = nikola::resources_push_model(app->res_group_id, "models/medieval_bridge.nbr");
 
   // Models init
-  app->model = nikola::resources_push_model(app->res_group_id, "models/zombie_idle.nbr");
+  app->model = nikola::resources_push_model(app->res_group_id, "models/knight_melee.nbr");
 
   // Skeletons init
-  app->skeleton = nikola::resources_push_skeleton(app->res_group_id, "rigs/zombie_idle.nbr");
+  app->skeleton = nikola::resources_push_skeleton(app->res_group_id, "rigs/knight_melee.nbr");
 
   // Animations init
-  app->animation = nikola::resources_push_animation(app->res_group_id, "animations/zombie_idle.nbr");
+  app->animation = nikola::resources_push_animation(app->res_group_id, "animations/knight_melee.nbr");
 
   // Materials init
   
@@ -144,7 +144,7 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
   }
 
   // Animator update
-  // nikola::animator_animate(app->animator, (float)delta_time);
+  nikola::animator_animate(app->animator, (float)delta_time);
 
   // Update the camera
   
@@ -185,12 +185,9 @@ void app_render_gui(nikola::App* app) {
   
   if(ImGui::CollapsingHeader("Entities")) {
     nikola::gui_edit_transform("Ground", &app->transforms[0]);
-
     nikola::gui_edit_transform("Model 1", &app->transforms[1]);
 
-    // for(nikola::sizei i = 0; i < ANIMATORS_MAX; i++) {
-    //   nikola::gui_edit_animator(nikola::String("Animator " + std::to_string(i)).c_str(), &app->animators[i]);
-    // }
+    nikola::gui_edit_animator("Animator", app->animator);
   }
 
   // Frame

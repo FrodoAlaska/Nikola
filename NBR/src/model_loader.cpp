@@ -31,45 +31,45 @@ struct ObjData {
 /// Private functions
 
 static bool is_valid_extension(const nikola::FilePath& ext) {
-  return ext == ".obj"  || 
-         ext == ".fbx"  || 
-         ext == ".gltf" || 
-         ext == ".glb"  || 
-         ext == ".dae";
+  return ext == ".gltf" || 
+         ext == ".glb";
 }
 
-static void get_bone_parent(ObjData* data, const aiScene* ai_scene, aiBone* bone) {
-  nikola::String parent_name = bone->mNode->mParent->mName.C_Str();
-  aiBone* parent_bone        = nullptr; 
+static void push_bone(ObjData* data, const aiScene* ai_scene, aiNode* node) {
+  // Add the bone to the map
 
-  if(data->bone_map.find(parent_name) == data->bone_map.end()) {
-    parent_bone = ai_scene->findBone(bone->mNode->mParent->mName);
-  }
-
-  if(parent_bone) {
-    get_bone_parent(data, ai_scene, parent_bone);
-  }
-
-  nikola::String bone_name  = bone->mNode->mName.C_Str();
+  nikola::String bone_name  = node->mName.C_Str();
   data->bone_map[bone_name] = data->bone_map.size(); 
+
+  // Go through the children
+
+  for(nikola::u32 i = 0; i < node->mNumChildren; i++) {
+    push_bone(data, ai_scene, node->mChildren[i]);
+  }
 }
 
 static void load_bone_map(ObjData* data, const aiScene* ai_scene) {
-  for(nikola::u32 i = 0; i < ai_scene->mNumMeshes; i++) {
-    aiMesh* mesh = ai_scene->mMeshes[i];
-    
-    for(nikola::u32 j = 0; j < mesh->mNumBones; j++) {
-      aiBone* bone        = mesh->mBones[j];
-      nikola::String name = bone->mNode->mName.C_Str();
-  
-      if(data->bone_map.find(name) != data->bone_map.end()) {
-        continue;
-      }
-  
-      get_bone_parent(data, ai_scene, bone);
-      data->bone_map[name] = data->bone_map.size() - 1;
-    }
+  /* @NOTE (3/12/2025, Mohamed):
+  *
+  * Unfortunately, Assimp has no way to refer to the root bone
+  * (not that I know of at least), and so I'm subjected to use some 
+  * very terrible methods. With all the animations that _I_ use, the 
+  * root joing is always called `_rootJoint`. Jusst like that. 
+  * Here, we search for that bone and then traverse its children, 
+  * adding them to the map one by one. 
+  *
+  * In the future, we'll use a specific format instead of a library that 
+  * tries (terribly) to generalize all formats. It's probably going to be 
+  * `cgltf`, since that's what we use for loading skeletons and animations.
+  */
+
+  aiBone* root_bone = ai_scene->findBone(aiString("_rootJoint"));
+  if(!root_bone) {
+    NIKOLA_LOG_DEBUG("The bone name \'_rootJoint\' is not the root. Ignore this message if this mesh is not animated.");
+    return;
   }
+
+  push_bone(data, ai_scene, root_bone->mNode);
 }
 
 static void load_node_mesh(ObjData* data, aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
@@ -114,14 +114,14 @@ static void load_node_mesh(ObjData* data, aiMesh* mesh, nikola::NBRMesh* nbr_mes
     // Adding joints data
 
     nikola::sizei vec_index = 0; 
-    nikola::Vec4 ids        = nikola::Vec4(-2.0f); // If the values are still -2 after the the loop below, it means this particular mesh does not have bones...
-    nikola::Vec4 weights    = nikola::Vec4(-1.0f);
+    nikola::Vec4 ids        = nikola::Vec4(-2.0f); // If the values are still -2 after the the loop below, it means this mesh is not animated
+    nikola::Vec4 weights    = nikola::Vec4(0.0f);
 
     if(mesh->HasBones()) {
       nbr_mesh->vertex_component_bits |= (nikola::u8)nikola::VERTEX_COMPONENT_JOINT_ID |
                                          (nikola::u8)nikola::VERTEX_COMPONENT_JOINT_WEIGHT;
 
-      ids = nikola::Vec4(-1.0f);
+      ids = nikola::Vec4(0.0f);
 
       for(nikola::u32 ib = 0; ib < mesh->mNumBones; ib++) {
         aiBone* bone = mesh->mBones[ib];
@@ -129,14 +129,24 @@ static void load_node_mesh(ObjData* data, aiMesh* mesh, nikola::NBRMesh* nbr_mes
         for(nikola::u32 iw = 0; iw < bone->mNumWeights; iw++) {
           aiVertexWeight* weight = &bone->mWeights[iw];
 
+          // Vertex IDs are incremental. If it's greater than the 
+          // current vertex index, then there is no reason to keep going... 
+
+          if(weight->mVertexId > iv) {
+            break;
+          }
+
           // We only care about the bone influencing _this_ vertex
+          
           if(weight->mVertexId != iv) {
             continue; 
           }
 
           // Another bone added to the pile!
 
-          ids[vec_index]     = data->bone_map[bone->mNode->mName.C_Str()];
+          nikola::String bone_name = bone->mNode->mName.C_Str();
+
+          ids[vec_index]     = data->bone_map[bone_name];
           weights[vec_index] = weight->mWeight;
           vec_index++;
         }
@@ -271,6 +281,7 @@ static void load_scene_materials(const aiScene* scene, ObjData* data) {
     // @TEMP: Temporary fix since `AI_MATKEY_EMISSIVE_INTENSITY` apparently 
     // doesn't work. We're settings the emissive factor to `1.0f` if there 
     // is an emissive texture at all.
+    
     if(nbr_material.emissive_index != -1) {
       nbr_material.emissive = 1.0f;
     }
@@ -290,7 +301,7 @@ bool model_loader_load(nikola::NBRModel* model, const nikola::FilePath& path) {
   nikola::FilePath ext = nikola::filepath_extension(path);
 
   if(!is_valid_extension(ext)) {
-    NIKOLA_LOG_ERROR("No valid model loader for \'%s\'", ext.c_str());
+    NIKOLA_LOG_ERROR("No valid model loader for \'%s\'. Currently supported formats: GLTF, GLB", ext.c_str());
     return false;
   } 
 

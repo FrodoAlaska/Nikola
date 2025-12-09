@@ -456,6 +456,12 @@ NIKOLA_API const String mat3_to_string(const Mat3& mat);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Mat4 functions
 
+/// Creates and returns a `Mat4` from the given array 
+/// of `values`. 
+///
+/// @NOTE: The `values` array MUST have 16 elements.
+NIKOLA_API Mat4 mat4_make(const f32* values);
+
 /// Returns the determinant value of `mat` 
 NIKOLA_API const f32 mat4_det(const Mat4& mat);
 

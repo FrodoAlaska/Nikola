@@ -957,10 +957,8 @@ void renderer_queue_animation(const ResourceID& model_id,
 
   // Queue the animation
 
-  // Animation* animation    = resources_get_animation(animator.animation_id);
-  // RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
-  //
-  // entry->animations.emplace_back(animation->skinning_palette);
+  RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
+  entry->animations.emplace_back(animator_get_skinning_palette(animator));
 }
 
 void renderer_queue_particles(const ParticleEmitter& emitter) {

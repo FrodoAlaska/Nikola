@@ -40,6 +40,8 @@ FetchContent_Declare(
 
 # GLM
 
+set(GLM_ENABLE_SIMD_AVX ON)
+
 FetchContent_Declare(
   glm 
   URL https://github.com/g-truc/glm/archive/refs/tags/1.0.1.zip

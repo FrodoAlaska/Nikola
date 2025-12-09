@@ -24,4 +24,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/euler_angles.hpp>
 
+#ifdef GLM_FORCE_INTRINSICS
+  #include <glm/simd/matrix.h>
+#endif
+
 #include <moodycamel/concurrentqueue.h>

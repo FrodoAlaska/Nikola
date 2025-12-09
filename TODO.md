@@ -8,18 +8,18 @@
     - [x] Import the animations into OZZ runtime formats 
     - [] Animation logic
         - [x] Add sampling and local-to-model jobs 
-        - [] Send the skinning matrices to the renderer
+        - [x] Send the skinning matrices to the renderer
         - [] Add the ability to do blending 
         - [] Inverse kinematics post-process 
     - [] Test animations with multiple instances.
     - [] Documentation
 - [] Resources 
+    - [] Optimize resource loading 
+        - [] Meshes/models: Use `cgltf` and `meshoptimizer` instead of bloated Assimp.
+        - [] Textures: This needs to be confirmed, but textures are probably the most demanding resource to load.
+        - [] Fonts: I'm not sure with this one as well, but fonts can be _very_ demanding.
+    - [] Make a simplified language for things like entity formats, materials, and the like. Call it `nkl`.
     - [] Material file format like `.mat` or something?
-    - [] Maybe have a JSON file that associates the resources with each other? 
-        - Perhaps we can use this as a way to represent our materials and then save them a `.nbr` files.
-        - For example, a texture can be referred in a material and a material can be referred to in a mesh. 
-        - That way, we can have the artists (and even myself) use different combinations of resources as we liked.
-        - It's almost like a description of how the resources will be used. 
     - [] We need to get rid of the NBR conversion tool and instead have the conversion process happen in the engine itself. 
     - [] Documentation
 - [] Performance v2.0

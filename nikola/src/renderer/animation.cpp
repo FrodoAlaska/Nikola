@@ -24,6 +24,7 @@ namespace nikola { // Start of nikola
 /// Skeleton
 struct Skeleton {
   ozz::unique_ptr<ozz::animation::Skeleton> handle;
+  DynamicArray<Mat4> inverse_bind_matrices;
 };
 /// Skeleton
 ///---------------------------------------------------------------------------------------------------------------------
@@ -47,6 +48,8 @@ struct Animator {
   ozz::vector<ozz::math::SoaTransform> locals;
   ozz::vector<ozz::math::Float4x4> models;
 
+  Array<Mat4, JOINTS_MAX> skinning_palette;
+
   AnimatorDesc desc;
 };
 /// Animator
@@ -55,21 +58,33 @@ struct Animator {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Private functions
 
-static void traverse_joints(ozz::animation::offline::RawSkeleton::Joint* joint, const NBRSkeleton& nbr_skele, const NBRSkeleton::NBRJoint& nbr_joint) {
+static void traverse_joints(Skeleton* skeleton,
+                            ozz::animation::offline::RawSkeleton::Joint* joint, 
+                            const NBRSkeleton& nbr_skele, 
+                            const NBRSkeleton::NBRJoint& nbr_joint) {
+  // Convert the name  
+  joint->name = nbr_joint.name;
+
+  // Convert the inverse bind matrices  
+
+  const f32* mat = &nbr_joint.inverse_bind_matrix[0];
+  skeleton->inverse_bind_matrices.emplace_back(mat[0], mat[1],  mat[2],  0.0f, 
+                                               mat[3], mat[4],  mat[5],  0.0f, 
+                                               mat[6], mat[7],  mat[8],  0.0f, 
+                                               mat[9], mat[10], mat[11], 1.0f);
+
   // Converting the transform
 
   joint->transform.translation = ozz::math::Float3(nbr_joint.position[0], 
                                                    nbr_joint.position[1], 
                                                    nbr_joint.position[2]);
-
-  joint->transform.rotation = ozz::math::Quaternion(nbr_joint.rotation[0], 
-                                                    nbr_joint.rotation[1], 
-                                                    nbr_joint.rotation[2],
-                                                    nbr_joint.rotation[3]);
-  
-  joint->transform.scale = ozz::math::Float3(nbr_joint.scale[0], 
-                                             nbr_joint.scale[1], 
-                                             nbr_joint.scale[2]);
+  joint->transform.rotation    = ozz::math::Quaternion(nbr_joint.rotation[0], 
+                                                       nbr_joint.rotation[1], 
+                                                       nbr_joint.rotation[2],
+                                                       nbr_joint.rotation[3]);
+  joint->transform.scale       = ozz::math::Float3(nbr_joint.scale[0], 
+                                                   nbr_joint.scale[1], 
+                                                   nbr_joint.scale[2]);
 
   // Going over the children
 
@@ -79,7 +94,7 @@ static void traverse_joints(ozz::animation::offline::RawSkeleton::Joint* joint, 
 
   joint->children.resize(nbr_joint.children_count);
   for(sizei i = 0; i < joint->children.size(); i++) {
-    traverse_joints(&joint->children[i], nbr_skele, nbr_skele.joints[nbr_joint.children[i]]);
+    traverse_joints(skeleton, &joint->children[i], nbr_skele, nbr_skele.joints[nbr_joint.children[i]]);
   }
 }
 
@@ -98,7 +113,7 @@ Skeleton* skeleton_create(const NBRSkeleton& nbr_skele) {
   raw_skele.roots.resize(1);
 
   // Root joint init
-  traverse_joints(&raw_skele.roots[0], nbr_skele, nbr_skele.joints[nbr_skele.root_index]);
+  traverse_joints(skele, &raw_skele.roots[0], nbr_skele, nbr_skele.joints[nbr_skele.root_index]);
 
   // Validate the skeleton first before existing. 
   // This is crucial, as the skeleton will not be built 
@@ -126,6 +141,8 @@ void skeleton_destroy(Skeleton* skele) {
   }
 
   skele->handle.reset();
+  skele->inverse_bind_matrices.clear();
+
   delete skele;
 }
 
@@ -144,6 +161,7 @@ Animation* animation_create(const NBRAnimation& nbr_anim) {
 
   raw_anim.tracks.resize(nbr_anim.tracks_count);
   raw_anim.duration = nbr_anim.duration;
+  raw_anim.name     = nbr_anim.name;
 
   // Converting the tracks
 
@@ -228,6 +246,9 @@ Animator* animator_create(const ResourceID& animation_id, const ResourceID& skel
   anim->animation = resources_get_animation(animation_id);
   anim->skeleton  = resources_get_skeleton(skeleton_id);
 
+  // Setting the end point
+  anim->desc.end_point = anim->animation->handle->duration();
+
   // Resizing arrays for performance reasons
 
   anim->locals.resize(anim->skeleton->handle->num_soa_joints());
@@ -287,17 +308,29 @@ AnimatorDesc& animator_get_desc(Animator* animator) {
   return animator->desc;
 }
 
+const Array<Mat4, JOINTS_MAX>& animator_get_skinning_palette(const Animator* animator) {
+  return animator->skinning_palette;
+}
+
 void animator_animate(Animator* animator, const f32 dt) {
   NIKOLA_ASSERT(animator, "Invalid Animator given to animator_animate");
 
-  // Update the time 
+  // Sorry. You're not animating, dude
 
   if(!animator->desc.is_animating) { 
     return;
   }
+   
+  // Looping is turned off and we're past the end so return...
+   
+  if(!animator->desc.is_looping && animator->desc.current_time > animator->desc.end_point) {
+    return;
+  }
+  
+  // Update the time 
 
   animator->desc.current_time = (dt * animator->desc.play_speed) / animator->desc.end_point;
-  animator->desc.current_time = clamp_float(animator->desc.current_time, 0.0f, 1.0f);
+  animator->desc.current_time = clamp_float(animator->desc.current_time, 0.0f, animator->desc.end_point);
 
   // Sampling job
 
@@ -322,6 +355,23 @@ void animator_animate(Animator* animator, const f32 dt) {
   if(!local_to_model_job.Run()) {
     NIKOLA_LOG_DEBUG("Failed to run the local to model job for an animator");
     return;
+  }
+
+  // Convert the newly calculated models into our engine format
+
+  for(sizei i = 0; i < animator->models.size(); i++) {
+    const ozz::math::Float4x4& ozz_mat = animator->models[i];
+
+    // Loading from SIMD registers into an array of floats
+
+    f32 raw_mat[16];
+    ozz::math::StorePtr(ozz_mat.cols[0], &raw_mat[0]);
+    ozz::math::StorePtr(ozz_mat.cols[1], &raw_mat[4]);
+    ozz::math::StorePtr(ozz_mat.cols[2], &raw_mat[8]);
+    ozz::math::StorePtr(ozz_mat.cols[3], &raw_mat[12]);
+    
+    // Set the skinning matrix
+    animator->skinning_palette[i] = mat4_make(raw_mat) * animator->skeleton->inverse_bind_matrices[i];
   }
 }
 

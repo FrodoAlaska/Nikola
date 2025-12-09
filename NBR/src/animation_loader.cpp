@@ -8,6 +8,14 @@
 namespace nbr { // Start of nbr
 
 /// ----------------------------------------------------------------------
+/// Consts
+
+const nikola::f32 ANIMATION_TIME_SCALE = 100.0f;
+
+/// Consts
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// NodeAnim
 
 struct NodeAnim {
@@ -15,8 +23,11 @@ struct NodeAnim {
   nikola::DynamicArray<nikola::QuatAnimSample> rotations;
   nikola::DynamicArray<nikola::VectorAnimSample> scales;
 
-  nikola::sizei samples_max = 0;
-  nikola::f32 duration      = 0.0f;
+  nikola::f32 duration = 0.0f;
+
+  nikola::Vec3 local_position;
+  nikola::Quat local_rotation;
+  nikola::Vec3 local_scale;
 };
 
 /// NodeAnim
@@ -26,7 +37,9 @@ struct NodeAnim {
 /// AnimData
 
 struct AnimData {
-  nikola::HashMap<nikola::String, NodeAnim> tracks;
+  nikola::HashMap<nikola::String, nikola::sizei> tracks_table;
+  nikola::DynamicArray<NodeAnim> tracks;
+
   nikola::f32 duration = 0.0f;
 };
 
@@ -41,130 +54,98 @@ static bool is_valid_extension(const nikola::FilePath& ext) {
          ext == ".glb";
 }
 
-static void read_positions(NodeAnim* track, cgltf_animation_sampler* sampler) {
-  /// @NOTE: 
-  ///
-  /// I realize that the actions below probably can be pulled out and 
-  /// placed into a function so that they are a bit less error-prone, which 
-  /// will also make me more "professional". But, listen, I'm tired, okay? 
-  ///
-  /// Leave me alone... 
-  ///
-
-  // Read the input (the time scale)
-
-  nikola::sizei floats_read = cgltf_accessor_unpack_floats(sampler->input, nullptr, sampler->input->count);
-
-  nikola::f32* input_buffer = (nikola::f32*)nikola::memory_allocate(sizeof(nikola::f32) * floats_read);
-  cgltf_accessor_unpack_floats(sampler->input, input_buffer, floats_read);
-
-  // Read the position values
+static void read_sampler(cgltf_animation_sampler* sampler, 
+                         nikola::DynamicArray<nikola::f32>& time_buffer, 
+                         nikola::DynamicArray<nikola::f32>& values_buffer) {
+  // Read the time buffer
   
-  floats_read = cgltf_accessor_unpack_floats(sampler->output, nullptr, sampler->output->count);
+  nikola::sizei time_floats_read = cgltf_accessor_unpack_floats(sampler->input, nullptr, sampler->input->count);
 
-  nikola::f32* output_buffer = (nikola::f32*)nikola::memory_allocate(sizeof(nikola::f32) * floats_read);
-  cgltf_accessor_unpack_floats(sampler->output, output_buffer, floats_read);
+  time_buffer.resize(time_floats_read);
+  cgltf_accessor_unpack_floats(sampler->input, time_buffer.data(), time_floats_read);
+
+  // Read the values buffer
+  
+  nikola::sizei values_floats_read = cgltf_accessor_unpack_floats(sampler->output, nullptr, sampler->output->count);
+
+  values_buffer.resize(values_floats_read);
+  cgltf_accessor_unpack_floats(sampler->output, values_buffer.data(), values_floats_read);
+}
+
+static void read_positions(NodeAnim* track, cgltf_animation_sampler* sampler) {
+  // Read the input and output accessors and get the corresponding buffers back...
+  // It's smart, I know. I'm vewy pwoud of mysewf.
+  
+  nikola::DynamicArray<nikola::f32> time_buffer;
+  nikola::DynamicArray<nikola::f32> values_buffer;
+
+  read_sampler(sampler, time_buffer, values_buffer);
 
   // Add the values into our internal array
 
-  for(nikola::sizei i = 0, j = 0; i < floats_read; i += 3, j++) { // 3 = number of components in a Vec3
-    nikola::f32 time = input_buffer[j];
+  track->positions.reserve(values_buffer.size());
+
+  for(nikola::sizei i = 0, j = 0; i < values_buffer.size(); i += 3, j++) { // 3 = number of components in a Vec3
+    nikola::f32 time = time_buffer[j];
     track->duration  = nikola::max_float(track->duration, sampler->input->max[0]); 
 
-    nikola::f32 x_pos = output_buffer[i + 0];
-    nikola::f32 y_pos = output_buffer[i + 1];
-    nikola::f32 z_pos = output_buffer[i + 2];
+    nikola::Vec3 pos;
+    pos.x = values_buffer[i + 0];
+    pos.y = values_buffer[i + 1];
+    pos.z = values_buffer[i + 2];
 
-    track->positions.emplace_back(nikola::Vec3(x_pos, y_pos, z_pos), time);
+    track->positions.emplace_back(pos, time);
   }
- 
-  // Freeing up some memory 
-  
-  nikola::memory_free(input_buffer);
-  nikola::memory_free(output_buffer);
-
-  // Update the samples count for later
-  track->samples_max = track->positions.size();
 }
 
 static void read_rotations(NodeAnim* track, cgltf_animation_sampler* sampler) {
-  // Read the input (the time scale)
-
-  nikola::sizei floats_read = cgltf_accessor_unpack_floats(sampler->input, nullptr, sampler->input->count);
-
-  nikola::f32* input_buffer = (nikola::f32*)nikola::memory_allocate(sizeof(nikola::f32) * floats_read);
-  cgltf_accessor_unpack_floats(sampler->input, input_buffer, floats_read);
-
-  // Read the rotation values
+  // Read the input and output accessors and get the corresponding buffers back...
   
-  floats_read = cgltf_accessor_unpack_floats(sampler->output, nullptr, sampler->output->count);
+  nikola::DynamicArray<nikola::f32> time_buffer;
+  nikola::DynamicArray<nikola::f32> values_buffer;
 
-  nikola::f32* output_buffer = (nikola::f32*)nikola::memory_allocate(sizeof(nikola::f32) * floats_read);
-  cgltf_accessor_unpack_floats(sampler->output, output_buffer, floats_read);
+  read_sampler(sampler, time_buffer, values_buffer);
 
   // Add the values into our internal array
-
-  for(nikola::sizei i = 0, j = 0; i < floats_read; i += 4, j++) { // 4 = number of components in a Quat
-    nikola::f32 time = input_buffer[j];
+  
+  track->rotations.reserve(values_buffer.size());
+  
+  for(nikola::sizei i = 0, j = 0; i < values_buffer.size(); i += 4, j++) { // 4 = number of components in a Quat
+    nikola::f32 time = time_buffer[j];
     track->duration  = nikola::max_float(track->duration, sampler->input->max[0]); 
 
-    nikola::f32 x_pos = output_buffer[i + 0];
-    nikola::f32 y_pos = output_buffer[i + 1];
-    nikola::f32 z_pos = output_buffer[i + 2];
-    nikola::f32 w_pos = output_buffer[i + 3];
+    nikola::Quat rot;
+    rot.x = values_buffer[i + 0];
+    rot.y = values_buffer[i + 1];
+    rot.z = values_buffer[i + 2];
+    rot.w = values_buffer[i + 3];
 
-    track->rotations.emplace_back(nikola::Quat(w_pos, x_pos, y_pos, z_pos), time);
-  }
- 
-  // Freeing up some memory 
-  
-  nikola::memory_free(input_buffer);
-  nikola::memory_free(output_buffer);
-
-  // Update the samples count for later
- 
-  if(track->samples_max < track->rotations.size()) {
-    track->samples_max = track->rotations.size();
+    track->rotations.emplace_back(rot, time);
   }
 }
 
 static void read_scales(NodeAnim* track, cgltf_animation_sampler* sampler) {
-  // Read the input (the time scale)
-
-  nikola::sizei floats_read = cgltf_accessor_unpack_floats(sampler->input, nullptr, sampler->input->count);
-
-  nikola::f32* input_buffer = (nikola::f32*)nikola::memory_allocate(sizeof(nikola::f32) * floats_read);
-  cgltf_accessor_unpack_floats(sampler->input, input_buffer, floats_read);
-
-  // Read the scale values
+  // Read the input and output accessors and get the corresponding buffers back...
   
-  floats_read = cgltf_accessor_unpack_floats(sampler->output, nullptr, sampler->output->count);
+  nikola::DynamicArray<nikola::f32> time_buffer;
+  nikola::DynamicArray<nikola::f32> values_buffer;
 
-  nikola::f32* output_buffer = (nikola::f32*)nikola::memory_allocate(sizeof(nikola::f32) * floats_read);
-  cgltf_accessor_unpack_floats(sampler->output, output_buffer, floats_read);
+  read_sampler(sampler, time_buffer, values_buffer);
 
   // Add the values into our internal array
+  
+  track->scales.reserve(values_buffer.size());
 
-  for(nikola::sizei i = 0, j = 0; i < floats_read; i += 3, j++) { // 4 = number of components in a Vec3
-    nikola::f32 time = input_buffer[j];
+  for(nikola::sizei i = 0, j = 0; i < values_buffer.size(); i += 3, j++) { // 3 = number of components in a Vec3
+    nikola::f32 time = time_buffer[j];
     track->duration  = nikola::max_float(track->duration, sampler->input->max[0]); 
 
-    nikola::f32 x_pos = output_buffer[i + 0];
-    nikola::f32 y_pos = output_buffer[i + 1];
-    nikola::f32 z_pos = output_buffer[i + 2];
+    nikola::Vec3 scale;
+    scale.x = values_buffer[i + 0];
+    scale.y = values_buffer[i + 1];
+    scale.z = values_buffer[i + 2];
 
-    track->scales.emplace_back(nikola::Vec3(x_pos, y_pos, z_pos), time);
-  }
- 
-  // Freeing up some memory 
-  
-  nikola::memory_free(input_buffer);
-  nikola::memory_free(output_buffer);
-  
-  // Update the samples count for later
- 
-  if(track->samples_max < track->scales.size()) {
-    track->samples_max = track->scales.size();
+    track->scales.emplace_back(scale, time);
   }
 }
 
@@ -216,7 +197,13 @@ bool animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& p
     cgltf_node* joint   = skin->joints[i];
     nikola::String name = joint->name;
 
-    data.tracks[name] = NodeAnim{};
+    data.tracks_table[name] = i;
+
+    data.tracks.push_back(NodeAnim{
+      .local_position = nikola::Vec3(joint->translation[0], joint->translation[1], joint->translation[2]),
+      .local_rotation = nikola::Quat(joint->rotation[3], joint->rotation[0], joint->rotation[1], joint->rotation[2]), // w, x, y, z
+      .local_scale    = nikola::Vec3(joint->scale[0], joint->scale[1], joint->scale[2]),
+    });
   }
 
   // Load the animation data
@@ -227,48 +214,53 @@ bool animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& p
     cgltf_animation_sampler* sampler = &gltf_anim->samplers[cgltf_animation_sampler_index(gltf_anim, channel->sampler)];
 
     nikola::String node_name = channel->target_node->name;
-    if(data.tracks.find(node_name) == data.tracks.end()) { // Can't find the node in the lookup table... probably a dull
-      continue;
-    }
+    NodeAnim* node           = &data.tracks[data.tracks_table[node_name]];
 
     switch(channel->target_path) {
       case cgltf_animation_path_type_translation:
-        read_positions(&data.tracks[nikola::String(channel->target_node->name)], sampler);
+        read_positions(node, sampler);
         break;
       case cgltf_animation_path_type_rotation:
-        read_rotations(&data.tracks[nikola::String(channel->target_node->name)], sampler);
+        read_rotations(node, sampler);
         break;
       case cgltf_animation_path_type_scale:
-        read_scales(&data.tracks[nikola::String(channel->target_node->name)], sampler);
+        read_scales(node, sampler);
         break;
       default: 
         break;
     }
   }
 
+  // Convert the name 
+
+  nikola::String anim_name = gltf_anim->name; 
+
+  anim->name_length = (nikola::u8)anim_name.size(); 
+  nikola::memory_copy(anim->name, anim_name.c_str(), anim->name_length);
+
   // Converting the data accumlated into our stupid NBR format 
-  // @NOTE: Yes, I'm traversing a hash map. Get off my back, dude. 
 
   anim->tracks_count = (nikola::u16)data.tracks.size();
   anim->tracks       = (nikola::NBRAnimation::NBRJointTrack*)nikola::memory_allocate(sizeof(nikola::NBRAnimation::NBRJointTrack) * anim->tracks_count);
 
-  nikola::sizei index = 0;
-  for(auto& [name, track] : data.tracks) {
-    nikola::NBRAnimation::NBRJointTrack* joint = &anim->tracks[index];
+  for(nikola::sizei i = 0; i < data.tracks.size(); i++) {
+    NodeAnim& track                            = data.tracks[i];
+    nikola::NBRAnimation::NBRJointTrack* joint = &anim->tracks[i];
 
     // Make sure that there is at least _one_ value in each array 
-    // for easier navigation.
+    // for easier navigation. Usually, it's going to be 
+    // the local position, rotation, or scale of the joint.
     
     if(track.positions.empty()) {
-      track.positions.emplace_back(nikola::Vec3(0.0f), 0.0f);
+      track.positions.emplace_back(track.local_position, 0.0f);
     }
-    
+
     if(track.rotations.empty()) {
-      track.rotations.emplace_back(nikola::Quat(1.0f, 0.0f, 0.0f, 0.0f), 0.0f);
+      track.rotations.emplace_back(track.local_rotation, 0.0f);
     }
-    
+
     if(track.scales.empty()) {
-      track.scales.emplace_back(nikola::Vec3(1.0f), 0.0f);
+      track.scales.emplace_back(track.local_scale, 0.0f);
     }
 
     // Convert positions
@@ -277,9 +269,9 @@ bool animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& p
     joint->position_samples = (nikola::f32*)nikola::memory_allocate(sizeof(nikola::VectorAnimSample) * joint->positions_count);
     
     for(nikola::sizei i = 0, j = 0; i < track.positions.size(); i++, j += 4) {
-      joint->position_samples[j + 0] = track.positions[i].value.x; 
-      joint->position_samples[j + 1] = track.positions[i].value.y; 
-      joint->position_samples[j + 2] = track.positions[i].value.z; 
+      joint->position_samples[j + 0] = track.positions[i].value.x * nikola::NBR_MODEL_IMPORT_SCALE; 
+      joint->position_samples[j + 1] = track.positions[i].value.y * nikola::NBR_MODEL_IMPORT_SCALE; 
+      joint->position_samples[j + 2] = track.positions[i].value.z * nikola::NBR_MODEL_IMPORT_SCALE; 
       joint->position_samples[j + 3] = track.positions[i].time;
     }
 
@@ -299,7 +291,7 @@ bool animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& p
     // Convert scales
     
     joint->scales_count  = (nikola::u16)track.scales.size();
-    joint->scale_samples = (nikola::f32*)nikola::memory_allocate(sizeof(nikola::QuatAnimSample) * joint->scales_count);
+    joint->scale_samples = (nikola::f32*)nikola::memory_allocate(sizeof(nikola::VectorAnimSample) * joint->scales_count);
     
     for(nikola::sizei i = 0, j = 0; i < track.scales.size(); i++, j += 4) {
       joint->scale_samples[j + 0] = track.scales[i].value.x; 
@@ -308,7 +300,6 @@ bool animation_loader_load(nikola::NBRAnimation* anim, const nikola::FilePath& p
       joint->scale_samples[j + 3] = track.scales[i].time;
     }
 
-    index++;
     data.duration = nikola::max_float(data.duration, track.duration);
   }
 

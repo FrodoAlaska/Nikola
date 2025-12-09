@@ -273,6 +273,11 @@ void file_write_bytes(File& file, const NBRModel& model) {
 void file_write_bytes(File& file, const NBRAnimation& anim) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
 
+  // Write the animation's name
+
+  file_write_bytes(file, &anim.name_length, sizeof(anim.name_length));
+  file_write_bytes(file, anim.name, anim.name_length);
+
   // Write the tracks
   
   file_write_bytes(file, &anim.tracks_count, sizeof(anim.tracks_count)); 
@@ -321,6 +326,14 @@ void file_write_bytes(File& file, const NBRSkeleton& skele) {
     file_write_bytes(file, joint->position, sizeof(joint->position));
     file_write_bytes(file, joint->rotation, sizeof(joint->rotation));
     file_write_bytes(file, joint->scale, sizeof(joint->scale));
+
+    // Write the inverse bind matrix
+    file_write_bytes(file, joint->inverse_bind_matrix, sizeof(joint->inverse_bind_matrix));
+
+    // Write the joint's name
+    
+    file_write_bytes(file, &joint->name_length, sizeof(joint->name_length));
+    file_write_bytes(file, joint->name, joint->name_length);
   }
 
   // Write the root index
@@ -775,7 +788,14 @@ void file_read_bytes(File& file, NBRModel* out_model) {
 void file_read_bytes(File& file, NBRAnimation* out_anim) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
   NIKOLA_ASSERT(out_anim, "Invalid NBRAnimation type given to file_read_bytes");
-  
+
+  // Read the animation's name
+
+  file_read_bytes(file, &out_anim->name_length, sizeof(out_anim->name_length));
+  file_read_bytes(file, out_anim->name, out_anim->name_length);
+
+  out_anim->name[out_anim->name_length] = '\0';
+
   // Read the tracks
 
   file_read_bytes(file, &out_anim->tracks_count, sizeof(out_anim->tracks_count)); 
@@ -836,6 +856,16 @@ void file_read_bytes(File& file, NBRSkeleton* out_skele) {
     file_read_bytes(file, joint->position, sizeof(joint->position));
     file_read_bytes(file, joint->rotation, sizeof(joint->rotation));
     file_read_bytes(file, joint->scale, sizeof(joint->scale));
+
+    // Read the inverse bind matrix
+    file_read_bytes(file, joint->inverse_bind_matrix, sizeof(joint->inverse_bind_matrix));
+
+    // Read the joint's name
+    
+    file_read_bytes(file, &joint->name_length, sizeof(joint->name_length));
+    file_read_bytes(file, joint->name, joint->name_length);
+
+    joint->name[joint->name_length] = '\0'; // Null-terminated for easier use later
   }
 
   // Read the root index

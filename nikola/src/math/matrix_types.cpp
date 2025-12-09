@@ -40,6 +40,10 @@ const String mat3_to_string(const Mat3& mat) {
 /// ----------------------------------------------------------------------
 /// Mat4 functions
 
+Mat4 mat4_make(const f32* values) {
+  return glm::make_mat4(values);
+}
+
 const f32 mat4_det(const Mat4& mat) {
   return glm::determinant(mat);
 }
@@ -86,10 +90,10 @@ const f32* mat4_raw_data(const Mat4& mat) {
 
 const String mat4_to_string(const Mat4& mat) {
   return 
-    "{" + std::to_string(mat[0][0]) + ", " + std::to_string(mat[0][1]) + ", " + std::to_string(mat[0][1]) + ", " + std::to_string(mat[0][2]) + "}\n"
-    "{" + std::to_string(mat[1][0]) + ", " + std::to_string(mat[1][1]) + ", " + std::to_string(mat[1][1]) + ", " + std::to_string(mat[1][2]) + "}\n"
-    "{" + std::to_string(mat[2][0]) + ", " + std::to_string(mat[2][1]) + ", " + std::to_string(mat[2][1]) + ", " + std::to_string(mat[2][2]) + "}\n"
-    "{" + std::to_string(mat[3][0]) + ", " + std::to_string(mat[3][1]) + ", " + std::to_string(mat[3][1]) + ", " + std::to_string(mat[3][2]) + "}";
+    "{" + std::to_string(mat[0][0]) + ", " + std::to_string(mat[1][0]) + ", " + std::to_string(mat[2][0]) + ", " + std::to_string(mat[3][0]) + "}\n"
+    "{" + std::to_string(mat[0][1]) + ", " + std::to_string(mat[1][1]) + ", " + std::to_string(mat[2][1]) + ", " + std::to_string(mat[3][1]) + "}\n"
+    "{" + std::to_string(mat[0][2]) + ", " + std::to_string(mat[1][2]) + ", " + std::to_string(mat[2][2]) + ", " + std::to_string(mat[3][2]) + "}\n"
+    "{" + std::to_string(mat[0][3]) + ", " + std::to_string(mat[1][3]) + ", " + std::to_string(mat[2][3]) + ", " + std::to_string(mat[3][3]) + "}";
 }
 
 /// Mat4 functions

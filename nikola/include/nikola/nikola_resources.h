@@ -34,16 +34,22 @@ struct Font;
 /// a valid `.nbr` file. 
 ///
 /// @NOTE: The value is the average of the ASCII hex codes of `n`, `b`, and `r`.
-const u8 NBR_VALID_IDENTIFIER     = 107;
+const u8 NBR_VALID_IDENTIFIER      = 107;
 
 /// The currently valid major version of any `.nbr` file
-const i16 NBR_VALID_MAJOR_VERSION = 0;
+const i16 NBR_VALID_MAJOR_VERSION  = 0;
 
 /// The currently valid minor version of any `.nbr` file
-const i16 NBR_VALID_MINOR_VERSION = 6;
+const i16 NBR_VALID_MINOR_VERSION  = 8;
 
 /// The maximum number of weights a joint can have in an NBR file. 
-const u8 NBR_JOINT_WEIGHTS_MAX    = 4;
+const sizei NBR_JOINT_WEIGHTS_MAX  = 4;
+
+/// The maximum number of characters a joint name can have.
+const sizei NBR_JOINT_NAME_MAX     = 256;
+
+/// The maximum number of characters an animation name can have.
+const sizei NBR_ANIMATION_NAME_MAX = 256;
 
 /// Some 3D models have their own unit of scales when being imported. 
 /// In order to unify all the models, we apply this multiplier to the models 
@@ -251,6 +257,18 @@ struct NBRSkeleton {
 
     /// The scale of the joint (X, Y, Z) in local space.
     f32 scale[3];
+
+    /// A 4x3 (4 rows, 3 columns) matrix representing the 
+    /// inverse bind matrix of this joint. 
+    f32 inverse_bind_matrix[12];
+
+    /// The optional name of the joint, with 
+    /// `name_length` number of characters.
+    ///
+    /// @NOTE: This is a C-string, missing the null-terminated character.
+
+    u8 name_length = 0;
+    char name[NBR_JOINT_NAME_MAX];
   };
  
   /// All of the joints in the skeleton that can be 
@@ -300,6 +318,14 @@ struct NBRAnimation {
     u16 scales_count;
     f32* scale_samples;
   };
+
+  /// The optional name of the animation, with 
+  /// `name_length` number of characters. 
+  ///
+  /// @NOTE: This is a C-string, missing the null-terminated character.
+
+  u8 name_length = 0;
+  char name[NBR_ANIMATION_NAME_MAX];
 
   /// An array of joints with `joints_count` elements. 
 

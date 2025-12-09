@@ -841,7 +841,8 @@ void gui_edit_animator(const char* name, Animator* animator) {
 
   ImGui::DragFloat("Start point", &desc.start_point, s_gui.big_step, 0.0f, desc.end_point);
   ImGui::DragFloat("End point", &desc.end_point, s_gui.big_step, 0.0f);
-  ImGui::DragFloat("Current point", &desc.current_time, 1.0f, 0.0f, 1.0f);
+  ImGui::DragFloat("Current point", &desc.current_time, 1.0f, desc.start_point, desc.end_point);
+  ImGui::SliderFloat("Playback speed", &desc.play_speed, -1.0f, 1.0f);
 
   ImGui::Checkbox("Looping", &desc.is_looping);
   ImGui::Checkbox("Playing", &desc.is_animating);

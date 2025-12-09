@@ -37,7 +37,7 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 - A fully-fledged audio system with both 2D audio and 3D spatialized audio, supporting multiple formats such as **MP3, WAV, and OGG**.
 - A simple but powerful physics system, using the Jolt Physics Engine.
 - A robust and easy-to-use 2D game UI system with canvas anchoring, including widgets like buttons, sliders, checkboxes, and texts.
-- Simple 3D skeletal animation system, supporting both the **GLTF**, **GLB**, and **Collada** formats.
+- Simple 3D skeletal animation system, supporting the **GLTF** format (plus **GLB**, of course).
 
 ## Showcase
 

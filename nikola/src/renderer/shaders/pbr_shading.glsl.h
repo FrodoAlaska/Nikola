@@ -39,6 +39,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       uniform mat4 u_light_space;
   
       // Outputs
+      
       out VS_OUT {
         vec2 tex_coords;
         vec3 normal;
@@ -53,29 +54,33 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
 
         flat int material_index;
       } vs_out;
-      
-      void main() {
-        //
-        // Applying the skinning of the animation 
-        // 
 
-        vec4 weighted_pos = vec4(vec3(0.0), 1.0);
-        int index         = gl_BaseInstance + gl_InstanceID;
-        
-        for(int i = 0; i < 4; i++) {
-          if(aJointId[i] == -1.0) { // The parent joint of the skeleton... skip
-            continue;
-          }
-          else if(aJointId[i] == -2.0) { // This geometry is not supposed to be animated... break
-            weighted_pos.xyz = aPos;
-            break;
-          }
-         
-          int joint_index = int(aJointId[i]);
-          weighted_pos   += (u_skinning_palette[gl_InstanceID][joint_index] * vec4(aPos, 1.0)) * aJointWeight[i];
+      // Utility functions 
+     
+      vec4 animate_vertex() {
+        vec4 result = vec4(0.0, 0.0, 0.0, 1.0);
+    
+        // @NOTE: We can probably use a for loop here, but I hate 
+        // loops in any shader. So, yeah. This looks fine...
+
+        result += u_skinning_palette[gl_InstanceID][int(aJointId[0])] * vec4(aPos, 1.0) * aJointWeight[0];
+        result += u_skinning_palette[gl_InstanceID][int(aJointId[1])] * vec4(aPos, 1.0) * aJointWeight[1];
+        result += u_skinning_palette[gl_InstanceID][int(aJointId[2])] * vec4(aPos, 1.0) * aJointWeight[2];
+        result += u_skinning_palette[gl_InstanceID][int(aJointId[3])] * vec4(aPos, 1.0) * aJointWeight[3];
+
+        return result;
+      }
+
+      void main() {
+        // Animate the vertex if that's possible
+
+        vec4 vertex_pos = vec4(aPos, 1.0);
+        if(aJointId[0] != -2.0) { // -2.0 is a special value to indicate that a mesh is not animated. Check `model_loader.cpp` for more information.
+          vertex_pos = animate_vertex();
         }
 
-        vec4 model_space = u_model[index] * weighted_pos;
+        int index        = gl_BaseInstance + gl_InstanceID;
+        vec4 model_space = u_model[index] * vertex_pos;
 
         //
         // Calculations for the normals
