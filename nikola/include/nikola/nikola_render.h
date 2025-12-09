@@ -573,36 +573,36 @@ struct Font {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// AnimatorDesc
-struct AnimatorDesc {
+/// AnimatorInfo
+struct AnimatorInfo {
   /// The current ticking time of the animation.
   /// This value goes from [0.0, 1.0].
-  f32 current_time  = 0.0f;
+  f32 current_time        = 0.0f;
  
   /// Indicates the start point in frames 
   /// of the animation.
-  f32 start_point   = 0.0f;
+  f32 start_point         = 0.0f;
 
-  /// Indicates the end point in frames 
-  /// of the animation.
-  ///
-  /// @NOTE: This is usually set to whatever the `duration` 
-  /// member of the `animation_id` is.
-  f32 end_point     = 0.0f;
+  /// The duration of the current animation playing.
+  f32 current_duration    = 0.0f;
 
   /// The playback speed of the animation in real-time. 
   /// This value can be negative to play the animation in reverse.
-  f32 play_speed    = 1.0f;
+  f32 play_speed          = 1.0f;
 
   /// Determines whether the animation should loop or not.
-  bool is_looping   = true;
+  bool is_looping         = true;
 
   /// When this flag is set to `true`, the animation will 
   /// go through its samples and play. Otherwise, the animation 
   /// will be paused.
-  bool is_animating = true;
+  bool is_animating       = true;
+
+  /// The index of the current animation that the 
+  /// animator is playing. 
+  sizei current_animation = 0;
 };
-/// AnimatorDesc
+/// AnimatorInfo
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -1025,29 +1025,25 @@ NIKOLA_API void animation_destroy(Animation* anim);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Animator functions
 
-/// Allocate and create an animator component using the given `animation_id` and `skeleton_id`.
-///
-/// @NOTE: Both the animation and skeleton of the animator can later be changed using 
-/// the `animator_set_animation` and `animator_set_skeleton` functions
-NIKOLA_API Animator* animator_create(const ResourceID& animation_id, const ResourceID& skeleton_id);
+/// Allocate and create an animator component using the given `skeleton_id` an array 
+/// of `animations` with `animations_count` elements.
+NIKOLA_API Animator* animator_create(const ResourceID& skeleton_id, const ResourceID* animations, const sizei animations_count);
+
+/// Allocate and create an animator component using the given `skeleton_id` and `animation_id`.
+NIKOLA_API Animator* animator_create(const ResourceID& skeleton_id, const ResourceID& animation_id);
 
 /// Reclaim/decallocate the memory consumed by `animator`.
 NIKOLA_API void animator_destroy(Animator* animator);
 
-/// Switch the internal animation of `animator` to the given `animation_id`.
-NIKOLA_API void animator_set_animation(Animator* animator, const ResourceID& animation_id);
-
-/// Switch the internal skeleton of `animator` to the given `skeleton_id`.
-NIKOLA_API void animator_set_skeleton(Animator* animator, const ResourceID& skeleton_id);
-
-/// Retrieve a reference of the internal `AnimatorDesc` of `animator`.
-NIKOLA_API AnimatorDesc& animator_get_desc(Animator* animator);
+/// Retrieve a reference of the internal `AnimatorInfo` of `animator`.
+NIKOLA_API AnimatorInfo& animator_get_info(Animator* animator);
 
 /// Retrieve a reference of the calculated skinning palette of `animator`.
 NIKOLA_API const Array<Mat4, JOINTS_MAX>& animator_get_skinning_palette(const Animator* animator);
 
 /// Start the animation process of the given `animator`, using the given `dt` as 
-/// a delta time for progressing.
+/// a delta time for progressing. The current animation of the given `animator` 
+/// will be chosen to be played. This can be changed from `AnimatorInfo.current_animation`.
 NIKOLA_API void animator_animate(Animator* animator, const f32 dt);
 
 /// Reset the `animator` to its initial state.

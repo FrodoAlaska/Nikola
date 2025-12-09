@@ -40,8 +40,8 @@ struct Animation {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Animator
 struct Animator {
-  Animation* animation = nullptr; 
-  Skeleton* skeleton   = nullptr;
+  DynamicArray<Animation*> animations; 
+  Skeleton* skeleton = nullptr;
 
   ozz::animation::SamplingJob::Context context;
 
@@ -49,8 +49,7 @@ struct Animator {
   ozz::vector<ozz::math::Float4x4> models;
 
   Array<Mat4, JOINTS_MAX> skinning_palette;
-
-  AnimatorDesc desc;
+  AnimatorInfo info;
 };
 /// Animator
 ///---------------------------------------------------------------------------------------------------------------------
@@ -238,16 +237,17 @@ void animation_destroy(Animation* anim) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// Animator functions
 
-Animator* animator_create(const ResourceID& animation_id, const ResourceID& skeleton_id) {
+Animator* animator_create(const ResourceID& skeleton_id, const ResourceID* animations, const sizei animations_count) {
   Animator* anim = new Animator{};
 
   // Retrieving the resources
 
-  anim->animation = resources_get_animation(animation_id);
-  anim->skeleton  = resources_get_skeleton(skeleton_id);
+  anim->animations.reserve(animations_count);
+  for(sizei i = 0; i < animations_count; i++) {
+    anim->animations.push_back(resources_get_animation(animations[i]));
+  } 
 
-  // Setting the end point
-  anim->desc.end_point = anim->animation->handle->duration();
+  anim->skeleton = resources_get_skeleton(skeleton_id);
 
   // Resizing arrays for performance reasons
 
@@ -259,53 +259,31 @@ Animator* animator_create(const ResourceID& animation_id, const ResourceID& skel
   return anim;
 }
 
+Animator* animator_create(const ResourceID& skeleton_id, const ResourceID& animation_id) {
+  return animator_create(skeleton_id, &animation_id, 1);
+}
+
 void animator_destroy(Animator* animator) {
   if(!animator) {
     return;
   }
 
-  animator->animation = nullptr;
-  animator->skeleton  = nullptr;
+  animator->animations.clear();
+  animator->skeleton = nullptr;
 
   animator->locals.clear();
   animator->models.clear();
   animator->context.Invalidate();
 
+  animator->info.current_duration  = 0.0f;
+  animator->info.current_animation = 0;
+
   delete animator;
 }
 
-void animator_set_animation(Animator* animator, const ResourceID& animation_id) {
-  NIKOLA_ASSERT(animator, "Invalid Animator given to animator_set_animation");
-
-  // Update the animation
-  animator->animation = resources_get_animation(animation_id);
-
-  // Reset the animator to not mess anything up (I think?)
-  animator_reset(animator);
-}
-
-void animator_set_skeleton(Animator* animator, const ResourceID& skeleton_id) {
-  NIKOLA_ASSERT(animator, "Invalid Animator given to animator_set_skeleton");
-
-  // Update the skeleton
-  animator->skeleton = resources_get_skeleton(skeleton_id);
-
-  // Updating the animator after a new skeleton
-
-  animator->locals.clear();
-  animator->models.clear();
-
-  animator->locals.resize(animator->skeleton->handle->num_soa_joints());
-  animator->models.resize(animator->skeleton->handle->num_joints());
-  animator->context.Resize(animator->skeleton->handle->num_joints());
-
-  // Reset the animator to not mess anything up (I think?)
-  animator_reset(animator);
-}
-
-AnimatorDesc& animator_get_desc(Animator* animator) {
-  NIKOLA_ASSERT(animator, "Invalid Animator given to animator_get_desc");
-  return animator->desc;
+AnimatorInfo& animator_get_info(Animator* animator) {
+  NIKOLA_ASSERT(animator, "Invalid Animator given to animator_get_info");
+  return animator->info;
 }
 
 const Array<Mat4, JOINTS_MAX>& animator_get_skinning_palette(const Animator* animator) {
@@ -317,29 +295,34 @@ void animator_animate(Animator* animator, const f32 dt) {
 
   // Sorry. You're not animating, dude
 
-  if(!animator->desc.is_animating) { 
+  if(!animator->info.is_animating) { 
     return;
   }
-   
+
+  // Get the current animation
+  
+  Animation* animation            = animator->animations[animator->info.current_animation];
+  animator->info.current_duration = animation->handle->duration();  
+
   // Looping is turned off and we're past the end so return...
   // Otherwise, we can start the animation again. 
 
-  if(!animator->desc.is_looping && animator->desc.current_time > animator->desc.end_point) {
+  if(!animator->info.is_looping && animator->info.current_time > animator->info.current_duration) {
     return;
   }
-  else if(animator->desc.current_time >= animator->desc.end_point) { 
-    animator->desc.current_time = animator->desc.start_point;
+  else if(animator->info.current_time >= animator->info.current_duration) { 
+    animator->info.current_time = animator->info.start_point;
   }
-  
+
   // Update the time 
-  animator->desc.current_time += (dt * animator->desc.play_speed) / animator->desc.end_point;
+  animator->info.current_time += (dt * animator->info.play_speed) / animator->info.current_duration;
 
   // Sampling job
 
   ozz::animation::SamplingJob sample_job;
-  sample_job.animation = animator->animation->handle.get();
+  sample_job.animation = animation->handle.get();
   sample_job.context   = &animator->context;
-  sample_job.ratio     = animator->desc.current_time;
+  sample_job.ratio     = animator->info.current_time;
   sample_job.output    = make_span(animator->locals);
 
   if(!sample_job.Run()) {
@@ -380,9 +363,10 @@ void animator_animate(Animator* animator, const f32 dt) {
 void animator_reset(Animator* animator) {
   NIKOLA_ASSERT(animator, "Invalid Animator given to animator_reset");
 
-  animator->desc.current_time = 0.0f;
-  animator->desc.start_point  = 0.0f;
-  animator->desc.end_point    = animator->animation->handle->duration();
+  animator->info.current_time      = 0.0f;
+  animator->info.start_point       = 0.0f;
+  animator->info.current_animation = 0;
+  animator->info.current_duration  = animator->animations[animator->info.current_animation]->handle->duration();
 }
 
 /// Animator functions

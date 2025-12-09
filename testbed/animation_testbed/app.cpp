@@ -103,7 +103,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   init_resources(app);
 
   // Animators init
-  app->animator = nikola::animator_create(app->animation, app->skeleton);
+  app->animator = nikola::animator_create(app->skeleton, app->animation);
 
   // Transform init
   

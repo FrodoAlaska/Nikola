@@ -837,15 +837,19 @@ void gui_edit_animator(const char* name, Animator* animator) {
   ImGui::SeparatorText(name); 
   ImGui::PushID(name); 
 
-  AnimatorDesc& desc = animator_get_desc(animator);
+  AnimatorInfo& info = animator_get_info(animator);
 
-  ImGui::DragFloat("Start point", &desc.start_point, s_gui.big_step, 0.0f, desc.end_point);
-  ImGui::DragFloat("End point", &desc.end_point, s_gui.big_step, 0.0f);
-  ImGui::DragFloat("Current point", &desc.current_time, 1.0f, desc.start_point, desc.end_point);
-  ImGui::SliderFloat("Playback speed", &desc.play_speed, -1.0f, 1.0f);
+  ImGui::Text("Duration: %.3f", info.current_duration);
+  ImGui::DragFloat("Start point", &info.start_point, s_gui.big_step, 0.0f, info.current_duration);
+  ImGui::DragFloat("Current point", &info.current_time, 1.0f, info.start_point, info.current_duration);
+  ImGui::SliderFloat("Playback speed", &info.play_speed, -1.0f, 1.0f);
 
-  ImGui::Checkbox("Looping", &desc.is_looping);
-  ImGui::Checkbox("Playing", &desc.is_animating);
+  ImGui::Checkbox("Looping", &info.is_looping);
+  ImGui::Checkbox("Playing", &info.is_animating);
+
+  if(ImGui::Button("Reset")) {
+    animator_reset(animator);
+  }
   
   ImGui::PopID(); 
 }
