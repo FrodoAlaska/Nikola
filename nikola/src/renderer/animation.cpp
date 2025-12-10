@@ -38,20 +38,20 @@ struct Animation {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// Animator
-struct Animator {
+/// AnimationSampler
+struct AnimationSampler {
   DynamicArray<Animation*> animations; 
   Skeleton* skeleton = nullptr;
 
   ozz::animation::SamplingJob::Context context;
-
   ozz::vector<ozz::math::SoaTransform> locals;
-  ozz::vector<ozz::math::Float4x4> models;
 
+  ozz::vector<ozz::math::Float4x4> models;
   Array<Mat4, JOINTS_MAX> skinning_palette;
-  AnimatorInfo info;
+
+  AnimationSamplerInfo info;
 };
-/// Animator
+/// AnimationSampler
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -235,117 +235,115 @@ void animation_destroy(Animation* anim) {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// Animator functions
+/// AnimatorSampler functions
 
-Animator* animator_create(const ResourceID& skeleton_id, const ResourceID* animations, const sizei animations_count) {
-  Animator* anim = new Animator{};
+AnimationSampler* animation_sampler_create(const ResourceID& skeleton_id, const ResourceID* animations, const sizei animations_count) {
+  AnimationSampler* sampler = new AnimationSampler{};
 
   // Retrieving the resources
 
-  anim->animations.reserve(animations_count);
+  sampler->animations.reserve(animations_count);
   for(sizei i = 0; i < animations_count; i++) {
-    anim->animations.push_back(resources_get_animation(animations[i]));
+    sampler->animations.push_back(resources_get_animation(animations[i]));
   } 
 
-  anim->skeleton = resources_get_skeleton(skeleton_id);
+  sampler->skeleton = resources_get_skeleton(skeleton_id);
 
   // Resizing arrays for performance reasons
 
-  anim->locals.resize(anim->skeleton->handle->num_soa_joints());
-  anim->models.resize(anim->skeleton->handle->num_joints());
-  anim->context.Resize(anim->skeleton->handle->num_joints());
+  sampler->locals.resize(sampler->skeleton->handle->num_soa_joints());
+  sampler->models.resize(sampler->skeleton->handle->num_joints());
+  sampler->context.Resize(sampler->skeleton->handle->num_joints());
 
   // Done!
-  return anim;
+  return sampler;
 }
 
-Animator* animator_create(const ResourceID& skeleton_id, const ResourceID& animation_id) {
-  return animator_create(skeleton_id, &animation_id, 1);
+AnimationSampler* animation_sampler_create(const ResourceID& skeleton_id, const ResourceID& animation_id) {
+  return animation_sampler_create(skeleton_id, &animation_id, 1);
 }
 
-void animator_destroy(Animator* animator) {
-  if(!animator) {
+void animation_sampler_destroy(AnimationSampler* sampler) {
+  if(!sampler) {
     return;
   }
 
-  animator->animations.clear();
-  animator->skeleton = nullptr;
+  sampler->animations.clear();
+  sampler->skeleton = nullptr;
 
-  animator->locals.clear();
-  animator->models.clear();
-  animator->context.Invalidate();
+  sampler->locals.clear();
+  sampler->models.clear();
+  sampler->context.Invalidate();
 
-  animator->info.current_duration  = 0.0f;
-  animator->info.current_animation = 0;
-
-  delete animator;
+  delete sampler;
 }
 
-AnimatorInfo& animator_get_info(Animator* animator) {
-  NIKOLA_ASSERT(animator, "Invalid Animator given to animator_get_info");
-  return animator->info;
+AnimationSamplerInfo& animation_sampler_get_info(AnimationSampler* sampler) {
+  NIKOLA_ASSERT(sampler, "Invalid AnimationSampler given to animation_sampler_get_info");
+  return sampler->info;
 }
 
-const Array<Mat4, JOINTS_MAX>& animator_get_skinning_palette(const Animator* animator) {
-  return animator->skinning_palette;
+const Array<Mat4, JOINTS_MAX>& animation_sampler_get_skinning_palette(const AnimationSampler* sampler) {
+  NIKOLA_ASSERT(sampler, "Invalid AnimationSampler given to animation_sampler_get_skinning_palette");
+  return sampler->skinning_palette;
 }
 
-void animator_animate(Animator* animator, const f32 dt) {
-  NIKOLA_ASSERT(animator, "Invalid Animator given to animator_animate");
+void animation_sampler_update(AnimationSampler* sampler, const f32 dt) {
+  NIKOLA_ASSERT(sampler, "Invalid AnimationSampler given to animation_sampler_update");
 
   // Sorry. You're not animating, dude
 
-  if(!animator->info.is_animating) { 
+  if(!sampler->info.is_animating) { 
     return;
   }
 
   // Get the current animation
   
-  Animation* animation            = animator->animations[animator->info.current_animation];
-  animator->info.current_duration = animation->handle->duration();  
+  Animation* animation = sampler->animations[sampler->info.current_animation];
+  f32 duration         = animation->handle->duration();  
 
   // Looping is turned off and we're past the end so return...
   // Otherwise, we can start the animation again. 
 
-  if(!animator->info.is_looping && animator->info.current_time > animator->info.current_duration) {
+  if(!sampler->info.is_looping && sampler->info.current_time > duration) {
     return;
   }
-  else if(animator->info.current_time >= animator->info.current_duration) { 
-    animator->info.current_time = animator->info.start_point;
+  else if(sampler->info.current_time > duration) { 
+    sampler->info.current_time = 0.0f;
   }
 
   // Update the time 
-  animator->info.current_time += (dt * animator->info.play_speed) / animator->info.current_duration;
+  sampler->info.current_time += (dt * sampler->info.play_speed) / duration;
 
   // Sampling job
 
   ozz::animation::SamplingJob sample_job;
   sample_job.animation = animation->handle.get();
-  sample_job.context   = &animator->context;
-  sample_job.ratio     = animator->info.current_time;
-  sample_job.output    = make_span(animator->locals);
+  sample_job.context   = &sampler->context;
+  sample_job.ratio     = sampler->info.current_time;
+  sample_job.output    = make_span(sampler->locals);
 
   if(!sample_job.Run()) {
-    NIKOLA_LOG_DEBUG("Failed to run the sampling job for an animator");
+    NIKOLA_LOG_DEBUG("Failed to run the sampling job for a sampler");
     return;
   }
 
   // Local to model job
 
   ozz::animation::LocalToModelJob local_to_model_job;
-  local_to_model_job.skeleton = animator->skeleton->handle.get();
-  local_to_model_job.input    = make_span(animator->locals);
-  local_to_model_job.output   = make_span(animator->models);
+  local_to_model_job.skeleton = sampler->skeleton->handle.get();
+  local_to_model_job.input    = make_span(sampler->locals);
+  local_to_model_job.output   = make_span(sampler->models);
 
   if(!local_to_model_job.Run()) {
-    NIKOLA_LOG_DEBUG("Failed to run the local to model job for an animator");
+    NIKOLA_LOG_DEBUG("Failed to run the local to model job for a sampler");
     return;
   }
 
   // Convert the newly calculated models into our engine format
 
-  for(sizei i = 0; i < animator->models.size(); i++) {
-    const ozz::math::Float4x4& ozz_mat = animator->models[i];
+  for(sizei i = 0; i < sampler->models.size(); i++) {
+    const ozz::math::Float4x4& ozz_mat = sampler->models[i];
 
     // Loading from SIMD registers into an array of floats
 
@@ -356,80 +354,11 @@ void animator_animate(Animator* animator, const f32 dt) {
     ozz::math::StorePtr(ozz_mat.cols[3], &raw_mat[12]);
     
     // Set the skinning matrix
-    animator->skinning_palette[i] = mat4_make(raw_mat) * animator->skeleton->inverse_bind_matrices[i];
+    sampler->skinning_palette[i] = mat4_make(raw_mat) * sampler->skeleton->inverse_bind_matrices[i];
   }
 }
 
-void animator_blend(Animator* animator, const f32 dt) {
-  NIKOLA_ASSERT(animator, "Invalid Animator given to animator_blend");
-
-  // Sorry. You're not animating, dude
-
-  if(!animator->info.is_animating) { 
-    return;
-  }
-
-  // Get the current animation
-  
-  Animation* animation            = animator->animations[animator->info.current_animation];
-  animator->info.current_duration = animation->handle->duration();  
-
-  // Looping is turned off and we're past the end so return...
-  // Otherwise, we can start the animation again. 
-
-  if(!animator->info.is_looping && animator->info.current_time > animator->info.current_duration) {
-    return;
-  }
-  else if(animator->info.current_time >= animator->info.current_duration) { 
-    animator->info.current_time = animator->info.start_point;
-  }
-
-  // Update the time 
-  animator->info.current_time += (dt * animator->info.play_speed) / animator->info.current_duration;
-
-  // Blending job
-  // @TODO
-
-  // Local to model job
-
-  ozz::animation::LocalToModelJob local_to_model_job;
-  local_to_model_job.skeleton = animator->skeleton->handle.get();
-  local_to_model_job.input    = make_span(animator->locals);
-  local_to_model_job.output   = make_span(animator->models);
-
-  if(!local_to_model_job.Run()) {
-    NIKOLA_LOG_DEBUG("Failed to run the local to model job for an animator");
-    return;
-  }
-
-  // Convert the newly calculated models into our engine format
-
-  for(sizei i = 0; i < animator->models.size(); i++) {
-    const ozz::math::Float4x4& ozz_mat = animator->models[i];
-
-    // Loading from SIMD registers into an array of floats
-
-    f32 raw_mat[16];
-    ozz::math::StorePtr(ozz_mat.cols[0], &raw_mat[0]);
-    ozz::math::StorePtr(ozz_mat.cols[1], &raw_mat[4]);
-    ozz::math::StorePtr(ozz_mat.cols[2], &raw_mat[8]);
-    ozz::math::StorePtr(ozz_mat.cols[3], &raw_mat[12]);
-    
-    // Set the skinning matrix
-    animator->skinning_palette[i] = mat4_make(raw_mat) * animator->skeleton->inverse_bind_matrices[i];
-  }
-}
-
-void animator_reset(Animator* animator) {
-  NIKOLA_ASSERT(animator, "Invalid Animator given to animator_reset");
-
-  animator->info.current_time      = 0.0f;
-  animator->info.start_point       = 0.0f;
-  animator->info.current_animation = 0;
-  animator->info.current_duration  = animator->animations[animator->info.current_animation]->handle->duration();
-}
-
-/// Animator functions
+/// AnimatorSampler functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 } // End of nikola

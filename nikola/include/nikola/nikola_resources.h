@@ -432,7 +432,7 @@ const u16 RESOURCE_GROUP_INVALID = ((u16)-1);
 const u16 RESOURCE_CACHE_ID      = 0;
 
 /// The maximum amount of joints that can processed.
-const sizei JOINTS_MAX           = 128;
+const sizei JOINTS_MAX           = 256;
 
 /// Resources consts
 ///---------------------------------------------------------------------------------------------------------------------

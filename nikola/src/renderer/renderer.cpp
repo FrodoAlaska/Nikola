@@ -893,13 +893,14 @@ void renderer_queue_model_instanced(const ResourceID& res_id,
 
 void renderer_queue_animation_instanced(const ResourceID& model_id,
                                         const Transform* transforms, 
-                                        const Animator** animators,
+                                        const AnimationSampler** samplers,
                                         const sizei count, 
                                         const ResourceID& mat_id) {
   // Queue the skinned model first
   renderer_queue_model_instanced(model_id, transforms, count, mat_id);
 
   // Queue the animation 
+  // @TODO (Renderer)
 
   // for(sizei i = 0; i < count; i++) {
   //   Animation* animation    = resources_get_animation(animators[i].animation_id);
@@ -950,7 +951,7 @@ void renderer_queue_model(const ResourceID& res_id, const Transform& transform, 
 
 void renderer_queue_animation(const ResourceID& model_id,
                               const Transform& transform, 
-                              const Animator* animator,
+                              const AnimationSampler* sampler,
                               const ResourceID& mat_id) {
   // Queue the skinned model first
   renderer_queue_model(model_id, transform, mat_id);
@@ -958,7 +959,7 @@ void renderer_queue_animation(const ResourceID& model_id,
   // Queue the animation
 
   RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
-  entry->animations.emplace_back(animator_get_skinning_palette(animator));
+  entry->animations.emplace_back(animation_sampler_get_skinning_palette(sampler));
 }
 
 void renderer_queue_particles(const ParticleEmitter& emitter) {

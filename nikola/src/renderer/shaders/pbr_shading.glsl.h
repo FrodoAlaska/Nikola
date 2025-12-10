@@ -33,7 +33,7 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         // The X-axis represents the indivisual animation instance, 
         // whereas the Y-axis represents the skinning matrices of that instance.
 
-        mat4 u_skinning_palette[1024][128]; // @TODO: Probably not the best count to have here
+        mat4 u_skinning_palette[1024][256]; // @TODO: Probably not the best count to have here
       };
 
       uniform mat4 u_light_space;

@@ -623,8 +623,8 @@ NIKOLA_API void gui_edit_character_body(const char* name, Character* character);
 /// Add a particles section identified by `name` to edit the given `emitter`.
 NIKOLA_API void gui_edit_particle_emitter(const char* name, ParticleEmitter* emitter);
 
-/// Add an animator section identified by `name` to edit the given `animator`.
-NIKOLA_API void gui_edit_animator(const char* name, Animator* animator);
+/// Add an animation sampler section identified by `name` to edit the given `sampler`.
+NIKOLA_API void gui_edit_animation_sampler(const char* name, AnimationSampler* sampler);
 
 /// GUI functions
 ///---------------------------------------------------------------------------------------------------------------------

@@ -573,29 +573,14 @@ struct Font {
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// AnimatorInfo
-struct AnimatorInfo {
+/// AnimationSamplerInfo
+struct AnimationSamplerInfo {
   /// The current ticking time of the animation.
-  /// This value goes from [0.0, 1.0].
   f32 current_time        = 0.0f;
- 
-  /// Indicates the start point in frames 
-  /// of the animation.
-  f32 start_point         = 0.0f;
-
-  /// The duration of the current animation playing.
-  f32 current_duration    = 0.0f;
-
+  
   /// The playback speed of the animation in real-time. 
   /// This value can be negative to play the animation in reverse.
   f32 play_speed          = 1.0f;
-
-  /// The blending factor taken into account when 
-  /// adding one or more animations together. 
-  ///
-  /// @NOTE: This value will only be used when `animator_blend`
-  /// is called instead of `animator_animate`.
-  f32 blending_factor     = 0.0f;
 
   /// Determines whether the animation should loop or not.
   bool is_looping         = true;
@@ -609,13 +594,44 @@ struct AnimatorInfo {
   /// animator is playing. 
   sizei current_animation = 0;
 };
-/// AnimatorInfo
+/// AnimationSamplerInfo
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// Animator
-struct Animator;
-/// Animator
+/// AnimationBlenderInfo
+struct AnimationBlenderInfo {
+  /// The current ticking time of the animation.
+  f32 current_time        = 0.0f;
+  
+  /// The playback speed of the animation in real-time. 
+  /// This value can be negative to play the animation in reverse.
+  f32 play_speed          = 1.0f;
+
+  /// The blending factor taken into account when 
+  /// adding one or more animations together. 
+  f32 blending_factor     = 0.0f;
+
+  /// Determines whether the animation should loop or not.
+  bool is_looping         = true;
+
+  /// When this flag is set to `true`, the animation will 
+  /// go through its samples and play. Otherwise, the animation 
+  /// will be paused.
+  bool is_animating       = true;
+};
+/// AnimationBlenderInfo
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// AnimationSampler
+struct AnimationSampler;
+/// AnimationSampler
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// AnimationBlender
+struct AnimationBlender;
+/// AnimationBlender
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -803,7 +819,7 @@ NIKOLA_API void renderer_queue_model_instanced(const ResourceID& res_id,
 
 NIKOLA_API void renderer_queue_animation_instanced(const ResourceID& model_id,
                                                    const Transform* transforms, 
-                                                   const Animator** animators,
+                                                   const AnimationSampler** samplers,
                                                    const sizei count, 
                                                    const ResourceID& mat_id = {});
 
@@ -823,7 +839,7 @@ NIKOLA_API void renderer_queue_model(const ResourceID& res_id,
 
 NIKOLA_API void renderer_queue_animation(const ResourceID& model_id,
                                          const Transform& transform, 
-                                         const Animator* animator,
+                                         const AnimationSampler* sampler,
                                          const ResourceID& mat_id = {});
 
 NIKOLA_API void renderer_queue_particles(const ParticleEmitter& emitter);
@@ -1012,8 +1028,12 @@ NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uni
 ///---------------------------------------------------------------------------------------------------------------------
 /// Skeleton functions
 
+/// Allocate and return a `Skeleton` resource using the information in `nbr_skele`.
+///
+/// @NOTE: This is more likely to be used in the resource manager.
 NIKOLA_API Skeleton* skeleton_create(const NBRSkeleton& nbr_skele);
 
+/// Destroy and reclaim the memory consumed by `skele`.
 NIKOLA_API void skeleton_destroy(Skeleton* skele);
 
 /// Skeleton functions
@@ -1022,48 +1042,49 @@ NIKOLA_API void skeleton_destroy(Skeleton* skele);
 ///---------------------------------------------------------------------------------------------------------------------
 /// Animation functions
 
+/// Allocate and return an `Animation` resource using the information in `nbr_anim`.
+///
+/// @NOTE: This is more likely to be used in the resource manager.
 NIKOLA_API Animation* animation_create(const NBRAnimation& nbr_anim);
 
+/// Destroy and reclaim the memory consumed by `anim`.
 NIKOLA_API void animation_destroy(Animation* anim);
 
 /// Animation functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// Animator functions
+/// AnimationSampler functions
 
-/// Allocate and create an animator component using the given `skeleton_id` an array 
+/// Allocate and create an animation sampler component using the given `skeleton_id` an array 
 /// of `animations` with `animations_count` elements.
-NIKOLA_API Animator* animator_create(const ResourceID& skeleton_id, const ResourceID* animations, const sizei animations_count);
+NIKOLA_API AnimationSampler* animation_sampler_create(const ResourceID& skeleton_id, const ResourceID* animations, const sizei animations_count);
 
-/// Allocate and create an animator component using the given `skeleton_id` and `animation_id`.
-NIKOLA_API Animator* animator_create(const ResourceID& skeleton_id, const ResourceID& animation_id);
+/// Allocate and create an animation sampler component using the given `skeleton_id` and `animation_id`.
+NIKOLA_API AnimationSampler* animation_sampler_create(const ResourceID& skeleton_id, const ResourceID& animation_id);
 
-/// Reclaim/decallocate the memory consumed by `animator`.
-NIKOLA_API void animator_destroy(Animator* animator);
+/// Reclaim/decallocate the memory consumed by `sampler`.
+NIKOLA_API void animation_sampler_destroy(AnimationSampler* sampler);
 
-/// Retrieve a reference of the internal `AnimatorInfo` of `animator`.
-NIKOLA_API AnimatorInfo& animator_get_info(Animator* animator);
+/// Retrieve a reference of the internal `AnimationSamplerInfo` of `sampler`.
+NIKOLA_API AnimationSamplerInfo& animation_sampler_get_info(AnimationSampler* sampler);
 
-/// Retrieve a reference of the calculated skinning palette of `animator`.
-NIKOLA_API const Array<Mat4, JOINTS_MAX>& animator_get_skinning_palette(const Animator* animator);
+/// Retrieve a reference of the calculated skinning palette of `sampler`.
+NIKOLA_API const Array<Mat4, JOINTS_MAX>& animation_sampler_get_skinning_palette(const AnimationSampler* sampler);
 
-/// Start the animation process of the given `animator`, using the given `dt` as 
-/// a delta time for progressing. The current animation of the given `animator` 
-/// will be chosen to be played. This can be changed from `AnimatorInfo.current_animation`.
-NIKOLA_API void animator_animate(Animator* animator, const f32 dt);
+/// Update the animation process of the given `sampler`, using the given `dt` as 
+/// a delta time for progressing. The current animation of the given `sampler` 
+/// will be chosen to be played. This can be changed from `AnimationSamplerInfo.current_animation`.
+NIKOLA_API void animation_sampler_update(AnimationSampler* sampler, const f32 dt);
 
 /// Start the blending process of the given `animator`, using the given `dt` as 
 /// a delta time for progressing. 
 ///
 /// The blending will be controlled by the `AnimatorInfo.blending_factor` value. 
 /// The animator will use the animations it was given on creation as the targets.
-NIKOLA_API void animator_blend(Animator* animator, const f32 dt);
+// NIKOLA_API void animator_blend(Animator* animator, const f32 dt);
 
-/// Reset the `animator` to its initial state.
-NIKOLA_API void animator_reset(Animator* animator);
-
-/// Animator functions
+/// AnimationSampler functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 /// *** Renderer ***

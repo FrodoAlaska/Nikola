@@ -10,7 +10,7 @@
         - [x] Add sampling and local-to-model jobs 
         - [x] Send the skinning matrices to the renderer
         - [] Add the ability to do blending 
-        - [] Inverse kinematics post-process 
+        - [] Have the ability to save the `Animator` component as a binary file
     - [] Test animations with multiple instances.
     - [] Documentation
 - [] Resources 

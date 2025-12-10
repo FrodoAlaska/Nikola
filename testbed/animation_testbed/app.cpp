@@ -23,7 +23,7 @@ struct nikola::App {
   nikola::ResourceID model;
   nikola::ResourceID skeleton, animations[ANIMATIONS_MAX];
   
-  nikola::Animator* animator;
+  nikola::AnimationSampler* animator;
   nikola::Transform transforms[3];
 };
 /// App
@@ -105,8 +105,8 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Resoruces init
   init_resources(app);
 
-  // Animators init
-  app->animator = nikola::animator_create(app->skeleton, app->animations, ANIMATIONS_MAX);
+  // Animation samplers init
+  app->animator = nikola::animation_sampler_create(app->skeleton, app->animations, ANIMATIONS_MAX);
 
   // Transform init
   
@@ -124,7 +124,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 }
 
 void app_shutdown(nikola::App* app) {
-  nikola::animator_destroy(app->animator);
+  nikola::animation_sampler_destroy(app->animator);
   nikola::resources_destroy_group(app->res_group_id);
   nikola::gui_shutdown();
 
@@ -149,25 +149,30 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
   // Reset 
 
   if(nikola::input_key_pressed(nikola::KEY_R)) {
-    nikola::animator_reset(app->animator);
+    nikola::animation_sampler_get_info(app->animator).current_time = 0.0f;
+  }
+  
+  // Idle
+
+  if(nikola::input_key_up(nikola::KEY_W)) {
+    nikola::animation_sampler_get_info(app->animator).current_animation = 0;
   }
 
   // Walk
 
   if(nikola::input_key_down(nikola::KEY_W)) {
-    nikola::AnimatorInfo& anim_info = nikola::animator_get_info(app->animator);
-    anim_info.current_animation     = 1;
+    nikola::animation_sampler_get_info(app->animator).current_animation = 1;
+    nikola::transform_translate(app->transforms[1], app->transforms[1].position + nikola::Vec3(0.0f, 0.0f, 5.0f * (nikola::f32)delta_time));
   }
 
   // Run 
 
   if(nikola::input_key_down(nikola::KEY_LEFT_SHIFT) && nikola::input_key_pressed(nikola::KEY_R)) {
-    nikola::AnimatorInfo& anim_info = nikola::animator_get_info(app->animator);
-    anim_info.current_animation     = 2;
+    nikola::animation_sampler_get_info(app->animator).current_animation = 2;
   }
 
   // Animator update
-  nikola::animator_animate(app->animator, (float)delta_time);
+  nikola::animation_sampler_update(app->animator, (float)delta_time);
 
   // Update the camera
   
@@ -210,7 +215,7 @@ void app_render_gui(nikola::App* app) {
     nikola::gui_edit_transform("Ground", &app->transforms[0]);
     nikola::gui_edit_transform("Model 1", &app->transforms[1]);
 
-    nikola::gui_edit_animator("Animator", app->animator);
+    nikola::gui_edit_animation_sampler("Animator", app->animator);
   }
 
   // Frame
