@@ -360,6 +360,66 @@ void animator_animate(Animator* animator, const f32 dt) {
   }
 }
 
+void animator_blend(Animator* animator, const f32 dt) {
+  NIKOLA_ASSERT(animator, "Invalid Animator given to animator_blend");
+
+  // Sorry. You're not animating, dude
+
+  if(!animator->info.is_animating) { 
+    return;
+  }
+
+  // Get the current animation
+  
+  Animation* animation            = animator->animations[animator->info.current_animation];
+  animator->info.current_duration = animation->handle->duration();  
+
+  // Looping is turned off and we're past the end so return...
+  // Otherwise, we can start the animation again. 
+
+  if(!animator->info.is_looping && animator->info.current_time > animator->info.current_duration) {
+    return;
+  }
+  else if(animator->info.current_time >= animator->info.current_duration) { 
+    animator->info.current_time = animator->info.start_point;
+  }
+
+  // Update the time 
+  animator->info.current_time += (dt * animator->info.play_speed) / animator->info.current_duration;
+
+  // Blending job
+  // @TODO
+
+  // Local to model job
+
+  ozz::animation::LocalToModelJob local_to_model_job;
+  local_to_model_job.skeleton = animator->skeleton->handle.get();
+  local_to_model_job.input    = make_span(animator->locals);
+  local_to_model_job.output   = make_span(animator->models);
+
+  if(!local_to_model_job.Run()) {
+    NIKOLA_LOG_DEBUG("Failed to run the local to model job for an animator");
+    return;
+  }
+
+  // Convert the newly calculated models into our engine format
+
+  for(sizei i = 0; i < animator->models.size(); i++) {
+    const ozz::math::Float4x4& ozz_mat = animator->models[i];
+
+    // Loading from SIMD registers into an array of floats
+
+    f32 raw_mat[16];
+    ozz::math::StorePtr(ozz_mat.cols[0], &raw_mat[0]);
+    ozz::math::StorePtr(ozz_mat.cols[1], &raw_mat[4]);
+    ozz::math::StorePtr(ozz_mat.cols[2], &raw_mat[8]);
+    ozz::math::StorePtr(ozz_mat.cols[3], &raw_mat[12]);
+    
+    // Set the skinning matrix
+    animator->skinning_palette[i] = mat4_make(raw_mat) * animator->skeleton->inverse_bind_matrices[i];
+  }
+}
+
 void animator_reset(Animator* animator) {
   NIKOLA_ASSERT(animator, "Invalid Animator given to animator_reset");
 

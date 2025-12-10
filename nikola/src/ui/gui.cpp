@@ -842,6 +842,7 @@ void gui_edit_animator(const char* name, Animator* animator) {
   ImGui::Text("Duration: %.3f", info.current_duration);
   ImGui::DragFloat("Start point", &info.start_point, s_gui.big_step, 0.0f, info.current_duration);
   ImGui::DragFloat("Current point", &info.current_time, 1.0f, info.start_point, info.current_duration);
+  ImGui::SliderFloat("Blending factor", &info.blending_factor, 0.0f, 1.0f);
   ImGui::SliderFloat("Playback speed", &info.play_speed, -1.0f, 1.0f);
 
   ImGui::Checkbox("Looping", &info.is_looping);

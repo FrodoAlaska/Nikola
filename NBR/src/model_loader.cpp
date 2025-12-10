@@ -11,17 +11,25 @@
 namespace nbr { // Start of nbr
 
 /// ----------------------------------------------------------------------
+/// NodeData
+struct NodeData {
+  nikola::String name; 
+  nikola::DynamicArray<aiMesh*> meshes;
+};
+/// NodeData
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// ObjData
 struct ObjData {
   nikola::DynamicArray<nikola::NBRMesh> meshes;
   nikola::DynamicArray<nikola::NBRMaterial> materials;
   nikola::DynamicArray<nikola::NBRTexture> textures;
 
+  nikola::DynamicArray<NodeData> nodes;
   nikola::HashMap<nikola::String, nikola::sizei> bone_map;
-  nikola::sizei bone_count = 0; 
 
   nikola::FilePath parent_dir;
-
   nikola::NBRTexture default_texture;
 };
 /// ObjData
@@ -33,43 +41,6 @@ struct ObjData {
 static bool is_valid_extension(const nikola::FilePath& ext) {
   return ext == ".gltf" || 
          ext == ".glb";
-}
-
-static void push_bone(ObjData* data, const aiScene* ai_scene, aiNode* node) {
-  // Add the bone to the map
-
-  nikola::String bone_name  = node->mName.C_Str();
-  data->bone_map[bone_name] = data->bone_map.size(); 
-
-  // Go through the children
-
-  for(nikola::u32 i = 0; i < node->mNumChildren; i++) {
-    push_bone(data, ai_scene, node->mChildren[i]);
-  }
-}
-
-static void load_bone_map(ObjData* data, const aiScene* ai_scene) {
-  /* @NOTE (3/12/2025, Mohamed):
-  *
-  * Unfortunately, Assimp has no way to refer to the root bone
-  * (not that I know of at least), and so I'm subjected to use some 
-  * very terrible methods. With all the animations that _I_ use, the 
-  * root joing is always called `_rootJoint`. Jusst like that. 
-  * Here, we search for that bone and then traverse its children, 
-  * adding them to the map one by one. 
-  *
-  * In the future, we'll use a specific format instead of a library that 
-  * tries (terribly) to generalize all formats. It's probably going to be 
-  * `cgltf`, since that's what we use for loading skeletons and animations.
-  */
-
-  aiBone* root_bone = ai_scene->findBone(aiString("_rootJoint"));
-  if(!root_bone) {
-    NIKOLA_LOG_DEBUG("The bone name \'_rootJoint\' is not the root. Ignore this message if this mesh is not animated.");
-    return;
-  }
-
-  push_bone(data, ai_scene, root_bone->mNode);
 }
 
 static void load_node_mesh(ObjData* data, aiMesh* mesh, nikola::NBRMesh* nbr_mesh) {
@@ -206,27 +177,85 @@ static void load_node_mesh(ObjData* data, aiMesh* mesh, nikola::NBRMesh* nbr_mes
   nikola::memory_copy(nbr_mesh->indices, indices.data(), bytes_size);
 }
 
-static void load_scene_meshes(const aiScene* scene, ObjData* data, aiNode* node) {
+static void load_nodes(const aiScene* scene, ObjData* data, aiNode* ai_node) {
+  data->nodes.push_back(NodeData{.name = ai_node->mName.C_Str()});
+
   // Starting at the root node, we will recursively go down 
-  // the scene tree and process each mesh to add it to the model. 
-  
-  for(nikola::sizei i = 0; i < node->mNumMeshes; i++) {
-    aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+  // the scene tree and queue up each mesh to add it to the model later. 
 
-    // Convert an `aiMesh` into our `NBRMesh`
-    
-    nikola::NBRMesh nbr_mesh; 
-    load_node_mesh(data, mesh, &nbr_mesh);
-
-    // Add the new mesh for later
-    data->meshes.push_back(nbr_mesh);
+  for(nikola::sizei i = 0; i < ai_node->mNumMeshes; i++) {
+    NodeData* node = &data->nodes[data->nodes.size() - 1];
+    node->meshes.push_back(scene->mMeshes[ai_node->mMeshes[i]]);
   }
 
-  // The given `node` will also have children of its own. Those 
+  // The given `ai_node` will also have children of its own. Those 
   // will need to be processed as well, obviously.
   
-  for(nikola::sizei i = 0; i < node->mNumChildren; i++) {
-    load_scene_meshes(scene, data, node->mChildren[i]);
+  for(nikola::sizei i = 0; i < ai_node->mNumChildren; i++) {
+    load_nodes(scene, data, ai_node->mChildren[i]);
+  }
+}
+
+static void push_bone(ObjData* data, const aiScene* ai_scene, aiNode* node) {
+  // Add the bone to the map
+
+  nikola::String bone_name  = node->mName.C_Str();
+  data->bone_map[bone_name] = data->bone_map.size(); 
+
+  // Go through the children
+
+  for(nikola::u32 i = 0; i < node->mNumChildren; i++) {
+    push_bone(data, ai_scene, node->mChildren[i]);
+  }
+}
+
+static void build_bone_hierarchy(ObjData* data, const aiScene* scene) {
+  /* @NOTE (10/12/2025, Mohamed):
+  *
+  * Unfortunately, Assimp has no way to refer to the root bone
+  * (not that I know of at least), and so I'm subjected to use some 
+  * very terrible methods. 
+  *
+  * We go through each of the nodes we have loaded and try to find 
+  * the first instance of a node with a bone. If so, that node is 
+  * the root bone. Otherwise, we keep going. If this mesh does 
+  * not include a skeleton (just a regular static mesh), then 
+  * we exit completely.
+  *
+  * In the future, we'll use a specific format instead of a library that 
+  * tries (terribly) to generalize all formats. It's probably going to be 
+  * `cgltf`, since that's what we use for loading skeletons and animations.
+  */
+
+  // Find the root bone
+
+  aiBone* root_bone = nullptr;
+  for(auto& node : data->nodes) {
+    root_bone = scene->findBone(aiString(node.name.c_str()));
+    if(root_bone) {
+      break;
+    }
+  }
+
+  if(!root_bone) { // No bones!
+    return;
+  }
+
+  // Start the traversal 
+  push_bone(data, scene, root_bone->mNode);
+}
+
+static void convert_meshes(ObjData* data) {
+  for(auto& node : data->nodes) {
+    for(auto& mesh : node.meshes) {
+      // Convert an `aiMesh` into our `NBRMesh`
+
+      nikola::NBRMesh nbr_mesh; 
+      load_node_mesh(data, mesh, &nbr_mesh);
+
+      // Add the new mesh for later
+      data->meshes.push_back(nbr_mesh);
+    }
   }
 }
 
@@ -242,12 +271,14 @@ static void load_material_texture(aiMaterial* material, aiTextureType type, ObjD
       continue;
     }
 
+    // Add the new texture for later
+
     data->textures.push_back(texture);
     *index += (nikola::i8)data->textures.size();
   }
 }
 
-static void load_scene_materials(const aiScene* scene, ObjData* data) {
+static void convert_materials(const aiScene* scene, ObjData* data) {
   data->materials.reserve(scene->mNumMaterials);
 
   // Go through each material in the scene 
@@ -335,19 +366,22 @@ bool model_loader_load(nikola::NBRModel* model, const nikola::FilePath& path) {
   ObjData data; 
   data.parent_dir = nikola::filepath_parent_path(path); // Usually, `path` will refer to the 3D model file directly so we need its immediate parent
 
-  // Load the bone map 
-  load_bone_map(&data, scene);
+  // Queue up all of the meshes that need to be converted
+  load_nodes(scene, &data, scene->mRootNode);
+
+  // Build up the bone hierarchy so that the meshes can refer to them 
+  build_bone_hierarchy(&data, scene);
 
   // Meshes init 
 
-  load_scene_meshes(scene, &data, scene->mRootNode);
+  convert_meshes(&data);
   model->meshes_count  = data.meshes.size();
   model->meshes        = (nikola::NBRMesh*)nikola::memory_allocate(sizeof(nikola::NBRMesh) * model->meshes_count);
   nikola::memory_copy(model->meshes, data.meshes.data(), data.meshes.size() * sizeof(nikola::NBRMesh));
 
   // Materials init
   
-  load_scene_materials(scene, &data);  
+  convert_materials(scene, &data);  
   model->materials_count = data.materials.size();
   model->materials       = (nikola::NBRMaterial*)nikola::memory_allocate(sizeof(nikola::NBRMaterial) * model->materials_count);
   nikola::memory_copy(model->materials, data.materials.data(), data.materials.size() * sizeof(nikola::NBRMaterial));

@@ -6,7 +6,7 @@
 /// ----------------------------------------------------------------------
 /// Consts
 
-const nikola::sizei ANIMATORS_MAX = 2;
+const nikola::sizei ANIMATIONS_MAX = 3;
 
 /// Consts
 /// ----------------------------------------------------------------------
@@ -21,7 +21,7 @@ struct nikola::App {
   nikola::ResourceID mesh_id, material_id;
 
   nikola::ResourceID model;
-  nikola::ResourceID animation, skeleton;
+  nikola::ResourceID skeleton, animations[ANIMATIONS_MAX];
   
   nikola::Animator* animator;
   nikola::Transform transforms[3];
@@ -44,13 +44,16 @@ static void init_resources(nikola::App* app) {
   app->mesh_id = nikola::resources_push_model(app->res_group_id, "models/medieval_bridge.nbr");
 
   // Models init
-  app->model = nikola::resources_push_model(app->res_group_id, "models/medieval_knight.nbr");
+  app->model = nikola::resources_push_model(app->res_group_id, "models/heraklios.nbr");
 
   // Skeletons init
-  app->skeleton = nikola::resources_push_skeleton(app->res_group_id, "rigs/medieval_knight.nbr");
+  app->skeleton = nikola::resources_push_skeleton(app->res_group_id, "rigs/heraklios.nbr");
 
   // Animations init
-  app->animation = nikola::resources_push_animation(app->res_group_id, "animations/medieval_knight.nbr");
+  
+  app->animations[0] = nikola::resources_push_animation(app->res_group_id, "animations/heraklios_idle.nbr");
+  app->animations[1] = nikola::resources_push_animation(app->res_group_id, "animations/heraklios_walk.nbr");
+  app->animations[2] = nikola::resources_push_animation(app->res_group_id, "animations/heraklios_run.nbr");
 
   // Materials init
   
@@ -103,7 +106,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   init_resources(app);
 
   // Animators init
-  app->animator = nikola::animator_create(app->skeleton, app->animation);
+  app->animator = nikola::animator_create(app->skeleton, app->animations, ANIMATIONS_MAX);
 
   // Transform init
   
@@ -112,7 +115,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::transform_scale(app->transforms[0], nikola::Vec3(10.0f));
   
   nikola::transform_translate(app->transforms[1], nikola::Vec3(10.0f, 11.0f, -21.4f));
-  nikola::transform_scale(app->transforms[1], nikola::Vec3(0.5f));
+  nikola::transform_scale(app->transforms[1], nikola::Vec3(50.0f));
   
   nikola::transform_translate(app->transforms[2], nikola::Vec3(30.0f, 11.0f, -21.4f));
   nikola::transform_scale(app->transforms[2], nikola::Vec3(0.5f));
@@ -141,6 +144,26 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
   if(nikola::input_key_pressed(nikola::KEY_F1)) {
     nikola::gui_toggle_active();
     app->frame_data.camera.is_active = !nikola::gui_is_active();
+  }
+
+  // Reset 
+
+  if(nikola::input_key_pressed(nikola::KEY_R)) {
+    nikola::animator_reset(app->animator);
+  }
+
+  // Walk
+
+  if(nikola::input_key_down(nikola::KEY_W)) {
+    nikola::AnimatorInfo& anim_info = nikola::animator_get_info(app->animator);
+    anim_info.current_animation     = 1;
+  }
+
+  // Run 
+
+  if(nikola::input_key_down(nikola::KEY_LEFT_SHIFT) && nikola::input_key_pressed(nikola::KEY_R)) {
+    nikola::AnimatorInfo& anim_info = nikola::animator_get_info(app->animator);
+    anim_info.current_animation     = 2;
   }
 
   // Animator update

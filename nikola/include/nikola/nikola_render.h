@@ -590,6 +590,13 @@ struct AnimatorInfo {
   /// This value can be negative to play the animation in reverse.
   f32 play_speed          = 1.0f;
 
+  /// The blending factor taken into account when 
+  /// adding one or more animations together. 
+  ///
+  /// @NOTE: This value will only be used when `animator_blend`
+  /// is called instead of `animator_animate`.
+  f32 blending_factor     = 0.0f;
+
   /// Determines whether the animation should loop or not.
   bool is_looping         = true;
 
@@ -1045,6 +1052,13 @@ NIKOLA_API const Array<Mat4, JOINTS_MAX>& animator_get_skinning_palette(const An
 /// a delta time for progressing. The current animation of the given `animator` 
 /// will be chosen to be played. This can be changed from `AnimatorInfo.current_animation`.
 NIKOLA_API void animator_animate(Animator* animator, const f32 dt);
+
+/// Start the blending process of the given `animator`, using the given `dt` as 
+/// a delta time for progressing. 
+///
+/// The blending will be controlled by the `AnimatorInfo.blending_factor` value. 
+/// The animator will use the animations it was given on creation as the targets.
+NIKOLA_API void animator_blend(Animator* animator, const f32 dt);
 
 /// Reset the `animator` to its initial state.
 NIKOLA_API void animator_reset(Animator* animator);
