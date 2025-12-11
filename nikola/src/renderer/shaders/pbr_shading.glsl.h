@@ -29,10 +29,6 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
       };
       
       layout(std430, binding = 4) readonly buffer AnimationBuffer {
-        // A 2D array of skinning matrices. 
-        // The X-axis represents the indivisual animation instance, 
-        // whereas the Y-axis represents the skinning matrices of that instance.
-
         mat4 u_skinning_palette[256][256]; // @TODO: Probably not the best count to have here
       };
 

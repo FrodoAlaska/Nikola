@@ -125,7 +125,18 @@ void shadow_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
   NIKOLA_PROFILE_FUNCTION();
 
   // Buffer bind points
+  
   gfx_buffer_bind_point(queue.transform_buffer, SHADER_MODELS_BUFFER_INDEX);
+  gfx_buffer_bind_point(queue.animation_buffer, SHADER_ANIMATION_BUFFER_INDEX);
+  
+  // Send over the animation remap table (if there are any)
+
+  if(!queue.animation_remap_table.empty()) {
+    shader_context_set_uniform_array(pass->shader_context, 
+                                     "u_animation_remap_table", 
+                                     queue.animation_remap_table.data(), 
+                                     queue.animation_remap_table.size());
+  }
 
   // Use the required resources
 

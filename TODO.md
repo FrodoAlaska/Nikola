@@ -1,17 +1,5 @@
 ## Update 0.4:
 
-- [] Animations 
-    - [x] Separate the animation into two components: `Skeleton` and `Animation` for both the NBR and the engine formats 
-    - [x] Import both the skeletons and animations from the NBR format
-    - [x] Load the engine formats from the NBR formats
-    - [x] Remember to delete both the skeleton and animations in the resource manager
-    - [x] Import the animations into OZZ runtime formats 
-    - [x] Animation logic
-        - [x] Add sampling and local-to-model jobs 
-        - [x] Send the skinning matrices to the renderer
-        - [x] Add the ability to do blending 
-    - [x] Test animations with multiple instances.
-    - [] Documentation
 - [] Resources 
     - [] Optimize resource loading 
         - [] Meshes/models: Use `cgltf` and `meshoptimizer` instead of bloated Assimp.
