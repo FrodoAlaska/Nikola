@@ -17,10 +17,13 @@ static void cache_uniform(ShaderContext* ctx, const String& name) {
   i32 location = gfx_shader_uniform_lookup(shader, name.c_str());
   
   // The uniform just does not exist in the shader at all 
+  
   if(location == -1) {
     NIKOLA_LOG_WARN("Could not find uniform \'%s\' in ShaderContext", name.c_str());
     return;
   }
+
+  // New uniform!
   
   ctx->uniforms_cache[name] = location; 
   NIKOLA_LOG_DEBUG("Cache uniform \'%s\' with location \'%i\' in ShaderContext...", name.c_str(), location);
@@ -30,12 +33,26 @@ static void check_and_send_uniform(ShaderContext* ctx, const String& name, GfxLa
   GfxShader* shader = ctx->shader; 
 
   // Send the uniform (only if it is valid)
+  
   if(ctx->uniforms_cache.find(name) != ctx->uniforms_cache.end()) {
     gfx_shader_upload_uniform(shader, ctx->uniforms_cache[name], type, data);
     return;
   }
   
-  // @TODO: Silent error??
+  // @TODO (ShaderContext): Silent error??
+}
+
+static void check_and_send_uniform_array(ShaderContext* ctx, const String& name, GfxLayoutType type, const void* data, const sizei count) {
+  GfxShader* shader = ctx->shader; 
+
+  // Send the uniform (only if it is valid)
+  
+  if(ctx->uniforms_cache.find(name) != ctx->uniforms_cache.end()) {
+    gfx_shader_upload_uniform_array(shader, ctx->uniforms_cache[name], type, data, count);
+    return;
+  }
+  
+  // @TODO (ShaderContext): Silent error??
 }
 
 /// Private functions
@@ -132,6 +149,20 @@ void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, 
   shader_context_set_uniform(ctx, (uniform_name + ".color"), value.color);
   shader_context_set_uniform(ctx, (uniform_name + ".radius"), (f32)nikola::cos(value.radius));
   shader_context_set_uniform(ctx, (uniform_name + ".outer_radius"), (f32)nikola::cos(value.outer_radius));
+}
+
+void shader_context_set_uniform_array(ShaderContext* ctx, const String& uniform_name, const i32* values, const sizei count) {
+  NIKOLA_ASSERT(ctx, "Invalid ShaderContext passed to shader_context_set_uniform_array");
+  NIKOLA_ASSERT(ctx->shader, "Invalid shader in ShaderContext passed to shader_context_set_uniform_array");
+
+  check_and_send_uniform_array(ctx, uniform_name, GFX_LAYOUT_INT1, values, count);
+}
+
+void shader_context_set_uniform_array(ShaderContext* ctx, const String& uniform_name, const f32* values, const sizei count) {
+  NIKOLA_ASSERT(ctx, "Invalid ShaderContext passed to shader_context_set_uniform_array");
+  NIKOLA_ASSERT(ctx->shader, "Invalid shader in ShaderContext passed to shader_context_set_uniform_array");
+  
+  check_and_send_uniform_array(ctx, uniform_name, GFX_LAYOUT_FLOAT1, values, count);
 }
 
 /// ShaderContext functions

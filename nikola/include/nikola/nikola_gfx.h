@@ -1479,7 +1479,7 @@ NIKOLA_API void gfx_shader_query(GfxShader* shader, GfxShaderQueryDesc* out_desc
 NIKOLA_API i32 gfx_shader_uniform_lookup(GfxShader* shader, const i8* uniform_name);
 
 /// Upload a uniform array with `count` elements of type `type` with `data` at `location` to `shader`. 
-NIKOLA_API void gfx_shader_upload_uniform_array(GfxShader* shader, const i32 location, const sizei count, const GfxLayoutType type, const void* data);
+NIKOLA_API void gfx_shader_upload_uniform_array(GfxShader* shader, const i32 location, const GfxLayoutType type, const void* data, const sizei count);
 
 /// Upload a uniform of type `type` with `data` at `location` to `shader`. 
 NIKOLA_API void gfx_shader_upload_uniform(GfxShader* shader, const i32 location, const GfxLayoutType type, const void* data);

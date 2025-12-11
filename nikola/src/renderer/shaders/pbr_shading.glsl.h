@@ -33,9 +33,10 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
         // The X-axis represents the indivisual animation instance, 
         // whereas the Y-axis represents the skinning matrices of that instance.
 
-        mat4 u_skinning_palette[1024][256]; // @TODO: Probably not the best count to have here
+        mat4 u_skinning_palette[256][256]; // @TODO: Probably not the best count to have here
       };
 
+      uniform int u_animation_remap_table[256]; 
       uniform mat4 u_light_space;
   
       // Outputs
@@ -57,29 +58,28 @@ inline nikola::GfxShaderDesc generate_pbr_shader() {
 
       // Utility functions 
      
-      vec4 animate_vertex() {
+      vec4 animate_vertex(const int index) {
         vec4 result = vec4(0.0, 0.0, 0.0, 1.0);
-    
-        // @NOTE: We can probably use a for loop here, but I hate 
-        // loops in any shader. So, yeah. This looks fine...
 
-        result += u_skinning_palette[gl_InstanceID][int(aJointId[0])] * vec4(aPos, 1.0) * aJointWeight[0];
-        result += u_skinning_palette[gl_InstanceID][int(aJointId[1])] * vec4(aPos, 1.0) * aJointWeight[1];
-        result += u_skinning_palette[gl_InstanceID][int(aJointId[2])] * vec4(aPos, 1.0) * aJointWeight[2];
-        result += u_skinning_palette[gl_InstanceID][int(aJointId[3])] * vec4(aPos, 1.0) * aJointWeight[3];
+        result += u_skinning_palette[index][int(aJointId[0])] * vec4(aPos, 1.0) * aJointWeight[0];
+        result += u_skinning_palette[index][int(aJointId[1])] * vec4(aPos, 1.0) * aJointWeight[1];
+        result += u_skinning_palette[index][int(aJointId[2])] * vec4(aPos, 1.0) * aJointWeight[2];
+        result += u_skinning_palette[index][int(aJointId[3])] * vec4(aPos, 1.0) * aJointWeight[3];
 
         return result;
       }
 
       void main() {
+        // The correct index of this vertex
+        int index = gl_BaseInstance + gl_InstanceID;
+        
         // Animate the vertex if that's possible
 
         vec4 vertex_pos = vec4(aPos, 1.0);
-        if(aJointId[0] != -2.0) { // -2.0 is a special value to indicate that a mesh is not animated. Check `model_loader.cpp` for more information.
-          vertex_pos = animate_vertex();
+        if(aJointId[0] != -2.0) { // -2.0 is just a simple value to indicate a static mesh
+          vertex_pos = animate_vertex(u_animation_remap_table[index]);
         }
 
-        int index        = gl_BaseInstance + gl_InstanceID;
         vec4 model_space = u_model[index] * vertex_pos;
 
         //

@@ -545,6 +545,7 @@ void renderer_begin(FrameData& data) {
     entry->transforms.clear();
     entry->materials.clear();
     entry->animations.clear();
+    entry->animation_remap_table.clear();
     entry->commands.clear();
   }
 }
@@ -900,14 +901,13 @@ void renderer_queue_animation_instanced(const ResourceID& model_id,
   renderer_queue_model_instanced(model_id, transforms, count, mat_id);
 
   // Queue the animation 
-  // @TODO (Renderer)
 
-  // for(sizei i = 0; i < count; i++) {
-  //   Animation* animation    = resources_get_animation(animators[i].animation_id);
-  //   RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
-  //
-  //   entry->animations.emplace_back(animation->skinning_palette);
-  // }
+  RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
+  entry->animation_remap_table.emplace_back((i32)entry->animations.size());
+
+  for(sizei i = 0; i < count; i++) {
+    entry->animations.emplace_back(animation_sampler_get_skinning_palette(samplers[i]));
+  }
 }
 
 void renderer_queue_animation_instanced(const ResourceID& model_id,
@@ -919,14 +919,14 @@ void renderer_queue_animation_instanced(const ResourceID& model_id,
   renderer_queue_model_instanced(model_id, transforms, count, mat_id);
 
   // Queue the animation 
-  // @TODO (Renderer)
 
-  // for(sizei i = 0; i < count; i++) {
-  //   Animation* animation    = resources_get_animation(animators[i].animation_id);
-  //   RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
-  //
-  //   entry->animations.emplace_back(animation->skinning_palette);
-  // }
+  RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
+  entry->animation_remap_table.emplace_back((i32)entry->animations.size());
+
+  for(sizei i = 0; i < count; i++) {
+    RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
+    entry->animations.emplace_back(animation_blender_get_skinning_palette(blenders[i]));
+  }
 }
 
 void renderer_queue_mesh(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id) {
@@ -972,12 +972,15 @@ void renderer_queue_animation(const ResourceID& model_id,
                               const Transform& transform, 
                               const AnimationSampler* sampler,
                               const ResourceID& mat_id) {
+  RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
+  
   // Queue the skinned model first
   renderer_queue_model(model_id, transform, mat_id);
 
-  // Queue the animation
+  // Add the remap index
+  entry->animation_remap_table.emplace_back((i32)entry->animations.size());
 
-  RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
+  // Queue the animation
   entry->animations.emplace_back(animation_sampler_get_skinning_palette(sampler));
 }
 
@@ -985,12 +988,15 @@ void renderer_queue_animation(const ResourceID& model_id,
                               const Transform& transform, 
                               const AnimationBlender* blender,
                               const ResourceID& mat_id) {
+  RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
+  
   // Queue the skinned model first
   renderer_queue_model(model_id, transform, mat_id);
 
-  // Queue the animation
+  // Add the remap index
+  entry->animation_remap_table.emplace_back((i32)entry->animations.size());
 
-  RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
+  // Queue the animation
   entry->animations.emplace_back(animation_blender_get_skinning_palette(blender));
 }
 

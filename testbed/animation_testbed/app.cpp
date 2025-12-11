@@ -25,8 +25,9 @@ struct nikola::App {
   
   nikola::AnimationSampler* animator;
   nikola::AnimationBlender* blender;
+  nikola::AnimationBlender* blender2;
 
-  nikola::Transform transforms[3];
+  nikola::Transform transforms[4];
 };
 /// App
 /// ----------------------------------------------------------------------
@@ -114,7 +115,10 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   app->blender = nikola::animation_blender_create(app->skeleton);
   nikola::animation_blender_push_animation(app->blender, app->animations[0]);
   nikola::animation_blender_push_animation(app->blender, app->animations[1]);
-  // nikola::animation_blender_push_animation(app->blender, app->animations[2]);
+  
+  app->blender2 = nikola::animation_blender_create(app->skeleton);
+  nikola::animation_blender_push_animation(app->blender2, app->animations[0]);
+  nikola::animation_blender_push_animation(app->blender2, app->animations[2]);
 
   // Transform init
   
@@ -126,7 +130,10 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::transform_scale(app->transforms[1], nikola::Vec3(50.0f));
   
   nikola::transform_translate(app->transforms[2], nikola::Vec3(30.0f, 11.0f, -21.4f));
-  nikola::transform_scale(app->transforms[2], nikola::Vec3(0.5f));
+  nikola::transform_scale(app->transforms[2], nikola::Vec3(50.0f));
+  
+  nikola::transform_translate(app->transforms[3], nikola::Vec3(15.0f, 11.0f, -30.4f));
+  nikola::transform_scale(app->transforms[3], nikola::Vec3(50.0f));
 
   return app;
 }
@@ -134,6 +141,8 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 void app_shutdown(nikola::App* app) {
   nikola::animation_sampler_destroy(app->animator);
   nikola::animation_blender_destroy(app->blender);
+  nikola::animation_blender_destroy(app->blender2);
+
   nikola::resources_destroy_group(app->res_group_id);
   nikola::gui_shutdown();
 
@@ -180,8 +189,11 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     nikola::animation_sampler_get_info(app->animator).current_animation = 2;
   }
 
-  // Animator update
+  // Animators update
+ 
+  nikola::animation_sampler_update(app->animator, (float)delta_time);
   nikola::animation_blender_update(app->blender, (float)delta_time);
+  nikola::animation_blender_update(app->blender2, (float)delta_time);
 
   // Update the camera
   
@@ -196,7 +208,11 @@ void app_render(nikola::App* app) {
   // Render the objects
   
   nikola::renderer_queue_model(app->mesh_id, app->transforms[0], app->material_id);
-  nikola::renderer_queue_animation(app->model, app->transforms[1], app->blender);
+
+  const nikola::AnimationBlender* blenders[] = {app->blender, app->blender2};
+  nikola::renderer_queue_animation_instanced(app->model, &app->transforms[1], &blenders[0], 2);
+  
+  nikola::renderer_queue_animation(app->model, app->transforms[3], app->animator);
 
   nikola::renderer_end();
   
@@ -223,9 +239,12 @@ void app_render_gui(nikola::App* app) {
   if(ImGui::CollapsingHeader("Entities")) {
     nikola::gui_edit_transform("Ground", &app->transforms[0]);
     nikola::gui_edit_transform("Model 1", &app->transforms[1]);
+    nikola::gui_edit_transform("Model 2", &app->transforms[2]);
+    nikola::gui_edit_transform("Model 3", &app->transforms[3]);
 
     nikola::gui_edit_animation_sampler("Animation sampler", app->animator);
-    nikola::gui_edit_animation_blender("Animation blender", app->blender);
+    nikola::gui_edit_animation_blender("Animation blender 1", app->blender);
+    nikola::gui_edit_animation_blender("Animation blender 2", app->blender2);
   }
 
   // Frame

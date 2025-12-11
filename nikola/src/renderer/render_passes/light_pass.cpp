@@ -154,6 +154,8 @@ void light_pass_prepare(RenderPass* pass, const FrameData& data) {
                          sizeof(LightBuffer), 
                          &light_buffer); 
 
+
+  // Update the skybox to render later
   s_state.skybox_id = data.skybox_id;
 }
 
@@ -165,6 +167,15 @@ void light_pass_sumbit(RenderPass* pass, const RenderQueueEntry& queue) {
   gfx_buffer_bind_point(queue.transform_buffer, SHADER_MODELS_BUFFER_INDEX);
   gfx_buffer_bind_point(queue.material_buffer, SHADER_MATERIALS_BUFFER_INDEX);
   gfx_buffer_bind_point(queue.animation_buffer, SHADER_ANIMATION_BUFFER_INDEX);
+  
+  // Send over the animation remap table (if there are any)
+
+  if(!queue.animation_remap_table.empty()) {
+    shader_context_set_uniform_array(pass->shader_context, 
+                                     "u_animation_remap_table", 
+                                     queue.animation_remap_table.data(), 
+                                     queue.animation_remap_table.size());
+  }
 
   // Render the skybox
 

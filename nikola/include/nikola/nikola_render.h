@@ -183,6 +183,7 @@ struct RenderQueueEntry {
   DynamicArray<Mat4> transforms; 
   DynamicArray<MaterialInterface> materials;
   DynamicArray<Array<Mat4, JOINTS_MAX>> animations;
+  DynamicArray<i32> animation_remap_table;
   DynamicArray<GfxDrawCommandIndirect> commands; 
 
   /// Pipeline
@@ -1038,6 +1039,12 @@ NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uni
 
 /// Set a uniform of type `SpotLight` with the name `uniform_name` in `ctx` to the given `value`. 
 NIKOLA_API void shader_context_set_uniform(ShaderContext* ctx, const String& uniform_name, const SpotLight& value);
+
+/// Set an array uniforms of type `i32` with the name `uniform_name` in `ctx` to the given `values` with `count` elements. 
+NIKOLA_API void shader_context_set_uniform_array(ShaderContext* ctx, const String& uniform_name, const i32* values, const sizei count);
+
+/// Set an array uniforms of type `f32` with the name `uniform_name` in `ctx` to the given `values` with `count` elements. 
+NIKOLA_API void shader_context_set_uniform_array(ShaderContext* ctx, const String& uniform_name, const f32* values, const sizei count);
 
 /// ShaderContext functions
 ///---------------------------------------------------------------------------------------------------------------------

@@ -10,7 +10,7 @@
         - [x] Add sampling and local-to-model jobs 
         - [x] Send the skinning matrices to the renderer
         - [x] Add the ability to do blending 
-    - [] Test animations with multiple instances.
+    - [x] Test animations with multiple instances.
     - [] Documentation
 - [] Resources 
     - [] Optimize resource loading 
@@ -41,6 +41,9 @@
     - [] GPU-based particle system, using compute shaders.
     - [] Have a lot of options to edit the shape, distribution, and gravity. Perhaps save it in a file?
     - [] Documentation
+- [] Animation 3.0
+    - [] Add inverse kinematics 
+    - [] User channels/tracking jobs? 
 - [] Scenes?
 - [] Renderer: Extra primitives 
     - [] More shapes like planes, capsules, and so on.

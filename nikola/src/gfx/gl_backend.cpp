@@ -1964,7 +1964,7 @@ i32 gfx_shader_uniform_lookup(GfxShader* shader, const i8* uniform_name) {
   return glGetUniformLocation(shader->id, uniform_name);
 }
 
-void gfx_shader_upload_uniform_array(GfxShader* shader, const i32 location, const sizei count, const GfxLayoutType type, const void* data) {
+void gfx_shader_upload_uniform_array(GfxShader* shader, const i32 location, const GfxLayoutType type, const void* data, const sizei count) {
   NIKOLA_ASSERT(shader, "Invalid GfxShader struct passed");
 
   // Will not do anything with an invalid uniform
@@ -2028,7 +2028,7 @@ void gfx_shader_upload_uniform_array(GfxShader* shader, const i32 location, cons
 }
 
 void gfx_shader_upload_uniform(GfxShader* shader, const i32 location, const GfxLayoutType type, const void* data) {
-  gfx_shader_upload_uniform_array(shader, location, 1, type, data);
+  gfx_shader_upload_uniform_array(shader, location, type, data, 1);
 }
 
 /// Shader functions 
