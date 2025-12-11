@@ -1,5 +1,6 @@
 #include "nikola/nikola_render.h"
 #include "nikola/nikola_input.h"
+#include "nikola/nikola_math.h"
 
 #include <ozz/animation/offline/raw_skeleton.h>
 #include <ozz/animation/offline/raw_animation.h>
@@ -63,8 +64,10 @@ struct AnimationBlender {
     ozz::animation::SamplingJob::Context context;
     ozz::vector<ozz::math::SoaTransform> locals;
 
-    f32 time   = 0.0f;
-    f32 weight = 0.0f;
+    f32 time     = 0.0f;
+    f32 duration = 0.0f; 
+    f32 weight   = 0.0f;
+    f32 speed    = 1.0f;
   };
 
   Skeleton* skeleton = nullptr;
@@ -121,6 +124,44 @@ static void traverse_joints(Skeleton* skeleton,
   joint->children.resize(nbr_joint.children_count);
   for(sizei i = 0; i < joint->children.size(); i++) {
     traverse_joints(skeleton, &joint->children[i], nbr_skele, nbr_skele.joints[nbr_joint.children[i]]);
+  }
+}
+
+static void update_blend_weights(AnimationBlender* blender) {
+  /// @NOTE (11/12/2025, Mohamed):
+  ///
+  /// This code is taken from OZZ's blending sample with a few changes. 
+  /// You can see the full code here: https://github.com/guillaumeblanc/ozz-animation/blob/master/samples/blend/sample_blend.cc
+  ///
+
+  // Compute the weight for all blends
+
+  sizei intervals_count = blender->blends_count - 1;
+  f32 interval          = 1.0f / intervals_count;
+
+  for(sizei i = 0; i < blender->blends_count; i++) {
+    f32 med = i * interval;
+    f32 x   = blender->info.blending_ratio - med;
+    f32 y   = ((x < 0.0f ? x : -x) + interval) * intervals_count;
+
+    blender->blends[i].weight = max_float(0.0f, y);
+  }
+
+  // Select the 2 blends that are in the range of blend ratio
+
+  f32 clamped_ratio = clamp_float(blender->info.blending_ratio, 0.0f, 0.999f);
+  sizei lower       = (sizei)(clamped_ratio * (blender->blends_count - 1));
+
+  AnimationBlender::BlendSample& blend_l = blender->blends[lower];
+  AnimationBlender::BlendSample& blend_r = blender->blends[lower + 1];
+
+  f32 duration = (blend_l.duration * blend_l.weight) + (blend_r.duration * blend_r.weight); 
+
+  // Find the speed coefficient for all blends
+
+  f32 inv_duration = 1.0f / duration;
+  for(sizei i = 0; i < blender->blends_count; i++) {
+    blender->blends[i].speed = blender->blends[i].duration * inv_duration;
   }
 }
 
@@ -423,7 +464,7 @@ void animation_blender_destroy(AnimationBlender* blender) {
   delete blender;
 }
 
-void animation_blender_push_animation(AnimationBlender* blender, const ResourceID& animation_id, const f32 weight) {
+void animation_blender_push_animation(AnimationBlender* blender, const ResourceID& animation_id) {
   NIKOLA_ASSERT(blender, "Invalid AnimationBlender given to animation_blender_push_animation");
 
   // Init the blend sample
@@ -431,7 +472,7 @@ void animation_blender_push_animation(AnimationBlender* blender, const ResourceI
   AnimationBlender::BlendSample* sample = &blender->blends[blender->blends_count];
 
   sample->animation = resources_get_animation(animation_id);
-  sample->weight    = weight;
+  sample->duration  = sample->animation->handle->duration();
 
   sample->locals.resize(blender->skeleton->handle->num_soa_joints());
   sample->context.Resize(blender->skeleton->handle->num_joints());
@@ -470,32 +511,40 @@ void animation_blender_update(AnimationBlender* blender, const f32 dt) {
     return;
   }
 
+  // Update each blend's weight before animating
+  update_blend_weights(blender);
+
   // Sampling jobs
 
   for(sizei i = 0; i < blender->blends_count; i++) {
-    AnimationBlender::BlendSample* blend = &blender->blends[i];
-    f32 animation_duration               = blend->animation->handle->duration(); 
+    AnimationBlender::BlendSample& blend = blender->blends[i];
 
     // Looping is turned off and we're past the end so continue...
     // Otherwise, we can start the animation again. 
 
-    if(!blender->info.is_looping && blend->time > animation_duration) {
+    if(!blender->info.is_looping && blend.time > blend.duration) {
       continue;
     }
-    else if(blend->time > animation_duration) { 
-      blend->time = 0.0f;
+    else if(blend.time > blend.duration) { 
+      blend.time = 0.0f;
     }
 
     // Update the time 
-    blend->time += (dt * blender->info.play_speed) / animation_duration;
+    blend.time += (dt * blend.speed) / blend.duration;
+
+    // The weight is too small to be considered in the blend... skip
+
+    if(blend.weight <= 0.0f) {
+      continue;
+    }
 
     // Initiate the job
 
     ozz::animation::SamplingJob sample_job;
-    sample_job.animation = blend->animation->handle.get();
-    sample_job.context   = &blend->context;
-    sample_job.ratio     = blend->time;
-    sample_job.output    = make_span(blend->locals);
+    sample_job.animation = blend.animation->handle.get();
+    sample_job.context   = &blend.context;
+    sample_job.ratio     = blend.time;
+    sample_job.output    = make_span(blend.locals);
 
     if(!sample_job.Run()) {
       NIKOLA_LOG_DEBUG("Failed to run the sampling job for a blend at index \'%zu\'", i);
@@ -506,11 +555,11 @@ void animation_blender_update(AnimationBlender* blender, const f32 dt) {
   // Setup the blending layers
 
   for(sizei i = 0; i < blender->blends_count; i++) {
-    AnimationBlender::BlendSample* blend      = &blender->blends[i];
-    ozz::animation::BlendingJob::Layer* layer = &blender->blend_layers[i];
+    AnimationBlender::BlendSample& blend      = blender->blends[i];
+    ozz::animation::BlendingJob::Layer& layer = blender->blend_layers[i];
 
-    layer->transform = make_span(blend->locals);
-    layer->weight    = blend->weight;
+    layer.transform = make_span(blend.locals);
+    layer.weight    = blend.weight;
   }
   
   // Blending job 

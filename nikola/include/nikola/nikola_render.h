@@ -603,16 +603,19 @@ struct AnimationSamplerInfo {
 ///---------------------------------------------------------------------------------------------------------------------
 /// AnimationBlenderInfo
 struct AnimationBlenderInfo {
-  /// The playback speed of the animation in real-time. 
-  /// This value can be negative to play the animation in reverse.
-  f32 play_speed          = 1.0f;
-
   /// The animation blender will choose the bind pose 
   /// when the accumulated weights of all the blend layers 
   /// is less than this value. 
   ///
   /// @NOTE: This value MUST be greater than `0.0f`.
   f32 blending_threshold  = 0.1f;
+
+  /// This value dictates which blend will be 
+  /// the more dominant. It will control the weight 
+  /// of each blend every loop. The higher the 
+  /// value, the more dominant the last blend will be.
+  /// And vice versa.
+  f32 blending_ratio      = 1.0f;
 
   /// Determines whether the animation should loop or not.
   bool is_looping         = true;
@@ -1104,12 +1107,10 @@ NIKOLA_API AnimationBlender* animation_blender_create(const ResourceID& skeleton
 NIKOLA_API void animation_blender_destroy(AnimationBlender* blender);
 
 /// Push a new animation using the `animation_id` into the given `blender` to be considered in the blending process, 
-/// with the given `weight` which indicates how "poweful" this animation is in the blending graph. The higher the `weight`
-/// value is the more likely will it dominate the blending process.
 ///
 /// @NOTE: Currently, the blending process only supports up to `ANIMATION_BLENDS_MAX`. Therefore, this function will 
 /// assert if more than `ANIMATION_BLENDS_MAX` are inserted into the blend.
-NIKOLA_API void animation_blender_push_animation(AnimationBlender* blender, const ResourceID& animation_id, const f32 weight);
+NIKOLA_API void animation_blender_push_animation(AnimationBlender* blender, const ResourceID& animation_id);
 
 /// Set the weight of an animation blend at `anim_index` in the given `blender` to `weight`. 
 NIKOLA_API void animation_blender_set_animation_weight(AnimationBlender* blender, const sizei anim_index, const f32 weight);

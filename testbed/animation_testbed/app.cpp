@@ -112,9 +112,9 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   app->animator = nikola::animation_sampler_create(app->skeleton, app->animations, ANIMATIONS_MAX);
 
   app->blender = nikola::animation_blender_create(app->skeleton);
-  nikola::animation_blender_push_animation(app->blender, app->animations[0], 0.7f);
-  nikola::animation_blender_push_animation(app->blender, app->animations[1], 0.6f);
-  // nikola::animation_blender_push_animation(app->blender, app->animations[2], 0.3f);
+  nikola::animation_blender_push_animation(app->blender, app->animations[0]);
+  nikola::animation_blender_push_animation(app->blender, app->animations[1]);
+  // nikola::animation_blender_push_animation(app->blender, app->animations[2]);
 
   // Transform init
   
@@ -224,7 +224,8 @@ void app_render_gui(nikola::App* app) {
     nikola::gui_edit_transform("Ground", &app->transforms[0]);
     nikola::gui_edit_transform("Model 1", &app->transforms[1]);
 
-    nikola::gui_edit_animation_sampler("Animator", app->animator);
+    nikola::gui_edit_animation_sampler("Animation sampler", app->animator);
+    nikola::gui_edit_animation_blender("Animation blender", app->blender);
   }
 
   // Frame
