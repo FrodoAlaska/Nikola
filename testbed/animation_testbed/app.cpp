@@ -24,6 +24,8 @@ struct nikola::App {
   nikola::ResourceID skeleton, animations[ANIMATIONS_MAX];
   
   nikola::AnimationSampler* animator;
+  nikola::AnimationBlender* blender;
+
   nikola::Transform transforms[3];
 };
 /// App
@@ -105,8 +107,14 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Resoruces init
   init_resources(app);
 
-  // Animation samplers init
+  // Animation components init
+  
   app->animator = nikola::animation_sampler_create(app->skeleton, app->animations, ANIMATIONS_MAX);
+
+  app->blender = nikola::animation_blender_create(app->skeleton);
+  nikola::animation_blender_push_animation(app->blender, app->animations[0], 0.7f);
+  nikola::animation_blender_push_animation(app->blender, app->animations[1], 0.6f);
+  // nikola::animation_blender_push_animation(app->blender, app->animations[2], 0.3f);
 
   // Transform init
   
@@ -125,6 +133,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
 void app_shutdown(nikola::App* app) {
   nikola::animation_sampler_destroy(app->animator);
+  nikola::animation_blender_destroy(app->blender);
   nikola::resources_destroy_group(app->res_group_id);
   nikola::gui_shutdown();
 
@@ -172,7 +181,7 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
   }
 
   // Animator update
-  nikola::animation_sampler_update(app->animator, (float)delta_time);
+  nikola::animation_blender_update(app->blender, (float)delta_time);
 
   // Update the camera
   
@@ -187,7 +196,7 @@ void app_render(nikola::App* app) {
   // Render the objects
   
   nikola::renderer_queue_model(app->mesh_id, app->transforms[0], app->material_id);
-  nikola::renderer_queue_animation(app->model, app->transforms[1], app->animator);
+  nikola::renderer_queue_animation(app->model, app->transforms[1], app->blender);
 
   nikola::renderer_end();
   

@@ -910,6 +910,25 @@ void renderer_queue_animation_instanced(const ResourceID& model_id,
   // }
 }
 
+void renderer_queue_animation_instanced(const ResourceID& model_id,
+                                        const Transform* transforms, 
+                                        const AnimationBlender** blenders,
+                                        const sizei count, 
+                                        const ResourceID& mat_id) {
+  // Queue the skinned model first
+  renderer_queue_model_instanced(model_id, transforms, count, mat_id);
+
+  // Queue the animation 
+  // @TODO (Renderer)
+
+  // for(sizei i = 0; i < count; i++) {
+  //   Animation* animation    = resources_get_animation(animators[i].animation_id);
+  //   RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
+  //
+  //   entry->animations.emplace_back(animation->skinning_palette);
+  // }
+}
+
 void renderer_queue_mesh(const ResourceID& res_id, const Transform& transform, const ResourceID& mat_id) {
   // Retrieving the necessary resources
 
@@ -960,6 +979,19 @@ void renderer_queue_animation(const ResourceID& model_id,
 
   RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
   entry->animations.emplace_back(animation_sampler_get_skinning_palette(sampler));
+}
+
+void renderer_queue_animation(const ResourceID& model_id,
+                              const Transform& transform, 
+                              const AnimationBlender* blender,
+                              const ResourceID& mat_id) {
+  // Queue the skinned model first
+  renderer_queue_model(model_id, transform, mat_id);
+
+  // Queue the animation
+
+  RenderQueueEntry* entry = &s_renderer.queues[RENDER_QUEUE_OPAQUE];
+  entry->animations.emplace_back(animation_blender_get_skinning_palette(blender));
 }
 
 void renderer_queue_particles(const ParticleEmitter& emitter) {

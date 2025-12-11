@@ -626,6 +626,9 @@ NIKOLA_API void gui_edit_particle_emitter(const char* name, ParticleEmitter* emi
 /// Add an animation sampler section identified by `name` to edit the given `sampler`.
 NIKOLA_API void gui_edit_animation_sampler(const char* name, AnimationSampler* sampler);
 
+/// Add an animation blender section identified by `name` to edit the given `blender`.
+NIKOLA_API void gui_edit_animation_blender(const char* name, AnimationBlender* blender);
+
 /// GUI functions
 ///---------------------------------------------------------------------------------------------------------------------
 

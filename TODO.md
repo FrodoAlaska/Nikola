@@ -6,11 +6,10 @@
     - [x] Load the engine formats from the NBR formats
     - [x] Remember to delete both the skeleton and animations in the resource manager
     - [x] Import the animations into OZZ runtime formats 
-    - [] Animation logic
+    - [x] Animation logic
         - [x] Add sampling and local-to-model jobs 
         - [x] Send the skinning matrices to the renderer
-        - [] Add the ability to do blending 
-        - [] Have the ability to save the `Animator` component as a binary file
+        - [x] Add the ability to do blending 
     - [] Test animations with multiple instances.
     - [] Documentation
 - [] Resources 

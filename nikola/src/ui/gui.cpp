@@ -851,6 +851,21 @@ void gui_edit_animation_sampler(const char* name, AnimationSampler* sampler) {
   ImGui::PopID(); 
 }
 
+void gui_edit_animation_blender(const char* name, AnimationBlender* blender) {
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+
+  AnimationBlenderInfo& info = animation_blender_get_info(blender);
+
+  ImGui::SliderFloat("Playback speed", &info.play_speed, -1.0f, 1.0f);
+  ImGui::SliderFloat("Blending threshold", &info.blending_threshold, 0.01f, 1.0f);
+
+  ImGui::Checkbox("Looping", &info.is_looping);
+  ImGui::Checkbox("Playing", &info.is_animating);
+  
+  ImGui::PopID(); 
+}
+
 /// Editor functions
 ///---------------------------------------------------------------------------------------------------------------------
 

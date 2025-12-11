@@ -10,6 +10,7 @@
 #include <ozz/animation/runtime/skeleton.h>
 #include <ozz/animation/runtime/local_to_model_job.h>
 #include <ozz/animation/runtime/sampling_job.h>
+#include <ozz/animation/runtime/blending_job.h>
 
 #include <ozz/base/maths/transform.h>
 #include <ozz/base/maths/simd_math.h>
@@ -45,14 +46,40 @@ struct AnimationSampler {
 
   ozz::animation::SamplingJob::Context context;
   ozz::vector<ozz::math::SoaTransform> locals;
-
   ozz::vector<ozz::math::Float4x4> models;
+  
   Array<Mat4, JOINTS_MAX> skinning_palette;
-
   AnimationSamplerInfo info;
 };
 /// AnimationSampler
 ///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// AnimationBlender
+struct AnimationBlender {
+  struct BlendSample {
+    Animation* animation = nullptr; 
+
+    ozz::animation::SamplingJob::Context context;
+    ozz::vector<ozz::math::SoaTransform> locals;
+
+    f32 time   = 0.0f;
+    f32 weight = 0.0f;
+  };
+
+  Skeleton* skeleton = nullptr;
+
+  sizei blends_count = 0;
+  BlendSample blends[ANIMATION_BLENDS_MAX]; 
+  ozz::vector<ozz::animation::BlendingJob::Layer> blend_layers;
+
+  ozz::vector<ozz::math::SoaTransform> locals;
+  ozz::vector<ozz::math::Float4x4> models;
+
+  Array<Mat4, JOINTS_MAX> skinning_palette;
+  AnimationBlenderInfo info;
+};
+/// AnimationBlender ---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// Private functions
@@ -359,6 +386,177 @@ void animation_sampler_update(AnimationSampler* sampler, const f32 dt) {
 }
 
 /// AnimatorSampler functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// AnimationBlender functions
+
+AnimationBlender* animation_blender_create(const ResourceID& skeleton_id) {
+  AnimationBlender* blender = new AnimationBlender{};
+ 
+  // Retrieving the skeleton
+  blender->skeleton = resources_get_skeleton(skeleton_id);
+  
+  // Resizing arrays for performance reasons
+
+  blender->locals.resize(blender->skeleton->handle->num_soa_joints());
+  blender->models.resize(blender->skeleton->handle->num_joints());
+
+  return blender;
+}
+
+void animation_blender_destroy(AnimationBlender* blender) {
+  if(!blender) {
+    return;
+  }
+
+  for(auto& blend : blender->blends) {
+    blend.animation = nullptr;
+
+    blend.context.Invalidate(); 
+    blend.locals.clear();
+  } 
+
+  blender->locals.clear();
+  blender->models.clear();
+
+  delete blender;
+}
+
+void animation_blender_push_animation(AnimationBlender* blender, const ResourceID& animation_id, const f32 weight) {
+  NIKOLA_ASSERT(blender, "Invalid AnimationBlender given to animation_blender_push_animation");
+
+  // Init the blend sample
+
+  AnimationBlender::BlendSample* sample = &blender->blends[blender->blends_count];
+
+  sample->animation = resources_get_animation(animation_id);
+  sample->weight    = weight;
+
+  sample->locals.resize(blender->skeleton->handle->num_soa_joints());
+  sample->context.Resize(blender->skeleton->handle->num_joints());
+
+  // Add a new layer for later
+  blender->blend_layers.push_back(ozz::animation::BlendingJob::Layer{});
+
+  // New blend!
+  blender->blends_count++;
+}
+
+void animation_blender_set_animation_weight(AnimationBlender* blender, const sizei anim_index, const f32 weight) {
+  NIKOLA_ASSERT(blender, "Invalid AnimationBlender given to animation_blender_set_animation_weight");
+  NIKOLA_ASSERT((anim_index >= 0 && anim_index < ANIMATION_BLENDS_MAX), 
+                "Invalid AnimationBlender given to animation_blender_set_animation_weight");
+
+  blender->blends[anim_index].weight = weight;
+}
+
+AnimationBlenderInfo& animation_blender_get_info(AnimationBlender* blender) {
+  NIKOLA_ASSERT(blender, "Invalid AnimationBlender given to animation_blender_get_info");
+  return blender->info;
+}
+
+const Array<Mat4, JOINTS_MAX>& animation_blender_get_skinning_palette(const AnimationBlender* blender) {
+  NIKOLA_ASSERT(blender, "Invalid AnimationBlender given to animation_blender_get_skinning_palette");
+  return blender->skinning_palette;
+}
+
+void animation_blender_update(AnimationBlender* blender, const f32 dt) {
+  NIKOLA_ASSERT(blender, "Invalid AnimationBlender given to animation_blender_update");
+  
+  // Sorry. You're not animating, dude
+
+  if(!blender->info.is_animating) { 
+    return;
+  }
+
+  // Sampling jobs
+
+  for(sizei i = 0; i < blender->blends_count; i++) {
+    AnimationBlender::BlendSample* blend = &blender->blends[i];
+    f32 animation_duration               = blend->animation->handle->duration(); 
+
+    // Looping is turned off and we're past the end so continue...
+    // Otherwise, we can start the animation again. 
+
+    if(!blender->info.is_looping && blend->time > animation_duration) {
+      continue;
+    }
+    else if(blend->time > animation_duration) { 
+      blend->time = 0.0f;
+    }
+
+    // Update the time 
+    blend->time += (dt * blender->info.play_speed) / animation_duration;
+
+    // Initiate the job
+
+    ozz::animation::SamplingJob sample_job;
+    sample_job.animation = blend->animation->handle.get();
+    sample_job.context   = &blend->context;
+    sample_job.ratio     = blend->time;
+    sample_job.output    = make_span(blend->locals);
+
+    if(!sample_job.Run()) {
+      NIKOLA_LOG_DEBUG("Failed to run the sampling job for a blend at index \'%zu\'", i);
+      return;
+    }
+  }
+  
+  // Setup the blending layers
+
+  for(sizei i = 0; i < blender->blends_count; i++) {
+    AnimationBlender::BlendSample* blend      = &blender->blends[i];
+    ozz::animation::BlendingJob::Layer* layer = &blender->blend_layers[i];
+
+    layer->transform = make_span(blend->locals);
+    layer->weight    = blend->weight;
+  }
+  
+  // Blending job 
+
+  ozz::animation::BlendingJob blending_job;
+  blending_job.threshold = blender->info.blending_threshold;
+  blending_job.layers    = make_span(blender->blend_layers);
+  blending_job.rest_pose = blender->skeleton->handle->joint_rest_poses();
+  blending_job.output    = make_span(blender->locals);
+
+  if(!blending_job.Run()) {
+    NIKOLA_LOG_DEBUG("Failed to run the blend job for a blender");
+    return;
+  }
+
+  // Local to model job
+
+  ozz::animation::LocalToModelJob local_to_model_job;
+  local_to_model_job.skeleton = blender->skeleton->handle.get();
+  local_to_model_job.input    = make_span(blender->locals);
+  local_to_model_job.output   = make_span(blender->models);
+
+  if(!local_to_model_job.Run()) {
+    NIKOLA_LOG_DEBUG("Failed to run the local to model job for a blender");
+    return;
+  }
+
+  // Convert the newly calculated models into our engine format
+
+  for(sizei i = 0; i < blender->models.size(); i++) {
+    const ozz::math::Float4x4& ozz_mat = blender->models[i];
+
+    // Loading from SIMD registers into an array of floats
+
+    f32 raw_mat[16];
+    ozz::math::StorePtr(ozz_mat.cols[0], &raw_mat[0]);
+    ozz::math::StorePtr(ozz_mat.cols[1], &raw_mat[4]);
+    ozz::math::StorePtr(ozz_mat.cols[2], &raw_mat[8]);
+    ozz::math::StorePtr(ozz_mat.cols[3], &raw_mat[12]);
+    
+    // Set the skinning matrix
+    blender->skinning_palette[i] = mat4_make(raw_mat) * blender->skeleton->inverse_bind_matrices[i];
+  }
+}
+
+/// AnimationBlender functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 } // End of nikola

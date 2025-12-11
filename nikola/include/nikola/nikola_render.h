@@ -32,6 +32,9 @@ const sizei POINT_LIGHTS_MAX              = 16;
 /// The maximum amount of particles tha can be emitted per emitter.
 const sizei PARTICLES_MAX                 = 1024;
 
+/// The maximum amount of animations a blending operation can have.
+const sizei ANIMATION_BLENDS_MAX          = 3;
+
 /// The maximum amount of corners a camera's frustum can have.
 const sizei CAMERA_FRUSTUM_CORNERS_MAX    = 8;
 
@@ -600,16 +603,16 @@ struct AnimationSamplerInfo {
 ///---------------------------------------------------------------------------------------------------------------------
 /// AnimationBlenderInfo
 struct AnimationBlenderInfo {
-  /// The current ticking time of the animation.
-  f32 current_time        = 0.0f;
-  
   /// The playback speed of the animation in real-time. 
   /// This value can be negative to play the animation in reverse.
   f32 play_speed          = 1.0f;
 
-  /// The blending factor taken into account when 
-  /// adding one or more animations together. 
-  f32 blending_factor     = 0.0f;
+  /// The animation blender will choose the bind pose 
+  /// when the accumulated weights of all the blend layers 
+  /// is less than this value. 
+  ///
+  /// @NOTE: This value MUST be greater than `0.0f`.
+  f32 blending_threshold  = 0.1f;
 
   /// Determines whether the animation should loop or not.
   bool is_looping         = true;
@@ -823,6 +826,12 @@ NIKOLA_API void renderer_queue_animation_instanced(const ResourceID& model_id,
                                                    const sizei count, 
                                                    const ResourceID& mat_id = {});
 
+NIKOLA_API void renderer_queue_animation_instanced(const ResourceID& model_id,
+                                                   const Transform* transforms, 
+                                                   const AnimationBlender** blenders,
+                                                   const sizei count, 
+                                                   const ResourceID& mat_id = {});
+
 /// A series of functions that queue a rendering command, using the given `res_id`
 /// at `transform` in world space, using `mat_id`.
 ///
@@ -840,6 +849,11 @@ NIKOLA_API void renderer_queue_model(const ResourceID& res_id,
 NIKOLA_API void renderer_queue_animation(const ResourceID& model_id,
                                          const Transform& transform, 
                                          const AnimationSampler* sampler,
+                                         const ResourceID& mat_id = {});
+
+NIKOLA_API void renderer_queue_animation(const ResourceID& model_id,
+                                         const Transform& transform, 
+                                         const AnimationBlender* blender,
                                          const ResourceID& mat_id = {});
 
 NIKOLA_API void renderer_queue_particles(const ParticleEmitter& emitter);
@@ -1056,7 +1070,7 @@ NIKOLA_API void animation_destroy(Animation* anim);
 ///---------------------------------------------------------------------------------------------------------------------
 /// AnimationSampler functions
 
-/// Allocate and create an animation sampler component using the given `skeleton_id` an array 
+/// Allocate and create an animation sampler component using the given `skeleton_id` and an array 
 /// of `animations` with `animations_count` elements.
 NIKOLA_API AnimationSampler* animation_sampler_create(const ResourceID& skeleton_id, const ResourceID* animations, const sizei animations_count);
 
@@ -1077,14 +1091,40 @@ NIKOLA_API const Array<Mat4, JOINTS_MAX>& animation_sampler_get_skinning_palette
 /// will be chosen to be played. This can be changed from `AnimationSamplerInfo.current_animation`.
 NIKOLA_API void animation_sampler_update(AnimationSampler* sampler, const f32 dt);
 
-/// Start the blending process of the given `animator`, using the given `dt` as 
-/// a delta time for progressing. 
-///
-/// The blending will be controlled by the `AnimatorInfo.blending_factor` value. 
-/// The animator will use the animations it was given on creation as the targets.
-// NIKOLA_API void animator_blend(Animator* animator, const f32 dt);
-
 /// AnimationSampler functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// AnimationBlender functions
+
+/// Allocate and create an animation blender component using the given `skeleton_id`.
+NIKOLA_API AnimationBlender* animation_blender_create(const ResourceID& skeleton_id);
+
+/// Reclaim/decallocate the memory consumed by `blender`.
+NIKOLA_API void animation_blender_destroy(AnimationBlender* blender);
+
+/// Push a new animation using the `animation_id` into the given `blender` to be considered in the blending process, 
+/// with the given `weight` which indicates how "poweful" this animation is in the blending graph. The higher the `weight`
+/// value is the more likely will it dominate the blending process.
+///
+/// @NOTE: Currently, the blending process only supports up to `ANIMATION_BLENDS_MAX`. Therefore, this function will 
+/// assert if more than `ANIMATION_BLENDS_MAX` are inserted into the blend.
+NIKOLA_API void animation_blender_push_animation(AnimationBlender* blender, const ResourceID& animation_id, const f32 weight);
+
+/// Set the weight of an animation blend at `anim_index` in the given `blender` to `weight`. 
+NIKOLA_API void animation_blender_set_animation_weight(AnimationBlender* blender, const sizei anim_index, const f32 weight);
+
+/// Retrieve a reference of the internal `AnimationBlenderInfo` of `blender`.
+NIKOLA_API AnimationBlenderInfo& animation_blender_get_info(AnimationBlender* blender);
+
+/// Retrieve a reference of the calculated skinning palette of `blender`.
+NIKOLA_API const Array<Mat4, JOINTS_MAX>& animation_blender_get_skinning_palette(const AnimationBlender* blender);
+
+/// Start the blending process of the given `blender`, using the given `dt` as 
+/// a delta time for progressing. 
+NIKOLA_API void animation_blender_update(AnimationBlender* blender, const f32 dt);
+
+/// AnimationBlender functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 /// *** Renderer ***
