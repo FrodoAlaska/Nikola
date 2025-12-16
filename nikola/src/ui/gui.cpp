@@ -7,6 +7,7 @@
 #include "nikola/nikola_physics.h"
 #include "nikola/nikola_input.h"
 #include "nikola/nikola_event.h"
+#include "nikola/nikola_entity.h"
 
 #include <GLFW/glfw3.h>
 
@@ -863,6 +864,99 @@ void gui_edit_animation_blender(const char* name, AnimationBlender* blender) {
   ImGui::Checkbox("Looping", &info.is_looping);
   ImGui::Checkbox("Playing", &info.is_animating);
   
+  ImGui::PopID(); 
+}
+
+void gui_edit_entity(const char* name, EntityWorld& world, EntityID& entt) {
+  ImGui::SeparatorText(name); 
+  ImGui::PushID(name); 
+ 
+  // Transform
+ 
+  if(ImGui::TreeNode("Transform")) {
+    Transform& transform = entity_get_component<Transform>(world, entt);
+    gui_edit_transform("", &transform);
+
+    ImGui::TreePop();
+  }
+
+  // Physics body
+
+  if(entity_has_component<PhysicsComponent>(world, entt)) {
+    if(ImGui::TreeNode("Physics body")) {
+      PhysicsComponent& comp = entity_get_component<PhysicsComponent>(world, entt);
+      gui_edit_physics_body("", comp.body);
+
+      ImGui::TreePop();
+    }
+  }
+
+  // Character
+
+  if(entity_has_component<CharacterComponent>(world, entt)) {
+    if(ImGui::TreeNode("Character body")) {
+      CharacterComponent& comp = entity_get_component<CharacterComponent>(world, entt);
+      gui_edit_character_body("", comp.character);
+
+      ImGui::TreePop();
+    }
+  }
+
+  // Audio 
+
+  if(entity_has_component<AudioSourceID>(world, entt)) {
+    if(ImGui::TreeNode("Audio source")) {
+      AudioSourceID& source = entity_get_component<AudioSourceID>(world, entt);
+      gui_edit_audio_source("", source);
+
+      ImGui::TreePop();
+    }
+  }
+  
+  // Timer 
+
+  if(entity_has_component<Timer>(world, entt)) {
+    if(ImGui::TreeNode("Timer")) {
+      Timer& timer = entity_get_component<Timer>(world, entt);
+      gui_edit_timer("", &timer);
+
+      ImGui::TreePop();
+    }
+  }
+  
+  // Particles 
+
+  if(entity_has_component<ParticleEmitter>(world, entt)) {
+    if(ImGui::TreeNode("Particle emitter")) {
+      ParticleEmitter& emitter = entity_get_component<ParticleEmitter>(world, entt);
+      gui_edit_particle_emitter("", &emitter);
+
+      ImGui::TreePop();
+    }
+  }
+  
+  // Animation sampler 
+
+  if(entity_has_component<AnimationSampler*>(world, entt)) {
+    if(ImGui::TreeNode("Animation sampler")) {
+      AnimationSampler* sampler = entity_get_component<AnimationSampler*>(world, entt);
+      gui_edit_animation_sampler("", sampler);
+
+      ImGui::TreePop();
+    }
+  }
+  
+  // Animation blender 
+
+  if(entity_has_component<AnimationBlender*>(world, entt)) {
+    if(ImGui::TreeNode("Animation blender")) {
+      AnimationBlender* blender = entity_get_component<AnimationBlender*>(world, entt);
+      gui_edit_animation_blender("", blender);
+
+      ImGui::TreePop();
+    }
+  }
+
   ImGui::PopID(); 
 }
 

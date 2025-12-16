@@ -180,7 +180,10 @@ void app_render_gui(nikola::App* app) {
 
   ImGui::SetNextWindowPos(ImVec2(10.0f, 10.0f));
   nikola::gui_begin_panel("Scene");
-  
+
+  // Entities
+  nikola::gui_edit_entity("Behelit", app->entt_world, app->entity);
+
   // Frame
   nikola::gui_edit_frame("Frame", &app->frame_data);
 

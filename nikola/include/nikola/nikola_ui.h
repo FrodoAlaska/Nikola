@@ -6,6 +6,7 @@
 #include "nikola_audio.h"
 #include "nikola_physics.h"
 #include "nikola_timer.h"
+#include "nikola_entity.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -628,6 +629,9 @@ NIKOLA_API void gui_edit_animation_sampler(const char* name, AnimationSampler* s
 
 /// Add an animation blender section identified by `name` to edit the given `blender`.
 NIKOLA_API void gui_edit_animation_blender(const char* name, AnimationBlender* blender);
+
+/// Add an entity section identified by `name` to edit the given `entt` using the `world` to retrieve components.
+NIKOLA_API void gui_edit_entity(const char* name, EntityWorld& world, EntityID& entt);
 
 /// GUI functions
 ///---------------------------------------------------------------------------------------------------------------------
