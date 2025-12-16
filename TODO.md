@@ -7,7 +7,8 @@
     - [x] Get components functionality 
     - [x] Custom components
     - [x] Entity update and render
-    - [] Entity and world GUI view
+    - [x] Instanced entities
+    - [] Entity GUI
     - [] Documentation
 - [] Resources 
     - [] We need to get rid of the NBR conversion tool and instead have the conversion process happen in the engine itself. 

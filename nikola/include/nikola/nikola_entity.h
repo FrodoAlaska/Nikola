@@ -83,6 +83,19 @@ struct RenderableComponent {
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// InstancedRenderableComponent
+struct InstancedRenderableComponent {
+  EntityRenderableType type; 
+
+  ResourceID renderable_id; 
+  ResourceID material_id;
+
+  DynamicArray<Transform> transforms;
+};
+/// InstancedRenderableComponent
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// EntityWorld functions
 
 NIKOLA_API void entity_world_clear(EntityWorld& world);
@@ -150,6 +163,13 @@ NIKOLA_API void entity_add_renderable(EntityWorld& world,
                                       const EntityRenderableType renderable_type, 
                                       const ResourceID& renderable_id, 
                                       const ResourceID& material_id = {});
+
+NIKOLA_API void entity_add_instanced_renderable(EntityWorld& world, 
+                                                EntityID& entt, 
+                                                const EntityRenderableType renderable_type, 
+                                                const DynamicArray<Transform>& transforms,
+                                                const ResourceID& renderable_id, 
+                                                const ResourceID& material_id = {});
 
 template<typename Comp>
 NIKOLA_API Comp& entity_get_component(EntityWorld& world, EntityID& entt) {

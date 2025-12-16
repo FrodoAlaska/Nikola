@@ -195,6 +195,32 @@ void entity_world_render(const EntityWorld& world) {
       }
     }
   }
+  
+  // Instanced renderables
+  {
+    NIKOLA_PROFILE_FUNCTION_NAMED("entity_world_render(InstancedRenderableComponent)");
+
+    auto view = world.view<InstancedRenderableComponent, Transform>();
+    for(auto entt : view) {
+      const Transform& transform                     = view.get<Transform>(entt);
+      const InstancedRenderableComponent& renderable = view.get<InstancedRenderableComponent>(entt);
+
+      switch(renderable.type) {
+        case ENTITY_RENDERABLE_MESH:
+          renderer_queue_mesh_instanced(renderable.renderable_id, renderable.transforms.data(), renderable.transforms.size(), renderable.material_id);
+          break;
+        case ENTITY_RENDERABLE_MODEL:
+          renderer_queue_model_instanced(renderable.renderable_id, renderable.transforms.data(), renderable.transforms.size(), renderable.material_id);
+          break;
+        case ENTITY_RENDERABLE_DEBUG_CUBE:
+          renderer_queue_debug_cube_instanced(renderable.transforms.data(), renderable.transforms.size(), renderable.material_id);
+          break;
+        case ENTITY_RENDERABLE_DEBUG_SPHERE:
+          renderer_queue_debug_sphere_instanced(renderable.transforms.data(), renderable.transforms.size(), renderable.material_id);
+          break;
+      }
+    }
+  }
 
   // Animation samplers
   {
@@ -336,6 +362,15 @@ void entity_add_renderable(EntityWorld& world,
                            const ResourceID& renderable_id, 
                            const ResourceID& material_id) {
   world.emplace<RenderableComponent>(entt, renderable_type, renderable_id, material_id);
+}
+
+void entity_add_instanced_renderable(EntityWorld& world, 
+                                     EntityID& entt, 
+                                     const EntityRenderableType renderable_type, 
+                                     const DynamicArray<Transform>& transforms,
+                                     const ResourceID& renderable_id, 
+                                     const ResourceID& material_id) {
+  world.emplace<InstancedRenderableComponent>(entt, renderable_type, renderable_id, material_id, transforms);
 }
 
 /// EntityID functions

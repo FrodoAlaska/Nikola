@@ -97,12 +97,22 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
                                                           nikola::Quat(1.0f, 0.0f, 0.0f, 0.0f), 
                                                           nikola::Vec3(32.0f, 0.1f, 32.0f));
   nikola::entity_add_renderable(app->entt_world, app->ground_entity, nikola::ENTITY_RENDERABLE_MESH, app->mesh_id, app->ground_material);
-  
+ 
+  nikola::DynamicArray<nikola::Transform> transforms; 
+  for(nikola::sizei i = 0; i < 16; i++) {
+    nikola::Transform transform;
+    transform.position = nikola::Vec3((i / 4) * 15.0f, 1.5f, (i % 4) * 15.0f);
+    transform.scale    = nikola::Vec3(0.2f);
+    nikola::transform_apply(transform);
+
+    transforms.push_back(transform);
+  }
+
   app->entity = nikola::entity_world_create_entity(app->entt_world, 
                                                    nikola::Vec3(15.0f, 1.5f, 15.0f), 
-                                                   nikola::Quat(1.0f, 0.0f, 0.0f, 0.0f), 
+                                                   nikola::quat_identity(),
                                                    nikola::Vec3(0.2f));
-  nikola::entity_add_renderable(app->entt_world, app->entity, nikola::ENTITY_RENDERABLE_MODEL, app->model_id);
+  nikola::entity_add_instanced_renderable(app->entt_world, app->entity, nikola::ENTITY_RENDERABLE_MODEL, transforms, app->model_id);
 
   // Lights init
 
