@@ -81,16 +81,161 @@ void entity_world_destroy_entity(EntityWorld& world, EntityID& entt) {
   world.destroy(entt); 
 }
 
-void entity_world_update(const EntityWorld& world, const f64 delta_time) {
+void entity_world_update(EntityWorld& world, const f64 delta_time) {
   NIKOLA_PROFILE_FUNCTION();
 
-  // @TODO (Entity)
+  // Physics bodies
+  {
+    NIKOLA_PROFILE_FUNCTION_NAMED("entity_world_update(PhysicsComponent)");
+
+    auto physics_view = world.view<PhysicsComponent, Transform>();
+    for(auto entt : physics_view) {
+      PhysicsComponent& physics_comp = physics_view.get<PhysicsComponent>(entt); 
+      PhysicsBodyType body_type      = physics_body_get_type(physics_comp.body);
+      
+      if(body_type == PHYSICS_BODY_STATIC) { // No need to update the transforms of static bodies.
+        continue;
+      }
+
+      Transform& transform = physics_view.get<Transform>(entt); 
+
+      transform.position = physics_body_get_position(physics_comp.body);
+      transform.rotation = physics_body_get_rotation(physics_comp.body);
+      transform_apply(transform);
+    }
+  }
+
+  // Characters
+  {
+    NIKOLA_PROFILE_FUNCTION_NAMED("entity_world_update(CharacterComponent)");
+
+    auto chars_view = world.view<CharacterComponent, Transform>();
+    for(auto entt : chars_view) {
+      Transform& transform  = chars_view.get<Transform>(entt); 
+      CharacterComponent& char_comp = chars_view.get<CharacterComponent>(entt); 
+      character_body_update(char_comp.character);
+
+      transform.position = character_body_get_position(char_comp.character);
+      transform.rotation = character_body_get_rotation(char_comp.character);
+      transform_apply(transform);
+    }
+  }
+
+  // Animation samplers
+  {
+    NIKOLA_PROFILE_FUNCTION_NAMED("entity_world_update(AnimationSampler)");
+
+    auto anim_view = world.view<AnimationSampler*>();
+    for(auto entt : anim_view) {
+      AnimationSampler* sampler = anim_view.get<AnimationSampler*>(entt);
+      animation_sampler_update(sampler, (f32)delta_time);
+    }
+  }
+
+  // Animation blenders
+  {
+    NIKOLA_PROFILE_FUNCTION_NAMED("entity_world_update(AnimationBlender)");
+
+    auto anim_view = world.view<AnimationBlender*>();
+    for(auto entt : anim_view) {
+      AnimationBlender* blender = anim_view.get<AnimationBlender*>(entt);
+      animation_blender_update(blender, (f32)delta_time);
+    }
+  }
+
+  // Timers
+  {
+    NIKOLA_PROFILE_FUNCTION_NAMED("entity_world_update(Timer)");
+
+    auto timer_view = world.view<Timer>();
+    for(auto entt : timer_view) {
+      Timer& timer = timer_view.get<Timer>(entt);
+      timer_update(timer, (f32)delta_time);
+    }
+  }
+
+  // Particles 
+  {
+    NIKOLA_PROFILE_FUNCTION_NAMED("entity_world_update(ParticleEmitter)");
+
+    auto view = world.view<ParticleEmitter>();
+    for(auto entt : view) {
+      ParticleEmitter& emitter = view.get<ParticleEmitter>(entt);
+      particle_emitter_update(emitter, (f32)delta_time); 
+    }
+  }
+
 }
 
 void entity_world_render(const EntityWorld& world) {
   NIKOLA_PROFILE_FUNCTION();
+
+  // Renderables
+  {
+    NIKOLA_PROFILE_FUNCTION_NAMED("entity_world_render(RenderableComponent)");
+
+    auto view = world.view<RenderableComponent, Transform>();
+    for(auto entt : view) {
+      const Transform& transform            = view.get<Transform>(entt);
+      const RenderableComponent& renderable = view.get<RenderableComponent>(entt);
+
+      switch(renderable.type) {
+        case ENTITY_RENDERABLE_MESH:
+          renderer_queue_mesh(renderable.renderable_id, transform, renderable.material_id);
+          break;
+        case ENTITY_RENDERABLE_MODEL:
+          renderer_queue_model(renderable.renderable_id, transform, renderable.material_id);
+          break;
+        case ENTITY_RENDERABLE_DEBUG_CUBE:
+          renderer_queue_debug_cube(transform, renderable.material_id);
+          break;
+        case ENTITY_RENDERABLE_DEBUG_SPHERE:
+          renderer_queue_debug_sphere(transform, renderable.material_id);
+          break;
+      }
+    }
+  }
+
+  // Animation samplers
+  {
+    NIKOLA_PROFILE_FUNCTION_NAMED("entity_world_render(AnimationSampler)");
+
+    auto view = world.view<AnimationSampler*, Transform>();
+    for(auto entt : view) {
+      const Transform& transform            = view.get<Transform>(entt);
+      const AnimationSampler* sampler       = view.get<AnimationSampler*>(entt);
+      const RenderableComponent& renderable = world.get<RenderableComponent>(entt);
+
+      renderer_queue_animation(renderable.renderable_id, transform, sampler, renderable.material_id);
+    }
+  }
+
+  // Animation blenders
+  {
+    NIKOLA_PROFILE_FUNCTION_NAMED("entity_world_render(AnimationBlender)");
+
+    auto view = world.view<AnimationBlender*, Transform>();
+    for(auto entt : view) {
+      const Transform& transform            = view.get<Transform>(entt);
+      const AnimationBlender* blender       = view.get<AnimationBlender*>(entt);
+      const RenderableComponent& renderable = world.get<RenderableComponent>(entt);
+
+      renderer_queue_animation(renderable.renderable_id, transform, blender, renderable.material_id);
+    }
+  }
   
-  // @TODO (Entity)
+  // Particles
+  {
+    NIKOLA_PROFILE_FUNCTION_NAMED("entity_world_render(ParticleEmitter)");
+
+    auto view = world.view<ParticleEmitter, Transform>();
+    for(auto entt : view) {
+      const Transform& transform     = view.get<Transform>(entt);
+      const ParticleEmitter& emitter = view.get<ParticleEmitter>(entt);
+
+      renderer_queue_particles(emitter);
+    }
+  }
 }
 
 /// EntityWorld functions

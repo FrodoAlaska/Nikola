@@ -23,11 +23,8 @@ struct nikola::App {
 
   nikola::Font* font;
 
-  nikola::Transform ground_transform;
-  nikola::Transform transforms[MAX_OBJECTS];
-
   nikola::EntityWorld entt_world;
-  nikola::EntityID entity;
+  nikola::EntityID entity, ground_entity;
 };
 /// App
 /// ----------------------------------------------------------------------
@@ -64,11 +61,6 @@ static void init_resources(nikola::App* app) {
 /// Private functions 
 /// ----------------------------------------------------------------------
 
-struct DamageComponent {
-  nikola::u32 amount = 0; 
-  nikola::u32 max    = 100;
-};
-
 /// ----------------------------------------------------------------------
 /// App functions 
 
@@ -98,17 +90,19 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Resoruces init
   init_resources(app);
 
-  // Transform init
-  
-  nikola::transform_translate(app->ground_transform, nikola::Vec3(10.0f, 0.5f, 10.0f));
-  nikola::transform_scale(app->ground_transform, nikola::Vec3(32.0f, 0.1f, 32.0f));
- 
-  for(nikola::sizei i = 0; i < MAX_OBJECTS; i++) {
-    nikola::transform_translate(app->transforms[i], nikola::Vec3((i / 4) * 15.0f, 1.5f, (i % 4) * 15.0f));
-    nikola::transform_scale(app->transforms[i], nikola::Vec3(0.2f));
-  }
+  // Entities init
 
-  app->entity = nikola::entity_world_create_entity(app->entt_world, nikola::Vec3(10.0f, 0.5f, 10.0f));
+  app->ground_entity = nikola::entity_world_create_entity(app->entt_world, 
+                                                          nikola::Vec3(10.0f, 0.5f, 10.0f), 
+                                                          nikola::Quat(1.0f, 0.0f, 0.0f, 0.0f), 
+                                                          nikola::Vec3(32.0f, 0.1f, 32.0f));
+  nikola::entity_add_renderable(app->entt_world, app->ground_entity, nikola::ENTITY_RENDERABLE_MESH, app->mesh_id, app->ground_material);
+  
+  app->entity = nikola::entity_world_create_entity(app->entt_world, 
+                                                   nikola::Vec3(15.0f, 1.5f, 15.0f), 
+                                                   nikola::Quat(1.0f, 0.0f, 0.0f, 0.0f), 
+                                                   nikola::Vec3(0.2f));
+  nikola::entity_add_renderable(app->entt_world, app->entity, nikola::ENTITY_RENDERABLE_MODEL, app->model_id);
 
   // Lights init
 
@@ -121,6 +115,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 }
 
 void app_shutdown(nikola::App* app) {
+  nikola::entity_world_clear(app->entt_world);
   nikola::resources_destroy_group(app->res_group_id);
   nikola::gui_shutdown();
 
@@ -142,6 +137,9 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     app->frame_data.camera.is_active = !nikola::gui_is_active();
   }
 
+  // Update the entity world
+  nikola::entity_world_update(app->entt_world, delta_time);
+
   // Update the camera
   
   nikola::camera_free_move_func(app->frame_data.camera);
@@ -149,17 +147,12 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 }
 
 void app_render(nikola::App* app) {
-  // Render 3D 
   nikola::renderer_begin(app->frame_data);
 
-  // Render the objects
-  
-  nikola::renderer_queue_mesh(app->mesh_id, app->ground_transform, app->ground_material);
-  nikola::renderer_queue_model_instanced(app->model_id, app->transforms, 2);
+  // Render the entity world
+  nikola::entity_world_render(app->entt_world);
 
   nikola::renderer_end();
-  
-  // Render 2D 
   
   nikola::batch_renderer_begin();
   nikola::batch_render_fps(app->font, nikola::Vec2(30.0f, 40.0f), 32.0f, nikola::Vec4(1.0f, 0.0f, 0.0f, 1.0f)); 

@@ -6,6 +6,7 @@
     - [x] Add an entity world 
     - [x] Get components functionality 
     - [x] Custom components
+    - [x] Entity update and render
     - [] Entity and world GUI view
     - [] Documentation
 - [] Resources 

@@ -27,8 +27,8 @@ const u32 ENITTY_INVALID = ((u32)-1);
 enum EntityRenderableType {
   ENTITY_RENDERABLE_MESH,
   ENTITY_RENDERABLE_MODEL,
-  ENTITY_RENDERABLE_ANIMATION,
-  ENTITY_RENDERABLE_DEBUG_MESH,
+  ENTITY_RENDERABLE_DEBUG_CUBE,
+  ENTITY_RENDERABLE_DEBUG_SPHERE,
 };
 /// EntityRenderableType
 /// ----------------------------------------------------------------------
@@ -94,7 +94,7 @@ NIKOLA_API EntityID entity_world_create_entity(EntityWorld& world,
 
 NIKOLA_API void entity_world_destroy_entity(EntityWorld& world, EntityID& entt);
 
-NIKOLA_API void entity_world_update(const EntityWorld& world, const f64 delta_time);
+NIKOLA_API void entity_world_update(EntityWorld& world, const f64 delta_time);
 
 NIKOLA_API void entity_world_render(const EntityWorld& world);
 
