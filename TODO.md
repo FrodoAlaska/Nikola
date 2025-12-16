@@ -1,15 +1,5 @@
 ## Update 0.4:
 
-- [] Entities
-    - [x] Integrate EnTT 
-    - [x] Add an entity ID 
-    - [x] Add an entity world 
-    - [x] Get components functionality 
-    - [x] Custom components
-    - [x] Entity update and render
-    - [x] Instanced entities
-    - [x] Entity GUI
-    - [] Documentation
 - [] Resources 
     - [] We need to get rid of the NBR conversion tool and instead have the conversion process happen in the engine itself. 
     - [] Material file format like `.mat` or something?
