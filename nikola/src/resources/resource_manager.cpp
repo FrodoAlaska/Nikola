@@ -128,17 +128,17 @@ static const char* texture_type_str(const GfxTextureType type) {
 static const char* geo_type_str(const GeometryType type) {
   switch(type) {
     case GEOMETRY_CUBE:
-      return "GEOMETRY_CUBE";
+      return "cube_mesh";
     case GEOMETRY_SPHERE:
-      return "GEOMETRY_SPHERE";
+      return "sphere_mesh";
     case GEOMETRY_SKYBOX:
-      return "GEOMETRY_SKYBOX";
+      return "skybox_mesh";
     case GEOMETRY_QUAD:
-      return "GEOMETRY_QUAD";
+      return "quad_mesh";
     case GEOMETRY_SIMPLE_CUBE:
-      return "GEOMETRY_SIMPLE_CUBE";
+      return "simple_cube_mesh";
     case GEOMETRY_SIMPLE_SPHERE:
-      return "GEOMETRY_SIMPLE_SPHERE";
+      return "simple_speher_mesh";
     default:
       return "INVALID GEOMETRY TYPE";
   }
@@ -1074,7 +1074,7 @@ ResourceID resources_push_mesh(const ResourceGroupID& group_id, NBRMesh& nbr_mes
   return id;
 }
 
-ResourceID resources_push_mesh(const ResourceGroupID& group_id, const GeometryType type) {
+ResourceID resources_push_mesh(const ResourceGroupID& group_id, const GeometryType type, const String& name) {
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
   
@@ -1088,11 +1088,21 @@ ResourceID resources_push_mesh(const ResourceGroupID& group_id, const GeometryTy
   ResourceID id; 
   PUSH_RESOURCE(group, meshes, mesh, RESOURCE_TYPE_MESH, id);
 
+  // Some useful info dump
+
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed mesh:", group->name.c_str());
   NIKOLA_LOG_DEBUG("     Vertices      = %zu", mesh->vertices.size());
   NIKOLA_LOG_DEBUG("     Indices       = %zu", mesh->indices.size());
   NIKOLA_LOG_DEBUG("     Geomatry type = %s", geo_type_str(type));
+ 
+  // Only store the mesh in the named IDs if it has a name
   
+  if(!name.empty()) {
+    NIKOLA_LOG_DEBUG("     Name          = %s", name.c_str());
+    group->named_ids[name] = id;
+  }
+
+  // Done!
   return id;
 }
 
@@ -1102,12 +1112,16 @@ ResourceID resources_push_material(const ResourceGroupID& group_id, const Materi
   
   // Allocate the material
   Material* material = new Material{};
-  
+ 
+  // Set the default textures
+
   material->albedo_map    = renderer_get_defaults().albedo_texture;
   material->roughness_map = renderer_get_defaults().roughness_texture;
   material->metallic_map  = renderer_get_defaults().metallic_texture;
   material->normal_map    = renderer_get_defaults().normal_texture;
   material->emissive_map  = renderer_get_defaults().emissive_texture;
+
+  // Set the members of the material
 
   material->color        = desc.color;
   material->roughness    = desc.roughness;
@@ -1146,20 +1160,28 @@ ResourceID resources_push_material(const ResourceGroupID& group_id, const Materi
   }
 
   // Create material
+  
   ResourceID id;
   PUSH_RESOURCE(group, materials, material, RESOURCE_TYPE_MATERIAL, id);
 
   // New material added
+  
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed material:", group->name.c_str());
   NIKOLA_LOG_DEBUG("     Color        = \'%s\'", vec3_to_string(material->color).c_str());
   NIKOLA_LOG_DEBUG("     Roughness    = \'%f\'", material->roughness);
   NIKOLA_LOG_DEBUG("     Metallic     = \'%f\'", material->metallic);
   NIKOLA_LOG_DEBUG("     Emissive     = \'%f\'", material->emissive);
   NIKOLA_LOG_DEBUG("     Transparency = \'%f\'", material->transparency);
+
+  if(!desc.name.empty()) {
+    NIKOLA_LOG_DEBUG("     Name         = \'%s\'", desc.name.c_str());
+    group->named_ids[desc.name] = id;
+  }
+  
   return id;
 }
 
-ResourceID resources_push_skybox(const ResourceGroupID& group_id, const ResourceID& cubemap_id) {
+ResourceID resources_push_skybox(const ResourceGroupID& group_id, const ResourceID& cubemap_id, const String& name) {
   NIKOLA_ASSERT(RESOURCE_IS_VALID(cubemap_id), "Cannot push a new skybox with an invalid cubemap");
   GROUP_CHECK(group_id);
   ResourceGroup* group = &s_manager.groups[group_id];
@@ -1181,6 +1203,11 @@ ResourceID resources_push_skybox(const ResourceGroupID& group_id, const Resource
 
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed skybox:", group->name.c_str());
   NIKOLA_LOG_DEBUG("     Vertices = %zu", skybox->vertices.size());
+
+  if(!name.empty()) {
+    group->named_ids[name] = id;
+    NIKOLA_LOG_DEBUG("     Name     = \'%s\'", name.c_str());
+  }
   
   return id;
 }

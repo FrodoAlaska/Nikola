@@ -661,17 +661,17 @@ NIKOLA_API ResourceID resources_push_shader_context(const ResourceGroupID& group
 /// Often it is used to load Models, for example.
 NIKOLA_API ResourceID resources_push_mesh(const ResourceGroupID& group_id, NBRMesh& nbr_mesh);
 
-/// Allocate a new `Mesh` using a predefined geometry `type`, 
+/// Allocate a new `Mesh` using a predefined geometry `type` with an optional `name`,
 /// store it in `group_id`, return a `ResourceID` to identified it. 
-NIKOLA_API ResourceID resources_push_mesh(const ResourceGroupID& group_id, const GeometryType type);
+NIKOLA_API ResourceID resources_push_mesh(const ResourceGroupID& group_id, const GeometryType type, const String& name = "");
 
 /// Allocate a new `Material` store it in `group_id` using the information in the given `desc`, 
 /// and return a `ResourceID` to identify it.
 NIKOLA_API ResourceID resources_push_material(const ResourceGroupID& group_id, const MaterialDesc& desc);
 
-/// Allocate a new `Skybox` using the previously-added `cubemap_id`, store it in `group_id`, 
-/// and return a `ResourceID` to identify it.
-NIKOLA_API ResourceID resources_push_skybox(const ResourceGroupID& group_id, const ResourceID& cubemap_id);
+/// Allocate a new `Skybox` using the previously-added `cubemap_id`, an optional `name`, 
+/// store it in `group_id`, and return a `ResourceID` to identify it.
+NIKOLA_API ResourceID resources_push_skybox(const ResourceGroupID& group_id, const ResourceID& cubemap_id, const String& name = "");
 
 /// Allocate a new `Skybox` using the cubemap at `cubemap_path`, store it in `group_id`, 
 /// and return a `ResourceID` to identify it.

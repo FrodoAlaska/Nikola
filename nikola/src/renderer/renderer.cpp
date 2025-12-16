@@ -111,6 +111,8 @@ static void init_defaults() {
   // Materials init
   
   MaterialDesc mat_desc = {
+    .name = "material_default",
+    
     .albedo_id    = albedo_texture_id, 
     .roughness_id = roughness_texture_id,
     .metallic_id  = metallic_texture_id, 
@@ -120,6 +122,8 @@ static void init_defaults() {
   s_renderer.defaults.material = resources_get_material(resources_push_material(RESOURCE_CACHE_ID, mat_desc));
   
   mat_desc = {
+    .name = "material_debug",
+    
     .albedo_id    = albedo_texture_id, 
     .roughness_id = roughness_texture_id,
     .metallic_id  = metallic_texture_id, 

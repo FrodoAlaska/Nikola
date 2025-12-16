@@ -455,6 +455,8 @@ struct Mesh {
 ///---------------------------------------------------------------------------------------------------------------------
 /// MaterialDesc
 struct MaterialDesc {
+  String name = "";
+  
   ResourceID albedo_id    = {};
   ResourceID roughness_id = {};
   ResourceID metallic_id  = {};

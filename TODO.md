@@ -1,9 +1,5 @@
 ## Update 0.4:
 
-- [] Resources 
-    - [] We need to get rid of the NBR conversion tool and instead have the conversion process happen in the engine itself. 
-    - [] Material file format like `.mat` or something?
-    - [] Documentation
 - [] Performance v2.0
     - [] Optimize resource loading 
         - [] Meshes/models: Use `cgltf` and `meshoptimizer` instead of bloated Assimp.
@@ -22,6 +18,9 @@
     - [] The current render pass system needs to go. 
         - Either reform it completely or get rid of it for more "handmade" passes. 
     - [] Instead, we can have "post-process" passes much similiar to the current pass system, except way simpler.
+- [] Resources 
+    - [] We need to get rid of the NBR conversion tool and instead have the conversion process happen in the engine itself. 
+    - [] Documentation
 - [] GPU Particles
     - [] GPU-based particle system, using compute shaders.
     - [] Have a lot of options to edit the shape, distribution, and gravity. Perhaps save it in a file?
