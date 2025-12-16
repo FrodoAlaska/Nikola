@@ -72,6 +72,9 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/ui/ui_image.cpp
   ${NIKOLA_SRC_DIR}/ui/ui_layout.cpp
   ${NIKOLA_SRC_DIR}/ui/ui_menu.cpp
+  
+  # Entity
+  ${NIKOLA_SRC_DIR}/entity/entity.cpp
 )
 
 set(NIKOLA_HEADERS

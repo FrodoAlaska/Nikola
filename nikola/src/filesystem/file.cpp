@@ -520,8 +520,9 @@ void file_write_bytes(File& file, const FrameData& frame) {
 
 void file_write_bytes(File& file, const AudioSourceID& source) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
-  
-  AudioSourceDesc desc = audio_source_get_desc(source);
+ 
+  AudioSourceID source_id = source; 
+  AudioSourceDesc desc    = audio_source_get_desc(source_id);
 
   f32 data[] = {
     desc.volume, 
@@ -1029,7 +1030,7 @@ void file_read_bytes(File& file, FrameData* frame) {
   }
 }
 
-void file_read_bytes(File& file, AudioSourceID& source) {
+void file_read_bytes(File& file, AudioSourceID* source) {
   NIKOLA_ASSERT(file.is_open(), "Cannot perform an operation on an unopened file");
  
   f32 raw_data[12];
@@ -1046,15 +1047,16 @@ void file_read_bytes(File& file, AudioSourceID& source) {
     .is_looping = (bool)raw_data[11],
   };
 
-  // Apply the new data;
-  audio_source_set_volume(source, desc.volume);
-  audio_source_set_pitch(source, desc.pitch);
-
-  audio_source_set_position(source,desc.position);
-  audio_source_set_velocity(source, desc.velocity);
-  audio_source_set_direction(source, desc.direction);
+  // Apply the new data
   
-  audio_source_set_looping(source, desc.is_looping);
+  audio_source_set_volume(*source, desc.volume);
+  audio_source_set_pitch(*source, desc.pitch);
+
+  audio_source_set_position(*source,desc.position);
+  audio_source_set_velocity(*source, desc.velocity);
+  audio_source_set_direction(*source, desc.direction);
+  
+  audio_source_set_looping(*source, desc.is_looping);
 }
 
 void file_read_bytes(File& file, AudioListenerDesc* listener) {

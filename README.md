@@ -15,6 +15,7 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 - [moodycamel](https://github.com/cameron314/concurrentqueue)
 - [RmlUi](https://github.com/mikke89/RmlUi) 
 - [OZZ](https://github.com/guillaumeblanc/ozz-animation/)
+- [EnTT](https://github.com/skypjack/entt)
 
 ### NBR Tool Dependencies:
 

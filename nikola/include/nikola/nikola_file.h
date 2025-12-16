@@ -436,7 +436,7 @@ NIKOLA_API void file_read_bytes(File& file, FrameData* frame);
 /// Read an `AudioSourceID` from `file` and save it into `source`.
 ///
 /// @NOTE: This function will raise an error if `file` is not opened.
-NIKOLA_API void file_read_bytes(File& file, AudioSourceID& source);
+NIKOLA_API void file_read_bytes(File& file, AudioSourceID* source);
 
 /// Read an `AudioListenerDesc` from `file` and save it into `listener`.
 ///

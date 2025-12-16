@@ -16,6 +16,7 @@ struct UICheckbox;
 struct UISlider;
 struct UIImage;
 struct UIMenu;
+struct Entity;
 
 /// ---------------------------------------------------------------------
  
@@ -88,6 +89,11 @@ enum EventType {
   EVENT_PHYSICS_CONTACT_REMOVED,
   EVENT_PHYSICS_CONTACT_PERSISTED,
   EVENT_PHYSICS_RAYCAST_HIT,
+
+  /// Entity events
+  
+  EVENT_ENTITY_ADDED, 
+  EVENT_ENTITY_DESTROYED,
 
   EVENTS_MAX,
 };
@@ -175,6 +181,10 @@ struct Event {
   /// The ray cast result given to this event 
   /// by `EVENT_PHYSICS_RAYCAST_HIT`.
   RayCastResult cast_result;
+
+  /// The entity ID given to this event by 
+  /// either `EVENT_ENTITY_ADDED` or `EVENT_ENTITY_DESTROYED`.
+  Entity* entt_id;
 };
 /// Event
 ///---------------------------------------------------------------------------------------------------------------------
