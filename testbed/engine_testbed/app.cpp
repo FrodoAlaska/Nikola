@@ -25,6 +25,9 @@ struct nikola::App {
 
   nikola::Transform ground_transform;
   nikola::Transform transforms[MAX_OBJECTS];
+
+  nikola::EntityWorld entt_world;
+  nikola::EntityID entity;
 };
 /// App
 /// ----------------------------------------------------------------------
@@ -34,6 +37,7 @@ struct nikola::App {
 
 static void init_resources(nikola::App* app) {
   // Resource storage init 
+  
   nikola::FilePath res_path = nikola::filepath_append(nikola::filesystem_current_path(), "res");
   app->res_group_id = nikola::resources_create_group("app_res", res_path);
 
@@ -59,6 +63,11 @@ static void init_resources(nikola::App* app) {
 
 /// Private functions 
 /// ----------------------------------------------------------------------
+
+struct DamageComponent {
+  nikola::u32 amount = 0; 
+  nikola::u32 max    = 100;
+};
 
 /// ----------------------------------------------------------------------
 /// App functions 
@@ -98,6 +107,8 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
     nikola::transform_translate(app->transforms[i], nikola::Vec3((i / 4) * 15.0f, 1.5f, (i % 4) * 15.0f));
     nikola::transform_scale(app->transforms[i], nikola::Vec3(0.2f));
   }
+
+  app->entity = nikola::entity_world_create_entity(app->entt_world, nikola::Vec3(10.0f, 0.5f, 10.0f));
 
   // Lights init
 

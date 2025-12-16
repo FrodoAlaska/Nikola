@@ -16,3 +16,4 @@
 #include <nikola/nikola_thread.h>
 #include <nikola/nikola_ui.h>
 #include <nikola/nikola_physics.h>
+#include <nikola/nikola_entity.h>

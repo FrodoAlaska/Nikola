@@ -184,7 +184,7 @@ struct Event {
 
   /// The entity ID given to this event by 
   /// either `EVENT_ENTITY_ADDED` or `EVENT_ENTITY_DESTROYED`.
-  Entity* entt_id;
+  u32 entt_id;
 };
 /// Event
 ///---------------------------------------------------------------------------------------------------------------------

@@ -4,8 +4,8 @@
     - [x] Integrate EnTT 
     - [x] Add an entity ID 
     - [x] Add an entity world 
-    - [] Get components functionality 
-    - [] Custom components
+    - [x] Get components functionality 
+    - [x] Custom components
     - [] Entity and world GUI view
     - [] Documentation
 - [] Resources 

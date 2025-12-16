@@ -30,3 +30,5 @@
 #endif
 
 #include <moodycamel/concurrentqueue.h>
+
+#include <entt/entt.hpp>
