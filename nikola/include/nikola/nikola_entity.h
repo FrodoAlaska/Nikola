@@ -18,7 +18,7 @@ namespace nikola { // Start of nikola
 /// Consts
 
 /// Used to indicate an invalid entity ID.
-const u32 ENITTY_INVALID = ((u32)-1);
+const u32 ENTITY_INVALID = ((u32)-1);
 
 /// Consts
 /// ----------------------------------------------------------------------
