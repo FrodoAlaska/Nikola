@@ -56,8 +56,8 @@ using EntityWorld = entt::registry;
 /// ----------------------------------------------------------------------
 /// Callbacks
 
-/// Called when the physics body of `entt` is collided in the physics world.
-using OnCollisionEnterFn = std::function<void(const EntityWorld& world, const EntityID& entt)>;
+/// Called when the physics body of `entt` is collided with `other` in the physics world.
+using OnCollisionEnterFn = std::function<void(const EntityWorld& world, const EntityID& entt, const EntityID& other)>;
 
 /// Callbacks
 /// ----------------------------------------------------------------------
