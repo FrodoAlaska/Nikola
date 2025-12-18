@@ -15,15 +15,6 @@ namespace nikola { // Start of nikola
 /// *** Entity ***
 
 /// ----------------------------------------------------------------------
-/// Consts
-
-/// Used to indicate an invalid entity ID.
-const u32 ENTITY_INVALID = ((u32)-1);
-
-/// Consts
-/// ----------------------------------------------------------------------
-
-/// ----------------------------------------------------------------------
 /// EntityRenderableType
 enum EntityRenderableType {
   /// Used to render an entity with a mesh.
@@ -54,10 +45,19 @@ using EntityWorld = entt::registry;
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
+/// Consts
+
+/// Used to indicate an invalid entity ID.
+const EntityID ENTITY_NULL = entt::null;
+
+/// Consts
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// Callbacks
 
 /// Called when the physics body of `entt` is collided with `other` in the physics world.
-using OnCollisionEnterFn = std::function<void(const EntityWorld& world, const EntityID& entt, const EntityID& other)>;
+using OnCollisionEnterFn = std::function<void(EntityWorld& world, EntityID& entt, EntityID& other)>;
 
 /// Callbacks
 /// ----------------------------------------------------------------------
@@ -259,12 +259,21 @@ NIKOLA_API void entity_add_instanced_renderable(EntityWorld& world,
                                                 const ResourceID& renderable_id, 
                                                 const ResourceID& material_id = {});
 
-/// Retrieve a generic component `Comp` from `entt` that lives in the given `world`.
+/// Retrieve a reference to a generic component `Comp` from `entt` that lives in the given `world`.
 ///
 /// @NOTE: It is often advised to first use `entity_has_component` to first check 
 /// if the given `entt` has that component in the first place.
 template<typename Comp>
 NIKOLA_API Comp& entity_get_component(EntityWorld& world, EntityID& entt) {
+  return world.get<Comp>(entt);
+}
+
+/// Retrieve a const reference to a generic component `Comp` from `entt` that lives in the given `world`.
+///
+/// @NOTE: It is often advised to first use `entity_has_component` to first check 
+/// if the given `entt` has that component in the first place.
+template<typename Comp>
+NIKOLA_API const Comp& entity_get_component_const(const EntityWorld& world, const EntityID& entt) {
   return world.get<Comp>(entt);
 }
 
