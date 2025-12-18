@@ -151,9 +151,11 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
   nikola::entity_world_update(app->entt_world, delta_time);
 
   // Update the camera
-  
+
+  nikola::Vec3 target = nikola::Vec3(15.0f, 1.5f, 15.0f);
+
   nikola::camera_free_move_func(app->frame_data.camera);
-  nikola::camera_update(app->frame_data.camera);
+  nikola::camera_update(app->frame_data.camera, &target);
 }
 
 void app_render(nikola::App* app) {

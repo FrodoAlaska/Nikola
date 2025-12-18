@@ -961,8 +961,12 @@ NIKOLA_API void camera_fps_move_func(Camera& camera);
 /// Fill the information in `cam` using the given `CameraDesc`.
 NIKOLA_API void camera_create(Camera* cam, const CameraDesc& desc);
 
-/// Update the internal matrices of `cam` and call the associated `CameraMoveFn`. 
-NIKOLA_API void camera_update(Camera& cam);
+/// Using, the given `target`, update the internal matrices of `cam`, updating 
+/// the direction and front vectors in the process. 
+///
+/// @NOTE: If the given `target` is set to `nullptr`, the camera will look 
+/// along its `front` vector.
+NIKOLA_API void camera_update(Camera& cam, const Vec3* target = nullptr);
 
 /// Have the given `cam` follow the `target`, taking into account the given `offset`.
 NIKOLA_API void camera_follow(Camera& cam, const Vec3& target, const Vec3& offset);

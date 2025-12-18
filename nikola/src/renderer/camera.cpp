@@ -198,14 +198,19 @@ void camera_create(Camera* cam, const CameraDesc& desc) {
   cam->is_active = true;
 }
 
-void camera_update(Camera& cam) {
+void camera_update(Camera& cam, const Vec3* target) {
   if(!cam.is_active) {
     return;
   }
 
   // View-projection matrix calculation
 
-  cam.view            = mat4_look_at(cam.position, cam.position + cam.front, cam.up);
+  Vec3 front = cam.position + cam.front;
+  if(target) {
+    front = *target + -cam.front;
+  }
+
+  cam.view            = mat4_look_at(cam.position, front, cam.up);
   cam.projection      = mat4_perspective((cam.zoom * DEG2RAD), cam.aspect_ratio, cam.near, cam.far);
   cam.view_projection = (cam.projection * cam.view);
 
