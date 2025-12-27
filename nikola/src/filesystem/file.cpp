@@ -347,25 +347,26 @@ void file_write_bytes(File& file, const NBRFont& font) {
   
   file_write_bytes(file, &font.glyphs_count, sizeof(font.glyphs_count));
   for(u32 i = 0; i < font.glyphs_count; i++) {
-    file_write_bytes(file, &font.glyphs[i].unicode, sizeof(i8));
-  
-    file_write_bytes(file, &font.glyphs[i].width, sizeof(u16));
-    file_write_bytes(file, &font.glyphs[i].height, sizeof(u16));
+    NBRFont::NBRGlyph* glyph = &font.glyphs[i];
 
-    file_write_bytes(file, &font.glyphs[i].left, sizeof(i16));
-    file_write_bytes(file, &font.glyphs[i].right, sizeof(i16));
-    file_write_bytes(file, &font.glyphs[i].top, sizeof(i16));
-    file_write_bytes(file, &font.glyphs[i].bottom, sizeof(i16));
-
-    file_write_bytes(file, &font.glyphs[i].offset_x, sizeof(i16));
-    file_write_bytes(file, &font.glyphs[i].offset_y, sizeof(i16));
+    file_write_bytes(file, &glyph->codepoint, sizeof(glyph->codepoint));
     
-    file_write_bytes(file, &font.glyphs[i].advance_x, sizeof(i16));
-    file_write_bytes(file, &font.glyphs[i].kern, sizeof(i16));
-    file_write_bytes(file, &font.glyphs[i].left_bearing, sizeof(i16));
+    file_write_bytes(file, &glyph->width, sizeof(glyph->width));
+    file_write_bytes(file, &glyph->height, sizeof(glyph->height));
   
-    sizei pixels_size = font.glyphs[i].width * font.glyphs[i].height;
-    file_write_bytes(file, font.glyphs[i].pixels, pixels_size);
+    file_write_bytes(file, &glyph->left, sizeof(glyph->left));
+    file_write_bytes(file, &glyph->right, sizeof(glyph->right));
+    file_write_bytes(file, &glyph->top, sizeof(glyph->top));
+    file_write_bytes(file, &glyph->bottom, sizeof(glyph->bottom));
+
+    file_write_bytes(file, &glyph->offset_x, sizeof(glyph->offset_x));
+    file_write_bytes(file, &glyph->offset_y, sizeof(glyph->offset_y));
+    
+    file_write_bytes(file, &glyph->advance_x, sizeof(glyph->advance_x));
+    file_write_bytes(file, &glyph->left_bearing, sizeof(glyph->left_bearing));
+  
+    sizei pixels_size = glyph->width * glyph->height;
+    file_write_bytes(file, glyph->pixels, pixels_size);
   }
 
   // Write font information
@@ -373,6 +374,11 @@ void file_write_bytes(File& file, const NBRFont& font) {
   file_write_bytes(file, &font.ascent, sizeof(font.ascent));
   file_write_bytes(file, &font.descent, sizeof(font.descent));
   file_write_bytes(file, &font.line_gap, sizeof(font.line_gap));
+  
+  file_write_bytes(file, &font.left, sizeof(font.left));
+  file_write_bytes(file, &font.right, sizeof(font.right));
+  file_write_bytes(file, &font.top, sizeof(font.top));
+  file_write_bytes(file, &font.bottom, sizeof(font.bottom));
 }
 
 void file_write_bytes(File& file, const NBRAudio& audio) {
@@ -880,30 +886,31 @@ void file_read_bytes(File& file, NBRFont* out_font) {
   // Load the glyphs 
   
   file_read_bytes(file, &out_font->glyphs_count, sizeof(out_font->glyphs_count));
-  out_font->glyphs = (NBRGlyph*)memory_allocate(sizeof(NBRGlyph) * out_font->glyphs_count);
+  out_font->glyphs = (NBRFont::NBRGlyph*)memory_allocate(sizeof(NBRFont::NBRGlyph) * out_font->glyphs_count);
 
   for(u32 i = 0; i < out_font->glyphs_count; i++) {
-    file_read_bytes(file, &out_font->glyphs[i].unicode, sizeof(i8));
-  
-    file_read_bytes(file, &out_font->glyphs[i].width, sizeof(u16));
-    file_read_bytes(file, &out_font->glyphs[i].height, sizeof(u16));
+    NBRFont::NBRGlyph* glyph = &out_font->glyphs[i];
 
-    file_read_bytes(file, &out_font->glyphs[i].left, sizeof(u16));
-    file_read_bytes(file, &out_font->glyphs[i].right, sizeof(u16));
-    file_read_bytes(file, &out_font->glyphs[i].top, sizeof(u16));
-    file_read_bytes(file, &out_font->glyphs[i].bottom, sizeof(u16));
-
-    file_read_bytes(file, &out_font->glyphs[i].offset_x, sizeof(i16));
-    file_read_bytes(file, &out_font->glyphs[i].offset_y, sizeof(i16));
+    file_read_bytes(file, &glyph->codepoint, sizeof(glyph->codepoint));
     
-    file_read_bytes(file, &out_font->glyphs[i].advance_x, sizeof(i16));
-    file_read_bytes(file, &out_font->glyphs[i].kern, sizeof(i16));
-    file_read_bytes(file, &out_font->glyphs[i].left_bearing, sizeof(i16));
+    file_read_bytes(file, &glyph->width, sizeof(glyph->width));
+    file_read_bytes(file, &glyph->height, sizeof(glyph->height));
   
-    sizei pixels_size      = out_font->glyphs[i].width * out_font->glyphs[i].height;
-    out_font->glyphs[i].pixels = (u8*)memory_allocate(pixels_size); 
+    file_read_bytes(file, &glyph->left, sizeof(glyph->left));
+    file_read_bytes(file, &glyph->right, sizeof(glyph->right));
+    file_read_bytes(file, &glyph->top, sizeof(glyph->top));
+    file_read_bytes(file, &glyph->bottom, sizeof(glyph->bottom));
 
-    file_read_bytes(file, out_font->glyphs[i].pixels, pixels_size);
+    file_read_bytes(file, &glyph->offset_x, sizeof(glyph->offset_x));
+    file_read_bytes(file, &glyph->offset_y, sizeof(glyph->offset_y));
+    
+    file_read_bytes(file, &glyph->advance_x, sizeof(glyph->advance_x));
+    file_read_bytes(file, &glyph->left_bearing, sizeof(glyph->left_bearing));
+  
+    sizei pixels_size = glyph->width * glyph->height;
+    glyph->pixels     = (u8*)memory_allocate(pixels_size); 
+
+    file_read_bytes(file, glyph->pixels, pixels_size);
   }
 
   // Load font information
@@ -911,6 +918,11 @@ void file_read_bytes(File& file, NBRFont* out_font) {
   file_read_bytes(file, &out_font->ascent, sizeof(out_font->ascent));
   file_read_bytes(file, &out_font->descent, sizeof(out_font->descent));
   file_read_bytes(file, &out_font->line_gap, sizeof(out_font->line_gap));
+  
+  file_read_bytes(file, &out_font->left, sizeof(out_font->left));
+  file_read_bytes(file, &out_font->right, sizeof(out_font->right));
+  file_read_bytes(file, &out_font->top, sizeof(out_font->top));
+  file_read_bytes(file, &out_font->bottom, sizeof(out_font->bottom));
 }
 
 void file_read_bytes(File& file, NBRAudio* out_audio) {

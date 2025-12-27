@@ -486,42 +486,42 @@ static bool load_font_nbr(ResourceGroup* group, Font* font, const FilePath& nbr_
   
   // Import the font information
   
-  font->ascent   = (f32)nbr_font.ascent;
-  font->descent  = (f32)nbr_font.descent;
-  font->line_gap = (f32)nbr_font.line_gap;
+  font->ascent   = nbr_font.ascent;
+  font->descent  = nbr_font.descent;
+  font->line_gap = nbr_font.line_gap;
+
+  font->left   = nbr_font.left;
+  font->right  = nbr_font.right;
+  font->top    = nbr_font.top;
+  font->bottom = nbr_font.bottom;
 
   // Import the glyphs 
   
   for(sizei i = 0; i < nbr_font.glyphs_count; i++) {
     Font::Glyph glyph;
+    NBRFont::NBRGlyph* nbr_glyph = &nbr_font.glyphs[i];
 
-    glyph.unicode = nbr_font.glyphs[i].unicode;
+    glyph.codepoint = nbr_glyph->codepoint;
 
-    glyph.size.x = nbr_font.glyphs[i].width;
-    glyph.size.y = nbr_font.glyphs[i].height;
-    
-    glyph.offset.x = nbr_font.glyphs[i].offset_x;
-    glyph.offset.y = nbr_font.glyphs[i].offset_y;
-    
-    glyph.left   = nbr_font.glyphs[i].left;
-    glyph.top    = nbr_font.glyphs[i].top;
-    glyph.right  = nbr_font.glyphs[i].right;
-    glyph.bottom = nbr_font.glyphs[i].bottom;
-    
-    glyph.advance_x    = nbr_font.glyphs[i].advance_x;
-    glyph.kern         = nbr_font.glyphs[i].kern;
-    glyph.left_bearing = nbr_font.glyphs[i].left_bearing;
+    glyph.size.x = nbr_glyph->width;
+    glyph.size.y = nbr_glyph->height;
 
-    // We don't care about glyphs that have a "non-size"
-    if(glyph.size.x <= 0) {
-      continue;
-    }
+    glyph.offset.x = nbr_glyph->offset_x;
+    glyph.offset.y = nbr_glyph->offset_y;
+    
+    glyph.left   = nbr_glyph->left;
+    glyph.top    = nbr_glyph->top;
+    glyph.right  = nbr_glyph->right;
+    glyph.bottom = nbr_glyph->bottom;
+    
+    glyph.advance_x    = nbr_glyph->advance_x;
+    glyph.left_bearing = nbr_glyph->left_bearing;
   
     // Importing the texture
     
     GfxTextureDesc face_desc {
-      .width  = (u32)nbr_font.glyphs[i].width,
-      .height = (u32)nbr_font.glyphs[i].height,
+      .width  = (u32)glyph.size.x,
+      .height = (u32)glyph.size.y,
       .depth  = 0, 
       .mips   = 1,
 
@@ -531,11 +531,11 @@ static bool load_font_nbr(ResourceGroup* group, Font* font, const FilePath& nbr_
       .wrap_mode = GFX_TEXTURE_WRAP_CLAMP,
 
       .is_bindless = false,
-      .data        = (void*)nbr_font.glyphs[i].pixels,
+      .data        = (void*)nbr_glyph->pixels,
     };
     glyph.texture = resources_get_texture(resources_push_texture(group->id, face_desc));
 
-    font->glyphs[glyph.unicode] = glyph;
+    font->glyphs[glyph.codepoint] = glyph;
   }
 
   //
@@ -554,9 +554,10 @@ static bool load_font_nbr(ResourceGroup* group, Font* font, const FilePath& nbr_
   
   NIKOLA_LOG_DEBUG("Group \'%s\' pushed font:", group->name.c_str());
   NIKOLA_LOG_DEBUG("     Glyphs   = %zu", font->glyphs.size());
-  NIKOLA_LOG_DEBUG("     Ascent   = %0.3f", font->ascent);
-  NIKOLA_LOG_DEBUG("     Descent  = %0.3f", font->descent);
-  NIKOLA_LOG_DEBUG("     Line gap = %0.3f", font->line_gap);
+  NIKOLA_LOG_DEBUG("     Ascent   = %f", font->ascent);
+  NIKOLA_LOG_DEBUG("     Descent  = %f", font->descent);
+  NIKOLA_LOG_DEBUG("     Line gap = %f", font->line_gap);
+  NIKOLA_LOG_DEBUG("     Bounds   = {L = %f, R = %f, T = %f, B = %f}", font->left, font->right, font->top, font->bottom);
   NIKOLA_LOG_DEBUG("     Path     = %s", nbr_path.c_str());
 
   // Done!

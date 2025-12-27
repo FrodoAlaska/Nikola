@@ -356,14 +356,13 @@ void batch_render_polygon(const Vec2& center, const f32 radius, const u32 sides,
 void batch_render_text(Font* font, const String& text, const Vec2& position, const f32 size, const Vec4& color) {
   NIKOLA_ASSERT(font, "Trying to render text using a NULL font in \'batch_render_text\'");
   
-  Vec2 off         = Vec2(0.0f);
-  f32 scale        = size / 256.0f;
-  f32 prev_advance = 0.0f;
+  Vec2 off  = Vec2(0.0f);
+  f32 scale = size / NBR_FONT_IMPORT_SCALE;
 
   // Render each character of the text
   for(sizei i = 0; i < text.size(); i++) {
     // Retrieve the "correct" glyph from the font
-    i8 ch       = text[i]; 
+    i8 ch             = text[i]; 
     Font::Glyph glyph = font->glyphs[ch];
 
     // Using the information in the glyph, add a new line for the next glyph
@@ -375,7 +374,7 @@ void batch_render_text(Font* font, const String& text, const Vec2& position, con
     // Since a space is not really a "glyph", we just add an imaginary space 
     // between this glyph and the next one.
     else if(ch == ' ' || ch == '\t') {
-      off.x += prev_advance * scale;
+      off.x += (size * scale) * 2;
       continue;
     }
     
@@ -384,17 +383,13 @@ void batch_render_text(Font* font, const String& text, const Vec2& position, con
 
     // Advance a little for the next glyph
     off.x += glyph.advance_x * scale;
-
-    // This is all for the next character. 
-    // Specially useful for spaces (' ').
-    prev_advance = glyph.advance_x;
   }
 }
 
 void batch_render_codepoint(Font* font, const char codepoint, const Vec2& position, const f32 font_size, const Vec4& color) {
   NIKOLA_ASSERT(font, "Trying to render text using a NULL font in \'batch_render_codepoint\'");
   
-  f32 scale = font_size / 256.0f;
+  f32 scale = font_size / NBR_FONT_IMPORT_SCALE;
 
   // Retrieve the "correct" glyph from the font
   Font::Glyph glyph = font->glyphs[codepoint];

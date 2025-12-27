@@ -171,7 +171,6 @@ void gui_end_panel() {
 
 void gui_toggle_active() {
   s_gui.is_active = !s_gui.is_active;
-  input_cursor_show(s_gui.is_active);
 }
 
 const bool gui_is_focused() {
@@ -521,7 +520,7 @@ void gui_edit_font(const char* name, Font* font, String* label) {
       String str_id = ("Char: " + ch);
       ImGui::PushID(str_id.c_str());
       
-      ImGui::Text("Unicode: %c", glyph->unicode);
+      ImGui::Text("Codepoint: %c", glyph->codepoint);
       
       ImGui::SliderFloat2("Size", &glyph->size[0], -1000, 1000);
       ImGui::SliderFloat2("Offset", &glyph->offset[0], -1000, 1000);
@@ -529,7 +528,6 @@ void gui_edit_font(const char* name, Font* font, String* label) {
       ImGui::Text("Bounds  = {T: %i, L: %i, B: %i, R: %i}", glyph->top, glyph->left, glyph->bottom, glyph->right);
       
       ImGui::SliderInt("Advance", &glyph->advance_x, -1000, FLOAT_MAX);
-      ImGui::SliderInt("Kern", &glyph->kern, -1000, FLOAT_MAX);
       ImGui::SliderInt("Left Side Bearing", &glyph->left_bearing, -1000, FLOAT_MAX);
 
       ImGui::Separator();

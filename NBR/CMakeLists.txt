@@ -3,7 +3,7 @@ project(nbr)
 
 ### Dependencies ###
 ############################################################
-# Setting some options for ASSIMP
+# ASSIMP
 
 set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF)
 set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF)
@@ -19,7 +19,6 @@ set(ASSIMP_BUILD_FBX_IMPORTER             ON)
 set(ASSIMP_BUILD_GLTF_IMPORTER            ON)
 set(ASSIMP_BUILD_COLLADA_IMPORTER         ON)
 
-# ASSIMP
 FetchContent_Declare(
   assimp 
   URL https://github.com/assimp/assimp/archive/refs/tags/v6.0.2.zip

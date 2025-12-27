@@ -56,6 +56,9 @@ const sizei NBR_ANIMATION_NAME_MAX = 256;
 /// before improting to the final NBR format.
 const f32 NBR_MODEL_IMPORT_SCALE  = 0.1f;
 
+/// The default font scale on import.
+const f32 NBR_FONT_IMPORT_SCALE   = 256.0f;
+
 /// NBR consts
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -337,58 +340,53 @@ struct NBRAnimation {
 };
 /// NBRAnimation
 ///---------------------------------------------------------------------------------------------------------------------
-  
-///---------------------------------------------------------------------------------------------------------------------
-/// NBRGlyph
-struct NBRGlyph {
-  /// The unicode representation of the character.
-  i8 unicode; 
-
-  /// The size of the glyph.
-  u16 width, height; 
-
-  /// The bounding box around the glyph.
-  i16 left, right, top, bottom;
-
-  /// An offset from the origin of the glyph. 
-  /// Starts at the top-left of the glyph. 
-  i16 offset_x, offset_y; 
-
-  /// This value determines the start of the next glyph. 
-  /// Usually, it starts at the origin of the current glyph 
-  /// and continues till the origin of the next glyph.
-  i16 advance_x;
-
-  /// A small value that can be applied to make certain 
-  /// characters appear better when next to each other. 
-  i16 kern;
-
-  /// Some left padding for certain characters.
-  i16 left_bearing;
-  
-  /// The pixels that will be given to the texture to be 
-  /// rendered later.
-  u8* pixels; 
-};
-/// NBRGlyph
-///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// NBRFont
 struct NBRFont {
+  struct NBRGlyph {
+    /// The codepoint representation of the character.
+    i8 codepoint; 
+    
+    /// The size of the glyph.
+    f32 width, height; 
+    
+    /// The bounding box around the glyph.
+    f32 left, right, top, bottom;
+
+    /// An offset from the origin of the glyph. 
+    /// Starts at the top-left of the glyph. 
+    f32 offset_x, offset_y; 
+
+    /// This value determines the start of the next glyph. 
+    /// Usually, it starts at the origin of the current glyph 
+    /// and continues till the origin of the next glyph.
+    f32 advance_x;
+
+    /// Some left padding for certain characters.
+    f32 left_bearing;
+
+    /// The pixels that will be given to the texture to be 
+    /// rendered later.
+    u8* pixels; 
+  };
+
   /// An array of glyphs with `glyphs_count` elements in this font.
   
   u32 glyphs_count;
   NBRGlyph* glyphs;
 
   /// This value is the top-most pixel of the first row. 
-  i16 ascent;
+  f32 ascent;
   
   /// This value is the bottom-most pixel of the last row. 
-  i16 descent;
+  f32 descent;
   
   /// This value is used to determine the advance on the vertical axis.
-  i16 line_gap;
+  f32 line_gap;
+
+  /// The bound box around all possible characters 
+  f32 left, right, top, bottom;
 };
 /// NBRFont
 ///---------------------------------------------------------------------------------------------------------------------

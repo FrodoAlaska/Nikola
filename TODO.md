@@ -1,5 +1,21 @@
 ## Update 0.4:
 
+- [] UI Revision
+    - [x] Fix the font importer
+    - [x] Test the new importer with the current renderer 
+    - [] Either rewrite the whole batch renderer or write a seperate UI renderer that compiles the UI geometry and renders it in batches
+    - [] Change the `UICanvas` component to accept a config file, and to build a series of batches 
+    - [] Add different UI widgets 
+        - [] Texts 
+        - [] Buttons 
+        - [] Sliders 
+        - [] Checkboxes 
+        - [] Tool tips 
+        - [] Progress bars
+        - [] etc
+    - [] Change the UI renderer to accept this `UICanvas` in order to render a "UI scene" 
+    - [] Test and test even more 
+    - [] Documentation
 - [] Performance v2.0
     - [] Optimize resource loading 
         - [] Meshes/models: Use `cgltf` and `meshoptimizer` instead of bloated Assimp.

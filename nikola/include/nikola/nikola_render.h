@@ -562,17 +562,19 @@ struct Animation;
 /// Font 
 struct Font {
   struct Glyph {
-    i8 unicode; 
+    i8 codepoint; 
     GfxTexture* texture = nullptr;
 
     Vec2 size;
     Vec2 offset;
 
     u32 left, right, top, bottom;
-    i32 advance_x, kern, left_bearing;
+    i32 advance_x, left_bearing;
   };
 
   f32 ascent, descent, line_gap;
+  f32 left, right, top, bottom;
+
   HashMap<i8, Glyph> glyphs;
 };
 /// Font 
