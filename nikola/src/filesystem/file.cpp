@@ -374,11 +374,6 @@ void file_write_bytes(File& file, const NBRFont& font) {
   file_write_bytes(file, &font.ascent, sizeof(font.ascent));
   file_write_bytes(file, &font.descent, sizeof(font.descent));
   file_write_bytes(file, &font.line_gap, sizeof(font.line_gap));
-  
-  file_write_bytes(file, &font.left, sizeof(font.left));
-  file_write_bytes(file, &font.right, sizeof(font.right));
-  file_write_bytes(file, &font.top, sizeof(font.top));
-  file_write_bytes(file, &font.bottom, sizeof(font.bottom));
 }
 
 void file_write_bytes(File& file, const NBRAudio& audio) {
@@ -918,11 +913,6 @@ void file_read_bytes(File& file, NBRFont* out_font) {
   file_read_bytes(file, &out_font->ascent, sizeof(out_font->ascent));
   file_read_bytes(file, &out_font->descent, sizeof(out_font->descent));
   file_read_bytes(file, &out_font->line_gap, sizeof(out_font->line_gap));
-  
-  file_read_bytes(file, &out_font->left, sizeof(out_font->left));
-  file_read_bytes(file, &out_font->right, sizeof(out_font->right));
-  file_read_bytes(file, &out_font->top, sizeof(out_font->top));
-  file_read_bytes(file, &out_font->bottom, sizeof(out_font->bottom));
 }
 
 void file_read_bytes(File& file, NBRAudio* out_audio) {

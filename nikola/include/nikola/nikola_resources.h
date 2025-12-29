@@ -384,9 +384,6 @@ struct NBRFont {
   
   /// This value is used to determine the advance on the vertical axis.
   f32 line_gap;
-
-  /// The bound box around all possible characters 
-  f32 left, right, top, bottom;
 };
 /// NBRFont
 ///---------------------------------------------------------------------------------------------------------------------

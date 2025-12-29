@@ -115,6 +115,7 @@ static void init_pipeline() {
 
 static void generate_quad_batch(BatchCall* batch, const Rect2D& src, const Rect2D& dest, const Vec4& color, const Vec2& shape_side) {
   // Top-left
+ 
   Vertex2D v1 = {
     .position       = s_batch.ortho * Vec4(dest.position.x, dest.position.y, 0.0f, 1.0f),
     .color          = color,
@@ -124,6 +125,7 @@ static void generate_quad_batch(BatchCall* batch, const Rect2D& src, const Rect2
   batch->vertices.push_back(v1);
 
   // Top-right
+  
   Vertex2D v2 = {
     .position       = s_batch.ortho * Vec4(dest.position.x + dest.size.x, dest.position.y, 0.0f, 1.0f),
     .color          = color,
@@ -133,6 +135,7 @@ static void generate_quad_batch(BatchCall* batch, const Rect2D& src, const Rect2
   batch->vertices.push_back(v2);
 
   // Bottom-right
+  
   Vertex2D v3 = {
     .position       = s_batch.ortho * Vec4(dest.position.x + dest.size.x, dest.position.y + dest.size.y, 0.0f, 1.0f),
     .color          = color,
@@ -143,6 +146,7 @@ static void generate_quad_batch(BatchCall* batch, const Rect2D& src, const Rect2
   batch->vertices.push_back(v3);
 
   // Bottom-left
+  
   Vertex2D v4 = {
     .position       = s_batch.ortho * Vec4(dest.position.x, dest.position.y + dest.size.y, 0.0f, 1.0f),
     .color          = color,
@@ -354,26 +358,31 @@ void batch_render_polygon(const Vec2& center, const f32 radius, const u32 sides,
 }
 
 void batch_render_text(Font* font, const String& text, const Vec2& position, const f32 size, const Vec4& color) {
-  NIKOLA_ASSERT(font, "Trying to render text using a NULL font in \'batch_render_text\'");
+  NIKOLA_ASSERT(font, "Trying to render text using a NULL font in batch_render_text");
   
-  Vec2 off  = Vec2(0.0f);
   f32 scale = size / NBR_FONT_IMPORT_SCALE;
+  Vec2 off  = Vec2(0.0f);
 
   // Render each character of the text
   for(sizei i = 0; i < text.size(); i++) {
     // Retrieve the "correct" glyph from the font
-    i8 ch             = text[i]; 
-    Font::Glyph glyph = font->glyphs[ch];
+    
+    i8 ch              = text[i]; 
+    Font::Glyph& glyph = font->glyphs[ch];
 
     // Using the information in the glyph, add a new line for the next glyph
+    
     if(ch == '\n') {
-      off.x = 0.0f;
-      off.y += size + 2.0f;
+      off.x  = 0.0f;
+      off.y += (font->ascent - font->descent + font->line_gap) * scale;
+
       continue;
     }
+
     // Since a space is not really a "glyph", we just add an imaginary space 
     // between this glyph and the next one.
-    else if(ch == ' ' || ch == '\t') {
+    
+    if(ch == ' ' || ch == '\t') {
       off.x += (size * scale) * 2;
       continue;
     }
@@ -387,22 +396,26 @@ void batch_render_text(Font* font, const String& text, const Vec2& position, con
 }
 
 void batch_render_codepoint(Font* font, const char codepoint, const Vec2& position, const f32 font_size, const Vec4& color) {
-  NIKOLA_ASSERT(font, "Trying to render text using a NULL font in \'batch_render_codepoint\'");
+  NIKOLA_ASSERT(font, "Trying to render text using a NULL font in batch_render_codepoint");
   
   f32 scale = font_size / NBR_FONT_IMPORT_SCALE;
 
   // Retrieve the "correct" glyph from the font
-  Font::Glyph glyph = font->glyphs[codepoint];
+  Font::Glyph& glyph = font->glyphs[codepoint];
 
   // Set up the soruce and destination rectangles
-  
+
+  Vec2 dest_pos;
+  dest_pos.x = position.x + ((glyph.left_bearing + glyph.offset.x) * scale);
+  dest_pos.y = position.y + ((glyph.offset.y) * scale);
+
   Rect2D src = {
     .size     = glyph.size * scale,
     .position = Vec2(0.0f), 
   };
   Rect2D dest = {
     .size     = src.size,
-    .position = position + (glyph.offset * scale), 
+    .position = dest_pos,
   };
 
   // Prepare and render the glyph batch

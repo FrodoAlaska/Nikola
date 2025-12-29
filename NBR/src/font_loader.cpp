@@ -52,17 +52,6 @@ static nikola::f32 load_font_information(nikola::NBRFont* font, stbtt_fontinfo* 
   font->ascent   = ascent * scale_factor;
   font->descent  = descent * scale_factor;
   font->line_gap = line_gap * scale_factor; 
-  NIKOLA_LOG_TRACE("%f, %f, %f", font->ascent, font->descent, font->line_gap);
-
-  // Get the bounding box around all possible characters 
-
-  nikola::i32 left, top, right, bottom;
-  stbtt_GetFontBoundingBox(info, &left, &top, &right, &bottom);
-
-  font->left   = left * scale_factor;
-  font->right  = right * scale_factor;
-  font->top    = top * scale_factor;
-  font->bottom = bottom * scale_factor;
 
   // Done!
   return scale_factor;

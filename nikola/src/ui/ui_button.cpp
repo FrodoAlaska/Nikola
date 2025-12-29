@@ -13,10 +13,11 @@ namespace nikola { // Start of nikola
 /// Private functions
 
 static void adjust_button(UIButton& button) {
-  button.size = button.text.bounds + button.padding;
+  Vec2 half_padding = button.padding * 0.5f;
+  button.size       = button.text.bounds + button.padding;
   
-  button.position.x = button.text.position.x - (button.padding.x / 2.0f);
-  button.position.y = button.text.position.y - (button.text.bounds.y - (button.padding.y / 2.0f));
+  button.position.x = button.text.position.x - half_padding.x;
+  button.position.y = button.text.position.y - button.text.bounds.y - half_padding.y;
 }
 
 static const bool is_hovered(const UIButton& button) {
@@ -41,6 +42,7 @@ void ui_button_create(UIButton* button, const UIButtonDesc& desc) {
   NIKOLA_ASSERT(RESOURCE_IS_VALID(desc.font_id), "Invalid font given to ui_button_create");
 
   // Text init
+  
   UITextDesc text_desc = {
     .string = desc.text, 
 
@@ -132,10 +134,13 @@ void ui_button_render(UIButton& button) {
     event_dispatch(event);
   }
 
-  // Render the button
+  // Render the outline
+  
   batch_render_quad(button.position - (button.outline_thickness / 2.0f), 
                     button.size + button.outline_thickness,
                     button.outline_color);
+
+  // Render the button
   batch_render_quad(button.position, button.size, color);
 
   // Render the text

@@ -490,11 +490,6 @@ static bool load_font_nbr(ResourceGroup* group, Font* font, const FilePath& nbr_
   font->descent  = nbr_font.descent;
   font->line_gap = nbr_font.line_gap;
 
-  font->left   = nbr_font.left;
-  font->right  = nbr_font.right;
-  font->top    = nbr_font.top;
-  font->bottom = nbr_font.bottom;
-
   // Import the glyphs 
   
   for(sizei i = 0; i < nbr_font.glyphs_count; i++) {
@@ -557,7 +552,6 @@ static bool load_font_nbr(ResourceGroup* group, Font* font, const FilePath& nbr_
   NIKOLA_LOG_DEBUG("     Ascent   = %f", font->ascent);
   NIKOLA_LOG_DEBUG("     Descent  = %f", font->descent);
   NIKOLA_LOG_DEBUG("     Line gap = %f", font->line_gap);
-  NIKOLA_LOG_DEBUG("     Bounds   = {L = %f, R = %f, T = %f, B = %f}", font->left, font->right, font->top, font->bottom);
   NIKOLA_LOG_DEBUG("     Path     = %s", nbr_path.c_str());
 
   // Done!

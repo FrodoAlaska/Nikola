@@ -11,33 +11,39 @@ namespace nikola { // Start of nikola
 /// Private functions
 
 static const Vec2 measure_bounds(const UIText& text) {
-  Vec2 result(0.0f, text.font_size);
-
-  f32 font_scale   = (text.font_size / 256.0f); // @TODO: This is an engine problem, but the `256` should be a constant. This is _REALLY_ bad.
-  f32 prev_advance = 0.0f;
+  Vec2 result    = Vec2(0.0f);
+  f32 font_scale = text.font_size / NBR_FONT_IMPORT_SCALE; 
 
   for(auto& ch : text.string) {
     Font::Glyph* glyph = &text.font->glyphs[ch];
-     
+    
+    // Make sure to take on the highest glyph
+   
+    f32 scaled_height = glyph->size.y * font_scale;
+    if(result.y < scaled_height) {
+      result.y = scaled_height;
+    }
+
     // Give some love to the Y-axis as well
+    
     if(ch == '\n') {
-      result.y += text.font_size;
       result.x  = 0.0f; 
+      result.y += (text.font->ascent - text.font->descent + text.font->line_gap) * font_scale;
 
       continue; 
     }
 
     // Take into account the spaces as well as normal characters
+    
     if(ch == ' ' || ch == '\t') {
-      result.x += (prev_advance * font_scale);
+      result.x += (text.font_size * font_scale) * 2;
       continue;
     }
      
-    result.x    += glyph->advance_x;
-    prev_advance = glyph->advance_x;
+    result.x += glyph->advance_x * font_scale;
   }
 
-  return Vec2(result.x * font_scale, result.y);
+  return result;
 }
 
 static void apply_animation_fade(UIText& text, const i32 dir, const f32 duration) {
@@ -99,11 +105,10 @@ void ui_text_create(UIText* text, const UITextDesc& desc) {
 
 void ui_text_set_anchor(UIText& text, const UIAnchor& anchor, const Vec2& bounds) {
   text.anchor        = anchor;
-  text.bounds        = measure_bounds(text);
   Vec2 text_center   = text.bounds / 2.0f;
   Vec2 bounds_center = bounds / 2.0f;
   
-  Vec2 padding = Vec2(15.0f, text.font_size);
+  Vec2 padding = Vec2(10.0f);
 
   switch(text.anchor) {
     case UI_ANCHOR_TOP_LEFT:  
@@ -114,7 +119,7 @@ void ui_text_set_anchor(UIText& text, const UIAnchor& anchor, const Vec2& bounds
       text.position.y = padding.y + text.offset.y; 
       break;
     case UI_ANCHOR_TOP_RIGHT:
-      text.position.x = (bounds.x - text.bounds.x - padding.x - 15.0f) + text.offset.x; 
+      text.position.x = (bounds.x - text.bounds.x - padding.x) + text.offset.x; 
       text.position.y = padding.y + text.offset.y;  
       break;
     case UI_ANCHOR_CENTER_LEFT:  
@@ -125,26 +130,30 @@ void ui_text_set_anchor(UIText& text, const UIAnchor& anchor, const Vec2& bounds
       text.position = (bounds_center - text_center) + text.offset;
       break;
     case UI_ANCHOR_CENTER_RIGHT:
-      text.position.x = (bounds.x - text.bounds.x - padding.x - 15.0f) + text.offset.x; 
+      text.position.x = (bounds.x - text.bounds.x - padding.x) + text.offset.x; 
       text.position.y = (bounds_center.y - text_center.y) + text.offset.y; 
       break;
     case UI_ANCHOR_BOTTOM_LEFT:  
       text.position.x = padding.x + text.offset.x;
-      text.position.y = (bounds.y - text.bounds.y) + text.offset.y + (text.font_size / 2.0f); 
+      text.position.y = (bounds.y - text.bounds.y) + text.offset.y; 
       break;
     case UI_ANCHOR_BOTTOM_CENTER:
       text.position.x = (bounds_center.x - text_center.x) + text.offset.x;
-      text.position.y = (bounds.y - text.bounds.y) + text.offset.y + (text.font_size / 2.0f); 
+      text.position.y = (bounds.y - text.bounds.y) + text.offset.y; 
       break;
     case UI_ANCHOR_BOTTOM_RIGHT:
-      text.position.x = (bounds.x - text.bounds.x - padding.x - 15.0f) + text.offset.x; 
-      text.position.y = (bounds.y - text.bounds.y) + text.offset.y + (text.font_size / 2.0f); 
+      text.position.x = (bounds.x - text.bounds.x - padding.x) + text.offset.x; 
+      text.position.y = (bounds.y - text.bounds.y) + text.offset.y; 
       break;
   }
+
+  text.position.y += text.bounds.y;
 }
 
 void ui_text_set_string(UIText& text, const String& new_string) {
   text.string = new_string;
+  text.bounds = measure_bounds(text);
+
   ui_text_set_anchor(text, text.anchor, text.canvas_bounds);
 }
 

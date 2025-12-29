@@ -3,18 +3,26 @@
 - [] UI Revision
     - [x] Fix the font importer
     - [x] Test the new importer with the current renderer 
+    - [x] Fix the text rendering to be more deterministic so that it can have accurate bounds 
+    - [] Find out a way to have border radius on buttons? Perhaps even drawing just an outline? 
     - [] Either rewrite the whole batch renderer or write a seperate UI renderer that compiles the UI geometry and renders it in batches
-    - [] Change the `UICanvas` component to accept a config file, and to build a series of batches 
+    - [] Change the `UIContext` component to accept a config file, and to build a series of batches 
     - [] Add different UI widgets 
+        - [] Panels
         - [] Texts 
         - [] Buttons 
         - [] Sliders 
         - [] Checkboxes 
         - [] Tool tips 
         - [] Progress bars
+        - [] Menus
         - [] etc
-    - [] Change the UI renderer to accept this `UICanvas` in order to render a "UI scene" 
-    - [] Test and test even more 
+    - [] Change the UI renderer to accept this `UIContext` in order to render a "UI scene" 
+    - [] Tests
+        - [] A simple main menu 
+        - [] Somewhat of an involved settings menu 
+        - [] The perk carousel
+    - [] Add the UI elements to the GUI and have the ability to save the configuration into a file
     - [] Documentation
 - [] Performance v2.0
     - [] Optimize resource loading 

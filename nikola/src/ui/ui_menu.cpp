@@ -135,7 +135,7 @@ void ui_menu_render(UIMenu& menu) {
   UIText* text = &menu.items[menu.current_item];
 
   // @NOTE: I don't know. It just works. Just leave it be, okay? 
-  Vec2 position = text->position - Vec2(0.0f, ((text->bounds.y + text->font_size) / 2.0f) - (text->font_size / 4.0f)); 
+  Vec2 position = text->position - Vec2(0.0f, text->bounds.y);
   Vec2 size     = text->bounds + menu.item_padding;
 
   batch_render_quad(position - (menu.item_padding / 2.0f), size, menu.selector_color);
