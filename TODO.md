@@ -18,11 +18,11 @@
         - [] Menus
         - [] etc
     - [] Change the UI renderer to accept this `UIContext` in order to render a "UI scene" 
+    - [] Add the UI elements to the GUI and have the ability to save the configuration into a file
     - [] Tests
         - [] A simple main menu 
         - [] Somewhat of an involved settings menu 
         - [] The perk carousel
-    - [] Add the UI elements to the GUI and have the ability to save the configuration into a file
     - [] Documentation
 - [] Performance v2.0
     - [] Optimize resource loading 

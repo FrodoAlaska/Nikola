@@ -76,7 +76,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
     .font_id   = app->font_id,
     .font_size = 42.0f,
-    .anchor    = nikola::UI_ANCHOR_TOP_CENTER, 
+    .anchor    = nikola::UI_ANCHOR_TOP_LEFT, 
 
     .canvas_bounds = nikola::Vec2(width, height), 
     .color         = nikola::Vec4(0.0f, 0.0f, 0.0f, 1.0f),
@@ -154,6 +154,13 @@ void app_render_gui(nikola::App* app) {
 
   nikola::gui_begin();
   nikola::gui_begin_panel("Button");
+
+  static int current_anchor  = (int)app->text.anchor;
+  static const char* options = "Top-Left\0Top-Center\0Top-Right\0Center-Left\0Center\0Center-Right\0Bottom-Left\0Bottom-Center\0Bottom-Right\0\0";
+
+  if(ImGui::Combo("Anchor", &current_anchor, options)) {
+    nikola::ui_text_set_anchor(app->text, (nikola::UIAnchor)current_anchor, app->text.canvas_bounds);
+  }
 
   ImGui::DragFloat("Radius", &app->button.border_radius, 0.01f);
 

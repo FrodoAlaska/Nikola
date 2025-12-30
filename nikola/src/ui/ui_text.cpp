@@ -104,49 +104,9 @@ void ui_text_create(UIText* text, const UITextDesc& desc) {
 }
 
 void ui_text_set_anchor(UIText& text, const UIAnchor& anchor, const Vec2& bounds) {
-  text.anchor        = anchor;
-  Vec2 text_center   = text.bounds / 2.0f;
-  Vec2 bounds_center = bounds / 2.0f;
-  
-  Vec2 padding = Vec2(10.0f);
+  text.anchor = anchor;
 
-  switch(text.anchor) {
-    case UI_ANCHOR_TOP_LEFT:  
-      text.position = padding + text.offset;
-      break;
-    case UI_ANCHOR_TOP_CENTER:
-      text.position.x = (bounds_center.x - text_center.x) + text.offset.x; 
-      text.position.y = padding.y + text.offset.y; 
-      break;
-    case UI_ANCHOR_TOP_RIGHT:
-      text.position.x = (bounds.x - text.bounds.x - padding.x) + text.offset.x; 
-      text.position.y = padding.y + text.offset.y;  
-      break;
-    case UI_ANCHOR_CENTER_LEFT:  
-      text.position.x = padding.x + text.offset.x;
-      text.position.y = (bounds_center.y - text_center.y) + text.offset.y; 
-      break;
-    case UI_ANCHOR_CENTER:
-      text.position = (bounds_center - text_center) + text.offset;
-      break;
-    case UI_ANCHOR_CENTER_RIGHT:
-      text.position.x = (bounds.x - text.bounds.x - padding.x) + text.offset.x; 
-      text.position.y = (bounds_center.y - text_center.y) + text.offset.y; 
-      break;
-    case UI_ANCHOR_BOTTOM_LEFT:  
-      text.position.x = padding.x + text.offset.x;
-      text.position.y = (bounds.y - text.bounds.y) + text.offset.y; 
-      break;
-    case UI_ANCHOR_BOTTOM_CENTER:
-      text.position.x = (bounds_center.x - text_center.x) + text.offset.x;
-      text.position.y = (bounds.y - text.bounds.y) + text.offset.y; 
-      break;
-    case UI_ANCHOR_BOTTOM_RIGHT:
-      text.position.x = (bounds.x - text.bounds.x - padding.x) + text.offset.x; 
-      text.position.y = (bounds.y - text.bounds.y) + text.offset.y; 
-      break;
-  }
-
+  text.position    = ui_anchor_get_position(text.anchor, bounds, text.bounds, Vec2(10.0f), text.offset);
   text.position.y += text.bounds.y;
 }
 

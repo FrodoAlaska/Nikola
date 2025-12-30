@@ -365,8 +365,8 @@ void gui_edit_camera(const char* name, Camera* camera) {
   
   // Information
   
-  ImGui::Text("Yaw: %f", camera->yaw);
-  ImGui::Text("Pitch: %f", camera->pitch);
+  ImGui::DragFloat("Yaw", &camera->yaw, s_gui.small_step);
+  ImGui::DragFloat("Pitch", &camera->pitch, s_gui.small_step);
 
   // Editables
  

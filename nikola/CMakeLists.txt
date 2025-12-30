@@ -24,6 +24,7 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/math/quaternion.cpp
   ${NIKOLA_SRC_DIR}/math/transform.cpp
   ${NIKOLA_SRC_DIR}/math/vertex.cpp
+  ${NIKOLA_SRC_DIR}/math/point.cpp
   
   # Physics 
   ${NIKOLA_SRC_DIR}/physics/physics.cpp
@@ -49,7 +50,6 @@ set(NIKOLA_SOURCES
   ${NIKOLA_SRC_DIR}/renderer/camera.cpp
   ${NIKOLA_SRC_DIR}/renderer/renderer.cpp
   ${NIKOLA_SRC_DIR}/renderer/batch_renderer.cpp
-  ${NIKOLA_SRC_DIR}/renderer/ui_renderer.cpp
   ${NIKOLA_SRC_DIR}/renderer/particles.cpp
   ${NIKOLA_SRC_DIR}/renderer/animation.cpp
   ${NIKOLA_SRC_DIR}/renderer/shader_context.cpp
@@ -65,6 +65,7 @@ set(NIKOLA_SOURCES
   
   # UI 
   ${NIKOLA_SRC_DIR}/ui/gui.cpp
+  ${NIKOLA_SRC_DIR}/ui/ui_anchor.cpp
   ${NIKOLA_SRC_DIR}/ui/ui_text.cpp
   ${NIKOLA_SRC_DIR}/ui/ui_button.cpp
   ${NIKOLA_SRC_DIR}/ui/ui_checkbox.cpp

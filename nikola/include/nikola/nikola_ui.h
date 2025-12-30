@@ -642,39 +642,19 @@ NIKOLA_API void gui_edit_entity(const char* name, EntityWorld& world, EntityID& 
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
-/// UI renderer functions
+/// UIAnchor functions
 
-/// Initialize the UI renderer.
-NIKOLA_API bool ui_renderer_init(GfxContext* gfx);
+/// Get the position of `anchor` relative to `screen_size`, using `element_size` to calculate 
+/// the final result, while using `padding` to add padding at the borders of `screen_size`, and 
+/// applying a final `offset` to the position.
+NIKOLA_API Vec2 ui_anchor_get_position(const UIAnchor& anchor, 
+                                       const Vec2& screen_size, 
+                                       const Vec2& element_size, 
+                                       const Vec2& padding = Vec2(10.0f), 
+                                       const Vec2& offset  = Vec2(0.0f));
 
-/// Shutdown and reclaim all the memory allocated by the UI renderer.
-NIKOLA_API void ui_renderer_shutdown();
-
-/// Begin the rendering process of the UI renderer.
-NIKOLA_API void ui_renderer_begin();
-
-/// End the rendering process of the UI renderer. 
-NIKOLA_API void ui_renderer_end();
-
-/// Load the font face found at the given `path`.
-/// Returns `true` if the font was loaded successfully, or `false` otherwise.
-///
-/// @NOTE: This is only a temporary function until I find a way 
-/// to integrate NBR fonts into the UI renderer.
-NIKOLA_API bool ui_renderer_load_font(const FilePath& path);
-
-/// UI renderer functions
+/// UIAnchor functions
 ///---------------------------------------------------------------------------------------------------------------------
-
-/// @ATTENTION @ATTENTION @ATTENTION @ATTENTION @ATTENTION @ATTENTION
-///
-///
-/// @NOTE: 
-/// All the functions below are going to potentially be deprecated. 
-/// Use the RmlUi stuff instead. It's way better, anyway.
-///
-///
-/// @ATTENTION @ATTENTION @ATTENTION @ATTENTION @ATTENTION @ATTENTION
 
 ///---------------------------------------------------------------------------------------------------------------------
 /// UIText functions

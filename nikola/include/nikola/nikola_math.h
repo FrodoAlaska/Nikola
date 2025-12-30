@@ -614,6 +614,21 @@ NIKOLA_API const sizei vertex_get_stride(const i32 vertex_flags);
 /// Vertex functions
 ///---------------------------------------------------------------------------------------------------------------------
 
+///---------------------------------------------------------------------------------------------------------------------
+/// Point functions
+
+/// Check if the given `point` is inside the bounds of `position` and `position + size`.
+NIKOLA_API bool point_in_rect(const Vec2& point, const Vec2& position, const Vec2& size);
+
+/// Check if the given `point` is inside the bounds `rect`.
+NIKOLA_API bool point_in_rect(const Vec2& point, const Rect2D& rect);
+
+/// Check if the given `point` is inside the circle centered at `position` with `radius` radius.
+NIKOLA_API bool point_in_circle(const Vec2& point, const Vec2& position, const f32 radius);
+
+/// Point functions
+///---------------------------------------------------------------------------------------------------------------------
+
 /// *** Math ***
 /// ----------------------------------------------------------------------
 
