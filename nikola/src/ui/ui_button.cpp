@@ -68,6 +68,7 @@ void ui_button_create(UIButton* button, const UIButtonDesc& desc) {
   button->color             = desc.color; 
   button->outline_color     = desc.outline_color;
   button->outline_thickness = desc.outline_thickness;
+  button->border_radius     = desc.border_radius;
 
   button->is_active   = true;
   button->was_hovered = false;
@@ -138,10 +139,11 @@ void ui_button_render(UIButton& button) {
   
   batch_render_quad(button.position - (button.outline_thickness / 2.0f), 
                     button.size + button.outline_thickness,
+                    button.border_radius,
                     button.outline_color);
 
   // Render the button
-  batch_render_quad(button.position, button.size, color);
+  batch_render_quad(button.position, button.size, button.border_radius, color);
 
   // Render the text
   ui_text_render(button.text);

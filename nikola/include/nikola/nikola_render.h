@@ -928,6 +928,9 @@ NIKOLA_API void batch_render_texture(GfxTexture* texture, const Rect2D& src, con
 /// @NOTE: By default, `tint` is set to `Vec4(1.0f)`.
 NIKOLA_API void batch_render_texture(GfxTexture* texture, const Vec2& position, const Vec2& size, const Vec4& tint = Vec4(1.0f));
 
+/// Render a rounded quad at `position` with a size of `size`, with a border radius `radius`, and tinted with `color`.
+NIKOLA_API void batch_render_quad(const Vec2& position, const Vec2& size, const f32 radius, const Vec4& color);
+
 /// Render a quad at `position` with a size of `size` and tinted with `color`.
 NIKOLA_API void batch_render_quad(const Vec2& position, const Vec2& size, const Vec4& color);
 

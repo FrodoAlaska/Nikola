@@ -165,7 +165,7 @@ struct UIButton {
   Vec2 padding, offset;
   Vec2 position, size;
 
-  f32 outline_thickness;
+  f32 outline_thickness, border_radius;
   Vec4 color, outline_color;
   
   bool is_active, was_hovered;
@@ -355,6 +355,11 @@ struct UIButtonDesc {
   ///
   /// @NOTE: This is set to `7.0f` by default.
   f32 outline_thickness = 7.0f;
+  
+  /// The radius of the button's corners.
+  ///
+  /// @NOTE: This is set to `0.0f` by default.
+  f32 border_radius    = 0.0f;
 };
 /// UIButtonDesc
 /// ----------------------------------------------------------------------

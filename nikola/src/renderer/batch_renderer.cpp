@@ -48,7 +48,7 @@ struct Material2D {
   Vec2 size; 
   Vec2 __padding0;
 
-  f32 radius       = 1.0f; 
+  f32 radius       = 0.0f; 
   f32 sides_count  = 4.0f;
   f32 shape_type = 0.0f; 
   
@@ -354,7 +354,7 @@ void batch_render_texture(GfxTexture* texture, const Vec2& position, const Vec2&
   batch_render_texture(texture, src, dest, tint);
 }
 
-void batch_render_quad(const Vec2& position, const Vec2& size, const Vec4& color) {
+void batch_render_quad(const Vec2& position, const Vec2& size, const f32 radius, const Vec4& color) {
   // Prepare the texture batch
   Batch* batch = prepare_texture_batch(s_batch.textures[0]);
   
@@ -362,9 +362,14 @@ void batch_render_quad(const Vec2& position, const Vec2& size, const Vec4& color
   
   Material2D material = {
     .size       = size, 
+    .radius     = radius,
     .shape_type = (f32)SHAPE_TYPE_QUAD, 
   };
   generate_quad_batch(batch, position, size, color, material);
+}
+
+void batch_render_quad(const Vec2& position, const Vec2& size, const Vec4& color) {
+  batch_render_quad(position, size, 0.0f, color);
 }
 
 void batch_render_circle(const Vec2& center, const f32 radius, const Vec4& color) {

@@ -5,7 +5,7 @@
     - [x] Test the new importer with the current renderer 
     - [x] Fix the text rendering to be more deterministic so that it can have accurate bounds 
     - [x] Either rewrite the whole batch renderer or write a seperate UI renderer that compiles the UI geometry and renders it in batches
-    - [] Find out a way to have border radius on buttons? Perhaps even drawing just an outline? 
+    - [x] Find out a way to have border radius on buttons? Perhaps even drawing just an outline? 
     - [] Change the `UIContext` component to accept a config file, and to build a series of batches 
     - [] Add different UI widgets 
         - [] Panels

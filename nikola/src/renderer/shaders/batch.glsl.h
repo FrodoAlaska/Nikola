@@ -83,15 +83,18 @@ inline nikola::GfxShaderDesc generate_batch_quad_shader() {
       // Functions
 
       vec4 quad_shape(Material2D material) {
-        // vec2 position  = fs_in.pixel_pos;
-        // vec2 half_size = material.size / 2.0;
-        //
-        // vec2 q = abs(position) - half_size + vec2(material.radius);
-        //
-        // float dist = 1.0 - (length(max(q, 0.0)) - material.radius);
-        // if(dist < 0.0) {
-        //   discard;
-        // }
+        // This helped a lot: https://www.shadertoy.com/view/Nlc3zf
+
+        vec2 position  = (fs_in.tex_coords - 0.5) * material.size;
+        vec2 half_size = material.size * 0.5f;
+
+        vec2 abs_pos = abs(position) - half_size + material.radius;
+        float sdf    = min(max(abs_pos.x, abs_pos.y), 0.0) + length(max(abs_pos, 0.0)) - material.radius;
+
+        float dist = 1.0 - smoothstep(0.0, fwidth(sdf), sdf);
+        if(dist <= 0.0) {
+          discard;
+        }
 
         return texture(u_texture, fs_in.tex_coords) * fs_in.out_color;
       }

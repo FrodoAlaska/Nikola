@@ -87,12 +87,14 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
     .text = "Play",
 
     .font_id   = app->font_id,
-    .font_size = 30.0f,
+    .font_size = 50.0f,
     .anchor    = nikola::UI_ANCHOR_CENTER, 
 
     .canvas_bounds = nikola::Vec2(width, height), 
 
     .padding = nikola::Vec2(50.0f, 25.0f),
+
+    .border_radius = 0.0f,
   };
   nikola::ui_button_create(&app->button, button_desc);
 
@@ -151,6 +153,11 @@ void app_render_gui(nikola::App* app) {
   }
 
   nikola::gui_begin();
+  nikola::gui_begin_panel("Button");
+
+  ImGui::DragFloat("Radius", &app->button.border_radius, 0.01f);
+
+  nikola::gui_end_panel();
   nikola::gui_end();
 }
 
