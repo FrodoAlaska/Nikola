@@ -14,8 +14,8 @@
 
 namespace Rml {
   class Context;
-  class ElementDocument;
   class Element;
+  class ElementDocument;
   
   template<typename T>
   class Releaser;
@@ -276,11 +276,25 @@ NIKOLA_API void ui_document_show(UIDocument* ui_doc);
 
 NIKOLA_API void ui_document_hide(UIDocument* ui_doc);
 
+NIKOLA_API bool ui_document_is_shown(UIDocument* ui_doc);
+
 NIKOLA_API void ui_document_enable_events(UIDocument* ui_doc);
+
+NIKOLA_API void ui_document_disable_events(UIDocument* ui_doc);
 
 NIKOLA_API void ui_document_pull_to_front(UIDocument* ui_doc);
 
 NIKOLA_API void ui_document_push_to_back(UIDocument* ui_doc);
+
+NIKOLA_API void ui_document_reload_stylesheet(UIDocument* ui_doc); 
+
+NIKOLA_API void ui_document_append_child(UIDocument* ui_doc, UIElementPtr element); 
+
+NIKOLA_API void ui_document_insert_before(UIDocument* ui_doc, UIElementPtr element, UIElement* adjacent_element); 
+
+NIKOLA_API void ui_document_replace_child(UIDocument* ui_doc, UIElementPtr element, UIElement* other_element); 
+
+NIKOLA_API void ui_document_remove_child(UIDocument* ui_doc, UIElement* element); 
 
 NIKOLA_API void ui_document_set_title(UIDocument* ui_doc, const String& title);
 
@@ -290,7 +304,15 @@ NIKOLA_API const String& ui_document_get_source_url(const UIDocument* ui_doc);
 
 NIKOLA_API UIContext* ui_document_get_context(UIDocument* ui_doc);
 
-NIKOLA_API void ui_document_reload_stylesheet(UIDocument* ui_doc); 
+NIKOLA_API UIElement* ui_document_get_element_by_id(UIDocument* ui_doc, const String& id);
+
+NIKOLA_API void ui_document_get_elements_by_tag(UIDocument* ui_doc, const String& tag_name, DynamicArray<UIElement*>& out_elements);
+
+NIKOLA_API void ui_document_get_elements_by_class(UIDocument* ui_doc, const String& class_name, DynamicArray<UIElement*>& out_elements);
+
+NIKOLA_API UIElement* ui_document_query_selector(UIDocument* ui_doc, const String& selector_name);
+
+NIKOLA_API void ui_document_query_selector_all(UIDocument* ui_doc, const String& selector_name, DynamicArray<UIElement*>& out_elements);
 
 /// UIDocument functions
 ///---------------------------------------------------------------------------------------------------------------------
@@ -298,9 +320,11 @@ NIKOLA_API void ui_document_reload_stylesheet(UIDocument* ui_doc);
 ///---------------------------------------------------------------------------------------------------------------------
 /// UIElement functions
 
-NIKOLA_API UIElement* ui_element_create(UIDocument* ui_doc, const String& name);
+NIKOLA_API UIElementPtr ui_element_create(UIDocument* ui_doc, const String& name);
 
 NIKOLA_API void ui_element_enable_events(UIElement* ui_element);
+
+NIKOLA_API void ui_element_disable_events(UIElement* ui_element);
 
 /// UIElement functions
 ///---------------------------------------------------------------------------------------------------------------------

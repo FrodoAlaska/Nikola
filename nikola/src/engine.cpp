@@ -35,6 +35,7 @@ void engine_init(const AppDesc& desc) {
   NIKOLA_PROFILE_FUNCTION();
 
   // Engine init
+  
   s_engine.app_desc   = desc; 
   s_engine.is_running = true;
 
@@ -107,6 +108,9 @@ void engine_init(const AppDesc& desc) {
 
 void engine_run() {
   while(window_is_open(s_engine.window)) {
+    // Poll for input events
+    window_poll_events(s_engine.window);
+    
     // Update 
     
     physics_world_step(1 / 60.0f, 1); 
@@ -116,11 +120,14 @@ void engine_run() {
     
     CHECK_VALID_CALLBACK(s_engine.app_desc.render_fn, s_engine.app);
     CHECK_VALID_CALLBACK(s_engine.app_desc.render_gui_fn, s_engine.app);
+    
+    // Update the internal systems
+
+    input_update();
+    niclock_update();
 
     // Present
-
     gfx_context_present(s_engine.gfx_context); 
-    window_poll_events(s_engine.window);
   }
 }
 

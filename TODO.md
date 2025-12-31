@@ -9,6 +9,7 @@
         - [] Progress 
         - [] Tabbed menus  
         - [] Scroll bar
+    - [x] Something wrong with the input. They don't register on RmlUI's side for some reason. Fix that.
     - [] Make the RmlUI Debugger work
     - [] Tests
         - [] A simple main menu 

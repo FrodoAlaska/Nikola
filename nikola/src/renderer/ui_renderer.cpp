@@ -22,8 +22,8 @@ namespace nikola { // Start of nikola
 ///---------------------------------------------------------------------------------------------------------------------
 /// Consts
 
-const sizei VERTEX_BUFFER_SIZE = MiB(1);
-const sizei INDEX_BUFFER_SIZE  = MiB(1);
+const sizei VERTEX_BUFFER_SIZE = MiB(2);
+const sizei INDEX_BUFFER_SIZE  = MiB(2);
 
 /// Consts
 ///---------------------------------------------------------------------------------------------------------------------

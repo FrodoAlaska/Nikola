@@ -15,6 +15,151 @@
 namespace nikola { // Start of nikola
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// Function declarations
+
+static Rml::Input::KeyIdentifier get_rml_key_code(const Key key);
+static Rml::Input::KeyModifier get_rml_key_modifier(const Key key);
+static Key get_nikola_key_code(const Rml::Input::KeyIdentifier key);
+
+/// Function declarations
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// NKEventListener
+class NKEventListener : public Rml::EventListener {
+  public:
+    NKEventListener() = default;
+
+  public:
+    void ProcessEvent(Rml::Event& event) override {
+      Event nk_event = {
+        .type = EVENT_INVALID,
+      };
+      
+      // Follow the our event struct depending on the event type
+
+      switch(event.GetId()) {
+        case Rml::EventId::Click:
+        case Rml::EventId::Mousedown:
+          nk_event.type                 = EVENT_UI_ELEMENT_CLICKED;
+          nk_event.element              = event.GetTargetElement();
+          nk_event.mouse_button_pressed = event.GetParameter<i32>("button", 0);
+          break;
+        case Rml::EventId::Dblclick:
+          nk_event.type                 = EVENT_UI_ELEMENT_DOUBLE_CLICKED;
+          nk_event.element              = event.GetTargetElement();
+          nk_event.mouse_button_pressed = event.GetParameter<i32>("button", 0);
+          break;
+        case Rml::EventId::Mousescroll:
+        case Rml::EventId::Scroll:
+          nk_event.type               = EVENT_UI_ELEMENT_SCROLLED;
+          nk_event.element            = event.GetTargetElement();
+          nk_event.mouse_scroll_value = event.GetParameter<f32>("wheel_delta_y", 0.0f);
+          break;
+        case Rml::EventId::Mouseover:
+          nk_event.type    = EVENT_UI_ELEMENT_ENTERED;
+          nk_event.element = event.GetTargetElement();
+          break;
+        case Rml::EventId::Mouseout:
+          nk_event.type    = EVENT_UI_ELEMENT_EXITED;
+          nk_event.element = event.GetTargetElement();
+          break;
+        case Rml::EventId::Mousemove:
+          nk_event.type    = EVENT_UI_ELEMENT_MOUSE_MOVED;
+          nk_event.element = event.GetTargetElement();
+          break;
+        case Rml::EventId::Keydown:
+          nk_event.type        = EVENT_UI_ELEMENT_KEY_DOWN;
+          nk_event.element     = event.GetTargetElement();
+          nk_event.key_pressed = get_nikola_key_code(event.GetParameter<Rml::Input::KeyIdentifier>("key_identifier", Rml::Input::KeyIdentifier::KI_UNKNOWN));
+          break;
+        case Rml::EventId::Keyup:
+          nk_event.type         = EVENT_UI_ELEMENT_KEY_UP;
+          nk_event.element      = event.GetTargetElement();
+          nk_event.key_released = get_nikola_key_code(event.GetParameter<Rml::Input::KeyIdentifier>("key_identifier", Rml::Input::KeyIdentifier::KI_UNKNOWN));
+          break;
+        case Rml::EventId::Focus:
+          nk_event.type    = EVENT_UI_ELEMENT_FOCUSED;
+          nk_event.element = event.GetTargetElement();
+          break;
+        case Rml::EventId::Blur:
+          nk_event.type    = EVENT_UI_ELEMENT_BLURRED;
+          nk_event.element = event.GetTargetElement();
+          break;
+        case Rml::EventId::Load:
+          nk_event.type = EVENT_UI_DOCUMENT_LOADED;
+          break;
+        case Rml::EventId::Unload:
+          nk_event.type = EVENT_UI_DOCUMENT_UNLOADED;
+          break;
+        case Rml::EventId::Show:
+          nk_event.type = EVENT_UI_DOCUMENT_SHOWN;
+          break;
+        case Rml::EventId::Hide:
+          nk_event.type = EVENT_UI_DOCUMENT_HIDDEN;
+          break;
+        case Rml::EventId::Dragstart:
+          nk_event.type            = EVENT_UI_ELEMENT_DRAG_STARTED; 
+          nk_event.dragged_element = (UIElement*)event.GetParameter<UIElement*>("drag_element", nullptr);
+          break;
+        case Rml::EventId::Dragend:
+          nk_event.type            = EVENT_UI_ELEMENT_DRAG_ENDED; 
+          nk_event.dragged_element = (UIElement*)event.GetParameter<UIElement*>("drag_element", nullptr);
+          break;
+        case Rml::EventId::Drag:
+          nk_event.type            = EVENT_UI_ELEMENT_DRAGED; 
+          nk_event.element         = event.GetTargetElement();
+          nk_event.dragged_element = (UIElement*)event.GetParameter<UIElement*>("drag_element", nullptr);
+          break;
+        case Rml::EventId::Dragover:
+          nk_event.type            = EVENT_UI_ELEMENT_DRAG_ENTERED; 
+          nk_event.element         = event.GetTargetElement();
+          nk_event.dragged_element = (UIElement*)event.GetParameter<UIElement*>("drag_element", nullptr);
+          break;
+        case Rml::EventId::Dragout:
+          nk_event.type            = EVENT_UI_ELEMENT_DRAG_EXITED; 
+          nk_event.element         = event.GetTargetElement();
+          nk_event.dragged_element = (UIElement*)event.GetParameter<UIElement*>("drag_element", nullptr);
+          break;
+        case Rml::EventId::Dragmove:
+          nk_event.type            = EVENT_UI_ELEMENT_DRAG_MOVED; 
+          nk_event.element         = event.GetTargetElement();
+          nk_event.dragged_element = (UIElement*)event.GetParameter<UIElement*>("drag_element", nullptr);
+          break;
+        case Rml::EventId::Dragdrop:
+          nk_event.type            = EVENT_UI_ELEMENT_DRAG_DROPPED; 
+          nk_event.dragged_element = (UIElement*)event.GetParameter<UIElement*>("drag_element", nullptr);
+          break;
+        case Rml::EventId::Animationend:
+          nk_event.type    = EVENT_UI_ELEMENT_ANIMATION_ENDED;
+          nk_event.element = event.GetTargetElement();
+          break;
+        case Rml::EventId::Transitionend:
+          nk_event.type    = EVENT_UI_ELEMENT_TRANSITION_ENDED;
+          nk_event.element = event.GetTargetElement();
+          break;
+        case Rml::EventId::Tabchange:
+          nk_event.type      = EVENT_UI_ELEMENT_TAB_CHANGED;
+          nk_event.tab_index = event.GetParameter<i32>("tab_index", 0);
+          nk_event.element   = event.GetTargetElement();
+          break;
+        default:
+          break;
+      }
+
+      // Dispatch the event
+    
+      if(nk_event.type != EVENT_INVALID) {
+        event_dispatch(nk_event);
+      }
+    }
+};
+
+static NKEventListener s_listener;
+/// NKEventListener
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// Private functions
 
 static Rml::Input::KeyIdentifier get_rml_key_code(const Key key) {
@@ -515,145 +660,9 @@ static Key get_nikola_key_code(const Rml::Input::KeyIdentifier key) {
     default:
       return KEY_UNKNOWN;
   }
-
 }
 
 /// Private functions
-///---------------------------------------------------------------------------------------------------------------------
-
-///---------------------------------------------------------------------------------------------------------------------
-/// NKEventListener
-class NKEventListener : public Rml::EventListener {
-  public:
-    NKEventListener() = default;
-
-  public:
-    void ProcessEvent(Rml::Event& event) override {
-      Event nk_event = {
-        .type = EVENT_INVALID,
-      };
-      
-      // Follow the our event struct depending on the event type
-
-      switch(event.GetId()) {
-        case Rml::EventId::Click:
-        case Rml::EventId::Mousedown:
-          nk_event.type                 = EVENT_UI_ELEMENT_CLICKED;
-          nk_event.element              = event.GetTargetElement();
-          nk_event.mouse_button_pressed = event.GetParameter<i32>("button", 0);
-          break;
-        case Rml::EventId::Dblclick:
-          nk_event.type                 = EVENT_UI_ELEMENT_DOUBLE_CLICKED;
-          nk_event.element              = event.GetTargetElement();
-          nk_event.mouse_button_pressed = event.GetParameter<i32>("button", 0);
-          break;
-        case Rml::EventId::Mousescroll:
-        case Rml::EventId::Scroll:
-          nk_event.type               = EVENT_UI_ELEMENT_SCROLLED;
-          nk_event.element            = event.GetTargetElement();
-          nk_event.mouse_scroll_value = event.GetParameter<f32>("wheel_delta_y", 0.0f);
-          break;
-        case Rml::EventId::Mouseover:
-          nk_event.type    = EVENT_UI_ELEMENT_ENTERED;
-          nk_event.element = event.GetTargetElement();
-          break;
-        case Rml::EventId::Mouseout:
-          nk_event.type    = EVENT_UI_ELEMENT_EXITED;
-          nk_event.element = event.GetTargetElement();
-          break;
-        case Rml::EventId::Mousemove:
-          nk_event.type    = EVENT_UI_ELEMENT_MOUSE_MOVED;
-          nk_event.element = event.GetTargetElement();
-          break;
-        case Rml::EventId::Keydown:
-          nk_event.type        = EVENT_UI_ELEMENT_KEY_DOWN;
-          nk_event.element     = event.GetTargetElement();
-          nk_event.key_pressed = get_nikola_key_code(event.GetParameter<Rml::Input::KeyIdentifier>("key_identifier", Rml::Input::KeyIdentifier::KI_UNKNOWN));
-          break;
-        case Rml::EventId::Keyup:
-          nk_event.type         = EVENT_UI_ELEMENT_KEY_UP;
-          nk_event.element      = event.GetTargetElement();
-          nk_event.key_released = get_nikola_key_code(event.GetParameter<Rml::Input::KeyIdentifier>("key_identifier", Rml::Input::KeyIdentifier::KI_UNKNOWN));
-          break;
-        case Rml::EventId::Focus:
-          nk_event.type    = EVENT_UI_ELEMENT_FOCUSED;
-          nk_event.element = event.GetTargetElement();
-          break;
-        case Rml::EventId::Blur:
-          nk_event.type    = EVENT_UI_ELEMENT_BLURRED;
-          nk_event.element = event.GetTargetElement();
-          break;
-        case Rml::EventId::Load:
-          nk_event.type = EVENT_UI_DOCUMENT_LOADED;
-          break;
-        case Rml::EventId::Unload:
-          nk_event.type = EVENT_UI_DOCUMENT_UNLOADED;
-          break;
-        case Rml::EventId::Show:
-          nk_event.type = EVENT_UI_DOCUMENT_SHOWN;
-          break;
-        case Rml::EventId::Hide:
-          nk_event.type = EVENT_UI_DOCUMENT_HIDDEN;
-          break;
-        case Rml::EventId::Dragstart:
-          nk_event.type            = EVENT_UI_ELEMENT_DRAG_STARTED; 
-          nk_event.dragged_element = (UIElement*)event.GetParameter<UIElement*>("drag_element", nullptr);
-          break;
-        case Rml::EventId::Dragend:
-          nk_event.type            = EVENT_UI_ELEMENT_DRAG_ENDED; 
-          nk_event.dragged_element = (UIElement*)event.GetParameter<UIElement*>("drag_element", nullptr);
-          break;
-        case Rml::EventId::Drag:
-          nk_event.type            = EVENT_UI_ELEMENT_DRAGED; 
-          nk_event.element         = event.GetTargetElement();
-          nk_event.dragged_element = (UIElement*)event.GetParameter<UIElement*>("drag_element", nullptr);
-          break;
-        case Rml::EventId::Dragover:
-          nk_event.type            = EVENT_UI_ELEMENT_DRAG_ENTERED; 
-          nk_event.element         = event.GetTargetElement();
-          nk_event.dragged_element = (UIElement*)event.GetParameter<UIElement*>("drag_element", nullptr);
-          break;
-        case Rml::EventId::Dragout:
-          nk_event.type            = EVENT_UI_ELEMENT_DRAG_EXITED; 
-          nk_event.element         = event.GetTargetElement();
-          nk_event.dragged_element = (UIElement*)event.GetParameter<UIElement*>("drag_element", nullptr);
-          break;
-        case Rml::EventId::Dragmove:
-          nk_event.type            = EVENT_UI_ELEMENT_DRAG_MOVED; 
-          nk_event.element         = event.GetTargetElement();
-          nk_event.dragged_element = (UIElement*)event.GetParameter<UIElement*>("drag_element", nullptr);
-          break;
-        case Rml::EventId::Dragdrop:
-          nk_event.type            = EVENT_UI_ELEMENT_DRAG_DROPPED; 
-          nk_event.dragged_element = (UIElement*)event.GetParameter<UIElement*>("drag_element", nullptr);
-          break;
-        case Rml::EventId::Animationend:
-          nk_event.type    = EVENT_UI_ELEMENT_ANIMATION_ENDED;
-          nk_event.element = event.GetTargetElement();
-          break;
-        case Rml::EventId::Transitionend:
-          nk_event.type    = EVENT_UI_ELEMENT_TRANSITION_ENDED;
-          nk_event.element = event.GetTargetElement();
-          break;
-        case Rml::EventId::Tabchange:
-          nk_event.type      = EVENT_UI_ELEMENT_TAB_CHANGED;
-          nk_event.tab_index = event.GetParameter<i32>("tab_index", 0);
-          nk_event.element   = event.GetTargetElement();
-          break;
-        default:
-          break;
-      }
-
-      // Dispatch the event
-    
-      if(nk_event.type != EVENT_INVALID) {
-        event_dispatch(nk_event);
-      }
-    }
-};
-
-static NKEventListener s_listener;
-/// NKEventListener
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
@@ -664,7 +673,7 @@ static bool mouse_callbacks(const Event& event, const void* dispatcher, const vo
 
   switch(event.type) {
     case EVENT_MOUSE_MOVED:
-      ui_ctx->ProcessMouseMove((i32)event.mouse_pos_x, (i32)event.mouse_pos_x, get_rml_key_modifier((Key)event.key_modifier));
+      ui_ctx->ProcessMouseMove((i32)event.mouse_pos_x, (i32)event.mouse_pos_y, get_rml_key_modifier((Key)event.key_modifier));
       break;
     case EVENT_MOUSE_BUTTON_PRESSED:
       ui_ctx->ProcessMouseButtonDown(event.mouse_button_pressed, get_rml_key_modifier((Key)event.key_modifier));
@@ -817,11 +826,7 @@ UIDocument* ui_document_create(UIContext* ui_ctx, const String& maker_name) {
 }
 
 void ui_document_close(UIDocument* ui_doc) {
-  ui_doc->RemoveEventListener("show", &s_listener);
-  ui_doc->RemoveEventListener("hide", &s_listener);
-  ui_doc->RemoveEventListener("load", &s_listener);
-  ui_doc->RemoveEventListener("unload", &s_listener);
-  
+  ui_document_disable_events(ui_doc);
   ui_doc->Close();
 }
 
@@ -833,11 +838,22 @@ void ui_document_hide(UIDocument* ui_doc) {
   ui_doc->Hide();
 }
 
+bool ui_document_is_shown(UIDocument* ui_doc) {
+  return ui_doc->IsVisible();
+}
+
 void ui_document_enable_events(UIDocument* ui_doc) {
   ui_doc->AddEventListener("show", &s_listener);
   ui_doc->AddEventListener("hide", &s_listener);
   ui_doc->AddEventListener("load", &s_listener);
   ui_doc->AddEventListener("unload", &s_listener);
+}
+
+void ui_document_disable_events(UIDocument* ui_doc) {
+  ui_doc->RemoveEventListener("show", &s_listener);
+  ui_doc->RemoveEventListener("hide", &s_listener);
+  ui_doc->RemoveEventListener("load", &s_listener);
+  ui_doc->RemoveEventListener("unload", &s_listener);
 }
 
 void ui_document_pull_to_front(UIDocument* ui_doc) {
@@ -846,6 +862,26 @@ void ui_document_pull_to_front(UIDocument* ui_doc) {
 
 void ui_document_push_to_back(UIDocument* ui_doc) {
   ui_doc->PushToBack();
+}
+
+void ui_document_reload_stylesheet(UIDocument* ui_doc) {
+  ui_doc->ReloadStyleSheet();
+}
+
+void ui_document_append_child(UIDocument* ui_doc, UIElementPtr element) {
+  ui_doc->AppendChild(std::move(element));
+}
+
+void ui_document_insert_before(UIDocument* ui_doc, UIElementPtr element, UIElement* adjacent_element) {
+  ui_doc->InsertBefore(std::move(element), adjacent_element);
+}
+
+void ui_document_replace_child(UIDocument* ui_doc, UIElementPtr element, UIElement* other_element) {
+  ui_doc->ReplaceChild(std::move(element), other_element);
+}
+
+void ui_document_remove_child(UIDocument* ui_doc, UIElement* element) {
+  ui_doc->RemoveChild(element);
 }
 
 void ui_document_set_title(UIDocument* ui_doc, const String& title) {
@@ -864,12 +900,24 @@ UIContext* ui_document_get_context(UIDocument* ui_doc) {
   return ui_doc->GetContext();
 }
 
-UIElementPtr ui_document_create_element(UIDocument* ui_doc, const String& name) {
-  return ui_doc->CreateElement(name);
+UIElement* ui_document_get_element_by_id(UIDocument* ui_doc, const String& id) {
+  return ui_doc->GetElementById(id);
 }
 
-void ui_document_reload_stylesheet(UIDocument* ui_doc) {
-  ui_doc->ReloadStyleSheet();
+void ui_document_get_elements_by_tag(UIDocument* ui_doc, const String& tag_name, DynamicArray<UIElement*>& out_elements) {
+  return ui_doc->GetElementsByTagName(out_elements, tag_name);
+}
+
+void ui_document_get_elements_by_class(UIDocument* ui_doc, const String& class_name, DynamicArray<UIElement*>& out_elements) {
+  return ui_doc->GetElementsByClassName(out_elements, class_name);
+}
+
+UIElement* ui_document_query_selector(UIDocument* ui_doc, const String& selector_name) {
+  return ui_doc->QuerySelector(selector_name);
+}
+
+void ui_document_query_selector_all(UIDocument* ui_doc, const String& selector_name, DynamicArray<UIElement*>& out_elements) {
+  return ui_doc->QuerySelectorAll(out_elements, selector_name);
 }
 
 /// UIDocument functions
@@ -878,9 +926,9 @@ void ui_document_reload_stylesheet(UIDocument* ui_doc) {
 ///---------------------------------------------------------------------------------------------------------------------
 /// UIElement functions
 
-UIElement* ui_element_create(UIDocument* ui_doc, const String& name) {
+UIElementPtr ui_element_create(UIDocument* ui_doc, const String& name) {
   NIKOLA_ASSERT(ui_doc, "An invalid UIDocument given to ui_element_create");
-  return ui_doc->CreateElement(name).get();
+  return ui_doc->CreateElement(name);
 }
 
 void ui_element_enable_events(UIElement* ui_element) {
@@ -913,6 +961,38 @@ void ui_element_enable_events(UIElement* ui_element) {
   ui_element->AddEventListener("transitionend", &s_listener);
   
   ui_element->AddEventListener("tabchange", &s_listener);
+}
+
+void ui_element_disable_events(UIElement* ui_element) {
+  ui_element->RemoveEventListener("scroll", &s_listener);
+  ui_element->RemoveEventListener("focus", &s_listener);
+  ui_element->RemoveEventListener("blur", &s_listener);
+  
+  ui_element->RemoveEventListener("keydown", &s_listener);
+  ui_element->RemoveEventListener("keyup", &s_listener);
+  
+  ui_element->RemoveEventListener("click", &s_listener);
+  ui_element->RemoveEventListener("dbclick", &s_listener);
+  
+  ui_element->RemoveEventListener("mousedown", &s_listener);
+  ui_element->RemoveEventListener("mousescroll", &s_listener);
+  ui_element->RemoveEventListener("mouseover", &s_listener);
+  ui_element->RemoveEventListener("mouseout", &s_listener);
+  ui_element->RemoveEventListener("mousemove", &s_listener);
+  
+  ui_element->RemoveEventListener("dragstart", &s_listener);
+  ui_element->RemoveEventListener("dragend", &s_listener);
+  ui_element->RemoveEventListener("drag", &s_listener);
+  
+  ui_element->RemoveEventListener("dragover", &s_listener);
+  ui_element->RemoveEventListener("dragout", &s_listener);
+  ui_element->RemoveEventListener("dragmove", &s_listener);
+  ui_element->RemoveEventListener("dragdrop", &s_listener);
+  
+  ui_element->RemoveEventListener("animationend", &s_listener);
+  ui_element->RemoveEventListener("transitionend", &s_listener);
+  
+  ui_element->RemoveEventListener("tabchange", &s_listener);
 }
 
 /// UIElement functions
