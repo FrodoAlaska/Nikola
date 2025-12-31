@@ -49,6 +49,7 @@ set(NIKOLA_SOURCES
   # Renderer 
   ${NIKOLA_SRC_DIR}/renderer/camera.cpp
   ${NIKOLA_SRC_DIR}/renderer/renderer.cpp
+  ${NIKOLA_SRC_DIR}/renderer/ui_renderer.cpp
   ${NIKOLA_SRC_DIR}/renderer/batch_renderer.cpp
   ${NIKOLA_SRC_DIR}/renderer/particles.cpp
   ${NIKOLA_SRC_DIR}/renderer/animation.cpp
@@ -65,14 +66,7 @@ set(NIKOLA_SOURCES
   
   # UI 
   ${NIKOLA_SRC_DIR}/ui/gui.cpp
-  ${NIKOLA_SRC_DIR}/ui/ui_anchor.cpp
-  ${NIKOLA_SRC_DIR}/ui/ui_text.cpp
-  ${NIKOLA_SRC_DIR}/ui/ui_button.cpp
-  ${NIKOLA_SRC_DIR}/ui/ui_checkbox.cpp
-  ${NIKOLA_SRC_DIR}/ui/ui_slider.cpp
-  ${NIKOLA_SRC_DIR}/ui/ui_image.cpp
-  ${NIKOLA_SRC_DIR}/ui/ui_layout.cpp
-  ${NIKOLA_SRC_DIR}/ui/ui_menu.cpp
+  ${NIKOLA_SRC_DIR}/ui/rmlui_backend.cpp
   
   # Entity
   ${NIKOLA_SRC_DIR}/entity/entity.cpp
@@ -136,6 +130,10 @@ target_include_directories(${PROJECT_NAME} PRIVATE BEFORE
 target_link_libraries(${PROJECT_NAME} PRIVATE 
   ${NIKOLA_LIBRARIES}
 )
+
+if(NOT NIKOLA_DISTRIBUTE)
+  target_link_libraries(${PROJECT_NAME} PRIVATE TracyClient)
+endif()
 
 target_precompile_headers(${PROJECT_NAME} PRIVATE 
   "$<$<COMPILE_LANGUAGE:CXX>:${NIKOLA_PCH}>"

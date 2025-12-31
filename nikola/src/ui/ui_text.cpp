@@ -2,6 +2,8 @@
 #include "nikola/nikola_resources.h"
 #include "nikola/nikola_render.h"
 #include "nikola/nikola_math.h"
+#include "nikola/nikola_event.h"
+#include "nikola/nikola_input.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -46,35 +48,6 @@ static const Vec2 measure_bounds(const UIText& text) {
   return result;
 }
 
-static void apply_animation_fade(UIText& text, const i32 dir, const f32 duration) {
-  // We need to "undo" the current alpha in order 
-  // to see the effect happeninig.
-  //
-  // i.e: if we're fading _in_ (increasing the alpha), 
-  // and the alpha is already at 1.0f, then we won't see 
-  // the effect.
-  
-  if(dir > 0 && text.color.a == 1.0f) {
-    text.color.a = 0.0f;
-  }
-  else if(dir < 0 && text.color.a == 0.0f) {
-    text.color.a = 1.0f;
-  }
-
-  // "Animate" the fade effect
-  
-  text.color.a += (dir * duration) * niclock_get_delta_time();
-  text.color.a = clamp_float(text.color.a, 0.001f, 0.99f);
-}
-
-static void apply_animation_ballon(UIText& text, const i32 dir, const f32 duration) {
-  // Animate the ballon effect by increasing or decreasing the font size
-  text.font_size += (dir * duration) * niclock_get_delta_time();
-
-  // Re-position the text to not lose the anchor position 
-  ui_text_set_anchor(text, text.anchor, text.canvas_bounds);
-}
-
 /// Private functions
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -98,15 +71,15 @@ void ui_text_create(UIText* text, const UITextDesc& desc) {
   text->anchor        = desc.anchor;
   text->canvas_bounds = desc.canvas_bounds;
   text->color         = desc.color;
-  ui_text_set_anchor(*text, text->anchor, desc.canvas_bounds);
+  ui_text_set_anchor(*text, text->anchor);
 
   text->is_active = true;
 }
 
-void ui_text_set_anchor(UIText& text, const UIAnchor& anchor, const Vec2& bounds) {
+void ui_text_set_anchor(UIText& text, const UIAnchor& anchor) {
   text.anchor = anchor;
 
-  text.position    = ui_anchor_get_position(text.anchor, bounds, text.bounds, Vec2(10.0f), text.offset);
+  text.position    = ui_anchor_get_position(text.anchor, text.canvas_bounds, text.bounds, Vec2(10.0f), text.offset);
   text.position.y += text.bounds.y;
 }
 
@@ -114,33 +87,37 @@ void ui_text_set_string(UIText& text, const String& new_string) {
   text.string = new_string;
   text.bounds = measure_bounds(text);
 
-  ui_text_set_anchor(text, text.anchor, text.canvas_bounds);
+  ui_text_set_anchor(text, text.anchor);
 }
 
-void ui_text_apply_animation(UIText& text, const UITextAnimation anim_type, const f32 duration) {
+void ui_text_update(UIText& text) {
   if(!text.is_active) {
     return;
   }
 
-  switch(anim_type) {
-    case UI_TEXT_ANIMATION_FADE_IN:
-      apply_animation_fade(text, 1, duration);
-      break;
-    case UI_TEXT_ANIMATION_FADE_OUT:
-      apply_animation_fade(text, -1, duration);
-      break;
-    case UI_TEXT_ANIMATION_BALLON_UP:
-      apply_animation_ballon(text, 1, duration);
-      break;
-    case UI_TEXT_ANIMATION_BALLON_DOWN:
-      apply_animation_ballon(text, -1, duration);
-      break;
-    case UI_TEXT_ANIMATION_SLIDE_UP:
-      text.position.y -= duration * niclock_get_delta_time();
-      break;
-    case UI_TEXT_ANIMATION_SLIDE_DOWN:
-      text.position.y += duration * niclock_get_delta_time();
-      break;
+  // Some useful variables...
+  
+  Vec2 mouse_pos;
+  input_mouse_position(&mouse_pos.x, &mouse_pos.y);
+
+  // Check if the text is hovered
+
+  bool is_hovered = point_in_rect(mouse_pos, text.position - Vec2(0.0f, text.bounds.y), text.bounds);
+  if(is_hovered) {
+    Event event = {
+      .type = EVENT_UI_TEXT_HOVERED, 
+      .text = &text, 
+    };
+    event_dispatch(event);
+  }
+
+  // Check if the text has been pressed
+  
+  if(is_hovered && input_action_pressed("ui-click")) {
+    event_dispatch(Event{
+      .type = EVENT_UI_TEXT_CLICKED, 
+      .text = &text, 
+    });
   }
 }
 

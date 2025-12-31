@@ -1,24 +1,11 @@
 #pragma once
 
 #include "nikola_base.h"
-#include "nikola_physics.h"
+#include "nikola_ui.h"
 
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola
-
-/// ---------------------------------------------------------------------
-
-// Some useful forward declarations to avoid circular dependencies...
-
-struct UIButton;
-struct UICheckbox;
-struct UISlider;
-struct UIImage;
-struct UIMenu;
-struct Entity;
-
-/// ---------------------------------------------------------------------
  
 /// ---------------------------------------------------------------------
 /// *** Event ***
@@ -26,9 +13,11 @@ struct Entity;
 ///---------------------------------------------------------------------------------------------------------------------
 /// EventType
 enum EventType {
+  EVENT_INVALID = 0,
+
   /// App events 
   
-  EVENT_APP_QUIT = 0,
+  EVENT_APP_QUIT,
 
   /// Window events 
   
@@ -63,23 +52,38 @@ enum EventType {
 
   /// UI events
   
-  EVENT_UI_BUTTON_CLICKED, 
-  EVENT_UI_BUTTON_ENTERED,
-  EVENT_UI_BUTTON_EXITED,
+  EVENT_UI_DOCUMENT_LOADED,
+  EVENT_UI_DOCUMENT_UNLOADED,
 
-  EVENT_UI_CHECKBOX_CLICKED,
-  EVENT_UI_CHECKBOX_ENTERED,
-  EVENT_UI_CHECKBOX_EXITED,
-  
-  EVENT_UI_SLIDER_CLICKED,
-  EVENT_UI_SLIDER_CHANGED,
-  
-  EVENT_UI_IMAGE_CLICKED,
-  EVENT_UI_IMAGE_ENTERED,
-  EVENT_UI_IMAGE_EXITED,
+  EVENT_UI_DOCUMENT_SHOWN,
+  EVENT_UI_DOCUMENT_HIDDEN,
 
-  EVENT_UI_MENU_ITEM_CHANGED,
-  EVENT_UI_MENU_ITEM_CLICKED,
+  EVENT_UI_ELEMENT_FOCUSED,
+  EVENT_UI_ELEMENT_BLURRED,
+
+  EVENT_UI_ELEMENT_CLICKED, 
+  EVENT_UI_ELEMENT_DOUBLE_CLICKED, 
+  EVENT_UI_ELEMENT_SCROLLED, 
+  EVENT_UI_ELEMENT_ENTERED,
+  EVENT_UI_ELEMENT_EXITED,
+  EVENT_UI_ELEMENT_MOUSE_MOVED,
+  EVENT_UI_ELEMENT_KEY_DOWN,
+  EVENT_UI_ELEMENT_KEY_UP,
+  
+  EVENT_UI_ELEMENT_DRAG_STARTED,
+  EVENT_UI_ELEMENT_DRAG_ENDED,
+  EVENT_UI_ELEMENT_DRAGED,
+
+  EVENT_UI_ELEMENT_DRAG_ENTERED,
+  EVENT_UI_ELEMENT_DRAG_EXITED,
+  
+  EVENT_UI_ELEMENT_DRAG_MOVED,
+  EVENT_UI_ELEMENT_DRAG_DROPPED,
+  
+  EVENT_UI_ELEMENT_ANIMATION_ENDED,
+  EVENT_UI_ELEMENT_TRANSITION_ENDED,
+  
+  EVENT_UI_ELEMENT_TAB_CHANGED,
 
   /// Physics events
 
@@ -152,21 +156,21 @@ struct Event {
 
   /// The joystick ID given to this event.
   i32 joystick_id; 
+  
+  /// The UI element given to this event upon any 
+  /// UI-related event initiation.
+  UIElement* element;
+  
+  /// The UI element given to this event upon any 
+  /// UI dragging operation.
+  ///
+  /// @NOTE: Both the `dragged_element` and `element` are 
+  /// valid on any drag-related events.
+  UIElement* dragged_element;
 
-  /// The button UI element given to this event. 
-  UIButton* button      = nullptr;
-  
-  /// The checkox UI element given to this event. 
-  UICheckbox* checkbox  = nullptr;
-  
-  /// The slider UI element given to this event. 
-  UISlider* slider      = nullptr;
-  
-  /// The image UI element given to this event. 
-  UIImage* image        = nullptr;
-  
-  /// The menu UI element given to this event. 
-  UIMenu* menu          = nullptr;
+  /// The index of the tab that was changed into 
+  /// upon the dispatch of the `EVENT_UI_ELEMENT_TAB_CHANGED` event.
+  i32 tab_index;
 
   /// The physics body that was given to this event 
   /// by either `EVENT_PHYSICS_BODY_ACTIVATED` or 
@@ -184,7 +188,7 @@ struct Event {
 
   /// The entity ID given to this event by 
   /// either `EVENT_ENTITY_ADDED` or `EVENT_ENTITY_DESTROYED`.
-  u32 entt_id;
+  EntityID entt_id;
 };
 /// Event
 ///---------------------------------------------------------------------------------------------------------------------
@@ -193,7 +197,7 @@ struct Event {
 /// Event callback
 
 /// The callback signature to use for any events, passing in the `event`, the `dispatcher`, and the `listener`.
-using EventFireFn = bool(*)(const Event& event, const void* dispatcher, const void* listener);
+using EventFireFn = std::function<bool(const Event& event, const void* dispatcher, const void* listener)>;
 
 /// Event callback
 ///---------------------------------------------------------------------------------------------------------------------

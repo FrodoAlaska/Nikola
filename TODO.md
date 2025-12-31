@@ -1,24 +1,15 @@
 ## Update 0.4:
 
 - [] UI Revision
-    - [x] Fix the font importer
-    - [x] Test the new importer with the current renderer 
-    - [x] Fix the text rendering to be more deterministic so that it can have accurate bounds 
-    - [x] Either rewrite the whole batch renderer or write a seperate UI renderer that compiles the UI geometry and renders it in batches
-    - [x] Find out a way to have border radius on buttons? Perhaps even drawing just an outline? 
-    - [] Change the `UIContext` component to accept a config file, and to build a series of batches 
-    - [] Add different UI widgets 
-        - [] Panels
-        - [] Texts 
-        - [] Buttons 
-        - [] Sliders 
-        - [] Checkboxes 
-        - [] Tool tips 
-        - [] Progress bars
-        - [] Menus
-        - [] etc
-    - [] Change the UI renderer to accept this `UIContext` in order to render a "UI scene" 
-    - [] Add the UI elements to the GUI and have the ability to save the configuration into a file
+    - [x] Add the RmlUI essentials `UIContext` and `UIDocument`
+    - [x] Add event listeners to the various widgets
+    - [] Abstract the most important functions of UI elements
+    - [] Add different UI elements 
+        - [] Text 
+        - [] Progress 
+        - [] Tabbed menus  
+        - [] Scroll bar
+    - [] Make the RmlUI Debugger work
     - [] Tests
         - [] A simple main menu 
         - [] Somewhat of an involved settings menu 

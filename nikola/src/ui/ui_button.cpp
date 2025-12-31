@@ -20,17 +20,6 @@ static void adjust_button(UIButton& button) {
   button.position.y = button.text.position.y - button.text.bounds.y - half_padding.y;
 }
 
-static const bool is_hovered(const UIButton& button) {
-  Vec2 mouse_pos;
-  input_mouse_position(&mouse_pos.x, &mouse_pos.y);
-
-  Vec2 min = button.position;
-  Vec2 max = button.position + button.size;
-
-  return (mouse_pos.x > min.x && mouse_pos.x < max.x) && 
-         (mouse_pos.y > min.y && mouse_pos.y < max.y);
-}
-
 /// Private functions
 ///---------------------------------------------------------------------------------------------------------------------
 
@@ -70,12 +59,11 @@ void ui_button_create(UIButton* button, const UIButtonDesc& desc) {
   button->outline_thickness = desc.outline_thickness;
   button->border_radius     = desc.border_radius;
 
-  button->is_active   = true;
-  button->was_hovered = false;
+  button->is_active = true;
 }
 
-void ui_button_set_anchor(UIButton& button, const UIAnchor& anchor, const Vec2& bounds) {
-  ui_text_set_anchor(button.text, anchor, bounds);
+void ui_button_set_anchor(UIButton& button, const UIAnchor& anchor) {
+  ui_text_set_anchor(button.text, anchor);
   adjust_button(button);
 }
 
@@ -84,55 +72,45 @@ void ui_button_set_string(UIButton& button, const String& new_string) {
   adjust_button(button);
 }
 
-void ui_button_render(UIButton& button) {
+void ui_button_update(UIButton& button) {
   if(!button.is_active) {
     return;
   }
 
-  Vec4 color = button.color;
-
-  // Check input state 
-
-  // Hovered 
+  // Some useful variables...
   
-  if(is_hovered(button)) {
-    // Just entered the button
-   
-    if(!button.was_hovered) {
-      Event event = {
-        .type   = EVENT_UI_BUTTON_ENTERED, 
-        .button = &button, 
-      };
-      event_dispatch(event);
-    }
-    
-    color.a            = 0.8f;
-    button.was_hovered = true;
-  }
-  else {
-    button.was_hovered = false;
+  Vec2 mouse_pos;
+  input_mouse_position(&mouse_pos.x, &mouse_pos.y);
+
+  button.color.a = 1.0f;
+
+  // Check if the button is hovered
+
+  bool is_hovered = point_in_rect(mouse_pos, button.position, button.size);
+  if(is_hovered) {
+    button.color.a = 0.8f;
+
+    event_dispatch(Event{
+      .type   = EVENT_UI_BUTTON_HOVERED, 
+      .button = &button, 
+    });
   }
 
-  // Exited
+  // Check if the button is pressed
   
-  if(!button.was_hovered) {
-    Event event = {
-      .type   = EVENT_UI_BUTTON_EXITED,
-      .button = &button,
-    };
-    event_dispatch(event);
+  if(is_hovered && input_action_pressed("ui-click")) {
+    button.color.a = 0.5f;
+
+    event_dispatch(Event{
+      .type   = EVENT_UI_BUTTON_CLICKED, 
+      .button = &button, 
+    });
   }
+}
 
-  // Pressed
-  
-  if(button.was_hovered && input_action_pressed("ui-click")) {
-    color.a = 0.5f;
-
-    Event event = {
-      .type   = EVENT_UI_BUTTON_CLICKED,
-      .button = &button,
-    };
-    event_dispatch(event);
+void ui_button_render(UIButton& button) {
+  if(!button.is_active) {
+    return;
   }
 
   // Render the outline
@@ -143,7 +121,7 @@ void ui_button_render(UIButton& button) {
                     button.outline_color);
 
   // Render the button
-  batch_render_quad(button.position, button.size, button.border_radius, color);
+  batch_render_quad(button.position, button.size, button.border_radius, button.color);
 
   // Render the text
   ui_text_render(button.text);

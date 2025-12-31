@@ -72,6 +72,14 @@ FetchContent_Declare(
   URL https://github.com/wolfpld/tracy/archive/refs/tags/v0.12.2.zip
 )
 
+# RmlUI (fork)
+
+FetchContent_Declare(
+  rmlui 
+  GIT_REPOSITORY https://github.com/FrodoAlaska/RmlUi.git
+  GIT_TAG        f6875a7c13fddd23e79b378065211eaeef5f9509 
+)
+
 # OZZ Animation
 
 set(ozz_build_tools    OFF)
@@ -88,7 +96,7 @@ FetchContent_Declare(
   URL https://github.com/guillaumeblanc/ozz-animation/archive/refs/tags/0.16.0.zip
 )
 
-FetchContent_MakeAvailable(glfw-3.4 glm OpenAL jolt tracy ozz)
+FetchContent_MakeAvailable(glfw-3.4 glm OpenAL jolt tracy rmlui ozz)
 ############################################################
 
 ### Project Variables ###
@@ -107,6 +115,7 @@ set(NIKOLA_INCLUDES
   ${OpenAL_SOURCE_DIR}/include
   ${jolt_SOURCE_DIR}/Jolt
   ${tracy_SOURCE_DIR}/public
+  ${rmlui_SOURCE_DIR}/Include
   ${ozz_SOURCE_DIR}/include
 )
 
@@ -114,7 +123,8 @@ set(NIKOLA_LIBRARIES
   glfw 
   OpenAL
   Jolt
-  TracyClient
+  rmlui
+  rmlui_debugger
   ozz_animation
   ozz_animation_offline
 )

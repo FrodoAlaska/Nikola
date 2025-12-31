@@ -3,6 +3,8 @@
 #include <nikola/nikola.h>
 #include <imgui/imgui.h>
 
+#include <RmlUi/Debugger.h>
+
 /// ----------------------------------------------------------------------
 /// App
 struct nikola::App {
@@ -12,8 +14,8 @@ struct nikola::App {
   nikola::ResourceGroupID res_group_id;
   nikola::ResourceID font_id;
 
-  nikola::UIText text;
-  nikola::UIButton button;
+  nikola::UIContext* context;
+  nikola::UIDocument* document;
 
   bool has_editor = false;
 };
@@ -33,6 +35,13 @@ static void init_resources(nikola::App* app) {
   
   app->font_id = nikola::resources_push_font(app->res_group_id, "fonts/HeavyDataNerdFont.nbr");
   nikola::resources_push_texture(app->res_group_id, "textures/frodo.nbr");
+
+  nikola::ui_renderer_load_font(nikola::filepath_append(res_path, "fonts/HeavyDataNerdFont.ttf"));
+}
+
+static bool on_button_pressed(const nikola::Event& event, const void* dispatcher, const void* listener) {
+  nikola::event_dispatch(nikola::Event{.type = nikola::EVENT_APP_QUIT});
+  return true;
 }
 
 /// Private functions 
@@ -71,32 +80,14 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // UI init
 
-  nikola::UITextDesc text_desc = {
-    .string = "Hello, Nikola",
-
-    .font_id   = app->font_id,
-    .font_size = 42.0f,
-    .anchor    = nikola::UI_ANCHOR_TOP_LEFT, 
-
-    .canvas_bounds = nikola::Vec2(width, height), 
-    .color         = nikola::Vec4(0.0f, 0.0f, 0.0f, 1.0f),
-  };
-  nikola::ui_text_create(&app->text, text_desc);
+  nikola::FilePath base_path = nikola::filepath_append(nikola::filesystem_current_path(), "res");
   
-  nikola::UIButtonDesc button_desc = {
-    .text = "Play",
+  app->context  = nikola::ui_context_create("Main", nikola::IVec2(width, height));
+  app->document = nikola::ui_document_load(app->context, nikola::filepath_append(base_path, "ui/first.rml"));
+  nikola::ui_document_show(app->document);
 
-    .font_id   = app->font_id,
-    .font_size = 50.0f,
-    .anchor    = nikola::UI_ANCHOR_CENTER, 
-
-    .canvas_bounds = nikola::Vec2(width, height), 
-
-    .padding = nikola::Vec2(50.0f, 25.0f),
-
-    .border_radius = 0.0f,
-  };
-  nikola::ui_button_create(&app->button, button_desc);
+  // Listen to events
+  nikola::event_listen(nikola::EVENT_UI_ELEMENT_CLICKED, on_button_pressed);
 
   return app;
 }
@@ -125,6 +116,15 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
     nikola::input_cursor_show(app->has_editor);
   }
 
+  // Reload the CSS
+
+  if(nikola::input_key_pressed(nikola::KEY_F5)) {
+    nikola::ui_document_reload_stylesheet(app->document);
+  }
+
+  // UI elements update
+  nikola::ui_context_update(app->context);
+
   // Update the camera
   
   nikola::camera_free_move_func(app->frame_data.camera);
@@ -140,11 +140,13 @@ void app_render(nikola::App* app) {
   // Render 2D 
   
   nikola::batch_renderer_begin();
-
-  nikola::ui_text_render(app->text);
-  nikola::ui_button_render(app->button);
-
   nikola::batch_renderer_end();
+
+  // Render UI 
+
+  nikola::ui_renderer_begin();
+  nikola::ui_context_render(app->context);
+  nikola::ui_renderer_end();
 }
 
 void app_render_gui(nikola::App* app) {
@@ -153,18 +155,6 @@ void app_render_gui(nikola::App* app) {
   }
 
   nikola::gui_begin();
-  nikola::gui_begin_panel("Button");
-
-  static int current_anchor  = (int)app->text.anchor;
-  static const char* options = "Top-Left\0Top-Center\0Top-Right\0Center-Left\0Center\0Center-Right\0Bottom-Left\0Bottom-Center\0Bottom-Right\0\0";
-
-  if(ImGui::Combo("Anchor", &current_anchor, options)) {
-    nikola::ui_text_set_anchor(app->text, (nikola::UIAnchor)current_anchor, app->text.canvas_bounds);
-  }
-
-  ImGui::DragFloat("Radius", &app->button.border_radius, 0.01f);
-
-  nikola::gui_end_panel();
   nikola::gui_end();
 }
 

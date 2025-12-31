@@ -904,6 +904,31 @@ NIKOLA_API void renderer_draw_skybox(const ResourceID& skybox_id);
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// UI renderer functions
+
+/// Initialize the UI renderer.
+NIKOLA_API bool ui_renderer_init(GfxContext* gfx);
+
+/// Shutdown and reclaim all the memory allocated by the UI renderer.
+NIKOLA_API void ui_renderer_shutdown();
+
+/// Begin the rendering process of the UI renderer.
+NIKOLA_API void ui_renderer_begin();
+
+/// End the rendering process of the UI renderer. 
+NIKOLA_API void ui_renderer_end();
+
+/// Load the font face found at the given `path`.
+/// Returns `true` if the font was loaded successfully, or `false` otherwise.
+///
+/// @NOTE: This is only a temporary function until I find a way 
+/// to integrate NBR fonts into the UI renderer.
+NIKOLA_API bool ui_renderer_load_font(const FilePath& path);
+
+/// UI renderer functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// Batch renderer functions
 
 /// Initialize the internal data of the batch renderer.
