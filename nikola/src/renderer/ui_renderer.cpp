@@ -147,7 +147,7 @@ public:
     batch.indices.assign(indices.data(), indices.data() + indices.size());
 
     renderer.batches.push_back(batch);
-    return (Rml::CompiledGeometryHandle)(renderer.batches.size() - 1);
+    return (Rml::CompiledGeometryHandle)(renderer.batches.size());
   }
   
   void RenderGeometry(Rml::CompiledGeometryHandle geometry, Rml::Vector2f translation, Rml::TextureHandle texture) override {
@@ -156,7 +156,7 @@ public:
     call.shader      = (texture == 0) ? renderer.shaders[SHADER_COLOR] : renderer.shaders[SHADER_TEXTURE];
     call.translation = Vec2(translation.x, translation.y);
     call.transform   = renderer.transform;
-    call.batch       = &renderer.batches[(sizei)geometry];
+    call.batch       = &renderer.batches[(sizei)(geometry - 1)];
 
     renderer.draw_calls.push_back(call);
   }
@@ -384,6 +384,12 @@ bool ui_renderer_init(GfxContext* gfx) {
   //
 
   s_renderer.textures.push_back(renderer_get_defaults().albedo_texture);
+
+  //
+  // Pre-allocating some memory for better performance
+  //
+
+  s_renderer.batches.reserve(128);
 
   //
   // Interfaces init
