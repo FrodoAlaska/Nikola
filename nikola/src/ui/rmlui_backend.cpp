@@ -14,6 +14,8 @@
 #include <RmlUi/Core/Elements/ElementFormControlInput.h>
 #include <RmlUi/Core/Elements/ElementFormControlSelect.h>
 
+#include <RmlUi/Debugger/Debugger.h>
+
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola
@@ -809,6 +811,32 @@ UIDocument* ui_context_get_document(UIContext* ui_ctx, const sizei index) {
 }
 
 /// UIContext functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UI debugger functions
+
+void ui_debugger_init(UIContext* ui_ctx) {
+  Rml::Debugger::Initialise(ui_ctx);
+}
+
+void ui_debugger_shutdown() {
+  Rml::Debugger::Shutdown();
+}
+
+void ui_debugger_set_context(UIContext* ui_ctx) {
+  Rml::Debugger::SetContext(ui_ctx);
+}
+
+void ui_debugger_set_visible(const bool visible) {
+  Rml::Debugger::SetVisible(visible);
+}
+
+bool ui_debugger_is_visible() {
+  return Rml::Debugger::IsVisible();
+}
+
+/// UI debugger functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------

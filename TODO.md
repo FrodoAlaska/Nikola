@@ -1,17 +1,11 @@
 ## Update 0.4:
 
 - [] UI Revision
-    - [] Add different UI elements 
-        - [x] Text 
-        - [x] Progress 
-        - [x] Sliders/checkboxes/radio buttons
-        - [x] Drop-down menu
-        - [x] Tabbed menus  
-    - [] Make the RmlUI Debugger work
     - [] Tests
         - [] A simple main menu 
         - [] Somewhat of an involved settings menu 
         - [] The perk carousel
+    - [] Add the relavent UI components to the entity system
     - [] Documentation
 - [] Performance v2.0
     - [] Optimize resource loading 

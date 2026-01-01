@@ -279,6 +279,22 @@ NIKOLA_API UIDocument* ui_context_get_document(UIContext* ui_ctx, const sizei in
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// UI debugger functions
+
+NIKOLA_API void ui_debugger_init(UIContext* ui_ctx);
+
+NIKOLA_API void ui_debugger_shutdown();
+
+NIKOLA_API void ui_debugger_set_context(UIContext* ui_ctx);
+
+NIKOLA_API void ui_debugger_set_visible(const bool visible);
+
+NIKOLA_API bool ui_debugger_is_visible();
+
+/// UI debugger functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// UIDocument functions
 
 NIKOLA_API UIDocument* ui_document_load(UIContext* ui_ctx, const FilePath& doc_path);

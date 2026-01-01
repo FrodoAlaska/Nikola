@@ -3,8 +3,6 @@
 #include <nikola/nikola.h>
 #include <imgui/imgui.h>
 
-#include <RmlUi/Debugger.h>
-
 /// ----------------------------------------------------------------------
 /// App
 struct nikola::App {
@@ -55,6 +53,7 @@ static bool on_button_pressed(const nikola::Event& event, const void* dispatcher
 
 nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // App init
+  
   nikola::App* app = new nikola::App{};
   nikola::renderer_set_clear_color(nikola::Vec4(0.8f, 0.1f, 0.1f, 1.0f));
 
@@ -96,6 +95,9 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 
   // Listen to events
   nikola::event_listen(nikola::EVENT_UI_ELEMENT_CLICKED, on_button_pressed);
+
+  nikola::ui_debugger_init(app->context);
+  nikola::ui_debugger_set_visible(true);
 
   return app;
 }

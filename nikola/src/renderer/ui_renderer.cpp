@@ -22,8 +22,8 @@ namespace nikola { // Start of nikola
 ///---------------------------------------------------------------------------------------------------------------------
 /// Consts
 
-const sizei VERTEX_BUFFER_SIZE = MiB(2);
-const sizei INDEX_BUFFER_SIZE  = MiB(2);
+const sizei VERTEX_BUFFER_SIZE = MiB(6);
+const sizei INDEX_BUFFER_SIZE  = MiB(6);
 
 /// Consts
 ///---------------------------------------------------------------------------------------------------------------------
@@ -147,7 +147,7 @@ public:
     batch.indices.assign(indices.data(), indices.data() + indices.size());
 
     renderer.batches.push_back(batch);
-    return (Rml::CompiledGeometryHandle)renderer.batches.size();
+    return (Rml::CompiledGeometryHandle)(renderer.batches.size() - 1);
   }
   
   void RenderGeometry(Rml::CompiledGeometryHandle geometry, Rml::Vector2f translation, Rml::TextureHandle texture) override {
@@ -156,7 +156,7 @@ public:
     call.shader      = (texture == 0) ? renderer.shaders[SHADER_COLOR] : renderer.shaders[SHADER_TEXTURE];
     call.translation = Vec2(translation.x, translation.y);
     call.transform   = renderer.transform;
-    call.batch       = &renderer.batches[(sizei)(geometry - 1)];
+    call.batch       = &renderer.batches[(sizei)geometry];
 
     renderer.draw_calls.push_back(call);
   }
@@ -420,7 +420,6 @@ void ui_renderer_shutdown() {
     batch.indices.clear();
   }
 
-  s_renderer.textures.clear();
   s_renderer.batches.clear();
   s_renderer.draw_calls.clear();
 
@@ -468,15 +467,19 @@ void ui_renderer_end() {
     
     GfxPipelineDesc& pipe_desc = gfx_pipeline_get_desc(s_renderer.pipeline);
 
-    gfx_buffer_upload_data(pipe_desc.vertex_buffer, 
-                           0, 
-                           sizeof(Rml::Vertex) * call.batch->vertices.size(), 
-                           call.batch->vertices.data());
+    if(!call.batch->vertices.empty()) {
+      gfx_buffer_upload_data(pipe_desc.vertex_buffer, 
+                             0, 
+                             sizeof(Rml::Vertex) * call.batch->vertices.size(), 
+                             call.batch->vertices.data());
+    }
 
-    gfx_buffer_upload_data(pipe_desc.index_buffer, 
-                           0, 
-                           sizeof(i32) * call.batch->indices.size(), 
-                           call.batch->indices.data());
+    if(!call.batch->indices.empty()) {
+      gfx_buffer_upload_data(pipe_desc.index_buffer, 
+                             0, 
+                             sizeof(i32) * call.batch->indices.size(), 
+                             call.batch->indices.data());
+    }
 
     pipe_desc.vertices_count = call.batch->vertices.size();
     pipe_desc.indices_count  = call.batch->indices.size();
