@@ -40,7 +40,10 @@ static void init_resources(nikola::App* app) {
 }
 
 static bool on_button_pressed(const nikola::Event& event, const void* dispatcher, const void* listener) {
-  nikola::event_dispatch(nikola::Event{.type = nikola::EVENT_APP_QUIT});
+  if(nikola::ui_element_get_id(event.element) == "quit") {
+    nikola::event_dispatch(nikola::Event{.type = nikola::EVENT_APP_QUIT});
+  }
+
   return true;
 }
 
@@ -88,8 +91,8 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::ui_document_enable_events(app->document);
   nikola::ui_document_show(app->document);
 
-  nikola::UIElement* element = nikola::ui_document_get_element_by_id(app->document, "quit");
-  nikola::ui_element_enable_events(element);
+  nikola::ui_element_enable_events(nikola::ui_document_get_element_by_id(app->document, "quit"));
+  nikola::ui_element_enable_events(nikola::ui_document_get_element_by_id(app->document, "settings"));
 
   // Listen to events
   nikola::event_listen(nikola::EVENT_UI_ELEMENT_CLICKED, on_button_pressed);

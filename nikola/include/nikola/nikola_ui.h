@@ -8,22 +8,9 @@
 #include "nikola_timer.h"
 #include "nikola_entity.h"
 
-/// ----------------------------------------------------------------------
-
-// Some workaround so we don't have to include RmlUi here... probably not the best solution, but oh well.
-
-namespace Rml {
-  class Context;
-  class Element;
-  class ElementDocument;
-  
-  template<typename T>
-  class Releaser;
-
-  using ElementPtr = std::unique_ptr<Rml::Element, Rml::Releaser<Rml::Element>>;
-}
-
-/// ----------------------------------------------------------------------
+// @TODO(UI): Please don't add this here. Find a way to hide it so that 
+// we don't have problems in the future. Thanks.
+#include <RmlUi/Core.h>
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -325,6 +312,64 @@ NIKOLA_API UIElementPtr ui_element_create(UIDocument* ui_doc, const String& name
 NIKOLA_API void ui_element_enable_events(UIElement* ui_element);
 
 NIKOLA_API void ui_element_disable_events(UIElement* ui_element);
+
+NIKOLA_API UIElementPtr ui_element_clone(UIElement* ui_element);
+
+NIKOLA_API void ui_element_focus(UIElement* ui_element);
+
+NIKOLA_API void ui_element_blur(UIElement* ui_element);
+
+NIKOLA_API void ui_element_append_child(UIElement* ui_element, UIElementPtr element); 
+
+NIKOLA_API void ui_element_insert_before(UIElement* ui_element, UIElementPtr element, UIElement* adjacent_element); 
+
+NIKOLA_API void ui_element_replace_child(UIElement* ui_element, UIElementPtr element, UIElement* other_element); 
+
+NIKOLA_API void ui_element_remove_child(UIElement* ui_element, UIElement* element); 
+
+NIKOLA_API void ui_element_set_id(UIElement* ui_element, const String& id);
+
+NIKOLA_API void ui_element_set_inner_html(UIElement* ui_element, const String& html);
+
+NIKOLA_API UIElement* ui_element_get_element_by_id(UIElement* ui_element, const String& id);
+
+NIKOLA_API void ui_element_get_elements_by_tag(UIElement* ui_element, const String& tag_name, DynamicArray<UIElement*>& out_elements);
+
+NIKOLA_API void ui_element_get_elements_by_class(UIElement* ui_element, const String& class_name, DynamicArray<UIElement*>& out_elements);
+
+NIKOLA_API UIElement* ui_element_query_selector(UIElement* ui_element, const String& selector_name);
+
+NIKOLA_API void ui_element_query_selector_all(UIElement* ui_element, const String& selector_name, DynamicArray<UIElement*>& out_elements);
+
+NIKOLA_API UIContext* ui_element_get_context(UIElement* ui_element);
+
+NIKOLA_API UIDocument* ui_element_get_document(UIElement* ui_element);
+
+NIKOLA_API UIElement* ui_element_get_parent(UIElement* ui_element);
+
+NIKOLA_API UIElement* ui_element_get_next_sibling(UIElement* ui_element);
+
+NIKOLA_API UIElement* ui_element_get_previous_sibling(UIElement* ui_element);
+
+NIKOLA_API UIElement* ui_element_get_first_child(UIElement* ui_element);
+
+NIKOLA_API UIElement* ui_element_get_last_child(UIElement* ui_element);
+
+NIKOLA_API UIElement* ui_element_get_child(UIElement* ui_element, const sizei index);
+
+NIKOLA_API const sizei ui_element_get_children_count(UIElement* ui_element);
+
+NIKOLA_API const String& ui_element_get_tag(UIElement* ui_element);
+
+NIKOLA_API const String& ui_element_get_id(UIElement* ui_element);
+
+NIKOLA_API String ui_element_get_inner_html(UIElement* ui_element);
+
+NIKOLA_API bool ui_element_is_visible(UIElement* ui_element);
+
+NIKOLA_API bool ui_element_has_children(UIElement* ui_element);
+
+NIKOLA_API bool ui_element_matches(UIElement* ui_element, const String& selector);
 
 /// UIElement functions
 ///---------------------------------------------------------------------------------------------------------------------

@@ -1,15 +1,11 @@
 ## Update 0.4:
 
 - [] UI Revision
-    - [x] Add the RmlUI essentials `UIContext` and `UIDocument`
-    - [x] Add event listeners to the various widgets
-    - [] Abstract the most important functions of UI elements
     - [] Add different UI elements 
         - [] Text 
         - [] Progress 
         - [] Tabbed menus  
         - [] Scroll bar
-    - [x] Something wrong with the input. They don't register on RmlUI's side for some reason. Fix that.
     - [] Make the RmlUI Debugger work
     - [] Tests
         - [] A simple main menu 

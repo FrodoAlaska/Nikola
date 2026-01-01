@@ -995,6 +995,122 @@ void ui_element_disable_events(UIElement* ui_element) {
   ui_element->RemoveEventListener("tabchange", &s_listener);
 }
 
+UIElementPtr ui_element_clone(UIElement* ui_element) {
+  return ui_element->Clone();
+}
+
+void ui_element_focus(UIElement* ui_element) {
+  ui_element->Focus();
+}
+
+void ui_element_blur(UIElement* ui_element) {
+  ui_element->Blur();
+}
+
+void ui_element_append_child(UIElement* ui_element, UIElementPtr element) {
+  ui_element->AppendChild(std::move(element));
+}
+
+void ui_element_insert_before(UIElement* ui_element, UIElementPtr element, UIElement* adjacent_element) {
+  ui_element->InsertBefore(std::move(element), adjacent_element);
+}
+
+void ui_element_replace_child(UIElement* ui_element, UIElementPtr element, UIElement* other_element) {
+  ui_element->ReplaceChild(std::move(element), other_element);
+}
+
+void ui_element_remove_child(UIElement* ui_element, UIElement* element) {
+  ui_element->RemoveChild(element);
+}
+
+void ui_element_set_id(UIElement* ui_element, const String& id) {
+  ui_element->SetId(id);
+}
+
+void ui_element_set_inner_html(UIElement* ui_element, const String& html) {
+  ui_element->SetInnerRML(html);
+}
+
+UIElement* ui_element_get_element_by_id(UIElement* ui_element, const String& id) {
+  return ui_element->GetElementById(id);
+}
+
+void ui_element_get_elements_by_tag(UIElement* ui_element, const String& tag_name, DynamicArray<UIElement*>& out_elements) {
+  ui_element->GetElementsByTagName(out_elements, tag_name);
+}
+
+void ui_element_get_elements_by_class(UIElement* ui_element, const String& class_name, DynamicArray<UIElement*>& out_elements) {
+  ui_element->GetElementsByClassName(out_elements, class_name);
+}
+
+UIElement* ui_element_query_selector(UIElement* ui_element, const String& selector_name) {
+  return ui_element->QuerySelector(selector_name);
+}
+
+void ui_element_query_selector_all(UIElement* ui_element, const String& selector_name, DynamicArray<UIElement*>& out_elements) {
+  ui_element->QuerySelectorAll(out_elements, selector_name);
+}
+
+UIContext* ui_element_get_context(UIElement* ui_element) {
+  return ui_element->GetContext();
+}
+
+UIDocument* ui_element_get_document(UIElement* ui_element) {
+  return ui_element->GetOwnerDocument();
+}
+
+UIElement* ui_element_get_parent(UIElement* ui_element) {
+  return ui_element->GetParentNode();
+}
+
+UIElement* ui_element_get_next_sibling(UIElement* ui_element) {
+  return ui_element->GetNextSibling();
+}
+
+UIElement* ui_element_get_previous_sibling(UIElement* ui_element) {
+  return ui_element->GetPreviousSibling();
+}
+
+UIElement* ui_element_get_first_child(UIElement* ui_element) {
+  return ui_element->GetFirstChild();
+}
+
+UIElement* ui_element_get_last_child(UIElement* ui_element) {
+  return ui_element->GetLastChild();
+}
+
+UIElement* ui_element_get_child(UIElement* ui_element, const sizei index) {
+  return ui_element->GetChild((i32)index);
+}
+
+const sizei ui_element_get_children_count(UIElement* ui_element) {
+  return (sizei)ui_element->GetNumChildren();
+}
+
+const String& ui_element_get_tag(UIElement* ui_element) {
+  return ui_element->GetTagName();
+}
+
+const String& ui_element_get_id(UIElement* ui_element) {
+  return ui_element->GetId();
+}
+
+String ui_element_get_inner_html(UIElement* ui_element) {
+  return ui_element->GetInnerRML();
+}
+
+bool ui_element_is_visible(UIElement* ui_element) {
+  return ui_element->IsVisible();
+}
+
+bool ui_element_has_children(UIElement* ui_element) {
+  return ui_element->HasChildNodes();
+}
+
+bool ui_element_matches(UIElement* ui_element, const String& selector) {
+  return ui_element->Matches(selector);
+}
+
 /// UIElement functions
 ///---------------------------------------------------------------------------------------------------------------------
 
