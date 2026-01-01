@@ -110,6 +110,36 @@ using UIElementPtr = Rml::ElementPtr;
 ///---------------------------------------------------------------------------------------------------------------------
 
 ///---------------------------------------------------------------------------------------------------------------------
+/// UIText 
+using UIText = Rml::ElementText;
+/// UIText 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UIProgress 
+using UIProgress = Rml::ElementProgress;
+/// UIProgress 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UIControlInput 
+using UIControlInput = Rml::ElementFormControlInput;
+/// UIControlInput 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UIControlSelect 
+using UIControlSelect = Rml::ElementFormControlSelect;
+/// UIControlSelect 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UITabMenu 
+using UITabMenu = Rml::ElementTabSet;
+/// UITabMenu 
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
 /// GUI functions
 
 /// Initialize the GUI context, given the information in `window`.
@@ -372,6 +402,106 @@ NIKOLA_API bool ui_element_has_children(UIElement* ui_element);
 NIKOLA_API bool ui_element_matches(UIElement* ui_element, const String& selector);
 
 /// UIElement functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UIText functions
+
+NIKOLA_API UIText* ui_text_create(UIDocument* ui_doc, const String& text);
+
+NIKOLA_API void ui_text_add_line(UIText* ui_text, const Vec2& line_offset, const String& line_text);
+
+NIKOLA_API void ui_text_clear_lines(UIText* ui_text);
+
+NIKOLA_API void ui_text_set_string(UIText* ui_text, const String& str);
+
+NIKOLA_API const String& ui_text_get_string(UIText* ui_text);
+
+NIKOLA_API const sizei ui_text_get_width(UIText* ui_text);
+
+/// UIText functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UIProgress functions
+
+NIKOLA_API void ui_progress_set_value(UIProgress* ui_progress, const f32 value);
+
+NIKOLA_API void ui_progress_set_max(UIProgress* ui_progress, const f32 max);
+
+NIKOLA_API f32 ui_progress_get_value(UIProgress* ui_progress);
+
+NIKOLA_API f32 ui_progress_get_max(UIProgress* ui_progress);
+
+/// UIProgress functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UIControlInput functions
+
+NIKOLA_API void ui_control_input_set_value(UIControlInput* ui_input, const String& value);
+
+NIKOLA_API void ui_control_input_set_selection_range(UIControlInput* ui_input, i32 selection_start, i32 selection_end);
+
+NIKOLA_API String ui_control_input_get_value(UIControlInput* ui_input);
+
+NIKOLA_API void ui_control_input_get_selection_range(UIControlInput* ui_input, i32* selection_start, i32* selection_end, String* selected_text);
+
+NIKOLA_API bool ui_control_input_is_submitted(UIControlInput* ui_input);
+
+/// UIControlInput functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UIControlSelect functions
+
+NIKOLA_API void ui_control_select_add(UIControlSelect* ui_select, const String& html, const String& value, i32 before = -1, bool selectable = true);
+
+NIKOLA_API void ui_control_select_remove(UIControlSelect* ui_select, const i32 index);
+
+NIKOLA_API void ui_control_select_remove_all(UIControlSelect* ui_select);
+
+NIKOLA_API void ui_control_select_show_box(UIControlSelect* ui_select);
+
+NIKOLA_API void ui_control_select_hide_box(UIControlSelect* ui_select);
+
+NIKOLA_API void ui_control_select_set_value(UIControlSelect* ui_select, const String& value);
+
+NIKOLA_API void ui_control_select_set_selection(UIControlSelect* ui_select, const i32 selection);
+
+NIKOLA_API bool ui_control_select_is_box_shown(UIControlSelect* ui_select);
+
+NIKOLA_API UIElement* ui_control_select_get_option(UIControlSelect* ui_select, const i32 index);
+
+NIKOLA_API String ui_control_select_get_value(UIControlSelect* ui_select);
+
+NIKOLA_API i32 ui_control_select_get_selection(UIControlSelect* ui_select);
+
+NIKOLA_API sizei ui_control_select_get_options_count(UIControlSelect* ui_select);
+
+/// UIControlSelect functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UITabMenu functions
+
+NIKOLA_API void ui_tab_menu_set_tab(UITabMenu* ui_tab, const i32 index, const String& html);
+
+NIKOLA_API void ui_tab_menu_set_panel(UITabMenu* ui_tab, const i32 index, const String& html);
+
+NIKOLA_API void ui_tab_menu_set_tab(UITabMenu* ui_tab, const i32 index, UIElementPtr element);
+
+NIKOLA_API void ui_tab_menu_set_panel(UITabMenu* ui_tab, const i32 index, UIElementPtr element);
+
+NIKOLA_API void ui_tab_menu_set_active_tab(UITabMenu* ui_tab, const i32 index);
+
+NIKOLA_API void ui_tab_menu_remove_tab(UITabMenu* ui_tab, const i32 index);
+
+NIKOLA_API i32 ui_tab_menu_get_active_tab(UITabMenu* ui_tab);
+
+NIKOLA_API sizei ui_tab_menu_get_tabs_count(UITabMenu* ui_tab);
+
+/// UITabMenu functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 } // End of nikola

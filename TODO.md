@@ -2,10 +2,11 @@
 
 - [] UI Revision
     - [] Add different UI elements 
-        - [] Text 
-        - [] Progress 
-        - [] Tabbed menus  
-        - [] Scroll bar
+        - [x] Text 
+        - [x] Progress 
+        - [x] Sliders/checkboxes/radio buttons
+        - [x] Drop-down menu
+        - [x] Tabbed menus  
     - [] Make the RmlUI Debugger work
     - [] Tests
         - [] A simple main menu 

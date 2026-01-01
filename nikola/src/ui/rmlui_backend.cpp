@@ -9,6 +9,10 @@
 #include <RmlUi/Core/Input.h>
 #include <RmlUi/Core/Event.h>
 #include <RmlUi/Core/EventListener.h>
+#include <RmlUi/Core/ElementUtilities.h>
+#include <RmlUi/Core/Elements/ElementProgress.h>
+#include <RmlUi/Core/Elements/ElementFormControlInput.h>
+#include <RmlUi/Core/Elements/ElementFormControlSelect.h>
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -1112,6 +1116,177 @@ bool ui_element_matches(UIElement* ui_element, const String& selector) {
 }
 
 /// UIElement functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UIText functions
+
+UIText* ui_text_create(UIDocument* ui_doc, const String& text) {
+  NIKOLA_ASSERT(ui_doc, "An invalid UIDocument given to ui_text_create");
+  return (UIText*)ui_doc->CreateTextNode(text).get();
+}
+
+void ui_text_add_line(UIText* ui_text, const Vec2& line_offset, const String& line_text) {
+  ui_text->AddLine(Rml::Vector2f(line_offset.x, line_offset.y), line_text);
+}
+
+void ui_text_clear_lines(UIText* ui_text) {
+  ui_text->ClearLines();
+}
+
+void ui_text_set_string(UIText* ui_text, const String& str) {
+  ui_text->SetText(str);
+}
+
+const String& ui_text_get_string(UIText* ui_text) {
+  return ui_text->GetText();
+}
+
+const sizei ui_text_get_width(UIText* ui_text) {
+  return (sizei)Rml::ElementUtilities::GetStringWidth(ui_text, ui_text_get_string(ui_text));
+}
+
+/// UIText functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UIProgress functions
+
+void ui_progress_set_value(UIProgress* ui_progress, const f32 value) {
+  return ui_progress->SetValue(value);
+}
+
+void ui_progress_set_max(UIProgress* ui_progress, const f32 max) {
+  return ui_progress->SetMax(max);
+}
+
+f32 ui_progress_get_value(UIProgress* ui_progress) {
+  return ui_progress->GetValue();
+}
+
+f32 ui_progress_get_max(UIProgress* ui_progress) {
+  return ui_progress->GetMax();
+}
+
+/// UIProgress functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UIControlInput functions
+
+void ui_control_input_set_value(UIControlInput* ui_input, const String& value) {
+  ui_input->SetValue(value);
+}
+
+void ui_control_input_set_selection_range(UIControlInput* ui_input, i32 selection_start, i32 selection_end) {
+  ui_input->SetSelectionRange(selection_start, selection_end);
+}
+
+String ui_control_input_get_value(UIControlInput* ui_input) {
+  return ui_input->GetValue();
+}
+
+void ui_control_input_get_selection_range(UIControlInput* ui_input, i32* selection_start, i32* selection_end, String* selected_text) {
+  ui_input->GetSelection(selection_start, selection_end, selected_text);
+}
+
+bool ui_control_input_is_submitted(UIControlInput* ui_input) {
+  return ui_input->IsSubmitted();
+}
+
+/// UIControlInput functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UIControlSelect functions
+
+void ui_control_select_add(UIControlSelect* ui_select, const String& html, const String& value, i32 before, bool selectable) {
+  ui_select->Add(html, value, before, selectable);
+}
+
+void ui_control_select_remove(UIControlSelect* ui_select, const i32 index) {
+  ui_select->Remove(index);
+}
+
+void ui_control_select_remove_all(UIControlSelect* ui_select) {
+  ui_select->RemoveAll();
+}
+
+void ui_control_select_show_box(UIControlSelect* ui_select) {
+  ui_select->ShowSelectBox();
+}
+
+void ui_control_select_hide_box(UIControlSelect* ui_select) {
+  ui_select->HideSelectBox();
+}
+
+void ui_control_select_set_value(UIControlSelect* ui_select, const String& value) {
+  ui_select->SetValue(value);
+}
+
+void ui_control_select_set_selection(UIControlSelect* ui_select, const i32 selection) {
+  ui_select->SetSelection(selection);
+}
+
+bool ui_control_select_is_box_shown(UIControlSelect* ui_select) {
+  return ui_select->IsSelectBoxVisible();
+}
+
+UIElement* ui_control_select_get_option(UIControlSelect* ui_select, const i32 index) {
+  return ui_select->GetOption(index);
+}
+
+String ui_control_select_get_value(UIControlSelect* ui_select) {
+  return ui_select->GetValue();
+}
+
+i32 ui_control_select_get_selection(UIControlSelect* ui_select) {
+  return ui_select->GetSelection();
+}
+
+sizei ui_control_select_get_options_count(UIControlSelect* ui_select) {
+  return (sizei)ui_select->GetNumOptions();
+}
+
+/// UIControlSelect functions
+///---------------------------------------------------------------------------------------------------------------------
+
+///---------------------------------------------------------------------------------------------------------------------
+/// UITabMenu functions
+
+void ui_tab_menu_set_tab(UITabMenu* ui_tab, const i32 index, const String& html) {
+  ui_tab->SetTab(index, html);
+}
+
+void ui_tab_menu_set_panel(UITabMenu* ui_tab, const i32 index, const String& html) {
+  ui_tab->SetPanel(index, html);
+}
+
+void ui_tab_menu_set_tab(UITabMenu* ui_tab, const i32 index, UIElementPtr element) {
+  ui_tab->SetTab(index, std::move(element));
+}
+
+void ui_tab_menu_set_panel(UITabMenu* ui_tab, const i32 index, UIElementPtr element) {
+  ui_tab->SetPanel(index, std::move(element));
+}
+
+void ui_tab_menu_set_active_tab(UITabMenu* ui_tab, const i32 index) {
+  ui_tab->SetActiveTab(index);
+}
+
+void ui_tab_menu_remove_tab(UITabMenu* ui_tab, const i32 index) {
+  ui_tab->RemoveTab(index);
+}
+
+i32 ui_tab_menu_get_active_tab(UITabMenu* ui_tab) {
+  return ui_tab->GetActiveTab();
+}
+
+sizei ui_tab_menu_get_tabs_count(UITabMenu* ui_tab) {
+  return ui_tab->GetNumTabs();
+}
+
+/// UITabMenu functions
 ///---------------------------------------------------------------------------------------------------------------------
 
 } // End of nikola
