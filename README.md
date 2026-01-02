@@ -44,7 +44,7 @@ Nikola is a cross-platform framework for window creation, input handling, audio 
 
 Here are some games that were made with _Nikola_: 
 
-[Crossing The Line](https://frodoalaska.itch.io/crossing-the-line)
+[Crossing The Line](https://frodoalaska.itch.io/crossing-the-line) /
 [Play Dice With Me, Will Ya?](https://frodoalaska.itch.io/dice-will-ya)
 
 ## Build Instructions
