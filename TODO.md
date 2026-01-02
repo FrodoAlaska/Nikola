@@ -1,7 +1,16 @@
+## 2026 Plan 
+
+- Improve the graphics fidelity of the engine. Improve it _a ton_. It is one of the weakest points of the engine, and it needs work.
+- Improve upon the performance of the engine. While the engine is not slow, there are a lot of systems that _need_ a performance boost. 
+- Add a capabale GPU particle system with a wide variety of abilities for shaping the particles and controling everything about them.
+- Add the ability to render heightmaps, as well as interact with them on the physics level.
+- Add procedural generation tools. Math functions using the `stb_perlin` library, and components in the entity system to easily use proc-gen. 
+
 ## Update 0.4:
 
 - [] UI Revision
     - [] Tests
+        - [] Dialogue box
         - [] A simple main menu 
         - [] Somewhat of an involved settings menu 
         - [] The perk carousel

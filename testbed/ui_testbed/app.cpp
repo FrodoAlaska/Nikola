@@ -85,13 +85,10 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::FilePath base_path = nikola::filepath_append(nikola::filesystem_current_path(), "res");
   
   app->context  = nikola::ui_context_create("Main", nikola::IVec2(width, height));
-  app->document = nikola::ui_document_load(app->context, nikola::filepath_append(base_path, "ui/first.rml"));
+  app->document = nikola::ui_document_load(app->context, nikola::filepath_append(base_path, "ui/dialogue.rml"));
   
   nikola::ui_document_enable_events(app->document);
   nikola::ui_document_show(app->document);
-
-  nikola::ui_element_enable_events(nikola::ui_document_get_element_by_id(app->document, "quit"));
-  nikola::ui_element_enable_events(nikola::ui_document_get_element_by_id(app->document, "settings"));
 
   // Listen to events
   nikola::event_listen(nikola::EVENT_UI_ELEMENT_CLICKED, on_button_pressed);

@@ -65,7 +65,7 @@ struct UIBatch {
 /// UIDrawCall
 struct UIDrawCall {
   GfxTexture* texture; 
-  ShaderContext* shader;
+  ShaderID shader_id;
 
   Vec2 translation = Vec2(0.0f);
   Mat4 transform   = Mat4(1.0f);
@@ -152,8 +152,8 @@ public:
   
   void RenderGeometry(Rml::CompiledGeometryHandle geometry, Rml::Vector2f translation, Rml::TextureHandle texture) override {
     UIDrawCall call{};
-    call.texture     = renderer.textures[(sizei)texture];
-    call.shader      = (texture == 0) ? renderer.shaders[SHADER_COLOR] : renderer.shaders[SHADER_TEXTURE];
+    call.texture     = (texture == 0) ? nullptr : renderer.textures[(sizei)(texture - 1)];
+    call.shader_id   = (texture == 0) ? SHADER_COLOR : SHADER_TEXTURE;
     call.translation = Vec2(translation.x, translation.y);
     call.transform   = renderer.transform;
     call.batch       = &renderer.batches[(sizei)(geometry - 1)];
@@ -192,18 +192,24 @@ public:
     GfxTexture* texture = gfx_texture_create(renderer.gfx, GFX_TEXTURE_2D);
 
     GfxTextureDesc tex_desc; 
-    tex_desc.width  = texture_dimensions.x; 
-    tex_desc.height = texture_dimensions.y; 
-    tex_desc.depth  = 0; 
-    tex_desc.mips   = 1; 
-    tex_desc.type   = GFX_TEXTURE_2D; 
-    tex_desc.format = (GfxTextureFormat)nbr_texture.format; 
-    tex_desc.data   = nbr_texture.pixels;
+    tex_desc.width       = nbr_texture.width; 
+    tex_desc.height      = nbr_texture.height; 
+    tex_desc.depth       = 0; 
+    tex_desc.mips        = 1; 
+    tex_desc.type        = GFX_TEXTURE_2D; 
+    tex_desc.format      = (GfxTextureFormat)nbr_texture.format; 
+    tex_desc.data        = nbr_texture.pixels;
+    tex_desc.is_bindless = false;
 
     if(!gfx_texture_load(texture, tex_desc)) {
       NIKOLA_LOG_ERROR("Failed to load texture at '\%s\'", FilePath(source).c_str());
       return 0;
     } 
+
+    // Write back the dimensions of the texture to Rml
+
+    texture_dimensions.x = tex_desc.width;
+    texture_dimensions.y = tex_desc.height;
 
     //
     // Freeing NBR data
@@ -215,7 +221,7 @@ public:
     // Done!
     
     renderer.textures.push_back(texture); 
-    return (Rml::TextureHandle)(renderer.textures.size() - 1);
+    return (Rml::TextureHandle)(renderer.textures.size());
   }
 
   Rml::TextureHandle GenerateTexture(Rml::Span<const Rml::byte> source, Rml::Vector2i source_dimensions) override {
@@ -244,20 +250,11 @@ public:
     // Done!
     
     renderer.textures.push_back(texture); 
-    return (Rml::TextureHandle)(renderer.textures.size() - 1);
+    return (Rml::TextureHandle)(renderer.textures.size());
   }
 
   void ReleaseTexture(Rml::TextureHandle texture) override {
-    // @NOTE:
-    //
-    // The first texture in the array is handled by the engine. If we free it here, the resource manager 
-    // will try to free it again later. Double free. That's never good.
-    //
-
     sizei index = (sizei)(texture - 1);
-    if(index == 0) { 
-      return; 
-    }
 
     gfx_texture_destroy(renderer.textures[index]);
     renderer.textures[index] = nullptr;
@@ -383,7 +380,7 @@ bool ui_renderer_init(GfxContext* gfx) {
   // Default texture init
   //
 
-  s_renderer.textures.push_back(renderer_get_defaults().albedo_texture);
+  // s_renderer.textures.push_back(renderer_get_defaults().albedo_texture);
 
   //
   // Pre-allocating some memory for better performance
@@ -453,20 +450,26 @@ void ui_renderer_end() {
   // Initiating the draw calls
 
   for(auto& call : s_renderer.draw_calls) {
+    // Retrieve the correct shader
+
+    ShaderContext* shader = s_renderer.shaders[call.shader_id];
+
     // Setting uniforms 
 
-    shader_context_set_uniform(call.shader, "u_translate", call.translation);
-    shader_context_set_uniform(call.shader, "u_transform", call.transform);
-    shader_context_set_uniform(call.shader, "u_projection", s_renderer.ortho);
+    shader_context_set_uniform(shader, "u_translate", call.translation);
+    shader_context_set_uniform(shader, "u_transform", call.transform);
+    shader_context_set_uniform(shader, "u_projection", s_renderer.ortho);
 
     // Use the resources
 
-    GfxBindingDesc bind_desc = {
-      .shader = call.shader->shader,
+    GfxBindingDesc bind_desc;
+    bind_desc.shader = shader->shader;
 
-      .textures       = &call.texture, 
-      .textures_count = 1,
-    };
+    if(call.texture) {
+      bind_desc.textures       = &call.texture;
+      bind_desc.textures_count = 1;
+    }
+
     gfx_context_use_bindings(s_renderer.gfx, bind_desc);
 
     // Update the required resources

@@ -2133,6 +2133,7 @@ const bool gfx_texture_load(GfxTexture* texture, const GfxTextureDesc& desc) {
   // @TODO (GFX): Perhaps having the texture resident _as soon_ as it 
   // is created is not the best idea.
   //
+  
   if(desc.is_bindless) {
     texture->bindless_id = glGetTextureHandleARB(texture->id);
     glMakeTextureHandleResidentARB(texture->bindless_id);
