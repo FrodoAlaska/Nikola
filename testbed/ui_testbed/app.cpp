@@ -4,6 +4,22 @@
 #include <imgui/imgui.h>
 
 /// ----------------------------------------------------------------------
+/// DialogueInfo
+struct DialogueInfo {
+  nikola::String text;
+  nikola::String speaker; 
+
+  nikola::sizei current_line = 0;
+  nikola::DynamicArray<nikola::String> lines;
+  
+  nikola::UIElement* speaker_element;
+  nikola::UIElement* text_element;
+  nikola::UIElement* next_button;
+};
+/// DialogueInfo
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
 /// App
 struct nikola::App {
   nikola::Window* window;
@@ -14,6 +30,8 @@ struct nikola::App {
 
   nikola::UIContext* context;
   nikola::UIDocument* document;
+
+  DialogueInfo dialogue_info;
 
   bool has_editor = false;
 };
@@ -37,15 +55,94 @@ static void init_resources(nikola::App* app) {
   nikola::ui_renderer_load_font(nikola::filepath_append(res_path, "fonts/HeavyDataNerdFont.ttf"));
 }
 
+static bool dialogue_load(DialogueInfo* info, const nikola::FilePath& txt_path, nikola::UIDocument* ui_doc) {
+  // Open the dialogue file
+
+  nikola::File file;
+  nikola::i32 file_flags = (nikola::i32)(nikola::FILE_OPEN_READ);
+
+  if(!nikola::file_open(&file, txt_path, file_flags)) {
+    NIKOLA_LOG_ERROR("Failed to read dialogue file at \'%s\'", txt_path.c_str());
+    return false;
+  }
+
+  // Read the whole text first
+  nikola::file_read_string(file, &info->text);
+
+  // Read the speaker's name
+
+  nikola::sizei start = 0;
+  for(nikola::sizei i = 0; i < info->text.size(); i++) {
+    char ch = info->text[i];
+
+    if(ch != ':') {
+      info->speaker += ch;
+      continue;
+    }
+
+    info->speaker += ':';
+    start          = i + 1;
+
+    break;
+  }
+
+  // Read the lines
+
+  nikola::String line;
+  for(nikola::sizei i = start; i < info->text.size(); i++) {
+    char ch = info->text[i];
+    
+    if(ch != '#') {
+      line += ch;
+      continue;
+    }
+
+    info->lines.emplace_back(line);
+    line.clear();
+  }
+
+  // Set the initial dialogue values
+
+  info->speaker_element = nikola::ui_document_get_element_by_id(ui_doc, "speaker");
+  info->text_element    = nikola::ui_document_get_element_by_id(ui_doc, "dialogue");
+  info->next_button     = nikola::ui_document_get_element_by_id(ui_doc, "next-arrow");
+
+  nikola::ui_element_set_inner_html(info->speaker_element, info->speaker);
+  nikola::ui_element_set_inner_html(info->text_element, info->lines[0]);
+
+  // Enabling events for the next button
+  nikola::ui_element_enable_events(info->next_button);
+
+  // Done!
+  return true;
+}
+
+static void dialogue_advance(DialogueInfo& info) {
+  info.current_line++;
+  if(info.current_line >= info.lines.size()) { // Out of bounds...
+    return;
+  }
+
+  nikola::ui_element_set_inner_html(info.text_element, info.lines[info.current_line]);
+}
+
+/// Private functions 
+/// ----------------------------------------------------------------------
+
+/// ----------------------------------------------------------------------
+/// Callbacks
+
 static bool on_button_pressed(const nikola::Event& event, const void* dispatcher, const void* listener) {
-  if(nikola::ui_element_get_id(event.element) == "quit") {
-    nikola::event_dispatch(nikola::Event{.type = nikola::EVENT_APP_QUIT});
+  DialogueInfo* info = (DialogueInfo*)listener;
+
+  if(nikola::ui_element_get_id(event.element) == "next-arrow") {
+    dialogue_advance(*info);
   }
 
   return true;
 }
 
-/// Private functions 
+/// Callbacks
 /// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
@@ -90,8 +187,14 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::ui_document_enable_events(app->document);
   nikola::ui_document_show(app->document);
 
+  // Read the dialogue file
+
+  if(!dialogue_load(&app->dialogue_info, nikola::filepath_append(base_path, "dialogue/hera_intro.txt"), app->document)) {
+    return app;
+  }
+
   // Listen to events
-  nikola::event_listen(nikola::EVENT_UI_ELEMENT_CLICKED, on_button_pressed);
+  nikola::event_listen(nikola::EVENT_UI_ELEMENT_CLICKED, on_button_pressed, &app->dialogue_info);
 
   return app;
 }
@@ -124,17 +227,6 @@ void app_update(nikola::App* app, const nikola::f64 delta_time) {
 
   if(nikola::input_key_pressed(nikola::KEY_F5)) {
     nikola::ui_document_reload_stylesheet(app->document);
-  }
-
-  // Hide the document
-
-  if(nikola::input_key_pressed(nikola::KEY_P)) {
-    if(nikola::ui_document_is_shown(app->document)) {
-      nikola::ui_document_hide(app->document);
-    }
-    else {
-      nikola::ui_document_show(app->document);
-    }
   }
 
   // UI elements update

@@ -46,8 +46,12 @@ class NKEventListener : public Rml::EventListener {
 
       switch(event.GetId()) {
         case Rml::EventId::Click:
-        case Rml::EventId::Mousedown:
           nk_event.type                 = EVENT_UI_ELEMENT_CLICKED;
+          nk_event.element              = event.GetTargetElement();
+          nk_event.mouse_button_pressed = event.GetParameter<i32>("button", 0);
+          break;
+        case Rml::EventId::Mousedown:
+          nk_event.type                 = EVENT_UI_ELEMENT_MOUSE_DOWN;
           nk_event.element              = event.GetTargetElement();
           nk_event.mouse_button_pressed = event.GetParameter<i32>("button", 0);
           break;

@@ -15,7 +15,7 @@ inline const char* generate_vertex_main() {
       // Layouts 
       
       layout (location = 0) in vec2 aPos;
-      layout (location = 1) in vec4 aColor;
+      layout (location = 1) in ivec4 aColor;
       layout (location = 2) in vec2 aTextureCoords;
     
       // Outputs
