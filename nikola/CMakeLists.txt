@@ -2,7 +2,6 @@
 ############################################################
 set(NIKOLA_SOURCES 
   # Base
-  ${NIKOLA_SRC_DIR}/base/nikola.cpp
   ${NIKOLA_SRC_DIR}/base/logger.cpp
   ${NIKOLA_SRC_DIR}/base/event.cpp
   ${NIKOLA_SRC_DIR}/base/window.cpp

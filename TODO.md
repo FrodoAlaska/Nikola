@@ -5,13 +5,18 @@
         - [] A simple main menu 
         - [] Somewhat of an involved settings menu 
         - [] The perk carousel
-    - [] Add the relavent UI components to the entity system
     - [] Documentation
 - [] Performance v2.0
     - [] Optimize resource loading 
         - [] Meshes/models: Use `cgltf` and `meshoptimizer` instead of bloated Assimp.
         - [] Textures: This needs to be confirmed, but textures are probably the most demanding resource to load.
         - [] Fonts: I'm not sure with this one as well, but fonts can be _very_ demanding.
+    - [] Custom memory pools 
+        - We need to consider creating memory pools to avoid memory allocations as much as possible. 
+        - The gfx backend and the renderers are especially in need of this. They allocate shit left and right. 
+        - [] Create a simple pool allocater and pass it into the various functions that need it. 
+        - [] Perhaps override the `new` and `delete` operator so that we can watch the allocations on the STL side as well?
+        - Memory. Just think about memory.
 
 ## Update 0.5:
 

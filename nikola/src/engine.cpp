@@ -39,8 +39,11 @@ void engine_init(const AppDesc& desc) {
   s_engine.app_desc   = desc; 
   s_engine.is_running = true;
 
-  // Library init 
-  NIKOLA_ASSERT(init(), "Failed to initialize Nikola");
+  // Events init
+  event_init();
+
+  // Input init
+  input_init();
  
   // Window init 
   
@@ -141,7 +144,7 @@ void engine_shutdown() {
   audio_device_shutdown();
 
   window_close(s_engine.window);
-  shutdown();
+  event_shutdown();
   
   NIKOLA_LOG_INFO("Appication \'%s\' was successfully shutdown", s_engine.app_desc.window_title.c_str());
 }

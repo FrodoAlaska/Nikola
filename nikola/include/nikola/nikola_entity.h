@@ -7,9 +7,27 @@
 #include "nikola_render.h"
 #include "nikola_pch.h"
 
+/// ----------------------------------------------------------------------
+/// Forward declarations
+
+namespace Rml {
+  class Context;
+};
+
+/// Forward declarations
+/// ----------------------------------------------------------------------
+
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola
+
+/// ----------------------------------------------------------------------
+/// Forward declarations
+
+using UIContext = Rml::Context;
+
+/// Forward declarations
+/// ----------------------------------------------------------------------
 
 /// ----------------------------------------------------------------------
 /// *** Entity ***
@@ -234,6 +252,12 @@ NIKOLA_API void entity_add_animation_sampler(EntityWorld& world,
                                              const ResourceID& skeleton_id, 
                                              const ResourceID* animations, 
                                              const sizei animations_count);
+
+/// A helper function to add a UI context component to `entt`, using the given `name` and `bounds`.
+NIKOLA_API void entity_add_ui_context(EntityWorld& world, 
+                                      EntityID& entt, 
+                                      const String& name, 
+                                      const IVec2& bounds);
 
 /// A helper function to add an animation blender component to `entt`, using the 
 /// given `skeleton_id`, mirroring the `animation_blender_create` function.

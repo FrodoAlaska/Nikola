@@ -8,10 +8,6 @@
 #include "nikola_timer.h"
 #include "nikola_entity.h"
 
-// @TODO(UI): Please don't add this here. Find a way to hide it so that 
-// we don't have problems in the future. Thanks.
-#include <RmlUi/Core.h>
-
 //////////////////////////////////////////////////////////////////////////
 
 namespace nikola { // Start of nikola

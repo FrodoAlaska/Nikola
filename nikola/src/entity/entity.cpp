@@ -1,5 +1,6 @@
 #include "nikola/nikola_entity.h"
 #include "nikola/nikola_event.h"
+#include "nikola/nikola_ui.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -36,7 +37,7 @@ EntityID entity_world_create_entity(EntityWorld& world,
 
   Event event = {
     .type    = EVENT_ENTITY_ADDED, 
-    .entt_id = entt,
+    .entt_id = (u32)entt,
   };
   event_dispatch(event);
 
@@ -49,7 +50,7 @@ void entity_world_destroy_entity(EntityWorld& world, EntityID& entt) {
 
   Event event = {
     .type    = EVENT_ENTITY_DESTROYED, 
-    .entt_id = entt,
+    .entt_id = (u32)entt,
   };
   event_dispatch(event);
 
@@ -354,6 +355,10 @@ void entity_add_animation_sampler(EntityWorld& world,
 void entity_add_animation_blender(EntityWorld& world, EntityID& entt, const ResourceID& skeleton_id) {
   AnimationBlender* blender = animation_blender_create(skeleton_id);
   world.emplace<AnimationBlender*>(entt, blender);
+}
+
+void entity_add_ui_context(EntityWorld& world, EntityID& entt, const String& name, const IVec2& bounds) {
+  world.emplace<UIContext*>(entt, ui_context_create(name, bounds));
 }
 
 void entity_add_renderable(EntityWorld& world, 
