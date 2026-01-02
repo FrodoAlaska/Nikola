@@ -245,30 +245,47 @@ NIKOLA_API void gui_edit_entity(const char* name, EntityWorld& world, EntityID& 
 ///---------------------------------------------------------------------------------------------------------------------
 /// UIContext functions
 
+/// Allocate and return a `UIContext` object with a `name` and `bounds`.
 NIKOLA_API UIContext* ui_context_create(const String& name, const IVec2 bounds);
 
+/// Reclaim any memory allocated by `ui_ctx`.
 NIKOLA_API void ui_context_destroy(UIContext* ui_ctx);
 
+/// Update the given `ui_ctx`.
 NIKOLA_API void ui_context_update(UIContext* ui_ctx);
 
+/// Render the given `ui_ctx`.
+///
+/// @NOTE: This function _MUST_ be called _after_ `ui_renderer_begin`, and 
+/// _before_ `ui_renderer_end`.
 NIKOLA_API void ui_context_render(UIContext* ui_ctx);
 
+/// If the given flag `enable` is `true`, the `ui_ctx` will be allowed to 
+/// take mouse input.
 NIKOLA_API void ui_context_enable_mouse_cursor(UIContext* ui_ctx, const bool enable);
 
+/// Activate/deactivate the theme `theme_name` in `ui_ctx`. 
 NIKOLA_API void ui_context_activate_theme(UIContext* ui_ctx, const String& theme_name, const bool active);
 
+/// Check if the theme `theme_name` in `ui_ctx` is currently active or not.
 NIKOLA_API bool ui_context_is_theme_active(UIContext* ui_ctx, const String& theme_name);
 
+/// Retrieve the `UIElement` that is currently being hovered over in `ui_ctx`.
 NIKOLA_API UIElement* ui_context_get_hover_element(UIContext* ui_ctx);
 
+/// Retrieve the `UIElement` that is currently focused in `ui_ctx`.
 NIKOLA_API UIElement* ui_context_get_focus_element(UIContext* ui_ctx);
 
+/// Retrieve the root/parent `UIElement` in `ui_ctx`.
 NIKOLA_API UIElement* ui_context_get_root_element(UIContext* ui_ctx);
 
+/// Retrieve the number of documents in `ui_ctx`.
 NIKOLA_API sizei ui_context_get_documents_count(UIContext* ui_ctx);
 
+/// Retrieve the document with the name `doc_id` in `ui_ctx`.
 NIKOLA_API UIDocument* ui_context_get_document(UIContext* ui_ctx, const String& doc_id);
 
+/// Retrieve the document at `index` in `ui_ctx`.
 NIKOLA_API UIDocument* ui_context_get_document(UIContext* ui_ctx, const sizei index);
 
 /// UIContext functions
@@ -277,14 +294,19 @@ NIKOLA_API UIDocument* ui_context_get_document(UIContext* ui_ctx, const sizei in
 ///---------------------------------------------------------------------------------------------------------------------
 /// UI debugger functions
 
+/// Initialize the UI debugger, enabling debugging capabilities on `ui_ctx`.
 NIKOLA_API void ui_debugger_init(UIContext* ui_ctx);
 
+/// Shutdown the UI debugger system.
 NIKOLA_API void ui_debugger_shutdown();
 
+/// Set the debugger to target `ui_ctx`.
 NIKOLA_API void ui_debugger_set_context(UIContext* ui_ctx);
 
+/// Depending on the given `visible` flag, enable or disable the debugger.
 NIKOLA_API void ui_debugger_set_visible(const bool visible);
 
+/// Check whether the debugger is currently active or not.
 NIKOLA_API bool ui_debugger_is_visible();
 
 /// UI debugger functions
@@ -293,54 +315,82 @@ NIKOLA_API bool ui_debugger_is_visible();
 ///---------------------------------------------------------------------------------------------------------------------
 /// UIDocument functions
 
+/// Allocate and load a new `UIDocument`, using the given `doc_path` to retrieve the RML file.
 NIKOLA_API UIDocument* ui_document_load(UIContext* ui_ctx, const FilePath& doc_path);
 
+/// Allocate and load a new `UIDocument`, using the given `doc_src` as the source of the RML content.
 NIKOLA_API UIDocument* ui_document_load_from_memory(UIContext* ui_ctx, const String& doc_src);
 
+/// Allocate and new (empty) `UIDocument`, using the given `maker_name` as the root element.
 NIKOLA_API UIDocument* ui_document_create(UIContext* ui_ctx, const String& maker_name = "body");
 
+/// Close the given `ui_doc`, disabling it completely.
 NIKOLA_API void ui_document_close(UIDocument* ui_doc);
 
+/// Show the `ui_doc` to enable it to render.
 NIKOLA_API void ui_document_show(UIDocument* ui_doc);
 
+/// Hide the `ui_doc` to disable it.
 NIKOLA_API void ui_document_hide(UIDocument* ui_doc);
 
+/// Check whether the given `ui_doc` is currently shown or not.
 NIKOLA_API bool ui_document_is_shown(UIDocument* ui_doc);
 
+/// Enable the given `ui_doc` to push events to the engine.
 NIKOLA_API void ui_document_enable_events(UIDocument* ui_doc);
 
+/// Disable the ability of the given `ui_doc` to push events to the engine.
 NIKOLA_API void ui_document_disable_events(UIDocument* ui_doc);
 
+/// Pull the given `ui_doc` to the front, making it render on top of all other documents currently active.
 NIKOLA_API void ui_document_pull_to_front(UIDocument* ui_doc);
 
+/// Push the given `ui_doc` to the back, making it render under all other documents currently active.
 NIKOLA_API void ui_document_push_to_back(UIDocument* ui_doc);
 
+/// Reload the stylesheet of the given `ui_doc`, using the original path given when it was loaded.
 NIKOLA_API void ui_document_reload_stylesheet(UIDocument* ui_doc); 
 
+/// Append the given `element` as a child to `ui_doc`.
 NIKOLA_API void ui_document_append_child(UIDocument* ui_doc, UIElementPtr element); 
 
+/// Insert the given `element` before `adjacent_element` in the given `ui_doc`.
 NIKOLA_API void ui_document_insert_before(UIDocument* ui_doc, UIElementPtr element, UIElement* adjacent_element); 
 
+/// Replace the given `other_element` with `element` in the given `ui_doc`.
 NIKOLA_API void ui_document_replace_child(UIDocument* ui_doc, UIElementPtr element, UIElement* other_element); 
 
+/// Remove the given `element` from the given `ui_doc`.
 NIKOLA_API void ui_document_remove_child(UIDocument* ui_doc, UIElement* element); 
 
+/// Set the title of the given `ui_doc` to `title`.
 NIKOLA_API void ui_document_set_title(UIDocument* ui_doc, const String& title);
 
+/// Retrieve the current title of `ui_doc`.
 NIKOLA_API const String& ui_document_get_title(const UIDocument* ui_doc);
 
+/// Retrieve the source URL of `ui_doc`.
 NIKOLA_API const String& ui_document_get_source_url(const UIDocument* ui_doc);
 
+/// Retrieve the `UIContext` that was given to `ui_doc` on creation.
 NIKOLA_API UIContext* ui_document_get_context(UIDocument* ui_doc);
 
+/// Retrieve a child `UIElement` with `id` ID in the given `ui_doc`.
+///
+/// @NOTE: If no `UIElement` with `id` was found in `ui_doc`, this function will return a `nullptr`.
 NIKOLA_API UIElement* ui_document_get_element_by_id(UIDocument* ui_doc, const String& id);
 
+/// Retrieve a list of `UIElement`s that share the same `tag_name` in `ui_doc` and save the results to `out_elements`.
 NIKOLA_API void ui_document_get_elements_by_tag(UIDocument* ui_doc, const String& tag_name, DynamicArray<UIElement*>& out_elements);
 
+/// Retrieve a list of `UIElement`s that share the same `class_name` in `ui_doc` and save the results to `out_elements`.
 NIKOLA_API void ui_document_get_elements_by_class(UIDocument* ui_doc, const String& class_name, DynamicArray<UIElement*>& out_elements);
 
+/// Retrieve a `UIElement` with the same RCSS selector query `selector_name` in `ui_doc` .
 NIKOLA_API UIElement* ui_document_query_selector(UIDocument* ui_doc, const String& selector_name);
 
+/// Retrieve a list of `UIElement`s that share the same RCSS selector query `selector_name` 
+/// in `ui_doc` and save the results to `out_elements`.
 NIKOLA_API void ui_document_query_selector_all(UIDocument* ui_doc, const String& selector_name, DynamicArray<UIElement*>& out_elements);
 
 /// UIDocument functions
@@ -349,68 +399,103 @@ NIKOLA_API void ui_document_query_selector_all(UIDocument* ui_doc, const String&
 ///---------------------------------------------------------------------------------------------------------------------
 /// UIElement functions
 
+/// Allocate and return a new (empty) `UIElementPtr` in `ui_doc` with `name`.
 NIKOLA_API UIElementPtr ui_element_create(UIDocument* ui_doc, const String& name);
 
+/// Enable the given `ui_element` to push events to the engine.
 NIKOLA_API void ui_element_enable_events(UIElement* ui_element);
 
+/// Disable the ability of the given `ui_element` to push events to the engine.
 NIKOLA_API void ui_element_disable_events(UIElement* ui_element);
 
+/// Clone the contents of `ui_element` and return a new `UIElementPtr`.
 NIKOLA_API UIElementPtr ui_element_clone(UIElement* ui_element);
 
+/// Give focus to the given `ui_element`.
 NIKOLA_API void ui_element_focus(UIElement* ui_element);
 
+/// Blur, or rather, remove focus from `ui_element`.
 NIKOLA_API void ui_element_blur(UIElement* ui_element);
 
+/// Append the given `element` as a child to `ui_element`.
 NIKOLA_API void ui_element_append_child(UIElement* ui_element, UIElementPtr element); 
 
+/// Insert the given `element` before `adjacent_element` in the given `ui_element`.
 NIKOLA_API void ui_element_insert_before(UIElement* ui_element, UIElementPtr element, UIElement* adjacent_element); 
 
+/// Replace the given `other_element` with `element` in the given `ui_element`.
 NIKOLA_API void ui_element_replace_child(UIElement* ui_element, UIElementPtr element, UIElement* other_element); 
 
+/// Remove the given `element` from the given `ui_element`.
 NIKOLA_API void ui_element_remove_child(UIElement* ui_element, UIElement* element); 
 
+/// Set the ID of `ui_element` to the given `id`.
 NIKOLA_API void ui_element_set_id(UIElement* ui_element, const String& id);
 
+/// Set the inner HTML contents of `ui_element` to the given `html`.
 NIKOLA_API void ui_element_set_inner_html(UIElement* ui_element, const String& html);
 
+/// Retrieve a child `UIElement` with `id` ID in the given `ui_element`.
+///
+/// @NOTE: If no `UIElement` with `id` was found in `ui_element`, this function will return a `nullptr`.
 NIKOLA_API UIElement* ui_element_get_element_by_id(UIElement* ui_element, const String& id);
 
+/// Retrieve a list of `UIElement`s that share the same `tag_name` in `ui_element` and save the results to `out_elements`.
 NIKOLA_API void ui_element_get_elements_by_tag(UIElement* ui_element, const String& tag_name, DynamicArray<UIElement*>& out_elements);
 
+/// Retrieve a list of `UIElement`s that share the same `class_name` in `ui_element` and save the results to `out_elements`.
 NIKOLA_API void ui_element_get_elements_by_class(UIElement* ui_element, const String& class_name, DynamicArray<UIElement*>& out_elements);
 
+/// Retrieve a `UIElement` with the same RCSS selector query `selector_name` in `ui_element` .
 NIKOLA_API UIElement* ui_element_query_selector(UIElement* ui_element, const String& selector_name);
 
+/// Retrieve a list of `UIElement`s that share the same RCSS selector query `selector_name` 
+/// in `ui_element` and save the results to `out_elements`.
 NIKOLA_API void ui_element_query_selector_all(UIElement* ui_element, const String& selector_name, DynamicArray<UIElement*>& out_elements);
 
+/// Retrieve the owner `UIContext` of `ui_element`.
 NIKOLA_API UIContext* ui_element_get_context(UIElement* ui_element);
 
+/// Retrieve the owner `UIDocument` of `ui_element`.
 NIKOLA_API UIDocument* ui_element_get_document(UIElement* ui_element);
 
+/// Retrieve the parent element of `ui_element`.
 NIKOLA_API UIElement* ui_element_get_parent(UIElement* ui_element);
 
+/// Retrieve the child element immediately following `ui_element`.
 NIKOLA_API UIElement* ui_element_get_next_sibling(UIElement* ui_element);
 
+/// Retrieve the child element immediately preceding `ui_element`.
 NIKOLA_API UIElement* ui_element_get_previous_sibling(UIElement* ui_element);
 
+/// Retrieve the first child element of `ui_element`.
 NIKOLA_API UIElement* ui_element_get_first_child(UIElement* ui_element);
 
+/// Retrieve the last child element of `ui_element`.
 NIKOLA_API UIElement* ui_element_get_last_child(UIElement* ui_element);
 
+/// Retrieve the child element at `index` of `ui_element`.
 NIKOLA_API UIElement* ui_element_get_child(UIElement* ui_element, const sizei index);
 
+/// Retrieve the number of children `ui_element` currently has.
 NIKOLA_API const sizei ui_element_get_children_count(UIElement* ui_element);
 
+/// Retrieve the string tag of `ui_element`. 
 NIKOLA_API const String& ui_element_get_tag(UIElement* ui_element);
 
+/// Retrieve the string ID of `ui_element`. 
 NIKOLA_API const String& ui_element_get_id(UIElement* ui_element);
 
+/// Retrieve the inner HTML contents of `ui_element`. 
 NIKOLA_API String ui_element_get_inner_html(UIElement* ui_element);
 
+/// Check whether the given `ui_element` is currently visible (active).
 NIKOLA_API bool ui_element_is_visible(UIElement* ui_element);
 
+/// Check whether the given `ui_element` has any direct children.
 NIKOLA_API bool ui_element_has_children(UIElement* ui_element);
 
+/// Check whether the RCSS query selector of the given `ui_element` matches `selector`.
 NIKOLA_API bool ui_element_matches(UIElement* ui_element, const String& selector);
 
 /// UIElement functions
@@ -419,16 +504,22 @@ NIKOLA_API bool ui_element_matches(UIElement* ui_element, const String& selector
 ///---------------------------------------------------------------------------------------------------------------------
 /// UIText functions
 
+/// Allocate and return a new (empty) `UIText` in `ui_doc` with `text` contents.
 NIKOLA_API UIText* ui_text_create(UIDocument* ui_doc, const String& text);
 
+/// Add a new line in `ui_text` with `line_offset` from the previous line, and `line_text` contents.
 NIKOLA_API void ui_text_add_line(UIText* ui_text, const Vec2& line_offset, const String& line_text);
 
+/// Clear all lines of `ui_text`.
 NIKOLA_API void ui_text_clear_lines(UIText* ui_text);
 
+/// Set the contents of `ui_text` to `str`.
 NIKOLA_API void ui_text_set_string(UIText* ui_text, const String& str);
 
+/// Retrieve the string contents of `ui_text`.
 NIKOLA_API const String& ui_text_get_string(UIText* ui_text);
 
+/// Retrieve the width of the string contents of `ui_text`.
 NIKOLA_API const sizei ui_text_get_width(UIText* ui_text);
 
 /// UIText functions
@@ -437,12 +528,16 @@ NIKOLA_API const sizei ui_text_get_width(UIText* ui_text);
 ///---------------------------------------------------------------------------------------------------------------------
 /// UIProgress functions
 
+/// Set the value of `ui_progress` to `value`.
 NIKOLA_API void ui_progress_set_value(UIProgress* ui_progress, const f32 value);
 
+/// Set the maximum of `ui_progress` to `max`.
 NIKOLA_API void ui_progress_set_max(UIProgress* ui_progress, const f32 max);
 
+/// Retrieve the current value of `ui_progress`.
 NIKOLA_API f32 ui_progress_get_value(UIProgress* ui_progress);
 
+/// Retrieve the current maximum of `ui_progress`.
 NIKOLA_API f32 ui_progress_get_max(UIProgress* ui_progress);
 
 /// UIProgress functions
@@ -451,14 +546,20 @@ NIKOLA_API f32 ui_progress_get_max(UIProgress* ui_progress);
 ///---------------------------------------------------------------------------------------------------------------------
 /// UIControlInput functions
 
+/// Set the string value of `ui_input` to `value`.
 NIKOLA_API void ui_control_input_set_value(UIControlInput* ui_input, const String& value);
 
+/// Set the selection range from `selection_start` to `selection_end` of `ui_input`.
 NIKOLA_API void ui_control_input_set_selection_range(UIControlInput* ui_input, i32 selection_start, i32 selection_end);
 
+/// Retrieve the string value of the given `ui_input`.
 NIKOLA_API String ui_control_input_get_value(UIControlInput* ui_input);
 
+/// Retrieve the current selection range of `ui_input`, writing the results in to `selection_start`,
+/// `selection_end`, and `selected_text`.
 NIKOLA_API void ui_control_input_get_selection_range(UIControlInput* ui_input, i32* selection_start, i32* selection_end, String* selected_text);
 
+/// Check whether the contents of `ui_input` have been submitted or not.
 NIKOLA_API bool ui_control_input_is_submitted(UIControlInput* ui_input);
 
 /// UIControlInput functions
@@ -467,28 +568,45 @@ NIKOLA_API bool ui_control_input_is_submitted(UIControlInput* ui_input);
 ///---------------------------------------------------------------------------------------------------------------------
 /// UIControlSelect functions
 
+/// Add a new option to `ui_select` with `html` contents and `value` string value. 
+/// The given `before` indicates the index of the element to insert this new option before. Leave as `-1` to append 
+/// this new option to the end. 
+/// The given `selectable` indicates whether this option is currently selectable or not.
 NIKOLA_API void ui_control_select_add(UIControlSelect* ui_select, const String& html, const String& value, i32 before = -1, bool selectable = true);
 
+/// Remove the option at `index` of `ui_select`.
 NIKOLA_API void ui_control_select_remove(UIControlSelect* ui_select, const i32 index);
 
+/// Remove all options of the given `ui_select`.
 NIKOLA_API void ui_control_select_remove_all(UIControlSelect* ui_select);
 
+/// Show the selection box of `ui_select`.
 NIKOLA_API void ui_control_select_show_box(UIControlSelect* ui_select);
 
+/// Hide the selection box of `ui_select`.
 NIKOLA_API void ui_control_select_hide_box(UIControlSelect* ui_select);
 
+/// Set the string value of `ui_select` to `value`.
 NIKOLA_API void ui_control_select_set_value(UIControlSelect* ui_select, const String& value);
 
+/// Set the index of the selection of `ui_select` to `selection`. 
+///
+/// @NOTE: If the given `selection` is out of bounds, the value will be clamped.
 NIKOLA_API void ui_control_select_set_selection(UIControlSelect* ui_select, const i32 selection);
 
+/// Check whether the selection box of the given `ui_select` is shown or not.
 NIKOLA_API bool ui_control_select_is_box_shown(UIControlSelect* ui_select);
 
+/// Retrieve the `UIElement` option of `ui_select` at `index`.
 NIKOLA_API UIElement* ui_control_select_get_option(UIControlSelect* ui_select, const i32 index);
 
+/// Retrieve the string value of `ui_select`.
 NIKOLA_API String ui_control_select_get_value(UIControlSelect* ui_select);
 
+/// Retrieve the current selection index of `ui_select`.
 NIKOLA_API i32 ui_control_select_get_selection(UIControlSelect* ui_select);
 
+/// Retrieve the number of options in `ui_select`.
 NIKOLA_API sizei ui_control_select_get_options_count(UIControlSelect* ui_select);
 
 /// UIControlSelect functions
@@ -497,20 +615,28 @@ NIKOLA_API sizei ui_control_select_get_options_count(UIControlSelect* ui_select)
 ///---------------------------------------------------------------------------------------------------------------------
 /// UITabMenu functions
 
+/// Set the contents of the tab of `ui_tab` at `index` to `html`.
 NIKOLA_API void ui_tab_menu_set_tab(UITabMenu* ui_tab, const i32 index, const String& html);
 
+/// Set the contents of the panel of `ui_tab` at `index` to `html`.
 NIKOLA_API void ui_tab_menu_set_panel(UITabMenu* ui_tab, const i32 index, const String& html);
 
+/// Set the tab of `ui_tab` at `index` to `element`.
 NIKOLA_API void ui_tab_menu_set_tab(UITabMenu* ui_tab, const i32 index, UIElementPtr element);
 
+/// Set the panel of `ui_tab` at `index` to `element`.
 NIKOLA_API void ui_tab_menu_set_panel(UITabMenu* ui_tab, const i32 index, UIElementPtr element);
 
+/// Set the currently active tab of `ui_tab` to `index`.
 NIKOLA_API void ui_tab_menu_set_active_tab(UITabMenu* ui_tab, const i32 index);
 
+/// Remove the tab of `ui_tab` at `index`.
 NIKOLA_API void ui_tab_menu_remove_tab(UITabMenu* ui_tab, const i32 index);
 
+/// Retrieve the index of the currently active tab of `ui_tab`.
 NIKOLA_API i32 ui_tab_menu_get_active_tab(UITabMenu* ui_tab);
 
+/// Retrieve the number of tabs in `ui_tab`.
 NIKOLA_API sizei ui_tab_menu_get_tabs_count(UITabMenu* ui_tab);
 
 /// UITabMenu functions

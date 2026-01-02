@@ -5,7 +5,6 @@
         - [] A simple main menu 
         - [] Somewhat of an involved settings menu 
         - [] The perk carousel
-    - [] Documentation
 - [] Performance v2.0
     - [] Optimize resource loading 
         - [] Meshes/models: Use `cgltf` and `meshoptimizer` instead of bloated Assimp.

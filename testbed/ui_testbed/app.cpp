@@ -96,9 +96,6 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   // Listen to events
   nikola::event_listen(nikola::EVENT_UI_ELEMENT_CLICKED, on_button_pressed);
 
-  nikola::ui_debugger_init(app->context);
-  nikola::ui_debugger_set_visible(true);
-
   return app;
 }
 
