@@ -171,6 +171,16 @@ void entity_world_update(EntityWorld& world, const f64 delta_time) {
     }
   }
 
+  // UIContext 
+  {
+    NIKOLA_PROFILE_FUNCTION_NAMED("entity_world_update(UIContext)");
+
+    auto view = world.view<UIContext*>();
+    for(auto entt : view) {
+      UIContext* ui_ctx = view.get<UIContext*>(entt);
+      ui_context_update(ui_ctx); 
+    }
+  }
 }
 
 void entity_world_render(const EntityWorld& world) {
@@ -266,6 +276,17 @@ void entity_world_render(const EntityWorld& world) {
       const ParticleEmitter& emitter = view.get<ParticleEmitter>(entt);
 
       renderer_queue_particles(emitter);
+    }
+  }
+
+  // UIContext 
+  {
+    NIKOLA_PROFILE_FUNCTION_NAMED("entity_world_render(UIContext)");
+
+    auto view = world.view<UIContext*>();
+    for(auto entt : view) {
+      UIContext* ui_ctx = view.get<UIContext*>(entt);
+      ui_context_render(ui_ctx); 
     }
   }
 }
