@@ -765,6 +765,7 @@ void ui_context_destroy(UIContext* ui_ctx) {
     return;
   }
 
+  ui_ctx->UnloadAllDocuments();
   Rml::RemoveContext(ui_ctx->GetName());
 }
 
@@ -859,6 +860,11 @@ UIDocument* ui_document_load_from_memory(UIContext* ui_ctx, const String& doc_sr
 UIDocument* ui_document_create(UIContext* ui_ctx, const String& maker_name) {
   NIKOLA_ASSERT(ui_ctx, "Invalid UIContext given to ui_document_create");
   return ui_ctx->CreateDocument(maker_name);
+}
+
+void ui_document_unload(UIDocument* ui_doc) {
+  UIContext* ui_ctx = ui_document_get_context(ui_doc);
+  ui_ctx->UnloadDocument(ui_doc);
 }
 
 void ui_document_close(UIDocument* ui_doc) {

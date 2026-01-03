@@ -78,6 +78,11 @@ void entity_world_destroy_entity(EntityWorld& world, EntityID& entt) {
     animation_blender_destroy(blender);
   }
 
+  if(world.any_of<UIContext*>(entt)) {
+    UIContext* ui_ctx = world.get<UIContext*>(entt);
+    ui_context_destroy(ui_ctx);
+  }
+
   // Destroy the entity in the world
   world.destroy(entt); 
 }

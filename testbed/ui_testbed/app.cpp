@@ -209,6 +209,7 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
 }
 
 void app_shutdown(nikola::App* app) {
+  nikola::ui_context_destroy(app->context);
   nikola::resources_destroy_group(app->res_group_id);
   nikola::gui_shutdown();
 

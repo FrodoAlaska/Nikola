@@ -324,6 +324,9 @@ NIKOLA_API UIDocument* ui_document_load_from_memory(UIContext* ui_ctx, const Str
 /// Allocate and new (empty) `UIDocument`, using the given `maker_name` as the root element.
 NIKOLA_API UIDocument* ui_document_create(UIContext* ui_ctx, const String& maker_name = "body");
 
+/// Unload the given `ui_doc`.
+NIKOLA_API void ui_document_unload(UIDocument* ui_doc);
+
 /// Close the given `ui_doc`, disabling it completely.
 NIKOLA_API void ui_document_close(UIDocument* ui_doc);
 
