@@ -109,9 +109,6 @@ set(LIBS_SOURCES
   ${NIKOLA_LIBS_DIR}/imgui/imgui_stdlib.h
   ${NIKOLA_LIBS_DIR}/imgui/imgui_tables.cpp
   ${NIKOLA_LIBS_DIR}/imgui/imgui_widgets.cpp
-
-  # CGLTF 
-  ${NIKOLA_LIBS_DIR}/cgltf/cgltf.cpp
 )
 ############################################################
 
@@ -122,11 +119,11 @@ add_library(${PROJECT_NAME} ${NIKOLA_BUILD_TYPE} ${NIKOLA_SOURCES} ${NIKOLA_HEAD
 
 ### Linking ###
 ############################################################
-target_include_directories(${PROJECT_NAME} PRIVATE BEFORE 
+target_include_directories(${PROJECT_NAME} PUBLIC BEFORE 
   ${NIKOLA_INCLUDES}
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE 
+target_link_libraries(${PROJECT_NAME} PUBLIC 
   ${NIKOLA_LIBRARIES}
 )
 

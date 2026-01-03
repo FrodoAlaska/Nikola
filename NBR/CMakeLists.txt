@@ -86,6 +86,9 @@ set(LIBS_SOURCES
   # dr_libs
   ${NBR_LIBS_DIR}/dr_libs/dr_mp3.cpp
   ${NBR_LIBS_DIR}/dr_libs/dr_wav.cpp
+
+  # CGLTF 
+  ${NBR_LIBS_DIR}/cgltf/cgltf.cpp
 )
 ############################################################
 

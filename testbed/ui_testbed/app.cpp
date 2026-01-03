@@ -133,10 +133,10 @@ static void dialogue_advance(DialogueInfo& info) {
 /// Callbacks
 
 static bool on_button_pressed(const nikola::Event& event, const void* dispatcher, const void* listener) {
-  DialogueInfo* info = (DialogueInfo*)listener;
+  const nikola::String& tag = nikola::ui_element_get_id(event.element);
 
-  if(nikola::ui_element_get_id(event.element) == "next-arrow") {
-    dialogue_advance(*info);
+  if(tag == "quit") {
+    nikola::event_dispatch(nikola::Event{.type = nikola::EVENT_APP_QUIT});
   }
 
   return true;
@@ -182,19 +182,28 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::FilePath base_path = nikola::filepath_append(nikola::filesystem_current_path(), "res");
   
   app->context  = nikola::ui_context_create("Main", nikola::IVec2(width, height));
-  app->document = nikola::ui_document_load(app->context, nikola::filepath_append(base_path, "ui/dialogue.rml"));
+  app->document = nikola::ui_document_load(app->context, nikola::filepath_append(base_path, "ui/main_menu.rml"));
   
   nikola::ui_document_enable_events(app->document);
   nikola::ui_document_show(app->document);
 
-  // Read the dialogue file
+  // Enable events for all the menu buttons
 
-  if(!dialogue_load(&app->dialogue_info, nikola::filepath_append(base_path, "dialogue/hera_intro.txt"), app->document)) {
-    return app;
+  nikola::DynamicArray<nikola::UIElement*> elements;
+  nikola::ui_document_query_selector_all(app->document, ".menu-button", elements);
+
+  for(auto& element : elements) {
+    nikola::ui_element_enable_events(element);
   }
 
+  // Read the dialogue file
+
+  // if(!dialogue_load(&app->dialogue_info, nikola::filepath_append(base_path, "dialogue/hera_intro.txt"), app->document)) {
+  //   return app;
+  // }
+
   // Listen to events
-  nikola::event_listen(nikola::EVENT_UI_ELEMENT_CLICKED, on_button_pressed, &app->dialogue_info);
+  nikola::event_listen(nikola::EVENT_UI_ELEMENT_CLICKED, on_button_pressed);
 
   return app;
 }
