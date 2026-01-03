@@ -175,6 +175,12 @@ NIKOLA_API void entity_world_update(EntityWorld& world, const f64 delta_time);
 /// `renderer_begin` and _BEFORE_ `renderer_end`.
 NIKOLA_API void entity_world_render(const EntityWorld& world);
 
+/// Render all the UI components of `world` in a data-oriented manner.
+///
+/// @NOTE: This function _MUST_ be called only once per frame after calling 
+/// `ui_renderer_begin` and _BEFORE_ `ui_renderer_end`.
+NIKOLA_API void entity_world_render_ui(const EntityWorld& world);
+
 /// EntityWorld functions
 /// ----------------------------------------------------------------------
 

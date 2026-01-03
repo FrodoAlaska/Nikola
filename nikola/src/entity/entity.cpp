@@ -278,10 +278,12 @@ void entity_world_render(const EntityWorld& world) {
       renderer_queue_particles(emitter);
     }
   }
+}
 
+void entity_world_render_ui(const EntityWorld& world) {
   // UIContext 
   {
-    NIKOLA_PROFILE_FUNCTION_NAMED("entity_world_render(UIContext)");
+    NIKOLA_PROFILE_FUNCTION_NAMED("entity_world_render_ui(UIContext)");
 
     auto view = world.view<UIContext*>();
     for(auto entt : view) {
