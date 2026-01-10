@@ -187,6 +187,11 @@ nikola::App* app_init(const nikola::Args& args, nikola::Window* window) {
   nikola::ui_document_enable_events(app->document);
   nikola::ui_document_show(app->document);
 
+  // UI debugger init
+
+  // nikola::ui_debugger_init(app->context);
+  // nikola::ui_debugger_set_visible(true);
+
   // Enable events for all the menu buttons
 
   nikola::DynamicArray<nikola::UIElement*> elements;

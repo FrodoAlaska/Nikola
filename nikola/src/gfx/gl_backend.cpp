@@ -916,8 +916,24 @@ static void init_pipeline_layout(GfxPipeline* pipe, sizei* strides) {
       sizei comp_count    = get_layout_count(attribute);
       sizei size          = get_layout_size(attribute);
 
+      /// @NOTE:
+      /// 
+      /// This is just a temporary resolution until I can fix this much later. 
+      /// If I stop being lazy, that is, which is unlikely to happen for a while. 
+      ///
+      /// Essentially, we are assuming that are floating-point attributes will _NOT_ 
+      /// be normalized. That's because we usually don't want them to be. However, 
+      /// with other non floating-point numbers, we assume that we need them to be normalized.
+      /// With bytes, for example, we might need to normalize that since we might be using them 
+      /// as color values. 
+      ///
+      /// This might be problematic, so I might come back here and fix it... 
+      ///
+
+      bool is_normalized = (gl_comp_type != GL_FLOAT);
+
       glEnableVertexArrayAttrib(pipe->vertex_array, start + j);
-      glVertexArrayAttribFormat(pipe->vertex_array, start + j, comp_count, gl_comp_type, GL_FALSE, stride);
+      glVertexArrayAttribFormat(pipe->vertex_array, start + j, comp_count, gl_comp_type, is_normalized, stride);
       glVertexArrayAttribBinding(pipe->vertex_array, start + j, i);
       
       // Increase the stride for the next round
