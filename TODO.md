@@ -8,8 +8,6 @@
 
 ## Update 0.4:
 
-- [] UI fix 
-    - [] There are a lot of problems with images that we need to fix
 - [] Performance v2.0
     - [] Optimize resource loading 
         - [] Meshes/models: Use `cgltf` and `meshoptimizer` instead of bloated Assimp.
