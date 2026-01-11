@@ -552,6 +552,9 @@ NIKOLA_API f32 ui_progress_get_max(UIProgress* ui_progress);
 /// Set the string value of `ui_input` to `value`.
 NIKOLA_API void ui_control_input_set_value(UIControlInput* ui_input, const String& value);
 
+/// Set the disabled state of the given `ui_input` to `disabled`.
+NIKOLA_API void ui_control_input_set_disabled(UIControlInput* ui_input, const bool disabled);
+
 /// Set the selection range from `selection_start` to `selection_end` of `ui_input`.
 NIKOLA_API void ui_control_input_set_selection_range(UIControlInput* ui_input, i32 selection_start, i32 selection_end);
 
@@ -564,6 +567,9 @@ NIKOLA_API void ui_control_input_get_selection_range(UIControlInput* ui_input, i
 
 /// Check whether the contents of `ui_input` have been submitted or not.
 NIKOLA_API bool ui_control_input_is_submitted(UIControlInput* ui_input);
+
+/// Check whether the given `ui_input` is disabled.
+NIKOLA_API bool ui_control_input_is_disabled(UIControlInput* ui_input);
 
 /// UIControlInput functions
 ///---------------------------------------------------------------------------------------------------------------------

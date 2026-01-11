@@ -1216,6 +1216,10 @@ void ui_control_input_set_value(UIControlInput* ui_input, const String& value) {
   ui_input->SetValue(value);
 }
 
+void ui_control_input_set_disabled(UIControlInput* ui_input, const bool disabled) {
+  ui_input->SetDisabled(disabled);
+}
+
 void ui_control_input_set_selection_range(UIControlInput* ui_input, i32 selection_start, i32 selection_end) {
   ui_input->SetSelectionRange(selection_start, selection_end);
 }
@@ -1230,6 +1234,10 @@ void ui_control_input_get_selection_range(UIControlInput* ui_input, i32* selecti
 
 bool ui_control_input_is_submitted(UIControlInput* ui_input) {
   return ui_input->IsSubmitted();
+}
+
+bool ui_control_input_is_disabled(UIControlInput* ui_input) {
+  return ui_input->IsDisabled();
 }
 
 /// UIControlInput functions
